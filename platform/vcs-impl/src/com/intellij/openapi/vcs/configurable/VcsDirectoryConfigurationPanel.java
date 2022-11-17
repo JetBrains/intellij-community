@@ -180,9 +180,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
   private static class MyVcsRenderer extends ColoredTableCellRenderer {
     private final MapInfo myInfo;
-    private final List<AbstractVcs> myAllVcses;
+    private final @NotNull List<? extends AbstractVcs> myAllVcses;
 
-    MyVcsRenderer(@NotNull MapInfo info, @NotNull List<AbstractVcs> allVcses) {
+    MyVcsRenderer(@NotNull MapInfo info, @NotNull List<? extends AbstractVcs> allVcses) {
       myInfo = info;
       myAllVcses = allVcses;
     }

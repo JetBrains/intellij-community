@@ -41,6 +41,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -92,19 +93,28 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(@NotNull final List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(final @NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {
+    processDefaultAdditionalElementsToRename(pair -> {
+      stringUsages.add(pair);
+      return true;
+    });
+  }
+  protected final boolean processDefaultAdditionalElementsToRename(@NotNull Processor<? super Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
-    final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {
-      TextOccurrencesUtil.processUsagesInStringsAndComments(
+      final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      return TextOccurrencesUtil.processUsagesInStringsAndComments(
         myElementToRename, GlobalSearchScope.projectScope(myElementToRename.getProject()),
         stringToSearch, false, (psiElement, textRange) -> {
           if (psiElement.getContainingFile() == currentFile) {
-            stringUsages.add(Pair.create(psiElement, textRange));
+            if (!stringUsages.process(Pair.create(psiElement, textRange))) {
+              return false;
+            }
           }
           return true;
         });
     }
+    return true;
   }
 
   @Override

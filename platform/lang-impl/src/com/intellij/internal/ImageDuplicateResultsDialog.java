@@ -52,14 +52,14 @@ import java.util.stream.Collectors;
  */
 public class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
-  private final List<VirtualFile> myImages;
+  private final List<? extends VirtualFile> myImages;
   private final Map<String, Set<VirtualFile>> myDuplicates;
   private final Tree myTree;
   private final TreeSpeedSearch mySpeedSearch;
   private final ResourceModules myResourceModules = new ResourceModules();
 
 
-  public ImageDuplicateResultsDialog(Project project, List<VirtualFile> images, Map<String, Set<VirtualFile>> duplicates) {
+  public ImageDuplicateResultsDialog(Project project, List<? extends VirtualFile> images, Map<String, Set<VirtualFile>> duplicates) {
     super(project);
     myProject = project;
     myImages = images;

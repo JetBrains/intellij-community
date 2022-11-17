@@ -91,7 +91,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     return ContainerUtil.map(panels, VcsLogPanel::getUi);
   }
 
-  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<VcsLogPanel> result) {
+  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<? super VcsLogPanel> result) {
     if (component instanceof VcsLogPanel) {
       result.add((VcsLogPanel)component);
       return;

@@ -121,8 +121,8 @@ public final class VcsInitialization {
 
   private void runInitStep(@NotNull Status current,
                            @NotNull Status next,
-                           @NotNull Predicate<VcsStartupActivity> extensionFilter,
-                           @NotNull List<VcsStartupActivity> pendingActivities) {
+                           @NotNull Predicate<? super VcsStartupActivity> extensionFilter,
+                           @NotNull List<? extends VcsStartupActivity> pendingActivities) {
     List<VcsStartupActivity> activities = new ArrayList<>();
     List<VcsStartupActivity> unfilteredActivities = EP_NAME.getExtensionList();
     synchronized (myLock) {
@@ -141,7 +141,7 @@ public final class VcsInitialization {
     runActivities(activities);
   }
 
-  private void runActivities(@NotNull List<VcsStartupActivity> activities) {
+  private void runActivities(@NotNull List<? extends VcsStartupActivity> activities) {
     Future<?> future = myFuture;
     if (future != null && future.isCancelled()) {
       return;

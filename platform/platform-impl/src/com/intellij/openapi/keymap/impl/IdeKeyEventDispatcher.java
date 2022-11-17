@@ -599,7 +599,7 @@ public final class IdeKeyEventDispatcher {
   boolean processAction(@NotNull InputEvent e,
                         @NotNull String place,
                         @NotNull DataContext context,
-                        @NotNull List<AnAction> actions,
+                        @NotNull List<? extends AnAction> actions,
                         @NotNull ActionProcessor processor,
                         @NotNull PresentationFactory presentationFactory,
                         @NotNull Shortcut shortcut) {

@@ -17,7 +17,7 @@ public abstract class RemoteAgentManager {
   }
 
   public abstract <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
-                                                        List<File> instanceLibraries,
+                                                        List<? extends File> instanceLibraries,
                                                         List<Class<?>> commonJarClasses,
                                                         String specificsRuntimeModuleName,
                                                         String specificsBuildJarPath,

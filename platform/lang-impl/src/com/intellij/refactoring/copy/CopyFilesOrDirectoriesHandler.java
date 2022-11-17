@@ -319,7 +319,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                       @NotNull PsiDirectory targetDirectory,
                                       int @Nullable [] choice,
                                       @Nullable @NlsContexts.Command String title,
-                                      @NotNull List<PsiFile> added) throws IncorrectOperationException, IOException {
+                                      @NotNull List<? super PsiFile> added) throws IncorrectOperationException, IOException {
     MultiMap<PsiDirectory, PsiFile> existingFiles = new MultiMap<>();
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (Registry.is("run.refactorings.under.progress")) {
@@ -372,7 +372,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                           int @Nullable [] choice,
                                           @NlsContexts.DialogTitle String title,
                                           @NotNull MultiMap<PsiDirectory, PsiFile> existingFiles,
-                                          @NotNull List<PsiFile> added) {
+                                          @NotNull List<? super PsiFile> added) {
     SkipOverwriteChoice defaultChoice = choice != null && choice[0] > -1 ? SkipOverwriteChoice.values()[choice[0]] : null;
     try {
       defaultChoice = handleExistingFiles(defaultChoice, choice, newName, targetDirectory, title, existingFiles, added, null);

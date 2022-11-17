@@ -251,7 +251,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         return declarationToRename
     }
 
-    override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: Pass<PsiElement>) {
+    override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: Pass<in PsiElement>) {
         val namedUnwrappedElement = element.namedUnwrappedElement ?: return
 
         val callableDeclaration = namedUnwrappedElement as? KtCallableDeclaration

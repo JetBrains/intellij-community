@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 public final class ChangeListChangesSupplier implements Supplier<Iterable<Change>> {
   private final @NotNull List<ChangeList> myChangeLists;
 
-  public ChangeListChangesSupplier(@NotNull List<ChangeList> changeLists) {
+  public ChangeListChangesSupplier(@NotNull List<? extends ChangeList> changeLists) {
     myChangeLists = List.copyOf(changeLists);
   }
 

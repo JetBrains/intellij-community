@@ -349,7 +349,7 @@ public final class DocRenderItem {
     if (items != null) updateRenderers(items, recreateContent);
   }
 
-  private void updateIcon(List<Runnable> foldingTasks) {
+  private void updateIcon(List<? super Runnable> foldingTasks) {
     boolean iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     boolean iconExists = highlighter.getGutterIconRenderer() != null;
     if (iconEnabled != iconExists) {

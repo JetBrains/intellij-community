@@ -117,7 +117,7 @@ public final class SearchUtil {
     return configurable;
   }
 
-  private static void processComponent(SearchableConfigurable configurable, Set<OptionDescription> configurableOptions, JComponent component, boolean i18n) {
+  private static void processComponent(SearchableConfigurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component, boolean i18n) {
     if (component != null) {
       for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeComponent(configurable, component, configurableOptions);
@@ -132,7 +132,7 @@ public final class SearchUtil {
     }
   }
 
-  private static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path, boolean i18n) {
+  private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path, boolean i18n) {
     if (component instanceof SkipSelfSearchComponent) {
       return;
     }

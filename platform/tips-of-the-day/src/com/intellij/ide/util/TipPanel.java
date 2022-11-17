@@ -261,7 +261,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     });
   }
 
-  private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<TextParagraph> tipContent) {
+  private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<? extends TextParagraph> tipContent) {
     saveCurrentTipLikenessState();
     myCurrentLikenessState = getLikenessState(tip);
     myCurrentTip = tip;

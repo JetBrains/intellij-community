@@ -109,7 +109,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     return null;
   }
 
-  public void collectRefsToInvert(PsiElement namedElement, Collection<PsiElement> elementsToInvert) {
+  public void collectRefsToInvert(PsiElement namedElement, Collection<? super PsiElement> elementsToInvert) {
     final Query<PsiReference> query = namedElement instanceof PsiMethod ?
                                       MethodReferencesSearch.search((PsiMethod)namedElement) :
                                       ReferencesSearch.search(namedElement);
@@ -245,7 +245,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   public void collectRefElements(final PsiElement element,
                                  final RenameProcessor renameProcessor,
                                  @NotNull final String newName,
-                                 final Collection<PsiElement> elementsToInvert) {
+                                 final Collection<? super PsiElement> elementsToInvert) {
     collectRefsToInvert(element, elementsToInvert);
 
     if (element instanceof PsiMethod) {

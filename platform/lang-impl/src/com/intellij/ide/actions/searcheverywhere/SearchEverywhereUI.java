@@ -256,7 +256,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     updateRightActions(contributors);
   }
 
-  private void updateRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+  private void updateRightActions(@NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
     List<AnAction> actions = getRightActions(contributors);
     myHintHelper.removeRightExtensions();
     if (!actions.isEmpty()) {

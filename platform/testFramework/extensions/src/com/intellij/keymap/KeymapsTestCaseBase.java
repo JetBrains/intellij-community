@@ -395,7 +395,7 @@ public abstract class KeymapsTestCaseBase {
     return DynamicTests.asDynamicTests(failures, "linux shortcuts are correct", "too many problems in linux shortcuts");
   }
 
-  private static void checkLinuxKeymap(Keymap keymap, List<NamedFailure> failures) {
+  private static void checkLinuxKeymap(Keymap keymap, List<? super NamedFailure> failures) {
     for (String actionId : keymap.getActionIdList()) {
       for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
         if (shortcut instanceof KeyboardShortcut) {

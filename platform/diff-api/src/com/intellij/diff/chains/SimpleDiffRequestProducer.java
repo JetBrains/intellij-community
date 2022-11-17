@@ -18,13 +18,13 @@ public class SimpleDiffRequestProducer {
 
   @NotNull
   public static DiffRequestProducer create(@NotNull FilePath filePath,
-                                           @NotNull ThrowableComputable<DiffRequest, Throwable> producer) {
+                                           @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
     return new MyDiffRequestProducer(filePath.getPath(), filePath.getFileType(), producer);
   }
 
   @NotNull
   public static DiffRequestProducer create(@NotNull @Nls String name,
-                                           @NotNull ThrowableComputable<DiffRequest, Throwable> producer) {
+                                           @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
     return new MyDiffRequestProducer(name, null, producer);
   }
 

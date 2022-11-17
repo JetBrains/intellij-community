@@ -44,7 +44,7 @@ internal object ImaginaryInplaceRefactoring : InplaceRefactoring(
   override fun notSameFile(file: VirtualFile?, containingFile: PsiFile): Boolean = error("must not be called")
   override fun getReferencesSearchScope(file: VirtualFile?): SearchScope = error("must not be called")
   override fun checkLocalScope(): PsiElement = error("must not be called")
-  override fun collectAdditionalElementsToRename(stringUsages: MutableList<Pair<PsiElement, TextRange>>): Unit = error("must not be called")
+  override fun collectAdditionalElementsToRename(stringUsages: MutableList<in Pair<PsiElement, TextRange>>): Unit = error("must not be called")
   override fun createLookupExpression(selectedElement: PsiElement?): MyLookupExpression = error("must not be called")
   override fun createTemplateExpression(selectedElement: PsiElement?): Expression = error("must not be called")
   override fun acceptReference(reference: PsiReference?): Boolean = error("must not be called")

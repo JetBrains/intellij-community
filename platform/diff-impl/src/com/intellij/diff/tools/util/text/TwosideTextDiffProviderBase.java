@@ -59,7 +59,7 @@ abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implemen
   @Override
   public List<List<LineFragment>> compare(@NotNull CharSequence text1,
                                           @NotNull CharSequence text2,
-                                          @NotNull List<Range> linesRanges,
+                                          @NotNull List<? extends Range> linesRanges,
                                           @NotNull ProgressIndicator indicator) {
     LineOffsets lineOffsets1 = LineOffsetsUtil.create(text1);
     LineOffsets lineOffsets2 = LineOffsetsUtil.create(text2);

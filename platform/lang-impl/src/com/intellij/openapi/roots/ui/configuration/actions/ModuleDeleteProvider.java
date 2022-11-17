@@ -113,7 +113,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
 
   protected void doDetachModules(@NotNull Project project,
                                  Module @Nullable [] modules,
-                                 @Nullable List<UnloadedModuleDescription> unloadedModules) {
+                                 @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] currentModules = moduleManager.getModules();
     final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
@@ -142,7 +142,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
 
   private void detachModules(@NotNull Project project,
                              Module @Nullable [] modules,
-                             @Nullable List<UnloadedModuleDescription> unloadedModules) {
+                             @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
     doDetachModules(project, modules, unloadedModules);
   }
 

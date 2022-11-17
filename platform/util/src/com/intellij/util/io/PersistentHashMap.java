@@ -226,8 +226,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    */
   public static <K, V> PersistentHashMap<K, V> canonicalize(final @NotNull PersistentHashMap<K, V> originalMap,
                                                             final @NotNull /* @OutParam */ PersistentHashMap<K, V> targetCanonicalMap,
-                                                            final @NotNull Function<List<K>, List<K>> stableKeysSorter,
-                                                            final @NotNull Function<V, V> valueCanonicalizer) throws IOException {
+                                                            final @NotNull Function<? super List<K>, ? extends List<K>> stableKeysSorter,
+                                                            final @NotNull Function<? super V, ? extends V> valueCanonicalizer) throws IOException {
     PersistentMapBase.canonicalize(
       originalMap.myImpl,
       targetCanonicalMap.myImpl,

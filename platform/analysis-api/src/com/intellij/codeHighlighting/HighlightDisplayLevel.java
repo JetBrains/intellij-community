@@ -26,6 +26,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HighlightDisplayLevel {
+  public HighlightDisplayLevel(@NotNull HighlightSeverity severity, @NotNull Icon icon) {
+    this(severity, new Pair<>(icon, icon));
+  }
+
+  public HighlightDisplayLevel(@NotNull HighlightSeverity severity, @NotNull Pair<? extends @NotNull Icon, ? extends @NotNull Icon> iconPair) {
+    this(severity);
+    myIconPair = iconPair;
+    ourMap.put(mySeverity, this);
+  }
+
+  public HighlightDisplayLevel(@NotNull HighlightSeverity severity) {
+    mySeverity = severity;
+  }
+
   private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<>();
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING =
@@ -72,7 +86,7 @@ public class HighlightDisplayLevel {
     }
   };
 
-  private Pair<Icon, Icon> myIconPair = new Pair<>(EmptyIcon.ICON_16, EmptyIcon.ICON_16);
+  private Pair<? extends @NotNull Icon, ? extends @NotNull Icon> myIconPair = new Pair<>(EmptyIcon.ICON_16, EmptyIcon.ICON_16);
   private final HighlightSeverity mySeverity;
 
   @Nullable
@@ -92,21 +106,6 @@ public class HighlightDisplayLevel {
   public static HighlightDisplayLevel find(@NotNull HighlightSeverity severity) {
     return ourMap.get(severity);
   }
-
-  public HighlightDisplayLevel(@NotNull HighlightSeverity severity, @NotNull Icon icon) {
-    this(severity, new Pair<>(icon, icon));
-  }
-
-  public HighlightDisplayLevel(@NotNull HighlightSeverity severity, Pair<@NotNull Icon, @NotNull Icon> iconPair) {
-    this(severity);
-    myIconPair = iconPair;
-    ourMap.put(mySeverity, this);
-  }
-
-  public HighlightDisplayLevel(@NotNull HighlightSeverity severity) {
-    mySeverity = severity;
-  }
-
 
   public @NonNls String toString() {
     return mySeverity.toString();
@@ -157,7 +156,7 @@ public class HighlightDisplayLevel {
            createIconPair(key, AllIcons.General.InspectionsWarning, AllIcons.General.InspectionsWarningEmpty);
   }
 
-  private static Pair<Icon, Icon> createIconPair(@NotNull TextAttributesKey key, @NotNull Icon first, @NotNull Icon second) {
+  private static @NotNull Pair<Icon, Icon> createIconPair(@NotNull TextAttributesKey key, @NotNull Icon first, @NotNull Icon second) {
     return new Pair<>(new ColorizedIcon(key, first), new ColorizedIcon(key, second));
   }
 

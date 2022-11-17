@@ -164,7 +164,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @ApiStatus.Internal
-  public final void addFiles(@NotNull List<Path> files) {
+  public final void addFiles(@NotNull List<? extends Path> files) {
     classPath.addFiles(files);
     this.files.addAll(files);
   }

@@ -66,7 +66,7 @@ public class LabelPainter {
                                @NotNull Color foreground,
                                boolean isSelected,
                                int availableWidth,
-                               @NotNull List<RefGroup> refGroups) {
+                               @NotNull List<? extends RefGroup> refGroups) {
     myBackground = background;
     myForeground = isSelected ? foreground : TEXT_COLOR;
 

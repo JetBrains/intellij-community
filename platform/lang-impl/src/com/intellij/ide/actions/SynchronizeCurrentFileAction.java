@@ -43,7 +43,7 @@ public final class SynchronizeCurrentFileAction extends DumbAwareAction {
     synchronizeFiles(files, project, true);
   }
 
-  public static void synchronizeFiles(@NotNull Collection<VirtualFile> files, @NotNull Project project, boolean async) {
+  public static void synchronizeFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project, boolean async) {
     if (files.isEmpty()) return;
 
     for (VirtualFile file : files) {

@@ -19,7 +19,7 @@ public class UrlCollector {
 
   private List<File> myFiles;
 
-  public URL[] collect(@NotNull Collection<File> libraries) {
+  public URL[] collect(@NotNull Collection<? extends File> libraries) {
     List<File> files = collectFiles(libraries);
     URL[] result = new URL[files.size()];
     for (int i = 0; i < files.size(); i++) {

@@ -64,15 +64,15 @@ public class Touchbar {
   public static void setButtonActions(@NotNull JComponent component, JButton[] buttons) {
     setButtonActions(component, Arrays.asList(buttons));
   }
-  public static void setButtonActions(@NotNull JComponent component, Collection<JButton> buttons) {
+  public static void setButtonActions(@NotNull JComponent component, Collection<? extends JButton> buttons) {
     setButtonActions(component, buttons, null, null);
   }
-  public static void setButtonActions(@NotNull JComponent component, Collection<JButton> buttons, Collection<JButton> principal, JButton defaultButton) {
+  public static void setButtonActions(@NotNull JComponent component, Collection<? extends JButton> buttons, Collection<? extends JButton> principal, JButton defaultButton) {
     setButtonActions(component, buttons, principal, defaultButton, null);
   }
   public static void setButtonActions(@NotNull JComponent component,
-                                      Collection<JButton> buttons,
-                                      Collection<JButton> principal,
+                                      Collection<? extends JButton> buttons,
+                                      Collection<? extends JButton> principal,
                                       JButton defaultButton,
                                       @Nullable ActionGroup extraActions) {
     if (!SystemInfo.isMac || ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return;

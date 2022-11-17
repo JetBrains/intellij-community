@@ -198,7 +198,7 @@ public abstract class RenamePsiElementProcessorBase {
    * @param editor the editor in which inplace refactoring was invoked
    * @param renameCallback rename procedure which should be called on the chosen substitution
    */
-  public void substituteElementToRename(@NotNull final PsiElement element, @NotNull Editor editor, @NotNull Pass<PsiElement> renameCallback) {
+  public void substituteElementToRename(@NotNull final PsiElement element, @NotNull Editor editor, @NotNull Pass<? super PsiElement> renameCallback) {
     final PsiElement psiElement = substituteElementToRename(element, editor);
     if (psiElement == null) return;
     if (!PsiElementRenameHandler.canRename(psiElement.getProject(), editor, psiElement)) return;

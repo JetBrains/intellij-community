@@ -803,8 +803,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @RequiresEdt
     private void refreshViewOnEdt(@NotNull DefaultTreeModel treeModel,
-                                  @NotNull List<LocalChangeList> changeLists,
-                                  @NotNull List<FilePath> unversionedFiles,
+                                  @NotNull List<? extends LocalChangeList> changeLists,
+                                  @NotNull List<? extends FilePath> unversionedFiles,
                                   boolean hasPendingRefresh) {
       if (myDisposed) return;
 

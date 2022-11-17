@@ -55,7 +55,7 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
 
   public static void doGet(@NotNull Project project,
                            @NotNull @NlsContexts.Label String actionTitle,
-                           @NotNull List<FileRevisionProvider> providers,
+                           @NotNull List<? extends FileRevisionProvider> providers,
                            @Nullable Runnable onFinished) {
     List<VirtualFile> files = ContainerUtil.mapNotNull(providers, it -> it.getFilePath().getVirtualFile());
     if (!files.isEmpty()) {
@@ -75,12 +75,12 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
 
   private static class MyWriteVersionTask extends Task.Backgroundable {
     @NotNull private final @NlsContexts.Label String myActionTitle;
-    @NotNull private final List<FileRevisionProvider> myProviders;
+    private final @NotNull List<? extends FileRevisionProvider> myProviders;
     @Nullable private final Runnable myOnFinished;
 
     MyWriteVersionTask(@NotNull Project project,
                        @NotNull @NlsContexts.Label String actionTitle,
-                       @NotNull List<FileRevisionProvider> providers,
+                       @NotNull List<? extends FileRevisionProvider> providers,
                        @Nullable Runnable onFinished) {
       super(project, VcsBundle.message("show.diff.progress.title"));
       myActionTitle = actionTitle;

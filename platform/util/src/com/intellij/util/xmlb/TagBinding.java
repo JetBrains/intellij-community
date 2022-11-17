@@ -116,7 +116,7 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
     return context;
   }
 
-  private void deserialize(@NotNull Object context, @NotNull List<Element> children) {
+  private void deserialize(@NotNull Object context, @NotNull List<? extends Element> children) {
     assert binding != null;
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(context, children.get(0));

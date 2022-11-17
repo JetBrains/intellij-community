@@ -1577,7 +1577,7 @@ public final class MVStore implements AutoCloseable {
         return changed;
     }
 
-    private static void addToChanged(List<Page<?, ?>> changed, RootReference<?, ?> rootReference) {
+    private static void addToChanged(List<? super Page<?, ?>> changed, RootReference<?, ?> rootReference) {
         Page<?, ?> rootPage = rootReference.root;
         // after deletion previously saved leaf may pop up as a root,
         // but we still need to save new root pos in meta

@@ -40,7 +40,7 @@ public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   }
 
   private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
-                                               @NotNull List<AnAction> speedSearchActions,
+                                               @NotNull List<? super AnAction> speedSearchActions,
                                                boolean isFirstLevel) {
     if (!isFirstLevel) speedSearchActions.add(Separator.create(actionGroup.getTemplatePresentation().getText()));
 

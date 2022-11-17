@@ -217,7 +217,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       return myUnwrapper.getDescription(myElement);
     }
 
-    PsiElement collectAffectedElements(@NotNull List<PsiElement> toExtract) {
+    PsiElement collectAffectedElements(@NotNull List<? super PsiElement> toExtract) {
       return myUnwrapper.collectAffectedElements(myElement, toExtract);
     }
   }

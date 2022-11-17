@@ -14,6 +14,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.project.Project;
@@ -221,9 +222,8 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return isModuleAdded;
   }
 
-  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "removal"})
   @Override
-  public void moduleAdded(List<com.intellij.openapi.module.ModuleComponent> oldComponents) {
+  public void moduleAdded(List<? super ModuleComponent> oldComponents) {
     isModuleAdded = true;
     //noinspection removal,UnnecessaryFullyQualifiedName
     processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component) -> {

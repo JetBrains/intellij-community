@@ -138,7 +138,7 @@ public class BranchFilterPopupComponent
 
   private class MyBranchPopupBuilder extends BranchPopupBuilder {
     protected MyBranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
-                                   @Nullable Collection<VirtualFile> visibleRoots,
+                                   @Nullable Collection<? extends VirtualFile> visibleRoots,
                                    @Nullable List<? extends List<String>> recentItems) {
       super(dataPack, visibleRoots, recentItems);
     }

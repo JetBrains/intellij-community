@@ -158,7 +158,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     doScheduleIndex(full, request -> request.run(myProgress.createProgressIndicator(INDEXING)));
   }
 
-  private synchronized void doScheduleIndex(boolean full, @NotNull Consumer<IndexingRequest> requestConsumer) {
+  private synchronized void doScheduleIndex(boolean full, @NotNull Consumer<? super IndexingRequest> requestConsumer) {
     if (myDisposableFlag.isDisposed()) return;
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     // for fresh index, wait for complete log to load and index everything in one command

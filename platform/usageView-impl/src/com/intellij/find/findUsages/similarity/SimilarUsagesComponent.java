@@ -84,7 +84,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   public void dispose() {
   }
 
-  public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<SimilarUsage> usagesToRender) {
+  public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<? extends SimilarUsage> usagesToRender) {
     JScrollPane similarUsagesScrollPane = ScrollPaneFactory.createScrollPane(this, true);
     renderOriginalUsage();
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {

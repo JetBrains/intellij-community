@@ -140,7 +140,7 @@ public abstract class VcsVFSListener implements Disposable {
      * @return get a list of files under lock and clear the given collection of files
      */
     @NotNull
-    private <T> List<T> acquireListUnderLock(@NotNull Collection<T> files) {
+    private <T> List<T> acquireListUnderLock(@NotNull Collection<? extends T> files) {
       return withLock(PROCESSING_LOCK.writeLock(), () -> {
         List<T> copiedFiles = new ArrayList<>(files);
         files.clear();
@@ -358,7 +358,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @RequiresEdt
-    private void processBeforeEvents(@NotNull List<VFileEvent> events) {
+    private void processBeforeEvents(@NotNull List<? extends VFileEvent> events) {
       for (VFileEvent event : events) {
         if (isEventIgnored(event)) continue;
 
@@ -375,7 +375,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @RequiresBackgroundThread
-    private void processAfterEvents(@NotNull List<VFileEvent> events) {
+    private void processAfterEvents(@NotNull List<? extends VFileEvent> events) {
       for (VFileEvent event : events) {
         ProgressManager.checkCanceled();
         if (isEventIgnored(event)) continue;
@@ -800,7 +800,7 @@ public abstract class VcsVFSListener implements Disposable {
      * Not using modal progress here, because it could lead to some focus related assertion (e.g. "showing dialogs from popup" in com.intellij.ui.popup.tree.TreePopupImpl)
      * Assume, that it is a safe to do all processing in background even if "Add to VCS" dialog may appear during such processing.
      */
-    private void processEventsInBackground(List<VFileEvent> events) {
+    private void processEventsInBackground(List<? extends VFileEvent> events) {
       new Task.Backgroundable(myProject, VcsBundle.message("progress.title.version.control.processing.changed.files"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {

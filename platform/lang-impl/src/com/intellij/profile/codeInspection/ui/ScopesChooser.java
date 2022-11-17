@@ -32,13 +32,13 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public abstract class ScopesChooser extends ComboBoxAction implements DumbAware {
-  private final List<Descriptor> myDefaultDescriptors;
+  private final List<? extends Descriptor> myDefaultDescriptors;
   @NotNull
   private final InspectionProfileImpl myInspectionProfile;
   private final Project myProject;
   private final Set<String> myExcludedScopeNames;
 
-  public ScopesChooser(final List<Descriptor> defaultDescriptors,
+  public ScopesChooser(final List<? extends Descriptor> defaultDescriptors,
                        @NotNull InspectionProfileImpl inspectionProfile,
                        @NotNull Project project,
                        final String[] excludedScopeNames) {

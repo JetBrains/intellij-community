@@ -112,7 +112,7 @@ final class Pluralizer {
   private String replaceWord(String word,
                              Map<String, String> replaceMap,
                              Map<String, String> keepMap,
-                             List<Map.Entry<Pattern, String>> rules) {
+                             List<? extends Map.Entry<Pattern, String>> rules) {
     if (Strings.isEmpty(word)) return word;
 
     // Get the correct token and case restoration functions.
