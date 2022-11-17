@@ -1,6 +1,7 @@
 package com.intellij.grazie.ide.notification
 
 import com.intellij.grazie.GrazieBundle
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -12,12 +13,15 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.util.application
+import java.time.Duration
 
 private val grazieProfessionalPluginId
   get() = PluginId.getId("com.intellij.grazie.pro")
 
+private val isGrazieProfessionalInstalled by lazy { PluginManager.isPluginInstalled(grazieProfessionalPluginId) }
+
 private const val NOTIFICATION_SHOWN = "Grazie.Professional.Advertisement.Shown"
-private const val IGNORE_DELAY = 1000 * 60 * 60 * 24 * 14
+private val IGNORE_DELAY = Duration.ofDays(14).toMillis()
 
 private fun shouldShow(): Boolean {
   val timestamp = PropertiesComponent.getInstance().getInt(NOTIFICATION_SHOWN, 0)
@@ -37,7 +41,7 @@ private fun markShown() {
 }
 
 internal fun advertiseGrazieProfessional(project: Project) {
-  if (application.isUnitTestMode || !shouldShow()) {
+  if (isGrazieProfessionalInstalled || application.isUnitTestMode || !shouldShow()) {
     return
   }
   markDelayed()
