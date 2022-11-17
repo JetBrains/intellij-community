@@ -584,6 +584,9 @@
     <extensionPoint qualifiedName="com.jetbrains.python.console.pyConsoleOutputCustomizer"
                     interface="com.jetbrains.python.console.PyConsoleOutputCustomizer"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.customizer"
+                    interface="com.jetbrains.python.console.PyConsoleCustomizer"
+                    dynamic="true"/>
 
     <!-- Experimental sdk EP, avoid using it -->
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
