@@ -48,10 +48,8 @@ public final class QuickFixGetFamilyNameViolationInspection extends DevKitUastIn
   }
 
   private static boolean isQuickFixGetFamilyNameImplementation(@NotNull UMethod method) {
-    PsiMethod methodJavaPsi = method.getJavaPsi();
-    if ("getFamilyName".equals(methodJavaPsi.getName()) &&
-        methodJavaPsi.getParameterList().isEmpty() &&
-        !methodJavaPsi.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (!"getFamilyName".equals(method.getName()) || !method.getUastParameters().isEmpty()) return false;
+    if (!method.getJavaPsi().hasModifierProperty(PsiModifier.ABSTRACT)) {
       UClass containingClass = UastContextKt.getUastParentOfType(method.getSourcePsi(), UClass.class, true);
       if (containingClass == null) return false;
       return InheritanceUtil.isInheritor(containingClass.getJavaPsi(), QuickFix.class.getName());
