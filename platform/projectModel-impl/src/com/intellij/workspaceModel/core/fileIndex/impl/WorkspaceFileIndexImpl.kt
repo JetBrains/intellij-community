@@ -16,9 +16,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.workspaceModel.core.fileIndex.*
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx {
   companion object {
@@ -52,6 +51,14 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
       is MultipleWorkspaceFileSets -> info.fileSets.first()
       else -> null
     }
+  }
+
+  override fun unloadModules(entities: List<ModuleEntity>) {
+    indexData?.unloadModules(entities)
+  }
+
+  override fun loadModules(entities: List<ModuleEntity>) {
+    indexData?.loadModules(entities)
   }
 
   override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(file: VirtualFile,

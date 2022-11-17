@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
@@ -36,6 +37,16 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * Forces the index to update entities marked by [markDirty]. Must be called during execution of the same Write Action as [markDirty].
    */
   fun updateDirtyEntities()
+
+  /**
+   * This is a temporary method introduced to support unloading of modules until IDEA-298694 is implemented.
+   */
+  fun unloadModules(entities: List<ModuleEntity>)
+
+  /**
+   * This is a temporary method introduced to support loading back unloaded modules until IDEA-298694 is implemented.
+   */
+  fun loadModules(entities: List<ModuleEntity>)
 
   companion object {
     @JvmField
