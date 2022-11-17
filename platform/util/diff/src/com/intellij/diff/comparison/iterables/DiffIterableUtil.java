@@ -133,8 +133,11 @@ public final class DiffIterableUtil {
   // Misc
   //
 
+  /**
+   * Iterate both changed and unchanged ranges one-by-one.
+   */
   @NotNull
-  public static Iterable<Pair<Range, Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
+  public static Iterable<Pair<Range, /* isUnchanged */ Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
     return () -> new Iterator<Pair<Range, Boolean>>() {
       @NotNull private final Iterator<Range> myChanges = iterable.changes();
       @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();

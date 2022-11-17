@@ -26,6 +26,9 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   override val project: Project
   override val virtualFile: VirtualFile
 
+  /**
+   * Whether tracker gutter markers are visible in a given [Editor].
+   */
   @RequiresEdt
   fun isAvailableAt(editor: Editor): Boolean {
     return editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
@@ -38,6 +41,19 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   fun showHint(range: Range, editor: Editor)
 }
 
+/**
+ * Trackers tracked by [com.intellij.openapi.vcs.impl.LineStatusTrackerManager].
+ *
+ * The trackers are frozen by [com.intellij.openapi.vcs.changes.VcsFreezingProcess].
+ *
+ * There's a lock order:
+ * [com.intellij.openapi.application.Application.runReadAction] ->
+ * [com.intellij.openapi.vcs.changes.ChangeListManagerImpl.executeUnderDataLock] ->
+ * [LineStatusTracker.readLock].
+ * Which means implementations CAN NOT access CLM during most operations, including [DocumentTracker.Handler].
+ *
+ * @see com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider
+ */
 interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
   fun release()
 

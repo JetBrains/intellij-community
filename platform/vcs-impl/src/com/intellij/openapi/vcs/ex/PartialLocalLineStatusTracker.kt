@@ -54,6 +54,14 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+/**
+ * Tracker that is used for "Partial Changelist" and "Partial Commit" features, allowing to commit a subset of file's changed lines.
+ *
+ * The tracker stores changelists ids, see [com.intellij.openapi.vcs.changes.ChangeListWorker.PartialChangeTracker].
+ *
+ * @see com.intellij.openapi.vcs.impl.PartialChangesUtil
+ * @see LineStatusTrackerManager.arePartialChangelistsEnabled
+ */
 interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun getAffectedChangeListsIds(): List<String>
 
@@ -69,6 +77,9 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun setExcludedFromCommit(lines: BitSet, isExcluded: Boolean)
 
 
+  /**
+   * @return `false` if file can be committed as is
+   */
   fun hasPartialChangesToCommit(): Boolean
 
   @RequiresEdt
@@ -126,8 +137,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   private var defaultMarker: ChangeListMarker
 
-  private var initialChangeListId: String? = null
-  private var lastKnownTrackerChangeListId: String? = null
+  private var initialChangeListId: String? = null // Initial state from ChangeListWorker or DefaultChangelist if initialized by typing
+  private var lastKnownTrackerChangeListId: String? = null // Track changelist for a file without changed lines. Ex: executable bit change.
   private val affectedChangeLists = HashSet<String>()
 
   private var hasUndoInCommand: Boolean = false

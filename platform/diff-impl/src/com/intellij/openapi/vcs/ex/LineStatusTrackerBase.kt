@@ -80,7 +80,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   override val virtualFile: VirtualFile? get() = null
 
   override fun getRanges(): List<R>? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ApplicationManager.getApplication().assertReadAccessAllowed() // is not needed - but without it results are useless
     return blockOperations.getRanges()
   }
 

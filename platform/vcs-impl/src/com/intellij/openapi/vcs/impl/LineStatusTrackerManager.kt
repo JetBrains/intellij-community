@@ -908,7 +908,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   private class RefreshRequest(val document: Document, val loader: LineStatusTrackerContentLoader) {
     override fun equals(other: Any?): Boolean = other is RefreshRequest && document == other.document
     override fun hashCode(): Int = document.hashCode()
-    override fun toString(): String = "RefreshRequest: " + (FileDocumentManager.getInstance().getFile(document)?.path ?: "unknown") // NON-NLS
+    override fun toString(): String {
+      return "RefreshRequest: " + (FileDocumentManager.getInstance().getFile(document)?.path ?: "unknown") // NON-NLS
+    }
   }
 
   private class RefreshData(val content: TrackerContent,
@@ -1409,9 +1411,20 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
   private class BaseRevisionContent(val text: CharSequence) : TrackerContent
 }
 
+/**
+ * Allows overriding created trackers for partucular files.
+ *
+ * Trackers are created on EDT on request (ex: when [Editor] is opened).
+ * Providers may implement [LineStatusTrackerContentLoader] to use [LineStatusTrackerManager] mechanism for loading necessary
+ * information on a pooled thread.
+ *
+ * @see LineStatusTrackerSettingListener
+ */
 interface LocalLineStatusTrackerProvider {
   fun isTrackedFile(project: Project, file: VirtualFile): Boolean
   fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean
+
+  @RequiresEdt
   fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>?
 
   companion object {
