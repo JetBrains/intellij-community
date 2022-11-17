@@ -23,6 +23,9 @@ private val isGrazieProfessionalInstalled by lazy { PluginManager.isPluginInstal
 private const val NOTIFICATION_SHOWN = "Grazie.Professional.Advertisement.Shown"
 private val IGNORE_DELAY = Duration.ofDays(14).toMillis()
 
+private const val INVOCATION_COUNT = "Grazie.Professional.Advertisement.Invoked"
+private const val SHOW_AFTER_INVOCATIONS = 3
+
 private fun shouldShow(): Boolean {
   val timestamp = PropertiesComponent.getInstance().getInt(NOTIFICATION_SHOWN, 0)
   if (timestamp < 0) {
@@ -40,8 +43,21 @@ private fun markShown() {
   PropertiesComponent.getInstance().setValue(NOTIFICATION_SHOWN, "-1")
 }
 
+private fun obtainInvocationCount(): Int {
+  return PropertiesComponent.getInstance().getInt(INVOCATION_COUNT, 0)
+}
+
+private fun updateInvocationCount(count: Int) {
+  PropertiesComponent.getInstance().setValue(INVOCATION_COUNT, count.toString())
+}
+
 internal fun advertiseGrazieProfessional(project: Project) {
   if (isGrazieProfessionalInstalled || application.isUnitTestMode || !shouldShow()) {
+    return
+  }
+  val invocationCount = obtainInvocationCount()
+  if (invocationCount < SHOW_AFTER_INVOCATIONS) {
+    updateInvocationCount(invocationCount + 1)
     return
   }
   markDelayed()
