@@ -2313,11 +2313,11 @@
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
     <vcs.codeVisionLanguageContext language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaVcsCodeVisionContext"/>
-    <codeInsight.codeVisionSettingsPreviewLanguage modelId="vcs.code.vision" language="JAVA" order="first"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="vcs.code.vision" language="JAVA"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider"/>
-    <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="JAVA" order="first"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="JAVA"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider"/>
-    <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="JAVA" order="first"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="JAVA"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector"/>
