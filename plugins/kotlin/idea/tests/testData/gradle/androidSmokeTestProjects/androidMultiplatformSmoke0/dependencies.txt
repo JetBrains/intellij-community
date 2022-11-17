@@ -545,8 +545,10 @@ MODULES
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
         project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
     project.multiplatformAndroidLibrary.main
     Order entries:
@@ -555,8 +557,10 @@ MODULES
         project.multiplatformAndroidJvmIosLibrary.main (scope: COMPILE, exported: false)
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: COMPILE, exported: false)
     project.multiplatformAndroidLibrary.unitTest
     Order entries:
@@ -566,8 +570,10 @@ MODULES
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
         project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
     project.multiplatformJvmLibrary
     Order entries:
@@ -582,8 +588,10 @@ MODULES
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
     project.multiplatformJvmLibrary.commonTest
     Order entries:
@@ -597,8 +605,10 @@ MODULES
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
     project.multiplatformJvmLibrary.jvmMain
     Order entries:
@@ -610,8 +620,10 @@ MODULES
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
         Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
     project.multiplatformJvmLibrary.jvmTest
     Order entries:
@@ -626,7 +638,9 @@ MODULES
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
         Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
 
