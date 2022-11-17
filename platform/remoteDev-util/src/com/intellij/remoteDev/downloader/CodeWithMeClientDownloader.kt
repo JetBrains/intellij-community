@@ -652,7 +652,7 @@ object CodeWithMeClientDownloader {
 
     if (SystemInfo.isWindows) {
       val hProcess = WindowsFileUtil.windowsShellExecute(
-        executable = executable.toString(),
+        executable = executable,
         workingDirectory = extractedJetBrainsClientData.clientDir,
         parameters = parameters
       )
