@@ -605,37 +605,36 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             ideModule.kotlinGradleProjectDataOrFail.pureKotlinSourceFolders.addAll(mppModelPureKotlinSourceFolders)
         }
 
-        internal data class CompilationWithDependencies(
-            val compilation: KotlinCompilation,
-            val substitutedDependencies: List<ExternalDependency>
-        ) {
-            private val konanTarget: String?
-                get() = compilation.nativeExtensions?.konanTarget
-
-            val dependencyNames: Map<String, ExternalDependency> by lazy {
-                substitutedDependencies.associateBy { it.name.removeSuffixIfPresent(" | $konanTarget") }
-            }
-        }
-
         fun populateModuleDependencies(
             gradleModule: IdeaModule,
             ideProject: DataNode<ProjectData>,
             ideModule: DataNode<ModuleData>,
             resolverCtx: ProjectResolverContext
         ) {
-            val context = createKotlinMppPopulateModuleDependenciesContext(
-                gradleModule = gradleModule,
-                ideProject = ideProject,
-                ideModule = ideModule,
-                resolverCtx = resolverCtx
-            ) ?: return
+            val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
 
-
-            context.populateModuleDependenciesByKGP()
+            /* New Kotlin Gradle Plugin versions will provide this dependencies container */
+            @OptIn(KotlinGradlePluginVersionDependentApi::class)
+            mppModel.dependencies?.let { dependencies ->
+                mppModel.sourceSetsByName.values.forEach { sourceSet ->
+                    val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
+                    val sourceSetDataNode = ideModule.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
+                    dependencies[sourceSet.name].forEachIndexed { index, dependency ->
+                        sourceSetDataNode.addDependency(dependency)?.data?.setOrder(index)
+                    }
+                }
+            }
 
             /* Fallback for older Kotlin Gradle Plugin versions */
             @OptIn(KotlinGradlePluginVersionDependentApi::class)
-            if (context.mppModel.dependencies == null) {
+            if (mppModel.dependencies == null) {
+                val context = createKotlinMppPopulateModuleDependenciesContext(
+                    gradleModule = gradleModule,
+                    ideProject = ideProject,
+                    ideModule = ideModule,
+                    resolverCtx = resolverCtx
+                ) ?: return
+
                 populateModuleDependenciesByCompilations(context)
                 populateModuleDependenciesByPlatformPropagation(context)
                 populateModuleDependenciesBySourceSetVisibilityGraph(context)
