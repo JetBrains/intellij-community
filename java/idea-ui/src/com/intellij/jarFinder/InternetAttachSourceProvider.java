@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.Nls;
@@ -195,11 +194,8 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
     return true;
   }
 
-  @RequiresEdt
   public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<? extends Library> libraries) {
-    VirtualFile srcFile = WriteAction.compute(() -> {
-      return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
-    });
+    VirtualFile srcFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
     if (srcFile == null) return;
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(srcFile);
@@ -213,7 +209,6 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
     doAttachSourceJars(libraries, roots);
   }
 
-  @RequiresEdt
   private static void doAttachSourceJars(@NotNull Collection<? extends Library> libraries, VirtualFile[] roots) {
     WriteAction.run(() -> {
       for (Library library : libraries) {
