@@ -182,7 +182,14 @@ class GitBranchesTreeModelImpl(
     }
   }
 
-  private fun createTreePathFor(branch: GitBranch): TreePath {
+  override fun createTreePathFor(value: Any): TreePath? {
+    val repository = value as? GitRepository
+
+    if (repository != null) {
+      return TreePathUtil.convertCollectionToTreePath(listOf(root, repository))
+    }
+
+    val branch = value as? GitBranch ?: return null
     val branchType = GitBranchType.of(branch)
     val path = mutableListOf<Any>().apply {
       add(root)

@@ -72,7 +72,7 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 import kotlin.math.min
 
-class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, parent: JBPopup? = null)
+class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, parent: JBPopup? = null, parentValue: Any? = null)
   : WizardPopup(project, parent, step),
     TreePopup, NextStepHandler {
 
@@ -90,6 +90,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     private set
 
   init {
+    setParentValue(parentValue)
     setMinimumSize(JBDimension(300, 200))
     dimensionServiceKey = if (isChild()) null else GitBranchPopup.DIMENSION_SERVICE_KEY
     userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
@@ -534,7 +535,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     SwingUtilities.convertPointToScreen(point, tree)
 
     myChild =
-      if (nextStep is GitBranchesTreePopupStep) GitBranchesTreePopup(project, nextStep, this)
+      if (nextStep is GitBranchesTreePopupStep) GitBranchesTreePopup(project, nextStep, this, parentValue)
       else createPopup(this, nextStep, parentValue)
 
     myChild.show(content, content.locationOnScreen.x + content.width - STEP_X_PADDING, point.y, true)
@@ -551,7 +552,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   override fun getPreferredFocusableComponent(): JComponent = tree
 
   override fun onChildSelectedFor(value: Any) {
-    val path = value as? TreePath ?: return
+    val path = treeStep.createTreePathFor(value) ?: return
+
     if (tree.selectionPath != path) {
       tree.selectionPath = path
     }

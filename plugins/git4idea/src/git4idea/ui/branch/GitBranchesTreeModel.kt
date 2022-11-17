@@ -12,6 +12,8 @@ interface GitBranchesTreeModel : TreeModel {
 
   fun getPreferredSelection(): TreePath?
 
+  fun createTreePathFor(value: Any): TreePath?
+
   fun filterBranches(type: GitBranchType? = null, matcher: MinusculeMatcher? = null)
 
   object TreeRoot

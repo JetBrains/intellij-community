@@ -96,6 +96,10 @@ class GitBranchesTreePopupStep(private val project: Project,
     return _treeModel.getPreferredSelection()
   }
 
+  fun createTreePathFor(value: Any): TreePath? {
+    return _treeModel.createTreePathFor(value)
+  }
+
   internal fun setPrefixGrouping(state: Boolean) {
     _treeModel.isPrefixGrouping = state
   }
