@@ -314,7 +314,7 @@ public abstract class DialogWrapper {
     createDefaultActions();
   }
 
-  protected DialogWrapper(@NotNull Function<DialogWrapper, DialogWrapperPeer> peerFactory) {
+  protected DialogWrapper(@NotNull Function<? super DialogWrapper, ? extends DialogWrapperPeer> peerFactory) {
     myPeer = peerFactory.apply(this);
     myCreateSouthSection = false;
     createDefaultActions();

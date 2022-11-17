@@ -14,8 +14,8 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Function
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.invokeOnceOnCommandFinish
@@ -49,12 +49,12 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
     }
 
     override fun findUsages(
-        filesToMove: MutableCollection<PsiFile>,
-        directoriesToMove: Array<out PsiDirectory>,
-        result: MutableCollection<UsageInfo>,
-        searchInComments: Boolean,
-        searchInNonJavaFiles: Boolean,
-        project: Project
+      filesToMove: MutableCollection<out PsiFile>,
+      directoriesToMove: Array<out PsiDirectory>,
+      result: MutableCollection<in UsageInfo>,
+      searchInComments: Boolean,
+      searchInNonJavaFiles: Boolean,
+      project: Project
     ) {
         filesToMove
             .filterIsInstance<KtFile>()
@@ -89,11 +89,11 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
 
     // Actual move logic is implemented in postProcessUsages since usages are not available here
     override fun move(
-        file: PsiFile,
-        moveDestination: PsiDirectory,
-        oldToNewElementsMapping: MutableMap<PsiElement, PsiElement>,
-        movedFiles: MutableList<PsiFile>,
-        listener: RefactoringElementListener?
+      file: PsiFile,
+      moveDestination: PsiDirectory,
+      oldToNewElementsMapping: MutableMap<PsiElement, PsiElement>,
+      movedFiles: MutableList<in PsiFile>,
+      listener: RefactoringElementListener?
     ): Boolean {
         if (file !is KtFile) return false
 

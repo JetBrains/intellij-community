@@ -12,7 +12,7 @@ import java.util.Collection;
 public interface FileWatcherNotificationSink {
   default void notifyManualWatchRoots(@NotNull PluggableFileWatcher watcher, @NotNull Collection<String> roots) { }
 
-  void notifyMapping(@NotNull Collection<Pair<String, String>> mapping);
+  void notifyMapping(@NotNull Collection<? extends Pair<String, String>> mapping);
 
   void notifyDirtyPath(@NotNull String path);
 

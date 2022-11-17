@@ -568,7 +568,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void updateList(T oldValue, int oldIndex, List<T> listItems) {
+  private void updateList(T oldValue, int oldIndex, List<? extends T> listItems) {
     mergeListItems(myListModel, myList, listItems);
 
     if (myList.isEmpty()) {

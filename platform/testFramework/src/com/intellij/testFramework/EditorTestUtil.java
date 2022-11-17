@@ -57,7 +57,6 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
@@ -585,7 +584,7 @@ public final class EditorTestUtil {
       return markup.insertMarks(editor.getDocument().getCharsSequence());
     }
 
-    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<CaretInfo> carets) {
+    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<? extends CaretInfo> carets) {
       CaretAndSelectionMarkup markup = new CaretAndSelectionMarkup();
       // The expected state is properly sorted already, so it doesn't require extra sorting,
       // but for sake of consistency we use the same approach as for the actual caret state.
@@ -806,7 +805,7 @@ public final class EditorTestUtil {
       }});
   }
 
-  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<HighlightInfo> highlightInfos,
+  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
                                                                  @NotNull CharSequence documentSequence,
                                                                  @Nullable Set<String> acceptableKeyNames) {
     List<Pair<Integer, String>> sortedMarkers = highlightInfos.stream()

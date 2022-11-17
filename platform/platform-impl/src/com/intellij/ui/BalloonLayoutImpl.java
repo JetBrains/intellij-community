@@ -307,7 +307,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     setBounds(balloons, startX, y);
   }
 
-  protected void setBounds(@NotNull List<Balloon> balloons, int startX, int y) {
+  protected void setBounds(@NotNull List<? extends Balloon> balloons, int startX, int y) {
     for (Balloon balloon : balloons) {
       Rectangle bounds = new Rectangle(getSize(balloon));
       y -= bounds.height;

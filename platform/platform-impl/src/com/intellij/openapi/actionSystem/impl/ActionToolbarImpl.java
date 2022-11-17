@@ -174,7 +174,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private final EventDispatcher<ActionToolbarListener> myListeners = EventDispatcher.create(ActionToolbarListener.class);
 
-  private @NotNull Function<String, Component> mySeparatorCreator = (name) -> new MySeparator(name);
+  private @NotNull Function<? super String, ? extends Component> mySeparatorCreator = (name) -> new MySeparator(name);
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false);
@@ -1031,7 +1031,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myActionButtonBorder = actionButtonBorder;
   }
 
-  public final void setSeparatorCreator(@NotNull Function<String, Component> separatorCreator) {
+  public final void setSeparatorCreator(@NotNull Function<? super String, ? extends Component> separatorCreator) {
     mySeparatorCreator = separatorCreator;
   }
 

@@ -35,7 +35,7 @@ public class InvalidateCacheService {
     }
   }
 
-  public static void invalidateCaches(Predicate<CachesInvalidator> isAllowedInvalidator) {
+  public static void invalidateCaches(Predicate<? super CachesInvalidator> isAllowedInvalidator) {
     CachesInvalidator.EP_NAME.getExtensionList().stream().filter(isAllowedInvalidator).forEach(invalidator -> {
       try {
         invalidator.invalidateCaches();

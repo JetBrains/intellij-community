@@ -366,7 +366,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     return JDOMUtil.writeElement(element);
   }
 
-  private static String getTemplateMetaText(boolean shouldEncode, List<LocalArchivedTemplate.RootDescription> roots) {
+  private static String getTemplateMetaText(boolean shouldEncode, List<? extends LocalArchivedTemplate.RootDescription> roots) {
     Element element = new Element(ArchivedProjectTemplate.TEMPLATE);
     element.setAttribute(LocalArchivedTemplate.UNENCODED_ATTRIBUTE, String.valueOf(!shouldEncode));
 

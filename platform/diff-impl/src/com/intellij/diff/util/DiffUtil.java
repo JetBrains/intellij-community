@@ -1587,13 +1587,13 @@ public final class DiffUtil {
 
   @NotNull
   private static List<JComponent> createNotifications(@Nullable DiffViewer viewer,
-                                                      @NotNull List<DiffNotificationProvider> providers) {
+                                                      @NotNull List<? extends DiffNotificationProvider> providers) {
     List<JComponent> notifications = ContainerUtil.mapNotNull(providers, it -> it.createNotification(viewer));
     return wrapEditorNotificationBorders(notifications);
   }
 
   @NotNull
-  public static List<JComponent> wrapEditorNotificationBorders(@NotNull List<JComponent> notifications) {
+  public static List<JComponent> wrapEditorNotificationBorders(@NotNull List<? extends JComponent> notifications) {
     return ContainerUtil.map(notifications, component -> wrapEditorNotificationComponent(component));
   }
 

@@ -491,7 +491,7 @@ public final class ConfigurableExtensionPointUtil {
     return StringUtil.join(path, " | ");
   }
 
-  private static void collectPath(Class<? extends Configurable> configurableClass, List<String> path, Configurable[] configurables) {
+  private static void collectPath(Class<? extends Configurable> configurableClass, List<? super String> path, Configurable[] configurables) {
     for (Configurable configurable : configurables) {
       if (configurableClass.equals(configurable.getClass()) ||
           configurable instanceof ConfigurableWrapper &&

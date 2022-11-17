@@ -773,7 +773,7 @@ public final class JDOMUtil {
   private static boolean areAttributesEqual(@NotNull List<? extends Attribute> l1,
                                             @NotNull List<? extends Attribute> l2,
                                             @NotNull Element base,
-                                            @NotNull List<MergeAttribute> mergeByAttributes) {
+                                            @NotNull List<? extends MergeAttribute> mergeByAttributes) {
     Set<String> attributes = mergeByAttributes.stream()
       .filter(o -> o.elementName.equals(base.getName()))
       .map(o -> o.attributeName)

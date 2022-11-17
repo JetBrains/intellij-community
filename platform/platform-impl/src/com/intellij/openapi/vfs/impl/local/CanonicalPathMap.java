@@ -28,12 +28,12 @@ final class CanonicalPathMap {
 
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots;
   private final NavigableSet<String> myOptimizedFlatWatchRoots;
-  private Collection<Pair<String, String>> myInitialPathMappings;
+  private @NotNull Collection<? extends Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
   CanonicalPathMap(@NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
                    @NotNull NavigableSet<String> optimizedFlatWatchRoots,
-                   @NotNull Collection<Pair<String, String>> initialPathMappings) {
+                   @NotNull Collection<? extends Pair<String, String>> initialPathMappings) {
     myOptimizedRecursiveWatchRoots = optimizedRecursiveWatchRoots;
     myOptimizedFlatWatchRoots = optimizedFlatWatchRoots;
     myInitialPathMappings = initialPathMappings;
@@ -172,7 +172,7 @@ final class CanonicalPathMap {
     return results;
   }
 
-  private static void addPrefixedPaths(NavigableSet<String> paths, String prefix, Collection<String> result) {
+  private static void addPrefixedPaths(NavigableSet<String> paths, String prefix, Collection<? super String> result) {
     var possibleRoot = paths.ceiling(prefix);
     if (possibleRoot != null && FileUtil.startsWith(possibleRoot, prefix)) {
       // It's worth going for the set and iterator

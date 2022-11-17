@@ -32,15 +32,14 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
   private final String myProperty;
   private final @IntentionName String myMessage;
   private final boolean myValue;
-  @Nullable
-  private final Function<InspectionProfileEntry, InspectionProfileEntry> myExtractor;
+  private final @Nullable Function<? super InspectionProfileEntry, ? extends InspectionProfileEntry> myExtractor;
 
   public SetInspectionOptionFix(LocalInspectionTool inspection, @NonNls String property, @IntentionName String message, boolean value) {
     this(inspection.getShortName(), property, message, value, null);
   }
 
   private SetInspectionOptionFix(@NotNull String shortName, @NonNls String property, @IntentionName String message, boolean value,
-                                 @Nullable Function<InspectionProfileEntry, InspectionProfileEntry> extractor) {
+                                 @Nullable Function<? super InspectionProfileEntry, ? extends InspectionProfileEntry> extractor) {
     myShortName = shortName;
     myProperty = property;
     myMessage = message;
@@ -53,7 +52,7 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
    */
   @NotNull
   public static SetInspectionOptionFix createFix(@NotNull String shortName, @NonNls String property, @IntentionName String message, boolean value,
-                                                 @NotNull Function<InspectionProfileEntry, InspectionProfileEntry> extractor) {
+                                                 @NotNull Function<? super InspectionProfileEntry, ? extends InspectionProfileEntry> extractor) {
     return new SetInspectionOptionFix(shortName, property, message, value, extractor);
   }
 

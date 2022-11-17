@@ -200,7 +200,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private static boolean isDescriptorAccepted(Descriptor descriptor,
                                               @NonNls String filter,
                                               final boolean forceInclude,
-                                              final List<Set<String>> keySetList, final Set<String> quoted) {
+                                              final List<? extends Set<String>> keySetList, final Set<String> quoted) {
     filter = StringUtil.toLowerCase(filter);
     if (StringUtil.containsIgnoreCase(descriptor.getText(), filter)) {
       return true;
@@ -668,7 +668,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return includeDoNotShow(myTreeTable.getSelectedToolNodes());
   }
 
-  private boolean includeDoNotShow(Collection<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean includeDoNotShow(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     return !ContainerUtil.exists(nodes, node -> {
       final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
@@ -1001,7 +1001,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
-  private static void updateHighlightingChooser(Collection<InspectionConfigTreeNode.Tool> nodes,
+  private static void updateHighlightingChooser(Collection<? extends InspectionConfigTreeNode.Tool> nodes,
                                                 Project project,
                                                 HighlightingChooser highlightingChooser) {
     final TextAttributesKey key = ScopesAndSeveritiesTable.getEditorAttributesKey(
@@ -1019,7 +1019,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  private boolean isThoughOneNodeEnabled(Collection<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean isThoughOneNodeEnabled(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     for (final InspectionConfigTreeNode.Tool node : nodes) {
       final String toolId = node.getKey().toString();

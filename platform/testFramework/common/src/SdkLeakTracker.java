@@ -59,7 +59,7 @@ public final class SdkLeakTracker {
     }
   }
 
-  private static Pair<Sdk, Throwable> findSdkWithRegistrationTrace(Set<Sdk> sdks) {
+  private static Pair<Sdk, Throwable> findSdkWithRegistrationTrace(Set<? extends Sdk> sdks) {
     for (Sdk sdk : sdks) {
       if (sdk instanceof Disposable) {
         Throwable trace = Disposer.getRegistrationTrace((Disposable)sdk);

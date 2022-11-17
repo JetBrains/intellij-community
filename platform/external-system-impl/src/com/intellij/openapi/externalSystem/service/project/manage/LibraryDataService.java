@@ -87,7 +87,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     registerPaths(toImport.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
   }
 
-  private static void refreshVfsFiles(Collection<File> files) {
+  private static void refreshVfsFiles(Collection<? extends File> files) {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     for (File file : files) {
       Path path = file.toPath();

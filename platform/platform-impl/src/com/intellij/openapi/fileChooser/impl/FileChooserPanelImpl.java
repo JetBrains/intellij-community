@@ -80,7 +80,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private final FileTypeRegistry myRegistry;
   private final FileChooserDescriptor myDescriptor;
   private final Runnable myCallback;
-  private final Consumer<@Nullable @DialogMessage String> myErrorSink;
+  private final @NotNull Consumer<? super @Nullable @DialogMessage String> myErrorSink;
   private final @Nullable WatchService myWatcher;
   private final Map<Path, FileSystem> myOpenFileSystems;
 
@@ -101,7 +101,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor,
                        @NotNull Runnable callback,
-                       @NotNull Consumer<@Nullable @DialogMessage String> errorSink,
+                       @NotNull Consumer<? super @Nullable @DialogMessage String> errorSink,
                        Path @NotNull [] recentPaths) {
     super(new GridBagLayout());
 

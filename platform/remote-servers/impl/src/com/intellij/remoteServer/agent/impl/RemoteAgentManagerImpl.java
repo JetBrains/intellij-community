@@ -102,7 +102,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
     }
 
     @Override
-    public Builder<T> withInstanceLibraries(@NotNull List<File> libraries) {
+    public Builder<T> withInstanceLibraries(@NotNull List<? extends File> libraries) {
       myInstanceLibraries.addAll(libraries);
       return this;
     }

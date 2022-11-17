@@ -463,7 +463,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place,
                                                     @NotNull ActionGroup group,
                                                     boolean horizontal,
-                                                    @NotNull Function<String, Component> separatorCreator) {
+                                                    @NotNull Function<? super String, ? extends Component> separatorCreator) {
     ActionToolbarImpl toolbar = createActionToolbarImpl(place, group, horizontal, false);
     toolbar.setSeparatorCreator(separatorCreator);
     return toolbar;

@@ -940,7 +940,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void setTitleProducer(@Nullable Producer<Pair<Icon, String>> titleProducer) {
+  public void setTitleProducer(@Nullable Producer<? extends Pair<Icon, String>> titleProducer) {
     myTitleWrapper.removeAll();
     if (titleProducer != null) {
       ActionToolbar toolbar = ActionManager.getInstance()
@@ -4015,7 +4015,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private final class TitleAction extends AnAction implements CustomComponentAction {
-    private final Producer<Pair<Icon, String>> myTitleProvider;
+    private final @NotNull Producer<? extends Pair<Icon, String>> myTitleProvider;
     private final JLabel myLabel = new JLabel() {
       @Override
       public Dimension getPreferredSize() {
@@ -4032,7 +4032,7 @@ public class JBTabsImpl extends JComponent
       }
     };
 
-    private TitleAction(@NotNull Producer<Pair<Icon, String>> titleProvider) {
+    private TitleAction(@NotNull Producer<? extends Pair<Icon, String>> titleProvider) {
       myTitleProvider = titleProvider;
     }
 

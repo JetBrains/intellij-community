@@ -229,7 +229,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     callScheduledUpdate();
   }
 
-  public void addSearchResultsIntoBeginning(List<SearchResult> searchResults) {
+  public void addSearchResultsIntoBeginning(List<? extends SearchResult> searchResults) {
     if (searchResults == null || searchResults.isEmpty()) {
       return;
     }
@@ -258,7 +258,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     myShowingResultsList.scrollRectToVisible(visibleRect);
   }
 
-  public void addSearchResultsIntoEnd(List<SearchResult> searchResults) {
+  public void addSearchResultsIntoEnd(List<? extends SearchResult> searchResults) {
     if (searchResults == null || searchResults.isEmpty()) {
       return;
     }

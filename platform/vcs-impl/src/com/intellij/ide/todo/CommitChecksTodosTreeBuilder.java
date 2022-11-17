@@ -45,7 +45,7 @@ public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuild
     return files;
   }
 
-  private static @Nullable Set<String> collectIncludedChangeListsIds(@NotNull Project project, @NotNull Collection<Change> changes) {
+  private static @Nullable Set<String> collectIncludedChangeListsIds(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return null;
 
     HashSet<String> ids = new HashSet<>();

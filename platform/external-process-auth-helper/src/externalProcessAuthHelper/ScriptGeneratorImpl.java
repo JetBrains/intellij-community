@@ -68,7 +68,7 @@ public class ScriptGeneratorImpl implements ScriptGenerator {
     return String.format("%s/bin/java", System.getProperty("java.home"));
   }
 
-  private static void addClasses(@NotNull Set<File> paths, @NotNull Class<?> clazz) {
+  private static void addClasses(@NotNull Set<? super File> paths, @NotNull Class<?> clazz) {
     paths.add(ScriptGeneratorUtil.getJarFileFor(clazz));
   }
 }

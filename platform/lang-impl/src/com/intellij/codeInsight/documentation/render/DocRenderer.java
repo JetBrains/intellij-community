@@ -95,7 +95,7 @@ final class DocRenderer implements CustomFoldRegionRenderer {
   DocRenderer(@NotNull DocRenderItem item) {
     myItem = item;
   }
-  void update(boolean updateSize, boolean updateContent, List<Runnable> foldingTasks) {
+  void update(boolean updateSize, boolean updateContent, List<? super Runnable> foldingTasks) {
     CustomFoldRegion foldRegion = myItem.foldRegion;
     if (foldRegion != null) {
       if (updateSize) {

@@ -87,7 +87,7 @@ public final class JpsFileTargetContextUtils {
     return true;
   }
 
-  private static List<FileTargetContextWrapper> findSourceRootTypes(Collection<FileTargetContext> targetContexts) {
+  private static List<FileTargetContextWrapper> findSourceRootTypes(Collection<? extends FileTargetContext> targetContexts) {
     return ContainerUtil.map(targetContexts, c -> {
       Project project = c.getFileSystemItem().getProject();
 

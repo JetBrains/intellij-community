@@ -21,7 +21,7 @@ public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<Framework
   }
 
   @Override
-  protected FrameworkLibraryVersion createVersion(Artifact version, List<DownloadableLibraryFileDescription> files) {
+  protected FrameworkLibraryVersion createVersion(Artifact version, List<? extends DownloadableLibraryFileDescription> files) {
     return new FrameworkLibraryVersionImpl(version.getName(), version.getVersion(), createAvailabilityCondition(version), files, myGroupId);
   }
 

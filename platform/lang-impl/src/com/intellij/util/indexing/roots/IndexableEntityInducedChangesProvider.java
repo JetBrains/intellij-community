@@ -61,7 +61,7 @@ public interface IndexableEntityInducedChangesProvider<E extends WorkspaceEntity
   Collection<OriginChange> getInducedChangesFromRefresh(@NotNull E entity);
 
   static <E extends WorkspaceEntity> void forEachRelevantProvider(@NotNull E entity,
-                                                                  @NotNull Consumer<IndexableEntityInducedChangesProvider<E>> consumer) {
+                                                                  @NotNull Consumer<? super IndexableEntityInducedChangesProvider<E>> consumer) {
     //noinspection unchecked
     Class<E> entityInterface = (Class<E>)entity.getEntityInterface();
     for (IndexableEntityInducedChangesProvider<? extends WorkspaceEntity> provider : EP_NAME.getExtensionList()) {
@@ -73,7 +73,7 @@ public interface IndexableEntityInducedChangesProvider<E extends WorkspaceEntity
   }
 
   static <E extends WorkspaceEntity> void forEachRelevantProvider(@NotNull EntityChange<? extends E> entityChange,
-                                                                  @NotNull BiConsumer<IndexableEntityInducedChangesProvider<E>, EntityChange<E>> consumer) {
+                                                                  @NotNull BiConsumer<? super IndexableEntityInducedChangesProvider<E>, ? super EntityChange<E>> consumer) {
     Class<E> entityInterface;
     E newEntity = entityChange.getNewEntity();
     if (newEntity != null) {

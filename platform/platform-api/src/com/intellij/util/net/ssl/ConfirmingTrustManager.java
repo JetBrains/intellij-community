@@ -32,7 +32,6 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 /**
  * The central piece of our SSL support - special kind of trust manager, that asks user to confirm
@@ -118,7 +117,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   }
 
   @NotNull
-  static X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<X509Certificate> certificates) throws Exception {
+  static X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
     ks.load(null, null);
     for (X509Certificate certificate : certificates) {
@@ -182,7 +181,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     });
   }
 
-  private void withCalculatedCertificateStrategy(ThrowableConsumer<UntrustedCertificateStrategyWithReason, CertificateException> block) throws CertificateException {
+  private void withCalculatedCertificateStrategy(ThrowableConsumer<? super UntrustedCertificateStrategyWithReason, ? extends CertificateException> block) throws CertificateException {
     UntrustedCertificateStrategy initialStrategy = myUntrustedCertificateStrategy.get();
     if (initialStrategy != null) {
       block.consume(new UntrustedCertificateStrategyWithReason(initialStrategy, null));

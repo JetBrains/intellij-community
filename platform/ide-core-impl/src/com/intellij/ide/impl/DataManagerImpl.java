@@ -204,7 +204,7 @@ public class DataManagerImpl extends DataManager {
     return result;
   }
 
-  private static @Nullable Object getRulesData(@NotNull String dataId, @NotNull List<GetDataRule> rules, @NotNull DataProvider provider) {
+  private static @Nullable Object getRulesData(@NotNull String dataId, @NotNull List<? extends GetDataRule> rules, @NotNull DataProvider provider) {
     for (GetDataRule rule : rules) {
       try {
         Object data = rule.getData(provider);

@@ -36,7 +36,6 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -224,7 +223,7 @@ public abstract class PredefinedSearchScopeProviderBase extends PredefinedSearch
   // todo @RequiresBackgroundThread
   @RequiresReadLock
   protected static @Nullable PsiFile fillFromDataContext(@Nullable DataContext dataContext,
-                                                         @NotNull Collection<SearchScope> result,
+                                                         @NotNull Collection<? super SearchScope> result,
                                                          @Nullable PsiFile psiFile) {
     PsiFile currentFile = psiFile;
     if (dataContext != null) {

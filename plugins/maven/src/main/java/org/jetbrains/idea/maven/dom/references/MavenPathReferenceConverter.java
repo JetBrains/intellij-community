@@ -72,7 +72,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
           @Override
           protected void innerResolveInContext(@NotNull String text,
                                                @NotNull PsiFileSystemItem context,
-                                               @NotNull Collection<ResolveResult> result,
+                                               @NotNull Collection<? super ResolveResult> result,
                                                boolean caseSensitive) {
             if (model == null) {
               DomElement rootElement = DomUtil.getFileElement(genericDomValue).getRootElement();

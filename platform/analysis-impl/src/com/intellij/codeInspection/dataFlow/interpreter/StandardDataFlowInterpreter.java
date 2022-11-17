@@ -74,7 +74,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
   }
 
   @Override
-  public final @NotNull RunnerResult interpret(@NotNull List<DfaInstructionState> startingStates) {
+  public final @NotNull RunnerResult interpret(@NotNull List<? extends DfaInstructionState> startingStates) {
     int endOffset = myFlow.getInstructionCount();
     DfaInstructionState lastInstructionState = null;
     myNestedClosures.clear();
@@ -208,7 +208,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
     return myNestedClosures;
   }
 
-  private static boolean containsState(Collection<DfaMemoryState> processed,
+  private static boolean containsState(Collection<? extends DfaMemoryState> processed,
                                        DfaInstructionState instructionState) {
     if (processed.contains(instructionState.getMemoryState())) {
       return true;
@@ -251,7 +251,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
                                    int @NotNull [] loopNumber,
                                    @NotNull MultiMap<Instruction, DfaMemoryState> processedStates,
                                    @NotNull MultiMap<Instruction, DfaMemoryState> incomingStates,
-                                   @NotNull List<DfaInstructionState> inFlightStates,
+                                   @NotNull List<? extends DfaInstructionState> inFlightStates,
                                    DfaInstructionState @NotNull [] afterStates,
                                    @NotNull StateQueue queue) {
     if (loopNumber[prevInstruction.getIndex()] == 0 || inSameLoop(prevInstruction, nextInstruction, loopNumber)) {
@@ -296,7 +296,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
     return loopNumber[nextInstruction.getIndex()] == loopNumber[prevInstruction.getIndex()];
   }
 
-  private @NotNull DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<DfaMemoryState> processed) {
+  private @NotNull DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<? extends DfaMemoryState> processed) {
     DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
     int curStateStackSize = curState.getStackSize();
     if (processed.size() > 10 && curStateStackSize > 10) {

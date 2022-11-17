@@ -132,8 +132,8 @@ public interface PersistentMapBase<Key, Value> {
   static <K, V, M extends PersistentMapBase<? super K, ? super V>> M canonicalize(
     final @NotNull PersistentMapBase<K, V> originalMap,
     final @NotNull /* @OutParam */ M targetCanonicalMap,
-    final @NotNull Function<List<K>, List<K>> stableKeysSorter,
-    final @NotNull Function<V, V> valueCanonicalizer
+    final @NotNull Function<? super List<K>, ? extends List<K>> stableKeysSorter,
+    final @NotNull Function<? super V, ? extends V> valueCanonicalizer
   ) throws IOException {
     final List<K> keys = new ArrayList<>();
     originalMap.processExistingKeys(k -> {

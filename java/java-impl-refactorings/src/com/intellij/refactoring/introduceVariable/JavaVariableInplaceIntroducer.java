@@ -295,7 +295,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+  protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
     if (!isReplaceAllOccurrences()) {
       final PsiExpression expr = getExpr();
       if (expr == null && !myReplaceSelf || expr != null && expr.getParent() == getVariable()) {

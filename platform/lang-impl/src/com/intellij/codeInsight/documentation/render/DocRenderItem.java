@@ -266,7 +266,7 @@ public final class DocRenderItem {
     toggle(null);
   }
 
-  private boolean toggle(@Nullable Collection<Runnable> foldingTasks) {
+  private boolean toggle(@Nullable Collection<? super Runnable> foldingTasks) {
     if (!(editor instanceof EditorEx)) return false;
     FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
     if (foldRegion == null) {

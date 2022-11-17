@@ -114,7 +114,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   private <T extends WorkspaceEntity> void handleProvider(ExternalLibrariesWorkspaceModelNodesProvider<T> provider,
                                                           @NotNull Project project,
                                                           EntityStorage storage,
-                                                          List<AbstractTreeNode<?>> children) {
+                                                          List<? super AbstractTreeNode<?>> children) {
     Sequence<T> sequence = storage.entities(provider.getWorkspaceClass());
     for (T entity : SequencesKt.asIterable(sequence)) {
       ProgressManager.checkCanceled();

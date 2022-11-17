@@ -62,7 +62,7 @@ public final class SynchronizeCurrentFileAction extends DumbAwareAction {
     RefreshQueue.getInstance().refresh(async, true, () -> postRefresh(project, files), files);
   }
 
-  private static void postRefresh(Project project, Collection<VirtualFile> files) {
+  private static void postRefresh(Project project, Collection<? extends VirtualFile> files) {
     List<VirtualFile> localFiles = ContainerUtil.filter(files, f -> f.isInLocalFileSystem());
     if (!localFiles.isEmpty()) {
       VcsFacade.getInstance().markFilesDirty(project, localFiles);

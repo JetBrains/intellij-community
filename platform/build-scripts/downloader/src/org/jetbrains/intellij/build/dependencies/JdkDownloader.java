@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  * It's currently fixed here to be the same on all build agents and also in Docker images
  */
 public final class JdkDownloader {
-  public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, Consumer<String> infoLog) {
+  public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, Consumer<? super String> infoLog) {
     OS os = OS.getCurrent();
     Arch arch = Arch.getCurrent();
     return getJdkHome(communityRoot, os, arch, infoLog);
@@ -26,7 +26,7 @@ public final class JdkDownloader {
     return getJdkHome(communityRoot, Logger.getLogger(JdkDownloader.class.getName())::info);
   }
 
-  static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch, Consumer<String> infoLog) {
+  static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch, Consumer<? super String> infoLog) {
     URI jdkUrl = getUrl(communityRoot, os, arch);
 
     Path jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl);

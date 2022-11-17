@@ -204,7 +204,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static void runFinalTasks(
     @NotNull Project project,
     @Nullable String projectPath,
-    @NotNull List<Runnable> tasks
+    @NotNull List<? extends Runnable> tasks
   ) {
     var topic = project.getMessageBus()
       .syncPublisher(ProjectDataImportListener.TOPIC);

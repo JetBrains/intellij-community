@@ -8,7 +8,7 @@ import java.lang.Character.UnicodeScript;
 import java.util.List;
 
 final class TextFragmentFactory {
-  static void createTextFragments(List<LineFragment> fragments,
+  static void createTextFragments(List<? super LineFragment> fragments,
                                   char[] lineChars,
                                   int start,
                                   int end,

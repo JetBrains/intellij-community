@@ -194,7 +194,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
                                             @NotNull String name,
                                             @NotNull FindSymbolParameters parameters,
                                             @NotNull ProgressIndicator canceled,
-                                            @NotNull List<NavigationItem> items) {
+                                            @NotNull List<? super NavigationItem> items) {
     if (myProject.isDisposed()) {
       return true;
     }

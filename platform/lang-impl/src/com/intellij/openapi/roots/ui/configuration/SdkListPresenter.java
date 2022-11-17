@@ -33,9 +33,9 @@ import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
 
-  private final @NotNull Producer<SdkListModel> myGetModel;
+  private final @NotNull Producer<? extends SdkListModel> myGetModel;
 
-  public SdkListPresenter(@NotNull Producer<SdkListModel> getSdkListModel) {
+  public SdkListPresenter(@NotNull Producer<? extends SdkListModel> getSdkListModel) {
     myGetModel = getSdkListModel;
   }
 

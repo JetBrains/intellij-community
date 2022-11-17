@@ -407,7 +407,7 @@ public abstract class KeymapsTestCaseBase {
   }
 
   @SuppressWarnings("deprecation")
-  private static void checkCtrlAltFn(Keymap keymap, Shortcut shortcut, KeyStroke stroke, List<NamedFailure> failures) {
+  private static void checkCtrlAltFn(Keymap keymap, Shortcut shortcut, KeyStroke stroke, List<? super NamedFailure> failures) {
     if (stroke != null) {
       int modifiers = stroke.getModifiers();
       int keyCode = stroke.getKeyCode();

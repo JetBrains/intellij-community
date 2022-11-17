@@ -257,8 +257,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @ApiStatus.Internal
   public static void addRunConfigurations(DefaultActionGroup allActionsGroup,
                                           Project project,
-                                          Function<RunnerAndConfigurationSettings, AnAction> createAction,
-                                          Function<@NlsSafe String, DefaultActionGroup> createFolder) {
+                                          Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
+                                          Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder) {
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {

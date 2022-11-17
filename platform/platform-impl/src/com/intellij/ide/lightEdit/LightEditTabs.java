@@ -347,7 +347,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   @Override
-  public void fileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {
+  public void fileStatusChanged(@NotNull Collection<? extends LightEditorInfo> editorInfos) {
     ApplicationManager.getApplication().invokeLater(() -> {
       List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs = ContainerUtil.mapNotNull(editorInfos, editorInfo -> {
         TabInfo info = findTabInfo(editorInfo);

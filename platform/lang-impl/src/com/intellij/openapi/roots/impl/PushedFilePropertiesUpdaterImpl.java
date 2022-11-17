@@ -167,7 +167,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     });
   }
 
-  public static void applyScannersToFile(@NotNull VirtualFile fileOrDir, List<IndexableFileScanner.IndexableFileVisitor> sessions) {
+  public static void applyScannersToFile(@NotNull VirtualFile fileOrDir, List<? extends IndexableFileScanner.IndexableFileVisitor> sessions) {
     for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
       try {
         session.visitFile(fileOrDir);
@@ -199,7 +199,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   }
 
   private void doPushRecursively(@NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                 @NotNull List<IndexableFileScanner> scanners,
+                                 @NotNull List<? extends IndexableFileScanner> scanners,
                                  @NotNull IndexableFilesIterator indexableFilesIterator) {
     List<IndexableFileScanner.IndexableFileVisitor> sessions =
       ContainerUtil.mapNotNull(scanners, visitor -> visitor.startSession(myProject).createVisitor(indexableFilesIterator.getOrigin()));
@@ -211,7 +211,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     finishVisitors(sessions);
   }
 
-  public static void finishVisitors(List<IndexableFileScanner.IndexableFileVisitor> sessions) {
+  public static void finishVisitors(List<? extends IndexableFileScanner.IndexableFileVisitor> sessions) {
     for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
       session.visitingFinished();
     }
@@ -331,7 +331,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     return moduleValues;
   }
 
-  public static Object @NotNull [] getImmediateValuesEx(@NotNull List<FilePropertyPusherEx<?>> pushers,
+  public static Object @NotNull [] getImmediateValuesEx(@NotNull List<? extends FilePropertyPusherEx<?>> pushers,
                                                         @NotNull IndexableSetOrigin origin) {
     final Object[] moduleValues;
     moduleValues = new Object[pushers.size()];

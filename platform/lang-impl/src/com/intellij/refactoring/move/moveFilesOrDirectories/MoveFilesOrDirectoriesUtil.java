@@ -212,7 +212,7 @@ public final class MoveFilesOrDirectoriesUtil {
     }, MoveHandler.getRefactoringName(), null);
   }
 
-  private static void addFilePointers(@NotNull Set<SmartPsiElementPointer<PsiFile>> pointers,
+  private static void addFilePointers(@NotNull Set<? super SmartPsiElementPointer<PsiFile>> pointers,
                                       @NotNull PsiElement element,
                                       @NotNull SmartPointerManager manager) {
     if (element instanceof PsiFile) {

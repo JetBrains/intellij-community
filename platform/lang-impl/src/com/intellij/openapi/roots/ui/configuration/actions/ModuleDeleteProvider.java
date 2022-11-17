@@ -96,7 +96,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
   }
 
   private static Set<String> getModuleNamesToDelete(Module @Nullable [] modules,
-                                                    @Nullable List<UnloadedModuleDescription> unloadedModules) {
+                                                    @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
     Set<String> moduleNamesToDelete = new HashSet<>();
     if (null != modules) {
       for (var module : modules) {

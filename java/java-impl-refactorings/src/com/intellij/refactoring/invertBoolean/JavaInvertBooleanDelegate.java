@@ -124,7 +124,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   }
 
   @Override
-  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<PsiElement> elementsToInvert) {
+  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<? super PsiElement> elementsToInvert) {
     boolean toInvert = super.collectElementsToInvert(namedElement, expression, elementsToInvert);
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiAssignmentExpression && !(parent.getParent() instanceof PsiExpressionStatement) || isOperatorAssignment(parent)) {

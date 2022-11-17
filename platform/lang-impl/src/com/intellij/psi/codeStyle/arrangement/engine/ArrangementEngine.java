@@ -539,7 +539,7 @@ public final class ArrangementEngine {
     public static <T extends ArrangementEntry> Context<T> from(@NotNull Rearranger<T> rearranger,
                                                                @NotNull Document document,
                                                                @NotNull PsiElement root,
-                                                               @NotNull Collection<TextRange> ranges,
+                                                               @NotNull Collection<? extends TextRange> ranges,
                                                                @NotNull ArrangementSettings arrangementSettings,
                                                                @NotNull CodeStyleSettings codeStyleSettings)
     {

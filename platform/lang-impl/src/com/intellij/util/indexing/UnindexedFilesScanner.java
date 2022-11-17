@@ -164,8 +164,8 @@ public class UnindexedFilesScanner extends DumbModeTask {
     );
   }
 
-  private static @Nullable List<IndexableFilesIterator> mergeIterators(@Nullable List<IndexableFilesIterator> iterators,
-                                                                       @Nullable List<IndexableFilesIterator> otherIterators) {
+  private static @Nullable List<IndexableFilesIterator> mergeIterators(@Nullable List<? extends IndexableFilesIterator> iterators,
+                                                                       @Nullable List<? extends IndexableFilesIterator> otherIterators) {
     if (iterators == null || otherIterators == null) return null;
     Map<IndexableSetOrigin, IndexableFilesIterator> uniqueIterators = new LinkedHashMap<>();
     for (IndexableFilesIterator iterator : iterators) {
@@ -184,7 +184,7 @@ public class UnindexedFilesScanner extends DumbModeTask {
   private @NotNull Map<IndexableFilesIterator, List<VirtualFile>> scan(@NotNull PerformanceWatcher.Snapshot snapshot,
                                                                        @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                                                                        @NotNull ProgressIndicator indicator,
-                                                                       @NotNull Ref<StatusMark> markRef) {
+                                                                       @NotNull Ref<? super StatusMark> markRef) {
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
@@ -236,7 +236,7 @@ public class UnindexedFilesScanner extends DumbModeTask {
 
   private void scanAndUpdateUnindexedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                                            @NotNull ProgressIndicator indicator,
-                                           @NotNull Ref<StatusMark> markRef) {
+                                           @NotNull Ref<? super StatusMark> markRef) {
     if (!IndexInfrastructure.hasIndices()) {
       return;
     }
@@ -357,7 +357,7 @@ public class UnindexedFilesScanner extends DumbModeTask {
   private @NotNull Map<IndexableFilesIterator, List<VirtualFile>> collectIndexableFilesConcurrently(
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
-    @NotNull List<IndexableFilesIterator> providers,
+    @NotNull List<? extends IndexableFilesIterator> providers,
     @NotNull ProjectIndexingHistoryImpl projectIndexingHistory
   ) {
     if (providers.isEmpty()) {

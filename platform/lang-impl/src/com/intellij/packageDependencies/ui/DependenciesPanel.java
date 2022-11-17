@@ -913,7 +913,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Nullable
-    private AnalysisScope getScope(Set<PsiFile> selectedScope) {
+    private AnalysisScope getScope(Set<? extends PsiFile> selectedScope) {
       Set<PsiFile> result = new HashSet<>();
       ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
       selectedScope.removeAll(result);

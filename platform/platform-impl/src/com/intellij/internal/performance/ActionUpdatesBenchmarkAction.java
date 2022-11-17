@@ -295,7 +295,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     LOG.info(sb.toString());
   }
 
-  private static void runAndMeasure(@NotNull List<Pair<Integer, String>> results,
+  private static void runAndMeasure(@NotNull List<? super Pair<Integer, String>> results,
                                     @NotNull String actionName,
                                     @NotNull LongSupplier runnable) {
     ReadAction.run(() -> {

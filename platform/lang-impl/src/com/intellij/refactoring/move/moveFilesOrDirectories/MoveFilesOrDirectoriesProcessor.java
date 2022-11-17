@@ -292,7 +292,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts, usages);
   }
 
-  private void afterMove(@Nullable ModelBranch branch, Collection<SmartPsiElementPointer<PsiFile>> movedFiles, List<Runnable> notifyListeners) {
+  private void afterMove(@Nullable ModelBranch branch, Collection<? extends SmartPsiElementPointer<PsiFile>> movedFiles, List<? extends Runnable> notifyListeners) {
     notifyListeners.forEach(Runnable::run);
     if (myMoveCallback != null) {
       myMoveCallback.refactoringCompleted();
@@ -341,7 +341,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void processDirectoryFiles(@NotNull List<SmartPsiElementPointer<PsiFile>> movedFiles, @NotNull Map<PsiElement, PsiElement> oldToNewMap, @NotNull PsiElement psiElement) {
+  private static void processDirectoryFiles(@NotNull List<? super SmartPsiElementPointer<PsiFile>> movedFiles, @NotNull Map<PsiElement, PsiElement> oldToNewMap, @NotNull PsiElement psiElement) {
     if (psiElement instanceof PsiFile) {
       final PsiFile movedFile = (PsiFile)psiElement;
       movedFiles.add(SmartPointerManager.createPointer(movedFile));

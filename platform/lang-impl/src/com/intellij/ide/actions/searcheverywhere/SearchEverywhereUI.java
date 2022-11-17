@@ -265,7 +265,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @NotNull
-  private List<AnAction> getRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+  private List<AnAction> getRightActions(@NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
     for (SearchEverywhereContributor<?> contributor : contributors) {
       if (!Objects.equals(getSelectedTabID(), contributor.getSearchProviderId()) || !(contributor instanceof SearchFieldActionsContributor)) continue;
 
@@ -291,7 +291,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   @Nls
   @Nullable
-  private static String getAdvertisement(List<SearchEverywhereContributor<?>> contributors) {
+  private static String getAdvertisement(List<? extends SearchEverywhereContributor<?>> contributors) {
 
     boolean commandsSupported = contributors.stream().anyMatch(contributor -> !contributor.getSupportedCommands().isEmpty());
     if (commandsSupported) {
@@ -348,7 +348,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     return null;
   }
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<SearchEverywhereFoundElementInfo> selection) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<? extends SearchEverywhereFoundElementInfo> selection) {
     if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> list = ContainerUtil.mapNotNull(selection, o -> (PsiElement)getDataFromElementInfo(CommonDataKeys.PSI_ELEMENT.getName(), o));
       return list.isEmpty() ? null : list.toArray(PsiElement.EMPTY_ARRAY);
@@ -1483,7 +1483,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       };
     }
 
-    private void setRightExtensions(@NotNull List<AnAction> actions) {
+    private void setRightExtensions(@NotNull List<? extends AnAction> actions) {
       myTextField.removeExtension(myHintExtension);
       myTextField.removeExtension(myWarningExtension);
       actions.stream().map(HintHelper::createRightActionExtension).forEach(it -> {

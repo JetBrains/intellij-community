@@ -312,7 +312,7 @@ public final class EnvironmentUtil {
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                                    @Nullable Path workingDir,
-                                                                                                   @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor,
+                                                                                                   @NotNull Consumer<? super @NotNull Map<String, String>> scriptEnvironmentProcessor,
                                                                                                    @NotNull Path envDataFile) throws IOException {
       final ProcessBuilder builder = new ProcessBuilder(command);
 

@@ -54,7 +54,7 @@ public final class IoTestUtil {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static @Nullable String filterParts(Predicate<String> predicate) {
+  private static @Nullable String filterParts(Predicate<? super String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
@@ -145,7 +145,7 @@ public final class IoTestUtil {
   /**
    * Creates a "subst" drive for target, perform some tests on it, and deletes it. Windows-only.
    */
-  public static void performTestOnWindowsSubst(@NotNull String target, @NotNull Consumer<@NotNull File> createdSubstTester) {
+  public static void performTestOnWindowsSubst(@NotNull String target, @NotNull Consumer<? super @NotNull File> createdSubstTester) {
     assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());

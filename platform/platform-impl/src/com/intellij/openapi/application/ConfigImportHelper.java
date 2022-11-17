@@ -416,10 +416,10 @@ public final class ConfigImportHelper {
   }
 
   static final class ConfigDirsSearchResult {
-    private final List<Pair<Path, FileTime>> directories;
+    private final List<? extends Pair<Path, FileTime>> directories;
     private final boolean fromSameProduct;
 
-    private ConfigDirsSearchResult(List<Pair<Path, FileTime>> directories, boolean fromSameProduct) {
+    private ConfigDirsSearchResult(List<? extends Pair<Path, FileTime>> directories, boolean fromSameProduct) {
       this.directories = directories;
       this.fromSameProduct = fromSameProduct;
     }

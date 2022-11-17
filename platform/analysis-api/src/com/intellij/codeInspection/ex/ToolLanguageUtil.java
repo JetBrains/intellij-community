@@ -46,7 +46,7 @@ public final class ToolLanguageUtil {
     return result;
   }
 
-  private static void addDialects(@NotNull Language language, @NotNull Set<String> result) {
+  private static void addDialects(@NotNull Language language, @NotNull Set<? super String> result) {
     for (Language dialect : language.getDialects()) {
       if (result.add(dialect.getID())) {
         addDialects(dialect, result);

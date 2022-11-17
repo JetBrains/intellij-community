@@ -176,7 +176,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
     return ContainerUtil.map(list, arr -> new CaretState(arr[0], arr[1], arr[2]));
   }
 
-  private static String injectStates(String text, List<CaretState> states) {
+  private static String injectStates(String text, List<? extends CaretState> states) {
     if (states.isEmpty()) return text;
     record Point(int x, int y) {
       static Point from(LogicalPosition pos) {

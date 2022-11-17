@@ -1777,7 +1777,7 @@ public final class MVStore implements AutoCloseable {
         chunkIdToToC.put(chunk.id, toc);
     }
 
-    private void storeBuffer(Chunk chunk, ByteBuf buf, Collection<Page<?, ?>> changed) {
+    private void storeBuffer(Chunk chunk, ByteBuf buf, Collection<? extends Page<?, ?>> changed) {
         saveChunkLock.lock();
         boolean isBufReleased = false;
         try {

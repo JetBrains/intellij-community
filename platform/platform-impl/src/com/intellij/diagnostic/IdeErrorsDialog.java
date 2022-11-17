@@ -651,7 +651,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  public static void confirmDisablePlugins(@Nullable Project project, @NotNull List<IdeaPluginDescriptor> pluginsToDisable) {
+  public static void confirmDisablePlugins(@Nullable Project project, @NotNull List<? extends IdeaPluginDescriptor> pluginsToDisable) {
     if (pluginsToDisable.isEmpty()) {
       return;
     }
@@ -991,9 +991,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static final class CompositeAction extends AbstractAction implements OptionAction {
     private final Action myMainAction;
-    private final List<Action> myAdditionalActions;
+    private final List<? extends Action> myAdditionalActions;
 
-    private CompositeAction(Action mainAction, List<Action> additionalActions) {
+    private CompositeAction(Action mainAction, List<? extends Action> additionalActions) {
       super((String)mainAction.getValue(Action.NAME));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
       myMainAction = mainAction;
@@ -1118,9 +1118,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     REPORT_ALL(dialog -> dialog.new ReportAllAction()),
     REPORT_AND_CLEAR_ALL(dialog -> dialog.new ReportAndClearAllAction());
 
-    private final Function<IdeErrorsDialog, Action> myActionProducer;
+    private final Function<? super IdeErrorsDialog, ? extends Action> myActionProducer;
 
-    ReportAction(Function<IdeErrorsDialog, Action> actionProducer) {
+    ReportAction(Function<? super IdeErrorsDialog, ? extends Action> actionProducer) {
       myActionProducer = actionProducer;
     }
 

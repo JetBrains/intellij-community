@@ -49,7 +49,7 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
   }
 
   @Override
-  public @NotNull Object deserializeList(@NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeList(@NotNull Object context, @NotNull List<? extends Element> elements) {
     List<Element> children;
     if (elements.size() == 1) {
       children = elements.get(0).getChildren();

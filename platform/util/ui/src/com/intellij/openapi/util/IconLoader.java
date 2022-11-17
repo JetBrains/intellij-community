@@ -632,7 +632,8 @@ public final class IconLoader {
    * Creates new icon with the low-level CachedImageIcon changing
    */
   @ApiStatus.Internal
-  public static @NotNull Icon replaceCachedImageIcons(@NotNull Icon icon,@NotNull Function<CachedImageIcon, Icon> cachedImageIconReplacer) {
+  public static @NotNull Icon replaceCachedImageIcons(@NotNull Icon icon,
+                                                      @NotNull Function<? super CachedImageIcon, ? extends Icon> cachedImageIconReplacer) {
     IconReplacer replacer = new IconReplacer() {
       @Override
       @Contract("null -> null; !null -> !null")

@@ -59,7 +59,7 @@ public final class XmlMatchUtil {
     return (secondToken.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) ? null : secondToken;
   }
 
-  private static boolean addSpecialXmlTags(@NotNull PsiElement element, List<XmlElement> list) {
+  private static boolean addSpecialXmlTags(@NotNull PsiElement element, List<? super XmlElement> list) {
     boolean result = false;
     for (SpecialElementExtractor extractor : SpecialElementExtractor.EP_NAME.getExtensionList()) {
       final PsiElement[] elements = extractor.extractSpecialElements(element);

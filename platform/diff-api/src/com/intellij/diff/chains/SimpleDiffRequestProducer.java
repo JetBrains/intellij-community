@@ -31,11 +31,11 @@ public class SimpleDiffRequestProducer {
   private static class MyDiffRequestProducer implements DiffRequestProducer {
     @NotNull private final @Nls String myName;
     @Nullable private final FileType myFileType;
-    @NotNull private final ThrowableComputable<DiffRequest, Throwable> myProducer;
+    private final @NotNull ThrowableComputable<? extends DiffRequest, Throwable> myProducer;
 
     private MyDiffRequestProducer(@NotNull @Nls String name,
                                   @Nullable FileType fileType,
-                                  @NotNull ThrowableComputable<DiffRequest, Throwable> producer) {
+                                  @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
       myName = name;
       myFileType = fileType;
       myProducer = producer;

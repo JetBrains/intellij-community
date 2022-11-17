@@ -36,14 +36,14 @@ public class InvokeTemplateAction extends DefaultActionGroup {
   public InvokeTemplateAction(TemplateImpl template,
                               Editor editor,
                               Project project,
-                              Set<Character> usedMnemonicsSet) {
+                              Set<? super Character> usedMnemonicsSet) {
     this(template, editor, project, usedMnemonicsSet, null);
   }
 
   public InvokeTemplateAction(TemplateImpl template,
                               Editor editor,
                               Project project,
-                              Set<Character> usedMnemonicsSet,
+                              Set<? super Character> usedMnemonicsSet,
                               @Nullable Runnable afterInvocationCallback) {
     super(extractMnemonic(template.getKey(), usedMnemonicsSet) +
           (StringUtil.isEmptyOrSpaces(template.getDescription()) ? "" : ". " + template.getDescription()),

@@ -511,7 +511,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       }
     }
 
-    public void replaceRemotesWith(@NotNull Collection<DeploymentImpl> newDeployments) {
+    public void replaceRemotesWith(@NotNull Collection<? extends DeploymentImpl> newDeployments) {
       synchronized (myLock) {
         myRemoteDeployments.clear();
         myCachedAllDeployments = null;

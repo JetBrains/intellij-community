@@ -164,7 +164,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
   }
 
-  private static void deleteTempFiles(Set<File> tempFiles) {
+  private static void deleteTempFiles(Set<? extends File> tempFiles) {
     if (tempFiles != null) {
       try {
         for (File file : tempFiles) {

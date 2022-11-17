@@ -683,9 +683,9 @@ public final class CustomizationUtil {
   }
 
   private static class PopupComputableActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
-    private final Supplier<@Nullable ActionGroup> myActionGroupSupplier;
+    private final Supplier<? extends @Nullable ActionGroup> myActionGroupSupplier;
 
-    PopupComputableActionGroup(Supplier<@Nullable ActionGroup> actionGroupSupplier) {
+    PopupComputableActionGroup(Supplier<? extends @Nullable ActionGroup> actionGroupSupplier) {
       myActionGroupSupplier = actionGroupSupplier;
     }
 

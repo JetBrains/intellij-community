@@ -193,7 +193,7 @@ public interface DfaMemoryState {
    *
    * @param filter filter to check whether the variable should be flushed
    */
-  void flushVariables(@NotNull Predicate<@NotNull DfaVariableValue> filter);
+  void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter);
 
   /**
    * Mark this state as ephemeral. See {@link #isEphemeral()} for details.

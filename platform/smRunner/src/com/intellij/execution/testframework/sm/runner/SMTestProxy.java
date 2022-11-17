@@ -598,7 +598,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     myParent = parent;
   }
 
-  public List<? extends SMTestProxy> collectChildren(@Nullable final Filter<SMTestProxy> filter) {
+  public List<? extends SMTestProxy> collectChildren(final @Nullable Filter<? super SMTestProxy> filter) {
     return filterChildren(filter, collectChildren());
   }
 

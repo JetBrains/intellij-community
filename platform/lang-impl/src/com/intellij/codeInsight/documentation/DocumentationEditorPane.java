@@ -57,7 +57,7 @@ public abstract class DocumentationEditorPane extends JEditorPane {
   protected DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
     @NotNull DocumentationImageResolver imageResolver,
-    @NotNull Function<@NotNull String, @Nullable Icon> iconResolver
+    @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver
   ) {
     myKeyboardActions = keyboardActions;
     myImageResolver = imageResolver;

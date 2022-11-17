@@ -363,7 +363,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     });
   }
 
-  private void fillElements(DTree tree, List<DirDiffElementImpl> elements) {
+  private void fillElements(DTree tree, List<? super DirDiffElementImpl> elements) {
     if (!myUpdating.get()) return;
     boolean separatorAdded = tree.getParent() == null;
     text.set(prepareText(tree.getPath()));

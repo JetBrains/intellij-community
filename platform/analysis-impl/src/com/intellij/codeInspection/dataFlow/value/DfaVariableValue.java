@@ -64,7 +64,7 @@ public final class DfaVariableValue extends DfaValue {
     DfaVariableValue createVariableValue(
       @NotNull VariableDescriptor descriptor,
       @Nullable DfaVariableValue qualifier,
-      @NotNull BiFunction<? super @NotNull VariableDescriptor, ? super @Nullable DfaVariableValue, @NotNull DfType> typeSupplier) {
+      @NotNull BiFunction<? super @NotNull VariableDescriptor, ? super @Nullable DfaVariableValue, ? extends @NotNull DfType> typeSupplier) {
       Pair<VariableDescriptor, DfaVariableValue> key = Pair.create(descriptor, qualifier);
       DfaVariableValue var = myExistingVars.get(key);
       if (var == null) {

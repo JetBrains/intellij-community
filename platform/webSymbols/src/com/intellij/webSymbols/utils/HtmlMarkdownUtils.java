@@ -231,7 +231,7 @@ public final class HtmlMarkdownUtils {
     return replaceProhibitedTags(line, ContainerUtil.emptyList());
   }
 
-  private static @NotNull String replaceProhibitedTags(@NotNull String line, @NotNull List<TextRange> skipRanges) {
+  private static @NotNull String replaceProhibitedTags(@NotNull String line, @NotNull List<? extends TextRange> skipRanges) {
     IntList list = collectProhibitedTagOffsets(line, skipRanges);
     return list.isEmpty() ? line : escapeTagsStart(line, list);
   }

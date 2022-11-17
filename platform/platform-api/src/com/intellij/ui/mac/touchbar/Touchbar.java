@@ -111,7 +111,7 @@ public class Touchbar {
   private static final Key<ActionGroup> ACTION_GROUP_KEY = Key.create("Touchbar.ActionGroup.key");
   private static final boolean EXPAND_OPTION_BUTTONS = Boolean.getBoolean("Touchbar.expand.option.button");
 
-  private static @NotNull DefaultActionGroup buildActionsFromButtons(Collection<JButton> buttons,
+  private static @NotNull DefaultActionGroup buildActionsFromButtons(Collection<? extends JButton> buttons,
                                                                      JButton defaultButton,
                                                                      boolean isPrincipal) {
     final DefaultActionGroup result = new DefaultActionGroup();

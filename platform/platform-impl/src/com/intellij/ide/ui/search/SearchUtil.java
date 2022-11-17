@@ -284,7 +284,7 @@ public final class SearchUtil {
     return result;
   }
 
-  private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path,  boolean i18n) {
+  private static void processUILabel(String title, Set<? super OptionDescription> configurableOptions, String path, boolean i18n) {
     int headStart = title.indexOf("<head>");
     int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
     if (headEnd > headStart) {

@@ -38,7 +38,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     Disposer.register(parent, this);
   }
 
-  public void renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
+  public void renderSimilarUsages(@NotNull Collection<? extends SimilarUsage> similarUsagesGroupUsages) {
     similarUsagesGroupUsages.stream().skip(myAlreadyProcessedUsages).limit(SNIPPET_LIMIT).forEach(usage -> {
       final UsageInfo info = usage.getUsageInfo();
       if (myOriginalUsage != info) {

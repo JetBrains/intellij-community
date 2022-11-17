@@ -80,7 +80,7 @@ abstract class ActionManagerEx : ActionManager() {
   abstract fun createActionToolbar(place: String,
                                    group: ActionGroup,
                                    horizontal: Boolean,
-                                   separatorCreator: Function<String, Component>): ActionToolbar
+                                   separatorCreator: Function<in String, out Component>): ActionToolbar
 
   /**
    * Do not call directly, prefer [ActionUtil] methods.

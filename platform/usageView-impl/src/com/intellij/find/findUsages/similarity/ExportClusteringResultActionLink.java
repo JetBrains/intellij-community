@@ -74,7 +74,7 @@ public class ExportClusteringResultActionLink extends ActionLink {
   }
 
   private static void buildSessionDataFile(@NotNull Project project,
-                                           @NotNull List<UsageCluster> clusters,
+                                           @NotNull List<? extends UsageCluster> clusters,
                                            @NotNull ProgressIndicator indicator, @NotNull String fileName) throws IOException {
     int counter = 0;
     StringWriter stringWriter = new StringWriter();

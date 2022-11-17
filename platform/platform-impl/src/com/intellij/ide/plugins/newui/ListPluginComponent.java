@@ -304,7 +304,7 @@ public final class ListPluginComponent extends JPanel {
     return new InstallButton(false, upgradeRequired);
   }
 
-  private void createEnableDisableButton(@NotNull Supplier<IdeaPluginDescriptor> descriptorFunction) {
+  private void createEnableDisableButton(@NotNull Supplier<? extends IdeaPluginDescriptor> descriptorFunction) {
     myEnableDisableButton = createEnableDisableButton(__ -> {
       List<IdeaPluginDescriptor> descriptors = List.of(descriptorFunction.get());
       if (myPluginModel.getState(myPlugin).isDisabled()) {
@@ -1083,12 +1083,12 @@ public final class ListPluginComponent extends JPanel {
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
                                                                                                                       @NotNull List<? extends ListPluginComponent> selection,
-                                                                                                                      @NotNull Function<ListPluginComponent, IdeaPluginDescriptor> function) {
+                                                                                                                      @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
     return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel, action, true, selection, function);
   }
 
   private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection,
-                                                                                                              @NotNull Function<ListPluginComponent, IdeaPluginDescriptor> function) {
+                                                                                                              @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
     return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, true, this, selection, function);
   }
 

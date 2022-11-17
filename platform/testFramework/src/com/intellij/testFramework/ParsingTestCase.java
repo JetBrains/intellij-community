@@ -174,7 +174,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     registerExtensions(name, (Class<T>)extension.getClass(), Collections.singletonList(extension));
   }
 
-  protected final <T> void registerExtensions(@NotNull ExtensionPointName<T> name, @NotNull Class<T> extensionClass, @NotNull List<T> extensions) {
+  protected final <T> void registerExtensions(@NotNull ExtensionPointName<T> name, @NotNull Class<T> extensionClass, @NotNull List<? extends T> extensions) {
     ExtensionsAreaImpl area = myApp.getExtensionArea();
     ExtensionPoint<T> point = area.getExtensionPointIfRegistered(name.getName());
     if (point == null) {

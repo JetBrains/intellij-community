@@ -18,7 +18,7 @@ final class CollectionBinding extends AbstractCollectionBinding  {
 
   @SuppressWarnings("DuplicatedCode")
   @Override
-  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     Collection<Object> result;
     boolean isContextMutable = context != null && ClassUtil.isMutableCollection(context);
     if (isContextMutable) {

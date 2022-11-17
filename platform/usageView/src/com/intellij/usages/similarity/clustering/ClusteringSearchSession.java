@@ -69,7 +69,7 @@ public class ClusteringSearchSession {
   }
 
 
-  public void updateClusters(@NotNull Collection<@NotNull UsageCluster> clusters) {
+  public void updateClusters(@NotNull Collection<? extends @NotNull UsageCluster> clusters) {
     synchronized (myClusters) {
       myClusters.clear();
       myClusters.addAll(clusters);

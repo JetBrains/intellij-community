@@ -68,7 +68,7 @@ public abstract class InvertBooleanDelegate {
   /**
    * @return true, if element was found in current language
    */
-  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<PsiElement> elementsToInvert) {
+  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<? super PsiElement> elementsToInvert) {
     PsiElement elementToInvert = getElementToInvert(namedElement, expression);
     if (elementToInvert != null) {
       elementsToInvert.add(elementToInvert);

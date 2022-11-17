@@ -520,7 +520,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return cache.myRunConfigs;
     }
 
-    private @NotNull List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<RunnerAndConfigurationSettings> runConfigs) {
+    private @NotNull List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<? extends RunnerAndConfigurationSettings> runConfigs) {
       return ContainerUtil.filter(runConfigs, config -> ProgramRunner.getRunner(myExecutor.getId(), config.getConfiguration()) != null);
     }
 

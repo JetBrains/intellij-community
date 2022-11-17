@@ -237,7 +237,7 @@ public class CustomizableActionsPanel {
     TreeUtil.ensureSelection(myActionsTree);
   }
 
-  private static List<String> toActionIDs(List<TreePath> paths) {
+  private static List<String> toActionIDs(List<? extends TreePath> paths) {
     return ContainerUtil.map(paths, path -> getActionId((DefaultMutableTreeNode)path.getLastPathComponent()));
   }
 

@@ -62,7 +62,7 @@ class TreeWelcomeScreenLeftPanel : WelcomeScreenLeftPanel {
     tab.childTabs.forEach { addTab(child, it) }
   }
 
-  override fun addSelectionListener(disposable: Disposable, action: Consumer<WelcomeScreenTab>) {
+  override fun addSelectionListener(disposable: Disposable, action: Consumer<in WelcomeScreenTab>) {
     val tsl = TreeSelectionListener { e ->
       val tab = TreeUtil.getUserObject(WelcomeScreenTab::class.java, e.path.lastPathComponent) ?: return@TreeSelectionListener
       if (!wasLoaded) {

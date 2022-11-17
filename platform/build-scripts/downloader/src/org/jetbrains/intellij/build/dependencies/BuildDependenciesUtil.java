@@ -205,7 +205,7 @@ public final class BuildDependenciesUtil {
     });
   }
 
-  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<InputStream, InputStream> unpacker)
+  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<? super InputStream, ? extends InputStream> unpacker)
     throws Exception {
     try (TarArchiveInputStream archive = new TarArchiveInputStream(
       unpacker.apply(new BufferedInputStream(Files.newInputStream(archiveFile))))) {

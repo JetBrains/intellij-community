@@ -25,7 +25,7 @@ public final class PlatformNioHelper {
    * @see NioFiles#readAttributes
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static void visitDirectory(@NotNull Path directory, @NotNull BiPredicate<Path, @Nullable BasicFileAttributes> consumer) {
+  public static void visitDirectory(@NotNull Path directory, @NotNull BiPredicate<? super Path, ? super @Nullable BasicFileAttributes> consumer) {
     try (var dirStream = Files.newDirectoryStream(directory)) {
       for (var path : dirStream) {
         BasicFileAttributes attrs = null;

@@ -87,7 +87,7 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
       items = Map.copyOf(map);
     }
 
-    private void forEach(@NotNull Consumer<IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> consumer) {
+    private void forEach(@NotNull Consumer<? super IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> consumer) {
       items.values().forEach(consumer);
     }
 
@@ -139,7 +139,7 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
   }
 
   @Nullable
-  WorkspaceModelSnapshot createWithRefreshedEntitiesIfNeeded(@NotNull List<EntityReference<WorkspaceEntity>> references,
+  WorkspaceModelSnapshot createWithRefreshedEntitiesIfNeeded(@NotNull List<? extends EntityReference<WorkspaceEntity>> references,
                                                              @NotNull Project project) {
     if (references.isEmpty()) return null;
 
@@ -397,7 +397,7 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
     }
 
     @Nullable
-    public IndexableFilesIterator createIterator(@NotNull Sdk sdk, @Nullable Collection<VirtualFile> rootsToFilter) {
+    public IndexableFilesIterator createIterator(@NotNull Sdk sdk, @Nullable Collection<? extends VirtualFile> rootsToFilter) {
       IndexableSetIterableOrigin origin = Objects.requireNonNull(origins.get(SdkId.create(sdk)), "Unknown SDK " + sdk);
       if (rootsToFilter == null) {
         return origin.createIterator();
@@ -588,7 +588,7 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
                                                                    @NotNull EntityStorage storage,
                                                                    @NotNull Project project,
                                                                    @NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entities,
-                                                                   @NotNull Collection<ContentRootDescription> descriptions) {
+                                                                   @NotNull Collection<? super ContentRootDescription> descriptions) {
       Class<E> aClass = provider.getEntityClass();
       if (ContentRootEntity.class.equals(aClass)) {
         for (E entity : SequencesKt.asIterable(storage.entities(aClass))) {

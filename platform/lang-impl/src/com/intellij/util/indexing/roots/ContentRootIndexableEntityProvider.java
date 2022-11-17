@@ -91,7 +91,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
   }
 
   @NotNull
-  static List<VirtualFileUrl> collectRootUrls(List<ContentRootEntity> newContentRoots) {
+  static List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
     return ContainerUtil.map(newContentRoots, o -> o.getUrl());
   }
 

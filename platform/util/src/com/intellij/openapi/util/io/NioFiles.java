@@ -207,7 +207,7 @@ public final class NioFiles {
    * <p>Implementation detail: the method tries to delete a file up to 10 times with 10 ms pause between attempts -
    * usually it's enough to overcome intermittent file lock on Windows.</p>
    */
-  public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<Path> callback) throws IOException {
+  public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<? super Path> callback) throws IOException {
     FileUtilRt.deleteRecursively(fileOrDirectory, callback::accept);
   }
 }

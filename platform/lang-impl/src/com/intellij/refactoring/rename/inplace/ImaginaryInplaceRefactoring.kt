@@ -62,7 +62,7 @@ internal object ImaginaryInplaceRefactoring : InplaceRefactoring(
   override fun getVariable(): PsiNamedElement = error("must not be called")
   override fun moveOffsetAfter(success: Boolean): Unit = error("must not be called")
   override fun addAdditionalVariables(builder: TemplateBuilderImpl?): Unit = error("must not be called")
-  override fun addReferenceAtCaret(refs: MutableCollection<PsiReference>?): Unit = error("must not be called")
+  override fun addReferenceAtCaret(refs: MutableCollection<in PsiReference>): Unit = error("must not be called")
   override fun showDialogAdvertisement(actionId: String?): Unit = error("must not be called")
   override fun getInitialName(): String = error("must not be called")
   override fun revertState(): Unit = error("must not be called")

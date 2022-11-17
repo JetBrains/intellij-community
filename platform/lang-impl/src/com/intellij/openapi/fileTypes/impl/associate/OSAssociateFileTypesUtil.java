@@ -93,7 +93,7 @@ public class OSAssociateFileTypesUtil {
     return null;
   }
 
-  private static void doAssociate(@NotNull Callback callback, @NotNull SystemFileTypeAssociator associator, List<FileType> fileTypes) {
+  private static void doAssociate(@NotNull Callback callback, @NotNull SystemFileTypeAssociator associator, List<? extends FileType> fileTypes) {
     if (fileTypes.size() > 0) {
       ApplicationManager.getApplication().executeOnPooledThread(
         () -> {

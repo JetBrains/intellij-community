@@ -693,7 +693,7 @@ public final class Utils {
   private static boolean ourInUpdateSessionForInputEventEDTLoop;
 
   @ApiStatus.Internal
-  public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull List<AnAction> actions,
+  public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull List<? extends AnAction> actions,
                                                               @NotNull InputEvent inputEvent,
                                                               @NotNull DataContext dataContext,
                                                               @NotNull String place,

@@ -497,7 +497,7 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  private void runCustomProcessors(@NotNull AWTEvent event, @NotNull List<EventDispatcher> processors) {
+  private void runCustomProcessors(@NotNull AWTEvent event, @NotNull List<? extends EventDispatcher> processors) {
     for (EventDispatcher each : processors) {
       try {
         each.dispatch(event);

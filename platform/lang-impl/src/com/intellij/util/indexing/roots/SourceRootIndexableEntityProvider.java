@@ -92,7 +92,7 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
   }
 
   @NotNull
-  private static List<VirtualFileUrl> collectRootUrls(List<SourceRootEntity> newContentRoots) {
+  private static List<VirtualFileUrl> collectRootUrls(List<? extends SourceRootEntity> newContentRoots) {
     return ContainerUtil.map(newContentRoots, o -> o.getUrl());
   }
 

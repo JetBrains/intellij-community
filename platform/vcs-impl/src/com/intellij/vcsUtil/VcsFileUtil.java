@@ -392,7 +392,7 @@ public final class VcsFileUtil {
   }
 
   private static void performAdditions(@NotNull AbstractVcs vcs,
-                                       @NotNull List<VirtualFile> value) {
+                                       @NotNull List<? extends VirtualFile> value) {
     CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
     if (checkinEnvironment != null) {
       checkinEnvironment.scheduleUnversionedFilesForAddition(value);

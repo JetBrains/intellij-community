@@ -3,7 +3,6 @@ package com.jetbrains.python.newProject.steps;
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.ObjectUtils;
@@ -48,7 +47,7 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
     }
 
     @Override
-    public AnAction[] getActions(@NotNull List<DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<PyNewProjectSettings> callback) {
+    public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<PyNewProjectSettings> callback) {
       generators = new ArrayList<>(generators);
       generators.sort(Comparator.comparing(DirectoryProjectGenerator::getName));
       generators.sort(Comparator.comparingInt(value -> {

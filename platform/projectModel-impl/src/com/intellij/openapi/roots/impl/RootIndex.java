@@ -416,7 +416,7 @@ class RootIndex {
   }
 
   @NotNull
-  private static Set<VirtualFile> collectSdkClasses(Set<Sdk> sdks) {
+  private static Set<VirtualFile> collectSdkClasses(Set<? extends Sdk> sdks) {
     Set<VirtualFile> roots = new HashSet<>();
 
     for (Sdk sdk : sdks) {

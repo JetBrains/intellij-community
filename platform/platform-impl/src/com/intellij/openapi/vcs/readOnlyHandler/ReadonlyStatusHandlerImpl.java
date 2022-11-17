@@ -110,7 +110,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     return createResultStatus(originalFiles, files);
   }
 
-  private List<PresentableFileInfo> createPresentableFileInfos(List<FileInfo> fileInfos) {
+  private List<PresentableFileInfo> createPresentableFileInfos(List<? extends FileInfo> fileInfos) {
     return ContainerUtil.map(fileInfos, fileInfo -> {
       TargetPresentationBuilder builder = TargetPresentation.builder(fileInfo.getFile().getPresentableName())
         .icon(VirtualFilePresentation.getIcon(fileInfo.getFile()))

@@ -58,7 +58,7 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
   }
 
   @Override
-  public LayoutViewOptions setTitleProducer(@Nullable Producer<@NotNull Pair<@Nullable Icon, @NotNull String>> titleProducer) {
+  public LayoutViewOptions setTitleProducer(@Nullable Producer<? extends @NotNull Pair<@Nullable Icon, @NotNull String>> titleProducer) {
     myContentUI.myTabs.setTitleProducer(titleProducer);
     return this;
   }

@@ -30,7 +30,7 @@ public abstract class EditorFileSwapper {
     return getFileToSwapTo(project, (EditorWithProviderComposite) composite);
   }
 
-  public static @Nullable TextEditorImpl findSinglePsiAwareEditor(@NotNull List<FileEditor> fileEditors) {
+  public static @Nullable TextEditorImpl findSinglePsiAwareEditor(@NotNull List<? extends FileEditor> fileEditors) {
     TextEditorImpl result = null;
     for (FileEditor fileEditor : fileEditors) {
       if (fileEditor instanceof TextEditorImpl) {

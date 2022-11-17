@@ -212,7 +212,7 @@ public final class FileWatcher {
     }
 
     @Override
-    public void notifyMapping(@NotNull Collection<Pair<String, String>> mapping) {
+    public void notifyMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
       if (!mapping.isEmpty()) {
         myPathMap.addMapping(mapping);
       }

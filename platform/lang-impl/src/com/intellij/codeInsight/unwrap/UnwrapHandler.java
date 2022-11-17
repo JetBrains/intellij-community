@@ -199,7 +199,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       });
     }
 
-    private void highlightExtractedElements(final List<PsiElement> extractedElements) {
+    private void highlightExtractedElements(final List<? extends PsiElement> extractedElements) {
       for (PsiElement each : extractedElements) {
         final TextRange textRange = each.getTextRange();
         HighlightManager.getInstance(myProject).addRangeHighlight(

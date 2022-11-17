@@ -92,8 +92,8 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
   protected abstract void onScopeAdded(@NotNull String scopeName);
 
   private void fillActionGroup(final DefaultActionGroup group,
-                               final List<NamedScope> scopes,
-                               final List<Descriptor> defaultDescriptors,
+                               final List<? extends NamedScope> scopes,
+                               final List<? extends Descriptor> defaultDescriptors,
                                final InspectionProfileImpl inspectionProfile,
                                final Set<String> excludedScopeNames) {
     for (final NamedScope scope : scopes) {

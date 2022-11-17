@@ -199,7 +199,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     return null;
   }
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Collection<AbstractTreeNode<?>> selected) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Collection<? extends AbstractTreeNode<?>> selected) {
     if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
       AbstractTreeNode<?> single = JBIterable.from(selected).single();
       if (single instanceof MyRootNode) {
