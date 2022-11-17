@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComm
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 
 class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
-  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModel::convert)), GHPRReviewThreadModel {
+  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModelImpl::convert)), GHPRReviewThreadModel {
 
   override val id: String = thread.id
   override val createdAt = thread.createdAt
@@ -67,7 +67,7 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     }
 
     val newComments = thread.comments.subList(size, thread.comments.size)
-    add(newComments.map(GHPRReviewCommentModel::convert))
+    add(newComments.map(GHPRReviewCommentModelImpl::convert))
     maybeMarkFirstCommentResolved()
   }
 
@@ -81,7 +81,7 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   }
 
   override fun addComment(comment: GHPullRequestReviewComment) {
-    add(GHPRReviewCommentModel.convert(comment))
+    add(GHPRReviewCommentModelImpl.convert(comment))
   }
 
   override fun addAndInvokeStateChangeListener(listener: () -> Unit) =
