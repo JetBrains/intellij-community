@@ -1,6 +1,6 @@
 {
   "name": "erlang-ls",
-  "version": "0.0.36",
+  "version": "0.0.39",
   "description": "The Visual Studio Code Extension for the Erlang Language Server",
   "license": "Apache-2.0",
   "contributes": {
