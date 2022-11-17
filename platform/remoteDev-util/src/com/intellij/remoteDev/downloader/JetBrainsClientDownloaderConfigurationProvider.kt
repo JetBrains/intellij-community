@@ -65,7 +65,6 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   private val ytKey = "application.info.youtrack.url"
   private val ytUrl = "https://youtrack.jetbrains.com/newissue?project=GTW&amp;clearDraft=true&amp;description=\$DESCR"
-  private val remoteDevYouTrackEnv = Pair("IDE_" + ytKey.replace(".", "_").uppercase(Locale.getDefault()), ytUrl)
   private val remoteDevYouTrackFlag = "-D$ytKey=$ytUrl"
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
     if (!vmOptionsFile.exists()) { // on macos
