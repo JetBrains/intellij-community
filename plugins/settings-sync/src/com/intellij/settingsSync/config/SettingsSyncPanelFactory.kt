@@ -50,7 +50,7 @@ internal object SettingsSyncPanelFactory {
                   descriptor.apply()
                 }
                 .onIsModified { descriptor.isModified() }
-              val c = comment(descriptor.description)
+              val c = comment(descriptor.description).visible(!descriptor.description.isEmpty())
               val subcategoryLink = configureLink(descriptor.secondaryGroup, c.component.font.size2D) {
                 topCheckBox.state = getGroupState(descriptor)
                 descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
