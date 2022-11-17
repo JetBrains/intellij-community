@@ -209,7 +209,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             Pair("NAME", productName),
             Pair("ICON", "\${SNAP}/bin/${context.productProperties.baseFileName}.png"),
             Pair("SCRIPT", snapName),
-            Pair("COMMENT", appInfo.motto!!),
+            Pair("COMMENT", appInfo.motto ?: ""),
             Pair("WM_CLASS", getLinuxFrameClass(context))
           )
         )
