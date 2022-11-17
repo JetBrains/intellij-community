@@ -8,8 +8,10 @@ import com.intellij.openapi.projectRoots.Sdk
 
 interface GradleNewProjectWizardData : MavenizedNewProjectWizardData<ProjectData> {
   val sdkProperty: GraphProperty<Sdk?>
-  val useKotlinDslProperty: GraphProperty<Boolean>
+  val gradleDslProperty: GraphProperty<GradleDsl>
 
   var sdk: Sdk?
-  var useKotlinDsl: Boolean
+  var gradleDsl: GradleDsl
+
+  enum class GradleDsl { KOTLIN, GROOVY }
 }

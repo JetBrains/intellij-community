@@ -22,6 +22,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 
 internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -94,5 +95,5 @@ fun <T> GradleNewProjectWizardStep<T>.generateModuleBuilder(): AbstractGradleMod
   isInheritGroupId = parentData?.group == groupId
   isInheritVersion = parentData?.version == version
 
-  isUseKotlinDsl = useKotlinDsl
+  isUseKotlinDsl = gradleDsl == GradleDsl.KOTLIN
 }

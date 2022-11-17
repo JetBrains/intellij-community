@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -42,7 +43,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     private var addSampleCode by addSampleCodeProperty
 
     init {
-      useKotlinDsl = false
+      gradleDsl = GradleDsl.GROOVY
     }
 
     override fun setupSettingsUI(builder: Panel) {

@@ -16,14 +16,14 @@ interface GradleJavaNewProjectWizardData : GradleNewProjectWizardData {
     @JvmStatic val NewProjectWizardStep.gradleData get() = data.getUserData(KEY)!!
 
     @JvmStatic val NewProjectWizardStep.sdkProperty get() = gradleData.sdkProperty
-    @JvmStatic val NewProjectWizardStep.useKotlinDslProperty get() = gradleData.useKotlinDslProperty
+    @JvmStatic val NewProjectWizardStep.gradleDslProperty get() = gradleData.gradleDslProperty
     @JvmStatic val NewProjectWizardStep.parentProperty get() = gradleData.parentProperty
     @JvmStatic val NewProjectWizardStep.groupIdProperty get() = gradleData.groupIdProperty
     @JvmStatic val NewProjectWizardStep.artifactIdProperty get() = gradleData.artifactIdProperty
     @JvmStatic val NewProjectWizardStep.versionProperty get() = gradleData.versionProperty
     @JvmStatic val NewProjectWizardStep.addSampleCodeProperty get() = gradleData.addSampleCodeProperty
     @JvmStatic var NewProjectWizardStep.sdk get() = gradleData.sdk; set(it) { gradleData.sdk = it }
-    @JvmStatic var NewProjectWizardStep.useKotlinDsl get() = gradleData.useKotlinDsl; set(it) { gradleData.useKotlinDsl = it }
+    @JvmStatic var NewProjectWizardStep.gradleDsl get() = gradleData.gradleDsl; set(it) { gradleData.gradleDsl = it }
     @JvmStatic var NewProjectWizardStep.parent get() = gradleData.parent; set(it) { gradleData.parent = it }
     @JvmStatic var NewProjectWizardStep.parentData get() = gradleData.parentData; set(it) { gradleData.parentData = it }
     @JvmStatic var NewProjectWizardStep.groupId get() = gradleData.groupId; set(it) { gradleData.groupId = it }
