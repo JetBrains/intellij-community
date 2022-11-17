@@ -74,12 +74,11 @@ open class TemporaryDirectory : ExternalResource() {
     return super.apply(base, description)
   }
 
-  
   protected fun before(testName: String) {
     sanitizedName = testNameToFileName(testName)
     root = Paths.get(FileUtilRt.getTempDirectory())
   }
-  
+
   @ApiStatus.Internal
   fun init(commonPrefix: String, root: Path) {
     if (this.root != null) {
@@ -209,7 +208,7 @@ class TemporaryDirectoryExtension : TemporaryDirectory(), BeforeEachCallback, Af
   override fun afterEach(context: ExtensionContext?) {
     after()
   }
-  
+
   override fun beforeEach(context: ExtensionContext) {
     before(context.testMethod.map { it.name }.orElse(context.displayName))
   }
