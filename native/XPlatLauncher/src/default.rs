@@ -596,6 +596,11 @@ pub fn get_cache_home() -> Result<PathBuf> {
 }
 
 #[cfg(target_os = "windows")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    Ok(None)
+}
+
+#[cfg(target_os = "windows")]
 pub unsafe fn get_known_folder_path(rfid: &GUID, human_readable: &str) -> Result<PathBuf> {
     debug!("Calling SHGetKnownFolderPath");
     let pwstr = unsafe {
@@ -635,6 +640,14 @@ pub fn get_cache_home() -> Result<PathBuf> {
     Ok(result)
 }
 
+#[cfg(target_os = "macos")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    let result = get_user_home()
+        .join("Logs");
+
+    Ok(Some(result))
+}
+
 // CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 #[cfg(target_os = "linux")]
 pub fn get_config_home() -> Result<PathBuf> {
@@ -654,10 +667,15 @@ pub fn get_cache_home() -> Result<PathBuf> {
 
     let result = match xdg_cache_home {
         Some(p) => { p }
-        None => { get_user_home().join(".config") }
+        None => { get_user_home().join(".cache") }
     };
 
     Ok(result)
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    Ok(None)
 }
 
 #[cfg(target_os = "linux")]

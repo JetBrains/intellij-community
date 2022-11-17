@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
-use crate::default::{get_cache_home, get_config_home};
+use crate::default::{get_cache_home, get_config_home, get_logs_home};
 use utils::{get_path_from_env_var, PathExt, read_file_to_end};
 use crate::{DefaultLaunchConfiguration, is_remote_dev, LaunchConfiguration};
 
@@ -15,6 +15,7 @@ pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
     config_dir: PathBuf,
     system_dir: PathBuf,
+    logs_dir: Option<PathBuf>
 }
 
 impl LaunchConfiguration for RemoteDevLaunchConfiguration {
@@ -70,7 +71,7 @@ impl DefaultLaunchConfiguration {
         )
     }
 
-    fn prepare_system_config_dir(&self, per_project_config_dir_name: &str) -> Result<PathBuf> {
+    fn prepare_host_system_dir(&self, per_project_config_dir_name: &str) -> Result<PathBuf> {
         self.prepare_project_specific_dir(
             "IDE system directory",
             "IJ_HOST_SYSTEM_DIR",
@@ -78,6 +79,24 @@ impl DefaultLaunchConfiguration {
             &get_cache_home()?,
             per_project_config_dir_name
         )
+    }
+
+    fn prepare_host_logs_dir(&self, per_project_config_dir_name: &str) -> Result<Option<PathBuf>> {
+        let logs_home = &get_logs_home()?;
+
+        match logs_home {
+            None => return Ok(None),
+            Some(x) => {
+                let prepared_logs_home = self.prepare_project_specific_dir(
+                    "IDE logs directory",
+                    "IJ_HOST_LOGS_DIR",
+                    "IJ_HOST_LOGS_BASE_DIR",
+                    x,
+                    per_project_config_dir_name
+                )?;
+                Ok(Some(prepared_logs_home))
+            }
+        }
     }
 
     fn prepare_project_specific_dir(
@@ -243,14 +262,14 @@ impl RemoteDevLaunchConfiguration {
             .replace(":", "_");
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
-
-
-        let system_dir = default.prepare_system_config_dir(&per_project_config_dir_name)?;
+        let system_dir = default.prepare_host_system_dir(&per_project_config_dir_name)?;
+        let logs_dir = default.prepare_host_logs_dir(&per_project_config_dir_name)?;
 
         let config = RemoteDevLaunchConfiguration {
             default,
             config_dir,
-            system_dir
+            system_dir,
+            logs_dir: logs_dir
         };
 
         Ok(config)
@@ -260,13 +279,17 @@ impl RemoteDevLaunchConfiguration {
         let config_path = self.config_dir.to_string_lossy();
         let plugins_path = self.config_dir.join("plugins").to_string_lossy().to_string();
         let system_path = self.system_dir.to_string_lossy();
-        let log_path = self.system_dir.join("log").to_string_lossy().to_string();
+
+        let logs_path = match &self.logs_dir {
+            None => self.system_dir.join("log").to_string_lossy().to_string(),
+            Some(x) => x.to_string_lossy().to_string()
+        };
 
         let remote_dev_properties = vec![
             ("idea.config.path", config_path.as_ref()),
             ("idea.plugins.path", plugins_path.as_ref()),
             ("idea.system.path", system_path.as_ref()),
-            ("idea.log.path", log_path.as_ref()),
+            ("idea.log.path", logs_path.as_ref()),
 
             // TODO: remove once all of this is disabled for remote dev
             ("jb.privacy.policy.text", "<!--999.999-->"),
