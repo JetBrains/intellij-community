@@ -81,8 +81,12 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
     }
   }
 
-  override fun createConsoleRunner(project: Project, contextModule: Module?): PydevConsoleRunner =
-    when (val consoleParameters = createConsoleParameters(project, contextModule)) {
+  override fun createConsoleRunner(project: Project, contextModule: Module?): PydevConsoleRunner {
+    var module = contextModule
+    if (module == null) {
+      module = PyConsoleCustomizer.EP_NAME.extensionList.firstNotNullOfOrNull { it.guessConsoleModule(project) }
+    }
+    return when (val consoleParameters = createConsoleParameters(project, module)) {
       is ConstantConsoleParameters -> PydevConsoleRunnerImpl(project, consoleParameters.sdk, consoleParameters.consoleType,
                                                              consoleParameters.workingDir,
                                                              consoleParameters.envs, consoleParameters.settingsProvider,
@@ -93,6 +97,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
                                                              consoleParameters.envs, consoleParameters.settingsProvider,
                                                              consoleParameters.setupScript)
     }
+  }
 
   override fun createConsoleRunnerWithFile(project: Project, config: PythonRunConfiguration): PydevConsoleRunner {
     val consoleParameters = createConsoleParameters(project, config.module)
