@@ -376,6 +376,10 @@
                     interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayHintsSwitch"
+                    interface="com.intellij.codeInsight.hints.InlayHintsSwitch"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.codeInsight.declarativeInlayProviderFactory"
                     interface="com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory"
                     dynamic="true"/>
