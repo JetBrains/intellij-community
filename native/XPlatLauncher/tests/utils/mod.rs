@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{env, fs, io, thread, time};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufReader, Write};
+use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
 use std::sync::Once;
@@ -249,6 +249,7 @@ pub fn layout_launcher(
         target_dir,
         vec![
             "bin/idea64.vmoptions",
+            "bin/idea.properties",
             "lib/test.jar"
         ],
         vec![
@@ -280,6 +281,7 @@ pub fn layout_launcher(
     //     ├── bin/
     //     │   └── xplat-launcher
     //     │   └── idea.vmoptions
+    //     │   └── idea.properties
     //     ├── Resources/
     //     │   └── product-info.json
     //     ├── lib/
@@ -300,7 +302,8 @@ pub fn layout_launcher(
         target_dir,
         vec![
             "Contents/bin/idea.vmoptions",
-            "Contents/lib/test.jar"
+            "Contents/lib/test.jar",
+            "Contents/bin/idea.properties",
         ],
         vec![
             (launcher.as_path(), "Contents/bin/xplat-launcher"),
@@ -330,6 +333,7 @@ pub fn layout_launcher(
     // ├── bin/
     // │   └── xplat-launcher
     // │   └── idea64.exe.vmoptions
+    // │   └── idea.properties
     // ├── lib/
     // │   └── app.jar
     // ├── jbr/
@@ -349,7 +353,8 @@ pub fn layout_launcher(
         target_dir,
         vec![
             "bin/idea64.exe.vmoptions",
-            "lib/test.jar"
+            "lib/test.jar",
+            "bin/idea.properties",
         ],
         vec![
             (launcher.as_path(), "bin/xplat-launcher.exe"),
@@ -590,8 +595,13 @@ fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, 
 fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParameters> {
     let file = File::open(path)?;
 
-    let reader = BufReader::new(file);
-    let dump: IntellijMainDumpedLaunchParameters = serde_json::from_reader(reader)?;
+    let mut reader = BufReader::new(file);
+    let mut text = String::new();
+    let len = reader.read_to_string(&mut text)?;
+
+    println!("read {len} bytes from {path:?}, content: {text}");
+
+    let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(text.as_str())?;
     Ok(dump)
 }
 

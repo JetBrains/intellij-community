@@ -319,7 +319,7 @@ impl RemoteDevLaunchConfiguration {
 
         // TODO: use IDE-specific properties file
         let distribution_properties = self.default.ide_bin.join("idea.properties");
-        let default_properties = read_file_to_end(&distribution_properties)?;
+        let default_properties = read_file_to_end(&distribution_properties).context("Failed to read IDE properties file")?;
 
         for l in default_properties.lines() {
             writeln!(&mut writer, "{l}")?;
