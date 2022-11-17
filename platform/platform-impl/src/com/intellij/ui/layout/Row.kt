@@ -24,6 +24,7 @@ interface BaseBuilder {
     withButtonGroup(null, buttonGroup, body)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun buttonGroup(init: () -> Unit) {
     buttonGroup(null, init)
   }
