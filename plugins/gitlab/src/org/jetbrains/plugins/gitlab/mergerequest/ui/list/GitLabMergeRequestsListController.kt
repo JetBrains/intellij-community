@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
@@ -54,7 +55,7 @@ internal class GitLabMergeRequestsListController(
     emptyText.clear()
 
     if (isLoading) {
-      emptyText.appendText(GitLabBundle.message("merge.request.list.empty.state.loading"))
+      emptyText.appendText(CollaborationToolsBundle.message("review.list.empty.state.loading"))
       return
     }
 
