@@ -50,11 +50,13 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     }
   }
 
-  override val component: JComponent = panel {
-    row {
-      label(CodeVisionBundle.message("CodeVisionConfigurable.column.name.position"))
-      positionComboBox = comboBox(CodeVisionGlobalSettingsProvider.supportedAnchors, anchorRenderer).component
-      positionComboBox.item = settings.getPositionForGroup(id)
+  override val component: JComponent by lazy {
+    panel {
+      row {
+        label(CodeVisionBundle.message("CodeVisionConfigurable.column.name.position"))
+        positionComboBox = comboBox(CodeVisionGlobalSettingsProvider.supportedAnchors, anchorRenderer).component
+        positionComboBox.item = settings.getPositionForGroup(id)
+      }
     }
   }
 
