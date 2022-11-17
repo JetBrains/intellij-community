@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.util.isGradleAtLeast
-import org.jetbrains.plugins.gradle.testFramework.util.isGradleOlderThan
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
 
 abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 

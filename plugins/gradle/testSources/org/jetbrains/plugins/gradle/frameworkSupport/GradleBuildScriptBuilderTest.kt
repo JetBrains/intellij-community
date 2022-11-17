@@ -303,6 +303,34 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
         }
         
         dependencies {
+            testImplementation platform('org.junit:junit-bom:$junit5')
+            testImplementation 'org.junit.jupiter:junit-jupiter'
+        }
+        
+        test {
+            useJUnitPlatform()
+        }
+      """.trimIndent() to """
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation(platform("org.junit:junit-bom:$junit5"))
+            testImplementation("org.junit.jupiter:junit-jupiter")
+        }
+        
+        tasks.test {
+            useJUnitPlatform()
+        }
+      """.trimIndent()),
+
+      GradleVersion.version("4.9") to ("""
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
             testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
             testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
         }

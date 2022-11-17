@@ -164,8 +164,12 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     }
   }
 
-  override fun withJUnit() =
-    if (isSupportedJUnit5(gradleVersion)) withJUnit5() else withJUnit4()
+  override fun withJUnit() = apply {
+    when (isSupportedJUnit5(gradleVersion)) {
+      true -> withJUnit5()
+      else -> withJUnit4()
+    }
+  }
 
   override fun withJUnit4() = apply {
     withMavenCentral()
@@ -175,8 +179,16 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withJUnit5() = apply {
     assert(isSupportedJUnit5(gradleVersion))
     withMavenCentral()
-    addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
-    addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
+    when (isSupportedPlatformDependency(gradleVersion)) {
+      true -> {
+        addTestImplementationDependency(call("platform", "org.junit:junit-bom:$junit5Version"))
+        addTestImplementationDependency("org.junit.jupiter:junit-jupiter")
+      }
+      else -> {
+        addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
+        addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
+      }
+    }
     configureTestTask {
       call("useJUnitPlatform")
     }
