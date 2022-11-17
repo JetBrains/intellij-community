@@ -226,7 +226,8 @@ abstract class ScriptClassRootsUpdater(
                         if (!scriptsAsEntities) {
                             scriptingDebugLog { "kotlin.script.dependencies from ${updates.oldRoots} to ${updates.newRoots}" }
 
-                            val dependencySdkLibraryName = if (updates.newSdkRoots.hasGradleDependency()) {
+                            val hasGradleDependency = updates.newSdkRoots.hasGradleDependency() || updates.newRoots.hasGradleDependency()
+                            val dependencySdkLibraryName = if (hasGradleDependency) {
                                 KotlinBaseScriptingBundle.message("script.name.gradle.script.sdk.dependencies")
                             } else {
                                 KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies")
@@ -240,7 +241,7 @@ abstract class ScriptClassRootsUpdater(
                                 dependencySdkLibraryName
                             )
 
-                            val dependencyLibraryName = if (updates.newRoots.hasGradleDependency()) {
+                            val dependencyLibraryName = if (hasGradleDependency) {
                                 KotlinBaseScriptingBundle.message("script.name.gradle.script.dependencies")
                             } else {
                                 KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies")
