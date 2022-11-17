@@ -31,29 +31,55 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         if (file.project.service<DumbService>().isDumb) return true
 
-        val topmostDotQualifiedExpression = element.safeCastUsing(dotQualifiedClass)
-                                             // We will process the whole chain using topmost DotQualifiedExpression.
-                                             // If the current one has parent then it means that it's not topmost DotQualifiedExpression
-                                             ?.takeIf { it.getParentDotQualifiedExpression() == null }
-                                            ?: return true
-
-        val context = getTypeComputationContext(topmostDotQualifiedExpression)
-
-        val reversedChain = topmostDotQualifiedExpression.assembleChainCall(context)
-        if (reversedChain == null) return true
-
-        if (checkIfShouldSkip(reversedChain, settings)) return true
-
-        for ((expression, type) in reversedChain) {
-          sink.addInlineElement(
-            expression.textRange.endOffset,
-            true,
-            type.getInlayPresentation(expression, factory, file.project, context),
-            false
-          )
-        }
+        processInlayElements(element, settings, sink, factory)
         return true
       }
+    }
+  }
+
+  protected open fun addInlayElementsAdapter(context: TypeComputationContext,
+                                             elements: List<ExpressionWithType<ExpressionType>>,
+                                             sink: InlayHintsSink,
+                                             factory: PresentationFactory,
+                                             offset: Int = 0) {
+    addInlayElementsToSink(context, elements, sink, factory, offset)
+  }
+
+  protected fun processInlayElements(element: PsiElement,
+                                     settings: Settings,
+                                     sink: InlayHintsSink,
+                                     factory: PresentationFactory,
+                                     offset: Int = 0) {
+    val topmostDotQualifiedExpression = element.safeCastUsing(dotQualifiedClass)
+                                          // We will process the whole chain using topmost DotQualifiedExpression.
+                                          // If the current one has parent then it means that it's not topmost DotQualifiedExpression
+                                          ?.takeIf { it.getParentDotQualifiedExpression() == null }
+                                        ?: return
+    val context = getTypeComputationContext(topmostDotQualifiedExpression)
+
+    val reversedChain = topmostDotQualifiedExpression.assembleChainCall(context)
+    if (reversedChain == null) return
+
+    if (reversedChain.asSequence().distinctBy { it.type }.count() < settings.uniqueTypeCount) return
+
+    addInlayElementsAdapter(context, reversedChain, sink, factory, offset)
+  }
+
+  protected fun addInlayElementsToSink(context: TypeComputationContext,
+                                            elements: List<ExpressionWithType<ExpressionType>>,
+                                            sink: InlayHintsSink,
+                                            factory: PresentationFactory,
+                                            offset: Int = 0) {
+    if (elements.isEmpty()) return
+    val project = elements.first().expression.project
+
+    for ((expression, type) in elements) {
+      sink.addInlineElement(
+        expression.textRange.endOffset + offset,
+        true,
+        type.getInlayPresentation(expression, factory, project, context),
+        false
+      )
     }
   }
 
@@ -93,7 +119,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
     }
   }
 
-  protected fun DotQualifiedExpression.assembleChainCall(context: TypeComputationContext): List<ExpressionWithType<ExpressionType>>? {
+  private fun DotQualifiedExpression.assembleChainCall(context: TypeComputationContext): List<ExpressionWithType<ExpressionType>>? {
     var someTypeIsUnknown = false
     val reversedChain =
       generateSequence<PsiElement>(this) {
@@ -120,10 +146,6 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
     return if (someTypeIsUnknown) null else reversedChain
   }
 
-  protected fun checkIfShouldSkip(chain: List<ExpressionWithType<ExpressionType>>, settings: Settings): Boolean {
-    return chain.asSequence().distinctBy { it.type }.count() < settings.uniqueTypeCount
-  }
-
   protected abstract fun ExpressionType.getInlayPresentation(
     expression: PsiElement,
     factory: PresentationFactory,
@@ -146,7 +168,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
 
   protected abstract fun getTypeComputationContext(topmostDotQualifiedExpression: DotQualifiedExpression): TypeComputationContext
 
-  protected fun <T> Any.safeCastUsing(clazz: Class<T>) = if (clazz.isInstance(this)) clazz.cast(this) else null
+  private fun <T> Any.safeCastUsing(clazz: Class<T>) = if (clazz.isInstance(this)) clazz.cast(this) else null
 
   final override fun createSettings() = Settings()
 
