@@ -8,6 +8,7 @@ import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
@@ -56,6 +57,16 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getDirsByPackageName] instead.
    */
   fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile>
+
+  /**
+   * This is a temporary method introduced to support unloading of modules until IDEA-298694 is implemented.
+   */
+  fun unloadModules(entities: List<ModuleEntity>)
+
+  /**
+   * This is a temporary method introduced to support loading back unloaded modules until IDEA-298694 is implemented.
+   */
+  fun loadModules(entities: List<ModuleEntity>)
 
   companion object {
     @JvmField
