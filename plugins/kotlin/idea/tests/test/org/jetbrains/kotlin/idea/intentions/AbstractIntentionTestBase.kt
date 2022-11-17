@@ -57,7 +57,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         val language = KotlinLanguage.INSTANCE
         val providerInfos =
             InlayHintsProviderFactory.EP.extensionList
-                .flatMap { it.getProvidersInfo(project) }
+                .flatMap { it.getProvidersInfo() }
                 .filter { it.language == language }
                 .mapNotNull { it.provider as? KotlinAbstractHintsProvider<KotlinAbstractHintsProvider.HintsSettings> }
         providerInfos.forEach {
