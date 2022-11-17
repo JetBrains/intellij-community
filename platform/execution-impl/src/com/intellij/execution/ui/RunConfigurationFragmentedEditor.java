@@ -16,6 +16,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.GotItComponentBuilder;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -196,7 +197,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
         String text = fragment.getName().replace("\u001B", "");
         new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
           withHeader(ExecutionBundle.message("gotIt.popup.title")).
-          show(component, (c, b) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
+          show(component, (c, b) -> new Point(GotItComponentBuilder.ARROW_SHIFT, c.getHeight()));
       }
     }
   }
