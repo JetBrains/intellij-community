@@ -4,6 +4,8 @@ package com.intellij.jarFinder;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -14,6 +16,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -197,9 +200,11 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
 
   @RequiresEdt
   public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<? extends Library> libraries) {
-    VirtualFile srcFile = WriteAction.compute(() -> {
-      return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
+    Ref<VirtualFile> srcFileRef = Ref.create();
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
+      srcFileRef.set(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar));
     });
+    VirtualFile srcFile = srcFileRef.get();
     if (srcFile == null) return;
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(srcFile);
