@@ -8,16 +8,16 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtil
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByCompilations(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
-    getCompilations(gradleModule, mppModel, ideModule, resolverCtx)
+    getCompilations(gradleIdeaModule, mppModel, ideModule, resolverCtx)
         .filterNot { (_, compilation) -> shouldDelegateToOtherPlugin(compilation) }
-        .filter { (_, compilation) -> processedModuleIds.add(getKotlinModuleId(gradleModule, compilation, resolverCtx)) }
+        .filter { (_, compilation) -> processedModuleIds.add(getKotlinModuleId(gradleIdeaModule, compilation, resolverCtx)) }
         .forEach { (dataNode, compilation) ->
             buildDependencies(
                 resolverCtx, sourceSetMap, artifactsMap, dataNode, getDependencies(compilation), ideProject
             )
             for (sourceSet in compilation.declaredSourceSets) {
                 if (sourceSet.fullName() == compilation.fullName()) continue
-                val targetDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx) ?: continue
+                val targetDataNode = getSiblingKotlinModuleData(sourceSet, gradleIdeaModule, ideModule, resolverCtx) ?: continue
                 addDependency(dataNode, targetDataNode, sourceSet.isTestComponent)
             }
         }
