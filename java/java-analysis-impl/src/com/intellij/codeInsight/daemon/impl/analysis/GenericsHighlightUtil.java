@@ -1061,8 +1061,16 @@ public final class GenericsHighlightUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(operand).descriptionAndTooltip(description);
     }
     if (type.getParameters().length > 0) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(operand).descriptionAndTooltip(
-          JavaErrorBundle.message("cannot.select.from.parameterized.type"));
+      final HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(operand).descriptionAndTooltip(
+        JavaErrorBundle.message("cannot.select.from.parameterized.type"));
+      final PsiJavaCodeReferenceElement referenceElement = operand.getInnermostComponentReferenceElement();
+      if (referenceElement != null) {
+        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList != null) {
+          info.registerFix(QUICK_FIX_FACTORY.createDeleteFix(parameterList), null, null, null, null);
+        }
+      }
+      return info;
     }
     return null;
   }
