@@ -18,15 +18,16 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
@@ -47,13 +48,11 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.EditorHintFixture
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.UIUtil
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
@@ -118,12 +117,10 @@ fun CodeInsightTestFixture.checkLookupItems(
     for (lookupString in lookupsToCheck) {
       val lookupElement = lookupElements[lookupString]
       assertNotNull("Missing lookup string: $lookupString", lookupElement)
-      val doc = IdeDocumentationTargetProvider.getInstance(project)
-        .documentationTargets(editor, file, lookupElement!!)
-        ?.firstOrNull()
-        ?.let { computeDocumentationBlocking(it.createPointer()) }
-        ?.html
-        ?.trim()
+      val targets = PlatformTestUtil.callOnBgtSynchronously({ ProgressManager.getInstance().runProcess(Computable { runReadAction {
+        IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, lookupElement!!)
+      } }, EmptyProgressIndicator()) }, 10)!!
+      val doc = targets.firstOrNull()?.let { computeDocumentationBlocking(it.createPointer()) }?.html?.trim()
 
       val sanitizedLookupString = lookupString.replace(Regex("[*\"?<>/\\[\\]:;|,#]"), "_")
       checkDocumentation(doc ?: "<no documentation>", "$fileSuffix#$sanitizedLookupString", expectedDataLocation)
@@ -262,14 +259,17 @@ private fun CodeInsightTestFixture.checkDocumentation(
   }
 }
 
-private fun CodeInsightTestFixture.renderDocAtCaret(): String? =
-  IdeDocumentationTargetProvider.getInstance(project)
-    .documentationTargets(editor, file, caretOffset)
-    .mapNotNull { computeDocumentationBlocking(it.createPointer())?.html }
+private fun CodeInsightTestFixture.renderDocAtCaret(): String? {
+  val targets = PlatformTestUtil.callOnBgtSynchronously({ ProgressManager.getInstance().runProcess(Computable { runReadAction {
+    IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, caretOffset)
+  } }, EmptyProgressIndicator()) }, 10)!!
+
+  return targets.mapNotNull { computeDocumentationBlocking(it.createPointer())?.html }
     .also { assertTrue("More then one documentation rendered:\n\n${it.joinToString("\n\n")}", it.size <= 1) }
     .getOrNull(0)
     ?.trim()
     ?.replace(Regex("<a href=\"psi_element:[^\"]*/unitTest[0-9]+/"), "<a href=\"psi_element:///src/")
+}
 
 
 infix fun ((item: LookupElementInfo) -> Boolean).and(other: (item: LookupElementInfo) -> Boolean): (item: LookupElementInfo) -> Boolean =
