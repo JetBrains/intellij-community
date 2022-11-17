@@ -295,7 +295,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     initializeTools(globalTools, localTools, globalSimpleTools);
     appendPairedInspectionsForUnfairTools(globalTools, globalSimpleTools, localTools);
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
-    runExternalTools(scope);
+    runExternalTools();
 
     if (runGlobalToolsOnly || localTools.isEmpty() && globalSimpleTools.isEmpty()) return;
 
@@ -433,7 +433,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     });
   }
 
-  protected void runExternalTools(@NotNull AnalysisScope scope) {}
+  protected void runExternalTools() {}
 
   private static @NotNull TextRange getEffectiveRange(@NotNull SearchScope searchScope, @NotNull PsiFile file) {
     if (searchScope instanceof LocalSearchScope) {
