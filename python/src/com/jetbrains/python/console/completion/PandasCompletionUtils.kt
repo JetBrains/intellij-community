@@ -17,57 +17,86 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
 
 /**
  *
  * This data class collect information about possible DataFrame.
  * @param psiName - name of PsiElement, that could be DataFrame type
  * @param needValidatorCheck - boolean flag to switch on check for validating columns name
+ * @param columnsBefore - list of sub-columns before the place where completion was called
  * LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier()
  *
  */
-data class PandasDataFrameCandidate(val psiName: String, val needValidatorCheck: Boolean)
+data class PandasDataFrameCandidate(val psiName: String, val needValidatorCheck: Boolean, val columnsBefore: List<String>)
 
 
 // Priority value to control order in CompletionResultSet
 private const val DATAFRAME_COLUMN_PRIORITY = 100.0
 
 fun getCompleteAttribute(parameters: CompletionParameters): List<PandasDataFrameCandidate> {
-  val currentElement: PsiElement?
-  val needValidatorCheck: Boolean
-  val parentLambdaExpression: PyExpression?
-  val candidates = mutableListOf<PandasDataFrameCandidate>()
+
   val callInnerReferenceExpression = getCallInnerReferenceExpression(parameters)
+  val (currentElement, needValidatorCheck) =
+    findCompleteAttribute(parameters)
+    ?: return getPossibleObjectsDataFrame(parameters, callInnerReferenceExpression)
 
-  findCompleteAttribute(parameters)?.let {
-    currentElement = it.first
-    needValidatorCheck = it.second
-    when (currentElement) {
-      is PyCallExpression, is PyParenthesizedExpression -> {
-        return emptyList()
-      }
-      is PyExpression -> {
-        parentLambdaExpression = collectParentOfLambdaExpression(currentElement, callInnerReferenceExpression)
-        parentLambdaExpression?.text?.let { name -> candidates.add(PandasDataFrameCandidate(name, needValidatorCheck)) }
-      }
-      !is PyReferenceExpression -> {
-        return emptyList()
-      }
+  return when (currentElement) {
+    is PyCallExpression, is PyParenthesizedExpression -> {
+      emptyList()
     }
-    currentElement.text?.let { name -> candidates.add(PandasDataFrameCandidate(name, needValidatorCheck)) }
+    is PyExpression -> buildList {
+      val parentLambdaExpression = collectParentOfLambdaExpression(currentElement, callInnerReferenceExpression)
+      parentLambdaExpression?.let {
+        add(createPandasDataFrameCandidate(it, needValidatorCheck))
+      }
+      add(createPandasDataFrameCandidate(currentElement, needValidatorCheck))
+    }
+    else -> {
+      emptyList()
+    }
   }
-  if (!candidates.isEmpty()) return candidates
-  return getPossibleObjectsDataFrame(parameters, callInnerReferenceExpression)
+}
 
+private fun createPandasDataFrameCandidate(psiElement: PsiElement, needValidatorCheck: Boolean): PandasDataFrameCandidate {
+  val columns = mutableListOf<String>()
+
+  val firstChild: PsiElement = PsiTreeUtil.getDeepestFirst(psiElement)
+
+  val lastChild = PsiTreeUtil.getDeepestLast(psiElement)
+  if (firstChild != lastChild) {
+    var child = PsiTreeUtil.nextLeaf(firstChild)
+    while (child != null) {
+      if (child.elementType?.toString() != "Py:DOT" && child.elementType?.toString() != "Py:LBRACKET" && child.elementType?.toString() != "Py:RBRACKET") {
+        when (child) {
+          is PyStringLiteralExpression -> {
+            columns.add((child as PyStringLiteralExpressionImpl).stringValue)
+          }
+          is PyPlainStringElement -> {
+            columns.add(child.content)
+          }
+          else -> {
+            columns.add(child.text)
+          }
+        }
+      }
+      if (child == lastChild) {
+        break
+      }
+      child = PsiTreeUtil.nextLeaf(child)
+    }
+  }
+
+  return PandasDataFrameCandidate(firstChild.text, needValidatorCheck, columns)
 }
 
 private fun getPossibleObjectsDataFrame(parameters: CompletionParameters,
                                         callInnerReferenceExpression: PyExpression?): List<PandasDataFrameCandidate> {
-  return setOfNotNull(
-    callInnerReferenceExpression?.text,
-    getSliceSubscriptionReferenceExpression(parameters)?.text,
-    getAttributeReferenceExpression(parameters)?.text
-  ).map { PandasDataFrameCandidate(it, false) }
+  return setOfNotNull(callInnerReferenceExpression?.text, getSliceSubscriptionReferenceExpression(parameters)?.text,
+                      getAttributeReferenceExpression(parameters)?.text).map {
+
+    PandasDataFrameCandidate(it, false, emptyList())
+  }
 }
 
 private fun findCompleteAttribute(parameters: CompletionParameters): Pair<PsiElement, Boolean>? {
@@ -81,16 +110,14 @@ private fun findCompleteAttribute(parameters: CompletionParameters): Pair<PsiEle
 
   val exactElement = element.prevSibling?.prevSibling
   when {
-    exactElement != null ->
-      return Pair(exactElement, needCheck)
+    exactElement != null -> return Pair(exactElement, needCheck)
 
     else -> return null
   }
 }
 
 private fun getCallInnerReferenceExpression(parameters: CompletionParameters): PyExpression? {
-  var callExpression: PyCallExpression? = PsiTreeUtil.getParentOfType(parameters.position, PyCallExpression::class.java)
-                                          ?: return null
+  var callExpression: PyCallExpression? = PsiTreeUtil.getParentOfType(parameters.position, PyCallExpression::class.java) ?: return null
   var referenceExpression: PyReferenceExpression? = null
 
   while (true) {
@@ -106,8 +133,8 @@ private fun getCallInnerReferenceExpression(parameters: CompletionParameters): P
 }
 
 private fun getSliceSubscriptionReferenceExpression(parameters: CompletionParameters): PyExpression? {
-  val expression = PsiTreeUtil.getParentOfType(parameters.position, PySubscriptionExpression::class.java)
-                   ?: PsiTreeUtil.getParentOfType(parameters.position, PySliceExpression::class.java)
+  val expression = PsiTreeUtil.getParentOfType(parameters.position, PySubscriptionExpression::class.java) ?: PsiTreeUtil.getParentOfType(
+    parameters.position, PySliceExpression::class.java)
   val result = PsiTreeUtil.getChildOfType(expression, PyReferenceExpression::class.java)
   if (result != null) {
     return PyPsiUtils.getFirstQualifier(result)
@@ -118,8 +145,7 @@ private fun getSliceSubscriptionReferenceExpression(parameters: CompletionParame
   return null
 }
 
-private fun getSliceSubscriptionReferenceExpressionWithMultiIndex(expression: PyExpression)
-  : PyExpression? {
+private fun getSliceSubscriptionReferenceExpressionWithMultiIndex(expression: PyExpression): PyExpression? {
   var count = 0
   var child = expression.copy()
 
@@ -164,7 +190,7 @@ private fun collectParentOfLambdaExpression(element: PyExpression, callInnerRefe
 }
 
 fun processDataFrameColumns(dfName: String,
-                            columns: List<String>,
+                            columns: Set<String>,
                             needValidatorCheck: Boolean,
                             elementOnPosition: PsiElement,
                             project: Project,
@@ -179,9 +205,7 @@ fun processDataFrameColumns(dfName: String,
       validator.isIdentifier(column, project) -> column
       else -> null
     }?.let {
-      val lookupElement = LookupElementBuilder.create(it).withTypeText(
-        PyBundle.message("pandas.completion.type.text", dfName)
-      )
+      val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("pandas.completion.type.text", dfName))
       when (ignoreML) {
         true -> PrioritizedLookupElement.withPriority(lookupElement, DATAFRAME_COLUMN_PRIORITY).asMLIgnorable()
         false -> PrioritizedLookupElement.withPriority(lookupElement, DATAFRAME_COLUMN_PRIORITY)
