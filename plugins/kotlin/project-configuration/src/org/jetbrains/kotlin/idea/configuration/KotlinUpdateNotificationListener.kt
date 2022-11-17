@@ -13,7 +13,7 @@ import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.util.isJavaFileType
 
 class KotlinUpdateNotificationListener(private val project: Project) : ModuleRootListener, DumbService.DumbModeListener, BulkFileListener {
-    override fun after(events: MutableList<out VFileEvent>) {
+    override fun after(events: List<VFileEvent>) {
         for (event in events) {
             if (event is VFileMoveEvent && event.file.isJavaFileType()) {
                 editorNotifications.updateNotifications(event.file)

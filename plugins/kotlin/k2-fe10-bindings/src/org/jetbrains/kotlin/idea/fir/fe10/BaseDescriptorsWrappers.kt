@@ -269,7 +269,7 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
 
     override fun getValueClassRepresentation(): ValueClassRepresentation<SimpleType> = TODO("Not yet implemented")
 
-    override fun getMemberScope(typeArguments: MutableList<out TypeProjection>): MemberScope = noImplementation()
+    override fun getMemberScope(typeArguments: List<TypeProjection>): MemberScope = noImplementation()
     override fun getMemberScope(typeSubstitution: TypeSubstitution): MemberScope = noImplementation()
     override fun getUnsubstitutedMemberScope(): MemberScope = noImplementation()
     override fun getUnsubstitutedInnerClassesScope(): MemberScope = noImplementation()

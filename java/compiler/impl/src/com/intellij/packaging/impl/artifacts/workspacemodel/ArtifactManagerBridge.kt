@@ -96,7 +96,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   @RequiresReadLock
-  override fun getAllArtifactsIncludingInvalid(): MutableList<out Artifact> {
+  override fun getAllArtifactsIncludingInvalid(): List<Artifact> {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()

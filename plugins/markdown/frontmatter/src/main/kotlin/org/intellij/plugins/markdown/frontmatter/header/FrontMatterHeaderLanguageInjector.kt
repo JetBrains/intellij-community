@@ -30,7 +30,7 @@ internal class FrontMatterHeaderLanguageInjector: MultiHostInjector {
     }
   }
 
-  override fun elementsToInjectIn(): MutableList<out Class<out PsiElement>> {
+  override fun elementsToInjectIn(): List<Class<out PsiElement>> {
     return mutableListOf(MarkdownFrontMatterHeader::class.java)
   }
 }

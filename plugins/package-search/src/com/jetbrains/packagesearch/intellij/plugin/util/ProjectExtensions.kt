@@ -101,7 +101,7 @@ internal val Project.nativeModulesFlow: Flow<List<Module>>
 
             override fun modulesRenamed(
                 project: Project,
-                modules: MutableList<out Module>,
+                modules: List<Module>,
                 oldNameProvider: Function<in Module, String>
             ) {
                 trySend(getNativeModules())
@@ -109,10 +109,10 @@ internal val Project.nativeModulesFlow: Flow<List<Module>>
         }
     }
 
-val Project.filesChangedEventFlow: Flow<MutableList<out VFileEvent>>
+val Project.filesChangedEventFlow: Flow<List<VFileEvent>>
     get() = messageBusFlow(VirtualFileManager.VFS_CHANGES) {
         object : BulkFileListener {
-            override fun after(events: MutableList<out VFileEvent>) {
+            override fun after(events: List<VFileEvent>) {
                 trySend(events)
             }
         }

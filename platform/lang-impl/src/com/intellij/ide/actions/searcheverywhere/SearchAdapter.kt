@@ -2,9 +2,9 @@
 package com.intellij.ide.actions.searcheverywhere
 
 open class SearchAdapter : SearchListener {
-  override fun elementsAdded(list: MutableList<out SearchEverywhereFoundElementInfo>) {}
+  override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>) {}
 
-  override fun elementsRemoved(list: MutableList<out SearchEverywhereFoundElementInfo>) {}
+  override fun elementsRemoved(list: List<SearchEverywhereFoundElementInfo>) {}
 
   override fun contributorWaits(contributor: SearchEverywhereContributor<*>) {}
 

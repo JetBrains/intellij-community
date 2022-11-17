@@ -169,7 +169,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
     // reset commit checks on VFS updates
     project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) {
+      override fun after(events: List<VFileEvent>) {
         if (isCommitChecksResultUpToDate == RecentCommitChecks.UNKNOWN) {
           return
         }
