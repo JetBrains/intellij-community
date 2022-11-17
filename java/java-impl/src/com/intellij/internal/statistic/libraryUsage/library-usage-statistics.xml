@@ -1,5 +1,28 @@
 <technologies>
   <!-- Scala libraries -->
+  <technology name="scala" root="scala"/>
+  <technology name="scalaz" root="scalaz"/>
+  <technology name="scalamock" root="org.scalamock"/>
+  <technology name="scalacheck" root="org.scalacheck"/>
+  <technology name="specs2" root="org.specs2"/>
+  <technology name="utest" root="utest"/>
+  <technology name="munit" root="munit"/>
+  <technology name="zio-test" root="zio.test"/>
+  <technology name="akka-http" root="akka.http"/>
+  <technology name="netty" root="io.netty"/>
+  <technology name="scalatra" root="org.scalatra"/>
+  <technology name="unfiltered" root="unfiltered"/>
+  <technology name="sttp" root="sttp.client3"/>
+  <technology name="http4s" root="org.http4s"/>
+  <technology name="twitter-util" root="com.twitter.util"/>
+  <technology name="shapeless" root="shapeless"/>
+  <technology name="finagle" root="com.twitter.finagle"/>
+  <technology name="cats" root="cats"/>
+  <technology name="breeze" root="breeze"/>
+  <technology name="slick" root="slick.sql"/>
+  <technology name="fs2" root="fs2"/>
+  <technology name="monix" root="monix.reactive"/>
+  <technology name="zio" root="zio"/>
   <technology name="akka-actor-typed" root="akka.actor.typed"/>
   <technology name="akka-http" root="akka.http"/>
   <technology name="akka-stream" root="akka.stream"/>
@@ -152,8 +175,6 @@
   <technology name="http4k" root="org.http4k"/>
   <technology name="rxjava3" root="io.reactivex.rxjava3"/>
   <technology name="rxkotlin" root="io.reactivex.rxjava3.kotlin"/>
-  <technology name="scala" root="scala"/>
-  <technology name="play2" root="play.api"/>
   <technology name="lagom" root="com.lightbend.lagom"/>
   <technology name="kotless" root="io.kotless"/>
   <technology name="spek" root="org.jetbrains.spek"/>
