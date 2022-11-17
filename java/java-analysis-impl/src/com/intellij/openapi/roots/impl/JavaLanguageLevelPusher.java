@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<LanguageLevel> {
 
   private static final FilePropertyKey<LanguageLevel> KEY = FilePropertyKeyImpl.createPersistentEnumKey("LANGUAGE_LEVEL",
-                                                                                                        "language_level_persistence", 3,
+                                                                                                        "language_level_persistence", 4,
                                                                                                         LanguageLevel.class);
 
   public static void pushLanguageLevel(@NotNull final Project project) {

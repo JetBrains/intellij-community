@@ -50,7 +50,7 @@ import java.util.*;
 public final class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
   private static final Key<String> PROJECT_LANGUAGE_LEVEL = new Key<>("python.project.language.level");
   private static final FilePropertyKey<LanguageLevel> KEY =
-    FilePropertyKeyImpl.createPersistentEnumKey("python.language.level", "python_language_level_persistence", 2, LanguageLevel.class);
+    FilePropertyKeyImpl.createPersistentEnumKey("python.language.level", "python_language_level_persistence", 3, LanguageLevel.class);
 
   /* It so happens that no single language level is compatible with more than one other.
      So a map suffices for representation*/
