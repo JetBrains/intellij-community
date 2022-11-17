@@ -56,7 +56,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                            includeExternalSourceSets: Boolean): WorkspaceFileSet? {
     return when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)) {
       is WorkspaceFileSetImpl -> info
-      is MultipleWorkspaceFileSets -> info.fileSets.first()
+      is MultipleWorkspaceFileSets -> info.find(null)
       else -> null
     }
   }
@@ -77,7 +77,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                                                                     customDataClass: Class<out D>): WorkspaceFileSetWithCustomData<D>? {
     val result = when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)) {
       is WorkspaceFileSetWithCustomData<*> -> info.takeIf { customDataClass.isInstance(it.data) }
-      is MultipleWorkspaceFileSets -> info.fileSets.find { customDataClass.isInstance(it.data) }
+      is MultipleWorkspaceFileSets -> info.find(customDataClass)
       else -> null
     }
     @Suppress("UNCHECKED_CAST")
