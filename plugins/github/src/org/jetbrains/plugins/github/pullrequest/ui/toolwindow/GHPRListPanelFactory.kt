@@ -30,10 +30,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
-import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -63,9 +60,6 @@ internal class GHPRListPanelFactory(private val project: Project,
       }
     }
 
-    val repository = repositoryDataService.repositoryCoordinates.repositoryPath.repository
-    GHPRListPanelController(scope, listLoader, searchVm, list.emptyText, repository, disposable)
-
     val searchPanel = GHPRSearchPanelFactory(searchVm, avatarIconsProvider).create(scope)
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
@@ -80,25 +74,33 @@ internal class GHPRListPanelFactory(private val project: Project,
     }
     OutdatedPanelController(listLoader, listUpdatesChecker, outdatedStatePanel, disposable)
 
-    val errorHandler = GHApiLoadingErrorHandler(project, account) {
-      listLoader.reset()
-    }
-    val errorModel = GHHandledErrorPanelModel(GithubBundle.message("pull.request.list.cannot.load"), errorHandler).apply {
-      error = listLoader.error
-    }
-    listLoader.addErrorChangeListener(disposable) {
-      errorModel.error = listLoader.error
-    }
-    val errorPane = GHHtmlErrorPanel.create(errorModel)
-
     val controlsPanel = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       add(searchPanel)
       add(outdatedStatePanel)
-      add(errorPane)
     }
+
     val listLoaderPanel = createListLoaderPanel(listLoader, list, disposable)
-    return JBUI.Panels.simplePanel(listLoaderPanel).addToTop(controlsPanel).andTransparent().also {
+    val progressStripe = ProgressStripe(
+      listLoaderPanel,
+      disposable,
+      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+    ).apply {
+      if (listLoader.loading) startLoadingImmediately() else stopLoading()
+    }
+    listLoader.addLoadingStateChangeListener(disposable) {
+      if (listLoader.loading) progressStripe.startLoading() else progressStripe.stopLoading()
+    }
+
+    val repository = repositoryDataService.repositoryCoordinates.repositoryPath.repository
+    GHPRListPanelController(
+      project, scope,
+      account, listLoader, searchVm, repository,
+      list.emptyText, listLoaderPanel, progressStripe,
+      disposable
+    )
+
+    return JBUI.Panels.simplePanel(progressStripe).addToTop(controlsPanel).andTransparent().also {
       DataManager.registerDataProvider(it) { dataId ->
         if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) {
           if (list.isSelectionEmpty) null else list.selectedValue
@@ -110,7 +112,6 @@ internal class GHPRListPanelFactory(private val project: Project,
   }
 
   private fun createListLoaderPanel(loader: GHListLoader<*>, list: JComponent, disposable: Disposable): JComponent {
-
     val scrollPane = ScrollPaneFactory.createScrollPane(list, true).apply {
       isOpaque = false
       viewport.isOpaque = false
@@ -120,7 +121,7 @@ internal class GHPRListPanelFactory(private val project: Project,
       val model = verticalScrollBar.model
       val listener = object : BoundedRangeModelThresholdListener(model, 0.7f) {
         override fun onThresholdReached() {
-          if (!loader.loading && loader.canLoadMore()) {
+          if (loader.canLoadMore()) {
             loader.loadMore()
           }
         }
@@ -130,19 +131,14 @@ internal class GHPRListPanelFactory(private val project: Project,
         if (!loader.loading) listener.stateChanged(ChangeEvent(loader))
       }
     }
+
     loader.addDataListener(disposable, object : GHListLoader.ListDataListener {
       override fun onAllDataRemoved() {
         if (scrollPane.isShowing) loader.loadMore()
       }
     })
-    val progressStripe = ProgressStripe(scrollPane, disposable,
-                                        ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
-      if (loader.loading) startLoadingImmediately() else stopLoading()
-    }
-    loader.addLoadingStateChangeListener(disposable) {
-      if (loader.loading) progressStripe.startLoading() else progressStripe.stopLoading()
-    }
-    return progressStripe
+
+    return scrollPane
   }
 
   private class OutdatedPanelController(private val listLoader: GHListLoader<*>,

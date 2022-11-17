@@ -7,7 +7,7 @@ import javax.swing.Action
 interface ErrorStatusPresenter {
   fun getErrorTitle(error: Throwable): @Nls String
 
-  fun getErrorDescription(error: Throwable): @Nls String
+  fun getErrorDescription(error: Throwable): @Nls String?
 
   fun getErrorAction(error: Throwable): Action?
 }

@@ -4,12 +4,12 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
-import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
@@ -33,7 +33,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
   private val dataEventDispatcher = EventDispatcher.create(GHListLoader.ListDataListener::class.java)
   override val loadedData = ArrayList<T>()
 
-  override fun canLoadMore() = !loading && (error != null)
+  override fun canLoadMore() = !loading && error == null
 
   override fun loadMore(update: Boolean) {
     if (Disposer.isDisposed(this)) return
@@ -43,7 +43,6 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
       loading = true
       requestLoadMore(indicator, update).handleOnEdt { list, error ->
         if (indicator.isCanceled) return@handleOnEdt
-        loading = false
         if (error != null) {
           if (!CompletableFutureUtil.isCancellation(error)) this.error = error
         }
@@ -52,6 +51,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
           loadedData.addAll(list)
           dataEventDispatcher.multicaster.onDataAdded(startIdx)
         }
+        loading = false
       }
     }
   }

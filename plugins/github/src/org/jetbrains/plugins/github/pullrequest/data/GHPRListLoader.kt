@@ -27,7 +27,7 @@ internal class GHPRListLoader(
     GHGQLRequests.PullRequest.search(repository.serverPath, buildQuery(repository.repositoryPath, searchQuery), p)
   })
 
-  override fun canLoadMore() = !loading && (loader.hasNext || error != null)
+  override fun canLoadMore() = !loading && loader.hasNext && error == null
 
   override fun doLoadMore(indicator: ProgressIndicator, update: Boolean) = loader.loadNext(indicator, update)
 

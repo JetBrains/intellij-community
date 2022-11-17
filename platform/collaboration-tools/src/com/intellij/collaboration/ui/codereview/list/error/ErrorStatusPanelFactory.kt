@@ -80,17 +80,18 @@ object ErrorStatusPanelFactory {
         return
       }
 
-      val errorTitle = errorPresenter.getErrorTitle(error)
-      val errorDescription = errorPresenter.getErrorDescription(error)
-      val errorAction = errorPresenter.getErrorAction(error)
-      val errorTextBuilder = HtmlBuilder()
-        .appendP(errorTitle)
-        .appendP(errorDescription)
+      val errorTextBuilder = HtmlBuilder().apply {
+        appendP(errorPresenter.getErrorTitle(error))
+        val errorTitle = errorPresenter.getErrorDescription(error)
+        if (errorTitle != null) {
+          appendP(errorTitle)
+        }
+      }
 
+      val errorAction = errorPresenter.getErrorAction(error)
       if (errorAction != null) {
         action = errorAction
-        errorTextBuilder.br()
-          .appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.getName()))
+        errorTextBuilder.appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.getName()))
       }
 
       htmlEditorPane.text = errorTextBuilder.wrapWithHtmlBody().toString()
