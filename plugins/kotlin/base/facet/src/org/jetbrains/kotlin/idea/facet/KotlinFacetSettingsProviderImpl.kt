@@ -6,6 +6,8 @@ import com.intellij.ProjectTopics
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -23,6 +25,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     SynchronizedFineGrainedEntityCache<Module, KotlinFacetSettings>(project),
     WorkspaceModelChangeListener,
     KotlinCompilerSettingsListener,
+    ModuleRootListener,
     KotlinFacetSettingsProvider {
 
     override fun getSettings(module: Module) = KotlinFacet.get(module)?.configuration?.settings
@@ -39,6 +42,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
         val busConnection = project.messageBus.connect(this)
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, this)
         busConnection.subscribe(KotlinCompilerSettingsListener.TOPIC, this)
+        busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
     }
 
     override fun checkKeyValidity(key: Module) {
@@ -48,6 +52,14 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     }
 
     override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
+        invalidate()
+    }
+
+    override fun rootsChanged(event: ModuleRootEvent) {
+        // TODO: entire method to be drop when IDEA-298694 is fixed.
+        //  Reason: unload modules are untracked with WorkspaceModel
+        if (event.isCausedByWorkspaceModelChangesOnly) return
+
         invalidate()
     }
 
