@@ -3,6 +3,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -250,6 +251,11 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       BlockingMethodInNonBlockingContextInspection.this.myConsiderUnknownContextBlocking = true;
       DaemonCodeAnalyzer.getInstance(project).restart(descriptor.getPsiElement().getContainingFile());
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return new IntentionPreviewInfo.Html(JvmAnalysisBundle.message("jvm.inspections.blocking.method.intention.text",JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking")));
     }
   }
 }
