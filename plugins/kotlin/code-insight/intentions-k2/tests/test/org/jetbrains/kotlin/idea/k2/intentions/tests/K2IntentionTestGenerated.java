@@ -2273,6 +2273,124 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/insertExplicitTypeArguments")
+    public static class InsertExplicitTypeArguments extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inapplicableAlreadyTyped.kt")
+        public void testInapplicableAlreadyTyped() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableAlreadyTyped.kt");
+        }
+
+        @TestMetadata("inapplicableNotGeneric.kt")
+        public void testInapplicableNotGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableNotGeneric.kt");
+        }
+
+        @TestMetadata("inapplicableNotInCallable.kt")
+        public void testInapplicableNotInCallable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableNotInCallable.kt");
+        }
+
+        @TestMetadata("inapplicableNotInCallable2.kt")
+        public void testInapplicableNotInCallable2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableNotInCallable2.kt");
+        }
+
+        @TestMetadata("inapplicableTypeNotInferred.kt")
+        public void testInapplicableTypeNotInferred() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableTypeNotInferred.kt");
+        }
+
+        @TestMetadata("inferredIntersectionTypeFromElvis.kt")
+        public void testInferredIntersectionTypeFromElvis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inferredIntersectionTypeFromElvis.kt");
+        }
+
+        @TestMetadata("inferredTypeFromElvis.kt")
+        public void testInferredTypeFromElvis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inferredTypeFromElvis.kt");
+        }
+
+        @TestMetadata("insertImportForArg.kt")
+        public void testInsertImportForArg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertImportForArg.kt");
+        }
+
+        @TestMetadata("insertManyTypes.kt")
+        public void testInsertManyTypes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertManyTypes.kt");
+        }
+
+        @TestMetadata("insertManyTypesInDifferentOrder.kt")
+        public void testInsertManyTypesInDifferentOrder() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertManyTypesInDifferentOrder.kt");
+        }
+
+        @TestMetadata("insertMultipleSomeWithClashingName.kt")
+        public void testInsertMultipleSomeWithClashingName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertMultipleSomeWithClashingName.kt");
+        }
+
+        @TestMetadata("insertTwoTypesFun.kt")
+        public void testInsertTwoTypesFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertTwoTypesFun.kt");
+        }
+
+        @TestMetadata("insertTypeAny.kt")
+        public void testInsertTypeAny() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertTypeAny.kt");
+        }
+
+        @TestMetadata("insertTypeThatIsAFunction.kt")
+        public void testInsertTypeThatIsAFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertTypeThatIsAFunction.kt");
+        }
+
+        @TestMetadata("insertTypeThatIsATypeArg.kt")
+        public void testInsertTypeThatIsATypeArg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertTypeThatIsATypeArg.kt");
+        }
+
+        @TestMetadata("insertTypeWithClashingName.kt")
+        public void testInsertTypeWithClashingName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertTypeWithClashingName.kt");
+        }
+
+        @TestMetadata("insertTypeWithLambda.kt")
+        public void testInsertTypeWithLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertTypeWithLambda.kt");
+        }
+
+        @TestMetadata("insertTypeWithTypeArguments.kt")
+        public void testInsertTypeWithTypeArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertTypeWithTypeArguments.kt");
+        }
+
+        @TestMetadata("insertTypeWithVarargs.kt")
+        public void testInsertTypeWithVarargs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertTypeWithVarargs.kt");
+        }
+
+        @TestMetadata("notApplicableGenericType.kt")
+        public void testNotApplicableGenericType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/notApplicableGenericType.kt");
+        }
+
+        @TestMetadata("simpleInsertTypeClass.kt")
+        public void testSimpleInsertTypeClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/simpleInsertTypeClass.kt");
+        }
+
+        @TestMetadata("simpleInsertTypeFun.kt")
+        public void testSimpleInsertTypeFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/simpleInsertTypeFun.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions")
     public abstract static class Intentions extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
