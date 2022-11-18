@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.SortingException;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -15,69 +12,80 @@ import static org.junit.Assert.fail;
  * @author Alexander Kireyev
  */
 public class LoadingOrderTest {
+
   @Test
   public void testSimpleSorting() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
-    target.add(createElement(LoadingOrder.ANY, null, "Any"));
-    target.add(createElement(LoadingOrder.FIRST, null, "1"));
-    target.add(createElement(LoadingOrder.LAST, null, "2"));
-    target.add(createElement(LoadingOrder.ANY, null, "Any"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    assertSequence(array, "1AnyAny2");
+    assertSequence(
+      "1AnyAny2",
+
+      createElement(LoadingOrder.ANY, null, "Any"),
+      createElement(LoadingOrder.FIRST, null, "1"),
+      createElement(LoadingOrder.LAST, null, "2"),
+      createElement(LoadingOrder.ANY, null, "Any")
+    );
   }
 
   @Test
   public void testStability() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
-    target.add(createElement(LoadingOrder.ANY, null, "1"));
-    target.add(createElement(LoadingOrder.ANY, null, "2"));
-    target.add(createElement(LoadingOrder.ANY, null, "3"));
-    target.add(createElement(LoadingOrder.ANY, null, "4"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    assertSequence(array, "1234");
+    assertSequence(
+      "1234",
+
+      createElement(LoadingOrder.ANY, null, "1"),
+      createElement(LoadingOrder.ANY, null, "2"),
+      createElement(LoadingOrder.ANY, null, "3"),
+      createElement(LoadingOrder.ANY, null, "4")
+    );
   }
 
   @Test
   public void testComplexSorting() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
     String idOne = "idOne";
     String idTwo = "idTwo";
-    target.add(createElement(LoadingOrder.before(idTwo), idOne, "2"));
-    target.add(createElement(LoadingOrder.FIRST, null, "0"));
-    target.add(createElement(LoadingOrder.LAST, null, "5"));
-    target.add(createElement(LoadingOrder.after(idTwo), null, "4"));
-    target.add(createElement(LoadingOrder.ANY, idTwo, "3"));
-    target.add(createElement(LoadingOrder.before(idOne), null, "1"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    assertSequence(array, "012345");
+
+    assertSequence(
+      "012345",
+
+      createElement(LoadingOrder.before(idTwo), idOne, "2"),
+      createElement(LoadingOrder.FIRST, null, "0"),
+      createElement(LoadingOrder.LAST, null, "5"),
+      createElement(LoadingOrder.after(idTwo), null, "4"),
+      createElement(LoadingOrder.ANY, idTwo, "3"),
+      createElement(LoadingOrder.before(idOne), null, "1")
+    );
   }
 
   @Test
   public void testComplexSorting2() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
     String idOne = "idOne";
-    target.add(createElement(LoadingOrder.before(idOne), null, "2"));
-    target.add(createElement(LoadingOrder.after(idOne), null, "4"));
-    target.add(createElement(LoadingOrder.FIRST, null, "1"));
-    target.add(createElement(LoadingOrder.ANY, idOne, "3"));
-    target.add(createElement(LoadingOrder.ANY, null, "5"));
-    target.add(createElement(LoadingOrder.LAST, null, "6"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    assertSequence(array, "123456");
+
+    assertSequence(
+      "123456",
+
+      createElement(LoadingOrder.before(idOne), null, "2"),
+      createElement(LoadingOrder.after(idOne), null, "4"),
+      createElement(LoadingOrder.FIRST, null, "1"),
+      createElement(LoadingOrder.ANY, idOne, "3"),
+      createElement(LoadingOrder.ANY, null, "5"),
+      createElement(LoadingOrder.LAST, null, "6")
+    );
   }
 
   @Test
   public void testComplexSortingBeforeLast() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
-    target.add(createElement(LoadingOrder.LAST, "1", "1"));
-    target.add(createElement(LoadingOrder.readOrder("last,before 1"), null, "2"));
-    target.add(createElement(LoadingOrder.ANY, null, "3"));
-    target.add(createElement(LoadingOrder.before("1'"), null, "4"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    assertSequence(array, "3421");
+    assertSequence(
+      "3421",
+
+      createElement(LoadingOrder.LAST, "1", "1"),
+      createElement(LoadingOrder.readOrder("last,before 1"), null, "2"),
+      createElement(LoadingOrder.ANY, null, "3"),
+      createElement(LoadingOrder.before("1'"), null, "4")
+    );
   }
 
-  private static void assertSequence(LoadingOrder.Orderable[] array, String expected) {
+  /**
+   * Asserts that after sorting the given elements, their IDs form the expected string.
+   */
+  private static void assertSequence(String expected, LoadingOrder.Orderable... array) {
     LoadingOrder.sort(array);
     StringBuffer sequence = buildSequence(array);
     assertEquals(expected, sequence.toString());
@@ -86,34 +94,35 @@ public class LoadingOrderTest {
   private static StringBuffer buildSequence(LoadingOrder.Orderable[] array) {
     StringBuffer sequence = new StringBuffer();
     for (LoadingOrder.Orderable adapter : array) {
-      sequence.append(((MyOrderable)adapter).getID());
+      sequence.append(((MyOrderable)adapter).getName());
     }
     return sequence;
   }
 
   @Test
   public void testFailingSortingBeforeFirst() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
-    target.add(createElement(LoadingOrder.ANY, null, "good"));
-    target.add(createElement(LoadingOrder.FIRST, "first", "bad"));
-    target.add(createElement(LoadingOrder.LAST, null, "good"));
-    target.add(createElement(LoadingOrder.before("first"), null, "bad"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    checkSortingFailure(array);
+    checkSortingFailure(
+      createElement(LoadingOrder.ANY, null, "good"),
+      createElement(LoadingOrder.FIRST, "first", "bad"),
+      createElement(LoadingOrder.LAST, null, "good"),
+      createElement(LoadingOrder.before("first"), null, "bad")
+    );
   }
 
+  // XXX: This test doesn't actually fail, despite its name.
   @Test
   public void testFailingSortingFirst() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
-    target.add(createElement(LoadingOrder.ANY, null, "2"));
-    target.add(createElement(LoadingOrder.FIRST, "first", "1"));
-    target.add(createElement(LoadingOrder.LAST, null, "3"));
-    target.add(createElement(LoadingOrder.FIRST, null, "1"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    assertSequence(array, "1123");
+    assertSequence(
+      "1123",
+
+      createElement(LoadingOrder.ANY, null, "2"),
+      createElement(LoadingOrder.FIRST, "first", "1"),
+      createElement(LoadingOrder.LAST, null, "3"),
+      createElement(LoadingOrder.FIRST, null, "1")
+    );
   }
 
-  private static void checkSortingFailure(LoadingOrder.Orderable[] array) {
+  private static void checkSortingFailure(LoadingOrder.Orderable... array) {
     try {
       LoadingOrder.sort(array);
       fail("Should have failed");
@@ -121,56 +130,59 @@ public class LoadingOrderTest {
     catch (SortingException e) {
       LoadingOrder.Orderable[] conflictingElements = e.getConflictingElements();
       assertEquals(2, conflictingElements.length);
-      assertEquals("bad", ((MyOrderable)conflictingElements[0]).getID());
-      assertEquals("bad", ((MyOrderable)conflictingElements[1]).getID());
+      assertEquals("bad", ((MyOrderable)conflictingElements[0]).getName());
+      assertEquals("bad", ((MyOrderable)conflictingElements[1]).getName());
     }
   }
 
   @Test
   public void testFailingSortingAfterLast() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
-    target.add(createElement(LoadingOrder.after("last"), null, "bad"));
-    target.add(createElement(LoadingOrder.FIRST, null, "good"));
-    target.add(createElement(LoadingOrder.LAST, "last", "bad"));
-    target.add(createElement(LoadingOrder.ANY, null, "good"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    checkSortingFailure(array);
+    checkSortingFailure(
+      createElement(LoadingOrder.after("last"), null, "bad"),
+      createElement(LoadingOrder.FIRST, null, "good"),
+      createElement(LoadingOrder.LAST, "last", "bad"),
+      createElement(LoadingOrder.ANY, null, "good")
+    );
   }
 
   @Test
   public void testFailingSortingLast() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
-    target.add(createElement(LoadingOrder.LAST, null, "3"));
-    target.add(createElement(LoadingOrder.FIRST, null, "1"));
-    target.add(createElement(LoadingOrder.LAST, "last", "3"));
-    target.add(createElement(LoadingOrder.ANY, null, "2"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    assertSequence(array, "1233");
+    assertSequence(
+      "1233",
+
+      createElement(LoadingOrder.LAST, null, "3"),
+      createElement(LoadingOrder.FIRST, null, "1"),
+      createElement(LoadingOrder.LAST, "last", "3"),
+      createElement(LoadingOrder.ANY, null, "2")
+    );
   }
 
   @Test
   public void testFailingSortingComplex() {
-    List<LoadingOrder.Orderable> target = new ArrayList<>();
-    target.add(createElement(LoadingOrder.after("2"), "1", "bad"));
-    target.add(createElement(LoadingOrder.after("3"), "2", "bad"));
-    target.add(createElement(LoadingOrder.after("1"), "3", "bad"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
-    checkSortingFailure(array);
+    checkSortingFailure(
+      createElement(LoadingOrder.after("2"), "1", "bad"),
+      createElement(LoadingOrder.after("3"), "2", "bad"),
+      createElement(LoadingOrder.after("1"), "3", "bad")
+    );
   }
 
-  private static LoadingOrder.Orderable createElement(final LoadingOrder order, final String idString, final String elementId) {
-    return new MyOrderable(order, idString, elementId);
+  /**
+   * @param orderId the ID that is used in "before" and "after" constraints
+   * @param name    the test-only name, only used for tracking the elements
+   */
+  private static LoadingOrder.Orderable createElement(LoadingOrder order, String orderId, String name) {
+    return new MyOrderable(order, orderId, name);
   }
 
   private static class MyOrderable implements LoadingOrder.Orderable {
     private final LoadingOrder myOrder;
     private final String myOrderId;
-    private final String myId;
+    private final String myName;
 
-    MyOrderable(LoadingOrder order, String orderId, String id) {
+    MyOrderable(LoadingOrder order, String orderId, String name) {
       myOrder = order;
       myOrderId = orderId;
-      myId = id;
+      myName = name;
     }
 
     @Override
@@ -183,8 +195,8 @@ public class LoadingOrderTest {
       return myOrder;
     }
 
-    public String getID() {
-      return myId;
+    public String getName() {
+      return myName;
     }
   }
 }
