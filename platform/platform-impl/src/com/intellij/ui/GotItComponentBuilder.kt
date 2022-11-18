@@ -29,9 +29,12 @@ import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
+import kotlin.math.min
 
 @ApiStatus.Internal
 class GotItComponentBuilder(@Nls private val text: String) {
+  private var image: Icon? = null
+
   @Nls
   private var header: String = ""
   private var icon: Icon? = null
@@ -49,6 +52,16 @@ class GotItComponentBuilder(@Nls private val text: String) {
 
   private var maxWidth = MAX_WIDTH
   private var useContrastColors = false
+
+  /**
+   * Add optional image above the header or description
+   */
+  fun withImage(image: Icon): GotItComponentBuilder {
+    val arcRatio = 16.0 / min(image.iconWidth, image.iconHeight)
+    val rounded = RoundedIcon(image, arcRatio, false)
+    this.image = adjustIcon(rounded)
+    return this
+  }
 
   /**
    * Add an optional header to the tooltip.
@@ -184,6 +197,8 @@ class GotItComponentBuilder(@Nls private val text: String) {
     val gc = GridBag()
     val left = if (icon != null) 8 else 0
     val column = if (icon != null) 1 else 0
+
+    image?.let { panel.add(JLabel(it), gc.nextLine().next().anchor(GridBagConstraints.LINE_START).coverLine().insetBottom(12)) }
 
     icon?.let { panel.add(JLabel(it), gc.nextLine().next().anchor(GridBagConstraints.BASELINE)) }
 

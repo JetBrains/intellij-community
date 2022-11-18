@@ -100,6 +100,14 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
+   * Add an optional image above the header or description
+   */
+  fun withImage(image: Icon): GotItTooltip {
+    gotItBuilder.withImage(image)
+    return this
+  }
+
+  /**
    * Add an optional header to the tooltip.
    */
   fun withHeader(@Nls header: String): GotItTooltip {
