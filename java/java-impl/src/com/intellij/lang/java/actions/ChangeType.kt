@@ -2,24 +2,27 @@
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.lang.jvm.actions.ChangeTypeRequest
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiTypeElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.siyeh.ig.psiutils.CommentTracker
 
 internal class ChangeType(
   typeElement: PsiTypeElement,
-  override val request: ChangeTypeRequest
+  @SafeFieldForPreview override val request: ChangeTypeRequest
   ) : CreateTargetAction<PsiTypeElement>(typeElement, request) {
   
   override fun getText(): String {
     val typeName = request.qualifiedName ?: return familyName
     return QuickFixBundle.message("change.type.text", typeName)
   }
-  
+
   override fun getFamilyName(): String = QuickFixBundle.message("change.type.family")
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
