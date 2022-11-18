@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 @Service
-public final class XmlRpcNativeSshService extends XmlRpcHandlerService<NativeSshAuthenticator> {
-  private XmlRpcNativeSshService() {
+public final class NativeSshAuthService extends ExternalProcessHandlerService<NativeSshAuthenticator> {
+  private NativeSshAuthService() {
     super("intellij-ssh-askpass", NativeSshAskPassXmlRpcHandler.HANDLER_NAME, NativeSshAskPassApp.class);
   }
 

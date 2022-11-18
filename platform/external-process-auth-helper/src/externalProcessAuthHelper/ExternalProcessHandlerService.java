@@ -33,8 +33,8 @@ import java.util.UUID;
  *   </ol>
  * </p>
  */
-public abstract class XmlRpcHandlerService<T> implements Disposable {
-  private static final Logger LOG = Logger.getInstance(XmlRpcHandlerService.class);
+public abstract class ExternalProcessHandlerService<T> implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ExternalProcessHandlerService.class);
 
   @NotNull private final @NonNls String myScriptTempFilePrefix;
   @NotNull private final @NonNls String myHandlerName;
@@ -51,9 +51,9 @@ public abstract class XmlRpcHandlerService<T> implements Disposable {
    * @param aClass      Main class of the external application invoked by Git,
    *                    which is able to handle its requests and pass to the main IDEA instance.
    */
-  protected XmlRpcHandlerService(@NotNull @NonNls String prefix,
-                                 @NotNull @NonNls String handlerName,
-                                 @NotNull Class<? extends ExternalApp> aClass) {
+  protected ExternalProcessHandlerService(@NotNull @NonNls String prefix,
+                                          @NotNull @NonNls String handlerName,
+                                          @NotNull Class<? extends ExternalApp> aClass) {
     myScriptTempFilePrefix = prefix;
     myHandlerName = handlerName;
     myScriptMainClass = aClass;

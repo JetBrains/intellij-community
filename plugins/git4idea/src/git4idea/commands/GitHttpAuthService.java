@@ -17,7 +17,7 @@ package git4idea.commands;
 
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
-import com.intellij.externalProcessAuthHelper.XmlRpcHandlerService;
+import com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -34,7 +34,7 @@ import java.util.UUID;
 /**
  * Provides the authentication mechanism for Git HTTP connections.
  */
-public abstract class GitHttpAuthService extends XmlRpcHandlerService<GitHttpAuthenticator> {
+public abstract class GitHttpAuthService extends ExternalProcessHandlerService<GitHttpAuthenticator> {
 
   protected GitHttpAuthService() {
     super("intellij-git-askpass", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);

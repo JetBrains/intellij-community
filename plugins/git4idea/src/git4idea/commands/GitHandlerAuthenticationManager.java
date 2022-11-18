@@ -153,7 +153,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void prepareNativeSshAuth() throws IOException {
-    XmlRpcNativeSshService service = ApplicationManager.getApplication().getService(XmlRpcNativeSshService.class);
+    NativeSshAuthService service = ApplicationManager.getApplication().getService(NativeSshAuthService.class);
 
     boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
     AuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), PassthroughAuthenticationGate.getInstance());
@@ -177,7 +177,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void addHandlerPathToEnvironment(@NotNull String env,
-                                           @NotNull XmlRpcHandlerService service) throws IOException {
+                                           @NotNull ExternalProcessHandlerService service) throws IOException {
     GitExecutable executable = myHandler.getExecutable();
     boolean useBatchFile = SystemInfo.isWindows &&
                            executable.isLocal() &&
@@ -189,7 +189,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void cleanupNativeSshAuth() {
     if (myNativeSshHandler != null) {
-      ApplicationManager.getApplication().getService(XmlRpcNativeSshService.class).unregisterHandler(myNativeSshHandler);
+      ApplicationManager.getApplication().getService(NativeSshAuthService.class).unregisterHandler(myNativeSshHandler);
       myNativeSshHandler = null;
     }
   }
