@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
@@ -50,6 +49,14 @@ private class LibraryDependencyCandidatesAndSdkInfos(
     operator fun plusAssign(other: LibraryDependencyCandidatesAndSdkInfos) {
         libraryDependencyCandidates += other.libraryDependencyCandidates
         sdkInfos += other.sdkInfos
+    }
+
+    operator fun plusAssign(libraryDependencyCandidate: LibraryDependencyCandidate) {
+        libraryDependencyCandidates += libraryDependencyCandidate
+    }
+
+    operator fun plusAssign(sdkInfo: SdkInfo) {
+        sdkInfos += sdkInfo
     }
 
     override fun toString(): String {
@@ -316,13 +323,13 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                         checkCanceled()
                         val libraryEx = libraryOrderEntry.library.safeAs<LibraryEx>()?.takeUnless { it.isDisposed } ?: return
                         val candidate = LibraryDependencyCandidate.fromLibraryOrNull(infoCache[libraryEx]) ?: return
-                        libraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates += candidate
+                        libraryDependencyCandidatesAndSdkInfos += candidate
                     }
 
                     override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
                         checkCanceled()
                         jdkOrderEntry.jdk?.let { jdk ->
-                            libraryDependencyCandidatesAndSdkInfos.sdkInfos += SdkInfo(project, jdk)
+                            libraryDependencyCandidatesAndSdkInfos += SdkInfo(project, jdk)
                         }
                     }
                 }, Unit)
@@ -428,6 +435,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             // TODO: `invalidate()` to be drop when IDEA-298694 is fixed
             //  Reason: unload modules are untracked with WorkspaceModel
             invalidate()
+            return
 
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
