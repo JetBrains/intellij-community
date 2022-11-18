@@ -59,14 +59,20 @@ public class MavenProjectsProcessor {
   }
 
   public void scheduleTask(MavenProjectsProcessorTask task) {
+    boolean startProcessingInThisThread = false;
     synchronized (myQueue) {
-      if (!isProcessing && !MavenUtil.isMavenUnitTestModeEnabled()) {
+      if (!isProcessing && !MavenUtil.isNoBackgroundMode()) {
         isProcessing = true;
-        startProcessing(task);
-        return;
+        startProcessingInThisThread = true;
       }
-      if (myQueue.contains(task)) return;
-      myQueue.add(task);
+      else {
+        if (myQueue.contains(task)) return;
+        myQueue.add(task);
+      }
+    }
+
+    if (startProcessingInThisThread) {
+      startProcessing(task);
     }
   }
 
