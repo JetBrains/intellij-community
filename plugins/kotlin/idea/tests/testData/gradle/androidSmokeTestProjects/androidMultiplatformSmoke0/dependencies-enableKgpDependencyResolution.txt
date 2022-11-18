@@ -317,7 +317,6 @@ MODULES
         < Android API 31 Platform >
         <Module source>
         project.multiplatformAndroidJvmIosLibrary.commonTest (scope: TEST, exported: false)
-        project.multiplatformAndroidJvmIosLibrary.commonTest (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
@@ -337,13 +336,21 @@ MODULES
     Order entries:
         < Gradle JDK >
         <Module source>
-        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
     project.multiplatformAndroidJvmIosLibrary.jvmTest
     Order entries:
         < Gradle JDK >
         <Module source>
         project.multiplatformAndroidJvmIosLibrary.commonTest (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
     project.multiplatformAndroidJvmIosLibrary.linuxX64Main
     Order entries:
         < Kotlin SDK >
@@ -390,7 +397,6 @@ MODULES
         < Android API 31 Platform >
         <Module source>
         project.multiplatformAndroidJvmIosLibrary2.commonTest (scope: TEST, exported: false)
-        project.multiplatformAndroidJvmIosLibrary2.commonTest (scope: TEST, exported: false)
         project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
         project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
@@ -414,13 +420,21 @@ MODULES
     Order entries:
         < Gradle JDK >
         <Module source>
-        project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (scope: COMPILE, exported: false)
         project.multiplatformAndroidJvmIosLibrary2.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
     project.multiplatformAndroidJvmIosLibrary2.jvmTest
     Order entries:
         < Gradle JDK >
         <Module source>
         project.multiplatformAndroidJvmIosLibrary2.commonTest (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
     project.multiplatformAndroidJvmIosLibrary2.linuxX64Main
     Order entries:
         < Kotlin SDK >
@@ -511,19 +525,34 @@ MODULES
     Order entries:
         < Gradle JDK >
         <Module source>
-        Gradle: com.squareup.okio:okio:3.2.0:commonMain (scope: COMPILE, exported: false)
+        Gradle: com.squareup.okio:okio:commonMain:3.2.0 (scope: COMPILE, exported: false)
     project.multiplatformJvmLibrary.commonTest
     Order entries:
         < Gradle JDK >
         <Module source>
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
     project.multiplatformJvmLibrary.jvmMain
     Order entries:
         < Gradle JDK >
         <Module source>
         project.multiplatformJvmLibrary.commonMain (scope: COMPILE, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
     project.multiplatformJvmLibrary.jvmTest
     Order entries:
         < Gradle JDK >
         <Module source>
         project.multiplatformJvmLibrary.commonTest (scope: TEST, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
 
