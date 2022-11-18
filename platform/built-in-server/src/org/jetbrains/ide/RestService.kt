@@ -37,10 +37,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.builtInWebServer.isSignedRequest
 import org.jetbrains.ide.RestService.Companion.createJsonReader
 import org.jetbrains.ide.RestService.Companion.createJsonWriter
-import org.jetbrains.io.addCommonHeaders
-import org.jetbrains.io.addNoCache
-import org.jetbrains.io.response
-import org.jetbrains.io.send
+import org.jetbrains.io.*
 import java.awt.Window
 import java.io.IOException
 import java.io.OutputStream
@@ -174,6 +171,12 @@ abstract class RestService : HttpRequestHandler() {
     get() = false
 
   /**
+   * Whether service failures should be returned as HTML or PlainText.
+   */
+  protected open val reportErrorsAsPlainText: Boolean
+    get() = false
+
+  /**
    * Use human-readable name or UUID if it is an internal service.
    */
   @NlsSafe
@@ -215,18 +218,18 @@ abstract class RestService : HttpRequestHandler() {
     try {
       val counter = abuseCounter.get((context.channel().remoteAddress() as InetSocketAddress).address)!!
       if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
-        HttpResponseStatus.TOO_MANY_REQUESTS.orInSafeMode(HttpResponseStatus.OK).send(context.channel(), request)
+        HttpResponseStatus.TOO_MANY_REQUESTS.orInSafeMode(HttpResponseStatus.OK).sendError(context.channel(), request)
         return true
       }
 
       if (!isHostTrusted(request, urlDecoder)) {
-        HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.OK).send(context.channel(), request)
+        HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.OK).sendError(context.channel(), request)
         return true
       }
 
       val error = execute(urlDecoder, request, context)
       if (error != null) {
-        HttpResponseStatus.BAD_REQUEST.send(context.channel(), request, error)
+        HttpResponseStatus.BAD_REQUEST.sendError(context.channel(), request, error)
       }
     }
     catch (e: Throwable) {
@@ -241,10 +244,22 @@ abstract class RestService : HttpRequestHandler() {
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR
       }
 
-      status.send(context.channel(), request, XmlStringUtil.escapeString(ExceptionUtil.getThrowableText(e)))
+      status.sendError(context.channel(), request, XmlStringUtil.escapeString(ExceptionUtil.getThrowableText(e)))
     }
 
     return true
+  }
+
+  private fun HttpResponseStatus.sendError(channel: Channel,
+                                           request: HttpRequest,
+                                           description: String? = null,
+                                           extraHeaders: HttpHeaders? = null) {
+    if (reportErrorsAsPlainText) {
+      sendPlainText(channel, request, description, extraHeaders)
+    }
+    else {
+      send(channel, request, description, extraHeaders)
+    }
   }
 
   @Throws(InterruptedException::class, InvocationTargetException::class)

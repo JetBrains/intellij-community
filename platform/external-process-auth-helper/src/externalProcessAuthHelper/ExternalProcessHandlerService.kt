@@ -111,6 +111,8 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
 
   override fun getServiceName(): String = entryPointName
 
+  override val reportErrorsAsPlainText: Boolean get() = true
+
   override fun isMethodSupported(method: HttpMethod): Boolean {
     return method === HttpMethod.POST
   }
