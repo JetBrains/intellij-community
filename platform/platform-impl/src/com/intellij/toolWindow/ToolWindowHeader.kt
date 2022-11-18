@@ -149,7 +149,12 @@ abstract class ToolWindowHeader internal constructor(
 
     val toolbarPanel = object : JPanel(HorizontalLayout(0, SwingConstants.CENTER)) {
       override fun getPreferredSize(): Dimension {
-        return if (toolWindow.toolWindowManager.isNewUi) toolbar.component.preferredSize else super.getPreferredSize()
+        return if (toolWindow.toolWindowManager.isNewUi
+                   && toolWindow.anchor != ToolWindowAnchor.LEFT
+                   && toolWindow.anchor != ToolWindowAnchor.RIGHT) {
+          toolbar.component.preferredSize
+        }
+        else super.getPreferredSize()
       }
     }
     toolbarPanel.isOpaque = false
