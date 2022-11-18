@@ -71,11 +71,15 @@ suspend fun checkCanceled() {
  * @see runBlocking
  */
 fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
+  return runBlockingCancellable(allowOrphan = false, action)
+}
+
+private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend CoroutineScope.() -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
     return runBlockingCancellable(indicator, action)
   }
-  return ensureCurrentJob { currentJob ->
+  return ensureCurrentJob(allowOrphan) { currentJob ->
     val context = currentThreadContext() +
                   currentJob +
                   CoroutineName("job run blocking")
@@ -96,9 +100,7 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
  */
 @Internal
 fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
-  return ensureCurrentJobAllowingOrphan {
-    runBlockingCancellable(action)
-  }
+  return runBlockingCancellable(allowOrphan = true, action)
 }
 
 @Internal
