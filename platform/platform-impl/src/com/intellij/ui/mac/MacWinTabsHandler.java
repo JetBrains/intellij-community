@@ -122,12 +122,7 @@ public final class MacWinTabsHandler {
     if (!myFrameAllowed) {
       return;
     }
-    if (isTransparentTitleBar()) {
-      updateTabBar();
-    }
-    else {
-      updateTabBar(myFrame, 0);
-    }
+    updateTabBar();
   }
 
   public void exitFullScreen() {
@@ -179,8 +174,6 @@ public final class MacWinTabsHandler {
       return;
     }
 
-    boolean isTransparentTitleBar = isTransparentTitleBar();
-
     ApplicationManager.getApplication().invokeLater(() -> {
       Integer[] visibleAndHeights = new Integer[frames.length];
       boolean callInAppkit = false;
@@ -195,9 +188,6 @@ public final class MacWinTabsHandler {
         if (newFrame == helper.getFrame()) {
           newIndex = i;
         }
-        if (!isTransparentTitleBar && helper.isInFullScreen()) {
-          visibleAndHeights[i] = 0;
-        }
         else {
           callInAppkit = true;
         }
@@ -211,15 +201,9 @@ public final class MacWinTabsHandler {
             addTabObserver(window);
 
             if (visibleAndHeights[i] == null) {
-              int styleMask = isTransparentTitleBar ? 0 : Foundation.invoke(window, "styleMask").intValue();
-              if ((styleMask & (1 << 14)) != 0) { // NSWindowStyleMaskFullScreen
-                visibleAndHeights[i] = 0;
-              }
-              else {
-                visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
-                if (visibleAndHeights[i] == -1) {
-                  visibleAndHeights[i] = DEFAULT_WIN_TAB_HEIGHT();
-                }
+              visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
+              if (visibleAndHeights[i] == -1) {
+                visibleAndHeights[i] = DEFAULT_WIN_TAB_HEIGHT();
               }
             }
           }
@@ -268,7 +252,7 @@ public final class MacWinTabsHandler {
     if (filler == null) {
       return;
     }
-    if (height > 0 && isTransparentTitleBar()) {
+    if (height > 0) {
       height++;
     }
     boolean visible = height > 0;
@@ -323,10 +307,6 @@ public final class MacWinTabsHandler {
     catch (Throwable e) {
       Logger.getInstance(MacWinTabsHandler.class).error(e);
     }
-  }
-
-  private static boolean isTransparentTitleBar() {
-    return Registry.is("ide.mac.transparentTitleBarAppearance", false);
   }
 
   private static int DEFAULT_WIN_TAB_HEIGHT() {

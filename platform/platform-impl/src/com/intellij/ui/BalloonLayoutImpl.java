@@ -293,7 +293,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     ToolWindowPane pane = UIUtil.findComponentOfType(myParent, ToolWindowPane.class);
     if (pane != null) {
       y -= pane.getBottomHeight();
-      if (SystemInfoRt.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", false) && !ExperimentalUI.isNewUI()) {
+      if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) {
         ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper((Window)myParent.getParent());
         if (helper == null || !helper.isInFullScreen()) {
           y -= UIUtil.getTransparentTitleBarHeight(myParent);

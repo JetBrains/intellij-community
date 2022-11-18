@@ -10,7 +10,6 @@ import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
@@ -98,7 +97,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         @Override
         public void windowEnteringFullScreen(FullScreenEvent event) {
           JRootPane rootPane = myFrame.getRootPane();
-          if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+          if (rootPane != null && rootPane.getBorder() != null) {
             rootPane.setBorder(null);
           }
           myTabsHandler.enteringFullScreen();
@@ -136,8 +135,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }
     JRootPane rootPane = myFrame.getRootPane();
 
-    if (rootPane != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
-
+    if (rootPane != null) {
       IdeGlassPane glassPane = (IdeGlassPane)myFrame.getRootPane().getGlassPane();
       glassPane.addMousePreprocessor(new MouseAdapter() {
         @Override
