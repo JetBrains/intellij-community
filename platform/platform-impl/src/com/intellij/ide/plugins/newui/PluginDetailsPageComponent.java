@@ -819,7 +819,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
 
             if (node.getScreenShots() == null && node.getExternalPluginIdForScreenShots() != null) {
-              IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node, node.getExternalPluginIdForScreenShots());
+              IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node.getExternalPluginIdForScreenShots());
               if (metadata != null) {
                 if (metadata.getScreenshots() != null) {
                   node.setScreenShots(metadata.getScreenshots());

@@ -461,7 +461,7 @@ class MarketplaceRequests : PluginInfoProvider {
       }
     }
     catch (e: IOException) {
-      LOG.error(e)
+      LOG.warn(e)
       return null
     }
   }
@@ -470,12 +470,12 @@ class MarketplaceRequests : PluginInfoProvider {
   @RequiresReadLockAbsence
   fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
     val externalPluginId = pluginNode.externalPluginId ?: return null
-    return loadPluginMetadata(pluginNode, externalPluginId)
+    return loadPluginMetadata(externalPluginId)
   }
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  fun loadPluginMetadata(pluginNode: PluginNode, externalPluginId: String): IntellijPluginMetadata? {
+  fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     try {
       return readOrUpdateFile(
         Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),
@@ -485,7 +485,7 @@ class MarketplaceRequests : PluginInfoProvider {
       ) { objectMapper.readValue(it, object : TypeReference<IntellijPluginMetadata>() {}) }
     }
     catch (e: Exception) {
-      LOG.error(e)
+      LOG.warn(e)
       return null
     }
   }
@@ -603,7 +603,7 @@ class MarketplaceRequests : PluginInfoProvider {
         }
     }
     catch (e: IOException) {
-      LOG.error(e)
+      LOG.warn(e)
       return null
     }
   }
