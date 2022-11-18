@@ -4,6 +4,7 @@ package training.ui.welcomeScreen
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
 import training.FeaturesTrainerIcons
 import training.lang.LangManager
 import training.learn.CourseManager
@@ -20,8 +21,10 @@ import javax.swing.Icon
 import javax.swing.JComponent
 
 internal class IFTInteractiveCourse : InteractiveCourseFactory {
-  override fun getInteractiveCourseData(): InteractiveCourseData? =
-    if (LangManager.getInstance().getLangSupport()?.useUserProjects == false) IFTInteractiveCourseData() else null
+
+  override val isActive: Boolean get() = LangManager.getInstance().getLangSupport()?.useUserProjects == false
+
+  override fun getInteractiveCourseComponent(): JComponent = InteractiveCoursePanel(IFTInteractiveCourseData())
 }
 
 private class IFTInteractiveCourseData : InteractiveCourseData {
