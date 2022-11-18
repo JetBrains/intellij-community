@@ -2,6 +2,7 @@
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.lang.jvm.actions.ChangeParametersRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.openapi.editor.Editor
@@ -9,9 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 
-internal class ChangeMethodParameters(target: PsiMethod, override val request: ChangeParametersRequest) : CreateTargetAction<PsiMethod>(
-  target, request) {
-
+internal class ChangeMethodParameters(
+  target: PsiMethod,
+  @SafeFieldForPreview override val request: ChangeParametersRequest
+) : CreateTargetAction<PsiMethod>(target, request) {
   override fun getText(): String {
     val helper = JvmPsiConversionHelper.getInstance(target.project)
     val parametersString = request.expectedParameters.joinToString(", ", "(", ")") {
