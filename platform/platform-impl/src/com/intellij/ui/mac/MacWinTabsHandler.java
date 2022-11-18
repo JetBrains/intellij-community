@@ -65,7 +65,7 @@ public final class MacWinTabsHandler {
 
   public MacWinTabsHandler(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     myFrame = frame;
-    myFrameAllowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, () -> updateTabBars(null));
+    myFrameAllowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null));
 
     if (myFrameAllowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
@@ -83,6 +83,7 @@ public final class MacWinTabsHandler {
     return frame == null || frame instanceof IdeFrameImpl;
   }
 
+  // TODO: remove after release 2023.1
   public void frameInit() {
     if (!myFrameAllowed) {
       return;
@@ -90,10 +91,13 @@ public final class MacWinTabsHandler {
 
     Foundation.executeOnMainThread(true, false, () -> {
       ID window = MacUtil.getWindowFromJavaWindow(myFrame);
-      String windowId = ApplicationNamesInfo.getInstance().getProductName() +
-                        (PluginManagerCore.isRunningFromSources() ? "-Snapshot" : "") + "-AwtWindow-WithTabs";
-      Foundation.invoke(window, "setTabbingIdentifier:", Foundation.nsString(windowId));
+      Foundation.invoke(window, "setTabbingIdentifier:", Foundation.nsString(getWindowId()));
     });
+  }
+
+  @NotNull
+  private static String getWindowId() {
+    return ApplicationNamesInfo.getInstance().getProductName() + (PluginManagerCore.isRunningFromSources() ? "-Snapshot" : "") + "-AwtWindow-WithTabs";
   }
 
   public void frameShow() {
