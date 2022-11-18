@@ -37,7 +37,8 @@ public class CompileAction extends CompileActionBase {
   }
 
   @Override
-  protected void doAction(DataContext dataContext, Project project) {
+  protected void doAction(@NotNull AnActionEvent event, Project project) {
+    final DataContext dataContext = event.getDataContext();
     Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
       ProjectTaskManager.getInstance(project).rebuild(module);
@@ -47,7 +48,7 @@ public class CompileAction extends CompileActionBase {
       if (files.length > 0) {
         ProjectTaskManager.getInstance(project).compile(files);
       }
-      else {
+      else if (!ActionPlaces.isShortcutPlace(event.getPlace())) {
         module = dataContext.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
         if (module != null) {
           ProjectTaskManager.getInstance(project).rebuild(module);
@@ -81,7 +82,7 @@ public class CompileAction extends CompileActionBase {
     }
     else {
       files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-      if (files.length == 0) {
+      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace())) {
         module = e.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
       }
     }
