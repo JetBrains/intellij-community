@@ -24,9 +24,6 @@
 
     <projectService serviceImplementation="org.jetbrains.builtInWebServer.WebServerPathToFileManager"/>
 
-    <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="org.jetbrains.ide.XmlRpcServerImpl"/>
-
-    <httpRequestHandler implementation="org.jetbrains.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
