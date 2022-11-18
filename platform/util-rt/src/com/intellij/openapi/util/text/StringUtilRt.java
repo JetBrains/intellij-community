@@ -364,18 +364,39 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
-    return formatFileSize(fileSize, " ");
+    return formatFileSize(fileSize, " ", -1);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
+    return formatFileSize(fileSize, unitSeparator, -1);
+  }
+
+  /**
+   *
+   * @param fileSize - size of the file in bytes
+   * @param unitSeparator - separator inserted between value and unit
+   * @param rank - preferred rank. 0 - bytes, 1 - kilobytes, ..., 6 - exabytes. If less than 0 then picked automatically
+   * @return string with formatted file size
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
     if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
     if (fileSize == 0) return '0' + unitSeparator + 'B';
-    int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
+    if (rank < 0) {
+      rank = rankForFileSize(fileSize);
+    }
     double value = fileSize / Math.pow(1000, rank);
     String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
     return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
+  }
+
+  @Contract(pure = true)
+  public static int rankForFileSize(long fileSize) {
+    if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
+    return (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
   }
 
   /**
