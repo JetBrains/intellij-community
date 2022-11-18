@@ -5,6 +5,9 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.SortingException;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -87,16 +90,8 @@ public class LoadingOrderTest {
    */
   private static void assertSequence(String expected, LoadingOrder.Orderable... array) {
     LoadingOrder.sort(array);
-    StringBuffer sequence = buildSequence(array);
-    assertEquals(expected, sequence.toString());
-  }
-
-  private static StringBuffer buildSequence(LoadingOrder.Orderable[] array) {
-    StringBuffer sequence = new StringBuffer();
-    for (LoadingOrder.Orderable adapter : array) {
-      sequence.append(((MyOrderable)adapter).getName());
-    }
-    return sequence;
+    String sequence = Arrays.stream(array).map(o -> ((MyOrderable)o).getName()).collect(Collectors.joining());
+    assertEquals(expected, sequence);
   }
 
   @Test
