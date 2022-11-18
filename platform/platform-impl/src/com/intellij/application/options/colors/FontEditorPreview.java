@@ -229,7 +229,7 @@ public class FontEditorPreview implements PreviewPanel{
   private static class DumbTrafficLightRenderer implements ErrorStripeRenderer {
     @Override
     public @NotNull AnalyzerStatus getStatus() {
-      return new AnalyzerStatus(AllIcons.General.InspectionsOK, "", "", () -> UIController.EMPTY);
+      return new AnalyzerStatus(AllIcons.General.InspectionsOK, "", "", UIController.EMPTY);
     }
   }
 

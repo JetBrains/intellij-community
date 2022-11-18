@@ -474,7 +474,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     myStatusUpdates.queue(Update.create("icon", () -> {
       if (myErrorStripeRenderer != null) {
         AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus();
-        if (!newStatus.equals(analyzerStatus)) {
+        if (!newStatus.equalsTo(analyzerStatus)) {
           changeStatus(newStatus);
         }
       }
@@ -1474,7 +1474,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
       Icon newIcon = analyzerStatus.getIcon();
 
-      presentation.setVisible(!AnalyzerStatus.isEmpty(analyzerStatus));
+      presentation.setVisible(!analyzerStatus.isEmpty());
 
       if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
         List<StatusItem> adjusted = newStatus.isEmpty() ? Collections.singletonList(new StatusItem("", newIcon)) : newStatus;

@@ -118,7 +118,7 @@ final class TrafficLightPopup {
 
   private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
     hidePopup();
-    if (myPopupState.isRecentlyHidden() || AnalyzerStatus.isEmpty(analyzerStatus)) return; // do not show new popup
+    if (myPopupState.isRecentlyHidden() || analyzerStatus.isEmpty()) return; // do not show new popup
 
     updateContentPanel(analyzerStatus);
 

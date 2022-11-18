@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
-import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -95,19 +94,11 @@ public final class ErrorStripeUpdateManager implements Disposable {
   }
 
   private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
       TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
       if (renderer != null) return renderer;
     }
-    return createFallbackRenderer(editor);
-  }
-
-  private @NotNull TrafficLightRenderer createFallbackRenderer(@NotNull Editor editor) {
-    return new TrafficLightRenderer(myProject, editor.getDocument()) {
-      @Override
-      protected @NotNull UIController createUIController() {
-        return super.createUIController(editor);
-      }
-    };
+    return new TrafficLightRenderer(myProject, editor);
   }
 }

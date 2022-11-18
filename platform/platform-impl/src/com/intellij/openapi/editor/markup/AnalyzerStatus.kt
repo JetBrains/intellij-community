@@ -11,11 +11,11 @@ import javax.swing.Icon
  * Container containing all necessary information for rendering TrafficLightRenderer.
  * Instance is created each time <code>ErrorStripeRenderer.getStatus</code> is called.
  */
-class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:Nls val details: String, controllerCreator: () -> UIController) {
-  /**
-   * Lazy UI controller getter. Call only when you do need access to the UI details.
-   */
-  val controller : UIController by lazy(LazyThreadSafetyMode.NONE) { controllerCreator() }
+@Internal
+class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:Nls val details: String, val controller: UIController) {
+  @Deprecated("use primary constructor")
+  constructor(icon: Icon, @Nls title: String, @Nls details: String, controllerCreator: () -> UIController) : this(icon, title, details, controllerCreator.invoke()) {
+  }
 
   var showNavigation : Boolean = false
   var expandedStatus: List<StatusItem> = emptyList()
@@ -52,40 +52,31 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
 
   fun isTextStatus() : Boolean = textStatus
 
+  /**
+   * Utility comparator which takes into account only valuable fields.
+   * For example the whole UI controller is ignored.
+   */
+  fun equalsTo(other: AnalyzerStatus): Boolean {
+    return icon == other.icon
+           && expandedStatus == other.expandedStatus
+           && title == other.title
+           && details == other.details
+           && showNavigation == other.showNavigation
+           && passes == other.passes
+  }
+
+  fun isEmpty() = this == EMPTY
+
   companion object {
     /**
-     * Utility comparator which takes into account only valuable fields.
-     * For example the whole UI controller is ignored.
+     * Default instance for classes that don't implement [com.intellij.openapi.editor.markup.ErrorStripeRenderer.getStatus]
      */
     @JvmStatic
-    fun equals(a: AnalyzerStatus?, b: AnalyzerStatus?): Boolean {
-      if (a == null && b == null) {
-        return true
-      }
-      if (a == null || b == null) {
-        return false
-      }
-      return a.icon == b.icon
-             && a.expandedStatus == b.expandedStatus
-             && a.title == b.title
-             && a.details == b.details
-             && a.showNavigation == b.showNavigation
-             && a.passes == b.passes
-    }
-
-    /**
-     * Default instance for classes that don't implement <code>ErrorStripeRenderer.getStatus</code>
-     */
-    @JvmStatic
-    val EMPTY by lazy(LazyThreadSafetyMode.NONE) {
-      AnalyzerStatus(EmptyIcon.ICON_0, "", "") { UIController.EMPTY }
-    }
-
-    @JvmStatic
-    fun isEmpty(status: AnalyzerStatus) = status == EMPTY
+    val EMPTY: AnalyzerStatus = AnalyzerStatus(EmptyIcon.ICON_0, "", "", UIController.EMPTY)
 
     @JvmStatic
     @Internal
+    @Deprecated("use UIController.EMPTY")
     val EmptyController = UIController.EMPTY
   }
 }
