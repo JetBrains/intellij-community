@@ -13,118 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.commands;
+package git4idea.commands
 
-import com.intellij.externalProcessAuthHelper.AuthenticationGate;
-import com.intellij.externalProcessAuthHelper.AuthenticationMode;
-import com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import git4idea.http.GitAskPassApp;
-import git4idea.http.GitAskPassAppHandler;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.UUID;
+import com.intellij.externalProcessAuthHelper.AuthenticationGate
+import com.intellij.externalProcessAuthHelper.AuthenticationMode
+import com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import git4idea.http.GitAskPassApp
+import git4idea.http.GitAskPassAppHandler
+import java.io.File
+import java.util.*
 
 /**
  * Provides the authentication mechanism for Git HTTP connections.
  */
-public abstract class GitHttpAuthService extends ExternalProcessHandlerService<GitHttpAuthenticator> {
-
-  protected GitHttpAuthService() {
-    super("intellij-git-askpass", GitAskPassAppHandler.HANDLER_NAME, GitAskPassApp.class);
-  }
-
-  @NotNull
-  @Override
-  protected Object createRpcRequestHandlerDelegate() {
-    return new InternalRequestHandlerDelegate();
+abstract class GitHttpAuthService : ExternalProcessHandlerService<GitHttpAuthenticator>("intellij-git-askpass",
+                                                                                        GitAskPassAppHandler.HANDLER_NAME,
+                                                                                        GitAskPassApp::class.java) {
+  override fun createRpcRequestHandlerDelegate(): Any {
+    return InternalRequestHandlerDelegate()
   }
 
   /**
-   * Creates new {@link GitHttpAuthenticator} that will be requested to handle username and password requests from Git.
+   * Creates new [GitHttpAuthenticator] that will be requested to handle username and password requests from Git.
    */
-  @NotNull
-  public abstract GitHttpAuthenticator createAuthenticator(@NotNull Project project,
-                                                           @NotNull Collection<String> urls,
-                                                           @NotNull File workingDirectory,
-                                                           @NotNull AuthenticationGate authenticationGate,
-                                                           @NotNull AuthenticationMode authenticationMode);
+  abstract fun createAuthenticator(project: Project,
+                                   urls: Collection<String>,
+                                   workingDirectory: File,
+                                   authenticationGate: AuthenticationGate,
+                                   authenticationMode: AuthenticationMode): GitHttpAuthenticator
 
   /**
    * Internal handler implementation class, it is made public to be accessible via XML RPC.
    */
-  public class InternalRequestHandlerDelegate implements GitAskPassAppHandler {
-    @Override
-    public @NotNull String handleInput(@NotNull String handlerNo, @NotNull String arg) {
-      GitHttpAuthenticator handler = getHandler(UUID.fromString(handlerNo));
-
-      boolean usernameNeeded = StringUtilRt.startsWithIgnoreCase(arg, "username"); //NON-NLS
-
-      String[] split = arg.split(" ");
-      String url = split.length > 2 ? parseUrl(split[2]) : "";
-
-      return getDefaultValueIfCancelled(() -> {
-        return usernameNeeded ? handler.askUsername(url) : handler.askPassword(url);
-      }, "");
+  inner class InternalRequestHandlerDelegate : GitAskPassAppHandler {
+    override fun handleInput(handlerNo: String, arg: String): String {
+      val handler = getHandler(UUID.fromString(handlerNo))
+      val usernameNeeded = StringUtilRt.startsWithIgnoreCase(arg, "username") //NON-NLS
+      val split = arg.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+      val url = if (split.size > 2) parseUrl(split[2]) else ""
+      return getDefaultValueIfCancelled(
+        { if (usernameNeeded) handler.askUsername(url) else handler.askPassword(url) }, "")
     }
   }
 
-  private static String parseUrl(@NotNull String url) {
-    // un-quote and remove the trailing colon
-    url = StringUtil.trimStart(url, "'");
-    url = StringUtil.trimEnd(url, ":");
-    url = StringUtil.trimEnd(url, "'");
-    return url;
+  companion object {
+    private fun parseUrl(url: String): String {
+      // un-quote and remove the trailing colon
+      var url = url
+      url = StringUtil.trimStart(url, "'")
+      url = StringUtil.trimEnd(url, ":")
+      url = StringUtil.trimEnd(url, "'")
+      return url
+    }
+
+    fun <T> getDefaultValueIfCancelled(operation: Computable<T>, defaultValue: T): T {
+      return try {
+        operation.compute()
+      }
+      catch (pce: ProcessCanceledException) {
+        defaultValue
+      }
+    }
   }
-
-  @NotNull
-  public static <T> T getDefaultValueIfCancelled(@NotNull Computable<? extends T> operation, @NotNull T defaultValue) {
-    try {
-      return operation.compute();
-    }
-    catch (ProcessCanceledException pce) {
-      return defaultValue;
-    }
-  }
-
-  /**
-   * NOOP handler providing empty values for credentials
-   */
-  protected static final GitHttpAuthenticator STUB_AUTHENTICATOR = new GitHttpAuthenticator() {
-    @NotNull
-    @Override
-    public String askPassword(@NotNull String url) {
-      return "";
-    }
-
-    @NotNull
-    @Override
-    public String askUsername(@NotNull String url) {
-      return "";
-    }
-
-    @Override
-    public void saveAuthData() {
-    }
-
-    @Override
-    public void forgetPassword() {
-    }
-
-    @Override
-    public boolean wasCancelled() {
-      return false;
-    }
-
-    @Override
-    public boolean wasRequested() {
-      return false;
-    }
-  };
 }

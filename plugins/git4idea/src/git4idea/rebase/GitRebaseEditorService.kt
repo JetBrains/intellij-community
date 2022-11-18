@@ -1,67 +1,51 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.rebase;
+package git4idea.rebase
 
-import com.intellij.ide.XmlRpcServer;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.util.Pair;
-import git4idea.commands.GitHandler;
-import git4idea.commands.GitScriptGenerator;
-import git4idea.config.GitExecutable;
-import git4idea.editor.GitRebaseEditorApp;
-import git4idea.editor.GitRebaseEditorAppHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.BuiltInServerManager;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import com.intellij.ide.XmlRpcServer
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.util.Pair
+import git4idea.commands.GitHandler
+import git4idea.commands.GitScriptGenerator
+import git4idea.config.GitExecutable
+import git4idea.editor.GitRebaseEditorApp
+import git4idea.editor.GitRebaseEditorAppHandler
+import org.jetbrains.ide.BuiltInServerManager
+import java.io.File
+import java.util.*
 
 /**
  * The service that generates editor script for
  */
 @Service(Service.Level.APP)
-public final class GitRebaseEditorService implements Disposable {
+class GitRebaseEditorService : Disposable {
   /**
    * The lock object
    */
-  private final Object myScriptLock = new Object();
+  private val myScriptLock = Any()
+
   /**
    * The handlers to use
    */
-  private final Map<UUID, Pair<GitRebaseEditorHandler, GitExecutable>> myHandlers = new HashMap<>();
+  private val myHandlers: MutableMap<UUID, Pair<GitRebaseEditorHandler, GitExecutable>> = HashMap()
+
   /**
    * The lock for the handlers
    */
-  private final Object myHandlersLock = new Object();
+  private val myHandlersLock = Any()
 
-  /**
-   * @return an instance of the server
-   */
-  @NotNull
-  public static GitRebaseEditorService getInstance() {
-    final GitRebaseEditorService service = ApplicationManager.getApplication().getService(GitRebaseEditorService.class);
-    if (service == null) {
-      throw new IllegalStateException("The service " + GitRebaseEditorService.class.getName() + " cannot be located");
-    }
-    return service;
-  }
-
-  private void addInternalHandler() {
-    XmlRpcServer xmlRpcServer = XmlRpcServer.getInstance();
+  private fun addInternalHandler() {
+    val xmlRpcServer = XmlRpcServer.getInstance()
     if (!xmlRpcServer.hasHandler(GitRebaseEditorAppHandler.HANDLER_NAME)) {
-      xmlRpcServer.addHandler(GitRebaseEditorAppHandler.HANDLER_NAME, new InternalHandlerRebase());
+      xmlRpcServer.addHandler(GitRebaseEditorAppHandler.HANDLER_NAME, InternalHandlerRebase())
     }
   }
 
-  @Override
-  public void dispose() {
-    XmlRpcServer xmlRpcServer = ApplicationManager.getApplication().getServiceIfCreated(XmlRpcServer.class);
-    if (xmlRpcServer != null) {
-      xmlRpcServer.removeHandler(GitRebaseEditorAppHandler.HANDLER_NAME);
-    }
+  override fun dispose() {
+    val xmlRpcServer = ApplicationManager.getApplication().getServiceIfCreated(XmlRpcServer::class.java)
+    xmlRpcServer?.removeHandler(GitRebaseEditorAppHandler.HANDLER_NAME)
   }
 
   /**
@@ -69,13 +53,13 @@ public final class GitRebaseEditorService implements Disposable {
    *
    * @return the editor command
    */
-  @NotNull
-  public synchronized String getEditorCommand(@NotNull GitExecutable executable) {
-    synchronized (myScriptLock) {
-      int port = BuiltInServerManager.getInstance().waitForStart().getPort();
-      return new GitScriptGenerator(executable)
+  @Synchronized
+  fun getEditorCommand(executable: GitExecutable): String {
+    synchronized(myScriptLock) {
+      val port = BuiltInServerManager.getInstance().waitForStart().port
+      return GitScriptGenerator(executable)
         .addParameters(Integer.toString(port))
-        .commandLine(GitRebaseEditorApp.class, false);
+        .commandLine(GitRebaseEditorApp::class.java, false)
     }
   }
 
@@ -85,13 +69,12 @@ public final class GitRebaseEditorService implements Disposable {
    * @param handler the handler to register
    * @return the handler identifier
    */
-  @NotNull
-  public UUID registerHandler(@NotNull GitHandler handler, @NotNull GitRebaseEditorHandler editorHandler) {
-    addInternalHandler();
-    synchronized (myHandlersLock) {
-      UUID key = UUID.randomUUID();
-      myHandlers.put(key, Pair.create(editorHandler, handler.getExecutable()));
-      return key;
+  fun registerHandler(handler: GitHandler, editorHandler: GitRebaseEditorHandler): UUID {
+    addInternalHandler()
+    synchronized(myHandlersLock) {
+      val key = UUID.randomUUID()
+      myHandlers[key] = Pair.create(editorHandler, handler.executable)
+      return key
     }
   }
 
@@ -100,11 +83,10 @@ public final class GitRebaseEditorService implements Disposable {
    *
    * @param handlerNo the handler number.
    */
-  public void unregisterHandler(@NotNull UUID handlerNo) {
-    synchronized (myHandlersLock) {
-      if (myHandlers.remove(handlerNo) == null) {
-        throw new IllegalStateException("The handler " + handlerNo + " has been already removed");
-      }
+  fun unregisterHandler(handlerNo: UUID) {
+    synchronized(myHandlersLock) {
+      val removed = myHandlers.remove(handlerNo)
+      checkNotNull(removed) { "The handler $handlerNo has been already removed" }
     }
   }
 
@@ -113,31 +95,29 @@ public final class GitRebaseEditorService implements Disposable {
    *
    * @param handlerNo the handler number.
    */
-  @NotNull
-  Pair<GitRebaseEditorHandler, GitExecutable> getHandler(@NotNull UUID handlerNo) {
-    synchronized (myHandlersLock) {
-      Pair<GitRebaseEditorHandler, GitExecutable> pair = myHandlers.get(handlerNo);
-      if (pair == null) {
-        throw new IllegalStateException("The handler " + handlerNo + " is not registered");
-      }
-      return pair;
+  fun getHandler(handlerNo: UUID): Pair<GitRebaseEditorHandler, GitExecutable> {
+    synchronized(myHandlersLock) {
+      return myHandlers[handlerNo] ?: throw IllegalStateException("The handler $handlerNo is not registered")
     }
   }
 
   /**
    * The internal xml rcp handler
    */
-  public class InternalHandlerRebase implements GitRebaseEditorAppHandler {
-    @Override
-    @SuppressWarnings("UnusedDeclaration")
-    public int editCommits(@NotNull String handlerNo, @NotNull String path, @NotNull String workingDir) {
-      Pair<GitRebaseEditorHandler, GitExecutable> pair = getHandler(UUID.fromString(handlerNo));
-      GitExecutable executable = pair.second;
-      GitRebaseEditorHandler editorHandler = pair.first;
+  inner class InternalHandlerRebase : GitRebaseEditorAppHandler {
+    override fun editCommits(handlerNo: String, path: String, workingDir: String): Int {
+      val pair = getHandler(UUID.fromString(handlerNo))
+      val executable = pair.second
+      val editorHandler = pair.first
 
-      File file = executable.convertFilePathBack(path, new File(workingDir));
+      val file = executable.convertFilePathBack(path, File(workingDir))
 
-      return editorHandler.editCommits(file);
+      return editorHandler.editCommits(file)
     }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): GitRebaseEditorService = service<GitRebaseEditorService>()
   }
 }
