@@ -56,15 +56,14 @@ class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQ
                     ?: return
 
             project.checkConflictsInteractively(conflicts) {
-                var movedDeclaration: KtNamedDeclaration? = null
                 ApplicationManagerEx.getApplicationEx().runWriteActionWithNonCancellableProgressInDispatchThread(
-                    KotlinBundle.message("moving.to.companion.object"), project, null
+                    KotlinBundle.message("making.member.static"), project, null
                 ) {
-                    movedDeclaration = moveMemberToCompanionObjectIntention.doMove(
+                    val movedDeclaration = moveMemberToCompanionObjectIntention.doMove(
                         it, declaration, externalUsages, outerInstanceUsages, editor
                     )
+                    makeStaticAndReformat(movedDeclaration, editor)
                 }
-                movedDeclaration?.let { makeStaticAndReformat(it, editor) }
             }
         } else makeStaticAndReformat(declaration, editor)
     }
