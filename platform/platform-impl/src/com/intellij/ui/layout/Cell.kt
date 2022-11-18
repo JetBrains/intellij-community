@@ -214,13 +214,16 @@ fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBi
   return withBinding(JTextComponent::getText, JTextComponent::setText, modelBinding)
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : AbstractButton> CellBuilder<T>.withSelectedBinding(modelBinding: PropertyBinding<Boolean>): CellBuilder<T> {
   return withBinding(AbstractButton::isSelected, AbstractButton::setSelected, modelBinding)
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 val CellBuilder<AbstractButton>.selected
   get() = component.selected
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
 
 // separate class to avoid row related methods in the `cell { } `
