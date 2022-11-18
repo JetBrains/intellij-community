@@ -350,6 +350,7 @@
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
       "projectStructure.svg": "general/projectStructure.svg",
       "successDialog.svg": "general/successDialog.svg",
+      "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
       "warningDialog.svg": "general/warningDialog.svg"
     },
