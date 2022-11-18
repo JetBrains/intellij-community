@@ -17,10 +17,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
 import com.intellij.ui.popup.NextStepHandler
@@ -46,6 +43,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
+import git4idea.ui.branch.GitBranchesTreeModel.BranchTypeUnderRepository
 import git4idea.ui.branch.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
 import git4idea.ui.branch.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.GitBranchesTreeUtil.selectFirstLeaf
@@ -148,7 +146,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
     treeStep.setSearchPattern(pattern)
-    val haveBranches = haveBranchesToShow()
+    val haveBranches = traverseNodesAndExpand()
     if (haveBranches) {
       selectPreferred()
     }
@@ -158,15 +156,22 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
   }
 
-  private fun haveBranchesToShow(): Boolean {
+  private fun traverseNodesAndExpand(): Boolean {
     val model = tree.model
-    val root = model.root
+    var haveBranches = false
+    TreeUtil.treeTraverser(tree)
+      .filter(Conditions.or(Conditions.instanceOf(GitBranchType::class.java),
+                            Conditions.instanceOf(BranchTypeUnderRepository::class.java)))
+      .forEach { node ->
+        if (!haveBranches && !model.isLeaf(node)) {
+          haveBranches = true
+        }
+        if (node is BranchTypeUnderRepository) {
+          treeStep.createTreePathFor(node)?.let { path -> TreeUtil.promiseExpand(tree, path) }
+        }
+      }
 
-    return (0 until model.getChildCount(root))
-      .asSequence()
-      .map { model.getChild(root, it) }
-      .filterIsInstance<GitBranchType>()
-      .any { !model.isLeaf(it) }
+    return haveBranches
   }
 
   internal fun restoreDefaultSize() {
@@ -213,11 +218,14 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
   }
 
-  private fun toggleFavorite(branch: GitBranch) {
+  private fun toggleFavorite(userObject: Any?) {
+    val branchUnderRepository = userObject as? GitBranchesTreeModel.BranchUnderRepository
+    val branch = userObject as? GitBranch ?: branchUnderRepository?.branch ?: return
+    val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.repositories
     val branchType = GitBranchType.of(branch)
     val branchManager = project.service<GitBranchManager>()
-    val anyNotFavorite = treeStep.repositories.any { repository -> !branchManager.isFavorite(branchType, repository, branch.name) }
-    treeStep.repositories.forEach { repository ->
+    val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, branch.name) }
+    repositories.forEach { repository ->
       branchManager.setFavorite(branchType, repository, branch.name, anyNotFavorite)
     }
   }
@@ -225,7 +233,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun installGeneralShortcutActions() {
     registerAction("toggle_favorite", KeyStroke.getKeyStroke("SPACE"), object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        (tree.lastSelectedPathComponent?.let(TreeUtil::getUserObject) as? GitBranch)?.run(::toggleFavorite)
+        tree.lastSelectedPathComponent?.let(TreeUtil::getUserObject).run(::toggleFavorite)
       }
     })
   }
@@ -481,7 +489,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (selected != null) {
       val userObject = TreeUtil.getUserObject(selected)
       val point = e?.point
-      if (point != null && userObject is GitBranch && isMainIconAt(point, userObject)) {
+      val branchUnderRepository = userObject as? GitBranchesTreeModel.BranchUnderRepository
+      val branch = userObject as? GitBranch ?: branchUnderRepository?.branch
+      if (point != null && branch != null && isMainIconAt(point, branch)) {
         toggleFavorite(userObject)
         return
       }
