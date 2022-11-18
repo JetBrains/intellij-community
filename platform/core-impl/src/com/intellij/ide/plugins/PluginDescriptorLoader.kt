@@ -723,7 +723,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
   val outputDir = Files.createTempDirectory("plugin")!!
   try {
     Decompressor.Zip(file)
-      .withZipExtensionsIfUnix()
+      .withZipExtensions()
       .extract(outputDir)
     try {
       //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here

@@ -231,7 +231,7 @@ public final class StartupActionScriptManager {
       Files.createDirectories(destination);
 
       new Decompressor.Zip(source)
-        .withZipExtensionsIfUnix()
+        .withZipExtensions()
         .filter(myFilenameFilter)
         .extract(destination);
     }
