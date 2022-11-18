@@ -173,8 +173,11 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             //  Reason: unload modules are untracked with WorkspaceModel
             if (event.isCausedByWorkspaceModelChangesOnly) return
 
-            invalidate()
-            project.ideaModules().forEach(::get)
+            applyIfPossible {
+                invalidate()
+                project.ideaModules().forEach(::get)
+                incModificationCount()
+            }
         }
 
         override fun modelChanged(event: VersionedStorageChange) {
