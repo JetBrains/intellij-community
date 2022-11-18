@@ -89,7 +89,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   }
 
   override fun categoriesStateChanged() {
-    syncSettings()
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
   }
 
   private fun scheduleSyncingOnAppFocus() {
@@ -109,7 +109,8 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   }
 
   private fun syncSettings() {
-    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
+    val syncControls = SettingsSyncMain.getInstance().controls
+    syncSettings(syncControls.remoteCommunicator, syncControls.updateChecker)
   }
 
   @RequiresEdt
