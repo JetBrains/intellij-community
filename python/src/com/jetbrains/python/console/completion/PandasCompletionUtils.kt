@@ -67,7 +67,7 @@ private fun createPandasDataFrameCandidate(psiElement: PsiElement, needValidator
   if (firstChild != lastChild) {
     var child = PsiTreeUtil.nextLeaf(firstChild)
     while (child != null) {
-      if (child.elementType?.toString() != "Py:DOT" && child.elementType?.toString() != "Py:LBRACKET" && child.elementType?.toString() != "Py:RBRACKET") {
+      if (child.elementType != PyTokenTypes.DOT && child.elementType != PyTokenTypes.LBRACKET && child.elementType != PyTokenTypes.RBRACKET) {
         when (child) {
           is PyStringLiteralExpression -> {
             columns.add((child as PyStringLiteralExpressionImpl).stringValue)
