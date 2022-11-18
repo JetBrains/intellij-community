@@ -173,4 +173,5 @@ fun Row.enableIf(predicate: ComponentPredicate) {
   predicate.addListener { enabled = it }
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }

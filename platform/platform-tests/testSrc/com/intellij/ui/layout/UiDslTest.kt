@@ -51,11 +51,6 @@ abstract class UiDslTest {
   }
 
   @Test
-  fun `titled rows`() {
-    doTest { titledRows() }
-  }
-
-  @Test
   fun `titled row`() {
     doTest { titledRow() }
   }

@@ -112,21 +112,6 @@ fun createLafTestPanel(): JPanel {
   return panel
 }
 
-fun titledRows(): JPanel {
-  return panel {
-    titledRow("Async Profiler") {
-      row { browserLink("Async profiler README.md", "https://github.com/jvm-profiling-tools/async-profiler") }
-      row("Agent path:") { textFieldWithBrowseButton("").comment("If field is empty bundled agent will be used") }
-      row("Agent options:") { textFieldWithBrowseButton("").comment("Don't add output format (collapsed is used) or output file options") }
-    }
-    titledRow("Java Flight Recorder") {
-      row("JRE home:") {
-        textFieldWithBrowseButton("").comment("At least OracleJRE 9 or OpenJRE 11 is required to import dump")
-      }
-    }
-  }
-}
-
 // titledRows is not enough to test because component align depends on comment components, so, pure titledRow must be tested
 fun titledRow(): JPanel {
   return panel {
