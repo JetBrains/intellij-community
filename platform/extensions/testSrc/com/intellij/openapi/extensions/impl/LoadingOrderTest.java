@@ -85,15 +85,6 @@ public class LoadingOrderTest {
     );
   }
 
-  /**
-   * Asserts that after sorting the given elements, their IDs form the expected string.
-   */
-  private static void assertSequence(String expected, LoadingOrder.Orderable... array) {
-    LoadingOrder.sort(array);
-    String sequence = Arrays.stream(array).map(o -> ((MyOrderable)o).getName()).collect(Collectors.joining(" "));
-    assertEquals(expected, sequence);
-  }
-
   @Test
   public void testFailingSortingBeforeFirst() {
     checkSortingFailure(
@@ -116,20 +107,6 @@ public class LoadingOrderTest {
       createElement(LoadingOrder.FIRST, null, "1")
     );
   }
-
-  private static void checkSortingFailure(LoadingOrder.Orderable... array) {
-    try {
-      LoadingOrder.sort(array);
-      fail("Should have failed");
-    }
-    catch (SortingException e) {
-      LoadingOrder.Orderable[] conflictingElements = e.getConflictingElements();
-      assertEquals(2, conflictingElements.length);
-      assertEquals("bad", ((MyOrderable)conflictingElements[0]).getName());
-      assertEquals("bad", ((MyOrderable)conflictingElements[1]).getName());
-    }
-  }
-
   @Test
   public void testFailingSortingAfterLast() {
     checkSortingFailure(
@@ -159,6 +136,32 @@ public class LoadingOrderTest {
       createElement(LoadingOrder.after("3"), "2", "bad"),
       createElement(LoadingOrder.after("1"), "3", "bad")
     );
+  }
+
+  /**
+   * Assert that after sorting the given elements, their IDs form the expected string.
+   */
+  private static void assertSequence(String expected, LoadingOrder.Orderable... array) {
+    LoadingOrder.sort(array);
+    String sequence = Arrays.stream(array).map(o -> ((MyOrderable)o).getName()).collect(Collectors.joining(" "));
+    assertEquals(expected, sequence);
+  }
+
+  /**
+   * Ensure that the given elements cannot be sorted, due to conflicting constraints.
+   * All elements that are involved in the conflicts must have the name "bad".
+   */
+  private static void checkSortingFailure(LoadingOrder.Orderable... array) {
+    try {
+      LoadingOrder.sort(array);
+      fail("Should have failed");
+    }
+    catch (SortingException e) {
+      LoadingOrder.Orderable[] conflictingElements = e.getConflictingElements();
+      assertEquals(2, conflictingElements.length);
+      assertEquals("bad", ((MyOrderable)conflictingElements[0]).getName());
+      assertEquals("bad", ((MyOrderable)conflictingElements[1]).getName());
+    }
   }
 
   /**
