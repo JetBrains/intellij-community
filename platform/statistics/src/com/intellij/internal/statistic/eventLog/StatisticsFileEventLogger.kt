@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
@@ -23,7 +23,8 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val recorderVersion: String,
                                      private val writer: StatisticsEventLogWriter,
                                      private val systemEventIdProvider: StatisticsSystemEventIdProvider,
-                                     private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet())
+                                     private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
+                                     private val ideMode: String? = null
 ) : StatisticsEventLogger, Disposable {
   protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId", 1)
 
@@ -106,6 +107,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       if (headless) {
         event.data["system_headless"] = true
       }
+      ideMode?.let { event.data["ide_mode"] = ideMode }
       writer.log(it.validatedEvent)
       ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
         .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData)
