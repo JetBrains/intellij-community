@@ -1,0 +1,7 @@
+<idea-plugin>
+  <resource-bundle>messages.ExternalProcessAuthHelperBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <httpRequestHandler implementation="com.intellij.externalProcessAuthHelper.NativeSshExternalProcessRest"/>
+  </extensions>
+</idea-plugin>

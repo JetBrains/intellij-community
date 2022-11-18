@@ -15,25 +15,26 @@ public class NativeSshAskPassApp implements ExternalApp {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     try {
-      String description;
-      if (args.length > 0) {
-        description = args[0];
-      }
-      else {
-        description = ""; // XML RPC doesn't like nulls
+      String handlerId = ExternalAppUtil.getEnv(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV);
+      int idePort = ExternalAppUtil.getEnvInt(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV);
+
+      String description = args.length > 0 ? args[0] : null;
+
+      ExternalAppUtil.Result result = ExternalAppUtil.sendIdeRequest(NativeSshAskPassAppHandler.ENTRY_POINT_NAME, idePort,
+                                                                     handlerId, description);
+
+      if (result.isError) {
+        System.err.println(result.error);
+        System.exit(1);
       }
 
-      String handlerNo = ExternalAppUtil.getEnv(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV);
-      int xmlRpcPort = ExternalAppUtil.getEnvInt(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV);
-
-      String response = ExternalAppUtil.sendXmlRequest(NativeSshAskPassAppHandler.RPC_METHOD_NAME, xmlRpcPort,
-                                                       handlerNo, description);
-      String passphrase = ExternalAppUtil.adjustNullFrom(response);
+      String passphrase = result.response;
       if (passphrase == null) {
         System.exit(1); // dialog canceled
       }
 
       System.out.println(passphrase);
+      System.exit(0);
     }
     catch (Throwable t) {
       System.err.println(t.getMessage());

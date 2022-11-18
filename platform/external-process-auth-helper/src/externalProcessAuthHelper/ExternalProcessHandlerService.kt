@@ -1,119 +1,89 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalProcessAuthHelper
 
-import com.intellij.ide.XmlRpcServer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.io.readUtf8
 import externalApp.ExternalApp
+import externalApp.ExternalAppHandler
+import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.BuiltInServerManager
+import org.jetbrains.ide.RestService
+import org.jetbrains.io.response
 import java.io.File
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.util.*
 
 /**
  * The provider of external application scripts called by Git when a remote operation needs communication with the user.
  *
  * Usage:
- *  * Get the script from [getScriptPath].
- *  * Set up proper environment variable (e.g. `GIT_SSH` for SSH connections, or `GIT_ASKPASS` for HTTP) pointing to the script.
- *  * [Register][registerHandler] the handler of Git requests.
- *  * Call Git operation.
- *  * If the operation requires user interaction, the registered handler is called via XML RPC protocol.
- *    It can show a dialog in the GUI and return the answer via XML RPC to the external application, that further provides
- *    this value to the Git process.
- *  * [Unregister][unregisterHandler] the handler after operation has completed.
- *
- * @param handlerName Returns the name of the handler to be used by XML RPC client to call remote methods of a proper object.
- * @param aClass      Main class of the external application invoked by Git,
- * which is able to handle its requests and pass to the main IDEA instance.
+ * - Register corresponding [ExternalProcessHandlerService] service and [ExternalProcessRest] extension in plugin.xml.
+ * - Get the script path from [getCallbackScriptPath] and IDE port from [getIdePort].
+ * - Register handler using [registerHandler].
+ * - Call external application, passing ENV from [ExternalAppHandler] pointing to the script and IDE port.
+ * - If the operation requests user interaction, the registered handler is called via [ExternalApp] and IDE Rest protocol.
+ * - Do the task (ex: show GUI dialog) and return the answer to the external application via [ExternalApp].
  */
-abstract class ExternalProcessHandlerService<T>(private val myScriptTempFilePrefix: @NonNls String,
-                                                private val myHandlerName: @NonNls String,
-                                                private val myScriptMainClass: Class<out ExternalApp?>) : Disposable {
-  private val myScriptPaths: MutableMap<String, File> = HashMap()
+abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
+  private val scriptNamePrefix: @NonNls String,
+  private val scriptMainClass: Class<out ExternalApp>
+) {
+  companion object {
+    private val LOG = logger<ExternalProcessHandlerService<*>>()
+  }
+
+  private val scriptPaths = HashMap<@NonNls String, File>()
   private val SCRIPT_FILE_LOCK = Any()
 
-  private val handlers: MutableMap<UUID, T?> = HashMap()
+  private val handlers = HashMap<UUID, T>()
   private val HANDLERS_LOCK = Any()
 
-  /**
-   * @return the port number for XML RCP
-   */
-  fun getXmlRcpPort(): Int {
-    return BuiltInServerManager.getInstance().waitForStart().port;
+  fun getIdePort(): Int {
+    return BuiltInServerManager.getInstance().waitForStart().port
   }
 
   /**
    * Get file to the script service
    *
    * @return path to the script
-   * @throws IOException if script cannot be generated
    */
   @Throws(IOException::class)
-  fun getScriptPath(scriptId: String, generator: ScriptGenerator, useBatchFile: Boolean): File {
+  fun getCallbackScriptPath(scriptId: String, generator: ScriptGenerator, useBatchFile: Boolean): File {
+    val id = scriptId + if (useBatchFile) "-bat" else "" //NON-NLS
+
     synchronized(SCRIPT_FILE_LOCK) {
-      val id = scriptId + if (useBatchFile) "-bat" else "" //NON-NLS
-      var scriptPath = myScriptPaths[id]
-      if (scriptPath == null || !scriptPath.exists()) {
-        val commandLine = generator.commandLine(myScriptMainClass, useBatchFile)
-        scriptPath = ScriptGeneratorUtil.createTempScript(commandLine, "$myScriptTempFilePrefix-$scriptId", useBatchFile)
-        myScriptPaths[id] = scriptPath
-      }
-      return scriptPath
+      val oldFile = scriptPaths[id]
+      if (oldFile != null && oldFile.exists()) return oldFile
+
+      val commandLine = generator.commandLine(scriptMainClass, useBatchFile)
+      val newFile = ScriptGeneratorUtil.createTempScript(commandLine, "$scriptNamePrefix-$scriptId", useBatchFile)
+      scriptPaths[id] = newFile
+      return newFile
     }
   }
 
-  /**
-   * Register handler. Note that handlers must be unregistered using [.unregisterHandler].
-   *
-   * @param handler a handler to register
-   * @return an identifier to pass to the environment variable
-   */
-  fun registerHandler(handler: T): UUID {
+  fun registerHandler(handler: T, disposable: Disposable): UUID {
+    val key: UUID
     synchronized(HANDLERS_LOCK) {
-      val xmlRpcServer = XmlRpcServer.getInstance()
-      if (!xmlRpcServer.hasHandler(myHandlerName)) {
-        xmlRpcServer.addHandler(myHandlerName, createRpcRequestHandlerDelegate())
-      }
-      val key = UUID.randomUUID()
+      key = UUID.randomUUID()
       handlers[key] = handler
-      return key
     }
-  }
 
-  override fun dispose() {
-    val xmlRpcServer = ApplicationManager.getApplication().getServiceIfCreated(XmlRpcServer::class.java)
-    xmlRpcServer?.removeHandler(myHandlerName)
-  }
-
-  /**
-   * Creates an implementation of the xml rpc handler, which methods will be called from the external application.
-   * This method should just delegate the call to the specific handler of type [T], which can be achieved by [.getHandler].
-   *
-   * @return New instance of the xml rpc handler delegate.
-   */
-  protected abstract fun createRpcRequestHandlerDelegate(): Any
-
-  /**
-   * Get handler for the key
-   *
-   * @param key the key to use
-   * @return the registered handler
-   */
-  protected fun getHandler(key: UUID): T {
-    synchronized(HANDLERS_LOCK) {
-      return handlers[key] ?: throw IllegalStateException("No handler for the key $key")
+    Disposer.register(disposable) {
+      unregisterHandler(key)
     }
+
+    return key
   }
 
-  /**
-   * Unregister handler by the key
-   *
-   * @param key the key to unregister
-   */
-  fun unregisterHandler(key: UUID) {
+  private fun unregisterHandler(key: UUID) {
     synchronized(HANDLERS_LOCK) {
       if (handlers.remove(key) == null) {
         LOG.error("The handler $key is not registered")
@@ -121,7 +91,43 @@ abstract class ExternalProcessHandlerService<T>(private val myScriptTempFilePref
     }
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(ExternalProcessHandlerService::class.java)
+  private fun getHandler(key: UUID): T {
+    synchronized(HANDLERS_LOCK) {
+      return handlers[key] ?: throw IllegalStateException("No handler for the key $key")
+    }
+  }
+
+  internal fun invokeHandler(key: UUID, requestBody: String): String? {
+    return handleRequest(getHandler(key), requestBody)
+  }
+
+  protected abstract fun handleRequest(handler: T, requestBody: String): String?
+}
+
+abstract class ExternalProcessRest<T : ExternalAppHandler>(
+  private val entryPointName: @NonNls String
+) : RestService() {
+  protected abstract val externalProcessHandler: ExternalProcessHandlerService<T>
+
+  override fun getServiceName(): String = entryPointName
+
+  override fun isMethodSupported(method: HttpMethod): Boolean {
+    return method === HttpMethod.POST
+  }
+
+  override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
+    val handlerId = urlDecoder.parameters()[ExternalAppHandler.HANDLER_ID_PARAMETER]?.singleOrNull() ?: return "Handler is not specified"
+    val uuid = UUID.fromString(handlerId)
+    val bodyContent = request.content().readUtf8()
+
+    val result = externalProcessHandler.invokeHandler(uuid, bodyContent)
+
+    if (result != null) {
+      sendResponse(request, context, response(result, StandardCharsets.UTF_8))
+    }
+    else {
+      sendOk(request, context)
+    }
+    return null
   }
 }

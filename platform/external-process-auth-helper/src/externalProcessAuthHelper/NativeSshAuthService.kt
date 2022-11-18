@@ -2,29 +2,27 @@
 package com.intellij.externalProcessAuthHelper
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.util.NlsSafe
-import externalApp.ExternalAppUtil
+import com.intellij.openapi.components.service
 import externalApp.nativessh.NativeSshAskPassApp
 import externalApp.nativessh.NativeSshAskPassAppHandler
-import org.jetbrains.annotations.NonNls
-import java.util.*
 
-@Service
-class NativeSshAuthService : ExternalProcessHandlerService<NativeSshAuthenticator>("intellij-ssh-askpass",
-                                                                                   NativeSshAskPassAppHandler.HANDLER_NAME,
-                                                                                   NativeSshAskPassApp::class.java) {
-  override fun createRpcRequestHandlerDelegate(): Any {
-    return InternalRequestHandler()
+@Service(Service.Level.APP)
+class NativeSshAuthService : ExternalProcessHandlerService<NativeSshAskPassAppHandler>(
+  "intellij-ssh-askpass",
+  NativeSshAskPassApp::class.java
+) {
+  companion object {
+    @JvmStatic
+    fun getInstance() = service<NativeSshAuthService>()
   }
 
-  /**
-   * Internal handler implementation class, do not use it.
-   */
-  inner class InternalRequestHandler : NativeSshAskPassAppHandler {
-    override fun handleInput(handlerNo: @NonNls String, description: @NlsSafe String): String {
-      val g = getHandler(UUID.fromString(handlerNo))
-      val answer = g.handleInput(description)
-      return ExternalAppUtil.adjustNullTo(answer)
-    }
+  override fun handleRequest(handler: NativeSshAskPassAppHandler, requestBody: String): String? {
+    return handler.handleInput(requestBody)
   }
+}
+
+class NativeSshExternalProcessRest : ExternalProcessRest<NativeSshAskPassAppHandler>(
+  NativeSshAskPassAppHandler.ENTRY_POINT_NAME
+) {
+  override val externalProcessHandler: ExternalProcessHandlerService<NativeSshAskPassAppHandler> get() = service<NativeSshAuthService>()
 }

@@ -5,8 +5,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import externalApp.ExternalApp;
-import org.apache.commons.codec.DecoderException;
-import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,8 +31,6 @@ public class ScriptGeneratorImpl implements ScriptGenerator {
     Set<File> jarPaths = new LinkedHashSet<>();
     addClasses(jarPaths, mainClass);
     addClasses(jarPaths, ExternalApp.class);
-    addClasses(jarPaths, XmlRpcClientLite.class);
-    addClasses(jarPaths, DecoderException.class);
 
     @NonNls StringBuilder cmd = new StringBuilder();
 

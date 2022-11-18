@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ssh.SSHUtil;
 import com.intellij.util.PathUtil;
+import externalApp.nativessh.NativeSshAskPassAppHandler;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import java.util.regex.Matcher;
 import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
 import static com.intellij.externalProcessAuthHelper.AuthenticationMode.FULL;
 
-public class NativeSshGuiAuthenticator implements NativeSshAuthenticator {
+public class NativeSshGuiAuthenticator implements NativeSshAskPassAppHandler {
   @NotNull private final Project myProject;
   @NotNull private final AuthenticationGate myAuthenticationGate;
   @NotNull private final AuthenticationMode myAuthenticationMode;

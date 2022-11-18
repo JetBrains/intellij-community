@@ -608,6 +608,9 @@
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl"/>
+    <httpRequestHandler implementation="git4idea.commands.GitAskPassExternalProcessRest"/>
+    <httpRequestHandler implementation="git4idea.rebase.GitRebaseEditorExternalProcessRest"/>
+
     <applicationService serviceImplementation="git4idea.config.SSHConnectionSettings"/>
     <applicationService serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"

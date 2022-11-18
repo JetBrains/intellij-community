@@ -42,7 +42,6 @@ import externalApp.ExternalAppUtil;
  */
 public class GitAskPassApp implements ExternalApp {
 
-  // STDOUT is used to provide credentials to Git process; STDERR is used to print error message to the main IDEA command line.
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     try {
@@ -50,12 +49,23 @@ public class GitAskPassApp implements ExternalApp {
         throw new IllegalArgumentException("No arguments specified!");
       }
 
-      String handlerNo = ExternalAppUtil.getEnv(GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV);
+      String handlerId = ExternalAppUtil.getEnv(GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV);
       int xmlRpcPort = ExternalAppUtil.getEnvInt(GitAskPassAppHandler.IJ_ASK_PASS_PORT_ENV);
 
-      String ans = ExternalAppUtil.sendXmlRequest(GitAskPassAppHandler.RPC_METHOD_NAME, xmlRpcPort,
-                                                  handlerNo, args[0]);
-      System.out.println(ans);
+      String description = args[0];
+
+      ExternalAppUtil.Result result = ExternalAppUtil.sendIdeRequest(GitAskPassAppHandler.ENTRY_POINT_NAME, xmlRpcPort,
+                                                                     handlerId, description);
+      if (result.isError) {
+        System.err.println(result.error);
+        System.exit(1);
+      }
+
+      String ans = result.response;
+      if (ans != null) {
+        System.out.println(ans);
+      }
+      System.exit(0);
     }
     catch (Throwable t) {
       System.err.println(t.getMessage());

@@ -2,28 +2,25 @@
 package externalApp.nativessh;
 
 import externalApp.ExternalAppHandler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * This handler is called via XML RPC from {@link NativeSshAskPassApp} when ssh requests user credentials.
+ * This handler is called by {@link NativeSshAskPassApp} when ssh requests user credentials.
  */
 public interface NativeSshAskPassAppHandler extends ExternalAppHandler {
 
-  String IJ_SSH_ASK_PASS_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
-  String IJ_SSH_ASK_PASS_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";
-  String HANDLER_NAME = NativeSshAskPassAppHandler.class.getName();
-  String RPC_METHOD_NAME = HANDLER_NAME + ".handleInput";
+  @NonNls String IJ_SSH_ASK_PASS_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
+  @NonNls String IJ_SSH_ASK_PASS_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";
+  @NonNls String ENTRY_POINT_NAME = "askPass";
 
   /**
    * Get the answer for interactive input request from ssh.
    *
-   * @param handlerNo   Handler uuid passed via {@link #IJ_SSH_ASK_PASS_HANDLER_ENV}
    * @param description Key description specified by ssh, or empty string if description is not available
    * @return passphrase or null if prompt was canceled
-   * <p>
-   * Return value should be wrapped using {@link externalApp.ExternalAppUtil#adjustNullTo}
    */
-  @NotNull
-  @SuppressWarnings("unused")
-  String handleInput(@NotNull String handlerNo, @NotNull String description);
+  @Nullable
+  String handleInput(@NotNull String description);
 }

@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GitRebaseEditorAppHandler extends ExternalAppHandler {
 
-  @NonNls String IJ_EDITOR_HANDLER_ENV = "IDEA_REBASE_HANDER_NO";
-  @NonNls String HANDLER_NAME = GitRebaseEditorAppHandler.class.getName();
-  String RPC_METHOD_NAME = HANDLER_NAME + ".editCommits";
+  @NonNls String IJ_EDITOR_HANDLER_ENV = "INTELLIJ_REBASE_HANDER_NO";
+  @NonNls String IJ_EDITOR_PORT_ENV = "INTELLIJ_REBASE_HANDER_PORT";
+  @NonNls String ENTRY_POINT_NAME = "gitEditor";
 
   /**
    * The exit code used to indicate that editing was canceled or has failed in some other way.
@@ -21,13 +21,11 @@ public interface GitRebaseEditorAppHandler extends ExternalAppHandler {
   int ERROR_EXIT_CODE = 2;
 
   /**
-   * Get the answer for interactive input request from ssh
+   * Get the answer for interactive input request from git
    *
-   * @param handlerNo  Handler uuid passed via {@link #IJ_EDITOR_HANDLER_ENV}
-   * @param path       Path to output file. Handler should save user input into it.
+   * @param path       Path to the output file. Handler should save user input into it.
    * @param workingDir Path to a working directory, as <code>path</code> can be relative.
    * @return Exit code
    */
-  @SuppressWarnings("UnusedDeclaration")
-  int editCommits(@NotNull String handlerNo, @NotNull String path, @NotNull String workingDir);
+  int editCommits(@NotNull String path, @NotNull String workingDir);
 }

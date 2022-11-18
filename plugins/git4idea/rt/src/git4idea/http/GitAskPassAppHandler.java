@@ -16,26 +16,24 @@
 package git4idea.http;
 
 import externalApp.ExternalAppHandler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This handler is called via XML RPC from {@link GitAskPassApp} when Git requests user credentials.
+ * This handler is called by {@link GitAskPassApp} when Git requests user credentials.
  */
 public interface GitAskPassAppHandler extends ExternalAppHandler {
 
-  String IJ_ASK_PASS_HANDLER_ENV = "GIT_ASKPASS_HANDLER";
-  String IJ_ASK_PASS_PORT_ENV = "GIT_ASKPASS_PORT";
-  String HANDLER_NAME = GitAskPassAppHandler.class.getName();
-  String RPC_METHOD_NAME = HANDLER_NAME + ".handleInput";
+  @NonNls String IJ_ASK_PASS_HANDLER_ENV = "INTELLIJ_GIT_ASKPASS_HANDLER";
+  @NonNls String IJ_ASK_PASS_PORT_ENV = "INTELLIJ_GIT_ASKPASS_PORT";
+  @NonNls String ENTRY_POINT_NAME = "gitAskPass";
 
   /**
    * Get the answer for interactive input request from git.
    *
-   * @param handlerNo Handler uuid passed via {@link #IJ_ASK_PASS_HANDLER_ENV}
-   * @param arg       Argument of input script.
+   * @param arg Argument of the input script
    * @return user input
    */
-  @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  String handleInput(@NotNull String handlerNo, @NotNull String arg);
+  String handleInput(@NotNull String arg);
 }
