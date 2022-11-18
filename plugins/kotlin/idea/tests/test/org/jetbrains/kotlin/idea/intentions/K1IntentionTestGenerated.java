@@ -10708,6 +10708,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/importAllMembers/EnumSyntheticMethods3.kt");
         }
 
+        @TestMetadata("EnumSyntheticMethods4.kt")
+        public void testEnumSyntheticMethods4() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods4.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods5.kt")
+        public void testEnumSyntheticMethods5() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods5.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods6.kt")
+        public void testEnumSyntheticMethods6() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods6.kt");
+        }
+
         @TestMetadata("ImportAllMembersInImport.kt")
         public void testImportAllMembersInImport() throws Exception {
             runTest("testData/intentions/importAllMembers/ImportAllMembersInImport.kt");

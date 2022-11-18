@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
@@ -23,7 +24,9 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -59,6 +62,9 @@ internal class ImportAllMembersIntention :
             return null
         }
         if (element.getQualifiedExpressionForReceiver()?.isEnumSyntheticMethodCall(target) == true) return null
+        with (this@KtAnalysisSession) {
+            if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
+        }
 
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
@@ -127,10 +133,17 @@ private fun KtAnalysisSession.isReferenceToObjectMemberOrUnresolved(qualifiedAcc
 
 private val enumSyntheticMethodNames = setOf("values", "valueOf")
 
-private fun KtClassOrObjectSymbol.isEnum(): Boolean = classKind == KtClassKind.ENUM_CLASS
+private fun KtDeclarationSymbol.isEnum(): Boolean = safeAs<KtClassOrObjectSymbol>()?.classKind == KtClassKind.ENUM_CLASS
 
 private fun KtCallableSymbol.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && callableIdIfNonLocal?.callableName?.asString() in enumSyntheticMethodNames
 
 private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && callExpression?.calleeExpression?.text in enumSyntheticMethodNames
+
+context(KtAnalysisSession)
+private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = anyDescendantOfType<KtCallExpression> { call ->
+    call.getQualifiedExpressionForSelector() == null &&
+            call.calleeExpression?.text in enumSyntheticMethodNames &&
+            call.resolveCall().singleFunctionCallOrNull()?.symbol?.psiSafe<KtClass>()?.isEnum() == true
+}
