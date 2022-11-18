@@ -36,6 +36,7 @@ class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQ
             newDeclaration
         } else copyDeclaration
         copyDeclarationInCompanion.addAnnotation(JVM_STATIC_FQ_NAME)
+        CodeStyleManager.getInstance(declaration.project).reformat(copyDeclarationInCompanion, true)
         return IntentionPreviewInfo.DIFF
     }
 
