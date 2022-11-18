@@ -81,6 +81,11 @@ fn prepare_test_env_impl(layout_kind: &LayoutSpec) -> Result<TestEnvironment> {
         test_root_dir: temp_dir
     };
 
+    // clean environment variables
+    env::remove_var("IU_JDK");
+    env::remove_var("JDK_HOME");
+    env::remove_var("JAVA_HOME");
+
     Ok(result)
 }
 
