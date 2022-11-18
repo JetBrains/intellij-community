@@ -10,6 +10,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -240,17 +241,19 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
       if (accessLevel != PsiUtil.getAccessLevel(modifierList)) {
         final List<PsiModifierList> modifierLists = new ArrayList<>();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          OverridingMethodsSearch.search(method, method.getResolveScope(), true).forEach(
-            new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
-              @Override
-              public boolean execute(@NotNull PsiMethod inheritor) {
-                PsiModifierList list = inheritor.getModifierList();
-                if (BaseIntentionAction.canModify(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
-                  modifierLists.add(list);
+          ReadAction.run(() -> {
+            OverridingMethodsSearch.search(method, method.getResolveScope(), true).forEach(
+              new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
+                @Override
+                public boolean execute(@NotNull PsiMethod inheritor) {
+                  PsiModifierList list = inheritor.getModifierList();
+                  if (BaseIntentionAction.canModify(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
+                    modifierLists.add(list);
+                  }
+                  return true;
                 }
-                return true;
-              }
-            }));
+              }));
+          });
         }, JavaBundle.message("psi.search.overriding.progress"), true, project);
         if (!modifierLists.isEmpty() && Messages.showYesNoDialog(project,
                                                                  QuickFixBundle.message("change.inheritors.visibility.warning.text"),
