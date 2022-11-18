@@ -39,7 +39,7 @@ public class ElementStatusTrackerImpl implements ElementStatusTracker {
     if (ranges == null || ranges.isEmpty()) return FileStatus.NOT_CHANGED;
     if (ranges.size() == 1) {
       Range r = ranges.get(0);
-      if (r.getType() == Range.INSERTED && r.getLine1() <= start && r.getLine2() >= end) {
+      if (r.getType() == Range.INSERTED && r.getLine1() <= start && r.getLine2() > end) {
         return FileStatus.ADDED;
       }
     }
