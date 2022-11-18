@@ -88,6 +88,7 @@ interface RowBuilder : BaseBuilder {
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun noteRow(@Nls text: String, linkHandler: ((url: String) -> Unit)? = null) {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
@@ -115,8 +116,10 @@ abstract class Row : Cell(), RowBuilder {
 
   abstract var visible: Boolean
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowsEnabled: Boolean
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowsVisible: Boolean
 
   /**
@@ -143,6 +146,7 @@ abstract class Row : Cell(), RowBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   internal abstract fun alignRight()
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun largeGapAfter()
 
   /**
@@ -163,6 +167,7 @@ abstract class Row : Cell(), RowBuilder {
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 enum class GrowPolicy {
   SHORT_TEXT, MEDIUM_TEXT
 }

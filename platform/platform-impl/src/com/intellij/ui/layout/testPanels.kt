@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
 import java.awt.GridLayout
 import javax.swing.*
@@ -51,44 +50,6 @@ fun visualPaddingsPanelOnlyLabeledScrollPane(): JPanel {
 fun visualPaddingsPanelOnlyTextField(): JPanel {
   return panel {
     row("Text field:") { JTextField("text")() }
-  }
-}
-
-fun fieldWithGear(): JPanel {
-  return panel {
-    row("Database:") {
-      JTextField()()
-      gearButton()
-    }
-    row("Master Password:") {
-      JBPasswordField()()
-    }
-  }
-}
-
-fun fieldWithGearWithIndent(): JPanel {
-  return panel {
-    row {
-      row("Database:") {
-        JTextField()()
-        gearButton()
-      }
-      row("Master Password:") {
-        JBPasswordField()()
-      }
-    }
-  }
-}
-
-fun noteRowInTheDialog(): JPanel {
-  val passwordField = JPasswordField()
-  return panel {
-    noteRow("Profiler requires access to the kernel-level API.\nEnter the sudo password to allow this. ")
-    row("Sudo password:") { passwordField() }
-    row { CheckBox(UIBundle.message("auth.remember.cb"), true)() }
-    noteRow("Should be an empty row above as a gap. <a href=''>Click me</a>.") {
-      System.out.println("Hello")
-    }
   }
 }
 

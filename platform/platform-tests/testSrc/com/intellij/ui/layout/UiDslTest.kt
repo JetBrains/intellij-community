@@ -36,21 +36,6 @@ abstract class UiDslTest {
   }
 
   @Test
-  fun `field with gear`() {
-    doTest { fieldWithGear() }
-  }
-
-  @Test
-  fun `field with gear with indent`() {
-    doTest { fieldWithGearWithIndent() }
-  }
-
-  @Test
-  fun `note row in the dialog`() {
-    doTest { noteRowInTheDialog() }
-  }
-
-  @Test
   fun `titled row`() {
     doTest { titledRow() }
   }
