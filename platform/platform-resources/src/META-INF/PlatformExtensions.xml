@@ -701,6 +701,12 @@
                          id="backspace.for.selection" order="after backspace.lookup"/>
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
                          id="delete.in.column.mode"/>
+    <editorActionHandler
+      action="EditorDeleteLine"
+      implementationClass="com.intellij.openapi.editor.actions.DeleteLineAction$CheсkHandler"
+      order="first"
+      id="EditorDeleteLine.checkHandler"
+    />
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
                  description="Allows to restore the legacy behavior of Up/Down w.r.t. selection boundaries.\n\
