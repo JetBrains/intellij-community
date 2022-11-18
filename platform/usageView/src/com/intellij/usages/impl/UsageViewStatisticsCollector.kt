@@ -35,7 +35,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 11)
+    val GROUP = EventLogGroup("usage.view", 12)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
@@ -47,9 +47,9 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
         get() = listOf("{regexp#integer}")
     }
     private val REFERENCE_CLASS = EventFields.Class("reference_class")
-    private val USAGE_SHOWN = GROUP.registerEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language)
-    private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
     private val UI_LOCATION = EventFields.Enum("ui_location", CodeNavigateSource::class.java)
+    private val USAGE_SHOWN = GROUP.registerVarargEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language, UI_LOCATION)
+    private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
 
     private val itemChosen = GROUP.registerEvent("item.chosen", USAGE_VIEW, UI_LOCATION, EventFields.Language)
 
@@ -106,8 +106,10 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logUsageShown(project: Project?, referenceClass: Class<out Any>, language: Language?, usageView:UsageView) {
-      USAGE_SHOWN.log(project, usageView, referenceClass, language)
+    fun logUsageShown(project: Project?, referenceClass: Class<out Any>, language: Language?, usageView: UsageView) {
+      USAGE_SHOWN.log(project, USAGE_VIEW.with(usageView), REFERENCE_CLASS.with(referenceClass), EventFields.Language.with(language),
+                      UI_LOCATION.with(
+                        if (usageView.presentation.isDetachedMode) CodeNavigateSource.ShowUsagesPopup else CodeNavigateSource.FindToolWindow))
     }
 
     @JvmStatic
