@@ -144,12 +144,12 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
 
   /**
-   * @param openIcon the open icon for the node.
+   * @param ignoredOpenIcon ignored
    * @deprecated Different icons for open/closed no longer supported. This function is no op.
    *             Sets the icon shown for the node when it is expanded in the tree.
    */
   @Deprecated(forRemoval = true)
-  public void setOpenIcon(Icon openIcon) {
+  public void setOpenIcon(Icon ignoredOpenIcon) {
   }
 
   /**
@@ -258,6 +258,12 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   @Override
   public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null || obj.getClass() != getClass()) {
+      return false;
+    }
     return ComparableObjectCheck.equals(this, obj);
   }
 
