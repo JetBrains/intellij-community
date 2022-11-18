@@ -277,6 +277,14 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
       }
       myComputation.reset();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      AsyncComputation that = (AsyncComputation)o;
+      return myProject.equals(that.myProject);
+    }
   }
 
   private PsiFile getPsiFile() {
