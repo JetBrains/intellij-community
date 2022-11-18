@@ -141,7 +141,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * False means file is not executable, but true means it is executable or we do not know.
+   * False means file is not executable, but true means it is executable, or we do not know.
    *
    * @param fullPath full path on target
    */
@@ -152,6 +152,9 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     }
     if (targetEnvConfig instanceof TargetConfigurationReadableFs) {
       var fileInfo = ((TargetConfigurationReadableFs)targetEnvConfig).getPathInfo(fullPath);
+      if (fileInfo instanceof PathInfo.Unknown) {
+        return true; // We can't be sure if file is executable or not
+      }
       return (fileInfo instanceof PathInfo.RegularFile) && (((PathInfo.RegularFile)fileInfo).getExecutable());
     }
     // We can't be sure if file is executable or not
