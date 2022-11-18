@@ -107,6 +107,22 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
         saveDiff(relativeFilePath, path1, path2)
         AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
       }
+      "exe" -> {
+        if (is7zAvailable) {
+          assertTheSameDirectoryContent(
+            path1.extractExe(path1.unpackingDir()),
+            path2.extractExe(path2.unpackingDir()),
+            deleteBothAfterwards = true
+          ).error ?: run {
+            saveDiff(relativeFilePath, path1, path2)
+            AssertionError("No difference in $relativeFilePath content.")
+          }
+        }
+        else {
+          println("7z should be installed to compare content of .exe, skipping")
+          compareChecksum(relativeFilePath, path1, path2)
+        }
+      }
       "dmg" -> {
         println(".dmg cannot be built reproducibly, content comparison is required")
         if (SystemInfo.isMac) {
@@ -135,11 +151,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
           null
         }
       }
-      else -> if (path1.checksum() != path2.checksum()) {
-        saveDiff(relativeFilePath, path1, path2)
-        AssertionError("Checksum mismatch for $relativeFilePath")
-      }
-      else null
+      else -> compareChecksum(relativeFilePath, path1, path2)
     }
     if (path1.permissions() != path2.permissions()) {
       val permError = AssertionError("Permissions mismatch for $relativeFilePath: ${path1.permissions()} vs ${path2.permissions()}")
@@ -147,6 +159,13 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     }
     return contentError
   }
+
+  private fun compareChecksum(relativeFilePath: String, path1: Path, path2: Path): AssertionError? =
+    if (path1.checksum() != path2.checksum()) {
+      saveDiff(relativeFilePath, path1, path2)
+      AssertionError("Checksum mismatch for $relativeFilePath")
+    }
+    else null
 
   private fun saveDiff(relativePath: String, file1: Path, file2: Path) {
     fun fileIn(subdir: String, path: String = relativePath) =
@@ -231,6 +250,11 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
 
   private fun Path.unSquash(target: Path): Path {
     process("unsquashfs", "$this", workDir = target)
+    return target
+  }
+
+  private fun Path.extractExe(target: Path): Path {
+    process("7z", "x", "-bd", "$this", workDir = target)
     return target
   }
 
