@@ -189,6 +189,20 @@
       "yarn.svg": "icons/nodejs/yarn.svg"
     },
     "general": {
+      "inspections": {
+        "inspectionsError.svg": "icons/general/inspectionsError.svg",
+        "inspectionsErrorEmpty.svg": "icons/general/inspectionsErrorEmpty.svg",
+        "inspectionsEye.svg": "icons/general/inspectionsEye.svg",
+        "inspectionsMixed.svg": "icons/general/inspectionsMixed.svg",
+        "inspectionsOK.svg": "icons/general/inspectionsOK.svg",
+        "inspectionsOKEmpty.svg": "icons/general/inspectionsOKEmpty.svg",
+        "inspectionsPause.svg": "icons/general/inspectionsPause.svg",
+        "inspectionsPowerSaveMode.svg": "icons/general/inspectionsPowerSaveMode.svg",
+        "inspectionsTrafficOff.svg": "icons/general/inspectionsTrafficOff.svg",
+        "inspectionsTypos.svg": "icons/general/inspectionsTypos.svg",
+        "inspectionsWarning.svg": "icons/general/inspectionsWarning.svg",
+        "inspectionsWarningEmpty.svg": "icons/general/inspectionsWarningEmpty.svg"
+      },
       "add.svg": [
         "general/add.svg",
         "actions/AddMulticaret.svg"
