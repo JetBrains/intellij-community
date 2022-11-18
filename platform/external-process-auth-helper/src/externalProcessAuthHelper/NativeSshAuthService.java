@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.NlsSafe;
 import externalApp.ExternalAppUtil;
 import externalApp.nativessh.NativeSshAskPassApp;
-import externalApp.nativessh.NativeSshAskPassXmlRpcHandler;
+import externalApp.nativessh.NativeSshAskPassAppHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +14,7 @@ import java.util.UUID;
 @Service
 public final class NativeSshAuthService extends ExternalProcessHandlerService<NativeSshAuthenticator> {
   private NativeSshAuthService() {
-    super("intellij-ssh-askpass", NativeSshAskPassXmlRpcHandler.HANDLER_NAME, NativeSshAskPassApp.class);
+    super("intellij-ssh-askpass", NativeSshAskPassAppHandler.HANDLER_NAME, NativeSshAskPassApp.class);
   }
 
   @NotNull
@@ -26,7 +26,7 @@ public final class NativeSshAuthService extends ExternalProcessHandlerService<Na
   /**
    * Internal handler implementation class, do not use it.
    */
-  public class InternalRequestHandler implements NativeSshAskPassXmlRpcHandler {
+  public class InternalRequestHandler implements NativeSshAskPassAppHandler {
     @NotNull
     @Override
     public String handleInput(@NotNull @NonNls String handlerNo, @NotNull @NlsSafe String description) {

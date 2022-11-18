@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import git4idea.http.GitAskPassApp;
-import git4idea.http.GitAskPassXmlRpcHandler;
+import git4idea.http.GitAskPassAppHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -37,7 +37,7 @@ import java.util.UUID;
 public abstract class GitHttpAuthService extends ExternalProcessHandlerService<GitHttpAuthenticator> {
 
   protected GitHttpAuthService() {
-    super("intellij-git-askpass", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);
+    super("intellij-git-askpass", GitAskPassAppHandler.HANDLER_NAME, GitAskPassApp.class);
   }
 
   @NotNull
@@ -59,7 +59,7 @@ public abstract class GitHttpAuthService extends ExternalProcessHandlerService<G
   /**
    * Internal handler implementation class, it is made public to be accessible via XML RPC.
    */
-  public class InternalRequestHandlerDelegate implements GitAskPassXmlRpcHandler {
+  public class InternalRequestHandlerDelegate implements GitAskPassAppHandler {
     @Override
     public @NotNull String handleInput(@NotNull String handlerNo, @NotNull String arg) {
       GitHttpAuthenticator handler = getHandler(UUID.fromString(handlerNo));

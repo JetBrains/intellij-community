@@ -50,10 +50,10 @@ public class GitAskPassApp implements ExternalApp {
         throw new IllegalArgumentException("No arguments specified!");
       }
 
-      String handlerNo = ExternalAppUtil.getEnv(GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV);
-      int xmlRpcPort = ExternalAppUtil.getEnvInt(GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV);
+      String handlerNo = ExternalAppUtil.getEnv(GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV);
+      int xmlRpcPort = ExternalAppUtil.getEnvInt(GitAskPassAppHandler.IJ_ASK_PASS_PORT_ENV);
 
-      String ans = ExternalAppUtil.sendXmlRequest(GitAskPassXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
+      String ans = ExternalAppUtil.sendXmlRequest(GitAskPassAppHandler.RPC_METHOD_NAME, xmlRpcPort,
                                                   handlerNo, args[0]);
       System.out.println(ans);
     }

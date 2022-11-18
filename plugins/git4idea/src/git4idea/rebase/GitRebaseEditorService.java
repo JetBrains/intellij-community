@@ -10,7 +10,7 @@ import git4idea.commands.GitHandler;
 import git4idea.commands.GitScriptGenerator;
 import git4idea.config.GitExecutable;
 import git4idea.editor.GitRebaseEditorApp;
-import git4idea.editor.GitRebaseEditorXmlRpcHandler;
+import git4idea.editor.GitRebaseEditorAppHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManager;
 
@@ -51,8 +51,8 @@ public final class GitRebaseEditorService implements Disposable {
 
   private void addInternalHandler() {
     XmlRpcServer xmlRpcServer = XmlRpcServer.getInstance();
-    if (!xmlRpcServer.hasHandler(GitRebaseEditorXmlRpcHandler.HANDLER_NAME)) {
-      xmlRpcServer.addHandler(GitRebaseEditorXmlRpcHandler.HANDLER_NAME, new InternalHandlerRebase());
+    if (!xmlRpcServer.hasHandler(GitRebaseEditorAppHandler.HANDLER_NAME)) {
+      xmlRpcServer.addHandler(GitRebaseEditorAppHandler.HANDLER_NAME, new InternalHandlerRebase());
     }
   }
 
@@ -60,7 +60,7 @@ public final class GitRebaseEditorService implements Disposable {
   public void dispose() {
     XmlRpcServer xmlRpcServer = ApplicationManager.getApplication().getServiceIfCreated(XmlRpcServer.class);
     if (xmlRpcServer != null) {
-      xmlRpcServer.removeHandler(GitRebaseEditorXmlRpcHandler.HANDLER_NAME);
+      xmlRpcServer.removeHandler(GitRebaseEditorAppHandler.HANDLER_NAME);
     }
   }
 
@@ -127,7 +127,7 @@ public final class GitRebaseEditorService implements Disposable {
   /**
    * The internal xml rcp handler
    */
-  public class InternalHandlerRebase implements GitRebaseEditorXmlRpcHandler {
+  public class InternalHandlerRebase implements GitRebaseEditorAppHandler {
     @Override
     @SuppressWarnings("UnusedDeclaration")
     public int editCommits(@NotNull String handlerNo, @NotNull String path, @NotNull String workingDir) {

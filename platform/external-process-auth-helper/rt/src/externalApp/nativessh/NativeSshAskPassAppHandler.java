@@ -1,16 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package externalApp.nativessh;
 
+import externalApp.ExternalAppHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * This handler is called via XML RPC from {@link NativeSshAskPassApp} when ssh requests user credentials.
  */
-public interface NativeSshAskPassXmlRpcHandler {
+public interface NativeSshAskPassAppHandler extends ExternalAppHandler {
 
   String IJ_SSH_ASK_PASS_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
   String IJ_SSH_ASK_PASS_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";
-  String HANDLER_NAME = NativeSshAskPassXmlRpcHandler.class.getName();
+  String HANDLER_NAME = NativeSshAskPassAppHandler.class.getName();
   String RPC_METHOD_NAME = HANDLER_NAME + ".handleInput";
 
   /**

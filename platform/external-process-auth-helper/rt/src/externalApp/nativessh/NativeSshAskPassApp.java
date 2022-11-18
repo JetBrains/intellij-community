@@ -23,10 +23,10 @@ public class NativeSshAskPassApp implements ExternalApp {
         description = ""; // XML RPC doesn't like nulls
       }
 
-      String handlerNo = ExternalAppUtil.getEnv(NativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV);
-      int xmlRpcPort = ExternalAppUtil.getEnvInt(NativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV);
+      String handlerNo = ExternalAppUtil.getEnv(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV);
+      int xmlRpcPort = ExternalAppUtil.getEnvInt(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV);
 
-      String response = ExternalAppUtil.sendXmlRequest(NativeSshAskPassXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
+      String response = ExternalAppUtil.sendXmlRequest(NativeSshAskPassAppHandler.RPC_METHOD_NAME, xmlRpcPort,
                                                        handlerNo, description);
       String passphrase = ExternalAppUtil.adjustNullFrom(response);
       if (passphrase == null) {

@@ -7,8 +7,8 @@ import externalApp.ExternalAppUtil;
 import java.io.File;
 import java.util.Arrays;
 
-import static git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
-import static git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV;
+import static git4idea.editor.GitRebaseEditorAppHandler.ERROR_EXIT_CODE;
+import static git4idea.editor.GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV;
 
 /**
  * The rebase editor application, this editor is invoked by the git.
@@ -39,7 +39,7 @@ public class GitRebaseEditorApp implements ExternalApp {
 
       String handlerNo = ExternalAppUtil.getEnv(IJ_EDITOR_HANDLER_ENV);
 
-      Integer response = ExternalAppUtil.sendXmlRequest(GitRebaseEditorXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
+      Integer response = ExternalAppUtil.sendXmlRequest(GitRebaseEditorAppHandler.RPC_METHOD_NAME, xmlRpcPort,
                                                         handlerNo, args[1], new File("").getAbsolutePath());
       int exitCode = response != null ? response.intValue() : ERROR_EXIT_CODE;
 

@@ -15,16 +15,17 @@
  */
 package git4idea.http;
 
+import externalApp.ExternalAppHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * This handler is called via XML RPC from {@link GitAskPassApp} when Git requests user credentials.
  */
-public interface GitAskPassXmlRpcHandler {
+public interface GitAskPassAppHandler extends ExternalAppHandler {
 
   String IJ_ASK_PASS_HANDLER_ENV = "GIT_ASKPASS_HANDLER";
   String IJ_ASK_PASS_PORT_ENV = "GIT_ASKPASS_PORT";
-  String HANDLER_NAME = GitAskPassXmlRpcHandler.class.getName();
+  String HANDLER_NAME = GitAskPassAppHandler.class.getName();
   String RPC_METHOD_NAME = HANDLER_NAME + ".handleInput";
 
   /**

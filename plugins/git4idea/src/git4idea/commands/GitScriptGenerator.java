@@ -5,10 +5,10 @@ import com.intellij.externalProcessAuthHelper.ScriptGeneratorImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import externalApp.ExternalApp;
-import externalApp.nativessh.NativeSshAskPassXmlRpcHandler;
+import externalApp.nativessh.NativeSshAskPassAppHandler;
 import git4idea.config.GitExecutable;
-import git4idea.editor.GitRebaseEditorXmlRpcHandler;
-import git4idea.http.GitAskPassXmlRpcHandler;
+import git4idea.editor.GitRebaseEditorAppHandler;
+import git4idea.http.GitAskPassAppHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -38,11 +38,11 @@ public class GitScriptGenerator extends ScriptGeneratorImpl {
       // pass ENV variables from git to java command
       StringBuilder sb = new StringBuilder();
       List<String> envs = ContainerUtil.newArrayList(
-        NativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV,
-        NativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV,
-        GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV,
-        GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV,
-        GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV);
+        NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV,
+        NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV,
+        GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV,
+        GitAskPassAppHandler.IJ_ASK_PASS_PORT_ENV,
+        GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV);
       sb.append("export WSLENV=");
       sb.append(StringUtil.join(envs, it -> it + "/w", ":"));
       sb.append("\n");
