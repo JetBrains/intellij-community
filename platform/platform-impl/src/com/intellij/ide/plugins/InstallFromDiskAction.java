@@ -99,7 +99,7 @@ class InstallFromDiskAction extends DumbAwareAction {
                                @Nullable Project project) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       PluginInstaller.installFromDisk(myTableModel, myPluginEnabler, file, myParentComponent, callbackData -> {
-        ApplicationManager.getApplication().invokeLater(() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           onPluginInstalledFromDisk(callbackData, project);
         });
       });
