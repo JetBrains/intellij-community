@@ -40,7 +40,7 @@ public class GitRebaseEditorApp implements ExternalApp {
       String handlerNo = ExternalAppUtil.getEnv(IJ_EDITOR_HANDLER_ENV);
 
       Integer response = ExternalAppUtil.sendXmlRequest(GitRebaseEditorXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
-                                                   handlerNo, args[1], new File("").getAbsolutePath());
+                                                        handlerNo, args[1], new File("").getAbsolutePath());
       int exitCode = response != null ? response.intValue() : ERROR_EXIT_CODE;
 
       System.exit(exitCode);

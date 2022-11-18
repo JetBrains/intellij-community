@@ -54,7 +54,7 @@ public class GitAskPassApp implements ExternalApp {
       int xmlRpcPort = ExternalAppUtil.getEnvInt(GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV);
 
       String ans = ExternalAppUtil.sendXmlRequest(GitAskPassXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
-                                             handlerNo, args[0]);
+                                                  handlerNo, args[0]);
       System.out.println(ans);
     }
     catch (Throwable t) {

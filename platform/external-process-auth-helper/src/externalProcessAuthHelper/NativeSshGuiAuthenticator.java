@@ -48,7 +48,7 @@ public class NativeSshGuiAuthenticator implements NativeSshAuthenticator {
   @Nullable
   @Override
   public String handleInput(@NotNull @NlsSafe String description) {
-    if(myAuthenticationMode == AuthenticationMode.NONE) return null;
+    if (myAuthenticationMode == AuthenticationMode.NONE) return null;
     return myAuthenticationGate.waitAndCompute(() -> {
       if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
       if (isSshPassword(description)) return askSshPasswordInput(description);
@@ -142,7 +142,11 @@ public class NativeSshGuiAuthenticator implements NativeSshAuthenticator {
 
   @Nullable
   private String askGenericInput(@NotNull @Nls String description) {
-    return askUser(() -> Messages.showPasswordDialog(myProject, description, ExternalProcessAuthHelperBundle.message("ssh.keyboard.interactive.title"), null));
+    return askUser(() -> {
+      return Messages.showPasswordDialog(myProject, description,
+                                         ExternalProcessAuthHelperBundle.message("ssh.keyboard.interactive.title"),
+                                         null);
+    });
   }
 
   @Nullable
@@ -170,7 +174,8 @@ public class NativeSshGuiAuthenticator implements NativeSshAuthenticator {
     if (authenticationMode == AuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project,
                                               ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"),
-                                              ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
+                                              ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message",
+                                                                                      PathUtil.getFileName(keyPath)),
                                               newAttributes, true);
   }
 
@@ -196,11 +201,13 @@ public class NativeSshGuiAuthenticator implements NativeSshAuthenticator {
 
   @NotNull
   private static CredentialAttributes passphraseCredentialAttributes(@NotNull @Nls String key) {
-    return new CredentialAttributes(generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase"), key), key);
+    String serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase"), key);
+    return new CredentialAttributes(serviceName, key);
   }
 
   @NotNull
   private static CredentialAttributes passwordCredentialAttributes(@NotNull @Nls String key) {
-    return new CredentialAttributes(generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password"), key), key);
+    String serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password"), key);
+    return new CredentialAttributes(serviceName, key);
   }
 }
