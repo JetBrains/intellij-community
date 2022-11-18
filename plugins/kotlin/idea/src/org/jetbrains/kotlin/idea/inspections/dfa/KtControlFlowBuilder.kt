@@ -1666,6 +1666,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
         }
         return if (result is DfReferenceType)
+            // Convert Java to Kotlin types if necessary
             result.dropTypeConstraint().meet(result.constraint.convert(KtClassDef.typeConstraintFactory(typeReference)).asDfType())
         else
             result
