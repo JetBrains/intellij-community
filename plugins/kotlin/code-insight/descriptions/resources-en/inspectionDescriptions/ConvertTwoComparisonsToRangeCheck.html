@@ -8,7 +8,7 @@ Reports two consecutive comparisons that can be converted to a range check.
       return month >= 1 && month &lt;= 12
   }
 </code></pre>
-<p>A quick-fix replaces the comparison-based check with a range one:</p>
+<p>The quick-fix replaces the comparison-based check with a range one:</p>
 <pre><code>
   fun checkMonth(month: Int): Boolean {
       return month in 1..12
