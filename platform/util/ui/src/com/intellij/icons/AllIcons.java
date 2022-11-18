@@ -527,7 +527,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Show_to_implement = load("general/show_to_implement.svg", 529160888, 7);
     /** 16x16 */ public static final @NotNull Icon ShowInfos = load("general/showInfos.svg", -952216238, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWarning = load("general/showWarning.svg", -1042271256, 2);
-    /** 48x48 */ public static final @NotNull Icon SuccessDialog = load("general/successDialog.svg", -97855675, 0);
+    /** 32x32 */ public static final @NotNull Icon SuccessDialog = load("general/successDialog.svg", 1499479, 0);
     /** 48x48 */ public static final @NotNull Icon SuccessLogin = load("general/successLogin.svg", -1762722892, 0);
     /** 16x16 */ public static final @NotNull Icon TbHidden = load("general/tbHidden.svg", 725382904, 2);
     /** 16x16 */ public static final @NotNull Icon TbShown = load("general/tbShown.svg", 1376577829, 2);
