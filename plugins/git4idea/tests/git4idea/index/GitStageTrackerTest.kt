@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.vcsUtil.VcsUtil
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
@@ -101,7 +102,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
 
     val file = projectRoot.findChild(fileName)!!
     val indexFile = project.service<GitIndexFileSystemRefresher>().getFile(projectRoot, VcsUtil.getFilePath(file))!!
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!!}
+    val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!! }
 
     runWithTrackerUpdate("setText") {
       invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
@@ -123,12 +124,13 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   fun `test untracked`() {
     val fileName = "file.txt"
     val file = runWithTrackerUpdate("createChildData") {
-      invokeAndWaitIfNeeded { runWriteAction { projectRoot.createChildData(this, fileName) }}
+      invokeAndWaitIfNeeded { runWriteAction { projectRoot.createChildData(this, fileName) } }
+        .also { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() }
     }
     TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
                           trackerState().statuses.getValue(VcsUtil.getFilePath(projectRoot, fileName)))
 
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!!}
+    val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
 
     runWithTrackerUpdate("setText") {
       invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
@@ -150,12 +152,9 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   private fun trackerState() = tracker.state.rootStates.getValue(projectRoot)
 
   private fun <T> runWithTrackerUpdate(name: String, function: () -> T): T {
-    return tracker.futureUpdate(name).let { futureUpdate ->
-      val result = function()
-      changeListManager.waitEverythingDoneInTestMode()
-      futureUpdate.waitOrCancel()
-      return@let result
-    }
+    val result = function()
+    tracker.futureUpdate(name).waitOrCancel()
+    return result
   }
 
   private fun Future<Unit>.waitOrCancel() {
