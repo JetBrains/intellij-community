@@ -57,7 +57,7 @@ internal fun checkIcons(context: Context = Context()) {
 }
 
 private fun push(context: Context) {
-  val branch = head(context.devRepoRoot)
+  val branch = head(context.iconRepo)
   val pushedCommits = pushToIconsRepo(branch, context)
   if (pushedCommits.isNotEmpty() && context.notifySlack && branch == "master") {
     notifySlackChannel(
