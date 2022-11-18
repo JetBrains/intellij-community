@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -319,14 +320,14 @@ public abstract class Decompressor {
         Path outputFile = entryFile(outputDir, entry.name);
         switch (entry.type) {
           case DIR:
-            Files.createDirectories(outputFile);
+            NioFiles.createDirectories(outputFile);
             break;
 
           case FILE:
             if (myOverwrite || !Files.exists(outputFile)) {
               InputStream inputStream = openEntryStream(entry);
               try {
-                Files.createDirectories(outputFile.getParent());
+                NioFiles.createDirectories(outputFile.getParent());
                 try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
                   StreamUtil.copy(inputStream, outputStream);
                 }
@@ -352,7 +353,7 @@ public abstract class Decompressor {
             if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
               try {
                 Path outputTarget = Paths.get(entry.linkTarget);
-                Files.createDirectories(outputFile.getParent());
+                NioFiles.createDirectories(outputFile.getParent());
                 Files.deleteIfExists(outputFile);
                 Files.createSymbolicLink(outputFile, outputTarget);
               }
