@@ -153,7 +153,7 @@ public class TestFrame {
       }
     };
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    JdkEx.setTabbingMode(frame, null);
+    JdkEx.setTabbingMode(frame, "TestFrameAAA123", null);
     Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
     return frame;
   }
