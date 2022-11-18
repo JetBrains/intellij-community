@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
@@ -139,7 +140,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return false;
   }
 
-  public boolean isHighlightableContentNode(@NotNull PresentableNodeDescriptor kid) {
+  public boolean isHighlightableContentNode(@NotNull PresentableNodeDescriptor<?> kid) {
     return true;
   }
 
@@ -147,8 +148,8 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return null;
   }
 
-  public boolean isParentOf(@NotNull NodeDescriptor eachNode) {
-    NodeDescriptor eachParent = eachNode.getParentDescriptor();
+  public boolean isParentOf(@NotNull NodeDescriptor<?> eachNode) {
+    NodeDescriptor<?> eachParent = eachNode.getParentDescriptor();
     while (eachParent != null) {
       if (eachParent == this) return true;
       eachParent = eachParent.getParentDescriptor();
@@ -156,7 +157,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return false;
   }
 
-  public boolean isAncestorOrSelf(NodeDescriptor selectedNode) {
+  public boolean isAncestorOrSelf(NodeDescriptor<?> selectedNode) {
     NodeDescriptor<?> node = selectedNode;
     while (node != null) {
       if (equals(node)) return true;
@@ -205,11 +206,10 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
       final ColoredFragment that = (ColoredFragment)o;
 
-      if (myAttributes != null ? !myAttributes.equals(that.myAttributes) : that.myAttributes != null) return false;
-      if (myText != null ? !myText.equals(that.myText) : that.myText != null) return false;
-      if (myToolTip != null ? !myToolTip.equals(that.myToolTip) : that.myToolTip != null) return false;
-
-      return true;
+      return
+        Objects.equals(myAttributes, that.myAttributes) &&
+        Objects.equals(myText, that.myText) &&
+        Objects.equals(myToolTip, that.myToolTip);
     }
 
     @Override
