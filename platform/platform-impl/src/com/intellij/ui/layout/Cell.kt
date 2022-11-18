@@ -103,6 +103,7 @@ class ValidationInfoBuilder(val component: JComponent) {
 interface CellBuilder<out T : JComponent> {
   val component: T
 
+  @Deprecated("Use Kotlin UI DSL 2")
   fun comment(@DetailedDescription text: String, maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
               forComponent: Boolean = false): CellBuilder<T>
 
@@ -126,16 +127,17 @@ interface CellBuilder<out T : JComponent> {
   /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun applyIfEnabled(): CellBuilder<T>
 
-  @ApiStatus.Experimental
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun accessibleName(@Nls name: String): CellBuilder<T> {
     component.accessibleContext.accessibleName = name
 
     return this
   }
 
-  @ApiStatus.Experimental
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun accessibleDescription(@Nls description: String): CellBuilder<T> {
     component.accessibleContext.accessibleDescription = description
 
@@ -161,6 +163,7 @@ interface CellBuilder<out T : JComponent> {
   fun visible(isVisible: Boolean)
   fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun withErrorOnApplyIf(@DialogMessage message: String, callback: (T) -> Boolean): CellBuilder<T> {
     withValidationOnApply { if (callback(it)) error(message) else null }
     return this
@@ -169,6 +172,7 @@ interface CellBuilder<out T : JComponent> {
   @ApiStatus.Internal
   fun shouldSaveOnApply(): Boolean
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun withLargeLeftGap(): CellBuilder<T>
 
   fun withLeftGap(): CellBuilder<T>

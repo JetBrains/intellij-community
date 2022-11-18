@@ -58,23 +58,6 @@ class UiDslApiTest : BasePlatformTestCase() {
     assertNull(label?.labelFor)
   }
 
-  fun testAccessible() {
-    panel {
-      row {
-        val checkBoxAccessibleName = "checkBoxName"
-        val checkBoxAccessibleDescription = "checkBoxDescription"
-        val checkBox = checkBox("checkBox")
-          .accessibleName(checkBoxAccessibleName)
-          .accessibleDescription(checkBoxAccessibleDescription)
-
-        with(checkBox.component.accessibleContext) {
-          assertEquals(checkBoxAccessibleName, accessibleName)
-          assertEquals(checkBoxAccessibleDescription, accessibleDescription)
-        }
-      }
-    }
-  }
-
   private fun findLabel(panel: DialogPanel): JLabel? {
     for (component in panel.components) {
       if (component is JLabel) {
