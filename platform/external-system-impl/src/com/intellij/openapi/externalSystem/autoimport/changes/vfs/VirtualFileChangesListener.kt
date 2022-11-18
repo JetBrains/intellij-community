@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 
 interface VirtualFileChangesListener {
 
-  fun isProcessRecursively(): Boolean = true
+  fun isProcessRecursively(): Boolean = false
 
   fun init() {}
 
