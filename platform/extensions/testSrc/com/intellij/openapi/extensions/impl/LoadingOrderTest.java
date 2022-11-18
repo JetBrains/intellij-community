@@ -19,7 +19,7 @@ public class LoadingOrderTest {
   @Test
   public void testSimpleSorting() {
     assertSequence(
-      "1AnyAny2",
+      "1 Any Any 2",
 
       createElement(LoadingOrder.ANY, null, "Any"),
       createElement(LoadingOrder.FIRST, null, "1"),
@@ -31,7 +31,7 @@ public class LoadingOrderTest {
   @Test
   public void testStability() {
     assertSequence(
-      "1234",
+      "1 2 3 4",
 
       createElement(LoadingOrder.ANY, null, "1"),
       createElement(LoadingOrder.ANY, null, "2"),
@@ -46,7 +46,7 @@ public class LoadingOrderTest {
     String idTwo = "idTwo";
 
     assertSequence(
-      "012345",
+      "0 1 2 3 4 5",
 
       createElement(LoadingOrder.before(idTwo), idOne, "2"),
       createElement(LoadingOrder.FIRST, null, "0"),
@@ -62,7 +62,7 @@ public class LoadingOrderTest {
     String idOne = "idOne";
 
     assertSequence(
-      "123456",
+      "1 2 3 4 5 6",
 
       createElement(LoadingOrder.before(idOne), null, "2"),
       createElement(LoadingOrder.after(idOne), null, "4"),
@@ -76,7 +76,7 @@ public class LoadingOrderTest {
   @Test
   public void testComplexSortingBeforeLast() {
     assertSequence(
-      "3421",
+      "3 4 2 1",
 
       createElement(LoadingOrder.LAST, "1", "1"),
       createElement(LoadingOrder.readOrder("last,before 1"), null, "2"),
@@ -90,7 +90,7 @@ public class LoadingOrderTest {
    */
   private static void assertSequence(String expected, LoadingOrder.Orderable... array) {
     LoadingOrder.sort(array);
-    String sequence = Arrays.stream(array).map(o -> ((MyOrderable)o).getName()).collect(Collectors.joining());
+    String sequence = Arrays.stream(array).map(o -> ((MyOrderable)o).getName()).collect(Collectors.joining(" "));
     assertEquals(expected, sequence);
   }
 
@@ -108,7 +108,7 @@ public class LoadingOrderTest {
   @Test
   public void testFailingSortingFirst() {
     assertSequence(
-      "1123",
+      "1 1 2 3",
 
       createElement(LoadingOrder.ANY, null, "2"),
       createElement(LoadingOrder.FIRST, "first", "1"),
@@ -143,7 +143,7 @@ public class LoadingOrderTest {
   @Test
   public void testFailingSortingLast() {
     assertSequence(
-      "1233",
+      "1 2 3 3",
 
       createElement(LoadingOrder.LAST, null, "3"),
       createElement(LoadingOrder.FIRST, null, "1"),
