@@ -61,7 +61,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val FIRST_RESULT_TS = EventFields.Long("duration_first_results_ms")
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
 
-    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION)
+    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, EventFields.Language)
 
     private val searchCancelled = GROUP.registerVarargEvent("cancelled",
                                                             SYMBOL_CLASS,
@@ -101,8 +101,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     )
 
     @JvmStatic
-    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource) {
-      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source))
+    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language?) {
+      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), EventFields.Language.with(language))
     }
 
     @JvmStatic
