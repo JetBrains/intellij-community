@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
@@ -62,10 +64,12 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
 
         data class LabeledReturn(val label: String) : BranchType()
 
-        class Assign(val lvalue: KtExpression) : BranchType() {
-            override fun equals(other: Any?) = other is Assign && lvalue.text == other.lvalue.text
+        class Assign(left: KtExpression) : BranchType() {
+            val lvalue: SmartPsiElementPointer<KtExpression> = left.let(SmartPointerManager::createPointer)
 
-            override fun hashCode() = lvalue.text.hashCode()
+            override fun equals(other: Any?) = other is Assign && lvalue.element?.text == other.lvalue.element?.text
+
+            override fun hashCode() = lvalue.element?.text.hashCode()
         }
     }
 
@@ -75,7 +79,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         ELSE_TRUE;
 
         companion object {
-            private val RedundancyInfoWithNone = IfExpressionRedundancyInfo(RedundancyType.NONE, BranchType.Simple, null)
+            private val RedundancyInfoWithNone = IfExpressionRedundancyInfo(NONE, BranchType.Simple, null)
 
             fun of(expression: KtIfExpression): IfExpressionRedundancyInfo {
                 val (thenReturn, thenType) = expression.then?.getBranchExpression() ?: return RedundancyInfoWithNone
@@ -111,8 +115,11 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     }
 
                     is KtBlockExpression -> statements.singleOrNull()?.getBranchExpression()
-                    is KtBinaryExpression -> if (operationToken == KtTokens.EQ && left != null) right to BranchType.Assign(left!!)
-                    else null
+                    is KtBinaryExpression -> {
+                        val left = left
+                        if (operationToken == KtTokens.EQ && left != null) right to BranchType.Assign(left)
+                        else null
+                    }
 
                     else -> this to BranchType.Simple
                 }
@@ -122,10 +129,11 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
 
     private inner class RemoveRedundantIf(
         private val redundancyType: RedundancyType,
-        @SafeFieldForPreview // may refer to PsiElement of original file but we are only reading from it
         private val branchType: BranchType,
-        private val returnAfterIf: KtExpression?,
+        returnAfterIf: KtExpression?,
     ) : LocalQuickFix {
+        val returnExpressionAfterIf: SmartPsiElementPointer<KtExpression>? = returnAfterIf?.let(SmartPointerManager::createPointer)
+
         override fun getName() = KotlinBundle.message("remove.redundant.if.text")
         override fun getFamilyName() = name
 
@@ -144,7 +152,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             val newExpressionOnlyWithCondition = when (branchType) {
                 is BranchType.Return -> factory.createExpressionByPattern("return $0", condition)
                 is BranchType.LabeledReturn -> factory.createExpressionByPattern("return${branchType.label} $0", condition)
-                is BranchType.Assign -> factory.createExpressionByPattern("$0 = $1", branchType.lvalue, condition)
+                is BranchType.Assign -> factory.createExpressionByPattern("$0 = $1", branchType.lvalue.element!!, condition)
                 else -> condition
             }
 
@@ -153,7 +161,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                  * This is the case that we used the next expression of the if expression as the else expression.
                  * See the code and comment in [RedundancyType.of].
                  */
-                returnAfterIf?.delete()
+                returnExpressionAfterIf?.element?.delete()
 
                 element.replace(newExpressionOnlyWithCondition)
             }
