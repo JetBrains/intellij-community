@@ -66,10 +66,10 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
   }
 
   protected fun addInlayElementsToSink(context: TypeComputationContext,
-                                            elements: List<ExpressionWithType<ExpressionType>>,
-                                            sink: InlayHintsSink,
-                                            factory: PresentationFactory,
-                                            offset: Int = 0) {
+                                       elements: List<ExpressionWithType<ExpressionType>>,
+                                       sink: InlayHintsSink,
+                                       factory: PresentationFactory,
+                                       offset: Int = 0) {
     if (elements.isEmpty()) return
     val project = elements.first().expression.project
 
