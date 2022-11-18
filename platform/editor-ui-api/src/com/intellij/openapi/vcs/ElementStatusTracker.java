@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A tracker that provides change status for {@link PsiElement}. The status might not be precise.
+ * Also, tracker is not guaranteed to work if the file containing the element is not opened in the editor.
  * 
  * @see FileStatusManager
  */
@@ -17,7 +18,8 @@ public interface ElementStatusTracker {
 
   /**
    * @param element element to get the status for
-   * @return status of the element: one of {@link FileStatus#ADDED}, {@link FileStatus#MODIFIED}, or {@link FileStatus#NOT_CHANGED}
+   * @return status of the element: one of {@link FileStatus#ADDED}, {@link FileStatus#MODIFIED}, or {@link FileStatus#NOT_CHANGED}.
+   * {@link FileStatus#NOT_CHANGED} status may be returned also if there's no VCS, or the element is not in the opened editor. 
    */
   @NotNull FileStatus getElementStatus(@NotNull PsiElement element);
 }
