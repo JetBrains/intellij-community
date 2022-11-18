@@ -16,12 +16,20 @@ import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.completion.full.line.language.supporters.FullLineLanguageSupporterBase
 
 abstract class JSDialectSupporter : FullLineLanguageSupporterBase() {
-  init {
-    STRING_MARKERS.addAll(listOf('`', '/'))
-    CLOSE_TO_OPEN['`'] = '`'
-    CLOSE_TO_OPEN['/'] = '/'
-  }
-  
+  override var STRING_MARKERS = arrayListOf('"', '\'', '`', '/')
+
+  override var CLOSE_TO_OPEN = hashMapOf(
+    // TODO: Bring back handling such angle brackets when element will be extended with psi.
+    // '>' to '<',
+    ')' to '(',
+    ']' to '[',
+    '}' to '{',
+    '"' to '"',
+    '\'' to '\'',
+    '`' to '`',
+    '/' to '/',
+  )
+
   override fun createCodeFragment(file: PsiFile, text: String, isPhysical: Boolean): PsiFile? {
     return JSExpressionCodeFragmentImpl(file.project, file.name, text, isPhysical, null)
   }

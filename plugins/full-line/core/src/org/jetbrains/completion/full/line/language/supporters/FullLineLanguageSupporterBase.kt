@@ -199,9 +199,9 @@ abstract class FullLineLanguageSupporterBase(extraMatchers: List<LocationMatcher
 
   private fun inComment(element: PsiElement): Boolean = element is PsiComment
 
-  val STRING_MARKERS = arrayListOf('"', '\'')
+  open var STRING_MARKERS = arrayListOf('"', '\'')
 
-  var CLOSE_TO_OPEN = hashMapOf(
+  open var CLOSE_TO_OPEN = hashMapOf(
     // TODO: Bring back handling such angle brackets when element will be extended with psi.
     // '>' to '<',
     ')' to '(',
