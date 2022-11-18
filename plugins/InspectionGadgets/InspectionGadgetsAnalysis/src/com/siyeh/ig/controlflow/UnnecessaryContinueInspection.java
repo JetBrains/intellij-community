@@ -84,6 +84,9 @@ public class UnnecessaryContinueInspection extends BaseInspection {
       if (ignoreInThenBranch && UnnecessaryReturnInspection.isInThenBranch(statement)) {
         return;
       }
+      if (ControlFlowUtils.isInFinallyBlock(statement)) {
+        return;
+      }
       if (body instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
         final PsiCodeBlock block = blockStatement.getCodeBlock();
