@@ -286,6 +286,8 @@ public final class PluginManagerConfigurable
     actions.add(new InstallFromDiskAction(myPluginModel,
                                           myPluginModel,
                                           myCardPanel) {
+
+      @RequiresEdt
       @Override
       protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
                                                @Nullable Project project) {
