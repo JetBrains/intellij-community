@@ -4,7 +4,7 @@ package com.intellij.diff.util;
 /**
  * Stores half-open intervals [start, end).
  */
-public class Range {
+public final class Range {
   public final int start1;
   public final int end1;
   public final int start2;
