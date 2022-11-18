@@ -21,7 +21,10 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
@@ -32,12 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLanguageFragmentKey;
 
 final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
-  private final Predicate<PsiFile> myInjectedFilesFilter;
 
   InjectedGeneralHighlightingPass(@NotNull PsiFile file,
                                   @NotNull Document document,
@@ -46,10 +47,8 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
                                   boolean updateAll,
                                   @NotNull ProperTextRange priorityRange,
                                   @Nullable Editor editor,
-                                  @NotNull HighlightInfoProcessor highlightInfoProcessor,
-                                  @NotNull Predicate<PsiFile> injectedFilesFilter) {
+                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     super(file, document, startOffset, endOffset, updateAll, priorityRange, editor, highlightInfoProcessor);
-    myInjectedFilesFilter = injectedFilesFilter;
   }
 
   @Override
@@ -164,7 +163,6 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
     Set<PsiFile> outInjected = new HashSet<>();
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
-      if (!myInjectedFilesFilter.test(injectedPsi)) return;
       synchronized (outInjected) {
         ProgressManager.checkCanceled();
         outInjected.add(injectedPsi);

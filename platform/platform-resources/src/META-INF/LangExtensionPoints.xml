@@ -652,7 +652,5 @@
                     interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.daemon.impl.injectedLanguageHighlightingRangeReducer"
                     interface="com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingRangeReducer"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.daemon.impl.injectedLanguageHighlightingFilesFilterProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingFilesFilterProvider"/>
   </extensionPoints>
 </idea-plugin>

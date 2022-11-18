@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.google.common.base.Predicates;
 import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -13,15 +12,12 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   private final @NotNull List<InjectedLanguageHighlightingRangeReducer> myLanguageHighlightingRangeReducers;
-  private final @NotNull List<InjectedLanguageHighlightingFilesFilterProvider> myLanguageInjectedFilesFiltersProviders;
 
   InjectedGeneralHighlightingPassFactory() {
     myLanguageHighlightingRangeReducers = InjectedLanguageHighlightingRangeReducer.EP_NAME.getExtensionList();
-    myLanguageInjectedFilesFiltersProviders = InjectedLanguageHighlightingFilesFilterProvider.EP_NAME.getExtensionList();
   }
 
   @Override
@@ -40,11 +36,10 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
     if (fileRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     TextRange adjustedRange = computeRestrictRange(file, editor, fileRange);
     ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-    Predicate<PsiFile> fileFilter = computeInjectedFilesFilter(file, editor);
 
     return new InjectedGeneralHighlightingPass(file, editor.getDocument(), adjustedRange.getStartOffset(), adjustedRange.getEndOffset(),
                                                fileRange.equalsToRange(adjustedRange.getStartOffset(), adjustedRange.getEndOffset()),
-                                               visibleRange, editor, new DefaultHighlightInfoProcessor(), fileFilter);
+                                               visibleRange, editor, new DefaultHighlightInfoProcessor());
   }
 
   @NotNull
@@ -58,23 +53,12 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
     return fileRange;
   }
 
-  @NotNull
-  private Predicate<PsiFile> computeInjectedFilesFilter(@NotNull PsiFile file, @NotNull Editor editor) {
-    for (InjectedLanguageHighlightingFilesFilterProvider filterProvider : myLanguageInjectedFilesFiltersProviders) {
-      Predicate<PsiFile> filter = filterProvider.provideFilterForInjectedFiles(file, editor);
-      if (filter != null) {
-        return filter;
-      }
-    }
-
-    return Predicates.alwaysTrue();
-  }
 
   @Override
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     return new InjectedGeneralHighlightingPass(file, document, 0, document.getTextLength(), true, new ProperTextRange(0,document.getTextLength()), null,
-                                               highlightInfoProcessor, Predicates.alwaysTrue());
+                                               highlightInfoProcessor);
   }
 }
