@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.MergingQueueGuiExecutor;
 import com.intellij.openapi.project.MergingTaskQueue;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -67,7 +68,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   }
 
   private void startTaskInDumbMode(UnindexedFilesScanner task) {
-    new DumbModeTask() {
+    DumbModeTask dumbTask = new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         ProgressIndicator old = runningTask.getAndSet(indicator);
@@ -80,7 +81,9 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
           LOG.assertTrue(old == indicator, "Old = " + old);
         }
       }
-    }.queue(getProject());
+    };
+    Disposer.register(dumbTask, task);
+    dumbTask.queue(getProject());
   }
 
   @Override
