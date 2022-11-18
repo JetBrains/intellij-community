@@ -24,7 +24,6 @@
   <technology name="monix" root="monix.reactive"/>
   <technology name="zio" root="zio"/>
   <technology name="akka-actor-typed" root="akka.actor.typed"/>
-  <technology name="akka-http" root="akka.http"/>
   <technology name="akka-stream" root="akka.stream"/>
   <technology name="algebird" root="com.twitter.algebird"/>
   <technology name="caliban" root="caliban"/>
@@ -37,7 +36,6 @@
   <technology name="doobie" root="doobie"/>
   <technology name="elastic4s" root="elastic4s"/>
   <technology name="elasticmq" root="elasticmq"/>
-  <technology name="finagle" root="com.twitter.finagle"/>
   <technology name="finatra" root="com.twitter.finatra"/>
   <technology name="gatling" root="io.gatling"/>
   <technology name="json4s" root="json4s"/>
@@ -60,7 +58,6 @@
   <technology name="scalapb" root="scalapb"/>
   <technology name="scio" root="scio"/>
   <technology name="skunk" root="skunk"/>
-  <technology name="spark-core" root="spark"/>
   <technology name="spire" root="spire"/>
   <technology name="tapir" root="sttp.tapir"/>
   <technology name="twitter-server" root="com.twitter.server"/>
