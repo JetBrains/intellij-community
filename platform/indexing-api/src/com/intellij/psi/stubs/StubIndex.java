@@ -146,6 +146,14 @@ public abstract class StubIndex {
 
   public abstract void forceRebuild(@NotNull Throwable e);
 
+  /**
+   * @param fileElementType {@link StubFileElementType} to track changes for.
+   * @return {@link ModificationTracker} that changes stamp on every file update (with corresponding {@link StubFileElementType})
+   * for which the stub has changed.
+   * @implNote doesn't track changes of files with binary content. Modification tracking happens before the StubIndex update, so one can use
+   * this tracker to react on stub changes without performing the index update. File is considered modified if a stub for its actual content
+   * differs from what is stored in the index. Modification detector might react false-positively when the number of changed files is big.
+   */
   @ApiStatus.Internal
   @ApiStatus.Experimental
   abstract public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
