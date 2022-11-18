@@ -25,7 +25,7 @@ class PyCondaCommand(
       if (pathInfo == null) {
         return Result.failure(Exception("$fullCondaPathOnTarget does not exist"))
       }
-      if ((pathInfo as? PathInfo.RegularFile)?.executable != true) {
+      if (pathInfo != PathInfo.Unknown && (pathInfo as? PathInfo.RegularFile)?.executable != true) {
         return Result.failure(Exception("$fullCondaPathOnTarget is not executable file"))
       }
     }
