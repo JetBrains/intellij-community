@@ -4,6 +4,8 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceCoordinates
@@ -27,7 +29,6 @@ fun KotlinSourceSetModuleId(coordinates: IdeaKotlinSourceCoordinates): KotlinSou
     return KotlinProjectModuleId(coordinates) + coordinates.sourceSetName
 }
 
-
 @OptIn(UnsafeApi::class)
 val GradleSourceSetData.kotlinSourceSetModuleId: KotlinSourceSetModuleId get() = KotlinSourceSetModuleId(id)
 
@@ -37,8 +38,4 @@ fun DataNode<*>.findSourceSetNode(id: KotlinSourceSetModuleId): DataNode<GradleS
         val data = node.data
         data is GradleSourceSetData && data.kotlinSourceSetModuleId == id
     } as? DataNode<GradleSourceSetData>
-}
-
-fun DataNode<*>.findSourceSetNode(coordinates: IdeaKotlinSourceCoordinates): DataNode<GradleSourceSetData>? {
-    return findSourceSetNode(KotlinSourceSetModuleId(coordinates))
 }

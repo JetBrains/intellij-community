@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryCoordinates
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
 import org.jetbrains.kotlin.tooling.core.UnsafeApi
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -38,11 +39,3 @@ fun KotlinLibraryName(coordinates: IdeaKotlinBinaryCoordinates): KotlinLibraryNa
 val LibraryData.kotlinLibraryName: KotlinLibraryName get() = KotlinLibraryName(this.externalName)
 
 fun LibraryData(name: KotlinLibraryName) = LibraryData(GradleConstants.SYSTEM_ID, name.toString())
-
-fun DataNode<GradleSourceSetData>.findLibraryDependencyNode(name: KotlinLibraryName): DataNode<LibraryDependencyData>? {
-    @Suppress("unchecked_cast")
-    return ExternalSystemApiUtil.findFirstRecursively(this) { node ->
-        val data = node.data
-        data is LibraryDependencyData && data.target.kotlinLibraryName == name
-    } as? DataNode<LibraryDependencyData>
-}

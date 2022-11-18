@@ -17,11 +17,12 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency
 }
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinSourceDependency): DataNode<ModuleDependencyData>? {
+    /* Already created dependency: Return node */
+    findModuleDependencyNode(dependency.kotlinSourceSetModuleId)?.let { return it }
+
+    /* Create module dependency */
     val projectNode = ExternalSystemApiUtil.findParent(this, ProjectKeys.PROJECT) ?: return null
-    val dependencyNode = projectNode.findSourceSetNode(dependency.coordinates) ?: return null
-    val existing = ExternalSystemApiUtil.findAll(this, ProjectKeys.MODULE_DEPENDENCY)
-        .firstOrNull { node -> node.data.target.id == dependencyNode.data.id }
-    if (existing != null) return existing
+    val dependencyNode = projectNode.findSourceSetNode(dependency.kotlinSourceSetModuleId) ?: return null
 
     val moduleDependencyData = ModuleDependencyData(this.data, dependencyNode.data)
     moduleDependencyData.scope = DependencyScope.COMPILE
@@ -30,14 +31,12 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinSourceDepe
 
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDependency): DataNode<LibraryDependencyData>? {
-    val dependencyCoordinates = dependency.coordinates ?: return null
-    val libraryName = KotlinLibraryName(dependencyCoordinates)
-
-    val dependencyNode = findLibraryDependencyNode(libraryName) ?: run create@{
-        val libraryData = LibraryData(libraryName)
-        libraryData.setGroup(dependencyCoordinates.group)
-        libraryData.artifactId = dependencyCoordinates.module
-        libraryData.version = dependencyCoordinates.version
+    val dependencyNode = findLibraryDependencyNode(dependency) ?: run create@{
+        val coordinates = dependency.coordinates ?: return null
+        val libraryData = LibraryData(KotlinLibraryName(coordinates))
+        libraryData.setGroup(coordinates.group)
+        libraryData.artifactId = coordinates.module
+        libraryData.version = coordinates.version
         createChild(ProjectKeys.LIBRARY_DEPENDENCY, LibraryDependencyData(this.data, libraryData, LibraryLevel.MODULE))
     }
 
