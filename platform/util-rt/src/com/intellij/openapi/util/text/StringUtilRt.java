@@ -331,45 +331,34 @@ public class StringUtilRt {
     List<String> result = new ArrayList<String>();
     StringBuilder builder = new StringBuilder(s.length());
     char quote = 0;
+    boolean isEscaped = false;
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
-      if (c == separator && quote == 0) {
+      boolean isSeparator = c == separator;
+      boolean isQuote = c == '"' || c == '\'';
+      boolean isQuoted = quote != 0;
+      boolean isEscape = c == '\\';
+
+      if (!isQuoted && isSeparator) {
         if (builder.length() > 0) {
           result.add(builder.toString());
           builder.setLength(0);
         }
         continue;
       }
-      boolean isQuote = c == '"' || c == '\'';
-      boolean isEscaped = isEscapedSymbol(s, i);
-      if (quote == 0 && isQuote && !isEscaped) {
-        quote = c;
+
+      if (!isEscaped && isQuote && (quote == 0 || quote == c)) {
+        quote = isQuoted ? 0 : c;
       }
-      else if (c == quote && !isEscaped) {
-        quote = 0;
-      }
+
+      isEscaped = isEscape && !isEscaped;
+
       builder.append(c);
     }
     if (builder.length() > 0) {
       result.add(builder.toString());
     }
     return result;
-  }
-
-  private static boolean isEscapedSymbol(CharSequence charSequence, int index) {
-    return countTailingSymbols(charSequence.subSequence(0, index), '\\') % 2 == 1;
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static int countTailingSymbols(CharSequence charSequence, char symbol) {
-    int counter = 0;
-    for (int i = charSequence.length() - 1; i >= 0; i--) {
-      if (charSequence.charAt(i) != symbol) {
-        break;
-      }
-      counter++;
-    }
-    return counter;
   }
 
   @NotNull
