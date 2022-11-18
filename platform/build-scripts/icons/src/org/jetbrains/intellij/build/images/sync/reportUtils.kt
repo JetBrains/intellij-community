@@ -45,7 +45,7 @@ internal fun findCommitsToSync(context: Context) {
 
 internal fun Map<Path, Collection<CommitInfo>>.commitMessage(): String =
   values.flatten().joinToString(separator = "\n\n") {
-    it.subject + "\n" + "https://jetbrains.team/p/ij/repositories/IntelliJIcons/revision/${it.hash}"
+    it.subject + "\n" + "Origin commit: ${it.hash}"
   }
 
 internal fun commit(context: Context) {
