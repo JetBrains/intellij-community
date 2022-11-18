@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.HttpRequests.JSON_CONTENT_TYPE
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -32,7 +33,7 @@ private val LOG = Logger.getInstance(FeedbackRequestDataHolder::class.java)
 
 sealed interface FeedbackRequestDataHolder {
   val feedbackType: String
-  val collectedData: String
+  val collectedData: JsonObject
 
   fun toJsonObject(): JsonObject
 }
@@ -42,7 +43,7 @@ sealed interface FeedbackRequestDataHolder {
  * Sent to WebTeam Backend and stored only on AWS S3.
  */
 data class FeedbackRequestData(override val feedbackType: String,
-                               override val collectedData: String) : FeedbackRequestDataHolder {
+                               override val collectedData: JsonObject) : FeedbackRequestDataHolder {
   override fun toJsonObject(): JsonObject {
     return buildJsonObject {
       put(FEEDBACK_FROM_ID_KEY, FEEDBACK_FORM_ID_ONLY_DATA)
@@ -62,7 +63,7 @@ data class FeedbackRequestDataWithDetailedAnswer(val email: String,
                                                  val title: String,
                                                  val description: String,
                                                  override val feedbackType: String,
-                                                 override val collectedData: String) : FeedbackRequestDataHolder {
+                                                 override val collectedData: JsonObject) : FeedbackRequestDataHolder {
   override fun toJsonObject(): JsonObject {
     return buildJsonObject {
       put(FEEDBACK_FROM_ID_KEY, FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER)
@@ -75,7 +76,6 @@ data class FeedbackRequestDataWithDetailedAnswer(val email: String,
     }
   }
 }
-
 
 fun submitFeedback(project: Project?,
                    feedbackData: FeedbackRequestDataHolder,
@@ -92,7 +92,6 @@ fun submitFeedback(project: Project?,
     sendFeedback(feedbackUrl, feedbackData, onDone, onError)
   }
 
-
   if (showNotification) {
     ApplicationManager.getApplication().invokeLater {
       ThanksForFeedbackNotification().notify(project)
@@ -108,7 +107,7 @@ private fun sendFeedback(feedbackUrl: String,
 
   try {
     HttpRequests
-      .post(feedbackUrl, "application/json")
+      .post(feedbackUrl, JSON_CONTENT_TYPE)
       .productNameAsUserAgent()
       .accept("application/json")
       .connect {

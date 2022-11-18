@@ -25,6 +25,8 @@
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
+      <action id="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction"
+              class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               internal="true"/>
