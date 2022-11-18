@@ -7,6 +7,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
@@ -16,8 +17,12 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(FlushQueue.class);
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, MINUTES.toMillis(1));
+
   private ObjectList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
@@ -132,7 +137,27 @@ final class FlushQueue {
         final long waitedInQueueNs = waitingFinishedNs - info.queuedTimeNs;
         final long executionDurationNs = executionFinishedNs - waitingFinishedNs;
 
-        watcher.runnableTaskFinished(runnable, waitedInQueueNs, info.queueSize, executionDurationNs, info.wasInSkippedItems);
+        //RC: ExceptionAnalyzer reports negative values here, but it is not clear there do they come from.
+        //    The reasons I could think of now are:
+        //    1) oddities of .nanoTime() behavior under different CPU power-saving modes
+        //    2) changing .nanoTime() origin due to thead being relocated to another CPU
+        //    3) long overflow in (end-start) expression.
+        //    those are straightforward reasons, but 1-2 was mostly solved (it seems to me) in a modern
+        //    hardware/software, and 3 is hard to expect in our use-cases. Hence, negative values could be
+        //    due to some other code bug I don't see right now. Safeguarding here prevents errors down the
+        //    stack, but it also shifts value statistics
+        final long waitedTimeInQueueNs_safe = waitedInQueueNs >= 0 ? waitedInQueueNs : 0;
+        final long executionDurationNs_safe = executionDurationNs >= 0 ? executionDurationNs : 0;
+
+        watcher.runnableTaskFinished(runnable,
+                                     waitedTimeInQueueNs_safe,
+                                     info.queueSize,
+                                     executionDurationNs_safe, info.wasInSkippedItems);
+
+        if (waitedInQueueNs < 0 || executionDurationNs<0) {
+          //maybe logs give us some hints about why the values are negative:
+          THROTTLED_LOG.info("waitedInQueueNs(" + waitedInQueueNs + ") | executionDurationNs(" + executionDurationNs + ") is negative -> unexpected state");
+        }
       }
     }
   }

@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.util.io.PersistentHashMapValueStorage.*;
+
 // todo rewrite: it's an app service for now but its lifecycle should be synchronized with stub index.
 @ApiStatus.Internal
 public final class SerializationManagerImpl extends SerializationManagerEx implements Disposable {
@@ -100,19 +102,12 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     if (myOpenFile == null) {
       return new InMemoryDataEnumerator<>();
     }
-    Boolean lastValue = null;
-    if (myUnmodifiable) {
-      lastValue = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
-      PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(Boolean.TRUE);
-    }
-    try {
-      return new PersistentStringEnumerator(myOpenFile, true);
-    }
-    finally {
-      if (myUnmodifiable) {
-        PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(lastValue);
-      }
-    }
+
+    return CreationTimeOptions.threadLocalOptions()
+      .readOnly(myUnmodifiable)
+      .with(() -> {
+        return new PersistentStringEnumerator(myOpenFile, /*cacheLastMapping: */ true);
+      });
   }
 
   @ApiStatus.Internal

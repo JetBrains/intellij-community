@@ -42,6 +42,20 @@ public final class PersistentHashMapValueStorage {
   static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
   static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
+  /**
+   * Default options for {@link PersistentHashMap} and {@link PersistentHashMapValueStorage}.
+   * <br/>
+   * Why: Both PHMap and its components (like PHMValueStorage) are frequently initialized quite deeply
+   * inside some wrapping code. Also, it could be >1 instances of PHMap/ValueStorage to support single
+   * top-level structure, and params like READONLY should be the same for all them. But it is quite
+   * daunting to pass parameters like READONLY through all the ctors and intermediate methods down to
+   * the point of actual initialization (e.g. READONLY is used in {@linkplain #com.intellij.util.io.PagedFileStorage}
+   * even). CreationTimeOptions allows to set those arguments in thread-local instance, and get them
+   * there they are needed.
+   * <br/>
+   * Instances of the class are immutable, all mutation methods return new instances -- one could
+   * safely keep any instance of this class for later use.
+   */
   //@Immutable
   public static final class CreationTimeOptions {
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
@@ -85,11 +99,20 @@ public final class PersistentHashMapValueStorage {
       return myUseCompression;
     }
 
-    @NotNull
     public CreationTimeOptions setReadOnly() {
       return new CreationTimeOptions(
         myIOCancellationCallback,
         true,
+        myCompactChunksWithValueDeserialization,
+        myHasNoChunks,
+        myUseCompression
+      );
+    }
+
+    public CreationTimeOptions readOnly(final boolean readOnly) {
+      return new CreationTimeOptions(
+        myIOCancellationCallback,
+        readOnly,
         myCompactChunksWithValueDeserialization,
         myHasNoChunks,
         myUseCompression

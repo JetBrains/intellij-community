@@ -46,7 +46,8 @@ object TraceManager {
     val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
     val traceEndpoint = System.getProperty("idea.diagnostic.opentelemetry.otlp")
     //RC: Contrary to traces, metrics ARE enabled by default.
-    //    Default metrics files look like '<logs>/open-telemetry-metrics.2022-11-01-20-15-44.csv'
+    //    Default metrics files look like '<logs>/open-telemetry-metrics.2022-11-01-20-15-44.csv' (date
+    //    suffix is appended automatically, see .createMetricsExporter() for details)
     //    To disable metrics: set `-Didea.diagnostic.opentelemetry.metrics.file=""` (i.e. empty string)
     val metricsReportingPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file",
                                                   "open-telemetry-metrics.csv")
@@ -76,7 +77,6 @@ object TraceManager {
     val metricExporters = mutableListOf<MetricExporter>()
     if (metricsEnabled) {
       val exporter = createMetricsExporter(metricsReportingPath)
-
       metricExporters.add(exporter)
     }
 
