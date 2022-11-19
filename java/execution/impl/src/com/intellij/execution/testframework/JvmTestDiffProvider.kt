@@ -2,15 +2,49 @@
 package com.intellij.execution.testframework
 
 import com.intellij.execution.testframework.actions.TestDiffProvider
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.asSafely
 
-abstract class JvmTestDiffProvider : TestDiffProvider {
-  protected fun parseStackTrace(stackStrace: String): Sequence<JavaStackFrame> {
+abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
+  final override fun findExpected(project: Project, stackTrace: String): PsiElement? {
+    var expectedParamIndex: Int? = null
+    parseStackTrace(stackTrace).forEach { stackFrame ->
+      val location = stackFrame.location
+      if (location !is JavaStackFrame.FileLocation) return@forEach
+      val file = JavaPsiFacade.getInstance(project)
+        .findClass(stackFrame.fqClassName, GlobalSearchScope.projectScope(project))
+        ?.containingFile?.navigationElement?.asSafely<PsiFile>() ?: return@forEach
+      val virtualFile = file.virtualFile ?: return@forEach
+      val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return@forEach
+      val startOffset = document.getLineStartOffset(location.lineNumber - 1)
+      val endOffset = document.getLineEndOffset(location.lineNumber - 1)
+      val failedCall = getFailedCall(file, startOffset, endOffset) ?: return@forEach
+      val expected = getExpected(failedCall, expectedParamIndex) ?: return@forEach
+      expectedParamIndex = getParamIndex(expected)
+      return InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, expected.textOffset + 1)
+    }
+    return null
+  }
+
+  abstract fun getParamIndex(param: PsiElement): Int?
+
+  abstract fun getFailedCall(file: PsiFile, startOffset: Int, endOffset: Int): E?
+
+  abstract fun getExpected(call: E, argIndex: Int?): PsiElement?
+
+  private fun parseStackTrace(stackStrace: String): Sequence<JavaStackFrame> {
     return stackStrace.lineSequence().mapNotNull { stackFrame ->
       if (stackFrame.isEmpty()) null else JavaStackFrame.parse(stackFrame)
     }
   }
 
-  protected data class JavaStackFrame(
+  private data class JavaStackFrame(
     val fqModuleName: String?,
     val fqClassName: String,
     val methodName: String,
