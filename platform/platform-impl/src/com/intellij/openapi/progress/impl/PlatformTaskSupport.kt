@@ -65,7 +65,8 @@ internal class PlatformTaskSupport : TaskSupport {
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T = withModalContext {
-    withModalIndicator(owner, title, cancellation, deferredDialog = null, action)
+    val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
+    withModalIndicator(descriptor, deferredDialog = null, action)
   }
 
   override fun <T> runBlockingModalInternal(
@@ -74,6 +75,7 @@ internal class PlatformTaskSupport : TaskSupport {
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T = resetThreadContext().use {
+    val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
     val currentModality = ModalityState.current()
     runBlocking {
       // Enter modality without releasing the current EDT event, and without dispatching other events in the queue.
@@ -87,7 +89,7 @@ internal class PlatformTaskSupport : TaskSupport {
         // Main job is not a child of the current coroutine to prevent cancellation of the current coroutine by main job failure.
         @OptIn(DelicateCoroutinesApi::class)
         val mainJob = GlobalScope.async(Dispatchers.Default + newModalityState.asContextElement()) {
-          withModalIndicator(owner, title, cancellation, deferredDialog, action)
+          withModalIndicator(descriptor, deferredDialog, action)
         }
         mainJob.invokeOnCompletion {
           // Stop processing the events when the task (with its subtasks) is completed.
@@ -176,14 +178,12 @@ private fun taskInfo(title: @ProgressTitle String, cancellation: TaskCancellatio
 }
 
 private suspend fun <T> withModalIndicator(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation,
+  descriptor: ModalIndicatorDescriptor,
   deferredDialog: CompletableDeferred<DialogWrapper>?,
   action: suspend CoroutineScope.() -> T,
 ): T = coroutineScope {
   val sink = FlowProgressSink()
-  val showIndicatorJob = showModalIndicator(owner, title, cancellation, sink.stateFlow, deferredDialog)
+  val showIndicatorJob = showModalIndicator(descriptor, sink.stateFlow, deferredDialog)
   try {
     withContext(sink.asContextElement(), action)
   }
@@ -192,11 +192,15 @@ private suspend fun <T> withModalIndicator(
   }
 }
 
+private class ModalIndicatorDescriptor(
+  val owner: ModalTaskOwner,
+  val title: @ProgressTitle String,
+  val cancellation: TaskCancellation,
+)
+
 @OptIn(IntellijInternalApi::class)
 private fun CoroutineScope.showModalIndicator(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation,
+  descriptor: ModalIndicatorDescriptor,
   stateFlow: Flow<ProgressState>,
   deferredDialog: CompletableDeferred<DialogWrapper>?,
 ): Job = launch(Dispatchers.IO) {
@@ -207,18 +211,18 @@ private fun CoroutineScope.showModalIndicator(
   val mainJob = this@showModalIndicator.coroutineContext.job
   // Use Dispatchers.EDT to avoid showing the dialog on top of another unrelated modal dialog (e.g. MessageDialogBuilder.YesNoCancel)
   withContext(Dispatchers.EDT) {
-    val window = ownerWindow(owner)
+    val window = ownerWindow(descriptor.owner)
     if (window == null) {
       logger<PlatformTaskSupport>().error("Cannot show progress dialog because owner window is not found")
       return@withContext
     }
 
     val ui = ProgressDialogUI()
-    ui.initCancellation(cancellation) {
+    ui.initCancellation(descriptor.cancellation) {
       mainJob.cancel("button cancel")
     }
     ui.backgroundButton.isVisible = false
-    ui.updateTitle(title)
+    ui.updateTitle(descriptor.title)
     launch {
       ui.updateFromSink(stateFlow)
     }
@@ -226,9 +230,9 @@ private fun CoroutineScope.showModalIndicator(
       panel = ui.panel,
       window = window,
       writeAction = false,
-      project = (owner as? ProjectModalTaskOwner)?.project,
+      project = (descriptor.owner as? ProjectModalTaskOwner)?.project,
       cancelAction = {
-        if (cancellation is CancellableTaskCancellation) {
+        if (descriptor.cancellation is CancellableTaskCancellation) {
           mainJob.cancel("dialog cancel")
         }
       },
