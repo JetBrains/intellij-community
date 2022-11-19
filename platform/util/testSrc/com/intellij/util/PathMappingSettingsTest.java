@@ -2,7 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,6 +65,7 @@ public class PathMappingSettingsTest {
   }
   @Test
   public void testRootDriveMapping() {
+    Assume.assumeTrue("Windows only test", SystemInfoRt.isWindows);
     myMappingSettings.addMapping("C:\\", "/mnt/c");
     assertEquals("Incorrect mapping",
                  Path.of("Windows"),
