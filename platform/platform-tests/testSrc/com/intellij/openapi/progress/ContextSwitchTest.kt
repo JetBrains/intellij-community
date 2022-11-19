@@ -9,13 +9,11 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 class ContextSwitchTest : CancellationTest() {
 
@@ -131,26 +129,26 @@ class ContextSwitchTest : CancellationTest() {
 
     fun assertThreadContext() {
       val tc = currentThreadContext()
-      Assertions.assertSame(tc[TestElementKey], testElement)
-      Assertions.assertNull(tc[ContinuationInterceptor.Key])
+      assertSame(tc[TestElementKey], testElement)
+      assertNull(tc[ContinuationInterceptor.Key])
     }
 
     withContext(testElement) {
-      Assertions.assertSame(currentThreadContext(), EmptyCoroutineContext)
+      assertSame(currentThreadContext(), EmptyCoroutineContext)
       blockingContext {
         assertThreadContext()
         runBlockingCancellable {
-          Assertions.assertSame(currentThreadContext(), EmptyCoroutineContext)
+          assertSame(currentThreadContext(), EmptyCoroutineContext)
           withContext(Dispatchers.Default) {
             blockingContext {
               assertThreadContext()
             }
           }
-          Assertions.assertSame(currentThreadContext(), EmptyCoroutineContext)
+          assertSame(currentThreadContext(), EmptyCoroutineContext)
         }
         assertThreadContext()
       }
-      Assertions.assertSame(currentThreadContext(), EmptyCoroutineContext)
+      assertSame(currentThreadContext(), EmptyCoroutineContext)
     }
   }
 }

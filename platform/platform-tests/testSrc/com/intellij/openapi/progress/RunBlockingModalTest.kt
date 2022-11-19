@@ -8,7 +8,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -20,7 +20,7 @@ class RunBlockingModalTest {
     val result = withContext(Dispatchers.EDT) {
       runBlockingModal(ModalTaskOwner.guess(), "") { 42 }
     }
-    Assertions.assertEquals(42, result)
+    assertEquals(42, result)
   }
 
   @Test
@@ -32,7 +32,7 @@ class RunBlockingModalTest {
           throw t // fail the scope
         }
       }
-      Assertions.assertSame(t, thrown)
+      assertSame(t, thrown)
     }
   }
 
@@ -47,7 +47,7 @@ class RunBlockingModalTest {
         }
       }
     }
-    Assertions.assertEquals(42, result)
+    assertEquals(42, result)
   }
 
   @Test
@@ -63,18 +63,18 @@ class RunBlockingModalTest {
   private suspend fun blockingContextTest() {
     val contextModality = requireNotNull(currentCoroutineContext().contextModality())
     blockingContext {
-      Assertions.assertSame(contextModality, ModalityState.defaultModalityState())
+      assertSame(contextModality, ModalityState.defaultModalityState())
       runBlockingCancellable {
         progressManagerTest {
           val nestedModality = currentCoroutineContext().contextModality()
           blockingContext {
-            Assertions.assertSame(nestedModality, ModalityState.defaultModalityState())
+            assertSame(nestedModality, ModalityState.defaultModalityState())
           }
         }
         runBlockingModalTest {
           val nestedModality = currentCoroutineContext().contextModality()
           blockingContext {
-            Assertions.assertSame(nestedModality, ModalityState.defaultModalityState())
+            assertSame(nestedModality, ModalityState.defaultModalityState())
           }
         }
       }
@@ -85,8 +85,8 @@ class RunBlockingModalTest {
     withContext(Dispatchers.EDT) {
       runBlockingModal(ModalTaskOwner.guess(), "") {
         val modality = requireNotNull(currentCoroutineContext().contextModality())
-        Assertions.assertNotEquals(modality, ModalityState.NON_MODAL)
-        Assertions.assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+        assertNotEquals(modality, ModalityState.NON_MODAL)
+        assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
         action()
       }
     }
@@ -96,10 +96,10 @@ class RunBlockingModalTest {
     withContext(Dispatchers.EDT) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
         val modality = ModalityState.defaultModalityState()
-        Assertions.assertNotEquals(modality, ModalityState.NON_MODAL)
+        assertNotEquals(modality, ModalityState.NON_MODAL)
         runBlockingCancellable {
-          Assertions.assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
-          Assertions.assertSame(modality, currentCoroutineContext().contextModality())
+          assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+          assertSame(modality, currentCoroutineContext().contextModality())
           action()
         }
       }, "", true, null)
