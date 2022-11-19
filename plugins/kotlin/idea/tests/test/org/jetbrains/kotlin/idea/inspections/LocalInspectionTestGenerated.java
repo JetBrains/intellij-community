@@ -16015,6 +16015,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedReceiverParameter/infix.kt");
         }
 
+        @TestMetadata("memberFunctionWithGenericParameter.kt")
+        public void testMemberFunctionWithGenericParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/memberFunctionWithGenericParameter.kt");
+        }
+
         @TestMetadata("object.kt")
         public void testObject() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/object.kt");
