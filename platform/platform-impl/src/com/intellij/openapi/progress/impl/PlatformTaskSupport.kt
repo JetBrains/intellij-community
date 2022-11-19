@@ -90,8 +90,12 @@ internal class PlatformTaskSupport : TaskSupport {
           withModalIndicator(owner, title, cancellation, deferredDialog, action)
         }
         mainJob.invokeOnCompletion {
-          processEventQueueJob.cancel() // Stop processing the events when the task (with its subtasks) is completed.
-          SwingUtilities.invokeLater(EmptyRunnable.INSTANCE) // Unblock `getNextEvent()`
+          // Stop processing the events when the task (with its subtasks) is completed.
+          processEventQueueJob.cancel()
+          // Unblock `getNextEvent()` in case it's blocked.
+          // It's important that getNextEvent() returns after [processEventQueueJob] is cancelled,
+          // this way the next yield() call throws CancellationException.
+          SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
         }
         mainJob.await()
       }
