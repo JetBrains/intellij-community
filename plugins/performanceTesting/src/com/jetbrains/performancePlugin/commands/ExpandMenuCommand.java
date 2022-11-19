@@ -27,8 +27,7 @@ abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
   }
 
   @Override
-  protected void execute(@NotNull ActionCallback callback,
-                         @NotNull PlaybackContext context) throws Exception {
+  protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context)  {
     ActionManager actionManager = ActionManager.getInstance();
     Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner(); // real focused component (editor/project view/..)
     DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(focusedComponent));

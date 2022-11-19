@@ -41,6 +41,7 @@ public class ReplaceTextCommand extends AbstractCommand {
         TypingTarget target = findTarget(context);
         if (target instanceof EditorComponentImpl) {
           DocumentEx document = ((EditorComponentImpl)target).getEditor().getDocument();
+          //noinspection TestOnlyProblems
           WriteCommandAction.runWriteCommandAction(context.getProject(),
                                                    () -> document.replaceText(text, document.getModificationStamp() + 1));
           result.setResult(null);

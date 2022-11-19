@@ -54,6 +54,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 
@@ -78,8 +79,9 @@ public class InspectionCommandEx extends AbstractCommand {
     if (StringUtil.isNotEmpty(myOptions.downloadFileUrl)) {
       if (StringUtil.isEmpty(myOptions.toolShortName)) {
         LOGGER.error("myOptions.toolShortName cannot be null if you want to download file for test");
+      } else {
+        downloadTestRequiredFile(myOptions.toolShortName, myOptions.downloadFileUrl);
       }
-      downloadTestRequiredFile(myOptions.toolShortName, myOptions.downloadFileUrl);
     }
 
     @NotNull Project project = context.getProject();
@@ -163,7 +165,10 @@ public class InspectionCommandEx extends AbstractCommand {
                   context.message("#########", getLine());
                   Path path = file.toPath();
                   context.message(path.toString(), getLine());
-                  long warningCount = Files.lines(path).filter(line -> line.contains("<problem>")).count();
+                  long warningCount;
+                  try(Stream<String> lines = Files.lines(path).filter(line -> line.contains("<problem>"))) {
+                    warningCount = lines.count();
+                  }
                   if (ApplicationManagerEx.isInIntegrationTest()) {
                     if (warningCount < Integer.MAX_VALUE) {
                       Path perfMetricsPath =
@@ -237,10 +242,10 @@ public class InspectionCommandEx extends AbstractCommand {
   private static void downloadTestRequiredFile(@NotNull String toolShortName, @NotNull String downloadUrl) {
     String tempDirectory = FileUtil.getTempDirectory();
     String filename = toolShortName + ".txt";
-    File prev = Paths.get(tempDirectory, filename).toFile();
-    if (prev.exists()) {
+    File downloadedFile = Paths.get(tempDirectory, filename).toFile();
+    if (downloadedFile.exists()) {
       //noinspection ResultOfMethodCallIgnored
-      prev.delete();
+      downloadedFile.delete();
     }
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, filename);
@@ -251,7 +256,7 @@ public class InspectionCommandEx extends AbstractCommand {
     catch (IOException e) {
       LOGGER.error(e);
     }
-    if (!Paths.get(tempDirectory, filename).toFile().exists()) {
+    if (!downloadedFile.exists()) {
       LOGGER.error("Downloaded file doesn't exist");
     }
   }
@@ -299,6 +304,6 @@ public class InspectionCommandEx extends AbstractCommand {
     public String directory;
 
     @Argument
-    public boolean hideResults = false;
+    final public boolean hideResults = false;
   }
 }

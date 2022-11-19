@@ -1,7 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -9,11 +8,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.util.elementType
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise

@@ -36,17 +36,26 @@ public class MoveDirectoryCommand extends AbstractCommand {
     String[] lineAndColumn = input.split(" ");
     final String sourcePath = lineAndColumn[0];
     final String targetPath = lineAndColumn[1];
-    VirtualFile sourceVirtualFile = ProjectUtil.guessProjectDir(project).findFileByRelativePath(sourcePath);
-    VirtualFile targetVirtualFile = ProjectUtil.guessProjectDir(project).findFileByRelativePath(targetPath);
-    final PsiDirectory sourcePsiDir = myPsiManager.findDirectory(sourceVirtualFile);
-    final PsiDirectory targetPsiDir = myPsiManager.findDirectory(targetVirtualFile);
+    VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
+    if(projectDir != null) {
+      VirtualFile sourceVirtualFile = projectDir.findFileByRelativePath(sourcePath);
+      VirtualFile targetVirtualFile = projectDir.findFileByRelativePath(targetPath);
+      if(sourceVirtualFile != null && targetVirtualFile != null) {
+        final PsiDirectory sourcePsiDir = myPsiManager.findDirectory(sourceVirtualFile);
+        final PsiDirectory targetPsiDir = myPsiManager.findDirectory(targetVirtualFile);
 
-    ApplicationManager.getApplication().invokeAndWait(() ->
-      WriteCommandAction.writeCommandAction(project).run(() -> {
-        MoveFilesOrDirectoriesUtil.doMoveDirectory(sourcePsiDir, targetPsiDir);
-        LOG.info("Dir " + sourcePath + " has been moved to " + targetPath);
-        actionCallback.setDone();
-      }), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeAndWait(() ->
+                                                            WriteCommandAction.writeCommandAction(project).run(() -> {
+                                                              MoveFilesOrDirectoriesUtil.doMoveDirectory(sourcePsiDir, targetPsiDir);
+                                                              LOG.info("Dir " + sourcePath + " has been moved to " + targetPath);
+                                                              actionCallback.setDone();
+                                                            }), ModalityState.NON_MODAL);
+      } else {
+        actionCallback.reject("Source or target dir is not found");
+      }
+    } else {
+      actionCallback.reject("Project dir can't be guessed");
+    }
     return Promises.toPromise(actionCallback);
   }
 }

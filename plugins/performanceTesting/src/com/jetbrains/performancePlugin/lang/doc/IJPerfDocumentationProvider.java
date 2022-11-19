@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 

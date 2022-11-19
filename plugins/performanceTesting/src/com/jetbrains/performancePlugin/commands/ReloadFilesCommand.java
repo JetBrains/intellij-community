@@ -16,8 +16,7 @@ public final class ReloadFilesCommand extends AbstractCallbackBasedCommand {
   }
 
   @Override
-  protected void execute(@NotNull ActionCallback callback,
-                         @NotNull PlaybackContext context) throws Exception {
+  protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context)  {
       LocalFileSystem.getInstance().refresh(false);
       callback.setDone();
   }

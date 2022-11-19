@@ -28,15 +28,19 @@ public class OpenProjectView extends AbstractCommand {
     ApplicationManager.getApplication().invokeLater(() -> {
       ToolWindowManager windowManager = ToolWindowManager.getInstance(context.getProject());
       ToolWindow window = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
-      if (!window.isActive() &&
-          (windowManager.isEditorComponentActive() || !ToolWindowId.PROJECT_VIEW.equals(windowManager.getActiveToolWindowId()))) {
-        window.activate(null);
-        LOG.warn("Project View is opened");
+      if(window != null) {
+        if (!window.isActive() &&
+            (windowManager.isEditorComponentActive() || !ToolWindowId.PROJECT_VIEW.equals(windowManager.getActiveToolWindowId()))) {
+          window.activate(null);
+          LOG.warn("Project View is opened");
+        }
+        else {
+          LOG.warn("Project View has been opened already");
+        }
+        actionCallback.setDone();
+      } else {
+        actionCallback.reject("Window is not found");
       }
-      else {
-        LOG.warn("Project View has been opened already");
-      }
-      actionCallback.setDone();
     });
     return Promises.toPromise(actionCallback);
   }

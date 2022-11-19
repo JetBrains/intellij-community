@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.util.ActionCallback

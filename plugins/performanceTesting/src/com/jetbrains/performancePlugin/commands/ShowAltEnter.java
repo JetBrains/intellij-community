@@ -42,7 +42,7 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
     String extractCommandList = extractCommandArgument(PREFIX);
     String[] commandList = extractCommandList.split("\\|");
     final String actionName = commandList[0];
-    final boolean invoke = (commandList.length > 1) ? Boolean.parseBoolean(commandList[1]) : true;
+    final boolean invoke = commandList.length == 1 || Boolean.parseBoolean(commandList[1]);
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
       @NotNull Project project = context.getProject();
       Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();

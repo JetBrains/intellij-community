@@ -9,10 +9,12 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.performancePlugin.Timer;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
@@ -24,7 +26,9 @@ public final class RunConfigurationCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runConfiguration";
   private static final String WAIT_FOR_PROCESS_STARTED = "TILL_STARTED";
   private static final String WAIT_FOR_PROCESS_TERMINATED = "TILL_TERMINATED";
-  private ExecutionEnvironment myExecutionEnvironment = new ExecutionEnvironment();
+  @SuppressWarnings("TestOnlyProblems") private ExecutionEnvironment myExecutionEnvironment = new ExecutionEnvironment();
+
+  private static final Logger LOG = Logger.getInstance(RunConfigurationCommand.class);
 
   public RunConfigurationCommand(@NotNull String text, int line) {
     super(text, line);
@@ -112,14 +116,13 @@ public final class RunConfigurationCommand extends AbstractCommand {
   }
 
   private static RunConfiguration getConfigurationByName(RunManager runManager, String configurationName) {
-    return runManager.getAllConfigurationsList().stream().filter(configuration -> configurationName.equals(configuration.getName()))
-      .findFirst().orElse(null);
+    return ContainerUtil.find(runManager.getAllConfigurationsList(), configuration -> configurationName.equals(configuration.getName()));
   }
 
   private static void printAllConfigurationsNames(RunManager runManager) {
-    System.out.println("*****************************");
-    System.out.println("Available configurations are:");
-    runManager.getAllConfigurationsList().stream().map(RunProfile::getName).forEach(System.out::println);
-    System.out.println("*****************************");
+    LOG.info("*****************************");
+    LOG.info("Available configurations are:");
+    runManager.getAllConfigurationsList().stream().map(RunProfile::getName).forEach(LOG::info);
+    LOG.info("*****************************");
   }
 }

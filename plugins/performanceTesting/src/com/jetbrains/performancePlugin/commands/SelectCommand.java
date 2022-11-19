@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
 
 public class SelectCommand extends AbstractCommand {
-  @SuppressWarnings("HardCodedStringLiteral") public static final String PREFIX = CMD_PREFIX + "selectText";
+  public static final String PREFIX = CMD_PREFIX + "selectText";
 
   public SelectCommand(@NotNull String command, int line) {
     super(command, line);

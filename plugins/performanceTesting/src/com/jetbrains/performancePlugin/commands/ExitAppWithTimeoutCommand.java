@@ -20,8 +20,7 @@ public final class ExitAppWithTimeoutCommand extends AbstractCallbackBasedComman
   }
 
   @Override
-  protected void execute(@NotNull ActionCallback callback,
-                         @NotNull PlaybackContext context) throws Exception {
+  protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context) {
     writeExitMetricsIfNeeded();
 
     String[] arguments = getText().split(" ", 2);

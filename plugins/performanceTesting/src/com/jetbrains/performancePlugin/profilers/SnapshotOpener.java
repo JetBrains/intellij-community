@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.profilers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ public interface SnapshotOpener {
 
   @Nullable
   static SnapshotOpener findSnapshotOpener(@NotNull File snapshot) {
-    return EP_NAME.getExtensionList().stream().filter(p -> p.canOpen(snapshot)).findAny().orElse(null);
+    return ContainerUtil.find(EP_NAME.getExtensionList(), p -> p.canOpen(snapshot));
   }
 
   boolean canOpen(@NotNull File snapshot);

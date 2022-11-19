@@ -63,6 +63,7 @@ public class FindUsagesCommand extends AbstractCommand {
     super(text, line);
   }
 
+  @SuppressWarnings("TestOnlyProblems")
   @Override
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
