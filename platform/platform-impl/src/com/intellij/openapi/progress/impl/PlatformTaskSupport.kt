@@ -74,8 +74,15 @@ internal class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = resetThreadContext().use {
+  ): T {
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
+    return runBlockingModalInternal(descriptor, action)
+  }
+
+  private fun <T> runBlockingModalInternal(
+    descriptor: ModalIndicatorDescriptor,
+    action: suspend CoroutineScope.() -> T,
+  ): T = resetThreadContext().use {
     val currentModality = ModalityState.current()
     runBlocking {
       // Enter modality without releasing the current EDT event, and without dispatching other events in the queue.
