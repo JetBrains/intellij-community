@@ -8,7 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
-import com.intellij.openapi.application.impl.withModalContext
+import com.intellij.openapi.application.impl.onEdtInNonAnyModality
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -66,9 +66,9 @@ internal class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = withModalContext {
+  ): T = onEdtInNonAnyModality {
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    withModalIndicator(descriptor, deferredDialog = null, action)
+    runBlockingModalInternal(cs = this, descriptor, action)
   }
 
   override fun <T> runBlockingModalInternal(

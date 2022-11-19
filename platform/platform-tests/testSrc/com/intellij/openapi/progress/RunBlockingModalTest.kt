@@ -20,6 +20,9 @@ import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.EmptyCoroutineContext
 
+/**
+ * @see WithModalProgressIndicatorTest
+ */
 class RunBlockingModalTest : ModalCoroutineTest() {
 
   @Test
