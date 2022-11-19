@@ -24,10 +24,18 @@ public class AnsiEscapeDecoder {
   /**
    * Parses ansi-color codes from text and sends text fragments with color attributes to textAcceptor
    *
-   * @param text         a string with ANSI escape sequences
+   * @param text         a string with optional ANSI escape sequences
    * @param outputType   stdout/stderr/system (from {@link ProcessOutputTypes})
    * @param textAcceptor receives text fragments with color attributes.
    *                     It can implement ColoredChunksAcceptor to receive list of pairs (text, attribute).
+   * @apiNote <ul>
+   * <li>method is not in general a thread safe. You may use it safely from 2 threads - one for {@code stdout} and one for {@code stderr}
+   * of the process. But you should not invoke it concurrently for the same output channel.</li>
+   * <li>method does not guarantee synchronous processing. Meaning you should not expect that {@code textAcceptor} got all colored chunks
+   * after invoking this method (despite the current implementation). Processing may be deferred. The only guarantee here, is that
+   * {@code text} passed to the method is going to be processed in the same order as it was passed for each channel: {@code stdout},
+   * {@code stderr} and other.</li>
+   * </ul>
    */
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
     AnsiStreamingLexer effectiveLexer;
