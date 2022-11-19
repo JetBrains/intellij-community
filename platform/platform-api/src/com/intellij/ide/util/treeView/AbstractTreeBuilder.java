@@ -2,12 +2,14 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
@@ -57,9 +59,20 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected AbstractTreeBuilder() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    Logger.getInstance(getClass()).error(PluginException.createByClass(
-      "'AbstractTreeBuilder' is going to be dropped soon and must not be used", null, getClass()));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    var aClass = getClass();
+    ClassLoader classLoader = aClass.getClassLoader();
+    if (classLoader instanceof PluginAwareClassLoader) {
+      PluginId pluginId = ((PluginAwareClassLoader)classLoader).getPluginId();
+      if (pluginId.getIdString().equals("Jetbrains TeamCity Plugin")) {
+        return;
+      }
+
+      Logger.getInstance(aClass).error(new PluginException("'AbstractTreeBuilder' is going to be dropped soon and must not be used", pluginId));
+    }
   }
 
   protected void init(@NotNull JTree tree,
