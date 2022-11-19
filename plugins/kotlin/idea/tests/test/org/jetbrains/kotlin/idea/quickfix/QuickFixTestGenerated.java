@@ -5224,6 +5224,26 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType.kt");
                     }
 
+                    @TestMetadata("inLambdaWithExpectedType2.kt")
+                    public void testInLambdaWithExpectedType2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType2.kt");
+                    }
+
+                    @TestMetadata("inLambdaWithExpectedType3.kt")
+                    public void testInLambdaWithExpectedType3() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType3.kt");
+                    }
+
+                    @TestMetadata("inLambdaWithExpectedType4.kt")
+                    public void testInLambdaWithExpectedType4() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType4.kt");
+                    }
+
+                    @TestMetadata("inLambdaWithExpectedType5.kt")
+                    public void testInLambdaWithExpectedType5() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/inLambdaWithExpectedType5.kt");
+                    }
+
                     @TestMetadata("inconsistentTypes.kt")
                     public void testInconsistentTypes() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/inconsistentTypes.kt");
