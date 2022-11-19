@@ -11,6 +11,18 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.coroutineContext
 
 @Internal
+fun <T> inModalContext(modalJob: Job, action: (ModalityState) -> T): T {
+  val newModalityState = LaterInvocator.getCurrentModalityState().appendEntity(modalJob)
+  LaterInvocator.enterModal(modalJob, newModalityState)
+  try {
+    return action(newModalityState)
+  }
+  finally {
+    LaterInvocator.leaveModal(modalJob)
+  }
+}
+
+@Internal
 suspend fun <X> withModalContext(
   action: suspend CoroutineScope.() -> X,
 ): X = coroutineScope {

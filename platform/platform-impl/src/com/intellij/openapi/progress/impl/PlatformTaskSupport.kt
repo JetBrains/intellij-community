@@ -5,9 +5,10 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.impl.*
+import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.application.impl.inModalContext
+import com.intellij.openapi.application.impl.withModalContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -86,12 +87,8 @@ internal class PlatformTaskSupport : TaskSupport {
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,
   ): T = resetThreadContext().use {
-    val currentModality = ModalityState.current()
-    runBlocking {
-      val blockingJob = cs.coroutineContext.job
-      val newModalityState = (currentModality as ModalityStateEx).appendJob(blockingJob) as ModalityStateEx
-      LaterInvocator.enterModal(blockingJob, newModalityState)
-      try {
+    inModalContext(cs.coroutineContext.job) { newModalityState ->
+      runBlocking {
         val deferredDialog = CompletableDeferred<DialogWrapper>()
         // Dispatch EDT events in the current runBlocking context.
         val processEventQueueJob = processEventQueueConsumingUnrelatedInputEvents(deferredDialog)
@@ -107,9 +104,6 @@ internal class PlatformTaskSupport : TaskSupport {
           SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
         }
         mainJob.await()
-      }
-      finally {
-        LaterInvocator.leaveModal(blockingJob)
       }
     }
   }
