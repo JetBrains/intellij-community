@@ -88,13 +88,13 @@ internal class PlatformTaskSupport : TaskSupport {
     action: suspend CoroutineScope.() -> T,
   ): T = resetThreadContext().use {
     inModalContext(cs.coroutineContext.job) { newModalityState ->
+      val deferredDialog = CompletableDeferred<DialogWrapper>()
+      val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
+        withModalIndicator(descriptor, deferredDialog, action)
+      }
       runBlocking {
-        val deferredDialog = CompletableDeferred<DialogWrapper>()
         // Dispatch EDT events in the current runBlocking context.
         val processEventQueueJob = processEventQueueConsumingUnrelatedInputEvents(deferredDialog)
-        val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
-          withModalIndicator(descriptor, deferredDialog, action)
-        }
         mainJob.invokeOnCompletion {
           // Stop processing the events when the task (with its subtasks) is completed.
           processEventQueueJob.cancel()
