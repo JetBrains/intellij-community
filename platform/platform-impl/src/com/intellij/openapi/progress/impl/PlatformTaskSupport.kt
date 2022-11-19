@@ -74,28 +74,27 @@ internal class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T {
+  ): T = ensureCurrentJobAllowingOrphan { currentJob ->
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    return runBlockingModalInternal(descriptor, action)
+    val scope = CoroutineScope(currentJob)
+    runBlockingModalInternal(cs = scope, descriptor, action)
   }
 
   private fun <T> runBlockingModalInternal(
+    cs: CoroutineScope,
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,
   ): T = resetThreadContext().use {
     val currentModality = ModalityState.current()
     runBlocking {
-      // Enter modality without releasing the current EDT event, and without dispatching other events in the queue.
-      val blockingJob = coroutineContext.job
+      val blockingJob = cs.coroutineContext.job
       val newModalityState = (currentModality as ModalityStateEx).appendJob(blockingJob) as ModalityStateEx
       LaterInvocator.enterModal(blockingJob, newModalityState)
       try {
         val deferredDialog = CompletableDeferred<DialogWrapper>()
         // Dispatch EDT events in the current runBlocking context.
         val processEventQueueJob = processEventQueueConsumingUnrelatedInputEvents(deferredDialog)
-        // Main job is not a child of the current coroutine to prevent cancellation of the current coroutine by main job failure.
-        @OptIn(DelicateCoroutinesApi::class)
-        val mainJob = GlobalScope.async(Dispatchers.Default + newModalityState.asContextElement()) {
+        val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
           withModalIndicator(descriptor, deferredDialog, action)
         }
         mainJob.invokeOnCompletion {
