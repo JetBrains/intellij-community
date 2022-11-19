@@ -18,11 +18,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.util.awaitCancellation
 import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -186,6 +188,7 @@ private suspend fun <T> withModalIndicator(
   }
 }
 
+@OptIn(IntellijInternalApi::class)
 private fun CoroutineScope.showModalIndicator(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
@@ -267,24 +270,6 @@ private suspend fun ProgressDialogUI.updateFromSink(stateFlow: Flow<ProgressStat
       updateProgress(it)
     }
   error("collect call must be cancelled")
-}
-
-private fun CoroutineScope.awaitCancellation(action: () -> Unit) {
-  // UNDISPATCHED guarantees that the coroutine will execute until first suspension point (awaitCancellation)
-  launch(start = CoroutineStart.UNDISPATCHED) {
-    try {
-      awaitCancellation()
-    }
-    finally {
-      withContext(NonCancellable) {
-        // Force re-dispatch to avoid executing the action in the current EDT event.
-        // Without this the dialog might be closed before it's shown, if the cancellation happens concurrently with `dialog.show()`.
-        // Concurrent cancellation might happen on a background thread, when the task finishes just before the dialog is about to show.
-        yield()
-        action()
-      }
-    }
-  }
 }
 
 /**
