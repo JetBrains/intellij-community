@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.EDT
@@ -74,9 +75,9 @@ internal class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = ensureCurrentJobAllowingOrphan { currentJob ->
+  ): T = ensureCurrentJobAllowingOrphan {
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    val scope = CoroutineScope(currentJob)
+    val scope = CoroutineScope(currentThreadContext())
     runBlockingModalInternal(cs = scope, descriptor, action)
   }
 
