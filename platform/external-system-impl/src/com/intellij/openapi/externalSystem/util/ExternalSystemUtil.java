@@ -1021,6 +1021,14 @@ public final class ExternalSystemUtil {
     return RUNNER_IDS.get(executorId);
   }
 
+  public static void registerRunnerId(@NotNull String executorId, @NotNull String externalSystemRunnerId)  {
+    if (!RUNNER_IDS.containsKey(executorId)) {
+      RUNNER_IDS.put(executorId, externalSystemRunnerId);
+    } else {
+      throw new ExternalSystemException("Executor with ID " + executorId + " is already registered");
+    }
+  }
+
   /**
    * Tries to obtain external project info implied by the given settings and link that external project to the given ide project.
    *
