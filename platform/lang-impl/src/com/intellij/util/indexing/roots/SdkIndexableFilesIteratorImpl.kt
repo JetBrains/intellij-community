@@ -19,7 +19,7 @@ import java.util.*
 class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
                                                         private val rootsToIndex: Collection<VirtualFile>) : IndexableFilesIterator {
 
-  override fun getDebugName() = "$sdkPresentableName ${sdk.name} ${rootsToIndex.joinToString { it.path }}"
+  override fun getDebugName() = "$sdkPresentableName ${sdk.name} ${sdk.homePath}"
 
   private val sdkPresentableName: String
     get() = (sdk.sdkType as? SdkType)?.presentableName.takeUnless { it.isNullOrEmpty() }
