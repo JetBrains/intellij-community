@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
-import com.intellij.ide.ui.ProjectTopHitCache;
+import com.intellij.ide.ui.TopHitCache;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -32,9 +32,9 @@ public abstract class VcsOptionsTopHitProviderBase implements OptionsSearchTopHi
 
     @Override
     public void directoryMappingChanged() {
-      for (ProjectLevelProvider provider : OptionsTopHitProvider.PROJECT_LEVEL_EP.getExtensionList()) {
+      for (ProjectLevelProvider provider : OptionsTopHitProvider.Companion.getPROJECT_LEVEL_EP().getExtensionList()) {
         if (provider instanceof VcsOptionsTopHitProviderBase) {
-          ProjectTopHitCache.getInstance(myProject).invalidateCachedOptions(provider.getClass());
+          TopHitCache.Companion.getInstance(myProject).invalidateCachedOptions(provider.getClass());
         }
       }
     }

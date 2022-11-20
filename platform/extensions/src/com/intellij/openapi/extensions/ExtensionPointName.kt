@@ -214,6 +214,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     val instance: T?
 
     val implementationClassName: String
+    val implementationClass: Class<T>?
 
     val pluginDescriptor: PluginDescriptor
   }
@@ -243,6 +244,19 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
               get() = createOrError(adapter = adapter, point = point)
             override val implementationClassName: String
               get() = adapter.assignableToClassName
+            override val implementationClass: Class<T>?
+              get() {
+                try {
+                  return adapter.getImplementationClass(point.componentManager)
+                }
+                catch (e: CancellationException) {
+                  throw e
+                }
+                catch (e: Throwable) {
+                  logger<ExtensionPointName<T>>().error(point.componentManager.createError(e, adapter.pluginDescriptor.pluginId))
+                  return null
+                }
+              }
 
             override val pluginDescriptor: PluginDescriptor
               get() = adapter.pluginDescriptor

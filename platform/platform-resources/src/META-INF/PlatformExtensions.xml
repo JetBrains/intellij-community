@@ -868,7 +868,7 @@
 
     <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity" order="last"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
-    <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
+    <applicationService serviceImplementation="com.intellij.ide.ui.AppTopHitCache"/>
 
     <applicationService serviceInterface="com.intellij.ide.util.TipAndTrickManager"
                         serviceImplementation="com.intellij.ide.util.TipAndTrickManagerImpl"/>
