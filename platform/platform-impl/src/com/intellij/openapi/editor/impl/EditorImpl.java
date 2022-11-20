@@ -351,10 +351,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myScrollingToCaret;
 
-  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind) {
+  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind, @Nullable VirtualFile file) {
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
+    myVirtualFile = file;
     myScheme = createBoundColorSchemeDelegate(null);
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myIsViewer = viewer;
@@ -859,8 +860,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFile(VirtualFile vFile) {
-    myVirtualFile = vFile;
-    reinitSettings();
+    // yes, compare by instance
+    //noinspection UseVirtualFileEquals
+    if (vFile != myVirtualFile) {
+      myVirtualFile = vFile;
+      reinitSettings();
+    }
   }
 
   @Override
@@ -1329,10 +1334,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void setHighlighter(final @NotNull EditorHighlighter highlighter) {
-    if (isReleased) return; // do not set highlighter to the released editor
+  public void setHighlighter(@NotNull EditorHighlighter highlighter) {
+    if (isReleased) {
+      // do not set highlighter to the released editor
+      return;
+    }
+
     assertIsDispatchThread();
-    final Document document = getDocument();
+    Document document = getDocument();
     Disposer.dispose(myHighlighterDisposable);
 
     document.addDocumentListener(highlighter);
@@ -4572,20 +4581,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setEditorFontSize(float fontSize) {
-      if (fontSize < MIN_FONT_SIZE) fontSize = MIN_FONT_SIZE;
-      if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
-      if (fontSize == myFontSize) return;
+      if (fontSize < MIN_FONT_SIZE) {
+        fontSize = MIN_FONT_SIZE;
+      }
+      if (fontSize > myMaxFontSize) {
+        fontSize = myMaxFontSize;
+      }
+      if (fontSize == myFontSize) {
+        return;
+      }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Font size overridden for " + EditorImpl.this, new Throwable());
       }
       myFontPreferencesAreSetExplicitly = false;
 
       IdeScaleTransformer scaleTransformer = IdeScaleTransformer.INSTANCE;
-      if (!scaleTransformer.isEditorFontSizeForced() &&
-        fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) myFontSize = FONT_SIZE_TO_IGNORE;
-      else myFontSize = fontSize;
+      if (!scaleTransformer.isEditorFontSizeForced() && fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) {
+        myFontSize = FONT_SIZE_TO_IGNORE;
+      }
+      else {
+        myFontSize = fontSize;
+      }
 
-      reinitFontsAndSettings();
+      reinitFonts();
+      reinitSettings();
     }
 
     void resetEditorFontSize() {
@@ -5181,7 +5200,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static class NullEditorHighlighter extends EmptyEditorHighlighter {
+  private static final class NullEditorHighlighter extends EmptyEditorHighlighter {
     private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
 
     NullEditorHighlighter() {

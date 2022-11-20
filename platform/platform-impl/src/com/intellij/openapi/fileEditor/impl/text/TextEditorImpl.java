@@ -8,12 +8,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -86,7 +86,9 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     if (!project.isDisposed()) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       PsiFile file = documentManager.getPsiFile(editor.getDocument());
-      if (file != null) return file.getLanguage();
+      if (file != null) {
+        return file.getLanguage();
+      }
     }
     else {
       LOG.warn("Attempting to get a language for document on a disposed project: " + project.getName());
@@ -236,6 +238,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   private static EditorImpl createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     LOG.assertTrue(document != null);
-    return (EditorImpl)EditorFactory.getInstance().createEditor(document, project, EditorKind.MAIN_EDITOR);
+    EditorFactoryImpl factory = ((EditorFactoryImpl)EditorFactory.getInstance());
+    return factory.createMainEditor(document, project, file);
   }
 }
