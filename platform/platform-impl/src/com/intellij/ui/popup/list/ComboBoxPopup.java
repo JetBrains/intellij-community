@@ -4,8 +4,11 @@ package com.intellij.ui.popup.list;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxPopupState;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.util.GroupedValue;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
@@ -14,6 +17,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -220,18 +224,26 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     @NotNull
     @Override
     public String getTextFor(T value) {
-      Component component = myGetRenderer.get().getListCellRendererComponent(myProxyList, value, -1, false, false);
+      final ListCellRenderer<? super T> cellRenderer = myGetRenderer.get();
+      Component component = cellRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
       return component instanceof TitledSeparator || component instanceof JSeparator ? "" :
-             component instanceof JLabel ? ((JLabel)component).getText() :
-             component instanceof SimpleColoredComponent
-             ? ((SimpleColoredComponent)component).getCharSequence(false).toString()
-             : String.valueOf(value);
+             component instanceof JLabel label ? label.getText() :
+             component instanceof SimpleColoredComponent c ? c.getCharSequence(false).toString() :
+             cellRenderer instanceof Accessible accessible ? accessible.getAccessibleContext().getAccessibleName() :
+             String.valueOf(value);
     }
 
     @Override
     public boolean isSelectable(T value) {
       Component component = myGetRenderer.get().getListCellRendererComponent(myProxyList, value, -1, false, false);
       return !(component instanceof TitledSeparator || component instanceof JSeparator);
+    }
+
+    @Override
+    public @Nullable ListSeparator getSeparatorAbove(T value) {
+      return value instanceof GroupedValue v && v.getSeparatorText() != null
+             ? new ListSeparator(v.getSeparatorText())
+             : null;
     }
   }
 
@@ -242,5 +254,13 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       items.add(model.getElementAt(i));
     }
     return items;
+  }
+
+  public <T> Boolean isSeparatorAboveOf(T value) {
+    return getListModel().isSeparatorAboveOf(value);
+  }
+
+  public <T> @NlsContexts.Separator String getCaptionAboveOf(T value) {
+    return getListModel().getCaptionAboveOf(value);
   }
 }
