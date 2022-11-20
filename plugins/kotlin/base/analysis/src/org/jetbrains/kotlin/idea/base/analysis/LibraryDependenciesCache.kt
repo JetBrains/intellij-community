@@ -62,7 +62,7 @@ private class LibraryDependencyCandidatesAndSdkInfos(
     override fun toString(): String {
         return "[${Integer.toHexString(System.identityHashCode(this))}] libraryDependencyCandidates: ${
             libraryDependencyCandidates.map { it.libraries.map(LibraryInfo::name) }
-        } sdkInfos: $sdkInfos"
+        } sdkInfos: ${sdkInfos.map { it.sdk.name }}"
     }
 }
 
@@ -402,7 +402,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                     tmpResults[moduleToVisit] ?: internalGet(moduleToVisit, tmpResults, trace, loops = loops)
 
                 val moduleLibraryDependencyCandidatesAndSdkInfos = tmpResults.getValue(module)
-                moduleLibraryDependencyCandidatesAndSdkInfos += moduleToVisitLibraryDependencyCandidatesAndSdkInfos
+
+                // We should not include SDK from dependent modules
+                // see the traverse way of OrderEnumeratorBase#shouldAddOrRecurse for JdkOrderEntry
+                moduleLibraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates += moduleToVisitLibraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates
             }
 
             trace.remove(module)
