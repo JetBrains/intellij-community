@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
@@ -56,7 +55,7 @@ import javax.swing.*
 
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
-  @field:Volatile @field:Suppress("unused") private var selfie: Image?,
+  selfie: Image?,
   withLoadingState: Boolean = false,
 ) : IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
   constructor(frame: IdeFrameImpl) : this(frame = frame, selfie = null, withLoadingState = false)
@@ -77,9 +76,9 @@ open class ProjectFrameHelper internal constructor(
   // so we remember the activation time and report it against the assigned project later
   private var activationTimestamp: Long? = null
 
-  internal val loadingState: MutableLoadingState? = if (withLoadingState) MutableLoadingState() else null
+  internal val loadingState: MutableLoadingState? = if (withLoadingState) MutableLoadingState(selfie = selfie) else null
 
-  internal class MutableLoadingState : FrameLoadingState {
+  internal class MutableLoadingState(override var selfie: Image?) : FrameLoadingState {
     override val loading: CompletableDeferred<Unit> = CompletableDeferred()
   }
 
@@ -335,9 +334,6 @@ open class ProjectFrameHelper internal constructor(
     val rootPane = rootPane
     rootPane.setProject(project)
 
-    if (selfie != null) {
-      StartupManager.getInstance(project).runAfterOpened { selfie = null }
-    }
     frameDecorator?.setProject()
     activationTimestamp?.let {
       RecentProjectsManager.getInstance().setActivationTimestamp(project, it)

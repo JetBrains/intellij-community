@@ -31,7 +31,6 @@ import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
@@ -393,7 +392,7 @@ private class SingleProjectUiFrameManager(private val frameInfo: FrameInfo, priv
 }
 
 private fun readProjectSelfie(projectWorkspaceId: String?, frame: IdeFrameImpl): Image? {
-  if (projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state", false)) {
+  if (projectWorkspaceId != null && ProjectSelfieUtil.isEnabled()) {
     try {
       return ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, ScaleContext.create(frame))
     }

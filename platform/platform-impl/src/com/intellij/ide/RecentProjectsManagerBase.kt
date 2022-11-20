@@ -657,7 +657,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
         writeInfoFile(frameInfo, frame)
       }
 
-      if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state", false)) {
+      if (workspaceId != null && ProjectSelfieUtil.isEnabled()) {
         takeASelfie(frameHelper, workspaceId)
       }
     }
@@ -750,14 +750,6 @@ int32 "extendedState"
     }
 
     //System.out.println("Write image: " + (System.currentTimeMillis() - start) + "ms");
-    val lastLink = selfieFile.parent.resolve("last.png")
-    if (SystemInfo.isUnix) {
-      Files.deleteIfExists(lastLink)
-      Files.createSymbolicLink(lastLink, selfieFile)
-    }
-    else {
-      Files.copy(selfieFile, lastLink, StandardCopyOption.REPLACE_EXISTING)
-    }
   }
 
   fun patchRecentPaths(patcher: (String) -> String?) {

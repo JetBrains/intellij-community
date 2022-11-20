@@ -586,8 +586,14 @@ private class IdePaneLoadingLayer(
       if (currentAlpha != 0f) {
         (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
 
-        g.setColor(JBColor.PanelBackground)
-        g.fillRect(0, 0, width, height)
+        val selfie = loadingState.selfie
+        if (selfie == null) {
+          g.setColor(JBColor.PanelBackground)
+          g.fillRect(0, 0, width, height)
+        }
+        else {
+          StartupUiUtil.drawImage(g, selfie)
+        }
       }
 
       super.paintComponent(g)
@@ -664,4 +670,5 @@ private class IdePaneLoadingLayer(
 
 internal interface FrameLoadingState {
   val loading: Job
+  val selfie: Image?
 }
