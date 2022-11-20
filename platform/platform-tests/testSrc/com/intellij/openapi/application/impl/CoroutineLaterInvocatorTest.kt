@@ -11,9 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import javax.swing.SwingUtilities
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.resume
 
 class CoroutineLaterInvocatorTest : ModalCoroutineTest() {
 
@@ -73,7 +71,7 @@ class CoroutineLaterInvocatorTest : ModalCoroutineTest() {
     withDifferentInitialModalities {
       val modalCoroutine = launchModalCoroutineAndWait(cs = this@withDifferentInitialModalities)
       val anyCoroutine = launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {}
-      processSwingQueue()
+      processApplicationQueue()
       yield()
       assertTrue(anyCoroutine.isCompleted)
       modalCoroutine.cancel()
@@ -85,7 +83,7 @@ class CoroutineLaterInvocatorTest : ModalCoroutineTest() {
     withDifferentInitialModalities {
       val modalCoroutine = launchModalCoroutineAndWait(this)
       val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {}
-      processSwingQueue()
+      processApplicationQueue()
       assertFalse(nonModalCoroutine.isCompleted)
       modalCoroutine.cancel()
     }
@@ -95,7 +93,7 @@ class CoroutineLaterInvocatorTest : ModalCoroutineTest() {
   fun `modal delays default non-modal`(): Unit = timeoutRunBlocking {
     val modalCoroutine = launchModalCoroutineAndWait(this)
     val nonModalCoroutine = launch(Dispatchers.EDT) {} // modality is not specified
-    processSwingQueue()
+    processApplicationQueue()
     assertFalse(nonModalCoroutine.isCompleted)
     modalCoroutine.cancel()
   }
@@ -105,7 +103,7 @@ class CoroutineLaterInvocatorTest : ModalCoroutineTest() {
     withDifferentInitialModalities {
       val modalCoroutine = launchModalCoroutineAndWait(cs = this@withDifferentInitialModalities)
       val modalCoroutine2 = modalCoroutine {}
-      processSwingQueue()
+      processApplicationQueue()
       assertFalse(modalCoroutine2.isCompleted)
       modalCoroutine.cancel()
     }
@@ -119,7 +117,7 @@ class CoroutineLaterInvocatorTest : ModalCoroutineTest() {
           awaitCancellation()
         }
       }
-      processSwingQueue()
+      processApplicationQueue()
       assertFalse(modalCoroutine.isCompleted)
       modalCoroutine.cancel()
     }
@@ -191,8 +189,6 @@ private fun CoroutineScope.modalCoroutine(action: suspend CoroutineScope.() -> U
   }
 }
 
-private suspend fun processSwingQueue(): Unit = suspendCancellableCoroutine {
-  SwingUtilities.invokeLater {
-    it.resume(Unit)
-  }
+internal suspend fun processApplicationQueue() {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {}
 }
