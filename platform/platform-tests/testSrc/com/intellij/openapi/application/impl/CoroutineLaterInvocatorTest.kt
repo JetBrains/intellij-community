@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.progress.timeoutRunBlocking
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
@@ -16,21 +15,7 @@ import javax.swing.SwingUtilities
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
 
-@TestApplication
-class CoroutineLaterInvocatorTest {
-
-  @BeforeEach
-  @AfterEach
-  fun checkNotModal() {
-    timeoutRunBlocking {
-      withContext(Dispatchers.EDT) {
-        assertFalse(LaterInvocator.isInModalContext()) {
-          "Expect no modal entries. Probably some of the previous tests didn't left their entries. " +
-          "Top entry is: " + LaterInvocator.getCurrentModalEntities().firstOrNull()
-        }
-      }
-    }
-  }
+class CoroutineLaterInvocatorTest : ModalCoroutineTest() {
 
   @Test
   fun `modal context`(): Unit = timeoutRunBlocking {
