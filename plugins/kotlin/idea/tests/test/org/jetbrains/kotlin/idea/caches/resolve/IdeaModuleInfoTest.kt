@@ -35,9 +35,11 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenc
 import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
+import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
@@ -46,6 +48,10 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.projectModel.FullJdk
+import org.jetbrains.kotlin.projectModel.KotlinSdk
+import org.jetbrains.kotlin.projectModel.ResolveSdk
+import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
@@ -1084,6 +1090,141 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         assertDependencies(lib = m7LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m7LibInfo)
     }
 
+    fun testMppCase() {
+        /**
+        ```mermaid
+        graph
+        common --> STDLIB_COMMON
+        js --> common
+        js --> STDLIB_JS
+        js --> KOTLIN_SDK
+        jvmNoSdk --> common
+        jvmNoSdk --> STDLIB_JVM
+        jvmWithSdk --> common
+        jvmWithSdk --> STDLIB_JVM
+        jvmWithSdk --> FULL_JDK
+        native --> common
+        common --> KOTLIN_SDK
+        ```
+         */
+
+        KotlinSdkType.setUpIfNeeded(testRootDisposable)
+
+        val common = module("common")
+        val js = module("js")
+        val jvmNoSdk = module("jvmNoSdk")
+        val jvmWithSdk = module("jvmWithSdk")
+        val native = module("native")
+
+        js.addDependency(common)
+        jvmNoSdk.addDependency(common)
+        jvmWithSdk.addDependency(common)
+        native.addDependency(common)
+
+        val stdlibCommon = projectLibrary("stdlibCommon", classesRoot = TestKotlinArtifacts.kotlinStdlibCommon.jarRoot)
+        val stdlibCommonLibInfo = stdlibCommon.toLibraryInfo()
+
+        common.addDependency(stdlibCommon)
+        common.addDependency(KotlinSdk, testRootDisposable)
+        jvmWithSdk.addDependency(KotlinSdk, testRootDisposable)
+
+        val kotlinSdkInfo = common.toSdkInfo(KotlinSdk) ?: error("no KotlinSDK")
+
+        val stdlibJs = projectLibrary("stdlibJs", classesRoot = TestKotlinArtifacts.kotlinStdlibJs.jarRoot)
+        val stdlibJsInfo = stdlibJs.toLibraryInfo()
+
+        js.addDependency(stdlibJs)
+        js.addDependency(KotlinSdk, testRootDisposable)
+
+        val stdlibJvm = projectLibrary("stdlibJvm", classesRoot = TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        val stdlibJvmLibInfo = stdlibJvm.toLibraryInfo()
+
+        jvmNoSdk.addDependency(stdlibJvm)
+        jvmWithSdk.addDependency(stdlibJvm)
+
+        jvmWithSdk.addDependency(FullJdk, testRootDisposable)
+        val fullSdkInfo = jvmWithSdk.toSdkInfo(FullJdk) ?: error("no FullJdk")
+
+        common.production.assertDependenciesEqual(
+            kotlinSdkInfo,
+            common.production,
+            stdlibCommonLibInfo
+        )
+
+        js.production.assertDependenciesEqual(
+            kotlinSdkInfo,
+            js.production,
+            common.production,
+            stdlibJsInfo
+        )
+
+        jvmNoSdk.production.assertDependenciesEqual(
+            jvmNoSdk.production,
+            common.production,
+            stdlibJvmLibInfo,
+        )
+
+        jvmWithSdk.production.assertDependenciesEqual(
+            fullSdkInfo,
+            jvmWithSdk.production,
+            common.production,
+            stdlibJvmLibInfo,
+        )
+
+        assertDependencies(
+            lib = stdlibCommonLibInfo,
+            expectedSdkInfos = listOf(kotlinSdkInfo),
+            stdlibCommonLibInfo
+        )
+
+        assertDependencies(
+            lib = stdlibJsInfo,
+            expectedSdkInfos = listOf(kotlinSdkInfo),
+            stdlibCommonLibInfo, stdlibJsInfo
+        )
+
+        assertDependencies(
+            lib = stdlibJvmLibInfo,
+            expectedSdkInfos = listOf(fullSdkInfo),
+            stdlibCommonLibInfo, stdlibJvmLibInfo
+        )
+
+        assertDependencies(
+            lib = stdlibJvmLibInfo,
+            expectedSdkInfos = listOf(fullSdkInfo),
+            stdlibCommonLibInfo, stdlibJvmLibInfo
+        )
+
+        //for (libraryInfo in listOf(stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m7LibInfo)) {
+        //    assertDependencies(
+        //        lib = libraryInfo,
+        //        stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
+        //    )
+        //}
+        //
+        //// drop module in the middle of the loop
+        //ModuleRootModificationUtil.updateModel(native) { model: ModifiableRootModel ->
+        //    val entry = model.findModuleOrderEntry(m5) ?: error("unable to find m5")
+        //    model.removeOrderEntry(entry)
+        //}
+        //
+        //native.production.assertDependenciesEqual(
+        //    native.production,
+        //    // m5 is dropped
+        //    // m5.production,
+        //    m4LibInfo,
+        //)
+        //
+        //assertDependencies(lib = stdlibJsInfo, stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo)
+        //assertDependencies(lib = stdlibJvmLibInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo)
+        //assertDependencies(lib = m3LibInfo, m3LibInfo, m4LibInfo)
+        //assertDependencies(lib = m4LibInfo, m4LibInfo)
+        //
+        //assertDependencies(lib = m6LibInfo, stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo, m6LibInfo, m7LibInfo)
+        //assertDependencies(lib = m7LibInfo, stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo, m7LibInfo)
+    }
+
+
     fun testModuleChainInvalidation() {
         /**
         ```mermaid
@@ -1914,6 +2055,21 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         )
     }
 
+    private fun assertDependencies(lib: LibraryInfo, expectedSdkInfos: List<SdkInfo>, vararg expectedLibraries: LibraryInfo) {
+        val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(lib)
+        assertEquals(
+            "LibraryInfo '${lib.name}' dependencies",
+            expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
+            dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+        )
+
+        assertEquals(
+            "LibraryInfo '${lib.name}' sdk dependency",
+            expectedSdkInfos.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+            dependencies.sdk.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+        )
+    }
+
     private fun createFileInProject(fileName: String): VirtualFile {
         return runWriteAction {
             getVirtualFile(createTempFile(fileName, "")).copy(this, VfsUtil.findFileByIoFile(File(project.basePath!!), true)!!, fileName)
@@ -1938,6 +2094,20 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         get() = testSourceInfo!!
 
     private fun LibraryEx.toLibraryInfo(): LibraryInfo = LibraryInfoCache.getInstance(project)[this].first()
+
+    private fun Module.toSdkInfo(sdk: ResolveSdk?): SdkInfo? {
+        val findOrGetCachedSdk = SdkInfoCache.getInstance(project).findOrGetCachedSdk(this.production)
+        if (sdk != null) {
+            check(when(sdk) {
+                FullJdk -> findOrGetCachedSdk?.sdk == PluginTestCaseBase.jdk(TestJdkKind.FULL_JDK)
+                KotlinSdk -> findOrGetCachedSdk?.sdk?.sdkType == KotlinSdkType.INSTANCE
+                else -> false
+            }) {
+                "module '$name' has to have '$sdk' SDK"
+            }
+        }
+        return findOrGetCachedSdk
+    }
 
     private fun module(name: String, hasProductionRoot: Boolean = true, hasTestRoot: Boolean = true): Module {
         return createModuleFromTestData(createTempDirectory().absolutePath, name, StdModuleTypes.JAVA, false).apply {
