@@ -27,7 +27,6 @@ import static com.intellij.util.concurrency.QueueProcessor.ThreadToUse;
  * To add a task to the queue use {@link #run(Task.Backgroundable)}
  * BackgroundTaskQueue may have a title - this title will be used if the task which is currently running doesn't have a title.
  */
-@SomeQueue
 public class BackgroundTaskQueue {
 
   protected final @NlsContexts.ProgressTitle @NotNull String myTitle;
