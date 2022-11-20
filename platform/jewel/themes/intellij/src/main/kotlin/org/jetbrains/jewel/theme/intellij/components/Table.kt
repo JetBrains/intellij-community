@@ -108,7 +108,7 @@ class TableState(
                 mapOf(
                     "initialFirstVisibleRowIndex" to it.firstVisibleRowIndex,
                     "initialFirstVisibleRowScrollOffset" to it.firstVisibleRowScrollOffset,
-                    *it.dividerOffsets.map { (k, v) -> it.toString() to v }.toTypedArray()
+                    *it.dividerOffsets.map { (_, v) -> it.toString() to v }.toTypedArray()
                 )
             },
             restore = {

@@ -3,7 +3,6 @@
 package org.jetbrains.jewel.theme.intellij.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.MouseClickScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -14,7 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.mouseClickable
+import androidx.compose.foundation.onClick
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -138,6 +137,7 @@ data class Tree<T>(val heads: List<Element<T>>) {
             found.value = true
             new
         }
+
         current is Element.Node<T> -> current.copy(children = current.children.map { replaceRecursive(old, new, it, found) })
         else -> current
     }
@@ -175,7 +175,8 @@ fun <T> BaseTreeLayout(
     focusedTreeElement: Tree.Element<T>? = null,
     onFocusedElementChange: (Tree.Element<T>?) -> Unit,
     onTreeNodeToggle: (Tree.Element.Node<T>) -> Unit,
-    onTreeElementClick: MouseClickScope.(Int, Tree.Element<T>) -> Unit,
+    onTreeElementClick: (Int, Tree.Element<T>) -> Unit,
+    onTreeElementMultiselectChange: (Int, Tree.Element<T>) -> Unit,
     onTreeElementDoubleClick: (Tree.Element<T>) -> Unit,
     rowContent: @Composable RowScope.(Tree.Element<T>) -> Unit
 ) {
@@ -207,12 +208,19 @@ fun <T> BaseTreeLayout(
                         if (isElementSelected) onFocusedElementChange(treeElement)
                     }
                     .onKeyEvent { onKeyPressed(it, index, treeElementWithDepth) }
-                    .mouseClickable { onTreeElementClick(index, treeElement) }
+                    .onClick(onDoubleClick = { onTreeElementDoubleClick(treeElement) }) {
+                        onTreeElementClick(index, treeElement)
+                    }
+                    .onClick(keyboardModifiers = {
+                        when {
+                            hostOs.isWindows || hostOs.isLinux -> isCtrlPressed
+                            hostOs.isMacOS -> isMetaPressed
+                            else -> false
+                        }
+                    }) {
+                        onTreeElementMultiselectChange(index, treeElement)
+                    }
                     .appendIf(focusedTreeElement == treeElement) { border(2.dp, Color.Red) },
-//                    .combinedClickable(
-//                        onClick = { EmptyClickContext.onTreeElementClick(treeElement) },
-//                        onDoubleClick = { onTreeElementDoubleClick(treeElement) }
-//                    )
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(Modifier.padding(start = depth * appearance.indentWidth, end = appearance.arrowEndPadding))
@@ -221,12 +229,13 @@ fun <T> BaseTreeLayout(
                         Box(modifier = Modifier.alpha(0f).paint(appearance.arrowPainter()))
                         rowContent(treeElement)
                     }
+
                     is Tree.Element.Node -> {
                         Box(
                             modifier = Modifier.rotate(if (treeElement.isOpen) 90f else 0f)
                                 .alpha(if (treeElement.children.isEmpty()) 0f else 1f)
                                 .paint(appearance.arrowPainter())
-                                .mouseClickable(enabled = treeElement.children.isNotEmpty()) {
+                                .onClick(enabled = treeElement.children.isNotEmpty()) {
                                     onTreeNodeToggle(treeElement)
                                 }
                         )
@@ -315,6 +324,7 @@ fun <T> TreeLayout(
                     onTreeElementDoubleClick(element)
                     true
                 }
+
                 index > 0 && keyEvent.key == Key.DirectionUp -> focusAndSelectSingleIndex(index - 1)
                 index < tree.flattenedTree.lastIndex && keyEvent.key == Key.DirectionDown -> focusAndSelectSingleIndex(index + 1)
                 keyEvent.key == Key.DirectionRight -> when {
@@ -322,14 +332,17 @@ fun <T> TreeLayout(
                         focusedTreeElement = onTreeNodeToggle(element).flattenedTree[index].treeElement
                         true
                     }
+
                     index < tree.flattenedTree.lastIndex -> focusAndSelectSingleIndex(index + 1)
                     else -> false
                 }
+
                 keyEvent.key == Key.DirectionLeft -> when {
                     element is Tree.Element.Node<T> && element.isOpen -> {
                         focusedTreeElement = onTreeNodeToggle(element).flattenedTree[index].treeElement
                         true
                     }
+
                     index > 0 -> when (element) {
                         !in tree.heads -> {
                             var currentIndex = index
@@ -343,10 +356,13 @@ fun <T> TreeLayout(
                             check(currentIndex >= 0) { "Cannot find parent of $element" }
                             focusAndSelectSingleIndex(currentIndex)
                         }
+
                         else -> focusAndSelectSingleIndex(0)
                     }
+
                     else -> false
                 }
+
                 keyEvent.key == Key.Home -> focusAndSelectSingleIndex(0)
                 keyEvent.key == Key.MoveEnd -> focusAndSelectSingleIndex(tree.flattenedTree.lastIndex)
                 keyEvent.key == Key.PageDown -> focusAndSelectSingleIndex(index + state.layoutInfo.visibleItemsInfo.size)
@@ -360,19 +376,13 @@ fun <T> TreeLayout(
         tree = tree,
         onTreeNodeToggle = { onTreeNodeToggle(it) },
         onTreeElementClick = { index, treeElement ->
-            val isMultiSelectionKeyPressed = when {
-                hostOs.isWindows || hostOs.isLinux -> keyboardModifiers.isCtrlPressed
-                hostOs.isMacOS -> keyboardModifiers.isMetaPressed
-                else -> false
-            }
-            val newTree = when {
-                isMultiSelectionKeyPressed -> {
-                    val elements =
-                        tree.flattenedTree.filter { it.treeElement.isSelected }.map { it.treeElement }.toSet()
-                    tree.selectElements(if (treeElement.isSelected) elements - treeElement else elements + treeElement)
-                }
-                else -> tree.selectOnly(treeElement)
-            }
+            val newTree = tree.selectOnly(treeElement)
+            onTreeChanged(newTree)
+            focusedTreeElement = newTree.flattenedTree.getOrNull(index)?.treeElement
+        },
+        onTreeElementMultiselectChange = { index, treeElement ->
+            val elements = tree.flattenedTree.filter { it.treeElement.isSelected }.map { it.treeElement }.toSet()
+            val newTree = tree.selectElements(if (treeElement.isSelected) elements - treeElement else elements + treeElement)
             onTreeChanged(newTree)
             focusedTreeElement = newTree.flattenedTree.getOrNull(index)?.treeElement
         },
