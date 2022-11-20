@@ -32,18 +32,6 @@ class CoroutineLaterInvocatorTest {
     }
   }
 
-  private suspend fun withDifferentInitialModalities(action: suspend CoroutineScope.() -> Unit) {
-    coroutineScope {
-      action()
-      withContext(ModalityState.any().asContextElement()) {
-        action()
-      }
-      withContext(ModalityState.NON_MODAL.asContextElement()) {
-        action()
-      }
-    }
-  }
-
   @Test
   fun `modal context`(): Unit = timeoutRunBlocking {
     withDifferentInitialModalities {
@@ -186,6 +174,18 @@ class CoroutineLaterInvocatorTest {
       //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
       @Suppress("AssertBetweenInconvertibleTypes")
       assertSame(e, t)
+    }
+  }
+}
+
+internal suspend fun withDifferentInitialModalities(action: suspend CoroutineScope.() -> Unit) {
+  coroutineScope {
+    action()
+    withContext(ModalityState.any().asContextElement()) {
+      action()
+    }
+    withContext(ModalityState.NON_MODAL.asContextElement()) {
+      action()
     }
   }
 }
