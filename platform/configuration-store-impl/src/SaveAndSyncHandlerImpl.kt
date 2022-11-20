@@ -14,14 +14,11 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.Disposer
@@ -32,21 +29,28 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.project.stateStore
-import com.intellij.util.SingleAlarm
 import com.intellij.util.application
-import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
 import java.beans.PropertyChangeListener
 import java.util.*
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private const val LISTEN_DELAY = 15
 
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
-  private val refreshDelayAlarm = SingleAlarm(Runnable { doScheduledRefresh() }, delay = 300, parentDisposable = this)
+  private val refreshRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
 
@@ -54,14 +58,58 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   private var refreshSessionId = -1L
 
   private val saveQueue = ArrayDeque<SaveTask>()
-
   private val currentJob = AtomicReference<Job?>()
 
   private val eventPublisher = application.messageBus.syncPublisher(SaveAndSyncHandlerListener.TOPIC)
+  private val forceExecuteImmediatelyState = AtomicBoolean()
 
   init {
-    // add listeners after some delay - doesn't make sense to listen earlier
-    EdtScheduledExecutorService.getInstance().schedule({ addListeners() }, LISTEN_DELAY.toLong(), TimeUnit.SECONDS)
+    @Suppress("DEPRECATION")
+    ApplicationManager.getApplication().coroutineScope.launch {
+      launch {
+        // not collectLatest - wait for previous execution
+        refreshRequests
+          .debounce(300.milliseconds)
+          .collect {
+            doScheduledRefresh()
+          }
+      }
+      launch {
+        // not collectLatest - wait for previous execution
+        saveRequests
+          .collect {
+            val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
+            if (!forceExecuteImmediately) {
+              delay(300.milliseconds)
+            }
+
+            if (blockSaveOnFrameDeactivationCount.get() != 0) {
+              return@collect
+            }
+
+            val job = currentJob.updateAndGet { oldJob ->
+              oldJob?.cancel()
+              launch(start = CoroutineStart.LAZY) { processTasks(forceExecuteImmediately = forceExecuteImmediately) }
+            }!!
+            try {
+              if (job.start()) {
+                job.join()
+              }
+            }
+            catch (ignore: CancellationException) {
+            }
+            finally {
+              currentJob.compareAndSet(job, null)
+            }
+          }
+      }
+
+      // add listeners after some delay - doesn't make sense to listen earlier
+      delay(15.seconds)
+      withContext(Dispatchers.EDT) {
+        addListeners(GeneralSettings.getInstance())
+      }
+    }.cancelOnDispose(this)
   }
 
   /**
@@ -70,28 +118,19 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
    * That's ok - client doesn't expect that `forceExecuteImmediately` means "executes immediately", it means "do save without regular delay".
    */
   private fun requestSave(forceExecuteImmediately: Boolean = false) {
-    if (currentJob.get() != null) {
+    if (blockSaveOnFrameDeactivationCount.get() != 0) {
       return
     }
 
-    val app = ApplicationManager.getApplication()
-    if (app == null || app.isDisposed || blockSaveOnFrameDeactivationCount.get() != 0) {
-      return
+    if (forceExecuteImmediately) {
+      forceExecuteImmediatelyState.set(true)
     }
-
-    currentJob.getAndSet(app.coroutineScope.launch {
-      if (!forceExecuteImmediately) {
-        delay(300)
-      }
-      processTasks(forceExecuteImmediately)
-      currentJob.set(null)
-    })?.cancel(CancellationException("Superseded by another request"))
+    check(saveRequests.tryEmit(Unit))
   }
 
   private suspend fun processTasks(forceExecuteImmediately: Boolean) {
     while (true) {
-      val app = ApplicationManager.getApplication()
-      if (app == null || app.isDisposed || blockSaveOnFrameDeactivationCount.get() != 0) {
+      if (blockSaveOnFrameDeactivationCount.get() != 0) {
         return
       }
 
@@ -107,16 +146,15 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
         return
       }
 
-      LOG.runAndLogException {
+      runCatching {
         eventPublisher.beforeSave(task, forceExecuteImmediately)
         saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
-      }
+      }.getOrLogException(LOG)
     }
   }
 
   @RequiresEdt
-  private fun addListeners() {
-    val settings = GeneralSettings.getInstance()
+  private fun addListeners(settings: GeneralSettings) {
     val idleListener = Runnable {
       if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
         ClientId.withClientId(ClientId.ownerId) {
@@ -197,7 +235,6 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
    * On app or project closing save is performed. In EDT. It means that if there is already running save in a pooled thread,
    * deadlock may be occurred because some save activities requires EDT with modality state "not modal" (by intention).
    */
-  @RequiresEdt
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
     if (!ApplicationManager.getApplication().isDispatchThread) {
       throw IllegalStateException(
@@ -208,7 +245,9 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
     var isSavedSuccessfully = true
     var isAutoSaveCancelled = false
     disableAutoSave().use {
-      currentJob.getAndSet(null)?.let {
+      saveRequests.resetReplayCache()
+      val currentJob = currentJob.getAndSet(null)
+      currentJob?.let {
         it.cancel(CancellationException("Superseded by explicit save"))
         isAutoSaveCancelled = true
       }
@@ -223,22 +262,24 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       }
 
       val project = (componentManager as? Project)?.takeIf { !it.isDefault }
-      ProgressManager.getInstance().run(object : Task.Modal(project, getProgressTitle(componentManager), /* canBeCancelled = */ false) {
-        override fun run(indicator: ProgressIndicator) {
-          indicator.isIndeterminate = true
+      runBlockingModal(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+                       title = getProgressTitle(componentManager),
+                       cancellation = TaskCancellation.nonCancellable()
+      ) {
+        // ensure that is fully cancelled
+        currentJob?.join()
 
-          runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) {
-            isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
-          }
+        isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
 
-          if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
-            val stateStore = project.stateStore
-            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
-            // update last modified for all project files that were modified between project open and close
+        if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
+          val stateStore = project.stateStore
+          val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
+          // update last modified for all project files that were modified between project open and close
+          withContext(Dispatchers.IO) {
             ConversionService.getInstance()?.saveConversionResult(path)
           }
         }
-      })
+      }
     }
 
     if (isAutoSaveCancelled) {
@@ -259,37 +300,41 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
 
   override fun scheduleRefresh() {
     externalChangesModificationTracker.incModificationCount()
-    refreshDelayAlarm.cancelAndRequest()
+    check(refreshRequests.tryEmit(Unit))
   }
 
-  private fun doScheduledRefresh() {
-    eventPublisher.beforeRefresh()
-    if (canSyncOrSave()) {
+  private suspend fun doScheduledRefresh() {
+    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      eventPublisher.beforeRefresh()
       refreshOpenFiles()
+      maybeRefresh(ModalityState.NON_MODAL)
     }
-    maybeRefresh(ModalityState.NON_MODAL)
   }
 
   override fun maybeRefresh(modalityState: ModalityState) {
-    if (blockSyncOnFrameActivationCount.get() == 0 && GeneralSettings.getInstance().isSyncOnFrameActivation) {
-      val queue = RefreshQueue.getInstance()
-      queue.cancelSession(refreshSessionId)
+    if (blockSyncOnFrameActivationCount.get() != 0 || !GeneralSettings.getInstance().isSyncOnFrameActivation) {
+      LOG.debug {
+        "vfs refresh rejected, blocked: ${blockSyncOnFrameActivationCount.get() != 0}, " +
+        "isSyncOnFrameActivation: ${GeneralSettings.getInstance().isSyncOnFrameActivation}"
+      }
+      return
+    }
 
-      val session = queue.createSession(true, true, null, modalityState)
-      session.addAllFiles(*ManagingFS.getInstance().localRoots)
-      refreshSessionId = session.id
-      session.launch()
-      LOG.debug("vfs refreshed")
-    }
-    else {
-      LOG.debug { "vfs refresh rejected, blocked: ${blockSyncOnFrameActivationCount.get() != 0}, isSyncOnFrameActivation: ${GeneralSettings.getInstance().isSyncOnFrameActivation}" }
-    }
+    val queue = RefreshQueue.getInstance()
+    queue.cancelSession(refreshSessionId)
+
+    val session = queue.createSession(true, true, null, modalityState)
+    session.addAllFiles(*ManagingFS.getInstance().localRoots)
+    refreshSessionId = session.id
+    session.launch()
+    LOG.debug("vfs refreshed")
   }
 
   override fun refreshOpenFiles() {
     val files = ArrayList<VirtualFile>()
     processOpenedProjects { project ->
       FileEditorManager.getInstance(project).selectedEditors
+        .asSequence()
         .flatMap { it.filesToRefresh }
         .filterTo(files) { it is NewVirtualFile }
     }
@@ -333,7 +378,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
 
 private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
 
-@NlsContexts.DialogTitle
+@NlsContexts.ProgressTitle
 private fun getProgressTitle(componentManager: ComponentManager): String {
   return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
 }

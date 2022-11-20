@@ -7,7 +7,11 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
@@ -15,11 +19,15 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 
 open class CloseProjectWindowHelper {
   companion object {
     /** This key may be used to for a specific behaviour when project is closing for particular projects */
-    @JvmStatic
     val SHOW_WELCOME_FRAME_FOR_PROJECT: Key<Boolean> = Key.create("Show.Welcome.Frame.For.Project")
   }
 
@@ -32,6 +40,7 @@ open class CloseProjectWindowHelper {
   protected open val isShowWelcomeScreenFromSettings
     get() = GeneralSettings.getInstance().isShowWelcomeScreen
 
+  @RequiresEdt
   open fun windowClosing(project: Project?) {
     val numberOfOpenedProjects = getNumberOfOpenedProjects()
     // Exit on Linux and Windows if the only opened project frame is closed.
@@ -49,16 +58,26 @@ open class CloseProjectWindowHelper {
 
   protected open fun getNumberOfOpenedProjects() = ProjectManager.getInstance().openProjects.size
 
+  @RequiresEdt
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     runInAutoSaveDisabledMode {
-      if (project != null && project.isOpen) {
-        ProjectManager.getInstance().closeAndDispose(project)
-      }
+      runBlockingModal(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+                       title = "",
+                       cancellation = TaskCancellation.nonCancellable()) {
+        if (project != null) {
+          @Suppress("DEPRECATION")
+          project.coroutineScope.coroutineContext.job.cancelAndJoin()
+          if (project.isOpen) {
+            withContext(Dispatchers.EDT) {
+              ProjectManager.getInstance().closeAndDispose(project)
+            }
+          }
+        }
 
-      val app = ApplicationManager.getApplication()
-      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
-      // app must be not saved as part of project closing because app settings maybe modified as result - e.g. RecentProjectsManager state
-      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(app)
+        ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
+        SaveAndSyncHandler.getInstance().scheduleSave(task = SaveAndSyncHandler.SaveTask(forceSavingAllSettings = true),
+                                                      forceExecuteImmediately = true)
+      }
     }
 
     WelcomeFrame.showIfNoProjectOpened()
