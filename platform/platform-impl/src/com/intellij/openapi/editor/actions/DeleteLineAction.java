@@ -35,10 +35,10 @@ public class DeleteLineAction extends TextComponentEditorAction {
     super(new Handler());
   }
 
-  public static class CheсkHandler extends EditorWriteActionHandler {
+  public static class CheckHandler extends EditorWriteActionHandler {
     private final EditorWriteActionHandler myOriginal;
 
-    public CheсkHandler(EditorActionHandler original) {
+    public CheckHandler(EditorActionHandler original) {
       myOriginal = (EditorWriteActionHandler)original;
     }
 

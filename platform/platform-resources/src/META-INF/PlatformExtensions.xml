@@ -703,7 +703,7 @@
                          id="delete.in.column.mode"/>
     <editorActionHandler
       action="EditorDeleteLine"
-      implementationClass="com.intellij.openapi.editor.actions.DeleteLineAction$CheсkHandler"
+      implementationClass="com.intellij.openapi.editor.actions.DeleteLineAction$CheckHandler"
       order="first"
       id="EditorDeleteLine.checkHandler"
     />
