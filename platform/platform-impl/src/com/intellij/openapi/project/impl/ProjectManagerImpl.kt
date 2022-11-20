@@ -30,12 +30,14 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -253,7 +255,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   fun updateTheOnlyProjectField() {
-    val isLightEditActive = LightEditService.getInstance().project != null
+    val isLightEditActive = serviceIfCreated<LightEditService>()?.project != null
     if (ApplicationManager.getApplication().isUnitTestMode && !ApplicationManagerEx.isInStressTest()) {
       // switch off optimization in non-stress tests to assert they don't query getProject for invalid PsiElements
       ProjectCoreUtil.updateInternalTheOnlyProjectFieldTemporarily(null)
@@ -1150,6 +1152,10 @@ private suspend fun initProject(file: Path,
       }
       preloadServicesAndCreateComponents(project, preloadServices)
 
+      project.coroutineScope.launchAndMeasure("fileEditorProvider preloading", Dispatchers.IO) {
+        FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList
+      }
+
       if (!isTrusted.await()) {
         throw CancellationException("not trusted")
       }
@@ -1159,8 +1165,8 @@ private suspend fun initProject(file: Path,
     try {
       withContext(NonCancellable) {
         project.coroutineScope.coroutineContext.job.cancelAndJoin()
-        withContext(Dispatchers.EDT) {
-          ApplicationManager.getApplication().runWriteAction { Disposer.dispose(project) }
+        writeAction {
+          Disposer.dispose(project)
         }
       }
     }

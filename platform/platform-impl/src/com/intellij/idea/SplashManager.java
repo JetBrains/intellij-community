@@ -23,7 +23,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public final class SplashManager {
   private static volatile JFrame PROJECT_FRAME;
@@ -62,7 +61,7 @@ public final class SplashManager {
   }
 
   private static @Nullable Runnable createFrameIfPossible() throws IOException {
-    Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
+    Path infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo");
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
       buffer = ByteBuffer.allocate((int)channel.size());

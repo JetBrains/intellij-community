@@ -65,7 +65,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
       sharedProviders.removeIf { it.policy != FileEditorPolicy.HIDE_OTHER_EDITORS }
     }
 
-    // Sort editors according policies
+    // sort editors according policies
     sharedProviders.sortWith(MyComparator)
     return sharedProviders
   }

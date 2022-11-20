@@ -1999,7 +1999,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
 
     val file = getOriginalFile(virtualFile)
-    val newProviders = FileEditorProviderManager.getInstance().getProvidersAsync(project, file)
+    val newProviders = runActivity("editor provider computing") {
+      FileEditorProviderManager.getInstance().getProvidersAsync(project, file)
+    }
     if (!canOpenFile(file, newProviders)) {
       return
     }
@@ -2009,14 +2011,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val builders = ArrayList<AsyncFileEditorProvider.Builder?>(newProviders.size)
     for (provider in newProviders) {
       val builder = try {
-        readAction {
-          if (!file.isValid) {
-            return@readAction null
-          }
-
-          LOG.assertTrue(provider.accept(project, file), "Provider $provider doesn't accept file $file")
-          if (provider is AsyncFileEditorProvider) provider.createEditorAsync(project, file) else null
-        }
+        if (provider is AsyncFileEditorProvider) provider.createEditorAsync(project, file) else null
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -2032,17 +2027,19 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
 
     withContext(Dispatchers.EDT) {
-      if (!file.isValid) {
-        return@withContext
-      }
+      runActivity("file opening in EDT") {
+        if (!file.isValid) {
+          return@withContext
+        }
 
-      val splitters = window.owner
-      splitters.insideChange++
-      try {
-        doOpenInEdtImpl(window = window, file = file, entry = entry, options = options, newProviders = newProviders, builders = builders)
-      }
-      finally {
-        splitters.insideChange--
+        val splitters = window.owner
+        splitters.insideChange++
+        try {
+          doOpenInEdtImpl(window = window, file = file, entry = entry, options = options, newProviders = newProviders, builders = builders)
+        }
+        finally {
+          splitters.insideChange--
+        }
       }
     }
   }
