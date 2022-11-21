@@ -281,6 +281,9 @@ class IndexDiagnosticDumper : Disposable {
       numberLimit = indexingDiagnosticsLimitOfFiles
     }
 
+    LOG.debug("deleteOutdatedDiagnostics, existing size ${existingDiagnostics.size}; sizeLimit $sizeLimit, " +
+              "indexingDiagnosticsLimitOfFiles $indexingDiagnosticsLimitOfFiles, numberLimit $numberLimit")
+
     val survivedDiagnostics = sortedDiagnostics.take(numberLimit)
     val outdatedDiagnostics = sortedDiagnostics.drop(numberLimit)
 
