@@ -10,10 +10,15 @@ import com.intellij.settingsSync.SettingsSyncStatusTracker
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 import com.intellij.ui.BadgeIconSupplier
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import icons.SettingsSyncIcons
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(message("title.settings.sync")), SettingsSyncStatusTracker.Listener {
+class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(message("title.settings.sync")),
+                                 SettingsEntryPointAction.NoDots,
+                                 SettingsSyncStatusTracker.Listener {
 
   private enum class SyncStatus {ON, OFF, FAILED}
 
@@ -41,22 +46,33 @@ class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(message("title.s
       p.isEnabledAndVisible = false
       return
     }
-    when (getStatus()) {
-      SyncStatus.ON -> {
+    val status = getStatus()
+    when (status) {
+      SyncStatus.ON ->
         p.icon = SettingsSyncIcons.StatusEnabled
-        @Suppress("DialogTitleCapitalization") // we use "is", not "Is
-        p.text = message("status.action.settings.sync.is.on")
-      }
-      SyncStatus.OFF -> {
+      SyncStatus.OFF ->
         p.icon = SettingsSyncIcons.StatusDisabled
-        @Suppress("DialogTitleCapitalization") // we use "is", not "Is
-        p.text = message("status.action.settings.sync.is.off")
-      }
-      SyncStatus.FAILED -> {
+      SyncStatus.FAILED ->
         p.icon = AllIcons.General.Error
-        p.text = message("status.action.settings.sync.failed")
-      }
     }
+    p.text = getStyledStatus(status)
+  }
+
+  private fun getStyledStatus(status: SyncStatus): @Nls String {
+    val builder = StringBuilder()
+    builder.append("<html>")
+      .append(message("status.action.settings.sync")).append(" ")
+      .append("<span color='#")
+    val hexColor = UIUtil.colorToHex(JBUI.CurrentTheme.Popup.mnemonicForeground())
+    builder.append(hexColor).append("'>")
+    when (status) {
+      SyncStatus.ON -> builder.append(message("status.action.settings.sync.is.on"))
+      SyncStatus.OFF -> builder.append(message("status.action.settings.sync.is.off"))
+      SyncStatus.FAILED -> builder.append(message("status.action.settings.sync.failed"))
+    }
+    builder
+      .append("</span>")
+    return "$builder"
   }
 
   class IconCustomizer : SettingsEntryPointAction.IconCustomizer {
