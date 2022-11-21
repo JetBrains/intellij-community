@@ -5,11 +5,8 @@ package org.jetbrains.kotlin.gradle.workspace
 class WorkspaceModelPrinterFactory {
     private val myModulePrinterContributors = mutableListOf<ModulePrinterContributor>()
 
-    fun addContributor(contributor: WorkspaceModelPrinterContributor<*>) {
-        when (contributor) {
-            is ModulePrinterContributor -> myModulePrinterContributors.add(contributor)
-            else -> error("Unexpected contributor: ${contributor::class.qualifiedName}")
-        }
+    fun addContributor(contributor: ModulePrinterContributor) {
+        myModulePrinterContributors.add(contributor)
     }
 
     fun build(): WorkspaceModelPrinter {
@@ -18,7 +15,7 @@ class WorkspaceModelPrinterFactory {
         }
 
         return WorkspaceModelPrinter(
-            compositeContributor(*myModulePrinterContributors.toTypedArray()),
+            myModulePrinterContributors
         )
     }
 }

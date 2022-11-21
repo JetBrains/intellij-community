@@ -3,17 +3,12 @@
 package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.kotlin.utils.Printer
 
 class WorkspaceModelPrinter(
-    private val moduleContributor: WorkspaceModelPrinterContributor<ModulePrinterEntity>? = null,
+    private val moduleContributors: List<ModulePrinterContributor>
 ) {
     private val printer = Printer(StringBuilder())
 
@@ -23,24 +18,16 @@ class WorkspaceModelPrinter(
         return printer.toString()
     }
 
-    private fun processModules(project: Project) = processEntities(
-        title = "MODULES",
-        contributor = moduleContributor,
-        entities = runReadAction { ModuleManager.getInstance(project).modules }.map(Module::toPrinterEntity),
-    )
+    private fun processModules(project: Project) {
+        if (moduleContributors.isEmpty()) return
 
-    private fun <EntityType : ContributableEntity> processEntities(
-        title: String,
-        contributor: WorkspaceModelPrinterContributor<EntityType>?,
-        entities: List<EntityType>,
-    ) {
-        if (contributor == null) return
+        printer.println("MODULES")
+        val modules = runReadAction { ModuleManager.getInstance(project).modules }.toList()
 
-        printer.println(title)
         printer.indented {
-            for (entity in entities.sortedBy { it.presentableName }) {
-                printer.println(entity.presentableName)
-                contributor.process(entity, printer)
+            for (module in modules.sortedBy { it.name }) {
+                printer.println(module.name)
+                moduleContributors.forEach { it.process(module, printer) }
             }
         }
     }
