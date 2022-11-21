@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.ConflictsUtil;
@@ -406,6 +407,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
           myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
           updateVarargsEnabled();
           createParametersPanel();
+        } else {
+          JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = myMakeStatic.isSelected();
         }
         updateSignature();
       });
