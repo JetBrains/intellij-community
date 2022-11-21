@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.async.disposingScope
@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IconUtil
@@ -57,7 +57,7 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
         if (existing != null) return@withLock existing
         try {
           val context = withContext(Dispatchers.IO) {
-            runUnderIndicator {
+            coroutineToIndicator {
               loadContext(account, requestExecutor, repository, remote)
             }
           }

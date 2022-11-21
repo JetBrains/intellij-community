@@ -125,7 +125,7 @@ open class CombinedDiffModelImpl(protected val project: Project,
       modelListeners.multicaster.onProgressBar(true)
 
       val request = runBlockingCancellable(indicator) {
-        withContext(Dispatchers.IO) { runUnderIndicator { loadRequest(indicator, blockId, producer) } }
+        withContext(Dispatchers.IO) { coroutineToIndicator { loadRequest(indicator, blockId, producer) } }
       }
 
       modelListeners.multicaster.onProgressBar(false)

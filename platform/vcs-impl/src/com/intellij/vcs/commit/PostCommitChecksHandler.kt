@@ -8,7 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -93,7 +93,7 @@ class PostCommitChecksHandler(val project: Project) {
 
     if (lastCommitInfos.isNotEmpty()) {
       val mergedCommitInfo = withContext(Dispatchers.IO) {
-        runUnderIndicator {
+        coroutineToIndicator {
           mergeCommitInfos(lastCommitInfos, commitInfo)
         }
       }
@@ -105,7 +105,7 @@ class PostCommitChecksHandler(val project: Project) {
     }
 
     return withContext(Dispatchers.IO) {
-      runUnderIndicator {
+      coroutineToIndicator {
         createPostCommitInfo(commitInfo)
       }
     }

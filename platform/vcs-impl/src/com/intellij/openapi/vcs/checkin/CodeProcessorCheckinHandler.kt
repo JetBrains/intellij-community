@@ -40,7 +40,7 @@ abstract class CodeProcessorCheckinHandler(
     withContext(Dispatchers.Default + noTextSinkContext(sink)) {
       // TODO suspending code processor
       val processor = readAction { createCodeProcessor(affectedFiles) }
-      runUnderIndicator {
+      coroutineToIndicator {
         processor.processFilesUnderProgress(ProgressManager.getGlobalProgressIndicator())
       }
     }

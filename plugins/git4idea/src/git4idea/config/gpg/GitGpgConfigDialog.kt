@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.help.HelpManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
@@ -158,7 +158,7 @@ class GitGpgConfigDialog(
   @Throws(VcsException::class)
   private suspend fun writeGitSettings(gpgKey: GpgKey?) {
     withContext(Dispatchers.IO) {
-      runUnderIndicator { writeGitGpgConfig(repository, gpgKey) }
+      coroutineToIndicator { writeGitGpgConfig(repository, gpgKey) }
     }
   }
 

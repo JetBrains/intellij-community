@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class RunUnderIndicatorTest : CancellationTest() {
+class CoroutineToIndicatorTest : CancellationTest() {
 
   @Test
   fun context(): Unit = timeoutRunBlocking {
@@ -23,7 +23,7 @@ class RunUnderIndicatorTest : CancellationTest() {
 
     withContext(modality.asContextElement()) {
       assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
-      runUnderIndicator {
+      coroutineToIndicator {
         assertNull(Cancellation.currentJob())
         assertNotNull(ProgressManager.getGlobalProgressIndicator())
         assertSame(modality, ModalityState.defaultModalityState())
@@ -39,7 +39,7 @@ class RunUnderIndicatorTest : CancellationTest() {
   fun cancellation(): Unit = timeoutRunBlocking {
     launch {
       assertThrows<CancellationException> {
-        runUnderIndicator {
+        coroutineToIndicator {
           ProgressManager.checkCanceled()
           coroutineContext.job.cancel()
           throw assertThrows<ProcessCanceledException> {
@@ -59,7 +59,7 @@ class RunUnderIndicatorTest : CancellationTest() {
 
   private suspend inline fun <reified T : Throwable> testRunUnderIndicatorRethrow(t: T) {
     val thrown = assertThrows<T> {
-      runUnderIndicator {
+      coroutineToIndicator {
         throw t
       }
     }
@@ -88,7 +88,7 @@ class RunUnderIndicatorTest : CancellationTest() {
     }
 
     withContext(sink.asContextElement()) {
-      runUnderIndicator {
+      coroutineToIndicator {
         ProgressManager.progress("Hello", "World")
         ProgressManager.getInstance().progressIndicator.fraction = 0.42
       }

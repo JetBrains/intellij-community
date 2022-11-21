@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -9,8 +9,8 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.progress.asContextElement
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -83,7 +83,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 
     withContext(Dispatchers.Default + textToDetailsSinkContext(sink)) {
-      runUnderIndicator {
+      coroutineToIndicator {
         worker.execute()
       }
     }

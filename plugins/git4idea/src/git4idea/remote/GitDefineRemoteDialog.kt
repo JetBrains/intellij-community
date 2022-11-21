@@ -5,7 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
@@ -140,6 +140,6 @@ class GitDefineRemoteDialog(
 
   private suspend fun lsRemote(url: String): GitCommandResult =
     withContext(Dispatchers.IO) {
-      runUnderIndicator { git.lsRemote(repository.project, virtualToIoFile(repository.root), url) }
+      coroutineToIndicator { git.lsRemote(repository.project, virtualToIoFile(repository.root), url) }
     }
 }

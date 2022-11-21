@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.progress.runModalTask
-import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -72,7 +72,7 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
     val files = commitInfo.committedVirtualFiles // Deleted files aren't included. But for them, we don't care about CRLFs.
     val shouldWarn = withContext(Dispatchers.Default) {
       coroutineContext.progressSink?.update(GitBundle.message("progress.checking.line.separator.issues"))
-      runUnderIndicator {
+      coroutineToIndicator {
         GitCrlfProblemsDetector.detect(project, git, files).shouldWarn()
       }
     }
@@ -164,7 +164,7 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
                                           roots: Collection<VirtualFile>,
                                           stopWhenFoundFirst: Boolean): MutableMap<VirtualFile, VcsUser> {
     return withContext(Dispatchers.Default) {
-      runUnderIndicator {
+      coroutineToIndicator {
         val defined = HashMap<VirtualFile, VcsUser>()
         for (root in roots) {
           val user = GitUserRegistry.getInstance(project).readUser(root) ?: continue

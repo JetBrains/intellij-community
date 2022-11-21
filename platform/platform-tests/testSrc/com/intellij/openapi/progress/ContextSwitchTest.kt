@@ -100,7 +100,7 @@ class ContextSwitchTest : CancellationTest() {
   }
 
   private suspend fun testRunUnderIndicator(blockingTest: () -> Unit) {
-    runUnderIndicator {
+    coroutineToIndicator {
       assertNull(Cancellation.currentJob())
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
       blockingTest()

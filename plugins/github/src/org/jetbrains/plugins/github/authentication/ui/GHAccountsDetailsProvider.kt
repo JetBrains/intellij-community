@@ -5,8 +5,7 @@ import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
 import com.intellij.collaboration.auth.ui.cancelOnRemoval
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +45,7 @@ internal class GHAccountsDetailsProvider(
     }
     if (executor == null) return Result.Error(GithubBundle.message("account.token.missing"), true)
     return withContext(Dispatchers.IO) {
-      runUnderIndicator {
+      coroutineToIndicator {
         doLoadDetails(executor, account)
       }
     }

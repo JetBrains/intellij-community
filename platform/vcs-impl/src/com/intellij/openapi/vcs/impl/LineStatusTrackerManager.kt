@@ -32,7 +32,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -1224,7 +1224,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
       isScheduled = true
       scope.launch {
         ClientId.withClientId(ClientId.localId) {
-          runUnderIndicator {
+          coroutineToIndicator {
             handleRequests()
           }
         }
