@@ -45,7 +45,7 @@ object ExtractMethodDialogUtil {
     val typeParameterList = PsiElementFactory.getInstance(extractOptions.project).createTypeParameterList()
     typeParameters.forEach { typeParameterList.add(it) }
 
-    val methodNames = ExtractMethodHelper.guessMethodName(extractOptions)
+    val methodNames = listOf(extractOptions.methodName) + ExtractMethodHelper.guessMethodName(extractOptions)
 
     return object: ExtractMethodDialog(project, targetClass, inputVariables, returnType, typeParameterList,
                                        thrownExceptions, isStatic, canBeStatic, canBeChainedConstructor,
@@ -54,7 +54,7 @@ object ExtractMethodDialogUtil {
       override fun areTypesDirected() = true
 
       override fun suggestMethodNames(): Array<String> {
-        return methodNames.toTypedArray()
+        return methodNames.distinct().toTypedArray()
       }
 
       override fun isVoidReturn(): Boolean = false

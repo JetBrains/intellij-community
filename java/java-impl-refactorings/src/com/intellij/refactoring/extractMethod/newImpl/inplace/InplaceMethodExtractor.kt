@@ -182,11 +182,11 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
+    val methodRange = callIdentifierRange?.range
+    val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
     InplaceExtractMethodCollector.openExtractDialog.log(project, isLinkUsed)
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     val elements = ExtractSelector().suggestElementsToExtract(targetClass.containingFile, range)
-    val methodRange = callIdentifierRange?.range
-    val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
     extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: extractor.extractOptions.isStatic)
   }
 
