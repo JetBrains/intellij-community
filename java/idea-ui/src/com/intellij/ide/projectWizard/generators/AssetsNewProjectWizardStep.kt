@@ -10,12 +10,11 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectSafe
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
@@ -62,20 +61,9 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
           AssetsProcessor().generateSources(outputDirectory, assets, templateProperties)
         }
       }
-      runWhenCreated(project) { //IDEA-244863
+      whenProjectCreated(project) { //IDEA-244863
         reformatCode(project, generatedFiles)
         openFilesInEditor(project, generatedFiles.filter { it.path in filesToOpen })
-      }
-    }
-  }
-
-  private fun runWhenCreated(project: Project, action: () -> Unit) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      action()
-    }
-    else {
-      StartupManager.getInstance(project).runAfterOpened {
-        ApplicationManager.getApplication().invokeLater(action, project.disposed)
       }
     }
   }
