@@ -11,7 +11,7 @@ import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
 import org.jdom.Element
 
-internal class OpenEditorsContextProvider : WorkingContextProvider() {
+private class OpenEditorsContextProvider : WorkingContextProvider() {
   override fun getId(): String = "editors"
 
   override fun getDescription(): String = TaskBundle.message("open.editors.and.positions")

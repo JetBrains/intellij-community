@@ -54,14 +54,14 @@ public class ScaleContext extends UserScaleContext {
   }
 
   /**
-   * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
+   * Creates a context based on the component's system scale and sticks to it via the {@link #update()} method.
    */
-  public static @NotNull ScaleContext create(@Nullable Component comp) {
-    ScaleContext ctx = new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(comp)));
-    if (comp != null) {
-      ctx.compRef = new WeakReference<>(comp);
+  public static @NotNull ScaleContext create(@Nullable Component component) {
+    ScaleContext context = new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(component)));
+    if (component != null) {
+      context.compRef = new WeakReference<>(component);
     }
-    return ctx;
+    return context;
   }
 
   /**
@@ -111,14 +111,12 @@ public class ScaleContext extends UserScaleContext {
    */
   @Override
   public double getScale(@NotNull ScaleType type) {
-    if (type == SYS_SCALE) return sysScale.value;
-    return super.getScale(type);
+    return type == SYS_SCALE ? sysScale.value : super.getScale(type);
   }
 
   @Override
   protected @NotNull Scale getScaleObject(@NotNull ScaleType type) {
-    if (type == SYS_SCALE) return sysScale;
-    return super.getScaleObject(type);
+    return type == SYS_SCALE ? sysScale : super.getScaleObject(type);
   }
 
   /**

@@ -392,7 +392,7 @@ public class HelpTooltip {
     };
   }
 
-  private ComponentPopupBuilder initPopupBuilder(JComponent tipPanel) {
+  private static ComponentPopupBuilder initPopupBuilder(@NotNull JComponent tipPanel) {
     return JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).
       setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
@@ -400,8 +400,7 @@ public class HelpTooltip {
       addUserData(PopupCornerType.RoundedTooltip);
   }
 
-  @NotNull
-  private MouseListener createIsOverTipMouseListener() {
+  private @NotNull MouseListener createIsOverTipMouseListener() {
     return new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
@@ -418,9 +417,8 @@ public class HelpTooltip {
     };
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public final JPanel createTipPanel() {
+  public final @NotNull JPanel createTipPanel() {
     JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
@@ -468,8 +466,7 @@ public class HelpTooltip {
     owner.removeMouseMotionListener(myMouseListener);
   }
 
-  @Nullable
-  public static HelpTooltip getTooltipFor(@NotNull JComponent owner) {
+  public static @Nullable HelpTooltip getTooltipFor(@NotNull JComponent owner) {
     return (HelpTooltip)owner.getClientProperty(TOOLTIP_PROPERTY);
   }
 
