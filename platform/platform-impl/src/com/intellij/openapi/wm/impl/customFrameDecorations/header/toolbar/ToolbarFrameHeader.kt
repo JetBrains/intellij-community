@@ -96,7 +96,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     myToolbarPlaceholder.revalidate()
   }
 
-  override fun removeToolbar() {
+  private fun removeToolbar() {
     toolbar?.removeComponentListener(contentResizeListener)
     myToolbarPlaceholder.removeAll()
     myToolbarPlaceholder.revalidate()

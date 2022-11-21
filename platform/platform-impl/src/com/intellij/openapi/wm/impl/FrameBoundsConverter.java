@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -7,8 +7,10 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Map;
 
 /**
  * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
@@ -20,8 +22,7 @@ public final class FrameBoundsConverter {
    * @param bounds the bounds in the device space
    * @return the bounds in the user space
    */
-  @NotNull
-  public static Rectangle convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
+  public static @NotNull Map.Entry<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
     int centerX = b.x + b.width / 2;
     int centerY = b.y + b.height / 2;
@@ -29,21 +30,33 @@ public final class FrameBoundsConverter {
     for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
       GraphicsConfiguration gc = gd.getDefaultConfiguration();
       Rectangle devBounds = gc.getBounds(); // in user space
-      if (scaleNeeded) scaleUp(devBounds, gc); // to device space if needed
+      if (scaleNeeded) {
+        scaleUp(devBounds, gc); // to device space if needed
+      }
       if (devBounds.contains(centerX, centerY)) {
-        if (scaleNeeded) scaleDown(b, gc); // to user space if needed
+        if (scaleNeeded) {
+          scaleDown(b, gc); // to user space if needed
+        }
         // do not return bounds bigger than the corresponding screen rectangle
         Rectangle screen = ScreenUtil.getScreenRectangle(gc);
-        if (b.x < screen.x) b.x = screen.x;
-        if (b.y < screen.y) b.y = screen.y;
-        if (b.width > screen.width) b.width = screen.width;
-        if (b.height > screen.height) b.height = screen.height;
-        return b;
+        if (b.x < screen.x) {
+          b.x = screen.x;
+        }
+        if (b.y < screen.y) {
+          b.y = screen.y;
+        }
+        if (b.width > screen.width) {
+          b.width = screen.width;
+        }
+        if (b.height > screen.height) {
+          b.height = screen.height;
+        }
+        return Map.entry(bounds, gd);
       }
     }
-    //We didn't find proper device at all, probably it was an external screen that is unavailable now, we cannot use specified bounds
+    // we didn't find proper device at all, probably it was an external screen that is unavailable now, we cannot use specified bounds
     ScreenUtil.fitToScreen(b);
-    return b;
+    return Map.entry(bounds, null);
   }
 
   /**

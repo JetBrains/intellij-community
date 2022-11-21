@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
@@ -40,7 +39,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Image
 import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.ComponentAdapter
@@ -55,10 +53,9 @@ import javax.swing.*
 
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
-  selfie: Image?,
-  withLoadingState: Boolean = false,
+  loadingState: FrameLoadingState? = null,
 ) : IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
-  constructor(frame: IdeFrameImpl) : this(frame = frame, selfie = null, withLoadingState = false)
+  constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
 
   private val isUpdatingTitle = AtomicBoolean()
   private var title: String? = null
@@ -76,21 +73,56 @@ open class ProjectFrameHelper internal constructor(
   // so we remember the activation time and report it against the assigned project later
   private var activationTimestamp: Long? = null
 
-  internal val loadingState: MutableLoadingState? = if (withLoadingState) MutableLoadingState(selfie = selfie) else null
-
-  internal class MutableLoadingState(override var selfie: Image?) : FrameLoadingState {
-    override val loading: CompletableDeferred<Unit> = CompletableDeferred()
-  }
-
   init {
     setupCloseAction()
     @Suppress("LeakingThis")
-    rootPane = createIdeRootPane()
+    rootPane = createIdeRootPane(loadingState)
+    frame.doSetRootPane(rootPane)
+    // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane
     @Suppress("LeakingThis")
     frameDecorator = IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, this)
-    preInit()
+    frame.setFrameHelper(object : FrameHelper {
+      override fun getData(dataId: String) = this@ProjectFrameHelper.getData(dataId)
+
+      override val accessibleName: String
+        get() {
+          val builder = StringBuilder()
+          project?.let {
+            builder.append(it.name)
+            builder.append(" - ")
+          }
+          builder.append(ApplicationNamesInfo.getInstance().fullProductName)
+          return builder.toString()
+        }
+
+      override val project: Project?
+        get() = this@ProjectFrameHelper.project
+
+      override val helper: IdeFrame
+        get() = this@ProjectFrameHelper
+
+      override val frameDecorator: IdeFrameImpl.FrameDecorator?
+        get() = this@ProjectFrameHelper.frameDecorator
+
+      override fun dispose() {
+        if (isTemporaryDisposed(frame)) {
+          frame.doDispose()
+        }
+        else {
+          Disposer.dispose(this@ProjectFrameHelper)
+        }
+      }
+    })
+    frame.background = JBColor.PanelBackground
     @Suppress("LeakingThis")
-    Disposer.register(ApplicationManager.getApplication(), this)
+    rootPane.preInit(frameHelper = this)
+
+    balloonLayout = if (ActionCenter.isEnabled()) {
+      ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
+    }
+    else {
+      BalloonLayoutImpl(rootPane, JBUI.insets(8))
+    }
   }
 
   companion object {
@@ -114,7 +146,7 @@ open class ProjectFrameHelper internal constructor(
     val superUserSuffix: String?
       get() = if (!isSuperUser) null else if (SystemInfoRt.isWindows) "Administrator" else "ROOT"
 
-    fun appendTitlePart(sb: StringBuilder, s: String?) {
+    internal fun appendTitlePart(sb: StringBuilder, s: String?) {
       appendTitlePart(sb, s, " \u2013 ")
     }
 
@@ -132,48 +164,8 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
-  private fun preInit() {
-    frame.rootPane = rootPane
-    // NB!: the root pane must be set before decorator,
-    // which holds its own client properties in a root pane
-    frame.setFrameHelper(object : FrameHelper {
-      override fun getData(dataId: String) = this@ProjectFrameHelper.getData(dataId)
-
-      override fun getAccessibleName(): @NlsSafe String {
-        val builder = StringBuilder()
-        project?.let {
-          builder.append(it.name)
-          builder.append(" - ")
-        }
-        builder.append(ApplicationNamesInfo.getInstance().fullProductName)
-        return builder.toString()
-      }
-
-      override fun dispose() {
-        if (isTemporaryDisposed(frame)) {
-          frame.doDispose()
-        }
-        else {
-          Disposer.dispose(this@ProjectFrameHelper)
-        }
-      }
-
-      override fun getProject() = this@ProjectFrameHelper.project
-
-      override fun getHelper() = this@ProjectFrameHelper
-    }, frameDecorator)
-    balloonLayout = if (ActionCenter.isEnabled()) {
-      ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
-    }
-    else {
-      BalloonLayoutImpl(rootPane, JBUI.insets(8))
-    }
-    frame.background = JBColor.PanelBackground
-    rootPane.prepareToolbar()
-  }
-
-  protected open fun createIdeRootPane(): IdeRootPane {
-    return IdeRootPane(frame = frame, frameHelper = this, parentDisposable = this, loadingState = loadingState)
+  protected open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
+    return IdeRootPane(frame = frame, parentDisposable = this, loadingState = loadingState)
   }
 
   private val isInitialized = AtomicBoolean()
@@ -245,22 +237,28 @@ open class ProjectFrameHelper internal constructor(
   override fun setFileTitle(fileTitle: String?, file: Path?) {
     this.fileTitle = fileTitle
     currentFile = file
-    updateTitle()
+    updateTitle(project)
   }
 
   override fun getNorthExtension(key: String): JComponent? = project?.let { rootPane.findNorthUiComponentByKey(key = key) }
 
-  protected open val titleInfoProviders: List<TitleInfoProvider>
-    get() = TitleInfoProvider.EP.extensionList
+  protected open fun getTitleInfoProviders(): List<TitleInfoProvider> {
+    return TitleInfoProvider.EP.extensionList
+  }
 
-  suspend fun updateTitle(title: String) {
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+  suspend fun updateTitle(title: String, project: Project) {
+    val titleInfoProviders = getTitleInfoProviders()
+    withContext(Dispatchers.EDT) {
       this@ProjectFrameHelper.title = title
-      updateTitle()
+      updateTitle(project = project, titleInfoProviders = titleInfoProviders)
     }
   }
 
-  fun updateTitle() {
+  internal fun updateTitle(project: Project?) {
+    updateTitle(project = project, titleInfoProviders = getTitleInfoProviders())
+  }
+
+  private fun updateTitle(project: Project?, titleInfoProviders: List<TitleInfoProvider>) {
     if (!isUpdatingTitle.compareAndSet(false, true)) {
       return
     }
@@ -274,9 +272,7 @@ open class ProjectFrameHelper internal constructor(
       val builder = StringBuilder()
       appendTitlePart(builder, title)
       appendTitlePart(builder, fileTitle)
-      val titleInfoProviders = titleInfoProviders
-      if (!titleInfoProviders.isEmpty()) {
-        val project = project!!
+      if (project != null) {
         for (extension in titleInfoProviders) {
           if (extension.isActive(project)) {
             val it = extension.getValue(project)
@@ -310,7 +306,9 @@ open class ProjectFrameHelper internal constructor(
       CommonDataKeys.PROJECT.`is`(dataId) -> if (project != null && project.isInitialized) project else null
       IdeFrame.KEY.`is`(dataId) -> this
       PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.`is`(dataId) -> {
-        if (project == null || !project.isInitialized) return null
+        if (project == null || !project.isInitialized) {
+          return null
+        }
         val manager = project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl ?: return null
         manager.getLastActiveToolWindows().toList().toTypedArray()
       }
@@ -331,9 +329,7 @@ open class ProjectFrameHelper internal constructor(
     }
 
     this.project = project
-    val rootPane = rootPane
     rootPane.setProject(project)
-
     frameDecorator?.setProject()
     activationTimestamp?.let {
       RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
@@ -375,16 +371,10 @@ open class ProjectFrameHelper internal constructor(
     if (ApplicationManager.getApplication().isUnitTestMode) {
       rootPane.removeNotify()
     }
-    if (WindowManagerEx.getInstanceEx().isFrameReused(this)) {
-      frame.setFrameHelper(null, null)
-    }
-    else {
-      val frame = frame
-      frame.rootPane = null
+
+    if (!WindowManagerEx.getInstanceEx().isFrameReused(this)) {
       frame.doDispose()
     }
-
-    loadingState?.loading?.cancel()
   }
 
   override fun suggestChildFrameBounds(): Rectangle {

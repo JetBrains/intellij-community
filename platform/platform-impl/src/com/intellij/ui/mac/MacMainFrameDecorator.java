@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ToolbarUtil;
@@ -64,7 +65,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private boolean myIsInit;
   private boolean myCallSetFullScreenAfterInit;
 
-  public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull IdeGlassPane glassPane, @NotNull Disposable parentDisposable) {
+  public MacMainFrameDecorator(@NotNull IdeFrameImpl frame, @NotNull IdeGlassPane glassPane, @NotNull Disposable parentDisposable) {
     super(frame);
 
     myTabsHandler = new MacWinTabsHandler(frame, parentDisposable);

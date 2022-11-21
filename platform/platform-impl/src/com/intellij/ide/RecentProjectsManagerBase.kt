@@ -10,21 +10,19 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.ide.ui.UISettings
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.*
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
@@ -37,28 +35,20 @@ import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SingleAlarm
 import com.intellij.util.io.isDirectory
-import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jps.util.JpsPathUtil
-import java.awt.image.BufferedImage
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.LongAdder
-import javax.imageio.IIOImage
-import javax.imageio.ImageIO
-import javax.imageio.ImageTypeSpecifier
-import javax.imageio.stream.MemoryCacheImageOutputStream
 import javax.swing.Icon
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
@@ -502,29 +492,21 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     withContext(Dispatchers.EDT) {
       runActivity("project frame initialization") {
         var activeTask: Pair<Path, OpenProjectTask>? = null
-        var fullScreenPromise: Job? = null
         for ((path, info) in toOpen) {
           val frameInfo = info.frame!!
           val isActive = info == activeInfo
-          val ideFrame = createNewProjectFrame(frameInfo)
+          val ideFrame = createNewProjectFrame(frameInfo).create()
           info.frameTitle?.let {
             ideFrame.title = it
           }
-          val frameHelper = ProjectFrameHelper(frame = ideFrame, selfie = null, withLoadingState = true)
-          val frameManager = MyProjectUiFrameManager(frame = ideFrame, frameHelper = frameHelper)
 
-          frameHelper.init()
-
+          IdeRootPane.customizeRawFrame(ideFrame)
           ideFrame.isVisible = true
-          if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-            fullScreenPromise = frameHelper.toggleFullScreen(true)
-          }
-
           val task = Pair(path, OpenProjectTask {
             forceOpenInNewFrame = true
             showWelcomeScreen = false
             projectWorkspaceId = info.projectWorkspaceId
-            implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameManager = frameManager, isVisibleManaged = true)
+            implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
           })
           if (isActive) {
             activeTask = task
@@ -533,13 +515,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
             taskList.add(task)
           }
         }
+
         // we open project windows in the order projects were opened historically (to preserve taskbar order)
         // but once the windows are created, we start project loading from the latest active project (and put its window at front)
         taskList.add(activeTask!!)
         taskList.reverse()
-        val frameToActivate = (activeTask.second.frameManager as MyProjectUiFrameManager).frame
-        fullScreenPromise?.join()
-        frameToActivate.toFront()
+        activeTask.second.frame?.toFront()
       }
     }
 
@@ -553,10 +534,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       catch (e: Exception) {
         withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
           @Suppress("SSBasedInspection")
-          (entry.second.frameManager as MyProjectUiFrameManager?)?.dispose()
+          (entry.second.frame as MyProjectUiFrameManager?)?.dispose()
           while (iterator.hasNext()) {
             @Suppress("SSBasedInspection")
-            (iterator.next().second.frameManager as MyProjectUiFrameManager?)?.dispose()
+            (iterator.next().second.frame as MyProjectUiFrameManager?)?.dispose()
           }
         }
 
@@ -652,15 +633,15 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       }
     }
 
-    LOG.runAndLogException {
+    runCatching {
       if (writeLastProjectInfo) {
         writeInfoFile(frameInfo, frame)
       }
 
-      if (workspaceId != null && ProjectSelfieUtil.isEnabled()) {
-        takeASelfie(frameHelper, workspaceId)
+      if (workspaceId != null && ProjectSelfieUtil.isEnabled) {
+        ProjectSelfieUtil.takeProjectSelfie(frameHelper.frame.rootPane, workspaceId)
       }
-    }
+    }.getOrLogException(LOG)
   }
 
   /**
@@ -724,32 +705,6 @@ int32 "extendedState"
 
     buffer.flip()
     infoFile.write(buffer)
-  }
-
-  private fun takeASelfie(frameHelper: ProjectFrameHelper, workspaceId: String) {
-    val frame = frameHelper.frame
-    val width = frame.width
-    val height = frame.height
-    val image = ImageUtil.createImage(frame.graphicsConfiguration, width, height, BufferedImage.TYPE_INT_ARGB)
-    UISettings.setupAntialiasing(image.graphics)
-    frame.paint(image.graphics)
-    val selfieFile = ProjectSelfieUtil.getSelfieLocation(workspaceId)
-    // must be a file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
-    //long start = System.currentTimeMillis();
-    selfieFile.outputStream().use { stream ->
-      MemoryCacheImageOutputStream(stream).use { out ->
-        val writer = ImageIO.getImageWriters(ImageTypeSpecifier.createFromRenderedImage(image), "png").next()
-        try {
-          writer.output = out
-          writer.write(null, IIOImage(image, null, null), null)
-        }
-        finally {
-          writer.dispose()
-        }
-      }
-    }
-
-    //System.out.println("Write image: " + (System.currentTimeMillis() - start) + "ms");
   }
 
   fun patchRecentPaths(patcher: (String) -> String?) {

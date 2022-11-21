@@ -2,6 +2,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -39,13 +40,13 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
       }
 
       val reopeningEditorsJob = Job().also { it.complete() }
-      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), reopeningEditorsJob)
+      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), reopeningEditorsJob, taskListDeferred = null)
     }
   }
 
   public override fun tearDown() {
     try {
-      manager!!.projectClosed()
+      manager?.let { Disposer.dispose(it) }
       manager = null
     }
     catch (e: Throwable) {

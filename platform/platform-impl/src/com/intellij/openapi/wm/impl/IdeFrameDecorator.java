@@ -30,9 +30,9 @@ import static com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isDisableAutoRe
 public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   static final String FULL_SCREEN = "ide.frame.full.screen";
 
-  protected final JFrame frame;
+  protected final IdeFrameImpl frame;
 
-  protected IdeFrameDecorator(@NotNull JFrame frame) {
+  protected IdeFrameDecorator(@NotNull IdeFrameImpl frame) {
     this.frame = frame;
   }
 
@@ -53,7 +53,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
   private static final Logger LOG = Logger.getInstance(IdeFrameDecorator.class);
 
-  public static @Nullable IdeFrameDecorator decorate(@NotNull JFrame frame,
+  public static @Nullable IdeFrameDecorator decorate(@NotNull IdeFrameImpl frame,
                                                      @NotNull IdeGlassPane glassPane,
                                                      @NotNull Disposable parentDisposable) {
     try {
@@ -86,7 +86,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
   // AWT-based decorator
   private static final class WinMainFrameDecorator extends IdeFrameDecorator {
-    private WinMainFrameDecorator(@NotNull JFrame frame) {
+    private WinMainFrameDecorator(@NotNull IdeFrameImpl frame) {
       super(frame);
     }
 
@@ -99,8 +99,9 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     public @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state) {
       Rectangle bounds = frame.getBounds();
       int extendedState = frame.getExtendedState();
+      JRootPane rootPane = frame.getRootPane();
       if (state && extendedState == Frame.NORMAL) {
-        frame.getRootPane().putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
+        frame.setNormalBounds(bounds);
       }
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       if (device == null) {
@@ -110,8 +111,8 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
       Component toFocus = frame.getMostRecentFocusOwner();
       Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
       try {
-        frame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, Boolean.TRUE);
-        frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
+        frame.setTogglingFullScreenInProgress(true);
+        rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
         frame.dispose();
         frame.setUndecorated(state);
       }
@@ -120,13 +121,13 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
           frame.setBounds(defaultBounds);
         }
         else {
-          Object o = frame.getRootPane().getClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS);
-          if (o instanceof Rectangle) {
-            frame.setBounds((Rectangle)o);
+          Rectangle o = frame.getNormalBounds();
+          if (o != null) {
+            frame.setBounds(o);
           }
         }
         frame.setVisible(true);
-        frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
+        rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
 
         if (!state && (extendedState & Frame.MAXIMIZED_BOTH) != 0) {
           frame.setExtendedState(extendedState);
@@ -141,7 +142,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         }
       }
       EventQueue.invokeLater(() -> {
-        frame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, null);
+        frame.setTogglingFullScreenInProgress(false);
       });
       return CompletableFuture.completedFuture(state);
     }
@@ -151,7 +152,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   private static final class EWMHFrameDecorator extends IdeFrameDecorator {
     private Boolean myRequestedState = null;
 
-    private EWMHFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
+    private EWMHFrameDecorator(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
       super(frame);
 
       frame.addComponentListener(new ComponentAdapter() {

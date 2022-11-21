@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
@@ -47,10 +48,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -59,6 +57,7 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.ContainerEvent
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
+import java.lang.Runnable
 import java.lang.ref.Reference
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -306,31 +305,49 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     return fileElement
   }
 
-  suspend fun restoreEditors(requestFocus: Boolean) {
-    val state = state.getAndSet(null) ?: return
-    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
-      val component = UIBuilder(this).process(state, topPanel)
-      withContext(Dispatchers.EDT) {
-        runActivity("editor reopening post-processing") {
-          component.isFocusable = false
-          removeAll()
-          add(component, BorderLayout.CENTER)
+  suspend fun restoreEditors(onStartup: Boolean) {
+    restoreEditors(onStartup, anyEditorOpened = null)
+  }
 
-          validate()
-          val windows = windows.toList()
-          for (window in windows) {
-            // clear empty splitters
-            if (window.tabCount == 0) {
-              window.removeFromSplitter()
-            }
-            else {
-              (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+  suspend fun restoreEditors(onStartup: Boolean, anyEditorOpened: CompletableDeferred<Unit>?) {
+    val state = state.getAndSet(null)
+    if (state == null) {
+      anyEditorOpened?.complete(Unit)
+      return
+    }
+
+    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    val component = UIBuilder(this, anyEditorOpened).process(state, topPanel)
+    anyEditorOpened?.complete(Unit)
+    withContext(Dispatchers.EDT) {
+      runActivity("editor reopening post-processing") {
+        component.isFocusable = false
+        if (!onStartup) {
+          removeAll()
+        }
+        add(component, BorderLayout.CENTER)
+        validate()
+        val windows = windows.toList()
+        for (window in windows) {
+          // clear empty splitters
+          if (window.tabCount == 0) {
+            window.removeFromSplitter()
+          }
+          else {
+            (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+          }
+        }
+
+        if (onStartup) {
+          val composite = currentWindow?.selectedComposite ?: return@withContext
+          val selectedEditor = composite.selectedEditor
+          if (selectedEditor is TextEditor) {
+            AsyncEditorLoader.performWhenLoaded(selectedEditor.editor) {
+              composite.preferredFocusedComponent?.requestFocusInWindow()
             }
           }
-
-          if (requestFocus) {
-            currentWindow?.selectedComposite?.preferredFocusedComponent?.requestFocusInWindow()
+          else {
+            composite.preferredFocusedComponent?.requestFocusInWindow()
           }
         }
       }
@@ -367,7 +384,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   fun openFilesAsync(): Job {
     @Suppress("DEPRECATION")
     return manager.project.coroutineScope.launch {
-      restoreEditors(requestFocus = false)
+      restoreEditors(onStartup = false)
     }
   }
 
@@ -869,7 +886,7 @@ internal class EditorSplitterState(element: Element) {
   }
 }
 
-private class UIBuilder(private val splitters: EditorsSplitters) {
+private class UIBuilder(private val splitters: EditorsSplitters, private val firstEditorOpened: CompletableDeferred<Unit>? = null) {
   suspend fun process(state: EditorSplitterState, context: JPanel?): JPanel {
     if (state.firstSplitter != null && state.secondSplitter != null) {
       return processSplitter(state, context)
@@ -951,6 +968,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
       }
       finally {
         virtualFile.putUserData(OPENED_IN_BULK, null)
+        firstEditorOpened?.complete(Unit)
       }
       activity.end()
     }

@@ -93,7 +93,7 @@ abstract class ToolWindowHeader internal constructor(
     MouseDragHelper.setComponentDraggable(westPanel, true)
     @Suppress("LeakingThis")
     add(westPanel)
-    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
+    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true)
     val commonActionsGroup = DefaultActionGroup(DockToolWindowAction(), ShowOptionsAction(), HideAction())
     toolbar = object : ActionToolbarImpl(
       ActionPlaces.TOOLWINDOW_TITLE,
@@ -101,11 +101,16 @@ abstract class ToolWindowHeader internal constructor(
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
         override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-          if (e == null) return EMPTY_ARRAY
+          if (e == null) {
+            return EMPTY_ARRAY
+          }
           val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformDataKeys.CONTEXT_COMPONENT))
-          val hideCommonActions = if (nearestDecorator is Component) ClientProperty.get(
-            nearestDecorator as Component?, InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
-          else null
+          val hideCommonActions = if (nearestDecorator is Component) {
+            ClientProperty.get(nearestDecorator as Component?, InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
+          }
+          else {
+            null
+          }
 
           val extraActions = mutableListOf<AnAction>(actionGroup)
           if (ExperimentalUI.isNewUI()) {
@@ -289,6 +294,10 @@ abstract class ToolWindowHeader internal constructor(
   }
 
   override fun paintComponent(g: Graphics) {
+    if (toolWindow.isDisposed) {
+      return
+    }
+
     g as Graphics2D
     val r = bounds
     val clip = g.clip

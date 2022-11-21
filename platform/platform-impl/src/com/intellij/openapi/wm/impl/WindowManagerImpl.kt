@@ -14,6 +14,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFocusManager
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JWindow
@@ -55,7 +57,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     private set
 
   private val projectToFrame = HashMap<Project, ProjectFrameHelper>()
-  private var frameToReuse: IdeFrameImpl? = null
+  // read from any thread, write from EDT
+  private val frameToReuse = AtomicReference<IdeFrameImpl?>()
 
   internal val defaultFrameInfoHelper = FrameInfoHelper()
 
@@ -63,17 +66,26 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   init {
     val app = ApplicationManager.getApplication()
+    val connection = app.messageBus.simpleConnect()
     if (!app.isUnitTestMode) {
       Disposer.register(app, Disposable { disposeRootFrame() })
-      app.messageBus.connect().subscribe(TitleInfoProvider.TOPIC, object : TitleInfoProvider.TitleInfoProviderListener {
+      connection.subscribe(TitleInfoProvider.TOPIC, object : TitleInfoProvider.TitleInfoProviderListener {
         override fun configurationChanged() {
-          for (frameHelper in projectToFrame.values) {
-            frameHelper.updateTitle()
+          for ((project, frameHelper) in projectToFrame) {
+            frameHelper.updateTitle(project)
           }
         }
       })
     }
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, windowWatcher)
+
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosingBeforeSave(project: Project) {
+        getFrameHelper(project)?.let {
+          releaseFrame(it)
+        }
+      }
+    })
   }
 
   override fun getAllProjectFrames() = projectToFrame.values.toTypedArray()
@@ -238,10 +250,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   internal fun removeAndGetRootFrame(): IdeFrameImpl? {
-    return frameToReuse?.let {
-      frameToReuse = null
-      it
-    }
+    return frameToReuse.getAndSet(null)
   }
 
   fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
@@ -254,16 +263,18 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     projectToFrame.put(project, frameHelper)
     frameHelper.setProject(project)
     frameHelper.installDefaultProjectStatusBarWidgets(project)
-    frameHelper.updateTitle()
+    frameHelper.updateTitle(project)
   }
 
   override fun releaseFrame(releasedFrameHelper: ProjectFrameHelper) {
-    releasedFrameHelper.rootPane.removeToolbar()
-
-    val project = releasedFrameHelper.project ?: return
-    projectToFrame.remove(project)
-    if (frameReuseEnabled && frameToReuse == null && project !is LightEditCompatible) {
-      frameToReuse = releasedFrameHelper.frame
+    val project = releasedFrameHelper.project
+    if (project != null) {
+      projectToFrame.remove(project)
+      if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible) {
+        frameToReuse.set(releasedFrameHelper.frame)
+        releasedFrameHelper.frame.doSetRootPane(null)
+        releasedFrameHelper.frame.setFrameHelper(null)
+      }
     }
 
     try {
@@ -274,13 +285,10 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
-  override fun isFrameReused(helper: ProjectFrameHelper): Boolean = helper.frame === frameToReuse
+  override fun isFrameReused(helper: ProjectFrameHelper): Boolean = helper.frame === frameToReuse.get()
 
   fun disposeRootFrame() {
-    frameToReuse?.let {
-      frameToReuse = null
-      it.doDispose()
-    }
+    frameToReuse.getAndSet(null)?.doDispose()
   }
 
   fun withFrameReuseEnabled(): AutoCloseable {
@@ -421,14 +429,14 @@ internal class FrameStateListener(
     val frame = e.component as IdeFrameImpl
     val rootPane = frame.rootPane
     if (rootPane != null && (rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) == true
-                             || rootPane.getClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS) == true)) {
+                             || frame.togglingFullScreenInProgress)) {
       return
     }
 
     val extendedState = frame.extendedState
     val bounds = frame.bounds
     if (extendedState == Frame.NORMAL && rootPane != null) {
-      rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
+      frame.normalBounds = bounds
     }
 
     val project = frameHelper.project

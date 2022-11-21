@@ -37,7 +37,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -582,9 +581,18 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var result: Project? = null
     var projectOpenActivity: Activity? = null
     try {
-      frameAllocator.run { saveTemplateJob, projectLoaded ->
+      frameAllocator.run { saveTemplateJob, initFrame ->
         activity.end()
-        val project = options.project ?: prepareProject(options, projectStoreBaseDir, saveTemplateJob)
+        val initFrameEarly = !options.isNewProject && options.beforeOpen == null
+        val project = when {
+          options.project != null -> options.project!!
+          options.isNewProject -> prepareNewProject(options = options,
+                                                    projectStoreBaseDir = projectStoreBaseDir,
+                                                    saveTemplateJob = saveTemplateJob)
+          else -> prepareProject(options = options,
+                                 projectStoreBaseDir = projectStoreBaseDir,
+                                 initFrame = initFrame.takeIf { initFrameEarly })
+        }
         result = project
         // must be under try-catch to dispose project on beforeOpen or preparedToOpen callback failures
         if (options.project == null) {
@@ -611,7 +619,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
         // Project is loaded and is initialized, project services and components can be accessed.
         // But start-up and post start-up activities are not yet executed.
-        projectLoaded(project)
+        if (!initFrameEarly) {
+          initFrame(project)
+        }
 
         projectOpenActivity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("project opening") else null
         runActivity("project startup") {
@@ -778,25 +788,28 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return project
   }
 
-  private suspend fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, saveTemplateJob: Job?): Project {
-    if (options.isNewProject) {
-      withContext(Dispatchers.IO) {
-        removeProjectConfigurationAndCaches(projectStoreBaseDir)
-      }
-      val project = instantiateProject(projectStoreBaseDir, options)
-      saveTemplateJob?.join()
-      val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-      initProject(file = projectStoreBaseDir,
-                  project = project,
-                  isRefreshVfsNeeded = options.isRefreshVfsNeeded,
-                  preloadServices = options.preloadServices,
-                  template = template,
-                  isTrustCheckNeeded = false)
-
-      project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
-      return project
+  private suspend fun prepareNewProject(options: OpenProjectTask, projectStoreBaseDir: Path, saveTemplateJob: Job?): Project {
+    withContext(Dispatchers.IO) {
+      removeProjectConfigurationAndCaches(projectStoreBaseDir)
     }
 
+    val project = instantiateProject(projectStoreBaseDir, options)
+    saveTemplateJob?.join()
+    val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
+    initProject(file = projectStoreBaseDir,
+                project = project,
+                isRefreshVfsNeeded = options.isRefreshVfsNeeded,
+                preloadServices = options.preloadServices,
+                template = template,
+                isTrustCheckNeeded = false)
+
+    project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
+    return project
+  }
+
+  private suspend fun prepareProject(options: OpenProjectTask,
+                                     projectStoreBaseDir: Path,
+                                     initFrame: ((project: Project) -> Unit)?): Project {
     var conversionResult: ConversionResult? = null
     if (options.runConversionBeforeOpen) {
       val conversionService = ConversionService.getInstance()
@@ -818,6 +831,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 isRefreshVfsNeeded = options.isRefreshVfsNeeded,
                 preloadServices = options.preloadServices,
                 template = null,
+                initFrame = initFrame,
                 isTrustCheckNeeded = true)
 
     if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
@@ -1124,7 +1138,8 @@ private suspend fun initProject(file: Path,
                                 isRefreshVfsNeeded: Boolean,
                                 preloadServices: Boolean,
                                 template: Project?,
-                                isTrustCheckNeeded: Boolean) {
+                                isTrustCheckNeeded: Boolean,
+                                initFrame: ((project: Project) -> Unit)? = null) {
   LOG.assertTrue(!project.isDefault)
 
   try {
@@ -1150,11 +1165,11 @@ private suspend fun initProject(file: Path,
       projectInitListeners {
         it.execute(project)
       }
-      preloadServicesAndCreateComponents(project, preloadServices)
 
-      project.coroutineScope.launchAndMeasure("fileEditorProvider preloading", Dispatchers.IO) {
-        FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList
-      }
+      // yes, before preloadServicesAndCreateComponents
+      initFrame?.invoke(project)
+
+      preloadServicesAndCreateComponents(project, preloadServices)
 
       if (!isTrusted.await()) {
         throw CancellationException("not trusted")

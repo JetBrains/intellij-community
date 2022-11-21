@@ -1063,16 +1063,19 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       openFileSetModificationCount.incrementAndGet()
     }
 
-    //[jeka] this is a hack to support back-forward navigation
-    // previously here was incorrect call to fireSelectionChanged() with a side-effect
-    val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
-    (ideDocumentHistory as IdeDocumentHistoryImpl).onSelectionChanged()
+    if (!options.isReopeningOnStartup) {
+      //[jeka] this is a hack to support back-forward navigation
+      // previously here was incorrect call to fireSelectionChanged() with a side-effect
+      val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
+      (ideDocumentHistory as IdeDocumentHistoryImpl).onSelectionChanged()
+
+      // make back/forward work
+      ideDocumentHistory.includeCurrentCommandAsNavigation()
+    }
 
     // update frame and tab title
     updateFileName(file)
 
-    // make back/forward work
-    ideDocumentHistory.includeCurrentCommandAsNavigation()
     if (options.pin != null) {
       window.setFilePinned(file, options.pin!!)
     }
@@ -2006,8 +2009,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       return
     }
 
-    // file is not opened yet - in this case we have to create editors and select the created EditorComposite.
-
+    // file is not opened yet - in this case we have to create editors and select the created EditorComposite
     val builders = ArrayList<AsyncFileEditorProvider.Builder?>(newProviders.size)
     for (provider in newProviders) {
       val builder = try {

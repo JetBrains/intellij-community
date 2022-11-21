@@ -52,30 +52,18 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   }
 
   override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
-    var tb = toolbar
-    if (tb == null) {
-      tb = createToolBar()
-      toolbar = tb
-    }
-    tb.init(toolbarActionGroups)
+    toolbar?.init(toolbarActionGroups)
   }
 
   override fun updateToolbar() {
-    removeToolbar()
-
-    val toolbar = createToolBar()
+    var toolbar = toolbar ?: return
+    remove(toolbar)
+    toolbar = createToolBar()
     this.toolbar = toolbar
     toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
 
     revalidate()
     updateCustomDecorationHitTestSpots()
-  }
-
-  override fun removeToolbar() {
-    val toolbar = toolbar ?: return
-    this.toolbar = null
-    remove(toolbar)
-    revalidate()
   }
 
   override fun windowStateChanged() {

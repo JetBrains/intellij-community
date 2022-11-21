@@ -1,210 +1,157 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.JBInsets;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
-import java.util.Objects;
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
+import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.ui.BalloonLayout
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.JBInsets
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.Window
+import java.util.*
+import javax.accessibility.AccessibleContext
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
-  public static final String NORMAL_STATE_BOUNDS = "normalBounds";
-  // when this client property is used (Boolean.TRUE is set for the key) we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
-  public static final String TOGGLING_FULL_SCREEN_IN_PROGRESS = "togglingFullScreenInProgress";
-
-  private @Nullable FrameHelper frameHelper;
-  private @Nullable FrameDecorator frameDecorator;
-
-  @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    return frameHelper == null ? null : frameHelper.getData(dataId);
+class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
+  companion object {
+    @JvmStatic
+    val activeFrame: Window?
+      get() = getFrames().firstOrNull { it.isActive }
   }
 
-  @Nullable FrameHelper getFrameHelper() {
-    return frameHelper;
-  }
+  var frameHelper: FrameHelper? = null
+    private set
 
-  interface FrameHelper extends DataProvider {
-    @Nls
-    String getAccessibleName();
+  var normalBounds: Rectangle? = null
+  // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
+  var togglingFullScreenInProgress: Boolean = true
 
-    void dispose();
+  override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 
-    @Nullable
-    Project getProject();
+  interface FrameHelper : DataProvider {
+    val accessibleName: @Nls String?
+    val project: Project?
+    val helper: IdeFrame
+    val frameDecorator: FrameDecorator?
 
-    @NotNull
-    IdeFrame getHelper();
+    fun dispose()
   }
 
   interface FrameDecorator {
-    boolean isInFullScreen();
-
-    default void frameInit() {
-    }
-
-    default void frameShow() {
-    }
-
-    default void appClosing() {
-    }
+    val isInFullScreen: Boolean
+    fun frameInit() {}
+    fun frameShow() {}
+    fun appClosing() {}
   }
 
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    if (frameDecorator != null) {
-      frameDecorator.frameInit();
-    }
+  override fun addNotify() {
+    super.addNotify()
+    frameHelper?.frameDecorator?.frameInit()
   }
 
-  // expose setRootPane
-  @Override
-  public void setRootPane(JRootPane root) {
-    super.setRootPane(root);
+  override fun createRootPane(): JRootPane? = null
+
+  internal fun doSetRootPane(rootPane: JRootPane?) {
+    super.setRootPane(rootPane)
   }
 
-  void setFrameHelper(@Nullable FrameHelper frameHelper, @Nullable FrameDecorator frameDecorator) {
-    this.frameHelper = frameHelper;
-    this.frameDecorator = frameDecorator;
+  // NB!: the root pane must be set before decorator,
+  // which holds its own client properties in a root pane
+  fun setFrameHelper(frameHelper: FrameHelper?) {
+    this.frameHelper = frameHelper
   }
 
-  @Override
-  public AccessibleContext getAccessibleContext() {
+  override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleIdeFrameImpl();
+      accessibleContext = AccessibleIdeFrameImpl()
     }
-    return accessibleContext;
+    return accessibleContext
   }
 
-  @Override
-  public void setExtendedState(int state) {
+  override fun setExtendedState(state: Int) {
     // do not load FrameInfoHelper class
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred() && getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
-      getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && isMaximized(state)) {
+      normalBounds = bounds
     }
-    super.setExtendedState(state);
+    super.setExtendedState(state)
   }
 
-  @Override
-  public void paint(@NotNull Graphics g) {
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
-      UISettings.setupAntialiasing(g);
+  override fun paint(g: Graphics) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+      setupAntialiasing(g)
     }
-
-    super.paint(g);
+    super.paint(g)
   }
 
-  @Override
-  @SuppressWarnings("deprecation")
-  public void show() {
-    super.show();
-    SwingUtilities.invokeLater(() -> {
-      setFocusableWindowState(true);
-      if (frameDecorator != null) {
-        frameDecorator.frameShow();
-      }
-    });
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun show() {
+    @Suppress("DEPRECATION")
+    super.show()
+    SwingUtilities.invokeLater {
+      focusableWindowState = true
+      frameHelper?.frameDecorator?.frameShow()
+    }
   }
 
-  @Override
-  public @NotNull Insets getInsets() {
-    return SystemInfoRt.isMac && isInFullScreen() ? JBInsets.emptyInsets() : super.getInsets();
+  override fun getInsets(): Insets {
+    return if (SystemInfoRt.isMac && isInFullScreen) JBInsets.emptyInsets() else super.getInsets()
   }
 
-  @Override
-  public boolean isInFullScreen() {
-    return frameDecorator != null && frameDecorator.isInFullScreen();
-  }
+  override fun isInFullScreen(): Boolean = frameHelper?.frameDecorator?.isInFullScreen ?: false
 
-  @Override
-  public void dispose() {
+  override fun dispose() {
+    val frameHelper = frameHelper
     if (frameHelper == null) {
-      doDispose();
+      doDispose()
     }
     else {
-      frameHelper.dispose();
+      frameHelper.dispose()
     }
   }
 
-  void doDispose() {
-    EdtInvocationManager.invokeLaterIfNeeded(() -> super.dispose());
+  fun doDispose() {
+    EdtInvocationManager.invokeLaterIfNeeded { super.dispose() }
   }
 
-  protected final class AccessibleIdeFrameImpl extends AccessibleJFrame {
-    @Override
-    public String getAccessibleName() {
-      return frameHelper == null ? super.getAccessibleName() : frameHelper.getAccessibleName();
+  private inner class AccessibleIdeFrameImpl : AccessibleJFrame() {
+    override fun getAccessibleName(): String {
+      val frameHelper = frameHelper
+      return if (frameHelper == null) super.getAccessibleName() else frameHelper.accessibleName!!
     }
   }
 
-  public static @Nullable Window getActiveFrame() {
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) {
-        return frame;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * @deprecated Use {@link ProjectFrameHelper#getProject()} instead.
-   */
-  @Override
-  @Deprecated(forRemoval = true)
-  public Project getProject() {
-    return frameHelper == null ? null : frameHelper.getProject();
-  }
+  @Deprecated("Use {@link ProjectFrameHelper#getProject()} instead.", ReplaceWith("frameHelper?.project"))
+  override fun getProject(): Project? = frameHelper?.project
 
   // deprecated stuff - as IdeFrame must be implemented (a lot of instanceof checks for JFrame)
+  override fun getStatusBar(): StatusBar? = frameHelper?.helper?.statusBar
 
-  @Override
-  public @Nullable StatusBar getStatusBar() {
-    return frameHelper == null ? null : frameHelper.getHelper().getStatusBar();
+  override fun suggestChildFrameBounds(): Rectangle = frameHelper!!.helper.suggestChildFrameBounds()
+
+  override fun setFrameTitle(title: String) {
+    frameHelper?.helper?.setFrameTitle(title)
   }
 
-  @Override
-  public @NotNull Rectangle suggestChildFrameBounds() {
-    return Objects.requireNonNull(frameHelper).getHelper().suggestChildFrameBounds();
-  }
+  override fun getComponent(): JComponent = getRootPane()
 
-  @Override
-  public void setFrameTitle(String title) {
-    if (frameHelper != null) {
-      frameHelper.getHelper().setFrameTitle(title);
-    }
-  }
+  override fun getBalloonLayout(): BalloonLayout? = frameHelper?.helper?.balloonLayout
 
-  @Override
-  public JComponent getComponent() {
-    return getRootPane();
-  }
-
-  @Override
-  public @Nullable BalloonLayout getBalloonLayout() {
-    return frameHelper == null ? null : frameHelper.getHelper().getBalloonLayout();
-  }
-
-  @Override
-  public void notifyProjectActivation() {
-    ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper(this);
-    if (helper != null) {
-      helper.notifyProjectActivation();
-    }
+  override fun notifyProjectActivation() {
+    getFrameHelper(this)?.notifyProjectActivation()
   }
 }

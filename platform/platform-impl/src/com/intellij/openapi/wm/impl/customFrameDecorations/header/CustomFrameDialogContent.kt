@@ -10,8 +10,7 @@ internal class CustomFrameDialogContent private constructor(private val window: 
                                                             private val header: CustomHeader, content: Container) : JPanel() {
   companion object {
     @JvmStatic
-    fun getCustomContentHolder(window: Window,
-                               content: JComponent): JComponent {
+    fun getCustomContentHolder(window: Window, content: JComponent): JComponent {
       return CustomFrameDialogContent(window, CustomHeader.create(window), content)
     }
 

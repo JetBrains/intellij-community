@@ -36,7 +36,6 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.FrameWrapper
@@ -52,7 +51,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.BalloonImpl
@@ -64,10 +62,7 @@ import com.intellij.util.*
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -75,8 +70,8 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
+import java.lang.Runnable
 import java.util.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -87,16 +82,16 @@ private val LOG = logger<ToolWindowManagerImpl>()
 private typealias Mutation = ((WindowInfoImpl) -> Unit)
 
 @ApiStatus.Internal
-open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(val project: Project,
-                                                                               @field:JvmField internal val isNewUi: Boolean,
-                                                                               private val isEdtRequired: Boolean)
-  : ToolWindowManagerEx(), Disposable {
+open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
+  val project: Project,
+  @field:JvmField internal val isNewUi: Boolean,
+  private val isEdtRequired: Boolean,
+) : ToolWindowManagerEx(), Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
   private val stripeManager = ToolWindowStripeManager.getInstance(project)
 
-  private val state: ToolWindowManagerState
-    get() = project.service()
+  private val state: ToolWindowManagerState by lazy(LazyThreadSafetyMode.NONE) { project.service() }
 
   var layoutState
     get() = state.layout
@@ -107,7 +102,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   private val sideStack = SideStack()
   private val toolWindowPanes = LinkedHashMap<String, ToolWindowPane>()
 
-  private var frameState: ProjectFrameHelper?
+  private var frameHelper: ProjectFrameHelper?
     get() = state.frame
     set(value) { state.frame = value }
 
@@ -287,10 +282,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
             manager.saveFloatingOrWindowedState(entry, manager.layoutState.getInfo(entry.id) ?: continue)
           }
         }
-
-        override fun projectClosed(project: Project) {
-          (project.serviceIfCreated<ToolWindowManager>() as ToolWindowManagerImpl?)?.projectClosed()
-        }
       })
 
       connection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
@@ -339,9 +330,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  private fun getDefaultToolWindowPane() = toolWindowPanes[WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID]!!
+  private fun getDefaultToolWindowPane() = toolWindowPanes.get(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)!!
 
-  internal fun getToolWindowPane(paneId: String) = toolWindowPanes[paneId] ?: getDefaultToolWindowPane()
+  internal fun getToolWindowPane(paneId: String) = toolWindowPanes.get(paneId) ?: getDefaultToolWindowPane()
 
   internal fun getToolWindowPane(toolWindow: ToolWindow): ToolWindowPane {
     val paneId = if (toolWindow is ToolWindowImpl) {
@@ -474,15 +465,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  suspend fun init(frameHelper: ProjectFrameHelper, reopeningEditorsJob: Job) {
-    doInit(frameHelper = frameHelper, connection = project.messageBus.connect(this), reopeningEditorsJob = reopeningEditorsJob)
+  suspend fun init(frameHelper: ProjectFrameHelper, reopeningEditorsJob: Job, taskListDeferred: Deferred<List<RegisterToolWindowTask>>) {
+    doInit(frameHelper = frameHelper,
+           connection = project.messageBus.connect(this),
+           reopeningEditorsJob = reopeningEditorsJob,
+           taskListDeferred = taskListDeferred)
   }
 
   @VisibleForTesting
-  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection, reopeningEditorsJob: Job) {
+  suspend fun doInit(frameHelper: ProjectFrameHelper,
+                     connection: MessageBusConnection,
+                     reopeningEditorsJob: Job,
+                     taskListDeferred: Deferred<List<RegisterToolWindowTask>>?) {
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      frameState = frameHelper
+      this@ToolWindowManagerImpl.frameHelper = frameHelper
 
       // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
       // registered differently, but we shouldn't have the main pane yet
@@ -494,7 +491,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
     }
 
-    toolWindowSetInitializer.initUi(reopeningEditorsJob)
+    toolWindowSetInitializer.initUi(reopeningEditorsJob, taskListDeferred)
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
@@ -557,35 +554,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     return toolWindowPanes.get(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
            ?: throw IllegalStateException("You must not register toolwindow programmatically so early. " +
                                           "Rework code or use ToolWindowManager.invokeLater")
-  }
-
-  fun projectClosed() {
-    WindowManagerEx.getInstanceEx().releaseFrame(frameState ?: return)
-
-    toolWindowPanes.values.forEach { it.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, null) }
-
-    // hide all tool windows - frame maybe reused for another project
-    for (entry in idToEntry.values) {
-      try {
-        removeDecoratorWithoutUpdatingState(entry, layoutState.getInfo(entry.id) ?: continue, dirtyMode = true)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-      finally {
-        Disposer.dispose(entry.disposable)
-      }
-    }
-
-    toolWindowPanes.values.forEach(ToolWindowPane::reset)
-
-    frameState = null
   }
 
   private fun loadDefault() {
@@ -742,7 +710,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   override val activeToolWindowId: String?
     get() {
-      val frame = toolWindowPanes.values.firstOrNull { it.frame.isActive }?.frame ?: frameState?.frame ?: return null
+      val frame = toolWindowPanes.values.firstOrNull { it.frame.isActive }?.frame ?: frameHelper?.frame ?: return null
       if (frame.isActive) {
         return getToolWindowIdForComponent(frame.mostRecentFocusOwner)
       }
@@ -1027,7 +995,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     return entry.toolWindow
   }
 
-  internal fun registerToolWindow(task: RegisterToolWindowTask, buttonManager: ToolWindowButtonManager): ToolWindowEntry {
+  internal fun registerToolWindow(task: RegisterToolWindowTask,
+                                  buttonManager: ToolWindowButtonManager,
+                                  ensureToolWindowActionRegisteredIsNeeded: Boolean = true): ToolWindowEntry {
     LOG.debug { "registerToolWindow($task)" }
 
     if (idToEntry.containsKey(task.id)) {
@@ -1050,7 +1020,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     val disposable = Disposer.newDisposable(task.id)
-    Disposer.register(project, disposable)
+    Disposer.register(this, disposable)
 
     val factory = task.contentFactory
 
@@ -1092,7 +1062,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
     }
 
-    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
+    if (ensureToolWindowActionRegisteredIsNeeded) {
+      ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
+    }
 
     val stripeButton = if (isButtonNeeded) {
       buttonManager.createStripeButton(toolWindow, infoSnapshot, task)

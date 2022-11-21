@@ -253,9 +253,13 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   private @Nullable Content getCurrentContent() {
     ToolWindow window = getCurrentToolWindow();
-    if (window == null) return null;
+    if (window == null) {
+      return null;
+    }
     ContentManager manager = window.getContentManagerIfCreated();
-    if (manager == null) return null;
+    if (manager == null) {
+      return null;
+    }
     return manager.getContent(this);
   }
 
@@ -389,8 +393,13 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     }
     else {
       Long time = myShowTime.getAndSet(null);
-      if (time != null) ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
-      IntentionsUI.getInstance(getProject()).hide();
+      if (time != null) {
+        ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
+      }
+      IntentionsUI intentionUI = getProject().getServiceIfCreated(IntentionsUI.class);
+      if (intentionUI != null) {
+        intentionUI.hide();
+      }
     }
   }
 

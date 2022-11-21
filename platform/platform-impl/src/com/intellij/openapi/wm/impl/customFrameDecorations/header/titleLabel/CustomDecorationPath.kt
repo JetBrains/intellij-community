@@ -19,11 +19,9 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-internal open class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(frame), CustomHeaderTitle {
+internal open class CustomDecorationPath(private val frame: JFrame) : SelectedEditorFilePath(frame), CustomHeaderTitle {
   companion object {
     fun createInstance(frame: JFrame): CustomDecorationPath = CustomDecorationPath(frame)
-
-    fun createMainInstance(frame: JFrame): CustomDecorationPath = CustomDecorationPath(frame)
   }
 
   private val projectManagerListener = object : ProjectManagerListener {

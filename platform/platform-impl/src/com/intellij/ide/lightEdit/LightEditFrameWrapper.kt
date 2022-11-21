@@ -36,7 +36,7 @@ internal class LightEditFrameWrapper(
   private val project: Project,
   frame: IdeFrameImpl,
   private val closeHandler: BooleanSupplier
-) : ProjectFrameHelper(frame = frame, selfie = null), Disposable, LightEditFrame {
+) : ProjectFrameHelper(frame = frame), Disposable, LightEditFrame {
   private var editPanel: LightEditPanel? = null
   private var frameTitleUpdateEnabled = true
 
@@ -46,7 +46,7 @@ internal class LightEditFrameWrapper(
       return runBlockingModal(project, "") {
         withContext(Dispatchers.EDT) {
           allocateLightEditFrame(project) { frame ->
-            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo), closeHandler = closeHandler)
+            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
           } as LightEditFrameWrapper
         }
       }
@@ -85,7 +85,7 @@ internal class LightEditFrameWrapper(
           windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
         }
         frameInfo.bounds?.let {
-          frame.frame.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)
+          frame.frame.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it).key
         }
       }
 
@@ -114,7 +114,7 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(): IdeRootPane {
+  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
     return LightEditRootPane(frame = frame, frameHelper = this, parentDisposable = this)
   }
 
@@ -133,8 +133,7 @@ internal class LightEditFrameWrapper(
     Disposer.register(statusBar) { statusBarWidgetManager.disableAllWidgets() }
   }
 
-  override val titleInfoProviders: List<TitleInfoProvider>
-    get() = emptyList()
+  override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
 
   override fun createCloseProjectWindowHelper(): CloseProjectWindowHelper {
     return object : CloseProjectWindowHelper() {
@@ -165,7 +164,6 @@ internal class LightEditFrameWrapper(
   private inner class LightEditRootPane(frame: JFrame,
                                         frameHelper: IdeFrame,
                                         parentDisposable: Disposable) : IdeRootPane(frame = frame,
-                                                                                    frameHelper = frameHelper,
                                                                                     parentDisposable = parentDisposable,
                                                                                     loadingState = null) {
     override fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {

@@ -106,7 +106,6 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     component.isOpaque = false
     return component
   }
-
 }
 
 private val lightThemeDarkHeaderDisableFilter: Supplier<RGBImageFilter> = Supplier {

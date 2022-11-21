@@ -7,6 +7,4 @@ internal interface ToolbarHolder {
   fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>)
 
   fun updateToolbar()
-
-  fun removeToolbar()
 }

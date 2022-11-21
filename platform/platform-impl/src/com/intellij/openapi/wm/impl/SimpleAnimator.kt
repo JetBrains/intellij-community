@@ -16,7 +16,6 @@ internal abstract class SimpleAnimator {
   abstract fun paintNow(frame: Int, totalFrames: Int)
 
   protected open fun paintCycleStart() {}
-  protected open fun paintCycleEnd() {}
 
   suspend fun run(totalFrames: Int, cycle: Duration) {
     val cycleDuration = cycle.inWholeNanoseconds
@@ -45,8 +44,6 @@ internal abstract class SimpleAnimator {
 
         delay(duration)
       }
-
-      paintCycleEnd()
     }
   }
 }
