@@ -2,18 +2,22 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 
-final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
+@ApiStatus.Internal
+@VisibleForTesting
+public final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
   private final @NotNull DataExternalizer<T> myValueExternalizer;
   private final @NotNull ValueContainerInputRemapping myInputRemapping;
 
-  ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull ValueContainerInputRemapping inputRemapping) {
+  public ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull ValueContainerInputRemapping inputRemapping) {
     myValueExternalizer = valueExternalizer;
     myInputRemapping = inputRemapping;
   }
