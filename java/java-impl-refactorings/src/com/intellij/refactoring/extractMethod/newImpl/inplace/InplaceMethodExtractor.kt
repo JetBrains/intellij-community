@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
@@ -150,6 +151,10 @@ class InplaceMethodExtractor(private val editor: Editor,
       val shouldAnnotate = popupProvider.annotate
       if (shouldAnnotate != null) {
         PropertiesComponent.getInstance(project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, shouldAnnotate, true)
+      }
+      val makeStatic = popupProvider.makeStatic
+      if (!popupProvider.staticPassFields && makeStatic != null) {
+        JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = makeStatic
       }
       restartInplace()
     }
