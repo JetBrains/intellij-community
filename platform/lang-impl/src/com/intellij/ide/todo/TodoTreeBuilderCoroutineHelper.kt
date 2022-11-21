@@ -94,8 +94,7 @@ private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
 @RequiresReadLock
 private fun TodoTreeBuilder.updateVisibleTree() {
   if (isUpdatable) {
-    if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-      validateCache()
+    if (hasDirtyFiles()) { // suppress redundant cache validations
       todoTreeStructure.validateCache()
     }
     model.invalidateAsync()

@@ -65,8 +65,10 @@ public abstract class TodoTreeBuilder implements Disposable {
   /**
    * This set contains "dirty" files. File is "dirty" if it's currently unknown
    * whether the file contains T.O.D.O item or not. To determine this it's necessary
-   * to perform some (perhaps, CPU expensive) operation. These "dirty" files are
-   * validated in {@code validateCache()} method.
+   * to perform {@link #hasDirtyFiles()} operation (potentially CPU expensive).
+   * These "dirty" files are validated in {@link #validateCache()} method.
+   * <p>
+   * Mutate in a background thread only.
    */
   protected final HashSet<VirtualFile> myDirtyFileSet = new HashSet<>();
 
@@ -357,10 +359,22 @@ public abstract class TodoTreeBuilder implements Disposable {
     });
   }
 
+  @RequiresBackgroundThread
   protected final void clearCache() {
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
+  }
+
+  protected final boolean hasDirtyFiles() {
+    synchronized (myDirtyFileSet) {
+      if (myDirtyFileSet.isEmpty()) {
+        return false;
+      }
+
+      validateCache();
+      return true;
+    }
   }
 
   @RequiresEdt
@@ -371,7 +385,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  protected final void validateCache() {
+  private void validateCache() {
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     // First we need to update "dirty" file set.
     for (Iterator<VirtualFile> i = myDirtyFileSet.iterator(); i.hasNext(); ) {
