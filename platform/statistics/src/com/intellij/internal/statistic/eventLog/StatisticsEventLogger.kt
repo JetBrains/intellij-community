@@ -123,7 +123,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
-    val ideMode = if(AppMode.isIsRemoteDevHost()) "RemoteDevHost" else null
+    val ideMode = if(AppMode.isIsRemoteDevHost()) "RDH" else null
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     val config = eventLogConfiguration.getOrCreate(recorderId)
     val writer = StatisticsEventLogFileWriter(recorderId, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
