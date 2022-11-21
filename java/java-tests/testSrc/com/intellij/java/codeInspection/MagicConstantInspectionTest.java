@@ -4,10 +4,12 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiClassImpl;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,9 @@ public class MagicConstantInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testVarargMethodCall() { doTest(); }
   public void testEnumConstructor() { doTest(); }
   public void testSwitchBlock() { doTest(); }
+  public void testSwitchExpression() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14, () -> doTest());
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");

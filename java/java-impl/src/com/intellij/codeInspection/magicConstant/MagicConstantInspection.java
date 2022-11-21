@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -33,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -42,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<Boolean> ANNOTATIONS_BEING_ATTACHED = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
@@ -397,13 +398,16 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     PsiExpression expression = PsiUtil.deparenthesizeExpression(argument);
     if (expression == null) return true;
     if (visited == null) visited = new HashSet<>();
-    if (!visited.add(expression)) return true;
+    if (!visited.add(expression)) return false;
     if (expression instanceof PsiConditionalExpression cond) {
       PsiExpression thenExpression = cond.getThenExpression();
       boolean thenAllowed = thenExpression == null || isAllowed(thenExpression, scope, allowedValues, manager, visited);
       if (!thenAllowed) return false;
       PsiExpression elseExpression = cond.getElseExpression();
       return elseExpression == null || isAllowed(elseExpression, scope, allowedValues, manager, visited);
+    }
+    else if (expression instanceof PsiSwitchExpression switchExpression) {
+      return isGoodSwitchExpression(switchExpression, allowedValues, scope, manager, visited);
     }
 
     if (isOneOf(expression, allowedValues, manager)) return true;
@@ -451,6 +455,44 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     }
 
     return PsiType.NULL.equals(expression.getType());
+  }
+
+  private static boolean isGoodSwitchExpression(PsiSwitchExpression switchExpression,
+                                                AllowedValues values,
+                                                PsiElement scope,
+                                                PsiManager manager,
+                                                Set<PsiExpression> visited) {
+    PsiCodeBlock body = switchExpression.getBody();
+    if (body == null) return true;
+    List<PsiSwitchLabeledRuleStatement> rules = ContainerUtil.filterIsInstance(body.getStatements(), PsiSwitchLabeledRuleStatement.class);
+    for (PsiSwitchLabeledRuleStatement rule : rules) {
+      if (rule.getBody() instanceof PsiExpressionStatement expressionStatement) {
+        if (!isAllowed(expressionStatement.getExpression(), scope, values, manager, visited)) {
+          return false;
+        }
+      }
+    }
+    final ControlFlow controlFlow;
+    try {
+      controlFlow = ControlFlowFactory.getInstance(switchExpression.getProject())
+        .getControlFlow(switchExpression, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    }
+    catch (AnalysisCanceledException ignored) {
+      return true;
+    }
+    int startOffset = controlFlow.getStartOffset(switchExpression);
+    int endOffset = controlFlow.getEndOffset(switchExpression);
+    if (startOffset < 0 || endOffset < 0) return true;
+    Collection<PsiStatement> exitStatements =
+      ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiYieldStatement.class);
+    for (PsiStatement exitStatement : exitStatements) {
+      PsiYieldStatement yieldStatement = (PsiYieldStatement)exitStatement;
+      PsiExpression expression = yieldStatement.getExpression();
+      if (expression != null && !isAllowed(expression, scope, values, manager, visited)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static final Key<Map<String, PsiExpression>> LITERAL_EXPRESSION_CACHE = Key.create("LITERAL_EXPRESSION_CACHE");
