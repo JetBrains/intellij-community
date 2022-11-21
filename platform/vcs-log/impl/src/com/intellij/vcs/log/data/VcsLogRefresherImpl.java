@@ -24,7 +24,6 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,14 +95,14 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     return new SingleTaskController.SingleTaskImpl(future, indicator);
   }
 
+  @Override
   @NotNull
   public DataPack getCurrentDataPack() {
     return myDataPack;
   }
 
-  @NotNull
   @Override
-  public DataPack readFirstBlock() {
+  public void readFirstBlock() {
     try {
       LogInfo data = loadRecentData(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()));
       Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
@@ -117,7 +116,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       LOG.info(e);
       myDataPack = new DataPack.ErrorDataPack(e);
     }
-    return myDataPack;
   }
 
   @NotNull
