@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class ParallelRunnerTest {
   @Test
@@ -60,10 +59,10 @@ public class ParallelRunnerTest {
     var text = "should be rethrown";
     var in = List.of(1, 2, 3, 4, 5);
     try {
-      ParallelRunner.<Integer, Exception>runInParallelRethrow(in, it -> {
-        throw new Exception(text);
+      ParallelRunner.<Integer, MyTestException>runInParallelRethrow(in, it -> {
+        throw new MyTestException(text);
       });
-    } catch (Exception e) {
+    } catch (MyTestException e) {
       rethrown = e;
     }
     assertNotNull(rethrown);
@@ -77,6 +76,18 @@ public class ParallelRunnerTest {
     ParallelRunner.runInParallelRethrow(in, it -> {
       throw new IOException(text);
     });
+  }
+
+  class MyTestException extends Exception {
+    private final String message;
+    MyTestException(String message) {
+      this.message = message;
+    }
+
+    @Override
+    public String getMessage() {
+      return message;
+    }
   }
 
 }
