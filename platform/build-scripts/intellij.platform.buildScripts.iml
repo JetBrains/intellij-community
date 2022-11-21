@@ -106,5 +106,65 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jackson-datatype-joda" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="library" name="commons-codec" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
+    <orderEntry type="library" name="ktor-client" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
+    <orderEntry type="library" name="ktor-client-content-negotiation" level="project" />
+    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="module-library">
+      <library name="jetbrains.apple.notary.api.kotlin.client" type="repository">
+        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.0-2.0.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor" />
+            <dependency maven-id="commons-codec:commons-codec" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="io.ktor:ktor-client-content-negotiation-jvm" />
+            <dependency maven-id="io.ktor:ktor-client-core-jvm" />
+            <dependency maven-id="io.ktor:ktor-client-logging-jvm" />
+            <dependency maven-id="io.ktor:ktor-events-jvm" />
+            <dependency maven-id="io.ktor:ktor-http-jvm" />
+            <dependency maven-id="io.ktor:ktor-io-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-kotlinx-jvm" />
+            <dependency maven-id="io.ktor:ktor-utils-jvm" />
+            <dependency maven-id="io.ktor:ktor-websocket-serialization-jvm" />
+            <dependency maven-id="io.ktor:ktor-websockets-jvm" />
+            <dependency maven-id="joda-time:joda-time" />
+            <dependency maven-id="org.apache.httpcomponents:httpclient" />
+            <dependency maven-id="org.apache.httpcomponents:httpcore" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.0-2.0.0/apple-notary-api-kotlin-client-1.0.0-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.302/aws-java-sdk-s3-1.12.302.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.302/aws-java-sdk-kms-1.12.302.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.302/aws-java-sdk-core-1.12.302.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.302/jmespath-java-1.12.302.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.0.0/java-jwt-4.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
