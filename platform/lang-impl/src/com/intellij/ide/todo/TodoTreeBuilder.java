@@ -389,8 +389,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   private void validateCache() {
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     // First we need to update "dirty" file set.
-    for (Iterator<VirtualFile> i = myDirtyFileSet.iterator(); i.hasNext(); ) {
-      VirtualFile file = i.next();
+    for (VirtualFile file : myDirtyFileSet) {
       PsiFile psiFile = file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
       if (psiFile == null || !treeStructure.accept(psiFile)) {
         if (myFileTree.contains(file)) {
@@ -406,10 +405,9 @@ public abstract class TodoTreeBuilder implements Disposable {
           highlighter.setText(PsiDocumentManager.getInstance(myProject).getDocument(psiFile).getCharsSequence());
         }
       }
-      i.remove();
     }
-    LOG.assertTrue(myDirtyFileSet.isEmpty());
-    // Now myDirtyFileSet should be empty
+
+    myDirtyFileSet.clear();
   }
 
   protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
