@@ -187,7 +187,7 @@ class InplaceMethodExtractor(private val editor: Editor,
     val elements = ExtractSelector().suggestElementsToExtract(targetClass.containingFile, range)
     val methodRange = callIdentifierRange?.range
     val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
-    extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: false)
+    extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: extractor.extractOptions.isStatic)
   }
 
   private fun restartInplace() {

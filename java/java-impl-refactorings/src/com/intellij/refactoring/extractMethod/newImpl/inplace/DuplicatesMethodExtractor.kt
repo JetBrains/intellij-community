@@ -261,18 +261,19 @@ private fun findExtractOptions(targetClass: PsiClass, elements: List<PsiElement>
 }
 
 fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
-  val extractor = DuplicatesMethodExtractor.create(targetClass, elements, methodName, makeStatic)
-  val dialogOptions = MapFromDialog.mapFromDialog(extractor.extractOptions)
-  if (dialogOptions != null) {
-    val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, extractor.anchor, extractor.elements)
-    MethodExtractor().executeRefactoringCommand(targetClass.project) {
-      MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
-      val (callElements, method) = mappedExtractor.extract()
-      MethodExtractor.sendRefactoringDoneEvent(method)
-      val editor = PsiEditorUtil.findEditor(targetClass)
-      if (editor != null) {
-        mappedExtractor.replaceDuplicates(editor, method)
-      }
+  val extractor = DuplicatesMethodExtractor.create(targetClass, elements, methodName, false)
+  val dialog = ExtractMethodDialogUtil.createDialog(extractor.extractOptions)
+  dialog.selectStaticFlag(makeStatic)
+  if (!dialog.showAndGet()) return
+  val dialogOptions = ExtractMethodPipeline.withDialogParameters(extractor.extractOptions, dialog)
+  val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, extractor.anchor, extractor.elements)
+  MethodExtractor().executeRefactoringCommand(targetClass.project) {
+    MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
+    val (_, method) = mappedExtractor.extract()
+    MethodExtractor.sendRefactoringDoneEvent(method)
+    val editor = PsiEditorUtil.findEditor(targetClass)
+    if (editor != null) {
+      mappedExtractor.replaceDuplicates(editor, method)
     }
   }
 }

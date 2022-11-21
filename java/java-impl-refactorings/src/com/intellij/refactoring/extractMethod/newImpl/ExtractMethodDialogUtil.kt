@@ -13,15 +13,9 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.util.containers.MultiMap
 
-object MapFromDialog {
-  fun mapFromDialog(extractOptions: ExtractOptions): ExtractOptions? {
-    val dialog = createDialog(extractOptions)
-    if (!dialog.showAndGet()) return null
-    return ExtractMethodPipeline.remap(extractOptions, dialog.chosenParameters, dialog.chosenMethodName,
-                                       dialog.isMakeStatic, dialog.visibility, dialog.isChainedConstructor, dialog.returnType)
-  }
+object ExtractMethodDialogUtil {
 
-  private fun createDialog(extractOptions: ExtractOptions): ExtractMethodDialog {
+  fun createDialog(extractOptions: ExtractOptions): ExtractMethodDialog {
     val project = extractOptions.project
     val returnType = extractOptions.dataOutput.type
     val thrownExceptions = extractOptions.thrownExceptions.toTypedArray()

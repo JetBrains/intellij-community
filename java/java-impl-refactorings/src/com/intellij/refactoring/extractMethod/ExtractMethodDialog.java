@@ -129,6 +129,10 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     init();
   }
 
+  public void selectStaticFlag(boolean isStatic){
+    myMakeStatic.setSelected(isStatic);
+  }
+
   protected String[] suggestMethodNames() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
