@@ -1226,6 +1226,10 @@ public final class JBUI {
         }
       }
 
+      public static @NotNull Color stepForeground() {
+        return JBColor.namedColor("GotItTooltip.stepForeground", foreground(false));
+      }
+
       public static @NotNull Color headerForeground() {
         return JBColor.namedColor("GotItTooltip.Header.foreground", foreground(false));
       }

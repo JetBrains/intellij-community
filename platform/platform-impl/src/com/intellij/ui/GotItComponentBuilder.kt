@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.BalloonBuilder
@@ -38,6 +40,7 @@ class GotItComponentBuilder(@Nls private val text: String) {
   @Nls
   private var header: String = ""
   private var icon: Icon? = null
+  private var stepNumber: Int? = null
 
   private var shortcut: Shortcut? = null
 
@@ -73,9 +76,31 @@ class GotItComponentBuilder(@Nls private val text: String) {
 
   /**
    * Add optional icon on the left of the header or description.
+   * Is not compatible with step number.
    */
   fun withIcon(icon: Icon): GotItComponentBuilder {
+    if (stepNumber != null) {
+      throw IllegalStateException("Icon and step number can not be showed both at once. Choose one of them.")
+    }
     this.icon = adjustIcon(icon)
+    return this
+  }
+
+  /**
+   * Add optional step number on the left of the header or description.
+   * The step will be rendered with one zero predecessor if step number is lower than 10.
+   * For example: 01, 02, 10, 12.
+   * The step number should be in the range [1, 99].
+   * Is not compatible with icon.
+   */
+  fun withStepNumber(step: Int): GotItComponentBuilder {
+    if (icon != null) {
+      throw IllegalStateException("Icon and step number can not be showed both at once. Choose one of them.")
+    }
+    if (step !in 1 until 100) {
+      throw IllegalArgumentException("The step should be in the range [1, 99]. Provided step number: $step")
+    }
+    this.stepNumber = step
     return this
   }
 
@@ -195,22 +220,28 @@ class GotItComponentBuilder(@Nls private val text: String) {
   private fun createContent(buttonSupplier: (JButton) -> Unit): JComponent {
     val panel = JPanel(GridBagLayout())
     val gc = GridBag()
-    val left = if (icon != null) 8 else 0
-    val column = if (icon != null) 1 else 0
+    val left = if (icon != null || stepNumber != null) 8 else 0
+    val column = if (icon != null || stepNumber != null) 1 else 0
 
     image?.let { panel.add(JLabel(it), gc.nextLine().next().anchor(GridBagConstraints.LINE_START).coverLine().insetBottom(12)) }
 
     icon?.let { panel.add(JLabel(it), gc.nextLine().next().anchor(GridBagConstraints.BASELINE)) }
+    stepNumber?.let { step ->
+      val label = JLabel(step.toString().padStart(2, '0'))
+      label.foreground = JBUI.CurrentTheme.GotItTooltip.stepForeground()
+      label.font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
+      panel.add(label, gc.nextLine().next().anchor(GridBagConstraints.BASELINE))
+    }
 
     if (header.isNotEmpty()) {
-      if (icon == null) gc.nextLine()
+      if (icon == null && stepNumber == null) gc.nextLine()
 
       val finalText = HtmlChunk.raw(header)
         .bold()
         .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.headerForeground())))
         .wrapWith(HtmlChunk.html())
         .toString()
-      panel.add(JBLabel(finalText), gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insetLeft(left))
+      panel.add(JBLabel(finalText), gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insets(1, left, 0, 0))
     }
 
     val builder = HtmlBuilder()
@@ -223,7 +254,7 @@ class GotItComponentBuilder(@Nls private val text: String) {
                   .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors)))))
     }
 
-    if (icon == null || header.isNotEmpty()) gc.nextLine()
+    if (icon == null && stepNumber == null || header.isNotEmpty()) gc.nextLine()
     panel.add(LimitedWidthLabel(builder, maxWidth),
               gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insets(if (header.isNotEmpty()) 5 else 0, left, 0, 0))
 

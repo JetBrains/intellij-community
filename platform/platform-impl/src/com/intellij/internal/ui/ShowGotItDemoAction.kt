@@ -57,7 +57,11 @@ class ShowGotItDemoAction : DumbAwareAction() {
     private var imageWidth: Int = 248
     private var imageHeight: Int = 132
 
+    private var showIconOrStep: Boolean = true
     private var showIcon: Boolean = true
+    private var showStepNumber: Boolean = false
+    private var stepNumber: Int = 1
+
     private var showHeader: Boolean = true
     private var headerText: String = "Some GotIt tooltip header"
 
@@ -104,9 +108,25 @@ class ShowGotItDemoAction : DumbAwareAction() {
           .bindIntText(this@GotItConfigurationDialog::imageHeight)
           .enabledIf(checkbox.selected)
       }
+
+      lateinit var iconOrStepCheckbox: Cell<JBCheckBox>
       row {
-        checkBox(CheckboxDescriptor("Icon", this@GotItConfigurationDialog::showIcon))
+        @Suppress("DialogTitleCapitalization")
+        iconOrStepCheckbox = checkBox(CheckboxDescriptor("Icon or Step Number:", this@GotItConfigurationDialog::showIconOrStep))
       }
+      buttonsGroup(indent = true) {
+        row {
+          val button = radioButton("Step number:")
+            .bindSelected(this@GotItConfigurationDialog::showStepNumber)
+          intTextField(IntRange(1, 99))
+            .bindIntText(this@GotItConfigurationDialog::stepNumber)
+            .enabledIf(button.selected)
+        }
+        row {
+          radioButton("Icon")
+            .bindSelected(this@GotItConfigurationDialog::showIcon)
+        }
+      }.enabledIf(iconOrStepCheckbox.selected)
 
       lateinit var linkCheckbox: Cell<JBCheckBox>
       row {
@@ -160,7 +180,8 @@ class ShowGotItDemoAction : DumbAwareAction() {
       val randomId = Random(System.currentTimeMillis()).nextBytes(32).toString(StandardCharsets.UTF_8)
       val gotIt = GotItTooltip(randomId, text, Disposer.newDisposable())
       if (showImage) gotIt.withImage(image)
-      if (showIcon) gotIt.withIcon(icon)
+      if (showIconOrStep && showIcon) gotIt.withIcon(icon)
+      if (showIconOrStep && showStepNumber) gotIt.withStepNumber(stepNumber)
       if (showHeader) gotIt.withHeader(headerText)
       if (showLink && actionLink) {
         gotIt.withLink(actionLinkText) { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() }

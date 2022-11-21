@@ -141,9 +141,27 @@ class GotItTooltip(@NonNls val id: String,
 
   /**
    * Add optional icon on the left of the header or description.
+   * Is not compatible with step number.
+   *
+   * @throws IllegalStateException if step number already specified using [withStepNumber].
    */
   fun withIcon(icon: Icon): GotItTooltip {
     gotItBuilder.withIcon(icon)
+    return this
+  }
+
+  /**
+   * Add optional step number on the left of the header or description.
+   * The step will be rendered with one zero predecessor if step number is lower than 10.
+   * For example: 01, 02, 10, 12.
+   * The step number should be in the range [1, 99].
+   * Is not compatible with icon.
+   *
+   * @throws IllegalStateException if icon already specified using [withIcon].
+   * @throws IllegalArgumentException if [step] is not in a range [1, 99].
+   */
+  fun withStepNumber(step: Int): GotItTooltip {
+    gotItBuilder.withStepNumber(step)
     return this
   }
 

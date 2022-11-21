@@ -465,6 +465,7 @@
       "background": "Grey3",
       "borderColor": "Grey3",
       "foreground": "Grey10",
+      "stepForeground": "Grey8",
       "Header.foreground": "Grey14",
       "shortcutForeground": "Grey9",
       "linkForeground": "Blue9",

@@ -518,6 +518,11 @@
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
     {
+      "key": "GotItTooltip.stepForeground",
+      "description": "GotIt tooltip step number foreground color if different from GotItTooltip.foreground",
+      "since": "2023.1"
+    },
+    {
       "key": "GotItTooltip.Header.foreground",
       "description": "GotIt tooltip header foreground color if different from GotItTooltip.foreground",
       "since": "2022.3.1"
