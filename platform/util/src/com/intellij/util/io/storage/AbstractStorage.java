@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
 public abstract class AbstractStorage implements Disposable, Forceable {
@@ -188,8 +189,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         myDataTable.close();
         newDataTable.close();
 
-        Files.delete(oldDataFile);
-        Files.move(newDataFile, oldDataFile);
+        Files.move(newDataFile, oldDataFile, StandardCopyOption.REPLACE_EXISTING);
         myDataTable = new DataTable(oldDataFile, myContext);
       }
       catch (IOException e) {
