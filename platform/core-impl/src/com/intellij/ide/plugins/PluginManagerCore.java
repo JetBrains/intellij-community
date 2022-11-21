@@ -517,7 +517,13 @@ public final class PluginManagerCore {
         }
       }
 
-      DisabledPluginsState.Companion.setEnabledState(descriptors, enabled);
+      PluginEnabler pluginEnabler = PluginEnabler.getInstance();
+      if (enabled) {
+        pluginEnabler.enable(descriptors);
+      }
+      else {
+        pluginEnabler.disable(descriptors);
+      }
     }
     return applied;
   }
