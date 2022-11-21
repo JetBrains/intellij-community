@@ -33,15 +33,23 @@ public class SnapshotVisiblePackBuilder {
 
   @NotNull
   public VisiblePack build(@NotNull VisiblePack visiblePack) {
-    if (visiblePack.getVisibleGraph() instanceof VisibleGraphImpl && visiblePack.getVisibleGraph().getVisibleCommitCount() > 0) {
-      return build(visiblePack.getDataPack(), ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters(),
-                   visiblePack.getAdditionalData());
+    DataPackBase dataPack = visiblePack.getDataPack();
+    if (dataPack instanceof DataPack.ErrorDataPack) {
+      return visiblePack;
     }
-    else {
-      DataPackBase newPack = new DataPackBase(visiblePack.getDataPack().getLogProviders(),
-                                              RefsModel.createEmptyInstance(myStorage), false);
-      return new VisiblePack(newPack, EmptyVisibleGraph.getInstance(), true, visiblePack.getFilters());
+
+    if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0 || !(visiblePack.getVisibleGraph() instanceof VisibleGraphImpl)) {
+      DataPackBase newDataPack = new DataPackBase(dataPack.getLogProviders(),
+                                                  RefsModel.createEmptyInstance(myStorage), false);
+      if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
+        return new VisiblePack.ErrorVisiblePack(newDataPack, visiblePack.getFilters(),
+                                                ((VisiblePack.ErrorVisiblePack)visiblePack).getError());
+      }
+      return new VisiblePack(newDataPack, EmptyVisibleGraph.getInstance(), true, visiblePack.getFilters());
     }
+
+    return build(dataPack, ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters(),
+                 visiblePack.getAdditionalData());
   }
 
   @NotNull
