@@ -9,11 +9,15 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.isToString
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -88,7 +92,14 @@ private fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryE
 
     if (!hasNoPlusOperandWithNewLine(expression)) return false
 
-    return allowAnalysisOnEdt { analyze(expression) { expression.getKtType()?.isString == true } }
+    return allowAnalysisOnEdt {
+        analyze(expression) {
+            if (expression.getKtType()?.isString != true) return@analyze false
+            val plusOperation = expression.operationReference.mainReference.resolveToSymbol() as? KtCallableSymbol
+            val classContainingPlus = plusOperation?.getContainingSymbol() as? KtNamedClassOrObjectSymbol
+            classContainingPlus?.classIdIfNonLocal?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
+        }
+    }
 }
 
 /**

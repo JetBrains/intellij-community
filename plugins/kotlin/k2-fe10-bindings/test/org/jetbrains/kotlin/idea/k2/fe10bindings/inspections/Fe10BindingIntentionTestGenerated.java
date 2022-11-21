@@ -646,6 +646,11 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/onlyForStrings.kt");
         }
 
+        @TestMetadata("plusOperatorReturnsString.kt")
+        public void testPlusOperatorReturnsString() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertToStringTemplate/plusOperatorReturnsString.kt");
+        }
+
         @TestMetadata("requiresPlusOperator.kt")
         public void testRequiresPlusOperator() throws Exception {
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/requiresPlusOperator.kt");

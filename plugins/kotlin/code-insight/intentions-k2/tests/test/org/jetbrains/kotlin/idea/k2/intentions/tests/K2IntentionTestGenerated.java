@@ -1927,6 +1927,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/onlyForStrings.kt");
         }
 
+        @TestMetadata("plusOperatorReturnsString.kt")
+        public void testPlusOperatorReturnsString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/plusOperatorReturnsString.kt");
+        }
+
         @TestMetadata("requiresPlusOperator.kt")
         public void testRequiresPlusOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/requiresPlusOperator.kt");
