@@ -392,7 +392,7 @@
     <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
 
     <!-- asyncio REPL for Python Console/Debugger -->
-    <registryKey key="python.debug.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
+    <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false" description="Possibility to write await outside of function"/>
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
