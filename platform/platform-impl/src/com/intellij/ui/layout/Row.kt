@@ -106,8 +106,13 @@ interface RowBuilder : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onGlobalApply(callback: () -> Unit): Row
+
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onGlobalReset(callback: () -> Unit): Row
+
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
@@ -129,6 +134,7 @@ abstract class Row : Cell(), RowBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowIndent: Int
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   protected abstract val builder: LayoutBuilderImpl
 
   /**

@@ -171,6 +171,7 @@ interface CellBuilder<out T : JComponent> {
     return this
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   @ApiStatus.Internal
   fun shouldSaveOnApply(): Boolean
 
@@ -424,8 +425,10 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun scrollableTextArea(prop: KMutableProperty0<String>, rows: Int? = null): CellBuilder<JBTextArea> = scrollableTextArea(prop.toBinding(), rows)
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null) = scrollableTextArea(PropertyBinding(getter, setter), rows)
 
   private fun scrollableTextArea(binding: PropertyBinding<String>, rows: Int? = null): CellBuilder<JBTextArea> {
@@ -435,6 +438,7 @@ abstract class Cell : BaseBuilder {
       .withTextBinding(binding)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun scrollableTextArea(property: GraphProperty<String>, rows: Int? = null): CellBuilder<JBTextArea> {
     return scrollableTextArea(property::get, property::set, rows)
       .withGraphProperty(property)
@@ -472,6 +476,7 @@ abstract class Cell : BaseBuilder {
     return component(spinner).withBinding(JBIntSpinner::getNumber, JBIntSpinner::setNumber, PropertyBinding(getter, setter))
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textFieldWithHistoryWithBrowseButton(
     getter: () -> String,
     setter: (String) -> Unit,
@@ -579,6 +584,7 @@ abstract class Cell : BaseBuilder {
     return component(label)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun expandableTextField(getter: () -> String,
                           setter: (String) -> Unit,
                           parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
@@ -590,6 +596,7 @@ abstract class Cell : BaseBuilder {
                    PropertyBinding(getter, setter))
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun expandableTextField(prop: KMutableProperty0<String>,
                           parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
                           joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER)
@@ -597,6 +604,7 @@ abstract class Cell : BaseBuilder {
     return expandableTextField(prop::get, prop::set, parser, joiner)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun expandableTextField(prop: GraphProperty<String>,
                           parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
                           joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER)
