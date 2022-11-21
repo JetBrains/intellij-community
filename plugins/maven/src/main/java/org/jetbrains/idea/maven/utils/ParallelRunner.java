@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,7 +25,7 @@ public class ParallelRunner {
   }
 
   @NotNull
-  private static <T> Consumer<T> rethrow(@NotNull ThrowingConsumer<T> consumer) {
+  private static <T> Consumer<T> toThrowingConsumer(@NotNull ThrowingConsumer<T> consumer) {
     return consumer;
   }
 
@@ -40,9 +42,27 @@ public class ParallelRunner {
   @SuppressWarnings("RedundantThrows")
   public static <T, E extends Throwable> void runInParallelRethrow(@NotNull Collection<T> collection, @NotNull ThrowingConsumer<T> method)
     throws E {
-    collection.parallelStream().forEach(rethrow(item -> {
+    collection.parallelStream().forEach(toThrowingConsumer(item -> {
       method.accept(item);
     }));
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T, E extends Throwable> void runInParallelRethrowWithAppExecutor(@NotNull Collection<T> collection, @NotNull ThrowingConsumer<T> method)
+    throws E {
+    var executor = AppExecutorUtil.getAppExecutorService();
+    try {
+      for (var item : collection) {
+        var future = executor.submit(() -> method.accept(item));
+        ConcurrencyUtil.manifestExceptionsIn(future);
+      }
+    } catch(RuntimeException e) {
+      var cause = e.getCause();
+      if (null != cause) {
+        throw (E)cause;
+      }
+      throw e;
+    }
   }
 
 
