@@ -238,7 +238,6 @@ object CommunityRepositoryModules {
         "intellij.fullLine.python",
         "intellij.fullLine.java",
         "intellij.fullLine.kotlin",
-        "intellij.fullLine.js"
       ))
     },
     plugin(listOf("intellij.lombok", "intellij.lombok.generated")),
