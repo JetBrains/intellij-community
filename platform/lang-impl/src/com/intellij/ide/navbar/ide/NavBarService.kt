@@ -43,8 +43,12 @@ internal class NavBarService(private val project: Project) : Disposable {
   }
 
   private val staticNavBarVm = StaticNavBarVmImpl(cs, project, UISettings.getInstance().isNavbarShown())
+  private var floatingBarJob: Job? = null
 
   fun uiSettingsChanged(uiSettings: UISettings) {
+    if (uiSettings.isNavbarShown()) {
+      floatingBarJob?.cancel()
+    }
     staticNavBarVm.isVisible = uiSettings.isNavbarShown()
   }
 
@@ -69,7 +73,7 @@ internal class NavBarService(private val project: Project) : Disposable {
   }
 
   private fun showFloatingNavbar(dataContext: DataContext) {
-    cs.launch(ModalityState.current().asContextElement()) {
+    val job = cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
         defaultModel(project)
       }
@@ -85,6 +89,12 @@ internal class NavBarService(private val project: Project) : Disposable {
         vm.selectTail()
         vm.showPopup()
       }
+    }
+
+    floatingBarJob = job
+
+    job.invokeOnCompletion {
+      floatingBarJob = null
     }
   }
 }

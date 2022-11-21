@@ -15,6 +15,7 @@ import com.intellij.ui.HintHint
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.util.awaitCancellation
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -25,10 +26,14 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 
-internal fun showHint(dataContext: DataContext, cs: CoroutineScope, project: Project, panel: NewNavBarPanel): LightweightHint {
+internal fun showHint(dataContext: DataContext, cs: CoroutineScope, project: Project, panel: NewNavBarPanel) {
   val wrappedPanel = wrapNavbarPanel(panel)
   val hint = createHint(cs, wrappedPanel)
   panel.onSizeChange = Runnable { hint.size = wrappedPanel.preferredSize }
+
+  cs.awaitCancellation {
+    hint.hide()
+  }
 
   val editor = dataContext.getData(CommonDataKeys.EDITOR)
   if (editor != null) {
@@ -37,8 +42,6 @@ internal fun showHint(dataContext: DataContext, cs: CoroutineScope, project: Pro
   else {
     showNonEditorHint(dataContext, project, hint)
   }
-
-  return hint
 }
 
 
