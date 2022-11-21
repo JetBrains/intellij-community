@@ -4,9 +4,7 @@ package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 
@@ -21,11 +19,7 @@ interface ModulePrinterEntity : ContributableEntity {
     val orderEntries: List<OrderEntryPrinterEntity>
 }
 
-interface LibraryPrinterEntity : ContributableEntity
-
-interface SdkPrinterEntity : ContributableEntity
-
-class ModulePrinterEntityImpl(private val module: Module) : ModulePrinterEntity {
+class ModulePrinterEntityImpl(val module: Module) : ModulePrinterEntity {
     override val presentableName: String get() = module.name
 
     override val kotlinFacetSettings: KotlinFacetSettings? by lazy {
@@ -35,14 +29,6 @@ class ModulePrinterEntityImpl(private val module: Module) : ModulePrinterEntity 
     override val orderEntries by lazy {
         runReadAction { ModuleRootManager.getInstance(module).orderEntries }.map(OrderEntry::toPrinterEntity)
     }
-}
-
-class LibraryPrinterEntityImpl(private val library: Library) : LibraryPrinterEntity {
-    override val presentableName: String get() = library.presentableName
-}
-
-class SdkPrinterEntityImpl(private val sdk: Sdk) : SdkPrinterEntity {
-    override val presentableName: String get() = sdk.name
 }
 
 enum class OrderEntryKind {
@@ -71,6 +57,4 @@ class OrderEntryPrinterEntityImpl(private val orderEntry: OrderEntry): OrderEntr
 }
 
 internal fun Module.toPrinterEntity(): ModulePrinterEntity = ModulePrinterEntityImpl(this)
-internal fun Library.toPrinterEntity(): LibraryPrinterEntity = LibraryPrinterEntityImpl(this)
-internal fun Sdk.toPrinterEntity(): SdkPrinterEntity = SdkPrinterEntityImpl(this)
 internal fun OrderEntry.toPrinterEntity(): OrderEntryPrinterEntity = OrderEntryPrinterEntityImpl(this)
