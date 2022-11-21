@@ -27,6 +27,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
 
   fun create(scope: CoroutineScope): JComponent {
     val accountDetailsProvider = GHAccountsDetailsProvider(scope, accountManager)
+    val errorPresenter = GHSelectorErrorStatusPresenter()
 
     return RepositoryAndAccountSelectorComponentFactory(vm)
       .create(scope = scope,
@@ -36,9 +37,9 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
               },
               detailsProvider = accountDetailsProvider,
               accountsPopupActionsSupplier = { createPopupLoginActions(it) },
-              credsMissingText = GithubBundle.message("account.token.missing"),
               submitActionText = GithubBundle.message("pull.request.view.list"),
-              loginButtons = createLoginButtons(scope))
+              loginButtons = createLoginButtons(scope),
+              errorPresenter = errorPresenter)
   }
 
   private fun createLoginButtons(scope: CoroutineScope): List<JButton> {

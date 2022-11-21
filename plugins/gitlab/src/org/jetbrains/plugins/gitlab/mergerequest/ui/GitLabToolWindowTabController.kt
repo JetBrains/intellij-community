@@ -63,9 +63,9 @@ internal class GitLabToolWindowTabController(private val project: Project,
       },
       detailsProvider = accountsDetailsProvider,
       accountsPopupActionsSupplier = { createPopupLoginActions(selectorVm, it) },
-      credsMissingText = GitLabBundle.message("account.token.missing"),
       submitActionText = GitLabBundle.message("view.merge.requests.button"),
-      loginButtons = createLoginButtons(scope, selectorVm)
+      loginButtons = createLoginButtons(scope, selectorVm),
+      errorPresenter = GitLabSelectorErrorStatusPresenter()
     )
 
     scope.launch {

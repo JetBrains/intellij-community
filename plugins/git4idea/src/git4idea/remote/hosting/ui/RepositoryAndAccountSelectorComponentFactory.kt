@@ -7,9 +7,9 @@ import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
-import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
@@ -43,9 +43,9 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     repoNamer: (M) -> @Nls String,
     detailsProvider: LoadingAccountsDetailsProvider<A, *>,
     accountsPopupActionsSupplier: (M) -> List<Action>,
-    credsMissingText: @Nls String,
     submitActionText: @Nls String,
-    loginButtons: List<JButton>
+    loginButtons: List<JButton>,
+    errorPresenter: ErrorStatusPresenter<RepositoryAndAccountSelectorViewModel.Error>
   ): JComponent {
 
     val repoCombo = SimpleComboboxWithActionsFactory(vm.repositoriesState, vm.repoSelectionState).create(scope, { mapping ->
@@ -89,21 +89,18 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         add(iconLabel, BorderLayout.NORTH)
       }
 
-      val errorTextPane = BaseHtmlEditorPane().apply {
-        bindText(scope, vm.errorState.map {
-          when (it) {
-            is RepositoryAndAccountSelectorViewModel.Error.MissingCredentials -> credsMissingText
-            is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> {
-              HtmlBuilder()
-                .append(CollaborationToolsBundle.message("review.list.connection.failed", it.repo.repository.toString(), it.account))
-                .br()
-                .append(ExceptionUtil.getPresentableMessage(it.exception))
-                .toString()
+      val errorTextPane = BaseHtmlEditorPane().apply htmlPane@{
+        bindText(scope, vm.errorState.map { error ->
+          if (error == null) return@map ""
+          HtmlBuilder().append(errorPresenter.getErrorTitle(error)).br().apply {
+            val errorDescription = errorPresenter.getErrorDescription(error)
+            if (errorDescription != null) {
+              append("$errorDescription ")
             }
-            null -> ""
-          }
+          }.toString()
         })
       }
+
       add(iconPanel, BorderLayout.WEST)
       add(errorTextPane, BorderLayout.CENTER)
 
