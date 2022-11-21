@@ -14,15 +14,11 @@ import org.jetbrains.kotlin.utils.Printer
 
 class WorkspaceModelPrinter(
     private val moduleContributor: WorkspaceModelPrinterContributor<ModulePrinterEntity>? = null,
-    private val libraryContributor: WorkspaceModelPrinterContributor<LibraryPrinterEntity>? = null,
-    private val sdkContributor: WorkspaceModelPrinterContributor<SdkPrinterEntity>? = null,
 ) {
     private val printer = Printer(StringBuilder())
 
     fun print(project: Project): String {
         processModules(project)
-        processLibraries(project)
-        processSdks()
 
         return printer.toString()
     }
@@ -33,18 +29,6 @@ class WorkspaceModelPrinter(
         entities = runReadAction { ModuleManager.getInstance(project).modules }.map(Module::toPrinterEntity),
     )
 
-    private fun processLibraries(project: Project) = processEntities(
-        title = "LIBRARIES",
-        contributor = libraryContributor,
-        entities = runReadAction { LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries }.map(Library::toPrinterEntity),
-    )
-
-    private fun processSdks() = processEntities(
-        title = "SDK",
-        contributor = sdkContributor,
-        entities = runReadAction { ProjectJdkTable.getInstance().allJdks }.map(Sdk::toPrinterEntity),
-    )
-
     private fun <EntityType : ContributableEntity> processEntities(
         title: String,
         contributor: WorkspaceModelPrinterContributor<EntityType>?,
@@ -52,12 +36,9 @@ class WorkspaceModelPrinter(
     ) {
         if (contributor == null) return
 
-        val preprocessedEntities = contributor.preprocess(entities)
-        if (preprocessedEntities.isEmpty()) return
-
         printer.println(title)
         printer.indented {
-            for (entity in preprocessedEntities.sortedBy { it.presentableName }) {
+            for (entity in entities.sortedBy { it.presentableName }) {
                 printer.println(entity.presentableName)
                 contributor.process(entity, printer)
             }
