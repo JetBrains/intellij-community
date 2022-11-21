@@ -66,8 +66,6 @@ enum class WorkspacePrintingMode(
         printer = WorkspaceModelPrinterFactory {
             addContributor(KotlinFacetSettingsPrinterContributor())
             addContributor(SanitizingOrderEntryPrinterContributor())
-            addContributor(SanitizingLibraryPrinterContributor())
-            addContributor(NoopSdkPrinterContributor())
         }
     ),
     MODULES(
@@ -90,20 +88,6 @@ enum class WorkspacePrintingMode(
         description = "List of all modules in a project with their Kotlin Facet settings",
         printer = WorkspaceModelPrinterFactory {
             addContributor(KotlinFacetSettingsPrinterContributor())
-        }
-    ),
-    LIBRARIES(
-        filePrefix = "libraries",
-        description = "List of all libraries in a project",
-        printer = WorkspaceModelPrinterFactory {
-            this.addContributor(SanitizingLibraryPrinterContributor())
-        }
-    ),
-    SDKS(
-        filePrefix = "sdks",
-        description = "List of all SDKs in a project",
-        printer = WorkspaceModelPrinterFactory {
-            addContributor(NoopSdkPrinterContributor())
         }
     ),
     // TODO: module roots

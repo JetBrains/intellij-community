@@ -5,9 +5,6 @@ package org.jetbrains.kotlin.gradle.workspace
 internal fun replaceNativeDistributionOrderEntries(orderEntries: Collection<OrderEntryPrinterEntity>): Collection<OrderEntryPrinterEntity> =
     replaceNativeDistribution(orderEntries, fakeOrderEntryEntityForKotlinNativeDistribution)
 
-internal fun replaceNativeDistributionLibraries(libraries: Collection<LibraryPrinterEntity>): Collection<LibraryPrinterEntity> =
-    replaceNativeDistribution(libraries, fakeLibraryForKotlinNativeDistribution)
-
 private fun <T : PrinterEntity> replaceNativeDistribution(elements: Collection<T>, replacement: T): Collection<T> {
     val nativeDistributionEntries = elements.filterTo(mutableSetOf()) {
         NATIVE_DISTRIBUTION_LIBRARY_PATTERN.matches(it.presentableName)
@@ -21,10 +18,6 @@ private fun <T : PrinterEntity> replaceNativeDistribution(elements: Collection<T
 
 private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^Kotlin/Native.*".toRegex()
 private const val KOTLIN_NATIVE_DISTRIBUTION_REPLACEMENT_NAME = "<Kotlin/Native Distribution Libraries Test Stub>"
-
-private val fakeLibraryForKotlinNativeDistribution = object : LibraryPrinterEntity {
-    override val presentableName: String get() = KOTLIN_NATIVE_DISTRIBUTION_REPLACEMENT_NAME
-}
 
 private val fakeOrderEntryEntityForKotlinNativeDistribution = object : OrderEntryPrinterEntity {
     override val kind: OrderEntryKind
