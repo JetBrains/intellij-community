@@ -13,14 +13,16 @@ public class TextRangeScalarUtil {
   }
 
   public static long toScalarRange(int start, int end) {
-    if (start > end) {
+    if (start > end || start < 0) {
       throw new IllegalArgumentException("Incorrect offsets: start="+start+"; end="+end);
     }
-    return ((long)start << 32) | end;
+    return ((long)end << 32) | start;
   }
 
-  public static long deltaScalarRange(long range, int deltaStart, int deltaEnd) {
-    return range + ((long)deltaStart << 32) + deltaEnd;
+  public static long shift(long range, int deltaStart, int deltaEnd) {
+    int newStart = startOffset(range) + deltaStart;
+    int newEnd = endOffset(range) + deltaEnd;
+    return toScalarRange(newStart, newEnd);
   }
 
   public static long union(long range1, long range2) {
@@ -30,11 +32,11 @@ public class TextRangeScalarUtil {
     return toScalarRange(start, end);
   }
 
-  public static int endOffset(long range) {
+  public static int startOffset(long range) {
     return (int)range & 0x7fffffff;
   }
 
-  public static int startOffset(long range) {
+  public static int endOffset(long range) {
     return (int)(range >>> 32);
   }
 
