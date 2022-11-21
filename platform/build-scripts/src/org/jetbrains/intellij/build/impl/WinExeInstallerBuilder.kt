@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -18,6 +19,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.FileTime
+import java.util.concurrent.TimeUnit
+import kotlin.io.path.setLastModifiedTime
 import kotlin.time.Duration.Companion.hours
 
 private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistributionCustomizer, context: BuildContext, suffix: String) {
@@ -58,6 +62,18 @@ private fun getFileAssociations(customizer: WindowsDistributionCustomizer): List
   return customizer.fileAssociations.map { if (it.startsWith(".")) it else ".$it" }
 }
 
+private val isDockerAvailable by lazy {
+    runBlocking {
+      try {
+        runProcess(listOf("docker", "--version"), inheritOut = true)
+        true
+      }
+      catch (e: Exception) {
+        false
+      }
+    }
+}
+
 @Suppress("SpellCheckingInspection")
 internal suspend fun buildNsisInstaller(winDistPath: Path,
                                         additionalDirectoryToInclude: Path,
@@ -65,6 +81,11 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
                                         customizer: WindowsDistributionCustomizer,
                                         runtimeDir: Path,
                                         context: BuildContext): Path? {
+  if (SystemInfoRt.isMac && !isDockerAvailable) {
+    Span.current().addEvent("Windows installer cannot be built on macOS without Docker")
+    return null
+  }
+
   val communityHome = context.paths.communityHomeDir
   val outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
   Span.current().setAttribute(outFileName, outFileName)
@@ -95,7 +116,9 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     prepareConfigurationFiles(nsiConfDir = nsiConfDir, winDistPath = winDistPath, customizer = customizer, context = context)
     for (it in customizer.customNsiConfigurationFiles) {
       val file = Path.of(it)
-      Files.copy(file, nsiConfDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
+      val copy = nsiConfDir.resolve(file.fileName)
+      Files.copy(file, copy, StandardCopyOption.REPLACE_EXISTING)
+      copy.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }
 
     // Log final nsi directory to make debugging easier
