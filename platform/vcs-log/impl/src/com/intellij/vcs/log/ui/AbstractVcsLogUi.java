@@ -18,6 +18,7 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -167,14 +168,18 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     else if (model.canRequestMore()) {
       model.requestToLoadMore(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
-    else if (!myVisiblePack.isFull() || myLogData.getDataPack() != myVisiblePack.getDataPack()) {
+    else if (myLogData.getDataPack() != myVisiblePack.getDataPack()) {
       invokeOnChange(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
-    else if (result == COMMIT_DOES_NOT_MATCH) {
-      future.set(JumpResult.COMMIT_DOES_NOT_MATCH);
+    else if (myVisiblePack.getDataPack() instanceof DataPack.ErrorDataPack ||
+             myVisiblePack instanceof VisiblePack.ErrorVisiblePack) {
+      future.set(JumpResult.fromInt(result));
+    }
+    else if (!myVisiblePack.isFull()) {
+      invokeOnChange(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else {
-      future.set(JumpResult.COMMIT_NOT_FOUND);
+      future.set(JumpResult.fromInt(result));
     }
   }
 
