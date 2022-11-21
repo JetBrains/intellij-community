@@ -11,6 +11,9 @@ class PythonPackagesDialogStatisticsCollector : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("python.packages.dialog", 1)
 
     @JvmStatic
-    val packagingOperationEvent = GROUP.registerEvent("packaging")
+    val packagingOperationEvent = GROUP.registerEvent("packages.changed")
+
+    @JvmStatic
+    val packagingDialogEvent = GROUP.registerEvent("dialog.opened")
   }
 }

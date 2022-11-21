@@ -262,6 +262,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected @NotNull ManagePackagesDialog createManagePackagesDialog() {
+    PythonPackagesDialogStatisticsCollector.getPackagingDialogEvent().log(myProject);
     return new ManagePackagesDialog(myProject,
                                     myPackageManagementService,
                                     new PackageManagementService.Listener() {

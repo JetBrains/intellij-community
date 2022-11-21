@@ -12,13 +12,13 @@ class PythonPackagesToolwindowStatisticsCollector : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("python.packages.toolwindow", 1)
 
     @JvmStatic
-    val installPackageEvent = GROUP.registerEvent("install")
+    val installPackageEvent = GROUP.registerEvent("installed")
 
     @JvmStatic
-    val uninstallPackageEvent = GROUP.registerEvent("uninstall")
+    val uninstallPackageEvent = GROUP.registerEvent("uninstalled")
 
     @JvmStatic
-    val requestDetailsEvent = GROUP.registerEvent("details")
+    val requestDetailsEvent = GROUP.registerEvent("details.requested")
 
     @JvmStatic
     val repositoriesChangedEvent = GROUP.registerEvent("repositories.changed")
