@@ -20,19 +20,7 @@ value class KotlinLibraryName @UnsafeApi constructor(val name: String) {
 
 fun KotlinLibraryName(coordinates: IdeaKotlinBinaryCoordinates): KotlinLibraryName {
     return KotlinLibraryName(
-        buildString {
-            append(coordinates.group)
-            append(":")
-            append(coordinates.module)
-            if (coordinates.sourceSetName != null) {
-                append(":")
-                append(coordinates.sourceSetName)
-            }
-            if (coordinates.version != null) {
-                append(":")
-                append(coordinates.version)
-            }
-        }
+        listOfNotNull(coordinates.group, coordinates.module, coordinates.sourceSetName, coordinates.version).joinToString(":")
     )
 }
 
