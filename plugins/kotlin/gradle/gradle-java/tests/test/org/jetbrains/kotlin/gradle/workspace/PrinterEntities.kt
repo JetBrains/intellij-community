@@ -2,11 +2,8 @@
 
 package org.jetbrains.kotlin.gradle.workspace
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.*
-import org.jetbrains.kotlin.config.KotlinFacetSettings
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 
 interface PrinterEntity {
     val presentableName: String
@@ -14,21 +11,10 @@ interface PrinterEntity {
 
 interface ContributableEntity : PrinterEntity
 
-interface ModulePrinterEntity : ContributableEntity {
-    val kotlinFacetSettings: KotlinFacetSettings?
-    val orderEntries: List<OrderEntryPrinterEntity>
-}
+interface ModulePrinterEntity : ContributableEntity
 
 class ModulePrinterEntityImpl(val module: Module) : ModulePrinterEntity {
     override val presentableName: String get() = module.name
-
-    override val kotlinFacetSettings: KotlinFacetSettings? by lazy {
-        runReadAction { KotlinFacetSettingsProvider.getInstance(module.project)?.getSettings(module) }
-    }
-
-    override val orderEntries by lazy {
-        runReadAction { ModuleRootManager.getInstance(module).orderEntries }.map(OrderEntry::toPrinterEntity)
-    }
 }
 
 enum class OrderEntryKind {
