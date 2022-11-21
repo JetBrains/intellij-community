@@ -27,7 +27,9 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
 
   fun create(scope: CoroutineScope): JComponent {
     val accountDetailsProvider = GHAccountsDetailsProvider(scope, accountManager)
-    val errorPresenter = GHSelectorErrorStatusPresenter()
+    val errorPresenter = GHSelectorErrorStatusPresenter(project) {
+      vm.submitSelection()
+    }
 
     return RepositoryAndAccountSelectorComponentFactory(vm)
       .create(scope = scope,

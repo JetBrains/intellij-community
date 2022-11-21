@@ -17,7 +17,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 internal class GitLabRepositoryAndAccountSelectorViewModel(
   private val scope: CoroutineScope,
   projectsManager: GitLabProjectsManager,
-  private val accountManager: GitLabAccountManager,
+  val accountManager: GitLabAccountManager,
   onSelected: suspend (GitLabProjectMapping, GitLabAccount) -> Unit,
 )
   : RepositoryAndAccountSelectorViewModelBase<GitLabProjectMapping, GitLabAccount>(

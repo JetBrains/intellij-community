@@ -14,17 +14,19 @@ import javax.swing.AbstractAction
 import javax.swing.JComponent
 
 internal sealed class GitLabHttpStatusErrorAction(@Nls name: String) : AbstractAction(name) {
-  class RefreshToken(
+  class LogInAgain(
     private val project: Project,
     private val parentScope: CoroutineScope,
     private val account: GitLabAccount,
-    private val accountManager: GitLabAccountManager
-  ) : GitLabHttpStatusErrorAction(CollaborationToolsBundle.message("account.refresh.token")) {
+    private val accountManager: GitLabAccountManager,
+    private val resetAction: () -> Unit = {}
+  ) : GitLabHttpStatusErrorAction(CollaborationToolsBundle.message("repository.and.account.selector.login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
       val token = GitLabLoginUtil.updateToken(project, parentComponent, account) { _, _ -> true } ?: return
       parentScope.launch {
         accountManager.updateAccount(account, token)
+        resetAction()
       }
     }
   }

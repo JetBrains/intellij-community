@@ -35,7 +35,7 @@ internal class GitLabMergeRequestErrorStatusPresenter(
   override fun getErrorAction(error: Throwable): Action? {
     val httpStatusError = parseHttpStatusError(error) ?: return null
     return when (httpStatusError.statusErrorType) {
-      HttpStatusErrorType.INVALID_TOKEN -> GitLabHttpStatusErrorAction.RefreshToken(project, scope, account, accountManager)
+      HttpStatusErrorType.INVALID_TOKEN -> GitLabHttpStatusErrorAction.LogInAgain(project, scope, account, accountManager)
       HttpStatusErrorType.UNKNOWN -> null
     }
   }

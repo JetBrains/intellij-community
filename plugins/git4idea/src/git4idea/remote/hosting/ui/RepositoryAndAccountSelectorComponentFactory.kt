@@ -6,6 +6,7 @@ import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
+import com.intellij.collaboration.ui.ActionLinkListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
@@ -13,10 +14,13 @@ import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.getName
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
@@ -90,12 +94,22 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       }
 
       val errorTextPane = BaseHtmlEditorPane().apply htmlPane@{
+        val actionLinkListener = ActionLinkListener(this@htmlPane)
+        removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+        addHyperlinkListener(actionLinkListener)
+
         bindText(scope, vm.errorState.map { error ->
           if (error == null) return@map ""
           HtmlBuilder().append(errorPresenter.getErrorTitle(error)).br().apply {
             val errorDescription = errorPresenter.getErrorDescription(error)
             if (errorDescription != null) {
               append("$errorDescription ")
+            }
+
+            val errorAction = errorPresenter.getErrorAction(error)
+            actionLinkListener.action = errorAction
+            if (errorAction != null) {
+              append(HtmlChunk.link(ActionLinkListener.ERROR_ACTION_HREF, errorAction.getName()))
             }
           }.toString()
         })
