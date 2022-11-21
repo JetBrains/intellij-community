@@ -15,6 +15,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.InvertBooleanFix;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +115,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
               if (psiReferenceExpression == null) return false;
               PsiMethodCallExpression methodCallExpression =
                 ObjectUtils.tryCast(psiReferenceExpression.getParent(), PsiMethodCallExpression.class);
-              if (methodCallExpression != null && !isInvertedMethodCall(methodCallExpression)) {
+              if (methodCallExpression != null && !isInvertedMethodCall(methodCallExpression, null)) {
                 descriptionsProcessor.ignoreElement(refMethod);
               }
               return false;
@@ -157,19 +158,20 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     globalContext.enqueueMethodUsagesProcessor(refMethod, processor);
   }
 
-  private static void checkMethodCall(RefElement refWhat, final PsiElement element) {
+  private static void checkMethodCall(RefElement refWhat, RefElement refFrom) {
     if (refWhat.getUserData(ALWAYS_INVERTED) != Boolean.TRUE) return;
     final RefMethod refMethod = (RefMethod)refWhat;
     final PsiElement psiElement = refMethod.getPsiElement();
     if (!(psiElement instanceof PsiMethod)) return;
     final PsiMethod psiMethod = (PsiMethod)psiElement;
-    element.accept(new JavaRecursiveElementWalkingVisitor() {
+    final PsiElement psiFrom = refFrom.getPsiElement();
+    psiFrom.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression = call.getMethodExpression();
         if (methodExpression.isReferenceTo(psiMethod)) {
-          if (isInvertedMethodCall(call)) return;
+          if (isInvertedMethodCall(call, psiFrom)) return;
           refMethod.putUserData(ALWAYS_INVERTED, Boolean.FALSE);
         }
       }
@@ -184,9 +186,11 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     });
   }
 
-  static boolean isInvertedMethodCall(@NotNull PsiMethodCallExpression methodCallExpression) {
-    PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    if (methodExpression.getQualifierExpression() instanceof PsiSuperExpression) return true; //don't flag super calls
+  static boolean isInvertedMethodCall(@NotNull PsiMethodCallExpression methodCallExpression, @Nullable PsiElement from) {
+    if (from instanceof PsiMethod && MethodCallUtils.isSuperMethodCall(methodCallExpression, (PsiMethod)from)) {
+      // ignore super method calls
+      return true;
+    }
     final PsiPrefixExpression prefixExpression = ObjectUtils.tryCast(methodCallExpression.getParent(), PsiPrefixExpression.class);
     return prefixExpression != null && prefixExpression.getOperationTokenType().equals(JavaTokenType.EXCL);
   }
@@ -202,7 +206,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
 
     @Override
     public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
-      checkMethodCall(refWhat, refFrom.getPsiElement());
+      checkMethodCall(refWhat, refFrom);
     }
   }
 }
