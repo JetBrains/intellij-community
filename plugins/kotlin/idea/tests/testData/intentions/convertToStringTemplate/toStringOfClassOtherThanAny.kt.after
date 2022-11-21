@@ -1,0 +1,11 @@
+class B {
+    override fun toString() = "B"
+}
+
+class C: B {
+    fun toString(str: String) = "C: $str"
+}
+
+fun test(a: Double, b: B, c: C): String {
+    return "a:$a, b:${b}_ c:${c.toString("")}"
+}

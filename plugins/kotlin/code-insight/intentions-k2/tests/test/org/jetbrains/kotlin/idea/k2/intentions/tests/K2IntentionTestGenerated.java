@@ -1754,6 +1754,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/stringPlusStringLiteral.kt");
         }
 
+        @TestMetadata("superMemberToString.kt")
+        public void testSuperMemberToString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/superMemberToString.kt");
+        }
+
         @TestMetadata("superToString.kt")
         public void testSuperToString() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/superToString.kt");
@@ -1782,6 +1787,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("toString.kt")
         public void testToString() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/toString.kt");
+        }
+
+        @TestMetadata("toStringOfClassOtherThanAny.kt")
+        public void testToStringOfClassOtherThanAny() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/toStringOfClassOtherThanAny.kt");
         }
 
         @TestMetadata("tricky.kt")
