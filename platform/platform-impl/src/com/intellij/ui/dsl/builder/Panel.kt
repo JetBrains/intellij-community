@@ -134,7 +134,7 @@ interface Panel : CellBase<Panel> {
 
   /**
    * Adds collapsible panel with independent grid, title and some vertical space above (except the group in the parents first row)
-   * and below (except the group in the parents last row) the group.
+   * and below (except the group in the parents last row) the group. The group title is focusable via the Tab key and supports mnemonics.
    * To change gaps around the group use [Row.topGap] and [Row.bottomGap] for the method result
    *
    * @param indent true if left indent is needed
