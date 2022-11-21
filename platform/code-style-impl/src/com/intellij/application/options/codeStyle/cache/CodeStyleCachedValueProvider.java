@@ -39,7 +39,12 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   private final @NotNull FileViewProvider myFile;
   private final @NotNull AsyncComputation       myComputation;
   private final @NotNull Project myProject;
-  private final @NotNull Lock                   myComputationLock = new ReentrantLock();
+  private final @NotNull Lock                   myComputationLock = new ReentrantLock() {
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ReentrantLock;
+    }
+  };
 
   private final static ExecutorService ourExecutorService =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("CodeStyleCachedValueProvider", MAX_COMPUTATION_THREADS);
