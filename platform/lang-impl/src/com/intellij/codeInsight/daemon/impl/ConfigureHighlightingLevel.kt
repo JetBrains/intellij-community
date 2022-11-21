@@ -110,12 +110,13 @@ object NotebookInjectedCodeUtility {
   @JvmField
   val NOTEBOOK_FILE_ANALYSIS_DONE_KEY = Key.create<Boolean>("notebook.file.analysis.done")
 
-  private const val notebookInjectedFileExtension: String = "jupyter-kts"
+  private const val notebookInjectedFileExtension: String = "jupyter.kts"
   private const val notebookInjectedMetaFileExtension: String = "juktm"
   private const val notebookDocumentFileExtension: String = "ipynb"
+  private const val notebookInjectedFileSuffix = ".$notebookInjectedFileExtension"
 
   fun isSuitableKtNotebookFragment(psiFile: PsiFile?): Boolean =
-    psiFile?.name?.endsWith(notebookInjectedFileExtension) == true
+    psiFile?.name?.endsWith(notebookInjectedFileSuffix) == true
 
   fun isLooksLikeNotebookDocument(document: Document): Boolean =
     FileDocumentManager.getInstance().getFile(document)?.extension == notebookDocumentFileExtension
