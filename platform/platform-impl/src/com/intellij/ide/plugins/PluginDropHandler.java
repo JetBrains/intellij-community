@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.CustomFileDropHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,14 +39,17 @@ public final class PluginDropHandler extends CustomFileDropHandler {
            ContainerUtil.process(files, file -> installFromDisk(file, project, parent));
   }
 
+  @RequiresEdt
   private static boolean installFromDisk(@NotNull File file,
                                          @Nullable Project project,
                                          @Nullable JComponent parentComponent) {
     return PluginInstaller.installFromDisk(new InstalledPluginsTableModel(project),
                                            PluginEnabler.HEADLESS,
                                            file,
+                                           project,
                                            parentComponent,
-                                           callbackData -> PluginInstaller.installPluginFromCallbackData(callbackData, project,
-                                                                                                         parentComponent));
+                                           callbackData -> {
+                                             PluginInstaller.installPluginFromCallbackData(callbackData, project, parentComponent);
+                                           });
   }
 }

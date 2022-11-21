@@ -225,14 +225,19 @@ public final class PluginInstaller {
     PluginStateManager.addStateListener(listener);
   }
 
+  @RequiresEdt
   static boolean installFromDisk(@NotNull InstalledPluginsTableModel model,
                                  @NotNull PluginEnabler pluginEnabler,
                                  @NotNull File file,
+                                 @Nullable Project project,
                                  @Nullable JComponent parent,
                                  @NotNull Consumer<? super PluginInstallCallbackData> callback) {
     try {
       Path path = file.toPath();
-      IdeaPluginDescriptorImpl pluginDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(path, null);
+      IdeaPluginDescriptorImpl pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        return PluginDescriptorLoader.loadDescriptorFromArtifact(path, null);
+      }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
+
       if (pluginDescriptor == null) {
         MessagesEx.showErrorDialog(parent,
                                    IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getName()),

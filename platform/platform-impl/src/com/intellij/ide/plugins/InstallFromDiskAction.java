@@ -8,10 +8,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -95,15 +93,12 @@ class InstallFromDiskAction extends DumbAwareAction {
                            });
   }
 
+  @RequiresEdt
   private void installFromDisk(@NotNull File file,
                                @Nullable Project project) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      PluginInstaller.installFromDisk(myTableModel, myPluginEnabler, file, myParentComponent, callbackData -> {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          onPluginInstalledFromDisk(callbackData, project);
-        });
-      });
-    }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project, myParentComponent);
+    PluginInstaller.installFromDisk(myTableModel, myPluginEnabler, file, project, myParentComponent, callbackData -> {
+      onPluginInstalledFromDisk(callbackData, project);
+    });
   }
 
   @RequiresEdt
