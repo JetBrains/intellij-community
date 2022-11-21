@@ -45,6 +45,7 @@ import java.util.*;
  *   <li>Listener topic class - {@link Listeners.Listener#getTopicClassName()}</li>
  * </ul>
  */
+@SuppressWarnings("UnusedReturnValue")
 public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
   private static final int INDEX_VERSION = 8;
@@ -272,7 +273,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
       }
       if (t == null) return true;
 
-      return processor.process((T)t);
+      return processor.process(t);
     });
   }
 
