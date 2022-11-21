@@ -573,6 +573,46 @@
       "deprecated": true
     },
     {
+      "key": "GotItTooltip.insets",
+      "description": "GotIt tooltip content insets",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.textInset",
+      "description": "GotIt tooltip inset between header and description, and description and link",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.buttonTopInset",
+      "description": "GotIt tooltip inset between description and button",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.buttonBottomInset",
+      "description": "GotIt tooltip additional bottom inset if there is a button",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.iconInset",
+      "description": "GotIt tooltip inset between step number/icon and header/description",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.imageTopInset",
+      "description": "GotIt tooltip additional top inset if there is an image",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.imageBottomInset",
+      "description": "GotIt tooltip inset between image and header/description",
+      "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.arc",
+      "description": "GotIt tooltip radius of the rounded corners",
+      "since": "2023.1"
+    },
+    {
       "key": "Group.disabledSeparatorColor"
     },
     {

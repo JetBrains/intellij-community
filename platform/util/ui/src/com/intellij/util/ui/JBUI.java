@@ -1210,6 +1210,20 @@ public final class JBUI {
     }
 
     public static final class GotItTooltip {
+      public static final JBValue TEXT_INSET = new JBValue.UIInteger("GotItTooltip.textInset", 4);
+      public static final JBValue BUTTON_TOP_INSET = new JBValue.UIInteger("GotItTooltip.buttonTopInset", 12);
+      public static final JBValue BUTTON_BOTTOM_INSET = new JBValue.UIInteger("GotItTooltip.buttonBottomInset", 6);
+      public static final JBValue ICON_INSET = new JBValue.UIInteger("GotItTooltip.iconInset", 6);
+      public static final JBValue IMAGE_TOP_INSET = new JBValue.UIInteger("GotItTooltip.imageTopInset", 4);
+      public static final JBValue IMAGE_BOTTOM_INSET = new JBValue.UIInteger("GotItTooltip.imageBottomInset", 12);
+      public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("GotItTooltip.arc", 8);
+
+      // Balloon itself has insets of 5 for top and bottom and 8 for left and right.
+      // So totally there are 12 for top and bottom and 16 for left and right
+      public static @NotNull Insets insets() {
+        return JBUI.insets("GotItTooltip.insets", JBUI.insets(7, 8));
+      }
+
       public static @NotNull Color foreground(boolean useContrastColors) {
         if (useContrastColors) {
           return JBColor.namedColor("Tooltip.Learning.foreground", 0xF5F5F5);

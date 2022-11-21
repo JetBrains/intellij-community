@@ -205,7 +205,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
           val g2d = g.create() as Graphics2D
           try {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-            val arcSize = JBUIScale.scale(16).toFloat()
+            val arcSize = JBUIScale.scale(8).toFloat()
             val rect = RoundRectangle2D.Float(x.toFloat(), y.toFloat(), iconWidth.toFloat(), iconHeight.toFloat(), arcSize, arcSize)
             g2d.color = Color.lightGray
             g2d.draw(rect)

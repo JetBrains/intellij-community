@@ -26,6 +26,7 @@ import java.awt.*
 import java.awt.event.ActionListener
 import java.io.StringReader
 import javax.swing.*
+import javax.swing.border.EmptyBorder
 import javax.swing.text.*
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
@@ -60,7 +61,7 @@ class GotItComponentBuilder(@Nls private val text: String) {
    * Add optional image above the header or description
    */
   fun withImage(image: Icon): GotItComponentBuilder {
-    val arcRatio = 16.0 / min(image.iconWidth, image.iconHeight)
+    val arcRatio = JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get().toDouble() / min(image.iconWidth, image.iconHeight)
     val rounded = RoundedIcon(image, arcRatio, false)
     this.image = adjustIcon(rounded)
     return this
@@ -197,6 +198,7 @@ class GotItComponentBuilder(@Nls private val text: String) {
       .setCornerToPointerDistance(ARROW_SHIFT)
       .setFillColor(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))
       .setPointerSize(JBUI.size(16, 8))
+      .setCornerRadius(JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get())
       .additionalSettings()
       .createBalloon().also { it.setAnimationEnabled(false) }
 
@@ -220,10 +222,16 @@ class GotItComponentBuilder(@Nls private val text: String) {
   private fun createContent(buttonSupplier: (JButton) -> Unit): JComponent {
     val panel = JPanel(GridBagLayout())
     val gc = GridBag()
-    val left = if (icon != null || stepNumber != null) 8 else 0
+    val left = if (icon != null || stepNumber != null) JBUI.CurrentTheme.GotItTooltip.ICON_INSET.get() else 0
     val column = if (icon != null || stepNumber != null) 1 else 0
 
-    image?.let { panel.add(JLabel(it), gc.nextLine().next().anchor(GridBagConstraints.LINE_START).coverLine().insetBottom(12)) }
+    image?.let {
+      panel.add(JLabel(it),
+                gc.nextLine().next()
+                  .anchor(GridBagConstraints.LINE_START)
+                  .coverLine()
+                  .insets(JBUI.CurrentTheme.GotItTooltip.IMAGE_TOP_INSET.get(), 0, JBUI.CurrentTheme.GotItTooltip.IMAGE_BOTTOM_INSET.get(), 0))
+    }
 
     icon?.let { panel.add(JLabel(it), gc.nextLine().next().anchor(GridBagConstraints.BASELINE)) }
     stepNumber?.let { step ->
@@ -256,10 +264,12 @@ class GotItComponentBuilder(@Nls private val text: String) {
 
     if (icon == null && stepNumber == null || header.isNotEmpty()) gc.nextLine()
     panel.add(LimitedWidthLabel(builder, maxWidth),
-              gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insets(if (header.isNotEmpty()) 5 else 0, left, 0, 0))
+              gc.setColumn(column).anchor(GridBagConstraints.LINE_START)
+                .insets(if (header.isNotEmpty()) JBUI.CurrentTheme.GotItTooltip.TEXT_INSET.get() else 0, left, 0, 0))
 
     link?.let {
-      panel.add(it, gc.nextLine().setColumn(column).anchor(GridBagConstraints.LINE_START).insets(5, left, 0, 0))
+      panel.add(it, gc.nextLine().setColumn(column).anchor(GridBagConstraints.LINE_START)
+        .insets(JBUI.CurrentTheme.GotItTooltip.TEXT_INSET.get(), left, 0, 0))
     }
 
     if (showButton) {
@@ -282,7 +292,7 @@ class GotItComponentBuilder(@Nls private val text: String) {
       }
       buttonSupplier(button)
 
-      if (showCloseShortcut) {
+      val buttonComponent: JComponent = if (showCloseShortcut) {
         val buttonPanel = JPanel().apply { isOpaque = false }
         buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
         buttonPanel.add(button)
@@ -292,28 +302,30 @@ class GotItComponentBuilder(@Nls private val text: String) {
           foreground = JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors)
         }
         buttonPanel.add(closeShortcut)
-
-        panel.add(buttonPanel, gc.nextLine().setColumn(column).insets(11, left, 0, 0).anchor(GridBagConstraints.LINE_START))
+        buttonPanel
       }
-      else {
-        panel.add(button, gc.nextLine().setColumn(column).insets(11, left, 0, 0).anchor(GridBagConstraints.LINE_START))
-      }
+      else button
+      panel.add(buttonComponent,
+                gc.nextLine().setColumn(column)
+                  .insets(JBUI.CurrentTheme.GotItTooltip.BUTTON_TOP_INSET.get(), left,
+                          JBUI.CurrentTheme.GotItTooltip.BUTTON_BOTTOM_INSET.get(), 0)
+                  .anchor(GridBagConstraints.LINE_START))
     }
 
     panel.background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
-    panel.border = PANEL_MARGINS
+    panel.border = EmptyBorder(JBUI.CurrentTheme.GotItTooltip.insets())
 
     return panel
   }
 
   companion object {
     @JvmField
-    val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + BalloonImpl.ARC.get()
+    val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue(
+      "ide.balloon.shadow.size") + JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
 
     internal const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
 
     private val MAX_WIDTH = JBUIScale.scale(280)
-    private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
 
     internal fun findIcon(src: String): Icon? {
       return IconLoader.findIcon(src, GotItTooltip::class.java)?.let { icon ->
