@@ -94,7 +94,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     if (TEST_SCRIPT_FILE_PATH != null && !ourScriptStarted) {
       ourScriptStarted = true;
       if (System.getProperty("ide.performance.screenshot") != null) {
-        registerScreenshotTaking(project, System.getProperty("ide.performance.screenshot"));
+        registerScreenshotTaking(System.getProperty("ide.performance.screenshot"));
       }
       LOG.info("Start Execution");
       PerformanceTestSpan.startSpan();
@@ -126,10 +126,10 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     }
   }
 
-  private static void registerScreenshotTaking(@NotNull Project project, String fileName) {
+  private static void registerScreenshotTaking(String fileName) {
     screenshotExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin screenshoter");
     screenshotExecutor.scheduleWithFixedDelay(()-> {
-      TakeScreenshotCommand.takeScreenshotOfFrame(project, fileName);
+      TakeScreenshotCommand.takeScreenshotOfFrame(fileName);
     }, 0, 1, TimeUnit.MINUTES);
   }
 
@@ -399,7 +399,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   public static void runScript(Project project, String script) {
     PlaybackRunner playback = new PlaybackRunnerExtended(script, new CommandLogger(), project);
     ActionCallback scriptCallback = playback.run();
-    runScript(scriptCallback, project);
+    runScript(scriptCallback);
   }
 
   private static void runScriptFromFile(Project project) {
@@ -407,10 +407,10 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     playback.setScriptDir(getTestFile().getParentFile());
     ActionCallback scriptCallback = playback.run();
     CommandsRunner.setStartActionCallback(scriptCallback);
-    runScript(scriptCallback, project);
+    runScript(scriptCallback);
   }
 
-  private static void runScript(ActionCallback scriptCallback, Project project) {
+  private static void runScript(ActionCallback scriptCallback) {
     scriptCallback
       .doWhenDone(() -> {
         LOG.info("Execution of the script has been finished successfully");
@@ -432,7 +432,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
         LOG.info(threadDump);
 
         if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-          TakeScreenshotCommand.takeScreenshotOfFrame(project, System.getProperty("ide.performance.screenshot.before.kill"));
+          TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.before.kill"));
         }
 
         if (MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR) {

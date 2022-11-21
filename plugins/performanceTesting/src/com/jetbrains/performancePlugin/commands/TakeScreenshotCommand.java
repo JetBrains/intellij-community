@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.commands;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.wm.IdeFrame;
@@ -36,7 +37,7 @@ public class TakeScreenshotCommand extends AbstractCommand {
     final AsyncPromise<Object> result = new AsyncPromise<>();
     String fullPathToFile = extractCommandArgument(PREFIX);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      takeScreenshotOfFrame(context.getProject(), fullPathToFile);
+      takeScreenshotOfFrame(fullPathToFile);
     });
 
     result.setResult(null);
@@ -70,36 +71,40 @@ public class TakeScreenshotCommand extends AbstractCommand {
     }
   }
 
-  public static void takeScreenshotOfFrame(@NotNull Project project, String fileName) {
-    CompletableFuture<Boolean> result = new CompletableFuture<>();
-    ApplicationManager.getApplication().invokeLater(()->{
-      IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-      if(frame != null) {
-        JComponent component = frame.getComponent();
-        BufferedImage img = ImageUtil.createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        component.printAll(img.createGraphics());
-        ApplicationManager.getApplication().executeOnPooledThread(() ->{
-          try {
-            result.complete(ImageIO.write(img, "png", new File(fileName)));
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-        });
-      } else {
-        LOG.info("Frame was empty when takeScreenshot was called");
+  public static void takeScreenshotOfFrame(String fileName) {
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for(Project project: projects){
+      CompletableFuture<Boolean> result = new CompletableFuture<>();
+      ApplicationManager.getApplication().invokeLater(()->{
+        IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+        if(frame != null) {
+          JComponent component = frame.getComponent();
+          BufferedImage img = ImageUtil.createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+          component.printAll(img.createGraphics());
+          String prefix = projects.length == 1 ? "" : project.getName() + "_";
+          ApplicationManager.getApplication().executeOnPooledThread(() ->{
+            try {
+              result.complete(ImageIO.write(img, "png", new File(prefix+fileName)));
+            }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+          });
+        } else {
+          LOG.info("Frame was empty when takeScreenshot was called");
+        }
+      });
+      try {
+        Boolean fileCreated = result.get(30, TimeUnit.SECONDS);
+        if(fileCreated){
+          LOG.info("Screenshot is saved at: " + fileName);
+        } else {
+          LOG.info("No writers are found for screenshot");
+        }
       }
-    });
-    try {
-      Boolean fileCreated = result.get(30, TimeUnit.SECONDS);
-      if(fileCreated){
-        LOG.info("Screenshot is saved at: " + fileName);
-      } else {
-        LOG.info("No writers are found for screenshot");
+      catch (InterruptedException | ExecutionException | TimeoutException e) {
+        LOG.info(e);
       }
-    }
-    catch (InterruptedException | ExecutionException | TimeoutException e) {
-      LOG.info(e);
     }
   }
 }
