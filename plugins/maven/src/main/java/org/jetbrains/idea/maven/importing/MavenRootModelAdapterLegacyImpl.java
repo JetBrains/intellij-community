@@ -449,7 +449,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   private Map<String, Library> getOrCreateLibrariesTable() {
     Map<String, Library> table = myLibrariesTable;
-    if (myLibrariesTable == null) {
+    if (table == null) {
       Map<String, Library> temp = new HashMap<>();
       myRootModel.orderEntries().forEachLibrary(library -> {
         temp.put(library.getName(), library);
