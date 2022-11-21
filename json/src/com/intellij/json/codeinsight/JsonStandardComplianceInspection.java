@@ -56,9 +56,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     return new StandardJsonValidatingElementVisitor(holder);
   }
 
-  @Nullable
-  private static PsiElement findTrailingComma(@NotNull JsonContainer container, @NotNull IElementType ending) {
-    final PsiElement lastChild = container.getLastChild();
+  protected static @Nullable PsiElement findTrailingComma(@NotNull PsiElement lastChild, @NotNull IElementType ending) {
     if (lastChild.getNode().getElementType() != ending) {
       return null;
     }
@@ -69,7 +67,6 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     return null;
   }
 
-
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
@@ -78,6 +75,28 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.trailing.comma"), "myWarnAboutTrailingCommas");
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.nan.infinity"), "myWarnAboutNanInfinity");
     return optionsPanel;
+  }
+
+  protected static @NotNull String escapeSingleQuotedStringContent(@NotNull String content) {
+    final StringBuilder result = new StringBuilder();
+    boolean nextCharEscaped = false;
+    for (int i = 0; i < content.length(); i++) {
+      final char c = content.charAt(i);
+      if ((nextCharEscaped && c != '\'') || (!nextCharEscaped && c == '"')) {
+        result.append('\\');
+      }
+      if (c != '\\' || nextCharEscaped) {
+        result.append(c);
+        nextCharEscaped = false;
+      }
+      else {
+        nextCharEscaped = true;
+      }
+    }
+    if (nextCharEscaped) {
+      result.append('\\');
+    }
+    return result.toString();
   }
 
   private static class AddDoubleQuotesFix implements LocalQuickFix {
@@ -103,29 +122,6 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         Logger.getInstance(JsonStandardComplianceInspection.class)
           .error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
       }
-    }
-
-    @NotNull
-    private static String escapeSingleQuotedStringContent(@NotNull String content) {
-      final StringBuilder result = new StringBuilder();
-      boolean nextCharEscaped = false;
-      for (int i = 0; i < content.length(); i++) {
-        final char c = content.charAt(i);
-        if ((nextCharEscaped && c != '\'') || (!nextCharEscaped && c == '"')) {
-          result.append('\\');
-        }
-        if (c != '\\' || nextCharEscaped) {
-          result.append(c);
-          nextCharEscaped = false;
-        }
-        else {
-          nextCharEscaped = true;
-        }
-      }
-      if (nextCharEscaped) {
-        result.append('\\');
-      }
-      return result.toString();
     }
   }
 
@@ -201,7 +197,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void visitArray(@NotNull JsonArray array) {
       if (myWarnAboutTrailingCommas && !allowTrailingCommas() &&
           JsonStandardComplianceProvider.shouldWarnAboutTrailingComma(array)) {
-        final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
+        final PsiElement trailingComma = findTrailingComma(array.getLastChild(), JsonElementTypes.R_BRACKET);
         if (trailingComma != null) {
           myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
         }
@@ -213,7 +209,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void visitObject(@NotNull JsonObject object) {
       if (myWarnAboutTrailingCommas && !allowTrailingCommas() &&
           JsonStandardComplianceProvider.shouldWarnAboutTrailingComma(object)) {
-        final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
+        final PsiElement trailingComma = findTrailingComma(object.getLastChild(), JsonElementTypes.R_CURLY);
         if (trailingComma != null) {
           myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
         }
