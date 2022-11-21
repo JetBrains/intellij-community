@@ -421,10 +421,7 @@ public class SwitchBlockHighlightingModel {
   }
 
   private static @NotNull Set<PsiClass> findMissedClasses(@NotNull PsiType selectorType, Map<PsiClass, PsiPattern> patternClasses) {
-    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
-    if (selectorClass instanceof PsiTypeParameter) {
-      selectorClass = selectorClass.getSuperClass();
-    }
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(selectorType));
     if (selectorClass == null) return Collections.emptySet();
     Queue<PsiClass> nonVisited = new ArrayDeque<>();
     nonVisited.add(selectorClass);
@@ -894,15 +891,7 @@ public class SwitchBlockHighlightingModel {
         }
         if (defaultElement != null || elementCoversType != null) return;
       }
-      PsiType selectorType = mySelectorType;
-      if (selectorType instanceof PsiCapturedWildcardType) {
-        selectorType = ((PsiCapturedWildcardType)selectorType).getUpperBound();
-      }
-      else if (selectorType instanceof PsiWildcardType) {
-        selectorType = ((PsiWildcardType)selectorType).getExtendsBound();
-      }
-
-      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(mySelectorType));
       if (selectorClass != null && getSwitchSelectorKind() == SelectorKind.ENUM) {
         List<String> enumElements = new SmartList<>();
         for (PsiCaseLabelElement labelElement : elements) {
@@ -918,8 +907,8 @@ public class SwitchBlockHighlightingModel {
         }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
-      else if (isSealed(selectorClass)) {
-        HighlightInfo.Builder info = checkSealedClassCompleteness(selectorType, elements);
+      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED)) {
+        HighlightInfo.Builder info = checkSealedClassCompleteness(mySelectorType, elements);
         if (info != null) {
           results.add(info.create());
         }
@@ -935,11 +924,6 @@ public class SwitchBlockHighlightingModel {
       else {
         results.add(createCompletenessInfoForSwitch(!elements.isEmpty()).create());
       }
-    }
-
-    private static boolean isSealed(@Nullable PsiClass psiClass){
-      PsiClass effectiveClass = psiClass instanceof PsiTypeParameter ? psiClass.getSuperClass() : psiClass;
-      return effectiveClass != null && effectiveClass.hasModifierProperty(SEALED);
     }
 
     private static void fillElementsToCheckDominance(@NotNull List<? super PsiCaseLabelElement> elements,
