@@ -117,8 +117,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     final Collection<DataNode<?>> libDeps = dataNodes.get(ProjectKeys.LIBRARY_DEPENDENCY);
 
     if (!moduleDeps.isEmpty() || !libDeps.isEmpty()) {
-      final ExternalSystemNode<?> depNode = new MyDependenciesNode(externalProjectsView);
-      boolean addDepNode = false;
+      //noinspection rawtypes
+      List<ExternalSystemNode<? extends DependencyData>> depNodeChildren = new ArrayList<>();
 
       for (DataNode<?> dataNode : moduleDeps) {
         if (!(dataNode.getData() instanceof ModuleDependencyData)) continue;
@@ -129,8 +129,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
           result.add(moduleDependencyDataExternalSystemNode);
         }
         else {
-          depNode.add(moduleDependencyDataExternalSystemNode);
-          addDepNode = true;
+          depNodeChildren.add(moduleDependencyDataExternalSystemNode);
         }
       }
 
@@ -148,15 +147,16 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
           libraryDependencyDataExternalSystemNode.setErrorLevel(ExternalProjectsStructure.ErrorLevel.NONE);
         }
         if (dataNode.getParent() != null && dataNode.getParent().getData() instanceof ModuleData) {
-          depNode.add(libraryDependencyDataExternalSystemNode);
-          addDepNode = true;
+          depNodeChildren.add(libraryDependencyDataExternalSystemNode);
         }
         else {
           result.add(libraryDependencyDataExternalSystemNode);
         }
       }
 
-      if (addDepNode) {
+      if (!depNodeChildren.isEmpty()) {
+        final ExternalSystemNode<?> depNode = new MyDependenciesNode(externalProjectsView);
+        depNode.addAll(depNodeChildren);
         result.add(depNode);
       }
     }
