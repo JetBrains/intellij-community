@@ -47,12 +47,16 @@ object DefaultNotebookEditorAppearance: NotebookEditorAppearance, NotebookEditor
   val CELL_UNDER_CARET_EDITOR_MODE_STRIPE_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CARET_EDITOR_MODE_STRIPE_COLOR")
   private val CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR")
 
+  // see org.jetbrains.plugins.notebooks.visualization.CaretBasedCellSelectionModelKt.getSelectionLines
   private fun isCellSelected(editor: Editor, lines: IntRange): Boolean {
     val cellStartOffset = editor.document.getLineStartOffset(lines.first)
     val cellEndOffset = editor.document.getLineEndOffset(lines.last)
     return editor.caretModel.allCarets.any { caret ->
-      cellStartOffset <= caret.selectionStart && caret.selectionStart <= cellEndOffset  ||
-      cellStartOffset <= caret.selectionEnd && caret.selectionEnd <= cellEndOffset
+      when {
+        caret.offset < caret.selectionStart || caret.offset > caret.selectionEnd -> caret.logicalPosition.line in lines
+        cellStartOffset == caret.selectionEnd && caret.offset < cellStartOffset -> false
+        else -> cellEndOffset >= caret.selectionStart && caret.selectionEnd >= cellStartOffset
+      }
     }
   }
   /**
