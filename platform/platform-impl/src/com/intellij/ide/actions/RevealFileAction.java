@@ -237,6 +237,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     if (LOG.isDebugEnabled()) LOG.debug("shell open: dir=" + dir + " toSelect=" + toSelect);
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
+      Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
+
       Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
       Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
       WinDef.UINT cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
@@ -256,12 +258,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private interface Shell32Ex extends StdCallLibrary {
-    Shell32Ex INSTANCE = init();
-
-    private static Shell32Ex init() {
-      Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-      return Native.load("shell32", Shell32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
-    }
+    Shell32Ex INSTANCE = Native.load("shell32", Shell32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
 
     Pointer ILCreateFromPath(String path);
     void ILFree(Pointer pIdl);
