@@ -1140,6 +1140,11 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val stdlibJvmLibInfo = stdlibJvm.toLibraryInfo()
 
         jvmNoSdk.addDependency(stdlibJvm)
+
+        val fakeLib = projectLibraryWithFakeRoot("fakeLib")
+        jvmNoSdk.addDependency(fakeLib)
+        val fakeLibLibraryInfo = fakeLib.toLibraryInfo()
+
         jvmWithSdk.addDependency(stdlibJvm)
 
         jvmWithSdk.addDependency(FullJdk, testRootDisposable)
@@ -1162,6 +1167,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             jvmNoSdk.production,
             common.production,
             stdlibJvmLibInfo,
+            fakeLibLibraryInfo
         )
 
         jvmWithSdk.production.assertDependenciesEqual(
@@ -1184,6 +1190,12 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         )
 
         assertDependencies(
+            lib = fakeLibLibraryInfo,
+            expectedSdkInfos = listOf(),
+            fakeLibLibraryInfo, stdlibCommonLibInfo, stdlibJvmLibInfo
+        )
+
+        assertDependencies(
             lib = stdlibJvmLibInfo,
             expectedSdkInfos = listOf(fullSdkInfo),
             stdlibCommonLibInfo, stdlibJvmLibInfo
@@ -1194,34 +1206,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             expectedSdkInfos = listOf(fullSdkInfo),
             stdlibCommonLibInfo, stdlibJvmLibInfo
         )
-
-        //for (libraryInfo in listOf(stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m7LibInfo)) {
-        //    assertDependencies(
-        //        lib = libraryInfo,
-        //        stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
-        //    )
-        //}
-        //
-        //// drop module in the middle of the loop
-        //ModuleRootModificationUtil.updateModel(native) { model: ModifiableRootModel ->
-        //    val entry = model.findModuleOrderEntry(m5) ?: error("unable to find m5")
-        //    model.removeOrderEntry(entry)
-        //}
-        //
-        //native.production.assertDependenciesEqual(
-        //    native.production,
-        //    // m5 is dropped
-        //    // m5.production,
-        //    m4LibInfo,
-        //)
-        //
-        //assertDependencies(lib = stdlibJsInfo, stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo)
-        //assertDependencies(lib = stdlibJvmLibInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo)
-        //assertDependencies(lib = m3LibInfo, m3LibInfo, m4LibInfo)
-        //assertDependencies(lib = m4LibInfo, m4LibInfo)
-        //
-        //assertDependencies(lib = m6LibInfo, stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo, m6LibInfo, m7LibInfo)
-        //assertDependencies(lib = m7LibInfo, stdlibJsInfo, stdlibJvmLibInfo, m3LibInfo, m4LibInfo, m7LibInfo)
     }
 
 
