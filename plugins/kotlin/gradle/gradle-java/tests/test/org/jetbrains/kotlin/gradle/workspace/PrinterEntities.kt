@@ -2,19 +2,10 @@
 
 package org.jetbrains.kotlin.gradle.workspace
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.*
 
 interface PrinterEntity {
     val presentableName: String
-}
-
-interface ContributableEntity : PrinterEntity
-
-interface ModulePrinterEntity : ContributableEntity
-
-class ModulePrinterEntityImpl(val module: Module) : ModulePrinterEntity {
-    override val presentableName: String get() = module.name
 }
 
 enum class OrderEntryKind {
@@ -24,6 +15,7 @@ enum class OrderEntryKind {
 interface OrderEntryPrinterEntity : PrinterEntity {
     val kind: OrderEntryKind?
 }
+
 class OrderEntryPrinterEntityImpl(private val orderEntry: OrderEntry): OrderEntryPrinterEntity {
     override val presentableName: String get() {
         val exportableOrderEntryPostfix = if (orderEntry is ExportableOrderEntry) {
@@ -42,5 +34,4 @@ class OrderEntryPrinterEntityImpl(private val orderEntry: OrderEntry): OrderEntr
     }
 }
 
-internal fun Module.toPrinterEntity(): ModulePrinterEntity = ModulePrinterEntityImpl(this)
 internal fun OrderEntry.toPrinterEntity(): OrderEntryPrinterEntity = OrderEntryPrinterEntityImpl(this)
