@@ -1,6 +1,6 @@
 <idea-plugin package="com.intellij.grazie">
   <id>tanvd.grazi</id>
-  <name>Grazie</name>
+  <name>Grazie Lite</name>
   <vendor>JetBrains</vendor>
 
   <incompatible-with>com.intellij.cwm.guest</incompatible-with>
