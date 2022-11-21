@@ -1064,6 +1064,9 @@
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.AboutTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.SystemTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.DisplayTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.WindowStateProjectServiceTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.WindowStateApplicationServiceTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.DimensionServiceTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.PluginTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.ProjectTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.GCTroubleInfoCollector"/>
