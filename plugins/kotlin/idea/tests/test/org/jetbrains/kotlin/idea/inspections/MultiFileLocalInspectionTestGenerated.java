@@ -132,4 +132,14 @@ public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLoca
     public void testUnusedSymbol_internalConstructorUsedInJava_InternalConstructorUsedInJava() throws Exception {
         runTest("testData/multiFileLocalInspections/unusedSymbol/internalConstructorUsedInJava/internalConstructorUsedInJava.test");
     }
+
+    @TestMetadata("usePropertyAccessSyntax/excludedCustomAccessor/excludedCustomAccessor.test")
+    public void testUsePropertyAccessSyntax_excludedCustomAccessor_ExcludedCustomAccessor() throws Exception {
+        runTest("testData/multiFileLocalInspections/usePropertyAccessSyntax/excludedCustomAccessor/excludedCustomAccessor.test");
+    }
+
+    @TestMetadata("usePropertyAccessSyntax/notExcludedCustomAccessor/notExcludedCustomAccessor.test")
+    public void testUsePropertyAccessSyntax_notExcludedCustomAccessor_NotExcludedCustomAccessor() throws Exception {
+        runTest("testData/multiFileLocalInspections/usePropertyAccessSyntax/notExcludedCustomAccessor/notExcludedCustomAccessor.test");
+    }
 }

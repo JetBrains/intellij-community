@@ -69,8 +69,9 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtCallExpress
 
     val fqNameList = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableList()
 
-    @Suppress("CAN_BE_PRIVATE")
-    private var fqNameStrings = NotPropertiesService.DEFAULT.toMutableList()
+    // Serialized setting
+    @Suppress("MemberVisibilityCanBePrivate")
+    var fqNameStrings = NotPropertiesService.DEFAULT.toMutableList()
 
     override fun readSettings(node: Element) {
         super.readSettings(node)
