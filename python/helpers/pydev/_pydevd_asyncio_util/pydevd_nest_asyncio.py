@@ -77,7 +77,7 @@ if IS_PY3K:
             if loop is None:
                 try:
                     loop = events.get_event_loop_policy().get_event_loop()
-                except RuntimeError:
+                except:
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     _patch_loop(loop)
