@@ -11,9 +11,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.components.ActionLink;
@@ -243,27 +245,44 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private void renderClusterDescription(@NotNull Set<@NotNull SimilarUsage> clusterUsages) {
     SimilarUsage usage = ContainerUtil.getFirstItem(clusterUsages);
     final UsageInfo usageInfo = usage.getUsageInfo();
-    renderSnippet(usageInfo, createHeaderPanel(usageInfo, clusterUsages));
+    PsiElement element = usageInfo.getElement();
+    VirtualFile file = usageInfo.getVirtualFile();
+    ProperTextRange rangeInElement = usageInfo.getRangeInElement();
+    UsageCodeSnippetComponent renderedComponent = null;
+    if (element != null && file != null && rangeInElement != null) {
+      final JPanel header = createHeaderWithLocationLink(element, file);
+      if (clusterUsages.size() > 1) {
+        header.add(createOpenSimilarUsagesActionLink(usageInfo, clusterUsages));
+      }
+      myMainPanel.add(header);
+      renderedComponent = createCodeSnippet(element, rangeInElement);
+      myMainPanel.add(renderedComponent);
+    }
+    myAlreadyRenderedSnippets.add(renderedComponent);
   }
 
 
   private void renderNonClusteredUsage(@NotNull UsageInfo2UsageAdapter usage) {
-    final UsageInfo usageInfo = usage.getUsageInfo();
-    renderSnippet(usageInfo, createHeaderWithLocationLink(usageInfo));
+    UsageInfo info = usage.getUsageInfo();
+    PsiElement element = info.getElement();
+    VirtualFile file = info.getVirtualFile();
+    ProperTextRange rangeInElement = info.getRangeInElement();
+    UsageCodeSnippetComponent snippet = null;
+    if (element != null && file != null && rangeInElement != null) {
+      myMainPanel.add(createHeaderWithLocationLink(element, file));
+      snippet = createCodeSnippet(element, rangeInElement);
+      myMainPanel.add(snippet);
+    }
+    myAlreadyRenderedSnippets.add(snippet);
   }
 
-  private void renderSnippet(@NotNull UsageInfo usageInfo, @NotNull JPanel headerPanel) {
-    PsiElement element = usageInfo.getElement();
-    UsageCodeSnippetComponent summaryRendererComponent = null;
-    if (element != null) {
-      summaryRendererComponent = new UsageCodeSnippetComponent(element, usageInfo.getRangeInElement());
+  private @NotNull UsageCodeSnippetComponent createCodeSnippet(@NotNull PsiElement element, @NotNull ProperTextRange textRange) {
+    UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(element, textRange);
       if (!Disposer.tryRegister(this, summaryRendererComponent)) {
         Disposer.dispose(summaryRendererComponent);
       }
-      myMainPanel.add(headerPanel);
-      myMainPanel.add(summaryRendererComponent);
-    }
-    myAlreadyRenderedSnippets.add(summaryRendererComponent);
+
+    return summaryRendererComponent;
   }
 
   private void addMostCommonUsagesForSelectedGroups() {
@@ -300,17 +319,8 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       .findFirst().orElse(null);
   }
 
-  private @NotNull JPanel createHeaderPanel(@NotNull UsageInfo info,
-                                            @NotNull Set<SimilarUsage> usageFilteredByGroup) {
-    final JPanel header = createHeaderWithLocationLink(info);
-    if (usageFilteredByGroup.size() > 1) {
-      header.add(createOpenSimilarUsagesActionLink(info, usageFilteredByGroup));
-    }
-    return header;
-  }
-
-  private @NotNull JPanel createHeaderWithLocationLink(@NotNull UsageInfo info) {
-    final LocationLinkComponent component = new LocationLinkComponent(this, myUsageView, info);
+  private @NotNull JPanel createHeaderWithLocationLink(@NotNull PsiElement element, @NotNull VirtualFile virtualFile) {
+    final LocationLinkComponent component = new LocationLinkComponent(this, myUsageView, element, virtualFile);
     final JPanel header = new JPanel();
     header.setBackground(UIUtil.getTextFieldBackground());
     header.setLayout(new FlowLayout(FlowLayout.LEFT));
