@@ -112,12 +112,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       compoundList = ContainerUtil.getFirstItems(compoundList, myRecentCommitCount);
       myDataPack = DataPack.build(compoundList, refs, myProviders, myStorage, false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
-      return myDataPack;
     }
     catch (VcsException e) {
       LOG.info(e);
-      return new DataPack.ErrorDataPack(e);
+      myDataPack = new DataPack.ErrorDataPack(e);
     }
+    return myDataPack;
   }
 
   @NotNull
