@@ -332,6 +332,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private final boolean myEnableButtons;
   private final Dimension myPointerSize;
   private final int myCornerToPointerDistance;
+  private int myCornerRadius = -1;
 
   public BalloonImpl(@NotNull JComponent content,
                      @NotNull Color borderColor,
@@ -989,8 +990,14 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
+  public void setCornerRadius(int radius) {
+    myCornerRadius = radius;
+  }
 
   private int getArc() {
+    if (myCornerRadius != -1) {
+      return myCornerRadius;
+    }
     return myDialogMode ? DIALOG_ARC.get() : ARC.get();
   }
 

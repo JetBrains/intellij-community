@@ -91,6 +91,8 @@ public interface BalloonBuilder {
   @NotNull
   default BalloonBuilder setCornerToPointerDistance(int distance) { return this; }
 
+  default BalloonBuilder setCornerRadius(int radius) { return this; }
+
   BalloonBuilder setHideOnCloseClick(boolean hideOnCloseClick);
 
   /**
