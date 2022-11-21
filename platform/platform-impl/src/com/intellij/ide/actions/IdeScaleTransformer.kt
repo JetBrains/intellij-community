@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.EditorFactory
@@ -57,7 +56,7 @@ object IdeScaleTransformer {
   @JvmStatic
   fun scaleToEditorFontSize(fontSize: Float, performBeforeTweaking: () -> Unit) {
     if (fontSize <= globalEditorFontSize) {
-      scale(DEFAULT_SCALE, false, performBeforeTweaking)
+      scale(DEFAULT_SCALE, performBeforeTweaking)
       return
     }
 
@@ -67,12 +66,7 @@ object IdeScaleTransformer {
     performTweaking(newParameters)
   }
 
-  private fun scale(newScaleFactor: Float, checkPresentationMode: Boolean = true, performBeforeTweaking: (() -> Unit)? = null) {
-    if (newScaleFactor < 1 || checkPresentationMode && UISettings.getInstance().presentationMode) return
-
-    val current = current
-    if (current != null && newScaleFactor >= current.scale && current.editorFont >= EditorFontsConstants.getMaxEditorFontSize()) return
-
+  private fun scale(newScaleFactor: Float, performBeforeTweaking: (() -> Unit)? = null) {
     prepareTweaking()
     performBeforeTweaking?.invoke()
     val savedOriginalConsoleFontSize = savedOriginalConsoleFontSize ?: return
