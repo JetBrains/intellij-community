@@ -618,15 +618,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   public void updateSessionData() {
     List<XExpression> watchExpressions = myRootNode.getWatchExpressions();
     XDebugSession session = getSession(getTree());
-    if (session != null) {
-      ((XDebugSessionImpl)session).setWatchExpressions(watchExpressions);
-    }
-    else {
-      XDebugSessionData data = getData(XDebugSessionData.DATA_KEY, getTree());
-      if (data != null) {
-        data.setWatchExpressions(watchExpressions);
-        getWatchesManager().setWatches(data.getConfigurationName(), watchExpressions);
-      }
+    XDebugSessionData data = (session != null) ? ((XDebugSessionImpl)session).getSessionData()
+                                               : getData(XDebugSessionData.DATA_KEY, getTree());
+    if (data != null) {
+      data.setWatchExpressions(watchExpressions);
+      getWatchesManager().setWatches(data.getConfigurationName(), watchExpressions);
     }
   }
 
