@@ -39,15 +39,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-final class PaintersHelper implements Painter.Listener {
-  private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
+final class PainterHelper implements Painter.Listener {
+  private static final Logger LOG = Logger.getInstance(PainterHelper.class);
 
   private final Set<Painter> painters = new LinkedHashSet<>();
   private final Map<Painter, Component> painterToComponent = new LinkedHashMap<>();
 
   private final JComponent rootComponent;
 
-  PaintersHelper(@NotNull JComponent component) {
+  PainterHelper(@NotNull JComponent component) {
     rootComponent = component;
   }
 
@@ -57,7 +57,9 @@ final class PaintersHelper implements Painter.Listener {
 
   public boolean needsRepaint() {
     for (Painter painter : painters) {
-      if (painter.needsRepaint()) return true;
+      if (painter.needsRepaint()) {
+        return true;
+      }
     }
     return false;
   }
@@ -87,12 +89,18 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   void runAllPainters(Graphics gg, @Nullable Offsets offsets) {
-    if (painters.isEmpty() || offsets == null) return;
+    if (painters.isEmpty() || offsets == null) {
+      return;
+    }
+
     Graphics2D g = (Graphics2D)gg;
     AffineTransform orig = g.getTransform();
     int i = 0;
     for (Painter painter : painters) {
-      if (!painter.needsRepaint()) continue;
+      if (!painter.needsRepaint()) {
+        continue;
+      }
+
       Component cur = painterToComponent.get(painter);
       // restore transform at the time of computeOffset()
       g.setTransform(offsets.transform);
@@ -103,7 +111,10 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   @Nullable Offsets computeOffsets(Graphics gg, @NotNull JComponent component) {
-    if (painters.isEmpty()) return null;
+    if (painters.isEmpty()) {
+      return null;
+    }
+
     Offsets offsets = new Offsets();
     offsets.offsets = new int[painters.size() * 2];
     // store current graphics transform
@@ -114,12 +125,16 @@ final class PaintersHelper implements Painter.Listener {
     Component prev = null;
     int i = 0;
     for (Painter painter : painters) {
-      if (!painter.needsRepaint()) continue;
+      if (!painter.needsRepaint()) {
+        continue;
+      }
 
       Component cur = painterToComponent.get(painter);
       if (cur != prev || r == null) {
         Container curParent = cur.getParent();
-        if (curParent == null) continue;
+        if (curParent == null) {
+          continue;
+        }
         r = SwingUtilities.convertRectangle(curParent, cur.getBounds(), component);
         prev = cur;
       }
@@ -130,7 +145,7 @@ final class PaintersHelper implements Painter.Listener {
     return offsets;
   }
 
-  public static class Offsets {
+  public static final class Offsets {
     AffineTransform transform;
     int[] offsets;
   }
@@ -146,7 +161,7 @@ final class PaintersHelper implements Painter.Listener {
     }
   }
 
-  static void initWallpaperPainter(@NotNull String propertyName, @NotNull PaintersHelper painters) {
+  static void initWallpaperPainter(@NotNull String propertyName, @NotNull PainterHelper painters) {
     painters.addPainter(new MyImagePainter(painters.rootComponent, propertyName), null);
   }
 
@@ -194,10 +209,10 @@ final class PaintersHelper implements Painter.Listener {
       float alpha,
       @NotNull Insets insets
     ) {
-      final var ctx = ScaleContext.create(g);
-      // Round up because we'd rather have the image clipped by 1 pixel than leave one pixel without background.
-      final int componentWidth = PaintUtil.alignIntToInt(component.getWidth(), ctx, PaintUtil.RoundingMode.CEIL, null);
-      final int componentHeight = PaintUtil.alignIntToInt(component.getHeight(), ctx, PaintUtil.RoundingMode.CEIL, null);
+      var scaleContext = ScaleContext.create(g);
+      // round up because we'd rather have the image clipped by 1 pixel than leave one pixel without background
+      int componentWidth = PaintUtil.alignIntToInt(component.getWidth(), scaleContext, PaintUtil.RoundingMode.CEIL, null);
+      int componentHeight = PaintUtil.alignIntToInt(component.getHeight(), scaleContext, PaintUtil.RoundingMode.CEIL, null);
       executePaint(g, componentWidth, componentHeight, image, fillType, anchor, alpha, insets);
     }
 
@@ -221,7 +236,9 @@ final class PaintersHelper implements Painter.Listener {
       int ch = componentHeight - i.top - i.bottom;
       int w = image.getWidth(null);
       int h = image.getHeight(null);
-      if (w <= 0 || h <= 0) return;
+      if (w <= 0 || h <= 0) {
+        return;
+      }
       // performance: pre-compute scaled image or tiles
       @Nullable
       GraphicsConfiguration cfg = g.getDeviceConfiguration();
@@ -348,23 +365,20 @@ final class PaintersHelper implements Painter.Listener {
       }
     }
 
-    @Nullable
-    private static VolatileImage validateImage(@Nullable GraphicsConfiguration cfg, @Nullable VolatileImage image) {
+    private static @Nullable VolatileImage validateImage(@Nullable GraphicsConfiguration cfg, @Nullable VolatileImage image) {
       if (image == null) return null;
       boolean lost1 = image.contentsLost();
       int validated = image.validate(cfg);
       boolean lost2 = image.contentsLost();
       if (lost1 || lost2 || validated != VolatileImage.IMAGE_OK) {
-        LOG.info(logPrefix(cfg, image) + "image flushed" +
-                 ": contentsLost=" + lost1 + "||" + lost2 + "; validate=" + validated);
+        LOG.info(logPrefix(cfg, image) + "image flushed: contentsLost=" + lost1 + "||" + lost2 + "; validate=" + validated);
         image.flush();
         return null;
       }
       return image;
     }
 
-    @NotNull
-    private static VolatileImage createImage(@Nullable GraphicsConfiguration cfg, int w, int h) {
+    private static @NotNull VolatileImage createImage(@Nullable GraphicsConfiguration cfg, int w, int h) {
       GraphicsConfiguration safe = cfg != null ? cfg : GraphicsEnvironment.getLocalGraphicsEnvironment()
         .getDefaultScreenDevice().getDefaultConfiguration();
       VolatileImage image;
@@ -385,14 +399,12 @@ final class PaintersHelper implements Painter.Listener {
       return image;
     }
 
-    @NotNull
-    private static String logPrefix(@Nullable GraphicsConfiguration cfg, @NotNull VolatileImage image) {
+    private static @NotNull String logPrefix(@Nullable GraphicsConfiguration cfg, @NotNull VolatileImage image) {
       return "(" + (cfg == null ? "null" : cfg.getClass().getSimpleName()) + ") "
              + image.getWidth() + "x" + image.getHeight() + " ";
     }
 
-    @NotNull
-    static BufferedImageFilter flipFilter(boolean flipV, boolean flipH) {
+    static @NotNull BufferedImageFilter flipFilter(boolean flipV, boolean flipH) {
       return new BufferedImageFilter(new BufferedImageOp() {
         @Override
         public BufferedImage filter(BufferedImage src, BufferedImage dest) {
@@ -587,7 +599,5 @@ final class PaintersHelper implements Painter.Listener {
         return filePath.endsWith(".svg");
       }
     }
-
   }
-
 }

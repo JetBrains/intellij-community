@@ -48,7 +48,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   }
 
   private val pane: JRootPane
-  private val namedPainters = HashMap<String, PaintersHelper>()
+  private val namedPainters = HashMap<String, PainterHelper>()
   private var isPreprocessorActive = false
   private val listenerToCursor = LinkedHashMap<Any, Cursor>()
   private var lastCursorComponent: Component? = null
@@ -514,11 +514,11 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     }
   }
 
-  internal fun getNamedPainters(name: String): PaintersHelper {
-    return namedPainters.computeIfAbsent(name) { PaintersHelper(this) }
+  internal fun getNamedPainters(name: String): PainterHelper {
+    return namedPainters.computeIfAbsent(name) { PainterHelper(this) }
   }
 
-  private val painters: PaintersHelper
+  private val painters: PainterHelper
     get() = getNamedPainters("glass")
 
   override fun addPainter(component: Component?, painter: Painter, parent: Disposable) {

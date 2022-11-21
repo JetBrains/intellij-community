@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -18,11 +19,11 @@ public abstract class AbstractPainter implements Painter {
     return myNeedsRepaint;
   }
 
-  public void setNeedsRepaint(final boolean needsRepaint) {
+  public void setNeedsRepaint(boolean needsRepaint) {
     setNeedsRepaint(needsRepaint, null);
   }
 
-  public void setNeedsRepaint(final boolean needsRepaint, @Nullable JComponent dirtyComponent) {
+  public void setNeedsRepaint(boolean needsRepaint, @Nullable JComponent dirtyComponent) {
     myNeedsRepaint = needsRepaint;
     if (myNeedsRepaint) {
       fireNeedsRepaint(dirtyComponent);
@@ -30,12 +31,12 @@ public abstract class AbstractPainter implements Painter {
   }
 
   @Override
-  public void addListener(final Listener listener) {
+  public void addListener(@NotNull Listener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public void removeListener(final Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
     myListeners.remove(listener);
   }
 
