@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -65,17 +66,54 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final SeverityRegistrar mySeverityRegistrar;
   private final Object2IntMap<HighlightSeverity> errorCount = new Object2IntOpenHashMap<>();
   private final @NotNull UIController myUIController;
+  private final boolean inLibrary; // true if getPsiFile() is in library sources
   private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
+  private final Map<Language, FileHighlightingSetting> myFileHighlightingSettings; // each root language -> its highlighting level
+  private final long myHighlightingSettingsModificationCount;
 
   public TrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
+    this(project, document, null);
+  }
+  protected TrafficLightRenderer(@NotNull Project project, @NotNull Editor editor) {
+    this(project, editor.getDocument(), editor);
+  }
+  private TrafficLightRenderer(@NotNull Project project, @NotNull Document document, @Nullable Editor editor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread(); // to be able to find PsiFile without "slow op in EDT" exceptions
     myProject = project;
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     myDocument = document;
     mySeverityRegistrar = SeverityRegistrar.getSeverityRegistrar(myProject);
 
-    init(project, document);
-    myUIController = createUIController();
+    init(project, myDocument);
+    myUIController = editor == null ? createUIController() : createUIController(editor);
+    myFileHighlightingSettings = ReadAction.compute(() -> {
+      PsiFile psiFile = getPsiFile();
+      if (psiFile == null) {
+        return Collections.emptyMap();
+      }
+      FileViewProvider viewProvider = psiFile.getViewProvider();
+      Set<Language> languages = viewProvider.getLanguages();
+      Map<Language, FileHighlightingSetting> result = new HashMap<>(languages.size());
+      HighlightingSettingsPerFile settings = HighlightingSettingsPerFile.getInstance(project);
+      for (Language language : languages) {
+        PsiFile psiRoot = viewProvider.getPsi(language);
+        FileHighlightingSetting setting = settings.getHighlightingSettingForRoot(psiRoot);
+        result.put(language, setting);
+      }
+
+      return result;
+    });
+    inLibrary = ReadAction.compute(() -> {
+      PsiFile psiFile = getPsiFile();
+      if (psiFile == null) {
+        return false;
+      }
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      assert virtualFile != null;
+      return fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile);
+    });
+    myHighlightingSettingsModificationCount = HighlightingSettingsPerFile.getInstance(project).getModificationCount();
   }
 
   private void init(@NotNull Project project, @NotNull Document document) {
@@ -98,17 +136,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         incErrorCount(rangeHighlighter, 1);
       }
     });
-  }
-
-  protected TrafficLightRenderer(@NotNull Project project, @NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread(); // to be able to find PsiFile without "slow op in EDT" exceptions
-    myProject = project;
-    myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    myDocument = editor.getDocument();
-    mySeverityRegistrar = SeverityRegistrar.getSeverityRegistrar(myProject);
-
-    init(project, myDocument);
-    myUIController = createUIController(editor);
   }
 
   private PsiFile getPsiFile() {
@@ -156,7 +183,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   public boolean isValid() {
-    return getPsiFile() != null;
+    /**
+     * when highlighting level changed, re-create TrafficLightRenderer (and recompute levels in its ctr)
+     * @see ErrorStripeUpdateManager#setOrRefreshErrorStripeRenderer(EditorMarkupModel, PsiFile)
+     */
+    PsiFile psiFile = getPsiFile();
+    return psiFile != null
+           && HighlightingSettingsPerFile.getInstance(psiFile.getProject()).getModificationCount() == myHighlightingSettingsModificationCount;
   }
 
   @ApiStatus.Internal
@@ -231,13 +264,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     Set<Language> languages = provider.getLanguages();
     boolean shouldHighlight = languages.isEmpty();
 
-    HighlightingSettingsPerFile hlManager = HighlightingSettingsPerFile.getInstance(getProject());
-    for (Language language : languages) {
-      PsiFile psiRoot = provider.getPsi(language);
-
-      FileHighlightingSetting level = hlManager.getHighlightingSettingForRoot(psiRoot);
-
-      shouldHighlight |= hlManager.shouldHighlight(psiRoot);
+    for (Map.Entry<Language, FileHighlightingSetting> entry : myFileHighlightingSettings.entrySet()) {
+      FileHighlightingSetting level = entry.getValue();
+      shouldHighlight |= level != FileHighlightingSetting.SKIP_HIGHLIGHTING;
       status.minimumLevel = status.minimumLevel.compareTo(level) < 0 ? status.minimumLevel : level;
     }
 
@@ -319,8 +348,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         title = DaemonBundle.message("shallow.analysis.completed");
         details = DaemonBundle.message("shallow.analysis.completed.details");
       }
-      else if (getPsiFile() != null
-               && HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(getPsiFile()) == FileHighlightingSetting.ESSENTIAL) {
+      else if (myFileHighlightingSettings.containsValue(FileHighlightingSetting.ESSENTIAL)) {
         title = DaemonBundle.message("essential.analysis.completed");
         details = DaemonBundle.message("essential.analysis.completed.details");
       }
@@ -391,39 +419,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   protected class AbstractUIController implements UIController {
-    private final boolean inLibrary;
-    @NotNull
-    private final List<LanguageHighlightLevel> myLevelList = new ArrayList<>();
     @NotNull
     private List<HectorComponentPanel> myAdditionalPanels = Collections.emptyList();
 
     AbstractUIController() {
       ApplicationManager.getApplication().assertIsNonDispatchThread();
-      inLibrary = ReadAction.compute(() -> {
-        PsiFile psiFile = getPsiFile();
-        if (psiFile == null) {
-          return false;
-        }
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-        VirtualFile virtualFile = psiFile.getVirtualFile();
-        assert virtualFile != null;
-        addLevels(psiFile, myLevelList);
-        return fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile);
-      });
     }
-
-    private static void addLevels(@NotNull PsiFile psiFile, @NotNull List<? super LanguageHighlightLevel> levelList) {
-      if (!psiFile.getProject().isDisposed()) {
-        FileViewProvider viewProvider = psiFile.getViewProvider();
-        for (Language language : viewProvider.getLanguages()) {
-          PsiFile psiRoot = viewProvider.getPsi(language);
-          FileHighlightingSetting setting = HighlightingSettingsPerFile.getInstance(psiFile.getProject()).getHighlightingSettingForRoot(psiRoot);
-          InspectionsLevel inspectionsLevel = FileHighlightingSetting.toInspectionsLevel(setting);
-          levelList.add(new LanguageHighlightLevel(language.getID(), inspectionsLevel));
-        }
-      }
-    }
-
     @Override
     public @NotNull List<InspectionsLevel> getAvailableLevels() {
       return inLibrary ?
@@ -435,13 +436,14 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     @Override
     public @NotNull List<LanguageHighlightLevel> getHighlightLevels() {
-      return Collections.unmodifiableList(myLevelList);
+      return ContainerUtil.map(myFileHighlightingSettings.entrySet(),
+                               entry -> new LanguageHighlightLevel(entry.getKey().getID(), FileHighlightingSetting.toInspectionsLevel(entry.getValue())));
     }
 
     @Override
     public void setHighLightLevel(@NotNull LanguageHighlightLevel level) {
       PsiFile psiFile = getPsiFile();
-      if (psiFile != null && !getProject().isDisposed() && !myLevelList.contains(level)) {
+      if (psiFile != null && !getProject().isDisposed() && !getHighlightLevels().contains(level)) {
         FileViewProvider viewProvider = psiFile.getViewProvider();
 
         Language language = Language.findLanguageByID(level.getLangID());
@@ -449,11 +451,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           PsiElement root = viewProvider.getPsi(language);
           FileHighlightingSetting setting = FileHighlightingSetting.fromInspectionsLevel(level.getLevel());
           HighlightLevelUtil.forceRootHighlighting(root, setting);
-
-          myLevelList.replaceAll(l -> l.getLangID().equals(level.getLangID()) ? level : l);
-
           InjectedLanguageManager.getInstance(getProject()).dropFileCaches(psiFile);
           myDaemonCodeAnalyzer.restart();
+          // after that TrafficLightRenderer will be recreated anew, no need to patch myFileHighlightingSettings
         }
       }
     }
@@ -498,7 +498,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       if (myAdditionalPanels.isEmpty()) {
         return true;
       }
-      if (ContainerUtil.and(myAdditionalPanels, p -> p.canClose())) {
+      if (ContainerUtil.all(myAdditionalPanels, p -> p.canClose())) {
         PsiFile psiFile = getPsiFile();
         if (myAdditionalPanels.stream().filter(p -> p.isModified()).peek(TrafficLightRenderer::applyPanel).count() > 0) {
           if (psiFile != null) {
