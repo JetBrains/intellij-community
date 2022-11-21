@@ -315,8 +315,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val infoCache = LibraryInfoCache.getInstance(project)
             ModuleRootManager.getInstance(module).orderEntries()
                 .process(object : RootPolicy<Unit>() {
-                    override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
-                        modulesToVisit.addAll(moduleSourceOrderEntry.rootModel.getModuleDependencies(true).toList())
+                    override fun visitModuleOrderEntry(moduleOrderEntry: ModuleOrderEntry, value: Unit) {
+                        moduleOrderEntry.module?.let(modulesToVisit::add)
                     }
 
                     override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
