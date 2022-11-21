@@ -105,8 +105,7 @@ private class JavaConstructorRenderer(
 
   private fun startTemplate(constructor: PsiMethod, template: Template, superConstructor: PsiMethod?) {
     val targetFile = targetClass.containingFile
-    val targetEditor = CodeInsightUtil.positionCursor(project, targetFile, constructor)
-                       ?: return
+    val targetEditor = CodeInsightUtil.positionCursor(project, targetFile, constructor) ?: return
     val templateListener = object : TemplateEditingAdapter() {
 
       override fun templateFinished(template: Template, brokenOff: Boolean) {

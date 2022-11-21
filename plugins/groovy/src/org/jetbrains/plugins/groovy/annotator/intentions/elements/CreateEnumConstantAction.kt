@@ -51,8 +51,7 @@ internal class CreateEnumConstantAction(
     added = forcePsiPostprocessAndRestoreElement(added) ?: return
     val template = builder.buildTemplate()
 
-    val newEditor = positionCursor(project, targetClass.containingFile, added)
-                    ?: return
+    val newEditor = positionCursor(project, targetClass.containingFile, added) ?: return
     val range = added.textRange
     newEditor.document.deleteString(range.startOffset, range.endOffset)
     startTemplate(newEditor, template, project)
