@@ -2,6 +2,10 @@
 
 package org.jetbrains.kotlin.gradle.workspace
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderEntry
+import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.utils.Printer
 
 interface WorkspaceModelPrinterContributor<T : ContributableEntity> {
@@ -37,7 +41,10 @@ class NoopModulePrinterContributor : ModulePrinterContributor {
 
 class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
     override fun process(entity: ModulePrinterEntity, printer: Printer) = with(printer) {
-        val facetSettings = entity.kotlinFacetSettings ?: return
+        if (entity !is ModulePrinterEntityImpl) return // synthetic entity, skip
+        val facetSettings = runReadAction { KotlinFacetSettingsProvider.getInstance(entity.module.project)
+            ?.getSettings(entity.module) }
+            ?: return
 
         indented {
             println("Settings from the Kotlin facet:")
@@ -59,10 +66,12 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
 class SanitizingOrderEntryPrinterContributor : ModulePrinterContributor {
 
     override fun process(entity: ModulePrinterEntity, printer: Printer) = with(printer) {
-        val orderEntries = entity.orderEntries
-        if (orderEntries.isEmpty()) return
-
+        if (entity !is ModulePrinterEntityImpl) return // synthetic entity, skip
+        val orderEntries = runReadAction { ModuleRootManager.getInstance(entity.module).orderEntries }
+            .map(OrderEntry::toPrinterEntity)
         val sanitizedEntries = replaceNativeDistributionOrderEntries(orderEntries)
+
+        if (sanitizedEntries.isEmpty()) return
 
         println("Order entries:")
         indented {
