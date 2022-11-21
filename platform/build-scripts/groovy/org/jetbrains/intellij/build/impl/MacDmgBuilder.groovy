@@ -96,7 +96,7 @@ final class MacDmgBuilder {
     Path dmgImage = context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)
       ? null
       : Path.of((context.applicationInfo.isEAP() ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath)
-    Path jetSignClient = context.proprietaryBuildTools.signTool.commandLineClient(context)
+    Path jetSignClient = context.proprietaryBuildTools.signTool?.commandLineClient(context)
     if (jetSignClient == null) {
       context.messages.error("JetSign client is missing, cannot proceed with signing")
     }
@@ -176,12 +176,12 @@ final class MacDmgBuilder {
       context.fullBuildNumber,
       // this host credentials, not required for signing via JetSign
       "", "",
-      context.proprietaryBuildTools.macHostProperties.codesignString,
+      context.proprietaryBuildTools.macHostProperties?.codesignString ?: "null",
       (jreArchivePath == null ? "no-jdk" : jreArchivePath.fileName.toString()),
       notarize ? "yes" : "no",
       customizer.bundleIdentifier,
       customizer.publishArchive.toString(), // compress-input
-      context.proprietaryBuildTools.signTool.commandLineClient(context)?.toString() ?: "null"
+      context.proprietaryBuildTools.signTool?.commandLineClient(context)?.toString() ?: "null"
     ), tempDir, null, TimeUnit.HOURS.toMillis(3))
     Files.move(targetFile, sourceFile, StandardCopyOption.REPLACE_EXISTING)
   }
