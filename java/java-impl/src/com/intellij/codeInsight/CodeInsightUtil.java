@@ -270,7 +270,7 @@ public final class CodeInsightUtil {
     return positionCursor(project, targetFile, lBrace != null ? lBrace : psiClass);
   }
 
-  @Nullable("null means unable to open the editor")
+  @Nullable("no virtual file is associated with a targetFile")
   public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, element.getClass());

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -184,7 +183,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       TemplateBuilderImpl templateBuilder = createRecordHeaderTemplate(aClass, deconstructionList);
       CreateFromUsageBaseFix.startTemplate(project, aClass, templateBuilder.buildTemplate(), text);
     }
-    else if (!IntentionPreviewUtils.isPreviewElement(deconstructionList)) {
+    else {
       CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
     }
   }
