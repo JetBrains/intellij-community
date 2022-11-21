@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.util.awaitCancellation
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -174,15 +175,9 @@ internal class NewNavBarPanel(
     popup.addHintListener {
       vm.cancel() // cancel vm when popup is cancelled
     }
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      try {
-        awaitCancellation()
-      }
-      catch (e: CancellationException) {
-        popupList = null
-        popup.hide() // cancel the popup when coroutine is cancelled
-        throw e
-      }
+    cs.awaitCancellation {
+      popupList = null
+      popup.hide() // cancel the popup when coroutine is cancelled
     }
     val offsetX = navBarPopupOffset(itemComponentIndex == 0)
     val point = getItemPopupLocation(itemComponent, popup)
