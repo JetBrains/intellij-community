@@ -211,8 +211,8 @@
                         serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
-    <projectService serviceInterface="com.intellij.psi.search.PredefinedSearchScopeProvider"
-                    serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.search.PredefinedSearchScopeProvider"
+                        serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
 
     <applicationService serviceInterface="com.intellij.model.psi.PsiSymbolReferenceService"
                         serviceImplementation="com.intellij.model.psi.impl.PsiSymbolReferenceServiceImpl"/>

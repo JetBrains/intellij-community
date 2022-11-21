@@ -39,8 +39,9 @@ public class FindUsagesOptions implements Cloneable {
   public static @NotNull SearchScope findScopeByName(@NotNull Project project,
                                                      @Nullable DataContext dataContext,
                                                      @Nullable String scopeName) {
-    PredefinedSearchScopeProvider scopeProvider = PredefinedSearchScopeProvider.getInstance(project);
-    for (SearchScope scope : scopeProvider.getPredefinedScopes(dataContext, true, false, false, false, false)) {
+    List<? extends SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
+      project, dataContext, true, false, false, false, false);
+    for (SearchScope scope : predefined) {
       if (scope.getDisplayName().equals(scopeName)) {
         return scope;
       }
