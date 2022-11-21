@@ -26,7 +26,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -108,8 +107,7 @@ public abstract class BaseRefactoringAction extends AnAction {
       return;
     }
     IdeEventQueue.getInstance().setEventCount(eventCount);
-
-    SlowOperations.allowSlowOperations(() -> performRefactoringAction(project, dataContext, handler));
+    performRefactoringAction(project, dataContext, handler);
   }
 
   @ApiStatus.Internal
