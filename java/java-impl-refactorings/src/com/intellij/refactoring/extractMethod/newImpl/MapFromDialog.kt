@@ -3,7 +3,6 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.refactoring.HelpID
@@ -16,20 +15,13 @@ import com.intellij.util.containers.MultiMap
 
 object MapFromDialog {
   fun mapFromDialog(extractOptions: ExtractOptions): ExtractOptions? {
-    val dialog = createDialog(extractOptions, RefactoringBundle.message("extract.method.title"), HelpID.EXTRACT_METHOD)
-    val isOk = dialog.showAndGet()
-    if (isOk) {
-      return ExtractMethodPipeline.remap(extractOptions, dialog.chosenParameters, dialog.chosenMethodName,
-                                         dialog.isMakeStatic, dialog.visibility, dialog.isChainedConstructor, dialog.returnType)
-    }
-    else {
-      return null
-    }
+    val dialog = createDialog(extractOptions)
+    if (!dialog.showAndGet()) return null
+    return ExtractMethodPipeline.remap(extractOptions, dialog.chosenParameters, dialog.chosenMethodName,
+                                       dialog.isMakeStatic, dialog.visibility, dialog.isChainedConstructor, dialog.returnType)
   }
 
-  private fun createDialog(extractOptions: ExtractOptions,
-                           @NlsContexts.DialogTitle refactoringName: String,
-                           helpId: String): ExtractMethodDialog {
+  private fun createDialog(extractOptions: ExtractOptions): ExtractMethodDialog {
     val project = extractOptions.project
     val returnType = extractOptions.dataOutput.type
     val thrownExceptions = extractOptions.thrownExceptions.toTypedArray()
@@ -40,7 +32,7 @@ object MapFromDialog {
     val nullability = extractOptions.dataOutput.nullability.takeIf { ExtractMethodHelper.isNullabilityAvailable(extractOptions) }
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
     val staticOptions = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions)
-    val canBeStatic = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions) != null
+    val canBeStatic = staticOptions != null
     val canBeChainedConstructor = ExtractMethodPipeline.canBeConstructor(analyzer)
     val factory = PsiElementFactory.getInstance(project)
     val variables = extractOptions.inputParameters
@@ -63,7 +55,8 @@ object MapFromDialog {
 
     return object: ExtractMethodDialog(project, targetClass, inputVariables, returnType, typeParameterList,
                                        thrownExceptions, isStatic, canBeStatic, canBeChainedConstructor,
-                                       refactoringName, helpId, nullability, elements, {0}) {
+                                       RefactoringBundle.message("extract.method.title"), HelpID.EXTRACT_METHOD,
+                                       nullability, elements, {0}) {
       override fun areTypesDirected() = true
 
       override fun suggestMethodNames(): Array<String> {
