@@ -371,8 +371,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (myCurrentDirectory != null) {
         var selection = myList.getSelectedValue();
         myModel.clear();
-        for (var i = 0; i < myCurrentContent.size(); i++) {
-          FsItem item = myCurrentContent.get(i);
+        for (var item : myCurrentContent) {
           if (show || item.visible) myModel.add(item);
         }
         myList.setSelectedValue(selection, true);
