@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
@@ -63,12 +65,16 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
             validateNewSettings(value)
             _settings = value
 
-            KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
+            runInEdt {
+                runWriteAction {
+                    KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
 
-            project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
-                oldSettings = oldSettings,
-                newSettings = _settings,
-            )
+                    project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+                        oldSettings = oldSettings,
+                        newSettings = _settings,
+                    )
+                }
+            }
         }
 
     fun update(changer: T.() -> Unit) {
@@ -100,12 +106,16 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
             XmlSerializer.deserializeInto(this, state)
         }
 
-        KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
+        runInEdt {
+            runWriteAction {
+                KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
 
-        project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
-            oldSettings = null,
-            newSettings = settings,
-        )
+                project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+                    oldSettings = null,
+                    newSettings = settings,
+                )
+            }
+        }
     }
 
     public override fun clone(): Any = super.clone()
