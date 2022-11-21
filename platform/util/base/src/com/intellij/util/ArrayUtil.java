@@ -995,4 +995,24 @@ public final class ArrayUtil {
     return -1;
   }
 
+  /**
+   * Checks the equality of two arrays, according to a custom condition. Like {@code Arrays#equals} but doesn't
+   * require a comparator.
+   * 
+   * @param arr1 first array
+   * @param arr2 second array
+   * @param equalityCondition BiPredicate that returns true if two elements are considered to be equal. Must return true
+   *                          if both arguments are the same object.
+   * @return true if both arrays are equal in terms of equalityCondition
+   * @param <T> type of array elements
+   */
+  public static <T> boolean areEqual(T @NotNull [] arr1, T @NotNull [] arr2, BiPredicate<T, T> equalityCondition) {
+    if (arr1 == arr2) return true;
+    if (arr1.length != arr2.length) return false;
+    for (int i = 0; i < arr1.length; i++) {
+      if (!equalityCondition.test(arr1[i], arr2[i])) return false;
+    }
+    return true;
+  }
+
 }
