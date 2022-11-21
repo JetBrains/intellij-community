@@ -4,7 +4,6 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
@@ -25,7 +24,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
@@ -209,9 +207,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       BitUtil.isSet(options, OPT_USAGE_VIEW),
       BitUtil.isSet(options, OPT_EMPTY_SCOPES)
     );
-    return SlowOperations.allowSlowOperations(() -> ReadAction.compute(() -> {
-      return doProcessScopes(project, dataContext, scopes, processor);
-    }));
+    return SlowOperations.allowSlowOperations(() -> doProcessScopes(project, dataContext, scopes, processor));
   }
 
   protected final @NotNull Promise<List<? extends SearchScope>> getPredefinedScopesAsync(@NotNull DataContext dataContext) {
@@ -227,7 +223,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   @RequiresBackgroundThread
-  @RequiresReadLock
   protected final @NotNull Boolean doProcessScopes(@NotNull DataContext dataContext,
                                                    @NotNull List<? extends SearchScope> predefinedScopes,
                                                    @NotNull Processor<? super ScopeDescriptor> processor) {
@@ -239,7 +234,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   // todo to be inlined
   // todo @RequiresBackgroundThread
-  @RequiresReadLock
   public static @NotNull Boolean doProcessScopes(@NotNull Project project,
                                                  @NotNull DataContext dataContext,
                                                  @NotNull List<? extends SearchScope> predefinedScopes,

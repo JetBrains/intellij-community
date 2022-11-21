@@ -20,7 +20,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,6 @@ final class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   private final @NotNull Project myProject;
   private final @Nullable PsiClass myRootClass;
 
-  @RequiresReadLock
   ClassHierarchyScopeDescriptor(@NotNull Project project,
                                 @NotNull DataContext dataContext) {
     super(null);
