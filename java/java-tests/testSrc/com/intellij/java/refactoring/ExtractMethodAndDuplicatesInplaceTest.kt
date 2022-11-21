@@ -238,10 +238,6 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
-  fun testExactDuplicatesDisableChangeSignature(){
-    doTest()
-  }
-
   fun testFoldedParametersInExactDuplicates(){
     val default = DuplicatesMethodExtractor.changeSignatureDefault
     try {
