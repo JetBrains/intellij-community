@@ -10,7 +10,11 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import javax.swing.Action
 
-class GHPRErrorStatusPresenter(project: Project, account: GithubAccount, resetRunnable: () -> Unit) : ErrorStatusPresenter {
+class GHPRErrorStatusPresenter(
+  project: Project,
+  account: GithubAccount,
+  resetRunnable: () -> Unit
+) : ErrorStatusPresenter<Throwable> {
   private val errorHandler = GHApiLoadingErrorHandler(project, account, resetRunnable)
 
   override fun getErrorTitle(error: Throwable): @Nls String = GithubBundle.message("pull.request.list.cannot.load")

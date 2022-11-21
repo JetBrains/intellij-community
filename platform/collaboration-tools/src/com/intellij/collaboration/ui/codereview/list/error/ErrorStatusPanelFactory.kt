@@ -24,7 +24,11 @@ import javax.swing.event.HyperlinkEvent
 object ErrorStatusPanelFactory {
   private const val ERROR_ACTION_HREF = "ERROR_ACTION"
 
-  fun create(scope: CoroutineScope, errorState: StateFlow<Throwable?>, errorPresenter: ErrorStatusPresenter): JComponent {
+  fun <T> create(
+    scope: CoroutineScope,
+    errorState: StateFlow<T?>,
+    errorPresenter: ErrorStatusPresenter<T>
+  ): JComponent {
     val htmlEditorPane = JEditorPane().apply {
       editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
       foreground = NamedColorUtil.getErrorForeground()
@@ -38,10 +42,10 @@ object ErrorStatusPanelFactory {
     return htmlEditorPane
   }
 
-  private class Controller(
+  private class Controller<T>(
     scope: CoroutineScope,
-    errorState: StateFlow<Throwable?>,
-    private val errorPresenter: ErrorStatusPresenter,
+    errorState: StateFlow<T?>,
+    private val errorPresenter: ErrorStatusPresenter<T>,
     private val htmlEditorPane: JEditorPane
   ) {
     private var action: Action? = null
@@ -73,7 +77,7 @@ object ErrorStatusPanelFactory {
       }
     }
 
-    private fun update(error: Throwable?) {
+    private fun update(error: T?) {
       if (error == null) {
         htmlEditorPane.text = ""
         htmlEditorPane.isVisible = false

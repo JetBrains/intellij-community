@@ -21,7 +21,7 @@ internal class GitLabMergeRequestErrorStatusPresenter(
   private val scope: CoroutineScope,
   private val account: GitLabAccount,
   private val accountManager: GitLabAccountManager
-) : ErrorStatusPresenter {
+) : ErrorStatusPresenter<Throwable> {
   override fun getErrorTitle(error: Throwable): @Nls String = GitLabBundle.message("merge.request.list.error")
 
   override fun getErrorDescription(error: Throwable): @Nls String {
