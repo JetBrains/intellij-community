@@ -2,4 +2,4 @@
 // WITH_STDLIB
 enum class EnumClass
 
-val a = EnumClass.entries
+val a: List<EnumClass> = EnumClass.entries

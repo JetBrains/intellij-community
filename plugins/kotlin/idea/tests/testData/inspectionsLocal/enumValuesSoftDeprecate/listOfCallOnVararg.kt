@@ -2,4 +2,4 @@
 // WITH_STDLIB
 enum class EnumClass
 
-val a = listOf(*EnumClass.values<caret>())
+val a: List<EnumClass> = listOf(*EnumClass.values<caret>())

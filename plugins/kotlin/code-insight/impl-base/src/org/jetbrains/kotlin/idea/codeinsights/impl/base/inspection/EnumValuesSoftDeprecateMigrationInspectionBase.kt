@@ -98,7 +98,7 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
             }
 
             // listOf(values())
-            parent is KtValueArgument && parent.parent is KtValueArgumentList -> {
+            parent is KtValueArgument && parent.isSpread && parent.parent is KtValueArgumentList -> {
                 val argumentList = parent.parent as KtValueArgumentList
                 if (argumentList.arguments.size == 1) {
                     val callableIdString = getCallableMethodIdString(argumentList.parent as? KtCallExpression)
