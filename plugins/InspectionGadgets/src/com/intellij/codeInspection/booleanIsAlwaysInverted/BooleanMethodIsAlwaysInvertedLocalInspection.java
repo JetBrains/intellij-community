@@ -36,10 +36,7 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
 
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    PsiType returnType = method.getReturnType();
-    if (!PsiType.BOOLEAN.equals(returnType) ||
-        MethodUtils.hasSuper(method) ||
-        RefUtil.isImplicitRead(method)) return null;
+    if (!PsiType.BOOLEAN.equals(method.getReturnType()) || MethodUtils.hasSuper(method) || RefUtil.isImplicitRead(method)) return null;
 
     int[] usageCount = {0};
     if (!UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {
@@ -59,6 +56,8 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
       return null;
     }
     if (usageCount[0] < 2) return null;
-    return new ProblemDescriptor[] { myGlobalTool.createProblemDescriptor(manager, method.getNameIdentifier(), isOnTheFly) };
+    final PsiIdentifier identifier = method.getNameIdentifier();
+    if (identifier == null) return null;
+    return new ProblemDescriptor[] { myGlobalTool.createProblemDescriptor(manager, identifier, isOnTheFly) };
   }
 }

@@ -59,15 +59,15 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
 
   @Override
   @Nullable
-  public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return new BooleanInvertedAnnotator();
   }
 
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
                                                 @NotNull AnalysisScope scope,
-                                                @NotNull final InspectionManager manager,
-                                                @NotNull final GlobalInspectionContext globalContext) {
+                                                @NotNull InspectionManager manager,
+                                                @NotNull GlobalInspectionContext globalContext) {
     if (!(refEntity instanceof RefMethod)) return null;
     RefMethod refMethod = (RefMethod)refEntity;
     if (!refMethod.isReferenced() ||
@@ -90,22 +90,21 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     return null;
   }
 
-  protected ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager,
-                                                      PsiElement psiIdentifier,
-                                                      boolean onTheFly) {
-    return manager.createProblemDescriptor(psiIdentifier,
+  protected ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiElement identifier, boolean onTheFly) {
+    final InvertBooleanDelegate invertBooleanDelegate = InvertBooleanDelegate.findInvertBooleanDelegate(identifier.getParent());
+    return manager.createProblemDescriptor(identifier,
                                            JavaBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
-                                           InvertBooleanDelegate.findInvertBooleanDelegate(psiIdentifier.getParent()) != null ? getInvertBooleanFix(onTheFly) : null,
+                                           invertBooleanDelegate != null ? getInvertBooleanFix(onTheFly) : null,
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
-                                                @NotNull final GlobalJavaInspectionContext context,
-                                                @NotNull final ProblemDescriptionsProcessor descriptionsProcessor) {
+  protected boolean queryExternalUsagesRequests(@NotNull RefManager manager,
+                                                @NotNull GlobalJavaInspectionContext context,
+                                                @NotNull ProblemDescriptionsProcessor descriptionsProcessor) {
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitMethod(@NotNull final RefMethod refMethod) {
+      public void visitMethod(@NotNull RefMethod refMethod) {
         if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
         if (descriptionsProcessor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
           final GlobalJavaInspectionContext.UsagesProcessor usagesProcessor = new GlobalJavaInspectionContext.UsagesProcessor() {
@@ -129,7 +128,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   }
 
   @Override
-  public LocalQuickFix getQuickFix(final String hint) {
+  public LocalQuickFix getQuickFix(String hint) {
     return getInvertBooleanFix(false);
   }
 
@@ -138,7 +137,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     return new BooleanMethodIsAlwaysInvertedLocalInspection(this);
   }
 
-  private static boolean hasNonInvertedCalls(final RefMethod refMethod) {
+  private static boolean hasNonInvertedCalls(RefMethod refMethod) {
     final Boolean alwaysInverted = refMethod.getUserData(ALWAYS_INVERTED);
     if (alwaysInverted != Boolean.TRUE) return true;
     if (refMethod.isExternalOverride()) return true;
