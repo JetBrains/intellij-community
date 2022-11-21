@@ -108,13 +108,14 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
       val manager = CodeStyleManager.getInstance(project)
       val initialMethod = manager.reformat(method.copy()) as PsiMethod
       val parametrizedMethod = manager.reformat(parametrizedExtraction.method) as PsiMethod
-      val dialog = SignatureSuggesterPreviewDialog(initialMethod, parametrizedMethod, oldMethodCall, newMethodCall, duplicates.size)
+      val dialog = SignatureSuggesterPreviewDialog(initialMethod, parametrizedMethod, oldMethodCall, newMethodCall,
+                                                   exactDuplicates.size, duplicates.size - exactDuplicates.size)
       return dialog.showAndGet()
     }
     val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> {default} } ?: ::confirmChangeSignature
     val isGoodSignatureChange = isGoodSignatureChange(extractOptions.elements, extractOptions.inputParameters,
                                                       parametrizedExtraction.callElements, updatedParameters)
-    val changeSignature = exactDuplicates.isEmpty() && duplicates.isNotEmpty() && isGoodSignatureChange && confirmChange()
+    val changeSignature = duplicates.size > exactDuplicates.size && isGoodSignatureChange && confirmChange()
     duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (changeSignature) updatedParameters else extractOptions.inputParameters
     val extractedElements = if (changeSignature) parametrizedExtraction else ExtractedElements(calls, method)
