@@ -47,4 +47,5 @@ private class KotlinOptimizeImportsQuickFix(file: KtFile) : LocalQuickFixOnPsiEl
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         OptimizeImportsProcessor(project, file).run()
     }
+    override fun startInWriteAction(): Boolean = false
 }
