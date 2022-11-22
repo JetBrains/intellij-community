@@ -59,7 +59,7 @@ class MobileMppTemplate : Template() {
                     )
 
                     actualFor(
-                        ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.ios, ModuleSubType.iosCocoaPods,
+                        ModuleSubType.ios, ModuleSubType.iosCocoaPods,
                         actualBody =
                         """actual val platform: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion"""
                     ) {
