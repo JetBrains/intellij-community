@@ -350,7 +350,7 @@ fun runPostProcessing(
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             {
                 val processor =
-                    J2kConverterExtension.extension(useNewJ2k).createWithProgressProcessor(
+                    J2kConverterExtension.extension(useNewJ2k = true).createWithProgressProcessor(
                         ProgressManager.getInstance().progressIndicator!!,
                         emptyList(),
                         postProcessor.phasesCount

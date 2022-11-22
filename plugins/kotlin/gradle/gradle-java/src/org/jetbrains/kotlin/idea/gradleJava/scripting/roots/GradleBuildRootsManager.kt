@@ -170,7 +170,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         // TODO: can gradleHome be null, what to do in this case
         val gradleHome = sync.gradleHome
         if (gradleHome == null) {
-            scriptingInfoLog("Cannot find valid gradle home for ${sync.gradleHome} with version = ${sync.gradleVersion}, script models cannot be saved")
+            scriptingInfoLog("Cannot find valid gradle home with version = ${sync.gradleVersion}, script models cannot be saved")
             return null
         }
 

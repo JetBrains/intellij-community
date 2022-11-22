@@ -96,7 +96,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
                             val endOffset = lastSibling?.endOffset ?: range.endOffset
                             selectionModel.setSelection(range.startOffset, endOffset)
                         } else {
-                            LOG.error("Extension created with new method body for $bodyToSelect but this body was not found after document commit. Extension text: \"${extension.text}\"")
+                            LOG.error("Extension created with new method body but this body was not found after document commit. Extension text: \"${extension.text}\"")
                             moveCaret(extension.textOffset, ScrollType.CENTER)
                         }
                     } else {

@@ -139,7 +139,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
             ProgressManager.checkCanceled()
 
             if (useNewJ2k) {
-                val postProcessor = J2kConverterExtension.extension(useNewJ2k).createPostProcessor(formatCode = true)
+                val postProcessor = J2kConverterExtension.extension(useNewJ2k = true).createPostProcessor(formatCode = true)
                 convertedResult.importsToAdd.forEach { fqName ->
                     postProcessor.insertImport(targetFile, fqName)
                 }

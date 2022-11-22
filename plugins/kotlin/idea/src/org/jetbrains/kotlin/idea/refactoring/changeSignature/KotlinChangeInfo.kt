@@ -121,7 +121,7 @@ open class KotlinChangeInfo(
 
             val toRemove = BooleanArray(receiverShift + methodDescriptor.parametersCount) { true }
             if (hasReceiver) {
-                toRemove[0] = receiverParameterInfo == null && hasReceiver && originalReceiver !in getNonReceiverParameters()
+                toRemove[0] = receiverParameterInfo == null && originalReceiver !in getNonReceiverParameters()
             }
 
             for (parameter in newParameters) {

@@ -37,10 +37,10 @@ internal class Solver(
 
         var i = 0
         do {
-            var somethingChanged = false
+            var somethingChanged: Boolean
             with(mutableConstraints) {
                 printDebugInfo(i)
-                somethingChanged = handleConstraintsWithNullableLowerBound(currentStep) || somethingChanged
+                somethingChanged = handleConstraintsWithNullableLowerBound(currentStep)
                 somethingChanged = handleConstraintsWithNotNullUpperBound(currentStep) || somethingChanged
                 somethingChanged = handleEqualsConstraints(currentStep) || somethingChanged
                 somethingChanged = substituteConstraints() || somethingChanged

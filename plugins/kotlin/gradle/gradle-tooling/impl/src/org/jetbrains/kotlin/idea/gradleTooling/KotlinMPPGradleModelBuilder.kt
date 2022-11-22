@@ -229,7 +229,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     private fun KotlinExtensionReflection.parseKotlinGradlePluginVersion(): KotlinGradlePluginVersion? {
         val version = KotlinGradlePluginVersion.parse(kotlinGradlePluginVersion ?: return null)
         if (version == null) {
-            MPP_BUILDER_LOGGER.warn("[sync warning] Failed to parse KotlinGradlePluginVersion: $version")
+            MPP_BUILDER_LOGGER.warn("[sync warning] Failed to parse KotlinGradlePluginVersion: version == null")
         }
         return version
     }

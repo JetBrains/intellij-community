@@ -118,7 +118,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         }
 
         if (optional) {
-            dependency.optional.value = optional
+            dependency.optional.value = true
         }
 
         dependency.systemPath.stringValue = systemPath
