@@ -57,7 +57,7 @@ class KotlinAndroidSourceSetInfoImpl(
     constructor(info: KotlinAndroidSourceSetInfo) : this(
         kotlinSourceSetName = info.kotlinSourceSetName,
         androidSourceSetName = info.androidSourceSetName,
-        androidVariantNames = info.androidVariantNames.toSet()
+        androidVariantNames = info.androidVariantNames.toMutableSet()
     )
 }
 
@@ -83,13 +83,13 @@ class KotlinSourceSetImpl(
     constructor(kotlinSourceSet: KotlinSourceSet) : this(
         name = kotlinSourceSet.name,
         languageSettings = KotlinLanguageSettingsImpl(kotlinSourceSet.languageSettings),
-        sourceDirs = HashSet(kotlinSourceSet.sourceDirs),
-        resourceDirs = HashSet(kotlinSourceSet.resourceDirs),
+        sourceDirs = kotlinSourceSet.sourceDirs.toMutableSet(),
+        resourceDirs = kotlinSourceSet.resourceDirs.toMutableSet(),
         regularDependencies = kotlinSourceSet.regularDependencies.clone(),
         intransitiveDependencies = kotlinSourceSet.intransitiveDependencies.clone(),
-        declaredDependsOnSourceSets = HashSet(kotlinSourceSet.declaredDependsOnSourceSets),
-        allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
-        additionalVisibleSourceSets = HashSet(kotlinSourceSet.additionalVisibleSourceSets),
+        declaredDependsOnSourceSets = kotlinSourceSet.declaredDependsOnSourceSets.toMutableSet(),
+        allDependsOnSourceSets = kotlinSourceSet.allDependsOnSourceSets.toMutableSet(),
+        additionalVisibleSourceSets = kotlinSourceSet.additionalVisibleSourceSets.toMutableSet(),
         androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
         actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms),
         isTestComponent = kotlinSourceSet.isTestComponent
@@ -133,7 +133,7 @@ data class KotlinCompilationOutputImpl(
     override val resourcesDir: File?
 ) : KotlinCompilationOutput {
     constructor(output: KotlinCompilationOutput) : this(
-        HashSet(output.classesDirs),
+        output.classesDirs.toMutableSet(),
         output.effectiveClassesDir,
         output.resourcesDir
     )
@@ -230,7 +230,7 @@ data class KotlinCompilationImpl(
             cloningCache: MutableMap<Any, Any>
         ): Set<KotlinCompilationCoordinates> = coordinates.map { initial ->
             cloningCache.getOrPut(initial) { KotlinCompilationCoordinatesImpl(initial) } as KotlinCompilationCoordinates
-        }.toSet()
+        }.toMutableSet()
     }
 }
 
