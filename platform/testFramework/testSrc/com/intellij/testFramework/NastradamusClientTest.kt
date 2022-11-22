@@ -57,7 +57,9 @@ class NastradamusClientTest {
         name = json.findValue("name").asText(),
         status = TestStatus.fromString(json.findValue("status").asText()),
         runOrder = json.findValue("runOrder").asInt(),
-        duration = json.findValue("duration")?.asLong() ?: 0
+        duration = json.findValue("duration")?.asLong() ?: 0,
+        buildType = TeamCityClient.buildTypeId,
+        buildStatusMessage = TeamCityClient.getBuildInfo().findValue("statusText").asText()
       )
     }
 
@@ -67,10 +69,17 @@ class NastradamusClientTest {
   @Test
   @Ignore("Do not use dedicated instance. Use mocks / spin up a new server")
   fun sendSortingDataToNostradamus() {
-    val client = NastradamusClient(URI("http://127.0.0.1:8000/").normalize())
+    val client = NastradamusClient(URI("http://127.0.0.1:8000/").normalize(), unsortedClasses = listOf())
 
     val sortEntity = SortRequestEntity(
-      changes = listOf(ChangeEntity("some data")),
+      changes = listOf(ChangeEntity(filePath = "file/path/file.xx",
+                                    relativeFile = "relative/path",
+                                    beforeRevision = "00230203",
+                                    afterRevision = "2322323",
+                                    changeType = "edited",
+                                    comment = "",
+                                    userName = "user.name@x.com",
+                                    date = "2022")),
       tests = listOf(TestCaseEntity("org.jetbrains.xx"), TestCaseEntity("com.intellij.bxjs"))
     )
 
@@ -81,12 +90,26 @@ class NastradamusClientTest {
   @Test
   @Ignore("Do not use dedicated instance. Use mocks / spin up a new server")
   fun sendTestRunResultToNostradamus() {
-    val client = NastradamusClient(URI("http://127.0.0.1:8000/").normalize())
+    val client = NastradamusClient(URI("http://127.0.0.1:8000/").normalize(), unsortedClasses = listOf())
 
     val testRunResult = TestResultRequestEntity(
       testRunResults = listOf(
-        TestResultEntity(name = "org.jetbrains.xx", status = TestStatus.FAILED, runOrder = -1, duration = 10),
-        TestResultEntity(name = "com.intellij.bxjs", status = TestStatus.SUCCESS, runOrder = 10, duration = 0),
+        TestResultEntity(
+          name = "org.jetbrains.xx",
+          status = TestStatus.FAILED,
+          runOrder = -1,
+          duration = 10,
+          buildType = "build_type_x",
+          buildStatusMessage = "okay"
+        ),
+        TestResultEntity(
+          name = "com.intellij.bxjs",
+          status = TestStatus.SUCCESS,
+          runOrder = 10,
+          duration = 0,
+          buildType = "new_build_type",
+          buildStatusMessage = ""
+        ),
       )
     )
 

@@ -36,7 +36,7 @@ suspend fun <T> withRetryAsync(retries: Long = 3,
 /** @return T - if successful; null - otherwise */
 fun <T> withRetry(retries: Long = 3,
                   messageOnFailure: String = "",
-                  delay: Duration = 10.seconds,
+                  delay: Duration = 5.seconds,
                   retryAction: () -> T): T? = runBlocking {
   withRetryAsync(retries, messageOnFailure) { retryAction() }
 }
