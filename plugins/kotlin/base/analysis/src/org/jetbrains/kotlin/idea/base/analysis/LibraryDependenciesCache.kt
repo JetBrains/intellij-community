@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.assertReadAccessAllowed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -201,7 +201,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         inner class ModelChangeListener : ModuleEntityChangeListener(project) {
             override fun entitiesChanged(outdated: List<Module>) {
-                invalidate()
+                invalidate(writeAccessRequired = true)
             }
         }
 
@@ -224,7 +224,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         @RequiresReadLock
         override fun get(key: Module): LibraryDependencyCandidatesAndSdkInfos {
-            ApplicationManager.getApplication().assertReadAccessAllowed()
+            assertReadAccessAllowed()
             return internalGet(key, hashMapOf(), linkedSetOf(), hashMapOf())
         }
 
@@ -437,7 +437,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
             // TODO: `invalidate()` to be drop when IDEA-298694 is fixed
             //  Reason: unload modules are untracked with WorkspaceModel
-            invalidate()
+            invalidate(writeAccessRequired = true)
             return
 
             // SDK could be changed (esp in tests) out of message bus subscription

@@ -60,7 +60,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
         //  Reason: unload modules are untracked with WorkspaceModel
         if (event.isCausedByWorkspaceModelChangesOnly) return
 
-        invalidate()
+        invalidate(writeAccessRequired = true)
     }
 
     override fun beforeChanged(event: VersionedStorageChange) {

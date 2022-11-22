@@ -180,7 +180,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             if (event.isCausedByWorkspaceModelChangesOnly) return
 
             applyIfPossible {
-                invalidate()
+                invalidate(writeAccessRequired = true)
                 project.ideaModules().forEach(::get)
                 incModificationCount()
             }
@@ -305,7 +305,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
                 // TODO: `invalidate()` to be drop when IDEA-298694 is fixed
                 //  Reason: unload modules are untracked with WorkspaceModel
-                invalidate()
+                invalidate(writeAccessRequired = true)
                 // TODO: `invalidateEntries(..)` to be uncommented when IDEA-298694 is fixed
                 //invalidateEntries({ k, _ -> k !in sdks })
 
