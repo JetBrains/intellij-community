@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.gradle.configuration.*
@@ -53,6 +54,7 @@ import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataPropert
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -81,11 +83,14 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
     }
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
-        return setOf(KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java, Unit::class.java)
+        return setOf(
+            KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java,
+            IdeaKotlinDependency::class.java, Extras::class.java, Unit::class.java
+        )
     }
 
     override fun getExtraProjectModelClasses(): Set<Class<out Any>> {
-        return setOf(KotlinMPPGradleModel::class.java, KotlinTarget::class.java)
+        return setOf(KotlinMPPGradleModel::class.java, KotlinTarget::class.java, IdeaKotlinDependency::class.java, Extras::class.java)
     }
 
     override fun getExtraCommandLineArgs(): List<String> =
