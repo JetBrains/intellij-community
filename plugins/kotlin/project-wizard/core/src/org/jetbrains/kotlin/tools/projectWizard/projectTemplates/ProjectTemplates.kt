@@ -303,6 +303,14 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
     override val projectKind = ProjectKind.Multiplatform
 
     override val setsModules: List<Module> = buildList {
+        val iosModule = Module(
+            "ios",
+            sharedIosConfigurator,
+            null,
+            permittedTemplateIds = emptySet(),
+            sourceSets = createDefaultSourceSets(),
+            subModules = emptyList()
+        )
         val shared = MultiplatformModule(
             "shared",
             template = MobileMppTemplate(),
@@ -317,14 +325,22 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                 ).withConfiguratorSettings<AndroidTargetConfigurator> {
                     configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
                 },
+                iosModule,
                 Module(
-                    "ios",
-                    sharedIosConfigurator,
+                    "iosSimulatorArm64",
+                    RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosSimulatorArm64),
                     null,
                     permittedTemplateIds = emptySet(),
-                    sourceSets = createDefaultSourceSets(),
+                    sourceSets = SourcesetType.values().map {
+                        Sourceset(
+                            sourcesetType = it,
+                            dependencies = emptyList(),
+                            createDirectory = false,
+                            dependsOnModules = listOf(iosModule),
+                        )
+                    },
                     subModules = emptyList()
-                )
+                ),
             )
         )
         +iosAppModule(shared)
