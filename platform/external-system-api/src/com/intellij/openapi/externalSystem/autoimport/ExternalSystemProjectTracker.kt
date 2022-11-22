@@ -53,7 +53,9 @@ interface ExternalSystemProjectTracker {
    * Schedules project reload, may be skipped if project is up-to-date, project is being reloaded or VCS is being updated.
    * Use [markDirtyAllProjects] for force project reload.
    */
-  fun scheduleProjectRefresh(force: Boolean = false)
+  fun scheduleProjectRefresh(force: Boolean)
+
+  fun scheduleProjectRefresh() = scheduleProjectRefresh(false)
 
   /**
    * Schedules project reload or notification update.
