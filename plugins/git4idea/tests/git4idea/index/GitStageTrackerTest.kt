@@ -4,6 +4,7 @@ package git4idea.index
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.AppTopics
+import com.intellij.idea.Bombed
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -20,6 +21,7 @@ import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
 import org.apache.commons.lang.RandomStringUtils
+import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -121,6 +123,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     }
   }
 
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Julia.Beliaeva")
   fun `test untracked`() {
     val fileName = "file.txt"
     val file = runWithTrackerUpdate("createChildData") {
@@ -152,9 +155,12 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   private fun trackerState() = tracker.state.rootStates.getValue(projectRoot)
 
   private fun <T> runWithTrackerUpdate(name: String, function: () -> T): T {
-    val result = function()
-    tracker.futureUpdate(name).waitOrCancel()
-    return result
+    return tracker.futureUpdate(name).let { futureUpdate ->
+      val result = function()
+      changeListManager.waitEverythingDoneInTestMode()
+      futureUpdate.waitOrCancel()
+      return@let result
+    }
   }
 
   private fun Future<Unit>.waitOrCancel() {
