@@ -169,6 +169,12 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object obj, int index, boolean isSelected, boolean cellHasFocus) {
+        if (panel.isDisposed()) {
+          // Don't create new NavBarItem if panel is disposed. See: IDEA-306495
+          //noinspection MissingAccessibleContext
+          return new SelectablePanel();
+        }
+
         SelectablePanel selectable = null;
 
         for (SelectablePanel cachedSelectable : selectables) {
