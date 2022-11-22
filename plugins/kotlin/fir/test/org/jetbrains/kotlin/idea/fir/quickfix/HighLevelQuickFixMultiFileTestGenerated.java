@@ -360,6 +360,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/importInFirstPartInUserType.test");
         }
 
+        @TestMetadata("importInterface.before.Main.kt")
+        public void testImportInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importInterface.before.Main.kt");
+        }
+
         @TestMetadata("importKotlinCompanionPropertyAsFieldFromJava.test")
         public void testImportKotlinCompanionPropertyAsFieldFromJava() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/importKotlinCompanionPropertyAsFieldFromJava.test");
@@ -420,19 +425,14 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/importKotlinStaticPropertyOverloadedSetterFromJava.test");
         }
 
-        @TestMetadata("importNullableTraitWithGenerics.before.Main.kt")
-        public void testImportNullableTraitWithGenerics() throws Exception {
-            runTest("../idea/tests/testData/quickfix/autoImports/importNullableTraitWithGenerics.before.Main.kt");
+        @TestMetadata("importNullableInterfaceWithGenerics.before.Main.kt")
+        public void testImportNullableInterfaceWithGenerics() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importNullableInterfaceWithGenerics.before.Main.kt");
         }
 
         @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
         public void testImportOperatorInvokeWithConvention() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/ImportOperatorInvokeWithConvention.before.Main.kt");
-        }
-
-        @TestMetadata("importTrait.before.Main.kt")
-        public void testImportTrait() throws Exception {
-            runTest("../idea/tests/testData/quickfix/autoImports/importTrait.before.Main.kt");
         }
 
         @TestMetadata("indexCallExtensionGet.test")

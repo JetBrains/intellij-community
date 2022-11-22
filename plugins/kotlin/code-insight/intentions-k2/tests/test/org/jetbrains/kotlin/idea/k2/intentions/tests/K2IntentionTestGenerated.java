@@ -1932,9 +1932,9 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/onOverride.kt");
         }
 
-        @TestMetadata("onOverrideInTrait.kt")
-        public void testOnOverrideInTrait() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitType/onOverrideInTrait.kt");
+        @TestMetadata("onOverrideInInterface.kt")
+        public void testOnOverrideInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/onOverrideInInterface.kt");
         }
 
         @TestMetadata("onPropertyAccessor.kt")

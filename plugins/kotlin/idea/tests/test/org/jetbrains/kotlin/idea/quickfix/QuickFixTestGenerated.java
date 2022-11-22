@@ -4017,6 +4017,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithReceiver.kt");
                     }
 
+                    @TestMetadata("callWithSuperInterface.kt")
+                    public void testCallWithSuperInterface() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithSuperInterface.kt");
+                    }
+
                     @TestMetadata("callWithSuperclassNoConstructorParams.kt")
                     public void testCallWithSuperclassNoConstructorParams() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithSuperclassNoConstructorParams.kt");
@@ -4025,11 +4030,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     @TestMetadata("callWithSuperclassWithConstructorParams.kt")
                     public void testCallWithSuperclassWithConstructorParams() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithSuperclassWithConstructorParams.kt");
-                    }
-
-                    @TestMetadata("callWithSupertrait.kt")
-                    public void testCallWithSupertrait() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithSupertrait.kt");
                     }
 
                     @TestMetadata("callWithThisReceiverInClass.kt")
@@ -4191,14 +4191,14 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/delegatorToSupercallWithTypeParams.kt");
                 }
 
-                @TestMetadata("traitDelegatorToSuperclass.kt")
-                public void testTraitDelegatorToSuperclass() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/traitDelegatorToSuperclass.kt");
+                @TestMetadata("interfaceDelegatorToSuperclass.kt")
+                public void testInterfaceDelegatorToSuperclass() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/interfaceDelegatorToSuperclass.kt");
                 }
 
-                @TestMetadata("traitDelegatorToSuperclass2.kt")
-                public void testTraitDelegatorToSuperclass2() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/traitDelegatorToSuperclass2.kt");
+                @TestMetadata("interfaceDelegatorToSuperclass2.kt")
+                public void testInterfaceDelegatorToSuperclass2() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/interfaceDelegatorToSuperclass2.kt");
                 }
             }
 
@@ -4290,6 +4290,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createClass/importDirective/enumWithQualifier.kt");
                     }
 
+                    @TestMetadata("interfaceInPackage.kt")
+                    public void testInterfaceInPackage() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createClass/importDirective/interfaceInPackage.kt");
+                    }
+
+                    @TestMetadata("interfaceWithQualifier.kt")
+                    public void testInterfaceWithQualifier() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createClass/importDirective/interfaceWithQualifier.kt");
+                    }
+
                     @TestMetadata("objectInPackage.kt")
                     public void testObjectInPackage() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createClass/importDirective/objectInPackage.kt");
@@ -4298,16 +4308,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     @TestMetadata("objectWithQualifier.kt")
                     public void testObjectWithQualifier() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createClass/importDirective/objectWithQualifier.kt");
-                    }
-
-                    @TestMetadata("traitInPackage.kt")
-                    public void testTraitInPackage() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createClass/importDirective/traitInPackage.kt");
-                    }
-
-                    @TestMetadata("traitWithQualifier.kt")
-                    public void testTraitWithQualifier() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createClass/importDirective/traitWithQualifier.kt");
                     }
                 }
             }
@@ -4469,6 +4469,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/interfaceByClassLiteral.kt");
                 }
 
+                @TestMetadata("interfaceByQualifier.kt")
+                public void testInterfaceByQualifier() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/interfaceByQualifier.kt");
+                }
+
+                @TestMetadata("interfaceNoReceiver.kt")
+                public void testInterfaceNoReceiver() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/interfaceNoReceiver.kt");
+                }
+
                 @TestMetadata("objectByClassLiteral.kt")
                 public void testObjectByClassLiteral() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/objectByClassLiteral.kt");
@@ -4519,24 +4529,14 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/objectWithSuperclass.kt");
                 }
 
-                @TestMetadata("objectWithSupertrait.kt")
-                public void testObjectWithSupertrait() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/objectWithSupertrait.kt");
+                @TestMetadata("objectWithSuperinterface.kt")
+                public void testObjectWithSuperinterface() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/objectWithSuperinterface.kt");
                 }
 
                 @TestMetadata("recursiveBound.kt")
                 public void testRecursiveBound() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/recursiveBound.kt");
-                }
-
-                @TestMetadata("traitByQualifier.kt")
-                public void testTraitByQualifier() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/traitByQualifier.kt");
-                }
-
-                @TestMetadata("traitNoReceiver.kt")
-                public void testTraitNoReceiver() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/traitNoReceiver.kt");
                 }
 
                 @TestMetadata("unusedReference.kt")
@@ -4642,6 +4642,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createClass/typeReference/enumNotQualifierWithTypeArgs.kt");
                 }
 
+                @TestMetadata("interfaceNotQualifierNoTypeArgs.kt")
+                public void testInterfaceNotQualifierNoTypeArgs() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/typeReference/interfaceNotQualifierNoTypeArgs.kt");
+                }
+
                 @TestMetadata("nestedClassByTypeArgumentRefNoBody.kt")
                 public void testNestedClassByTypeArgumentRefNoBody() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createClass/typeReference/nestedClassByTypeArgumentRefNoBody.kt");
@@ -4695,11 +4700,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("objectQualifierNoTypeArgs.kt")
                 public void testObjectQualifierNoTypeArgs() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createClass/typeReference/objectQualifierNoTypeArgs.kt");
-                }
-
-                @TestMetadata("traitNotQualifierNoTypeArgs.kt")
-                public void testTraitNotQualifierNoTypeArgs() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/typeReference/traitNotQualifierNoTypeArgs.kt");
                 }
 
                 @TestMetadata("typeArgumentWithBound.kt")
@@ -5064,9 +5064,9 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnClassNoClassObject2.kt");
                     }
 
-                    @TestMetadata("extensionFunOnTrait.kt")
-                    public void testExtensionFunOnTrait() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnTrait.kt");
+                    @TestMetadata("extensionFunOnInterface.kt")
+                    public void testExtensionFunOnInterface() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnInterface.kt");
                     }
 
                     @TestMetadata("extensionRefInImport.kt")
@@ -5129,6 +5129,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/funOnEnumClass2.kt");
                     }
 
+                    @TestMetadata("funOnInterface.kt")
+                    public void testFunOnInterface() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnInterface.kt");
+                    }
+
                     @TestMetadata("funOnLibObject.kt")
                     public void testFunOnLibObject() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/funOnLibObject.kt");
@@ -5137,11 +5142,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     @TestMetadata("funOnLibType.kt")
                     public void testFunOnLibType() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/funOnLibType.kt");
-                    }
-
-                    @TestMetadata("funOnTrait.kt")
-                    public void testFunOnTrait() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnTrait.kt");
                     }
 
                     @TestMetadata("funOnUserObject.kt")
@@ -6198,14 +6198,14 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/inAccessorInGenClass.kt");
                 }
 
+                @TestMetadata("inAccessorInInterface.kt")
+                public void testInAccessorInInterface() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/inAccessorInInterface.kt");
+                }
+
                 @TestMetadata("inAccessorInObject.kt")
                 public void testInAccessorInObject() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/inAccessorInObject.kt");
-                }
-
-                @TestMetadata("inAccessorInTrait.kt")
-                public void testInAccessorInTrait() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/inAccessorInTrait.kt");
                 }
 
                 @TestMetadata("inAccessorNoClass.kt")
@@ -10041,9 +10041,9 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/finalUpperBound.kt");
             }
 
-            @TestMetadata("implementTraitFinalSupertype.kt")
-            public void testImplementTraitFinalSupertype() throws Exception {
-                runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/implementTraitFinalSupertype.kt");
+            @TestMetadata("implementInterfaceFinalSupertype.kt")
+            public void testImplementInterfaceFinalSupertype() throws Exception {
+                runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/implementInterfaceFinalSupertype.kt");
             }
 
             @TestMetadata("nestedFinalClass.kt")
@@ -10182,9 +10182,9 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/modifiers/cannotMakeClassAnnotation.kt");
             }
 
-            @TestMetadata("finalTrait.kt")
-            public void testFinalTrait() throws Exception {
-                runTest("testData/quickfix/modifiers/finalTrait.kt");
+            @TestMetadata("finalInterface.kt")
+            public void testFinalInterface() throws Exception {
+                runTest("testData/quickfix/modifiers/finalInterface.kt");
             }
 
             @TestMetadata("illegalEnumAnnotation1.kt")
@@ -10387,9 +10387,9 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/modifiers/removeIncompatibleModifier.kt");
             }
 
-            @TestMetadata("removeInnerForClassInTrait.kt")
-            public void testRemoveInnerForClassInTrait() throws Exception {
-                runTest("testData/quickfix/modifiers/removeInnerForClassInTrait.kt");
+            @TestMetadata("removeInnerForClassInInterface.kt")
+            public void testRemoveInnerForClassInInterface() throws Exception {
+                runTest("testData/quickfix/modifiers/removeInnerForClassInInterface.kt");
             }
 
             @TestMetadata("removeModifierFromForbiddenOperatorMod.kt")
@@ -11035,6 +11035,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionInLocalDeclaration.kt");
             }
 
+            @TestMetadata("addFunctionInterface.kt")
+            public void testAddFunctionInterface() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addFunctionInterface.kt");
+            }
+
             @TestMetadata("addFunctionNoBody.kt")
             public void testAddFunctionNoBody() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionNoBody.kt");
@@ -11060,19 +11065,14 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionToReadOnlySupertype.kt");
             }
 
-            @TestMetadata("addFunctionTrait.kt")
-            public void testAddFunctionTrait() throws Exception {
-                runTest("testData/quickfix/override/nothingToOverride/addFunctionTrait.kt");
+            @TestMetadata("addFunctionTwoInterfaces.kt")
+            public void testAddFunctionTwoInterfaces() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addFunctionTwoInterfaces.kt");
             }
 
             @TestMetadata("addFunctionTwoSuperclasses.kt")
             public void testAddFunctionTwoSuperclasses() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionTwoSuperclasses.kt");
-            }
-
-            @TestMetadata("addFunctionTwoTraits.kt")
-            public void testAddFunctionTwoTraits() throws Exception {
-                runTest("testData/quickfix/override/nothingToOverride/addFunctionTwoTraits.kt");
             }
 
             @TestMetadata("addFunctionWithAnnotations.kt")
@@ -11105,9 +11105,9 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/addParameterPreserveVisibility.kt");
             }
 
-            @TestMetadata("addParameterTwoSupertraits.kt")
-            public void testAddParameterTwoSupertraits() throws Exception {
-                runTest("testData/quickfix/override/nothingToOverride/addParameterTwoSupertraits.kt");
+            @TestMetadata("addParameterTwoSuperinterfaces.kt")
+            public void testAddParameterTwoSuperinterfaces() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addParameterTwoSuperinterfaces.kt");
             }
 
             @TestMetadata("addParameterTwoSupertypes.kt")
@@ -11165,9 +11165,9 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeDefinitelyNotNull.kt");
             }
 
-            @TestMetadata("changeParameterTypeInTrait.kt")
-            public void testChangeParameterTypeInTrait() throws Exception {
-                runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeInTrait.kt");
+            @TestMetadata("changeParameterTypeInInterface.kt")
+            public void testChangeParameterTypeInInterface() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeInInterface.kt");
             }
 
             @TestMetadata("changeParameterTypeMatchNames.kt")
@@ -11190,9 +11190,9 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeSingleExpressionFunction.kt");
             }
 
-            @TestMetadata("changeParameterTypeSuperTrait.kt")
-            public void testChangeParameterTypeSuperTrait() throws Exception {
-                runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeSuperTrait.kt");
+            @TestMetadata("changeParameterTypeSuperInterface.kt")
+            public void testChangeParameterTypeSuperInterface() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeSuperInterface.kt");
             }
 
             @TestMetadata("changeReturnType.kt")
@@ -11240,9 +11240,9 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/removeParameter.kt");
             }
 
-            @TestMetadata("removeParameterTwoTraits.kt")
-            public void testRemoveParameterTwoTraits() throws Exception {
-                runTest("testData/quickfix/override/nothingToOverride/removeParameterTwoTraits.kt");
+            @TestMetadata("removeParameterTwoInterfaces.kt")
+            public void testRemoveParameterTwoInterfaces() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/removeParameterTwoInterfaces.kt");
             }
 
             @TestMetadata("removeTypeParameter.kt")
@@ -13821,6 +13821,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/suppress/declarationKinds/fun.kt");
             }
 
+            @TestMetadata("interface.kt")
+            public void testInterface() throws Exception {
+                runTest("testData/quickfix/suppress/declarationKinds/interface.kt");
+            }
+
             @TestMetadata("multiVal.kt")
             public void testMultiVal() throws Exception {
                 runTest("testData/quickfix/suppress/declarationKinds/multiVal.kt");
@@ -13844,11 +13849,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("secondaryConstructor.kt")
             public void testSecondaryConstructor() throws Exception {
                 runTest("testData/quickfix/suppress/declarationKinds/secondaryConstructor.kt");
-            }
-
-            @TestMetadata("trait.kt")
-            public void testTrait() throws Exception {
-                runTest("testData/quickfix/suppress/declarationKinds/trait.kt");
             }
 
             @TestMetadata("val.kt")

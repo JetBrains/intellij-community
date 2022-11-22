@@ -188,9 +188,9 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             runTest("testData/hierarchy/class/super/MultiTypeAlias/");
         }
 
-        @TestMetadata("TwoTraits")
-        public void testTwoTraits() throws Exception {
-            runTest("testData/hierarchy/class/super/TwoTraits/");
+        @TestMetadata("TwoInterfaces")
+        public void testTwoInterfaces() throws Exception {
+            runTest("testData/hierarchy/class/super/TwoInterfaces/");
         }
 
         @TestMetadata("TypeAlias")
@@ -211,9 +211,9 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             runTest("testData/hierarchy/class/sub/AllFromClass/");
         }
 
-        @TestMetadata("AllFromTrait")
-        public void testAllFromTrait() throws Exception {
-            runTest("testData/hierarchy/class/sub/AllFromTrait/");
+        @TestMetadata("AllFromInterface")
+        public void testAllFromInterface() throws Exception {
+            runTest("testData/hierarchy/class/sub/AllFromInterface/");
         }
 
         @TestMetadata("ClassFromClass")
@@ -221,9 +221,9 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             runTest("testData/hierarchy/class/sub/ClassFromClass/");
         }
 
-        @TestMetadata("ClassFromTrait")
-        public void testClassFromTrait() throws Exception {
-            runTest("testData/hierarchy/class/sub/ClassFromTrait/");
+        @TestMetadata("ClassFromInterface")
+        public void testClassFromInterface() throws Exception {
+            runTest("testData/hierarchy/class/sub/ClassFromInterface/");
         }
 
         @TestMetadata("ConstructorCallCaretAfter")
@@ -236,6 +236,16 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             runTest("testData/hierarchy/class/sub/ConstructorCallCaretBefore/");
         }
 
+        @TestMetadata("InterfaceFromClass")
+        public void testInterfaceFromClass() throws Exception {
+            runTest("testData/hierarchy/class/sub/InterfaceFromClass/");
+        }
+
+        @TestMetadata("InterfaceFromInterface")
+        public void testInterfaceFromInterface() throws Exception {
+            runTest("testData/hierarchy/class/sub/InterfaceFromInterface/");
+        }
+
         @TestMetadata("MultiTypeAlias")
         public void testMultiTypeAlias() throws Exception {
             runTest("testData/hierarchy/class/sub/MultiTypeAlias/");
@@ -246,9 +256,9 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             runTest("testData/hierarchy/class/sub/ObjectFromClass/");
         }
 
-        @TestMetadata("ObjectFromTrait")
-        public void testObjectFromTrait() throws Exception {
-            runTest("testData/hierarchy/class/sub/ObjectFromTrait/");
+        @TestMetadata("ObjectFromInterface")
+        public void testObjectFromInterface() throws Exception {
+            runTest("testData/hierarchy/class/sub/ObjectFromInterface/");
         }
 
         @TestMetadata("SecondaryConstructorCallCaretAfter")
@@ -259,16 +269,6 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
         @TestMetadata("SecondaryConstructorCallCaretBefore")
         public void testSecondaryConstructorCallCaretBefore() throws Exception {
             runTest("testData/hierarchy/class/sub/SecondaryConstructorCallCaretBefore/");
-        }
-
-        @TestMetadata("TraitFromClass")
-        public void testTraitFromClass() throws Exception {
-            runTest("testData/hierarchy/class/sub/TraitFromClass/");
-        }
-
-        @TestMetadata("TraitFromTrait")
-        public void testTraitFromTrait() throws Exception {
-            runTest("testData/hierarchy/class/sub/TraitFromTrait/");
         }
 
         @TestMetadata("TypeAlias")
@@ -518,9 +518,9 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             runTest("testData/hierarchy/overrides/kotlinFunctionInClass/");
         }
 
-        @TestMetadata("kotlinFunctionInTrait")
-        public void testKotlinFunctionInTrait() throws Exception {
-            runTest("testData/hierarchy/overrides/kotlinFunctionInTrait/");
+        @TestMetadata("kotlinFunctionInInterface")
+        public void testKotlinFunctionInInterface() throws Exception {
+            runTest("testData/hierarchy/overrides/kotlinFunctionInInterface/");
         }
 
         @TestMetadata("kotlinPropertyInClass")
@@ -528,9 +528,9 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             runTest("testData/hierarchy/overrides/kotlinPropertyInClass/");
         }
 
-        @TestMetadata("kotlinPropertyInTrait")
-        public void testKotlinPropertyInTrait() throws Exception {
-            runTest("testData/hierarchy/overrides/kotlinPropertyInTrait/");
+        @TestMetadata("kotlinPropertyInInterface")
+        public void testKotlinPropertyInInterface() throws Exception {
+            runTest("testData/hierarchy/overrides/kotlinPropertyInInterface/");
         }
 
         @TestMetadata("kotlinTopLevelFunction")

@@ -63,8 +63,8 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementDirectoryTest()
     }
 
-   open fun testFunctionFromTraitInJava() {
-        doImplementJavaDirectoryTest("foo.KotlinTrait", "bar")
+   open fun testFunctionFromInterfaceInJava() {
+        doImplementJavaDirectoryTest("foo.KotlinInterface", "bar")
     }
 
    open fun testGenericMethod() {
@@ -79,7 +79,7 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
-   open fun testTraitGenericImplement() {
+   open fun testInterfaceGenericImplement() {
         doImplementFileTest()
     }
 
@@ -95,7 +95,7 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doMultiImplementFileTest()
     }
 
-   open fun testTraitNullableFunction() {
+   open fun testInterfaceNullableFunction() {
         doImplementFileTest()
     }
 

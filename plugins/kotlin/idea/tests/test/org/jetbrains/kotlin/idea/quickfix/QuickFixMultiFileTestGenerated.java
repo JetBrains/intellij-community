@@ -463,6 +463,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/importInFirstPartInUserType.test");
             }
 
+            @TestMetadata("importInterface.before.Main.kt")
+            public void testImportInterface() throws Exception {
+                runTest("testData/quickfix/autoImports/importInterface.before.Main.kt");
+            }
+
             @TestMetadata("importKotlinCompanionPropertyAsFieldFromJava.test")
             public void testImportKotlinCompanionPropertyAsFieldFromJava() throws Exception {
                 runTest("testData/quickfix/autoImports/importKotlinCompanionPropertyAsFieldFromJava.test");
@@ -523,19 +528,14 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/importKotlinStaticPropertyOverloadedSetterFromJava.test");
             }
 
-            @TestMetadata("importNullableTraitWithGenerics.before.Main.kt")
-            public void testImportNullableTraitWithGenerics() throws Exception {
-                runTest("testData/quickfix/autoImports/importNullableTraitWithGenerics.before.Main.kt");
+            @TestMetadata("importNullableInterfaceWithGenerics.before.Main.kt")
+            public void testImportNullableInterfaceWithGenerics() throws Exception {
+                runTest("testData/quickfix/autoImports/importNullableInterfaceWithGenerics.before.Main.kt");
             }
 
             @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
             public void testImportOperatorInvokeWithConvention() throws Exception {
                 runTest("testData/quickfix/autoImports/ImportOperatorInvokeWithConvention.before.Main.kt");
-            }
-
-            @TestMetadata("importTrait.before.Main.kt")
-            public void testImportTrait() throws Exception {
-                runTest("testData/quickfix/autoImports/importTrait.before.Main.kt");
             }
 
             @TestMetadata("indexCallExtensionGet.test")
@@ -1143,6 +1143,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithJavaQualifierInMemberValDelegate.before.Main.kt");
                     }
 
+                    @TestMetadata("callWithSuperInterfaceAndJavaReceiver.before.Main.kt")
+                    public void testCallWithSuperInterfaceAndJavaReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithSuperInterfaceAndJavaReceiver.before.Main.kt");
+                    }
+
                     @TestMetadata("callWithSuperclassAndJavaReceiverNoConstructorParams.before.Main.kt")
                     public void testCallWithSuperclassAndJavaReceiverNoConstructorParams() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithSuperclassAndJavaReceiverNoConstructorParams.before.Main.kt");
@@ -1151,11 +1156,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     @TestMetadata("callWithSuperclassConstructorParamsAndJavaReceiver.before.Main.kt")
                     public void testCallWithSuperclassConstructorParamsAndJavaReceiver() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithSuperclassConstructorParamsAndJavaReceiver.before.Main.kt");
-                    }
-
-                    @TestMetadata("callWithSupertraitAndJavaReceiver.before.Main.kt")
-                    public void testCallWithSupertraitAndJavaReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithSupertraitAndJavaReceiver.before.Main.kt");
                     }
                 }
             }
@@ -1177,14 +1177,14 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/delegatorToNestedJavaSupercallWithParamNames.before.Main.kt");
                 }
 
-                @TestMetadata("traitDelegatorToNestedGroovySuperclass.before.Main.kt")
-                public void testTraitDelegatorToNestedGroovySuperclass() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/traitDelegatorToNestedGroovySuperclass.before.Main.kt");
+                @TestMetadata("interfaceDelegatorToNestedGroovySuperclass.before.Main.kt")
+                public void testInterfaceDelegatorToNestedGroovySuperclass() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/interfaceDelegatorToNestedGroovySuperclass.before.Main.kt");
                 }
 
-                @TestMetadata("traitDelegatorToNestedJavaSuperclass.before.Main.kt")
-                public void testTraitDelegatorToNestedJavaSuperclass() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/traitDelegatorToNestedJavaSuperclass.before.Main.kt");
+                @TestMetadata("interfaceDelegatorToNestedJavaSuperclass.before.Main.kt")
+                public void testInterfaceDelegatorToNestedJavaSuperclass() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/delegationSpecifier/interfaceDelegatorToNestedJavaSuperclass.before.Main.kt");
                 }
             }
 
@@ -1220,14 +1220,14 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     runTest("testData/quickfix/createFromUsage/createClass/importDirective/enumWithJavaQualifier.before.Main.kt");
                 }
 
+                @TestMetadata("interfaceWithJavaQualifier.before.Main.kt")
+                public void testInterfaceWithJavaQualifier() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/importDirective/interfaceWithJavaQualifier.before.Main.kt");
+                }
+
                 @TestMetadata("objectWithJavaQualifier.before.Main.kt")
                 public void testObjectWithJavaQualifier() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createClass/importDirective/objectWithJavaQualifier.before.Main.kt");
-                }
-
-                @TestMetadata("traitWithJavaQualifier.before.Main.kt")
-                public void testTraitWithJavaQualifier() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/importDirective/traitWithJavaQualifier.before.Main.kt");
                 }
             }
 
@@ -1273,14 +1273,14 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/enumEntryWithJavaNonEnumSuperclass.before.Main.kt");
                 }
 
+                @TestMetadata("interfaceByNestedJavaQualifier.before.Main.kt")
+                public void testInterfaceByNestedJavaQualifier() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/interfaceByNestedJavaQualifier.before.Main.kt");
+                }
+
                 @TestMetadata("objectWithJavaQualifier.before.Main.kt")
                 public void testObjectWithJavaQualifier() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/objectWithJavaQualifier.before.Main.kt");
-                }
-
-                @TestMetadata("traitByNestedJavaQualifier.before.Main.kt")
-                public void testTraitByNestedJavaQualifier() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/referenceExpression/traitByNestedJavaQualifier.before.Main.kt");
                 }
             }
 
@@ -1316,9 +1316,9 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     runTest("testData/quickfix/createFromUsage/createClass/typeReference/enumJavaTypeReceiver.before.Main.kt");
                 }
 
-                @TestMetadata("traitJavaTypeReceiver.before.Main.kt")
-                public void testTraitJavaTypeReceiver() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createClass/typeReference/traitJavaTypeReceiver.before.Main.kt");
+                @TestMetadata("interfaceJavaTypeReceiver.before.Main.kt")
+                public void testInterfaceJavaTypeReceiver() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/typeReference/interfaceJavaTypeReceiver.before.Main.kt");
                 }
             }
         }

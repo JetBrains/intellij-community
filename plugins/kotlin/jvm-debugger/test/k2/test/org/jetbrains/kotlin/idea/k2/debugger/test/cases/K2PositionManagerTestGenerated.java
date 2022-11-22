@@ -70,6 +70,11 @@ public abstract class K2PositionManagerTestGenerated extends AbstractK2PositionM
             runTest("../testData/positionManager/innerClass.kt");
         }
 
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("../testData/positionManager/interface.kt");
+        }
+
         @TestMetadata("JvmNameAnnotation.kt")
         public void testJvmNameAnnotation() throws Exception {
             runTest("../testData/positionManager/JvmNameAnnotation.kt");
@@ -108,11 +113,6 @@ public abstract class K2PositionManagerTestGenerated extends AbstractK2PositionM
         @TestMetadata("topLevelPropertyInitializer.kt")
         public void testTopLevelPropertyInitializer() throws Exception {
             runTest("../testData/positionManager/topLevelPropertyInitializer.kt");
-        }
-
-        @TestMetadata("trait.kt")
-        public void testTrait() throws Exception {
-            runTest("../testData/positionManager/trait.kt");
         }
 
         @TestMetadata("twoClasses.kt")

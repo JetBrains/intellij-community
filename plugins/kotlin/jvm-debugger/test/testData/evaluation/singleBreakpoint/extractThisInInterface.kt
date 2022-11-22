@@ -1,4 +1,4 @@
-package extractThisInTrait
+package extractThisInInterface
 
 fun main(args: Array<String>) {
     TImpl().foo()

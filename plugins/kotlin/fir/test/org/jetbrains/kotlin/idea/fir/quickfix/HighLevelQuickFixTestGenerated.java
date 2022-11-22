@@ -899,9 +899,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/modifiers/cannotMakeClassAnnotation.kt");
         }
 
-        @TestMetadata("finalTrait.kt")
-        public void testFinalTrait() throws Exception {
-            runTest("../idea/tests/testData/quickfix/modifiers/finalTrait.kt");
+        @TestMetadata("finalInterface.kt")
+        public void testFinalInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/finalInterface.kt");
         }
 
         @TestMetadata("illegalEnumAnnotation1.kt")
@@ -1104,9 +1104,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/modifiers/removeIncompatibleModifier.kt");
         }
 
-        @TestMetadata("removeInnerForClassInTrait.kt")
-        public void testRemoveInnerForClassInTrait() throws Exception {
-            runTest("../idea/tests/testData/quickfix/modifiers/removeInnerForClassInTrait.kt");
+        @TestMetadata("removeInnerForClassInInterface.kt")
+        public void testRemoveInnerForClassInInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/removeInnerForClassInInterface.kt");
         }
 
         @TestMetadata("removeModifierFromForbiddenOperatorMod.kt")

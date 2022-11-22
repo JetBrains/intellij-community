@@ -855,6 +855,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/inlineReified2.kt");
             }
 
+            @TestMetadata("interfaceFunction.kt")
+            public void testInterfaceFunction() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/interfaceFunction.kt");
+            }
+
             @TestMetadata("invisibleType.kt")
             public void testInvisibleType() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/invisibleType.kt");
@@ -1008,11 +1013,6 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("topLevelValUnderSmartCast.kt")
             public void testTopLevelValUnderSmartCast() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
-            }
-
-            @TestMetadata("traitFunction.kt")
-            public void testTraitFunction() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/traitFunction.kt");
             }
 
             @TestMetadata("unnecessaryNullabilityAnnotation.kt")
@@ -2807,9 +2807,9 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceProperty/extractLazyToFile.kt");
             }
 
-            @TestMetadata("extractLazyToTrait.kt")
-            public void testExtractLazyToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyToTrait.kt");
+            @TestMetadata("extractLazyToInterface.kt")
+            public void testExtractLazyToInterface() throws Exception {
+                runTest("testData/refactoring/introduceProperty/extractLazyToInterface.kt");
             }
 
             @TestMetadata("extractLazyWithBlock.kt")
@@ -2862,9 +2862,9 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceProperty/extractWithGetterToFile.kt");
             }
 
-            @TestMetadata("extractWithGetterToTrait.kt")
-            public void testExtractWithGetterToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithGetterToTrait.kt");
+            @TestMetadata("extractWithGetterToInterface.kt")
+            public void testExtractWithGetterToInterface() throws Exception {
+                runTest("testData/refactoring/introduceProperty/extractWithGetterToInterface.kt");
             }
 
             @TestMetadata("extractWithInitializerAndBlock.kt")
@@ -2897,9 +2897,9 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceProperty/extractWithInitializerToFile.kt");
             }
 
-            @TestMetadata("extractWithInitializerToTrait.kt")
-            public void testExtractWithInitializerToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerToTrait.kt");
+            @TestMetadata("extractWithInitializerToInterface.kt")
+            public void testExtractWithInitializerToInterface() throws Exception {
+                runTest("testData/refactoring/introduceProperty/extractWithInitializerToInterface.kt");
             }
 
             @TestMetadata("extractWithParams.kt")

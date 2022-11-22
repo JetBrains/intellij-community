@@ -241,6 +241,11 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
             runTest("../testData/stepping/stepInto/inlineOnly.kt");
         }
 
+        @TestMetadata("interfaces.kt")
+        public void testInterfaces() throws Exception {
+            runTest("../testData/stepping/stepInto/interfaces.kt");
+        }
+
         @TestMetadata("oneLineSuspendFunWithInline.kt")
         public void testOneLineSuspendFunWithInline() throws Exception {
             runTest("../testData/stepping/stepInto/oneLineSuspendFunWithInline.kt");
@@ -314,11 +319,6 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
         @TestMetadata("syntheticMethodsSkip.kt")
         public void testSyntheticMethodsSkip() throws Exception {
             runTest("../testData/stepping/stepInto/syntheticMethodsSkip.kt");
-        }
-
-        @TestMetadata("traits.kt")
-        public void testTraits() throws Exception {
-            runTest("../testData/stepping/stepInto/traits.kt");
         }
 
         @TestMetadata("whenExpr.kt")

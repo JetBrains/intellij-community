@@ -5661,6 +5661,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeParameters/genericParam-settings.java");
         }
 
+        @TestMetadata("interfaceDoubleParametrizationWithTwoBoundsWithExtending.java")
+        public void testInterfaceDoubleParametrizationWithTwoBoundsWithExtending() throws Exception {
+            runTest("testData/newJ2k/typeParameters/interfaceDoubleParametrizationWithTwoBoundsWithExtending.java");
+        }
+
         @TestMetadata("manyGenericParams.java")
         public void testManyGenericParams() throws Exception {
             runTest("testData/newJ2k/typeParameters/manyGenericParams.java");
@@ -5679,11 +5684,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("rawTypeCast.java")
         public void testRawTypeCast() throws Exception {
             runTest("testData/newJ2k/typeParameters/rawTypeCast.java");
-        }
-
-        @TestMetadata("traitDoubleParametrizationWithTwoBoundsWithExtending.java")
-        public void testTraitDoubleParametrizationWithTwoBoundsWithExtending() throws Exception {
-            runTest("testData/newJ2k/typeParameters/traitDoubleParametrizationWithTwoBoundsWithExtending.java");
         }
 
         @TestMetadata("typeFromOtherFile.java")

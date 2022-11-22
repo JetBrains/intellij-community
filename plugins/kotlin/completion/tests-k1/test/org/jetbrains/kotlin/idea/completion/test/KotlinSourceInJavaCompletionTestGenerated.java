@@ -83,6 +83,11 @@ public class KotlinSourceInJavaCompletionTestGenerated extends AbstractKotlinSou
         runTest("../testData/injava/InterfaceDefaultImplsNonImported.java");
     }
 
+    @TestMetadata("InterfaceMember.java")
+    public void testInterfaceMember() throws Exception {
+        runTest("../testData/injava/InterfaceMember.java");
+    }
+
     @TestMetadata("MultiFileFacade.java")
     public void testMultiFileFacade() throws Exception {
         runTest("../testData/injava/MultiFileFacade.java");
@@ -161,10 +166,5 @@ public class KotlinSourceInJavaCompletionTestGenerated extends AbstractKotlinSou
     @TestMetadata("TopLevelMembers.java")
     public void testTopLevelMembers() throws Exception {
         runTest("../testData/injava/TopLevelMembers.java");
-    }
-
-    @TestMetadata("TraitMember.java")
-    public void testTraitMember() throws Exception {
-        runTest("../testData/injava/TraitMember.java");
     }
 }

@@ -1,8 +1,8 @@
 // FIR_IDENTICAL
-interface Trait {
+interface Interface {
     fun <A, B : Runnable, E : Map.Entry<A, B>> foo() where B : Cloneable, B : Comparable<B>
 }
 
-class TraitImpl : Trait {
+class InterfaceImpl : Interface {
     <caret>
 }

@@ -1,5 +1,5 @@
 public class Testing {
-    void f(mockLib.foo.LibTrait p) {
+    void f(mockLib.foo.LibInterface p) {
         p.<caret>
     }
 }

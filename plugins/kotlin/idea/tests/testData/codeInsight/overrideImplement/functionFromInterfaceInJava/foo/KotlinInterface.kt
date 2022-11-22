@@ -1,6 +1,6 @@
 package foo
 
-interface KotlinTrait {
+interface KotlinInterface {
     fun bar(price : String?)
 }
 

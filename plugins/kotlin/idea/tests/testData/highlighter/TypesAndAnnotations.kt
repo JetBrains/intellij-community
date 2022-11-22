@@ -1,7 +1,7 @@
-interface <info textAttributesKey="KOTLIN_TRAIT">TheTrait</info> {
+interface <info textAttributesKey="KOTLIN_TRAIT">TheInterface</info> {
 }
 
-class <info textAttributesKey="KOTLIN_CLASS">TheClass</info> : <info textAttributesKey="KOTLIN_TRAIT">TheTrait</info> {
+class <info textAttributesKey="KOTLIN_CLASS">TheClass</info> : <info textAttributesKey="KOTLIN_TRAIT">TheInterface</info> {
 }
 
 <info textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</info> class <info textAttributesKey="KOTLIN_ANNOTATION">magnificent</info>

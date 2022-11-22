@@ -1,4 +1,4 @@
-package traits
+package interfaces
 
 fun main(args: Array<String>) {
     //Breakpoint!

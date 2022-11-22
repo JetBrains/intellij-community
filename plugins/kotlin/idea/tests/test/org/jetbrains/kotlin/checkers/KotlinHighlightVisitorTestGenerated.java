@@ -145,6 +145,11 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
             runTest("testData/checker/IncDec.kt");
         }
 
+        @TestMetadata("InterfaceSupertypeList.kt")
+        public void testInterfaceSupertypeList() throws Exception {
+            runTest("testData/checker/InterfaceSupertypeList.kt");
+        }
+
         @TestMetadata("IsExpressions.kt")
         public void testIsExpressions() throws Exception {
             runTest("testData/checker/IsExpressions.kt");
@@ -313,11 +318,6 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
         @TestMetadata("SuppressedHighlighting.kt")
         public void testSuppressedHighlighting() throws Exception {
             runTest("testData/checker/SuppressedHighlighting.kt");
-        }
-
-        @TestMetadata("TraitSupertypeList.kt")
-        public void testTraitSupertypeList() throws Exception {
-            runTest("testData/checker/TraitSupertypeList.kt");
         }
 
         @TestMetadata("trivialHierarchyLoop.kt")
@@ -711,6 +711,11 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
                 runTest("testData/checker/duplicateJvmSignature/functionAndProperty/classObject.kt");
             }
 
+            @TestMetadata("interface.kt")
+            public void testInterface() throws Exception {
+                runTest("testData/checker/duplicateJvmSignature/functionAndProperty/interface.kt");
+            }
+
             @TestMetadata("localClass.kt")
             public void testLocalClass() throws Exception {
                 runTest("testData/checker/duplicateJvmSignature/functionAndProperty/localClass.kt");
@@ -740,23 +745,18 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
             public void testTopLevelMultifileRuntime() throws Exception {
                 runTest("testData/checker/duplicateJvmSignature/functionAndProperty/topLevelMultifileRuntime.kt");
             }
-
-            @TestMetadata("trait.kt")
-            public void testTrait() throws Exception {
-                runTest("testData/checker/duplicateJvmSignature/functionAndProperty/trait.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/checker/duplicateJvmSignature/traitImpl")
-        public static class TraitImpl extends AbstractKotlinHighlightVisitorTest {
+        @TestMetadata("testData/checker/duplicateJvmSignature/interfaceImpl")
+        public static class InterfaceImpl extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("twoTraits.kt")
-            public void testTwoTraits() throws Exception {
-                runTest("testData/checker/duplicateJvmSignature/traitImpl/twoTraits.kt");
+            @TestMetadata("twoInterfaces.kt")
+            public void testTwoInterfaces() throws Exception {
+                runTest("testData/checker/duplicateJvmSignature/interfaceImpl/twoInterfaces.kt");
             }
         }
     }

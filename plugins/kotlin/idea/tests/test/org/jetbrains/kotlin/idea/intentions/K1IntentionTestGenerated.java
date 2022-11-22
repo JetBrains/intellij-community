@@ -15507,9 +15507,9 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/onOverride.kt");
         }
 
-        @TestMetadata("onOverrideInTrait.kt")
-        public void testOnOverrideInTrait() throws Exception {
-            runTest("testData/intentions/removeExplicitType/onOverrideInTrait.kt");
+        @TestMetadata("onOverrideInInterface.kt")
+        public void testOnOverrideInInterface() throws Exception {
+            runTest("testData/intentions/removeExplicitType/onOverrideInInterface.kt");
         }
 
         @TestMetadata("onPropertyAccessor.kt")
