@@ -3,7 +3,7 @@ PsiJetFileStubImpl[package=]
   IMPORT_LIST
   CLASS[classId=/Test, fqName=Test, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=Test, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=Test]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=Test.value, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=value]
           TYPE_REFERENCE
