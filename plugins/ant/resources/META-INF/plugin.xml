@@ -3,7 +3,7 @@
   <id>AntSupport</id>
   <category>Build Tools</category>
   <description><![CDATA[
-  Provides integration with the <a href="http://ant.apache.org/">Ant</a> build tool.
+  Provides integration with the <a href="https://ant.apache.org/">Ant</a> build tool.
 <ul><li>Dedicated tool window</li>
 <li>Coding assistance for build files</li>
 <li>Possibility to execute tasks</li></ul>
@@ -59,7 +59,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription" rootTagName="antlib"/>
     <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
     <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomDeclarationSearcher"/>
-    
+
     <!--Type Presentation-->
     <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="Macro Definition"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomMacrodefElement" name="Macrodef Nested Element"/>
