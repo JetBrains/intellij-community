@@ -66,9 +66,13 @@ public final class ChangeUtil {
       child = child.getTreeNext();
     }
 
-    return TreeCopyHandler.EP_NAME.getExtensionList().stream()
-      .map(handler -> handler.decodeInformation(element, state))
-      .filter(Objects::nonNull).findFirst().orElse(element);
+    for (TreeCopyHandler handler : TreeCopyHandler.EP_NAME.getExtensionList()) {
+      TreeElement treeElement = handler.decodeInformation(element, state);
+      if (treeElement != null) {
+        return treeElement;
+      }
+    }
+    return element;
   }
 
   @NotNull
