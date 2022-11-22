@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
@@ -61,8 +62,8 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
     doHighlighting();
     List<IntentionAction> actions = CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile());
     String message = JavaBundle.message("set.language.level.to.0", level.getPresentableText());
-    boolean found = ContainerUtil.exists(actions, act -> act.getText().equals(message));
-    if (!found) {
+    IntentionAction foundAction = ContainerUtil.find(actions, act -> act.getText().equals(message));
+    if (foundAction == null) {
       LanguageLevel foundLevel = Stream.of(LanguageLevel.values())
         .filter(l -> ContainerUtil.exists(actions, act -> act.getText()
           .equals(JavaBundle.message("set.language.level.to.0", l.getPresentableText()))))
@@ -71,6 +72,14 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
         fail("Expected level: "+level+"; actual: "+foundLevel);
       } else {
         fail("Action " + message + " not found");
+      }
+    }
+    else {
+      String actualPreview = IntentionPreviewPopupUpdateProcessor.getPreviewContent(getProject(), foundAction, getFile(), getEditor());
+      JavaVersion javaVersion = level.toJavaVersion();
+      String expectedPreview = JavaBundle.message("increase.language.level.preview.description", getModule().getName(), javaVersion);
+      if (!expectedPreview.equals(actualPreview)) {
+        failNotEquals(foundAction.getText(), expectedPreview, actualPreview);
       }
     }
   }
