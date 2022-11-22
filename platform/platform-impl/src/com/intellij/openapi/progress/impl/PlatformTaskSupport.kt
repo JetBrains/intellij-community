@@ -31,8 +31,10 @@ import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
+import java.awt.AWTEvent
 import java.awt.Component
-import java.awt.event.InputEvent
+import java.awt.Container
+import java.awt.EventQueue
 import javax.swing.SwingUtilities
 
 internal class PlatformTaskSupport : TaskSupport {
@@ -92,19 +94,16 @@ internal class PlatformTaskSupport : TaskSupport {
       val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
         withModalIndicator(descriptor, deferredDialog, action)
       }
-      runBlocking {
-        // Dispatch EDT events in the current runBlocking context.
-        val processEventQueueJob = processEventQueueConsumingUnrelatedInputEvents(deferredDialog)
-        mainJob.invokeOnCompletion {
-          // Stop processing the events when the task (with its subtasks) is completed.
-          processEventQueueJob.cancel()
-          // Unblock `getNextEvent()` in case it's blocked.
-          // It's important that getNextEvent() returns after [processEventQueueJob] is cancelled,
-          // this way the next yield() call throws CancellationException.
-          SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
-        }
-        mainJob.await()
+      mainJob.invokeOnCompletion {
+        // Unblock `getNextEvent()` in case it's blocked.
+        SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
       }
+      IdeEventQueue.getInstance().pumpEventsForHierarchy(
+        exitCondition = mainJob::isCompleted,
+        modalComponent = deferredDialog::modalComponent,
+      )
+      @OptIn(ExperimentalCoroutinesApi::class)
+      mainJob.getCompleted()
     }
   }
 }
@@ -281,38 +280,28 @@ private suspend fun ProgressDialogUI.updateFromSink(stateFlow: Flow<ProgressStat
   error("collect call must be cancelled")
 }
 
-/**
- * Before [deferredDialog] is completed, all input events are consumed unconditionally,
- * because the absence of the visible dialog means that
- * [com.intellij.ide.IdeEventQueue.consumeUnrelatedEvent] would consume the event.
- *
- * Once [deferredDialog] is completed (glass pane dialog is visible), input events originating in the dialog will be dispatched.
- * [deferredDialog] might never be completed:
- * - in case the dialog is heavy, all input events will be handled by the inner event loop;
- * - in case the dialog never became visible because the task was completed in [DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS] ms,
- * the processing routine will be simply cancelled.
- */
-private fun CoroutineScope.processEventQueueConsumingUnrelatedInputEvents(deferredDialog: Deferred<DialogWrapper>): Job = launch {
-  val eventQueue = IdeEventQueue.getInstance()
-  val processConsumingAllInputEventsUnconditionallyJob = launch {
-    while (true) {
-      val event = eventQueue.nextEvent
-      if (event is InputEvent && event.source is Component) {
-        event.consume()
-      }
-      else {
-        eventQueue.dispatchEvent(event)
-      }
-      yield()
-    }
+private fun Deferred<DialogWrapper>.modalComponent(): Container? {
+  if (!isCompleted) {
+    return null
   }
-  val modalComponent = deferredDialog.await().contentPane
-  processConsumingAllInputEventsUnconditionallyJob.cancel()
-  while (true) {
-    val event = eventQueue.nextEvent
-    if (!IdeEventQueue.consumeUnrelatedEvent(modalComponent, event)) {
-      eventQueue.dispatchEvent(event)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  val dialogWrapper = getCompleted()
+  if (dialogWrapper.isDisposed) {
+    return null
+  }
+  return dialogWrapper.contentPane
+}
+
+private fun IdeEventQueue.pumpEventsForHierarchy(
+  exitCondition: () -> Boolean,
+  modalComponent: () -> Component?,
+) {
+  assert(EventQueue.isDispatchThread())
+  while (!exitCondition()) {
+    val event: AWTEvent = nextEvent
+    val consumed = IdeEventQueue.consumeUnrelatedEvent(modalComponent(), event)
+    if (!consumed) {
+      dispatchEvent(event)
     }
-    yield()
   }
 }

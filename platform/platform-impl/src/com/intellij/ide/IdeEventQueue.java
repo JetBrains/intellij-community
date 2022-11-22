@@ -978,7 +978,19 @@ public final class IdeEventQueue extends EventQueue {
 
   // return true if consumed
   @ApiStatus.Internal
-  public static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
+  public static boolean consumeUnrelatedEvent(@Nullable Component modalComponent, @NotNull AWTEvent event) {
+    if (modalComponent == null) {
+      if (event instanceof InputEvent && event.getSource() instanceof Component) {
+        if (Logs.LOG.isDebugEnabled()) {
+          Logs.LOG.debug("pumpEventsForHierarchy.consumed: " + event);
+        }
+        ((InputEvent)event).consume();
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
     boolean consumed = false;
     if (event instanceof InputEvent) {
       Object s = event.getSource();
