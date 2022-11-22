@@ -13,16 +13,22 @@ import org.intellij.plugins.markdown.frontmatter.FrontMatterBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider
 import org.jetbrains.yaml.YAMLFileType
+import org.toml.lang.psi.TomlFileType
 
 internal class FrontMatterHeaderJsonSchemaFileProvider(private val project: Project): JsonSchemaFileProvider {
   override fun isAvailable(file: VirtualFile): Boolean {
     if (!FrontMatterHeaderMarkerProvider.isFrontMatterSupportEnabled()) {
       return false
     }
-    if (!FileTypeManager.getInstance().isFileOfType(file, YAMLFileType.YML)) {
+    if (!isSupportedFile(file)) {
       return false
     }
     return runReadAction { isInjectedFrontMatter(file) }
+  }
+
+  private fun isSupportedFile(file: VirtualFile): Boolean {
+    val manager = FileTypeManager.getInstance()
+    return manager.isFileOfType(file, YAMLFileType.YML) || manager.isFileOfType(file, TomlFileType)
   }
 
   private fun isInjectedFrontMatter(file: VirtualFile): Boolean {

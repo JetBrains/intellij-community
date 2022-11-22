@@ -4,15 +4,15 @@ import com.intellij.lang.Language
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-data class FrontMatterContentLanguage(val name: String)
+data class FrontMatterContentLanguage(val id: String)
 
 @ApiStatus.Experimental
 object FrontMatterLanguages {
-  val YAML = FrontMatterContentLanguage("YAML")
+  val YAML = FrontMatterContentLanguage("yaml")
   val TOML = FrontMatterContentLanguage("TOML")
 }
 
 @ApiStatus.Experimental
 fun FrontMatterContentLanguage.findLanguage(): Language? {
-  return Language.findLanguageByID(name.lowercase())
+  return Language.findLanguageByID(id)
 }
