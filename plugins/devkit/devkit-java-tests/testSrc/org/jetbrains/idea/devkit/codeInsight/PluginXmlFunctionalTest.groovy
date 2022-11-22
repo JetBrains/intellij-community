@@ -866,7 +866,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   private static void assertLookupElement(LookupElement[] variants, String lookupText, String tailText, String typeText) {
     LookupElement lookupElement = variants.find { it.lookupString == lookupText }
     assertNotNull(toString(variants, "\n"), lookupElement)
-    
+
     def presentation = new LookupElementPresentation()
     lookupElement.renderElement(presentation)
 

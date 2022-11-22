@@ -319,7 +319,8 @@ public class ExpectedHighlightingData {
     if (foregroundColor != null) {
       @JdkConstants.FontStyle int ft = fontType != null ? Integer.parseInt(fontType) : 0;
       forcedAttributes = new TextAttributes(
-        Color.decode(foregroundColor), backgroundColor != null ? Color.decode(backgroundColor) : null, effectColor != null ? Color.decode(effectColor) : null, 
+        Color.decode(foregroundColor), backgroundColor != null ? Color.decode(backgroundColor) : null,
+        effectColor != null ? Color.decode(effectColor) : null,
         effectType != null ? EffectType.valueOf(effectType) : null, ft);
     }
 
