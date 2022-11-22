@@ -1006,7 +1006,7 @@ public final class ArrayUtil {
    * @return true if both arrays are equal in terms of equalityCondition
    * @param <T> type of array elements
    */
-  public static <T> boolean areEqual(T @NotNull [] arr1, T @NotNull [] arr2, BiPredicate<T, T> equalityCondition) {
+  public static <T> boolean areEqual(T @NotNull [] arr1, T @NotNull [] arr2, @NotNull BiPredicate<? super T, ? super T> equalityCondition) {
     if (arr1 == arr2) return true;
     if (arr1.length != arr2.length) return false;
     for (int i = 0; i < arr1.length; i++) {
