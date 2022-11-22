@@ -44,20 +44,20 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager,
                                     @NotNull VirtualFile virtualFile,
-                                    final boolean eventSystemEnabled) {
+                                    boolean eventSystemEnabled) {
     this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), virtualFile.getFileType()));
   }
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager,
                                     @NotNull VirtualFile virtualFile,
-                                    final boolean eventSystemEnabled,
-                                    @NotNull final FileType fileType) {
+                                    boolean eventSystemEnabled,
+                                    @NotNull FileType fileType) {
     this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType));
   }
 
   protected SingleRootFileViewProvider(@NotNull PsiManager manager,
                                        @NotNull VirtualFile virtualFile,
-                                       final boolean eventSystemEnabled,
+                                       boolean eventSystemEnabled,
                                        @NotNull Language language) {
     super(manager, virtualFile, eventSystemEnabled);
     myBaseLanguage = language;
@@ -73,7 +73,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return myBaseLanguage;
   }
 
-  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
+  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull FileType fileType) {
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
@@ -201,7 +201,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
-  public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
+  public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, long maxBytes) {
     if (vFile instanceof LightVirtualFile && !vFile.getFileType().isBinary()) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes
       int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
@@ -218,18 +218,18 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   @NotNull
   @Override
-  public SingleRootFileViewProvider createCopy(@NotNull final VirtualFile copy) {
+  public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new SingleRootFileViewProvider(getManager(), copy, false, getBaseLanguage());
   }
 
   @Override
-  public PsiReference findReferenceAt(final int offset) {
-    final PsiFile psiFile = getPsi(getBaseLanguage());
+  public PsiReference findReferenceAt(int offset) {
+    PsiFile psiFile = getPsi(getBaseLanguage());
     return findReferenceAt(psiFile, offset);
   }
 
   @Override
-  public PsiElement findElementAt(final int offset) {
+  public PsiElement findElementAt(int offset) {
     return findElementAt(getPsi(getBaseLanguage()), offset);
   }
 

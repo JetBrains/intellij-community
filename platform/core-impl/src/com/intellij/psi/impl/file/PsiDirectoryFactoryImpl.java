@@ -26,7 +26,7 @@ public final class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
 
   @Override
   @NotNull
-  public String getQualifiedName(@NotNull final PsiDirectory directory, final boolean presentable) {
+  public String getQualifiedName(@NotNull PsiDirectory directory, boolean presentable) {
     if (presentable) {
       return FileUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl());
     }

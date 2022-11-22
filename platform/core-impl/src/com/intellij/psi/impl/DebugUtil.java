@@ -360,7 +360,7 @@ public final class DebugUtil {
                                   boolean showWhitespaces,
                                   boolean showRanges,
                                   @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
-    final ASTNode node = root.getNode();
+    ASTNode node = root.getNode();
     if (node == null) {
       psiToBuffer(buffer, root, 0, showWhitespaces, showRanges, showRanges, extra);
     }
