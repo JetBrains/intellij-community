@@ -239,8 +239,10 @@ public final class NetUtils {
       bytesRead = gzipStream.getCompressedBytesRead();
       if (indicator != null && expectedContentLength > 0) {
         long currentTime = System.currentTimeMillis();
-        long downloadSpeed = (bytesRead * 1000) / (currentTime - startTime); // B/s
-        updateIndicator(indicator, downloadSpeed, bytesRead, expectedContentLength, progressDescription);
+        if (currentTime > startTime) { // To not divide by zero
+          long downloadSpeed = (bytesRead * 1000) / (currentTime - startTime); // B/s
+          updateIndicator(indicator, downloadSpeed, bytesRead, expectedContentLength, progressDescription);
+        }
       }
     }
 
