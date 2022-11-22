@@ -466,27 +466,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     assertEquals("name-from-properties", project.getName());
   }
 
-  @Test
-  public void testEmptyResources() {
-    importProject("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                       <resources>
-                         <resource>
-                         </resource>
-                       </resources>
-                       <testResources>
-                         <testResource>
-                         </testResource>
-                       </testResources>
-                    </build>
-                    """);
-
-    assertModules("project");
-  }
-
   private static class NameSettingMavenImporter extends MavenImporter {
     private final String myName;
 
