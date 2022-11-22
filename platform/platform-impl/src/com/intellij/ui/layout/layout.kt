@@ -31,6 +31,7 @@ inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: St
 }
 
 @PublishedApi
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
