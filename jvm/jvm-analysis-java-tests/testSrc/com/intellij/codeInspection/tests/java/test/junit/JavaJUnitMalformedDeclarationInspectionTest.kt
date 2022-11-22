@@ -447,7 +447,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @ParameterizedTest
         void foo(String param) { }
       }
-    """.trimIndent(), "Annotate class 'Test' as '@TestInstance'")
+    """.trimIndent(), "Annotate class 'Test' as '@TestInstance'", true)
   }
   fun `test malformed parameterized introduce method source quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -475,7 +475,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @ParameterizedTest
         void foo(String param) { }
       }
-    """.trimIndent(), "Create method 'parameters' in 'Test'")
+    """.trimIndent(), "Create method 'parameters' in 'Test'", true)
   }
   fun `test malformed parameterized create csv source quickfix`() {
     val file = myFixture.addFileToProject("CsvFile.java", """
@@ -602,7 +602,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Before
         public void before() { return ""; }
       }
-    """.trimIndent(), "Fix 'before' method signature")
+    """.trimIndent(), "Fix 'before' method signature", true)
   }
   fun `test malformed before remove private quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -613,9 +613,9 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent(), """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
-        public void bef<caret>oreEach() { }
+        public void beforeEach() { }
       }
-    """.trimIndent(), "Fix 'beforeEach' method signature")
+    """.trimIndent(), "Fix 'beforeEach' method signature", true)
   }
   fun `test malformed before class no highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
@@ -671,7 +671,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.api.BeforeAll
         static void beforeAll() { return ""; }
       }
-    """.trimIndent(), "Fix 'beforeAll' method signature")
+    """.trimIndent(), "Fix 'beforeAll' method signature", true)
   }
 
   /* Malformed Datapoint(s) */
@@ -727,7 +727,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.experimental.theories.DataPoint
         public static Object f1() { return null; }
       }
-    """.trimIndent(), "Fix 'f1' method signature")
+    """.trimIndent(), "Fix 'f1' method signature", true)
   }
 
   /* Malformed setup/teardown */
@@ -755,7 +755,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       class C extends junit.framework.TestCase {
         public void setUp() { }
       }  
-    """.trimIndent(), "Fix 'setUp' method signature")
+    """.trimIndent(), "Fix 'setUp' method signature", true)
   }
 
   /* Malformed rule */
@@ -843,7 +843,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Rule
         public int x;
       }
-    """.trimIndent(), "Fix 'x' field signature")
+    """.trimIndent(), "Fix 'x' field signature", true)
   }
   fun `test malformed rule make field non-static quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -856,7 +856,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Rule
         public int y() { return 0; }
       }
-    """.trimIndent(), "Fix 'y' method signature")
+    """.trimIndent(), "Fix 'y' method signature", true)
   }
   fun `test malformed class rule make field public quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
@@ -887,7 +887,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.ClassRule
         public static SomeTestRule x = new SomeTestRule();
       }
-    """.trimIndent(), "Fix 'x' field signature")
+    """.trimIndent(), "Fix 'x' field signature", true)
   }
   fun `test malformed class rule make field static quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
