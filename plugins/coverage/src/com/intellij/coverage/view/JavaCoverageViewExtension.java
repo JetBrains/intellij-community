@@ -107,14 +107,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (javaNode.isClassCoverage()) {
       return myAnnotator.getClassCoverageInfo(javaNode.getQualifiedName());
     }
-    if (javaNode.isPackageCoverage()) {
+    else {
       return myAnnotator.getPackageCoverageInfo(javaNode.getQualifiedName(), myStateBean.myFlattenPackages);
     }
-    final Object value = SlowOperations.allowSlowOperations(() -> javaNode.getValue());
-    if (value instanceof PsiNamedElement) {
-      return myAnnotator.getExtensionCoverageInfo((PsiNamedElement)value);
-    }
-    return null;
   }
 
   @Override
