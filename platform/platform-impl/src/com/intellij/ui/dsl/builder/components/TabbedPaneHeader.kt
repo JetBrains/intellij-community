@@ -6,6 +6,7 @@ import com.intellij.ui.components.JBTabbedPane
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
+@Suppress("ReplaceRangeToWithUntil")
 @ApiStatus.Internal
 internal class TabbedPaneHeader : JBTabbedPane() {
 
@@ -22,6 +23,28 @@ internal class TabbedPaneHeader : JBTabbedPane() {
 
   override fun getMinimumSize(): Dimension {
     return preferredSize
+  }
+
+  override fun getBaseline(width: Int, height: Int): Int {
+    var result = -1
+
+    for (i in 0..tabCount - 1) {
+      val component = getTabComponentAt(i)
+      val baseline = component.getBaseline(component.width, component.height)
+      if (baseline >= 0) {
+        val baselineInParent = component.y + baseline
+        if (result < 0) {
+          result = baselineInParent
+        }
+        else {
+          if (result != baselineInParent) {
+            return -1
+          }
+        }
+      }
+    }
+
+    return result
   }
 }
 

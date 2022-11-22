@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
-import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -14,12 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -36,7 +32,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -155,6 +150,7 @@ public class SearchEverywhereHeader {
     return result;
   }
 
+  @NotNull
   private JComponent createNewUITabs() {
     newUIHeaderView = new SENewUIHeaderView(myTabs, myShortcutSupplier, myToolbar.getComponent());
     newUIHeaderView.tabbedPane.addChangeListener(new ChangeListener() {
@@ -162,12 +158,11 @@ public class SearchEverywhereHeader {
       public void stateChanged(ChangeEvent e) {
         SETab selectedTab = myTabs.get(newUIHeaderView.tabbedPane.getSelectedIndex());
         switchToTab(selectedTab);
-        SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
-                                                               SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(
-                                                                 selectedTab.getReportableID()));
+        SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(
+          myProject, SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(selectedTab.getReportableID()));
       }
     });
-    myToolbar.setTargetComponent(newUIHeaderView.tabbedPane);
+    myToolbar.setTargetComponent(newUIHeaderView.panel);
     return newUIHeaderView.panel;
   }
 
@@ -257,9 +252,7 @@ public class SearchEverywhereHeader {
       autoSetEverywhere(false);
     }
 
-    if (myToolbar != null) {
-      myToolbar.updateActionsImmediately();
-    }
+    myToolbar.updateActionsImmediately();
 
     header.repaint();
     myScopeChangedCallback.run();
@@ -431,90 +424,6 @@ public class SearchEverywhereHeader {
       return seTab != null && seTab.isSelected
              ? JBUI.CurrentTheme.BigPopup.selectedTabTextColor()
              : super.getForeground();
-    }
-  }
-
-  private static class MyScopeChooserAction extends ScopeChooserAction {
-    private ScopeDescriptor myScope;
-    private final Collection<SearchEverywhereContributor<?>> myContributors;
-    private final Runnable onChange;
-
-    private final GlobalSearchScope myEverywhereScope;
-    private final GlobalSearchScope myProjectScope;
-
-    private MyScopeChooserAction(@NotNull Project project,
-                                 Collection<SearchEverywhereContributor<?>> contributors,
-                                 Runnable onChange) {
-      myContributors = contributors;
-      this.onChange = onChange;
-
-      myEverywhereScope = GlobalSearchScope.everythingScope(project);
-      myProjectScope = GlobalSearchScope.projectScope(project);
-      myScope = new ScopeDescriptor(myProjectScope);
-
-      doSetScope(myScope);
-    }
-
-    private void doSetScope(@NotNull ScopeDescriptor sd) {
-      myScope = sd;
-      myContributors.stream()
-        .filter(c -> c instanceof ScopeSupporting)
-        .forEach(c -> ((ScopeSupporting)c).setScope(sd));
-    }
-
-    @Override
-    protected void onScopeSelected(@NotNull ScopeDescriptor sd) {
-      doSetScope(sd);
-      onChange.run();
-    }
-
-    @Override
-    @NotNull
-    protected ScopeDescriptor getSelectedScope() {
-      return myScope;
-    }
-
-    @Override
-    protected void onProjectScopeToggled() {
-      setEverywhere(!myScope.scopeEquals(myEverywhereScope));
-    }
-
-    @Override
-    protected boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
-      return ContainerUtil.process(extractScopes(), processor);
-    }
-
-    @Override
-    public boolean isEverywhere() {
-      return myScope.scopeEquals(myEverywhereScope);
-    }
-
-    @Override
-    public void setEverywhere(boolean everywhere) {
-      doSetScope(new ScopeDescriptor(everywhere ? myEverywhereScope : myProjectScope));
-      onChange.run();
-    }
-
-    @Override
-    public boolean canToggleEverywhere() {
-      return myScope.scopeEquals(myEverywhereScope) || myScope.scopeEquals(myProjectScope);
-    }
-
-    private List<ScopeDescriptor> extractScopes() {
-      BinaryOperator<List<ScopeDescriptor>> intersection = (descriptors1, descriptors2) -> {
-        ArrayList<ScopeDescriptor> res = new ArrayList<>(descriptors1);
-        List<String> scopes = Lists.transform(res, descriptor -> descriptor.getDisplayName());
-        scopes.retainAll(Lists.transform(descriptors2, descriptor -> descriptor.getDisplayName()));
-
-        return res;
-      };
-
-      Optional<List<ScopeDescriptor>> maybeScopes = myContributors.stream()
-        .filter(c -> c instanceof ScopeSupporting)
-        .map(c -> ((ScopeSupporting)c).getSupportedScopes())
-        .reduce(intersection);
-
-      return maybeScopes.orElse(Collections.emptyList());
     }
   }
 }
