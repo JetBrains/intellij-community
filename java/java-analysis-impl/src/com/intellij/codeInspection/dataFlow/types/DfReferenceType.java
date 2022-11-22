@@ -142,8 +142,8 @@ public interface DfReferenceType extends DfType {
       // possible aliasing
       return true;
     }
-    if (SpecialField.fromQualifierType(otherType) == SpecialField.COLLECTION_SIZE &&
-        SpecialField.fromQualifierType(this) == SpecialField.COLLECTION_SIZE) {
+    if (SpecialField.COLLECTION_SIZE.isMyQualifierType(otherType) &&
+        SpecialField.COLLECTION_SIZE.isMyQualifierType(this)) {
       // Collection size is sometimes derived from another (incompatible) collection
       // e.g. keySet Set size is affected by Map size.
       return true;

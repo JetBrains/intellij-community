@@ -240,11 +240,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
                                                    DfaVariableValue replacement) {
     if (value.dependsOn(flushed)) {
       DfType dfType = getDfType(value);
-      if (value instanceof DfaVariableValue) {
-        if (replacement != null) {
-          DfaVariableValue target = replaceQualifier((DfaVariableValue)value, flushed, replacement);
-          if (target != value) return target;
-        }
+      if (value instanceof DfaVariableValue var && replacement != null) {
+        DfaVariableValue target = replaceQualifier(var, flushed, replacement);
+        if (target != value) return target;
       }
       return myFactory.fromDfType(dfType);
     }
@@ -1233,17 +1231,34 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
+  public @NotNull DfType getDfTypeIncludingDerived(@NotNull DfaValue value) {
+    DfType newType = getDfType(value);
+    if (value instanceof DfaVariableValue var) {
+      var = canonicalizeQualifier(var);
+      if (!var.getDependentVariables().isEmpty()) {
+        for (Map.Entry<DfaVariableValue, DfType> entry : myVariableTypes.entrySet()) {
+          DfaVariableValue recordedVar = entry.getKey();
+          if (recordedVar.getQualifier() == var && recordedVar.getDescriptor() instanceof DerivedVariableDescriptor desc) {
+            newType = newType.meet(desc.asDfType(entry.getValue()));
+          }
+        }
+      }
+    }
+    return newType;
+  }
+
+  @Override
   public @NotNull DfType getDfType(@NotNull DfaValue value) {
-    if (value instanceof DfaBinOpValue) {
-      return getBinOpRange((DfaBinOpValue)value);
+    if (value instanceof DfaBinOpValue binOpValue) {
+      return getBinOpRange(binOpValue);
     }
-    if (value instanceof DfaVariableValue) {
-      DfType type = getRecordedType((DfaVariableValue)value);
-      return type != null ? type : ((DfaVariableValue)value).getInherentType();
+    if (value instanceof DfaVariableValue variableValue) {
+      DfType type = getRecordedType(variableValue);
+      return type != null ? type : variableValue.getInherentType();
     }
-    if (value instanceof DfaWrappedValue) {
-      DfType wrappedValueType = getDfType(((DfaWrappedValue)value).getWrappedValue());
-      return ((DfaWrappedValue)value).getSpecialField().asDfType(value.getDfType(), wrappedValueType);
+    if (value instanceof DfaWrappedValue wrappedValue) {
+      DfType wrappedValueType = getDfType(wrappedValue.getWrappedValue());
+      return wrappedValue.getSpecialField().asDfType(value.getDfType(), wrappedValueType);
     }
     return value.getDfType();
   }
@@ -1294,18 +1309,22 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private @NotNull DfaVariableValue canonicalize(DfaVariableValue var) {
     DfaVariableValue qualifier = var.getQualifier();
     if (qualifier != null) {
-      int index = myIdToEqClassesIndices.getOrDefault(qualifier.getID(), -1);
-      if (index == -1) {
-        qualifier = canonicalize(qualifier);
-        index = myIdToEqClassesIndices.getOrDefault(qualifier.getID(), -1);
-        if (index == -1) {
-          return var.withQualifier(qualifier);
-        }
-      }
-
-      return var.withQualifier(Objects.requireNonNull(myEqClasses.get(index).getCanonicalVariable()));
+      return var.withQualifier(canonicalizeQualifier(qualifier));
     }
     return var;
+  }
+
+  private @NotNull DfaVariableValue canonicalizeQualifier(@NotNull DfaVariableValue qualifier) {
+    int index = myIdToEqClassesIndices.getOrDefault(qualifier.getID(), -1);
+    if (index == -1) {
+      qualifier = canonicalize(qualifier);
+      index = myIdToEqClassesIndices.getOrDefault(qualifier.getID(), -1);
+      if (index == -1) {
+        return qualifier;
+      }
+    }
+
+    return Objects.requireNonNull(myEqClasses.get(index).getCanonicalVariable());
   }
 
   private DfType getRecordedType(DfaVariableValue var) {

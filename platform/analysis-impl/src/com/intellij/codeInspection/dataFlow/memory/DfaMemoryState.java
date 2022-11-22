@@ -163,6 +163,13 @@ public interface DfaMemoryState {
   @NotNull DfType getDfType(@NotNull DfaValue value);
 
   /**
+   * @param value value to get the type of
+   * @return the DfType of the value within this memory state, including available information about derived variables, when possible
+   * @see com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor
+   */
+  @NotNull DfType getDfTypeIncludingDerived(@NotNull DfaValue value);
+
+  /**
    * Forget values of all unstable fields that could be
    * qualified by one of specified qualifiers (including possible aliases).
    */
