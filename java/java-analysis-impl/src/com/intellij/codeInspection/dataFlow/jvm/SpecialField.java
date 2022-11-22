@@ -347,26 +347,6 @@ public enum SpecialField implements DerivedVariableDescriptor {
     return null;
   }
 
-  /**
-   * Returns a DfaValue which represents this special field
-   *
-   * @param factory a factory to create new values if necessary
-   * @param qualifier a known qualifier value
-   * @return a DfaValue which represents this special field
-   */
-  @Override
-  @NotNull
-  public final DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
-    if (qualifier instanceof DfaWrappedValue && ((DfaWrappedValue)qualifier).getSpecialField() == this) {
-      return ((DfaWrappedValue)qualifier).getWrappedValue();
-    }
-    if (qualifier instanceof DfaVariableValue) {
-      return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
-    }
-    DfType dfType = qualifier == null ? DfType.TOP : getFromQualifier(qualifier.getDfType());
-    return factory.fromDfType(dfType.meet(getDefaultValue()));
-  }
-
   @NotNull
   static DfType fromInitializer(@NotNull DfaVariableValue thisValue,
                                 @Nullable PsiElement context,
@@ -387,11 +367,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     return DfType.TOP;
   }
 
-  /**
-   * Returns a dfType that describes any possible value this special field may have
-   *
-   * @return a dfType for the default value
-   */
+  @Override
   @NotNull
   public DfType getDefaultValue() {
     return DfTypes.intRange(JvmPsiRangeSetUtil.indexRange());

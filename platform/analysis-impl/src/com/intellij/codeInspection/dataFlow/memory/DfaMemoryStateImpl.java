@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.*;
 import one.util.streamex.StreamEx;
@@ -217,12 +216,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     recordVariableType(var, dfType);
     applyBinOpRelations(value, RelationType.EQ, var);
     applyRelation(var, value, false);
-    if (!(value instanceof DfaVariableValue)) {
-      for (VariableDescriptor desc : dfType.getDerivedVariables()) {
-        DfaValue derivedVar = desc.createValue(getFactory(), var);
-        DfaValue derivedValue = desc.createValue(getFactory(), value);
-        if (derivedVar instanceof DfaVariableValue) {
-          setVarValue((DfaVariableValue)derivedVar, derivedValue);
+    if (value instanceof DfaWrappedValue wrappedValue) {
+      if (wrappedValue.getSpecialField().createValue(getFactory(), var) instanceof DfaVariableValue derivedVar) {
+        setVarValue(derivedVar, wrappedValue.getWrappedValue());
+      }
+    }
+    else if (!(value instanceof DfaVariableValue)) {
+      for (Map.Entry<DerivedVariableDescriptor, DfType> entry : value.getDfType().getDerivedValues().entrySet()) {
+        DerivedVariableDescriptor desc = entry.getKey();
+        if (desc.createValue(getFactory(), var) instanceof DfaVariableValue derivedVar) {
+          setVarValue(derivedVar, getFactory().fromDfType(entry.getValue().meet(desc.getDefaultValue())));
         }
       }
     }
@@ -790,8 +793,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   protected boolean meetVariableType(@NotNull DfaVariableValue var, @NotNull DfType originalType, @NotNull DfType newType) {
     recordVariableType(var, newType);
-    for (DerivedVariableDescriptor desc : newType.getDerivedVariables()) {
-      if (!meetDfType(desc.createValue(getFactory(), var), newType.getDerivedValue(desc))) {
+    for (Map.Entry<DerivedVariableDescriptor, DfType> entry : newType.getDerivedValues().entrySet()) {
+      if (!meetDfType(entry.getKey().createValue(getFactory(), var), entry.getValue())) {
         return false;
       }
     }
@@ -1349,9 +1352,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     myStack.replaceAll(val -> {
       DfType type = getDfType(val);
-      if (ContainerUtil.or(type.getDerivedVariables(), dv -> type.getDerivedValue(dv) != DfType.TOP &&
-                                                             !dv.isStable() && qualifierStatusMap.shouldFlush(val, dv.isCall()))) {
-        return myFactory.fromDfType(type.getBasicType());
+      for (Map.Entry<DerivedVariableDescriptor, DfType> entry : type.getDerivedValues().entrySet()) {
+        DerivedVariableDescriptor descriptor = entry.getKey();
+        DfType derivedType = entry.getValue();
+        if (derivedType != DfType.TOP && !descriptor.isStable() && qualifierStatusMap.shouldFlush(val, descriptor.isCall())) {
+          return myFactory.fromDfType(type.getBasicType());
+        }
       }
       if (val instanceof DfaVariableValue && qualifierStatusMap.shouldFlush((DfaVariableValue)val)) {
         return myFactory.fromDfType(type);

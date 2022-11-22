@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Type that corresponds to JVM reference type; represents subset of possible reference values (may include null)
@@ -129,12 +130,9 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
-  @NotNull
-  default DfType getDerivedValue(@NotNull DerivedVariableDescriptor derivedDescriptor) {
-    if (getSpecialField() == derivedDescriptor) {
-      return getSpecialFieldType();
-    }
-    return DfType.TOP;
+  default @NotNull Map<@NotNull DerivedVariableDescriptor, @NotNull DfType> getDerivedValues() {
+    SpecialField field = getSpecialField();
+    return field == null ? Map.of() : Map.of(field, getSpecialFieldType());
   }
 
   @Override
