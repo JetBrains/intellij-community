@@ -514,7 +514,8 @@ object CodeWithMeClientDownloader {
 
         when (url.scheme) {
           "http", "https" -> {
-            HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
+            HttpRequests.request(url.toString()).saveToFile(path, progressIndicator, true)
+            progressIndicator.text2 = ""
           }
           "file" -> {
             Files.copy(url.toPath(), path, StandardCopyOption.REPLACE_EXISTING)
