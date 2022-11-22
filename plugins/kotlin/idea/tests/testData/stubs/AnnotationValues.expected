@@ -16,7 +16,7 @@ PsiJetFileStubImpl[package=test]
         REFERENCE_EXPRESSION[referencedName=KClass]
   CLASS[classId=test/Simple, fqName=test.Simple, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=Simple, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=Simple]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.Simple.i, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=i]
           TYPE_REFERENCE
@@ -84,7 +84,7 @@ PsiJetFileStubImpl[package=test]
             BOOLEAN_CONSTANT[kind=BOOLEAN_CONSTANT, value=false]
   CLASS[classId=test/StringLiteral, fqName=test.StringLiteral, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=StringLiteral, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=StringLiteral]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.StringLiteral.s1, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=s1]
           TYPE_REFERENCE
@@ -125,7 +125,7 @@ PsiJetFileStubImpl[package=test]
       ENUM_ENTRY[classId=null, fqName=test.E.E2, isEnumEntry=true, isInterface=false, isLocal=false, isTopLevel=false, name=E2, superNames=[]]
   CLASS[classId=test/EnumLiteral, fqName=test.EnumLiteral, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=EnumLiteral, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=EnumLiteral]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.EnumLiteral.e1, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=e1]
           TYPE_REFERENCE
@@ -163,7 +163,7 @@ PsiJetFileStubImpl[package=test]
               REFERENCE_EXPRESSION[referencedName=E2]
   CLASS[classId=test/VarArg, fqName=test.VarArg, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=VarArg, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=VarArg]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.VarArg.v, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=v]
           MODIFIER_LIST[vararg]
@@ -186,7 +186,7 @@ PsiJetFileStubImpl[package=test]
             INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=3]
   CLASS[classId=test/Arrays, fqName=test.Arrays, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=Arrays, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=Arrays]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.Arrays.ia, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=ia]
           TYPE_REFERENCE
@@ -228,7 +228,7 @@ PsiJetFileStubImpl[package=test]
           VALUE_ARGUMENT[isSpread=false]
   CLASS[classId=test/ClassLiteral, fqName=test.ClassLiteral, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=ClassLiteral, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=ClassLiteral]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.ClassLiteral.c1, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=c1]
           TYPE_REFERENCE
@@ -263,7 +263,7 @@ PsiJetFileStubImpl[package=test]
       TYPE_PARAMETER[fqName=null, isInVariance=false, isOutVariance=false, name=T]
   CLASS[classId=test/Nested, fqName=test.Nested, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=Nested, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=Nested]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.Nested.i, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=i]
           TYPE_REFERENCE
@@ -275,7 +275,7 @@ PsiJetFileStubImpl[package=test]
               REFERENCE_EXPRESSION[referencedName=String]
   CLASS[classId=test/Outer, fqName=test.Outer, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=Outer, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=Outer]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.Outer.some, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=some]
           TYPE_REFERENCE
@@ -301,7 +301,7 @@ PsiJetFileStubImpl[package=test]
               REFERENCE_EXPRESSION[referencedName=nested]
   CLASS[classId=test/ArraysSpread, fqName=test.ArraysSpread, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=ArraysSpread, superNames=[]]
     MODIFIER_LIST[annotation]
-    PRIMARY_CONSTRUCTOR
+    PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=ArraysSpread]
       VALUE_PARAMETER_LIST
         VALUE_PARAMETER[fqName=test.ArraysSpread.ia, hasDefaultValue=false, hasValOrVar=true, isMutable=false, name=ia]
           MODIFIER_LIST[vararg]
