@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.addSampleCode
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.contentRoot
+import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.javaData
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.ide.wizard.chain
@@ -59,7 +60,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       outputDirectory = contentRoot
       addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
       if (addSampleCode) {
-        withJavaSampleCodeAsset("src", "")
+        withJavaSampleCodeAsset("src", "", javaData.generateOnboardingTips)
       }
     }
   }

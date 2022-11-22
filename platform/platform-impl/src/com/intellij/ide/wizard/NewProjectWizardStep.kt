@@ -90,5 +90,7 @@ interface NewProjectWizardStep {
     const val ADD_SAMPLE_CODE_PROPERTY_NAME = "NewProjectWizard.addSampleCodeState"
 
     const val GROUP_ID_PROPERTY_NAME = "NewProjectWizard.groupIdState"
+
+    const val GENERATE_ONBOARDING_TIPS_NAME = "NewProjectWizard.generateOnboardingTips"
   }
 }

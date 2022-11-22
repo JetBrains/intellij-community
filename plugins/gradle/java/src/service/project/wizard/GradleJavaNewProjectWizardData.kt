@@ -9,6 +9,7 @@ interface GradleJavaNewProjectWizardData : GradleNewProjectWizardData {
 
   val addSampleCodeProperty: GraphProperty<Boolean>
   var addSampleCode: Boolean
+  val generateOnboardingTips: Boolean
 
   companion object {
     @JvmStatic val KEY = Key.create<GradleJavaNewProjectWizardData>(GradleJavaNewProjectWizardData::class.java.name)

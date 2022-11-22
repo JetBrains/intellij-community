@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.starters.local.GeneratorAsset
@@ -10,18 +11,22 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectSafe
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.fileSystem.LocalFileSystemUtil
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
-import java.util.StringJoiner
+import java.util.*
 
 @ApiStatus.Experimental
 abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
@@ -88,9 +93,10 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   }
 
   companion object {
-    fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, aPackage: String) {
+    fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, aPackage: String, generateOnboardingTips: Boolean) {
+      val templateName = if (generateOnboardingTips) "SampleCodeWithOnboardingTips.java" else "SampleCode"
       val templateManager = FileTemplateManager.getDefaultInstance()
-      val template = templateManager.getInternalTemplate("SampleCode")
+      val template = templateManager.getInternalTemplate(templateName)
       val packageDirectory = aPackage.replace('.', '/')
       val pathJoiner = StringJoiner("/")
       if (sourceRootPath.isNotEmpty()) {
@@ -105,6 +111,19 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       addAssets(GeneratorTemplateFile(path, template))
       addFilesToOpen(path)
       addTemplateProperties("PACKAGE_NAME" to aPackage)
+
+      if (generateOnboardingTips) {
+        addTemplateProperties("SHIFT_SHIFT" to (if (SystemInfo.isMac) "⇧⇧" else "Shift Shift"))
+        addTemplateProperties("INTENTION_SHORTCUT" to KeymapUtil.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
+        addTemplateProperties("DEFAULT_RUN" to KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER))
+        addTemplateProperties("DEFAULT_DEBUG" to KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER))
+        addTemplateProperties("TOGGLE_BREAKPOINT" to KeymapUtil.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT))
+      }
+    }
+
+    @JvmStatic
+    fun proposeToGenerateOnboardingTipsByDefault(): Boolean {
+      return RecentProjectsManagerBase.getInstanceEx().getRecentPaths().isEmpty()
     }
   }
 }
