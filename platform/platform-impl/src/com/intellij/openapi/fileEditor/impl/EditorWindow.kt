@@ -719,7 +719,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       val height = Registry.intValue("ide.splitter.chooser.info.panel.height")
       var width = Registry.intValue("ide.splitter.chooser.info.panel.width")
       val arc = Registry.intValue("ide.splitter.chooser.info.panel.arc")
-      val getShortcut: (actionId: String) -> Unit = { actionId ->
+      val getShortcut: (actionId: String) -> String = { actionId ->
         val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
         KeymapUtil.getKeystrokeText(shortcut?.firstKeyStroke)
       }
