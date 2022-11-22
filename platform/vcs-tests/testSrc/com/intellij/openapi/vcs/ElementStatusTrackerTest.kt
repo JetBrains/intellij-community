@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.xml.XmlFile
 
 class ElementStatusTrackerTest : BaseLineStatusTrackerTestCase() {
   fun testPsiChanges() {
@@ -25,10 +26,10 @@ class ElementStatusTrackerTest : BaseLineStatusTrackerTestCase() {
           <tag>Hello</tag>
         </xml>""".trimIndent()
     test(updatedText, vcsText, true, "test.xml") {
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
-      val psiElement = psiFile.findElementAt(document.getLineStartOffset(1) + 3)!!.parent
-      assertEquals("<tag>Hello</tag>", psiElement.text)
-      assertEquals(expectedStatus, ElementStatusTracker.getInstance(project).getElementStatus(psiElement))
+      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) as XmlFile
+      val firstSubTag = psiFile.rootTag!!.subTags[0]
+      assertEquals("<tag>Hello</tag>", firstSubTag.text)
+      assertEquals(expectedStatus, ElementStatusTracker.getInstance(project).getElementStatus(firstSubTag))
     }
   }
 }
