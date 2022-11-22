@@ -19,7 +19,6 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +38,7 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Objects;
 
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(DomElementProblemDescriptorImpl.class);
@@ -47,9 +46,8 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   private final HighlightSeverity mySeverity;
   private final @InspectionMessage String myMessage;
   private final LocalQuickFix[] myFixes;
-  private List<Annotation> myAnnotations;
   private Pair<TextRange, PsiElement> myPair;
-  public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
+  static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
   private final ProblemHighlightType myHighlightType;
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, @InspectionMessage String message, final HighlightSeverity type) {
@@ -111,15 +109,6 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  @NotNull
-  public final List<Annotation> getAnnotations() {
-    if (myAnnotations == null) {
-      myAnnotations = ContainerUtil.createMaybeSingletonList(DomElementsHighlightingUtil.createAnnotation(this));
-    }
-    return myAnnotations;
-  }
-
-  @Override
   public void highlightWholeElement() {
     final PsiElement psiElement = getPsiElement();
     if (psiElement instanceof XmlAttributeValue) {
@@ -134,7 +123,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     }
   }
 
-  public Pair<TextRange,PsiElement> getProblemRange() {
+  Pair<TextRange,PsiElement> getProblemRange() {
     if (myPair == null) {
       myPair = computeProblemRange();
     }
@@ -182,16 +171,14 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
     final DomElementProblemDescriptorImpl that = (DomElementProblemDescriptorImpl)o;
 
-    if (myDomElement != null ? !myDomElement.equals(that.myDomElement) : that.myDomElement != null) return false;
+    if (!Objects.equals(myDomElement, that.myDomElement)) return false;
     if (!myMessage.equals(that.myMessage)) return false;
-    if (!mySeverity.equals(that.mySeverity)) return false;
-
-    return true;
+    return mySeverity.equals(that.mySeverity);
   }
 
   public int hashCode() {
     int result;
-    result = (myDomElement != null ? myDomElement.hashCode() : 0);
+    result = myDomElement != null ? myDomElement.hashCode() : 0;
     result = 31 * result + mySeverity.hashCode();
     result = 31 * result + myMessage.hashCode();
     return result;
@@ -204,7 +191,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     }
 
     if (myDomElement instanceof GenericAttributeValue) {
-      final GenericAttributeValue attributeValue = (GenericAttributeValue)myDomElement;
+      GenericAttributeValue<?> attributeValue = (GenericAttributeValue<?>)myDomElement;
       final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
       return value != null && StringUtil.isNotEmpty(value.getText()) ? value : attributeValue.getXmlElement();
     }
