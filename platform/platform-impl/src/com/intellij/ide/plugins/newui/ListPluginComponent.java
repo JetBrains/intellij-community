@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.Gray;
@@ -387,9 +388,11 @@ public final class ListPluginComponent extends JPanel {
       }
     }
 
-    String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
-    if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+    if (!myPlugin.isBundled()) {
+      String vendor = StringUtil.defaultIfEmpty(Strings.trim(myPlugin.getVendor()), Strings.trim(myPlugin.getOrganization()));
+      if (!StringUtil.isEmptyOrSpaces(vendor)) {
+        myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+      }
     }
   }
 

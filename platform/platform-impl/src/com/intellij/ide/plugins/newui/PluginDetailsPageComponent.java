@@ -990,7 +990,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     String vendor = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getVendor());
     String organization = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getOrganization());
-    if (Strings.isEmptyOrSpaces(vendor)) {
+    if (Strings.isEmptyOrSpaces(vendor) && Strings.isEmptyOrSpaces(organization)) {
       myAuthor.hide();
     }
     else {
