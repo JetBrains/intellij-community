@@ -43,7 +43,7 @@ class ProductivityFeedbackDialog(
     val fullAppName: String = ApplicationInfoEx.getInstanceEx().fullApplicationName
     val range: IntRange? = digitRegexp.find(fullAppName)?.range
     if (range != null) {
-      fullAppName.substring(0, range.first)
+      fullAppName.substring(0, range.first).trim()
     }
     else {
       fullAppName
@@ -95,29 +95,28 @@ class ProductivityFeedbackDialog(
           .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
           .bold()
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
-      panel {
-        row {
-          segmentedButton(List(9) { it + 1 }) { it.toString() }
-            .apply {
-              maxButtonsCount(9)
-            }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-            .whenItemSelected { productivityProperty.set(it) }
-        }
-        row {
-          label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.left.label"))
-            .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
-            .widthGroup("Group1")
-          label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.middle.label"))
-            .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
-            .align(AlignX.CENTER)
-            .resizableColumn()
-          label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.right.label"))
-            .applyToComponent {
-              font = ComponentPanelBuilder.getCommentFont(font)
-              horizontalAlignment = SwingConstants.RIGHT
-            }
-            .widthGroup("Group1")
-        }
+      row {
+        segmentedButton(List(9) { it + 1 }) { it.toString() }
+          .apply {
+            maxButtonsCount(9)
+          }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .whenItemSelected { productivityProperty.set(it) }
+          .align(Align.FILL)
+      }
+      row {
+        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.left.label"))
+          .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
+          .widthGroup("Group1")
+        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.middle.label"))
+          .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
+          .align(AlignX.CENTER)
+          .resizableColumn()
+        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.right.label"))
+          .applyToComponent {
+            font = ComponentPanelBuilder.getCommentFont(font)
+            horizontalAlignment = SwingConstants.RIGHT
+          }
+          .widthGroup("Group1")
       }
     }
     val proficiencySegmentedButtonPanel = panel {
@@ -132,26 +131,25 @@ class ProductivityFeedbackDialog(
             maxButtonsCount(9)
           }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
           .whenItemSelected { proficiencyProperty.set(it) }
+          .align(Align.FILL)
       }
-      panel {
-        row {
-          label(ProductivityFeedbackBundle.message("dialog.segmentedButton.2.left.label"))
-            .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
-            .widthGroup("Group2")
-            .resizableColumn()
-          label(ProductivityFeedbackBundle.message("dialog.segmentedButton.2.right.label"))
-            .applyToComponent {
-              font = ComponentPanelBuilder.getCommentFont(font)
-              horizontalAlignment = SwingConstants.RIGHT
-            }
-            .widthGroup("Group2")
-        }
+      row {
+        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.2.left.label"))
+          .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
+          .widthGroup("Group2")
+          .resizableColumn()
+        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.2.right.label"))
+          .applyToComponent {
+            font = ComponentPanelBuilder.getCommentFont(font)
+            horizontalAlignment = SwingConstants.RIGHT
+          }
+          .widthGroup("Group2")
       }
     }
 
     val mainPanel = panel {
       row {
-        label(ProductivityFeedbackBundle.message("dialog.title", applicationName))
+        label(ProductivityFeedbackBundle.message("dialog.title"))
           .applyToComponent {
             font = JBFont.h1()
           }
@@ -159,10 +157,12 @@ class ProductivityFeedbackDialog(
 
       row {
         cell(productivitySegmentedButtonPanel)
+          .align(Align.FILL)
       }
 
       row {
         cell(proficiencySegmentedButtonPanel)
+          .align(Align.FILL)
       }
 
       row {
