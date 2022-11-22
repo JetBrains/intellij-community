@@ -1940,7 +1940,7 @@
                      implementationClass="com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ConcatenationWithEmptyString" shortName="TrivialStringConcatenation"
                      bundle="messages.InspectionGadgetsBundle" key="trivial.string.concatenation.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.TrivialStringConcatenationInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryTemporaryOnConversionToString" bundle="messages.InspectionGadgetsBundle"
                      key="unnecessary.temporary.on.conversion.to.string.display.name" groupBundle="messages.InspectionsBundle"
