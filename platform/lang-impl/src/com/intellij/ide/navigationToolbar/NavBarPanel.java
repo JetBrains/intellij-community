@@ -694,11 +694,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
       final NavBarItem item = getItem(index);
 
-      final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
-      myNodePopup = new NavBarPopup(this, index, siblings, index, selectedIndex);
-      myModel.setSelectedIndex(index);
-      myNodePopup.show(item);
-      item.update();
+      if (item != null) {
+        final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
+        myNodePopup = new NavBarPopup(this, index, siblings, index, selectedIndex);
+        myModel.setSelectedIndex(index);
+        myNodePopup.show(item);
+        item.update();
+      }
     }
   }
 
