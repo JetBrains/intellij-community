@@ -11723,6 +11723,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/redundantIf/negate3.kt");
         }
 
+        @TestMetadata("returnWithoutElse.kt")
+        public void testReturnWithoutElse() throws Exception {
+            runTest("testData/quickfix/redundantIf/returnWithoutElse.kt");
+        }
+
+        @TestMetadata("returnWithoutElse2.kt")
+        public void testReturnWithoutElse2() throws Exception {
+            runTest("testData/quickfix/redundantIf/returnWithoutElse2.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/redundantIf/simple.kt");
