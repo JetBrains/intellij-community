@@ -357,7 +357,7 @@ class KotlinPlatformContainerImpl() : KotlinPlatformContainer {
         get() = myPlatforms != null
 
     constructor(platform: KotlinPlatformContainer) : this() {
-        myPlatforms = HashSet(platform.platforms)
+        myPlatforms = platform.platforms.toMutableSet()
     }
 
     override val platforms: Set<KotlinPlatform>
