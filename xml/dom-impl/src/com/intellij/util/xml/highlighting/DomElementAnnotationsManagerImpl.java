@@ -2,11 +2,13 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -201,7 +203,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       return problemHolder.getAllProblems(inspection);
     }
 
-    DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly, domFileElement);
+    DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly, domFileElement, new AnnotationHolderImpl(new AnnotationSession(
+      domFileElement.getFile()), false));
     inspection.checkFileElement(domFileElement, holder);
     //noinspection unchecked
     return appendProblems(domFileElement, holder, (Class<? extends DomElementsInspection<?>>)inspection.getClass());

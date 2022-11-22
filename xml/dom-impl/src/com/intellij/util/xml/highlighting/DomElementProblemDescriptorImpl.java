@@ -56,26 +56,19 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     this(domElement, message, type, LocalQuickFix.EMPTY_ARRAY);
   }
 
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         @InspectionMessage String message,
-                                         final HighlightSeverity type,
-                                         @Nullable final TextRange textRange) {
-    this(domElement, message, type, textRange, null, LocalQuickFix.EMPTY_ARRAY);
-  }
-
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         @InspectionMessage String message,
-                                         final HighlightSeverity type,
-                                         LocalQuickFix @NotNull ... fixes) {
+  DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
+                                  @InspectionMessage String message,
+                                  final HighlightSeverity type,
+                                  LocalQuickFix @NotNull ... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         @InspectionMessage String message,
-                                         final HighlightSeverity type,
-                                         @Nullable final TextRange textRange,
-                                         ProblemHighlightType highlightType,
-                                         LocalQuickFix @NotNull ... fixes) {
+  DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
+                                  @InspectionMessage String message,
+                                  final HighlightSeverity type,
+                                  @Nullable final TextRange textRange,
+                                  ProblemHighlightType highlightType,
+                                  LocalQuickFix @NotNull ... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
     if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
-import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.*
 import com.intellij.openapi.editor.Document
@@ -33,33 +32,30 @@ class ScriptExternalHighlightingPass(
         if (!file.isScript()) return
         val reports = IdeScriptReportSink.getReports(file)
 
-        val annotations = reports.mapNotNull { scriptDiagnostic ->
+        val infos = reports.mapNotNull { scriptDiagnostic ->
             val (startOffset, endOffset) = scriptDiagnostic.location?.let { computeOffsets(document, it) } ?: (0 to 0)
             val exception = scriptDiagnostic.exception
             val exceptionMessage = if (exception != null) " ($exception)" else ""
             @Suppress("HardCodedStringLiteral")
             val message = scriptDiagnostic.message + exceptionMessage
-            val annotation = Annotation(
-                startOffset,
-                endOffset,
-                scriptDiagnostic.severity.convertSeverity() ?: return@mapNotNull null,
-                message,
-                message
-            )
-
-            // if range is empty, show notification panel in editor
-            annotation.isFileLevelAnnotation = startOffset == endOffset
+            val severity = scriptDiagnostic.severity.convertSeverity() ?: return@mapNotNull null
+            val annotation = HighlightInfo.newHighlightInfo(com.intellij.codeInsight.daemon.impl.HighlightInfo.convertSeverity(severity))
+                .range(startOffset,endOffset)
+                .descriptionAndTooltip(message)
+            if (startOffset == endOffset) {
+                // if range is empty, show notification panel in editor
+                annotation.fileLevelAnnotation()
+            }
 
             for (provider in ScriptDiagnosticFixProvider.EP_NAME.extensionList) {
                 provider.provideFixes(scriptDiagnostic).forEach {
-                    annotation.registerFix(it)
+                    annotation.registerFix(it, null, null, null, null)
                 }
             }
 
-            annotation
+            annotation.create()
         }
 
-        val infos = annotations.map { HighlightInfo.fromAnnotation(it) }
         UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, infos, colorsScheme, id)
     }
 
