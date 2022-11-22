@@ -109,7 +109,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
                     ?: JvmPlatforms.defaultJvmPlatform
 
                 // TODO should we select platform depending on isIr platform detail?
-                KotlinPlatform.JS -> JsPlatforms.defaultJsPlatform
+                KotlinPlatform.JS, KotlinPlatform.WASM -> JsPlatforms.defaultJsPlatform
                 KotlinPlatform.NATIVE -> fragmentDataNode.data.platforms
                     .filterIsInstance<IdeaKpmNativePlatform>()
                     .mapNotNull { KonanTarget.predefinedTargets[it.konanTarget] }

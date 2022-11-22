@@ -118,9 +118,10 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
         private fun SimplePlatform.isRelevantFor(projectPlatforms: List<KotlinPlatform>): Boolean {
             val jvmPlatforms = listOf(KotlinPlatform.ANDROID, KotlinPlatform.JVM, KotlinPlatform.COMMON)
+            val jsPlatforms = listOf(KotlinPlatform.JS, KotlinPlatform.WASM)
             return when (this) {
                 is JvmPlatform -> projectPlatforms.intersect(jvmPlatforms).isNotEmpty()
-                is JsPlatform -> KotlinPlatform.JS in projectPlatforms
+                is JsPlatform -> projectPlatforms.intersect(jsPlatforms).isNotEmpty()
                 is NativePlatform -> KotlinPlatform.NATIVE in projectPlatforms
                 else -> true
             }
