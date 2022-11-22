@@ -238,8 +238,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = (int)Math.floor(x + scaleVal(myXShift + myHShifts(i), OBJ_SCALE));
-      int yOffset = (int)Math.floor(y + scaleVal(myYShift + myVShifts(i), OBJ_SCALE));
+      int xOffset = (int)Math.floor(x + scaleVal(myXShift + getHShift(i), OBJ_SCALE));
+      int yOffset = (int)Math.floor(y + scaleVal(myYShift + getVShift(i), OBJ_SCALE));
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
@@ -271,11 +271,11 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return (int)Math.ceil(scaleVal(myHeight, OBJ_SCALE));
   }
 
-  private int myHShifts(int i) {
+  public int getHShift(int i) {
     return (int)Math.floor(scaleVal(myHShifts[i], USR_SCALE));
   }
 
-  private int myVShifts(int i) {
+  public int getVShift(int i) {
     return (int)Math.floor(scaleVal(myVShifts[i], USR_SCALE));
   }
 
@@ -289,8 +289,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
       Icon icon = myIcons[i];
       if (icon == null) continue;
       allIconsAreNull = false;
-      int hShift = myHShifts(i);
-      int vShift = myVShifts(i);
+      int hShift = getHShift(i);
+      int vShift = getVShift(i);
       minX = Math.min(minX, hShift);
       maxX = Math.max(maxX, hShift + icon.getIconWidth());
       minY = Math.min(minY, vShift);
