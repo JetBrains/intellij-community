@@ -101,6 +101,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
               .notify(project);
           }
         }
+/* Android Studio: don't show this dialog; see issuetracker.google.com/260141081
         if (!previewLevels.isEmpty() && !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
           LanguageLevel languageLevel = previewLevels.first();
           int previewFeature = languageLevel.toJavaVersion().feature;
@@ -117,6 +118,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
             })
             .notify(project);
         }
+Android Studio: don't show this dialog; see issuetracker.google.com/260141081 */
       }
     });
   }
