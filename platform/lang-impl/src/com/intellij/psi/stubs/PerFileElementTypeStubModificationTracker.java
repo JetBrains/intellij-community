@@ -31,17 +31,17 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   public static final int PRECISE_CHECK_THRESHOLD =
     SystemProperties.getIntProperty("stub.index.per.file.element.type.modification.tracker.precise.check.threshold", 20);
 
-  private final ConcurrentMap<String, List<StubFileElementType>> myFileElementTypesCache = new ConcurrentHashMap<>();
-  private final ConcurrentMap<StubFileElementType, Long> myModCounts = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, List<StubFileElementType<?>>> myFileElementTypesCache = new ConcurrentHashMap<>();
+  private final ConcurrentMap<StubFileElementType<?>, Long> myModCounts = new ConcurrentHashMap<>();
   private final ClearableLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = ClearableLazyValue.createAtomic(() -> {
-    UpdatableIndex index = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
+    UpdatableIndex<?, ?, ?, ?> index = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
     while (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-      index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex)index).getBaseIndex();
+      index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index).getBaseIndex();
     }
     return (StubUpdatingIndexStorage)index;
   });
 
-  private record FileInfo(VirtualFile file, Project project, StubFileElementType type) { }
+  private record FileInfo(VirtualFile file, Project project, StubFileElementType<?> type) { }
 
   private final Queue<VirtualFile> myPendingUpdates = new ArrayDeque<>();
   private final Queue<FileInfo> myProbablyExpensiveUpdates = new ArrayDeque<>();
@@ -191,12 +191,12 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     return stubBuilderType.getStubFileElementType();
   }
 
-  private @NotNull List<StubFileElementType> determinePreviousFileElementType(int fileId, StubUpdatingIndexStorage index) {
+  private @NotNull List<StubFileElementType<?>> determinePreviousFileElementType(int fileId, StubUpdatingIndexStorage index) {
     String storedVersion = index.getStoredSubIndexerVersion(fileId);
     if (storedVersion == null) return Collections.emptyList();
     return myFileElementTypesCache.compute(storedVersion, (__, value) -> {
       if (value != null) return value;
-      List<StubFileElementType> types = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
+      List<StubFileElementType<?>> types = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
       if (types.size() > 1) {
         LOG.error("Cannot distinguish StubFileElementTypes. This might worsen the performance. " +
                   "Providing unique externalId or adding a distinctive debugName when instantiating StubFileElementTypes can help. " +
