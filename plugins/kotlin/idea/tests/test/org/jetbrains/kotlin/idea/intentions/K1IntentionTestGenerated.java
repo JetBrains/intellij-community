@@ -9396,6 +9396,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToStringTemplate/onlyForStrings.kt");
         }
 
+        @TestMetadata("plusOperatorReturnsString.kt")
+        public void testPlusOperatorReturnsString() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/plusOperatorReturnsString.kt");
+        }
+
         @TestMetadata("requiresPlusOperator.kt")
         public void testRequiresPlusOperator() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/requiresPlusOperator.kt");

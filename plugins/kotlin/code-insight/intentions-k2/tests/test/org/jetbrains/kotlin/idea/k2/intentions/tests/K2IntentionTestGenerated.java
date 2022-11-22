@@ -2571,6 +2571,19 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/trailingComma")
+    public static class TrailingComma extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("valueParameterList.kt")
+        public void testValueParameterList() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/trailingComma/valueParameterList.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/insertExplicitTypeArguments")
     public static class InsertExplicitTypeArguments extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
