@@ -13,7 +13,6 @@ import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -84,6 +83,7 @@ import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.*;
@@ -93,8 +93,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
@@ -126,6 +126,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @SuppressWarnings("SpellCheckingInspection")
   public static final @NonNls String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
+  /**
+   * Everything in console is UTF-8 only, just like regular script execution
+   */
+  static final Charset CONSOLE_CHARSET = StandardCharsets.UTF_8;
   private final Project myProject;
   private final @NlsContexts.TabTitle String myTitle;
   @Nullable private final String myWorkingDir;
@@ -453,7 +457,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     PyRemotePathMapper pathMapper = remoteSdkAdditionalData != null
                                     ? PydevConsoleRunnerUtil.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
                                     : null;
-    PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, pathMapper, mySdk);
+    PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, pathMapper,
+                                           mySdk);
 
     if (myWorkingDirFunction != null) {
       pythonConsoleScriptExecution.setWorkingDir(myWorkingDirFunction);
@@ -553,6 +558,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     PythonConsoleRunParams runParams = createConsoleRunParams(myWorkingDir, sdk, myEnvironmentVariables);
     PythonExecution pythonConsoleExecution = createPythonConsoleExecution(ideServerHostPortOnTarget, runParams, helpersAwareRequest);
+    pythonConsoleExecution.setCharset(CONSOLE_CHARSET);
+    pythonConsoleExecution.getEnvs().put(PythonEnvUtil.PYTHONIOENCODING, environment -> CONSOLE_CHARSET.name());
     List<String> interpreterOptions;
     if (!StringUtil.isEmptyOrSpaces(runParams.getInterpreterOptions())) {
       interpreterOptions = ParametersListUtil.parse(runParams.getInterpreterOptions());
@@ -734,7 +741,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       if (manager != null) {
         myProcessHandler = manager.createConsoleProcessHandler(
           process, myConsoleView, myPydevConsoleCommunication,
-          commandLine, StandardCharsets.UTF_8,
+          commandLine,
+          CONSOLE_CHARSET,
           PythonRemoteInterpreterManager.appendBasicMappings(myProject, null, (PyRemoteSdkAdditionalDataBase)sdkAdditionalData),
           myRemoteConsoleProcessData.getSocketProvider()
         );
@@ -744,8 +752,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       }
     }
     else {
-      myProcessHandler = new PyConsoleProcessHandler(process, myConsoleView, myPydevConsoleCommunication, commandLine,
-                                                     StandardCharsets.UTF_8);
+      myProcessHandler = new PyConsoleProcessHandler(process, myConsoleView, myPydevConsoleCommunication, commandLine, CONSOLE_CHARSET);
     }
     return myProcessHandler;
   }

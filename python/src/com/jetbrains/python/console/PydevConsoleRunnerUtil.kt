@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.console.completion.PydevConsoleElement
@@ -137,34 +136,31 @@ private class ReplaceSubstringFunction(private val s: String,
 }
 
 fun addDefaultEnvironments(sdk: Sdk,
-                           envs: Map<String, String>,
-                           project: Project): Map<String, String> {
-  setCorrectStdOutEncoding(envs, project)
+                           envs: Map<String, String>): Map<String, String> {
+  setCorrectStdOutEncoding(envs)
   PythonEnvUtil.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk))
   return envs
 }
 
 /**
- * Add required ENV var to Python task to set its stdout charset to current project charset to allow it print correctly.
+ * Add required ENV var to Python task to set its stdout charset to UTF-8 to allow it print correctly.
  *
  * @param envs    map of envs to add variable
- * @param project current project
  */
-private fun setCorrectStdOutEncoding(envs: Map<String, String>, project: Project) {
-  val defaultCharset = EncodingProjectManager.getInstance(project).defaultCharset
+private fun setCorrectStdOutEncoding(envs: Map<String, String>) {
+  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET;
   val encoding = defaultCharset.name()
   PythonEnvUtil.setPythonIOEncoding(PythonEnvUtil.setPythonUnbuffered(envs), encoding)
 }
 
 /**
- * Set command line charset as current project charset.
+ * Set command line charset as UTF-8 (the only charset supported by console)
  * Add required ENV var to Python task to set its stdout charset to current project charset to allow it print correctly.
  *
  * @param commandLine command line
- * @param project     current project
  */
-fun setCorrectStdOutEncoding(commandLine: GeneralCommandLine, project: Project) {
-  val defaultCharset = EncodingProjectManager.getInstance(project).defaultCharset
+fun setCorrectStdOutEncoding(commandLine: GeneralCommandLine) {
+  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET;
   commandLine.charset = defaultCharset
   PythonEnvUtil.setPythonIOEncoding(commandLine.environment, defaultCharset.name())
 }
