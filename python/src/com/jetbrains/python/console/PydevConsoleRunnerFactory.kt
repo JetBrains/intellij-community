@@ -82,10 +82,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
   }
 
   override fun createConsoleRunner(project: Project, contextModule: Module?): PydevConsoleRunner {
-    var module = contextModule
-    if (module == null) {
-      module = PyConsoleCustomizer.EP_NAME.extensionList.firstNotNullOfOrNull { it.guessConsoleModule(project) }
-    }
+    val module = PyConsoleCustomizer.EP_NAME.extensionList.firstNotNullOfOrNull { it.guessConsoleModule(project, contextModule) }
     return when (val consoleParameters = createConsoleParameters(project, module)) {
       is ConstantConsoleParameters -> PydevConsoleRunnerImpl(project, consoleParameters.sdk, consoleParameters.consoleType,
                                                              consoleParameters.workingDir,

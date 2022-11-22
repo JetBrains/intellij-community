@@ -11,5 +11,5 @@ interface PyConsoleCustomizer {
       ExtensionPointName.create("com.jetbrains.python.console.customizer")
   }
 
-  fun guessConsoleModule(project: Project): Module?
+  fun guessConsoleModule(project: Project, contextModule: Module?): Module?
 }
