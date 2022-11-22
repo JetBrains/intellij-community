@@ -143,6 +143,9 @@
     <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler$Processor"
                                id="JavaSyntheticPropertyFromKotlin"/>
 
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K1RenameRefactoringSupport"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>
+
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameDispatcherHandler"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableRenamerFactory"/>

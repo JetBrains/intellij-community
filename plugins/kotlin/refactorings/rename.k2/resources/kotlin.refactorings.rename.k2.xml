@@ -18,5 +18,8 @@
                                order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.K2RenameCallablesWithOverridesProcessor"
                                order="first"/>
+
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K2RenameRefactoringSupport"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>
   </extensions>
 </idea-plugin>
