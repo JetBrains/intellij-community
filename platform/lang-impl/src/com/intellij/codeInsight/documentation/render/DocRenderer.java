@@ -81,10 +81,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private int myCachedHeight = -1;
   private final @NotNull DocRenderLinkActivationHandler myLinkActivationHandler;
 
-  DocRenderer(@NotNull DocRenderItemImpl item) {
-    this(item, new DocRenderDefaultLinkActivationHandler());
-  }
-
   public DocRenderer(@NotNull DocRenderItem item, @NotNull DocRenderLinkActivationHandler linkActivationHandler) {
     myItem = item;
     myLinkActivationHandler = linkActivationHandler;
@@ -391,7 +387,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
-        DocFontSizePopup.show(editor.getContentComponent(), () -> DocRenderUpdater.updateRenderers(editor, true));
+        DocFontSizePopup.show(editor.getContentComponent(), () -> DocRenderItemUpdater.updateRenderers(editor, true));
       }
     }
   }
@@ -490,7 +486,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
           if (this == myPane) {
             CustomFoldRegion foldRegion = myItem.getFoldRegion();
             if (foldRegion != null) {
-              DocRenderUpdater.getInstance().updateFoldRegions(Collections.singleton(foldRegion), false);
+              DocRenderItemUpdater.getInstance().updateFoldRegions(Collections.singleton(foldRegion), false);
             }
           }
         });

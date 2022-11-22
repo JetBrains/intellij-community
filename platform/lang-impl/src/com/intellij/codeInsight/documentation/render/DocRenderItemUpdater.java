@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.*;
 
 @Service
-public final class DocRenderUpdater implements Runnable {
+public final class DocRenderItemUpdater implements Runnable {
   private static final long MAX_UPDATE_DURATION_MS = 50;
   private final Map<CustomFoldRegion, Boolean> myQueue = new HashMap<>();
 
-  static DocRenderUpdater getInstance() {
-    return ApplicationManager.getApplication().getService(DocRenderUpdater.class);
+  static DocRenderItemUpdater getInstance() {
+    return ApplicationManager.getApplication().getService(DocRenderItemUpdater.class);
   }
 
   public static void updateRenderers(@NotNull Collection<? extends DocRenderItem> items, boolean recreateContent) {

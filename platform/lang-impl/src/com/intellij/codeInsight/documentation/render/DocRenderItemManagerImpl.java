@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,11 +26,12 @@ public class DocRenderItemManagerImpl implements DocRenderItemManager {
   public static final Topic<DocRenderItemImpl.Listener> TOPIC = new Topic<>(DocRenderItemImpl.Listener.class, Topic.BroadcastDirection.NONE, true);
 
   private static final Key<Collection<DocRenderItemImpl>> OUR_ITEMS = Key.create("doc.render.items");
+  static final Key<Boolean> OWN_HIGHLIGHTER = Key.create("doc.render.highlighter");
 
   @Override
   @Nullable
   public DocRenderItemImpl getItemAroundOffset(@NotNull Editor editor, int offset) {
-    Collection<DocRenderItemImpl> items = getItems(editor);
+    Collection<DocRenderItemImpl> items = editor.getUserData(OUR_ITEMS);
     if (items == null || items.isEmpty()) return null;
     Document document = editor.getDocument();
     if (offset < 0 || offset > document.getTextLength()) return null;
@@ -62,10 +65,30 @@ public class DocRenderItemManagerImpl implements DocRenderItemManager {
 
   @Override
   @Nullable
-  public Collection<DocRenderItemImpl> getItems(@NotNull Editor editor) {
+  public Collection<DocRenderItem> getItems(@NotNull Editor editor) {
     Collection<DocRenderItemImpl> items = editor.getUserData(OUR_ITEMS);
     if (items == null) return null;
     return Collections.unmodifiableCollection(items);
+  }
+
+  @Override
+  public void removeAllItems(@NotNull Editor editor) {
+    Collection<DocRenderItemImpl> items = editor.getUserData(OUR_ITEMS);
+    if (items == null) {
+      return;
+    }
+    keepScrollingPositionWhile(editor, () -> {
+      List<Runnable> foldingTasks = new ArrayList<>();
+      boolean updated = false;
+      for (Iterator<DocRenderItemImpl> it = items.iterator(); it.hasNext(); ) {
+        DocRenderItemImpl existingItem = it.next();
+        updated |= existingItem.remove(foldingTasks);
+        it.remove();
+      }
+      editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
+      return updated;
+    });
+    setupListeners(editor, true);
   }
 
   @Override
@@ -121,34 +144,17 @@ public class DocRenderItemManagerImpl implements DocRenderItemManager {
       for (int i = 0; i < itemsToUpdateRenderers.size(); i++) {
         itemsToUpdateRenderers.get(i).setTextToRender(itemsToUpdateText.get(i));
       }
-      DocRenderUpdater.updateRenderers(itemsToUpdateRenderers, true);
+      DocRenderItemUpdater.updateRenderers(itemsToUpdateRenderers, true);
       ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).onItemsUpdate(editor, itemsToUpdateRenderers, true);
       items.addAll(newRenderItems);
       return updated;
     });
-    DocRenderListenersSetup.setupListeners(editor, items.isEmpty(), (connection) -> {
-      EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
-        @Override
-        public void editorReleased(@NotNull EditorFactoryEvent event) {
-          if (event.getEditor() == editor) {
-            // this ensures renderers are not kept for the released editors
-            setItemsToEditor(editor, new DocRenderPassFactory.Items(), false);
-          }
-        }
-      }, connection);
-      editor.getCaretModel().addCaretListener(new MyCaretListener(), connection);
-    });
-  }
-
-  private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
-    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
-    keeper.savePosition();
-    if (task.getAsBoolean()) keeper.restorePosition(false);
+    setupListeners(editor, items.isEmpty());
   }
 
   @Override
   public void resetToDefaultState(@NotNull Editor editor) {
-    Collection<DocRenderItemImpl> items = getItems(editor);
+    Collection<DocRenderItemImpl> items = editor.getUserData(OUR_ITEMS);
     if (items == null) return;
     boolean editorSetting = DocRenderManager.isDocRenderingEnabled(editor);
     keepScrollingPositionWhile(editor, () -> {
@@ -164,29 +170,8 @@ public class DocRenderItemManagerImpl implements DocRenderItemManager {
     });
   }
 
-  private static class MyCaretListener implements CaretListener {
-    @Override
-    public void caretPositionChanged(@NotNull CaretEvent event) {
-      onCaretUpdate(event);
-    }
-
-    @Override
-    public void caretAdded(@NotNull CaretEvent event) {
-      onCaretUpdate(event);
-    }
-
-    private static void onCaretUpdate(@NotNull CaretEvent event) {
-      Caret caret = event.getCaret();
-      if (caret == null) return;
-      int caretOffset = caret.getOffset();
-      FoldRegion foldRegion = caret.getEditor().getFoldingModel().getCollapsedRegionAtOffset(caretOffset);
-      if (foldRegion instanceof CustomFoldRegion && caretOffset > foldRegion.getStartOffset()) {
-        CustomFoldRegionRenderer renderer = ((CustomFoldRegion)foldRegion).getRenderer();
-        if (renderer instanceof DocRenderer) {
-          DocRenderItem data = ((DocRenderer)renderer).getItem();
-          data.toggle();
-        }
-      }
-    }
+  @Override
+  public boolean isRenderedDocHighlighter(@NotNull RangeHighlighter highlighter) {
+    return Boolean.TRUE.equals(highlighter.getUserData(OWN_HIGHLIGHTER));
   }
 }

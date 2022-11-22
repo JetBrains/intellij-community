@@ -18,13 +18,14 @@ interface DocRenderItem {
   val highlighter: RangeHighlighter
 
   val editor: Editor
+
   fun calcGutterIconRenderer(): GutterIconRenderer?
 
-  fun setIconVisible(visible: Boolean) {}
+  fun setIconVisible(visible: Boolean)
 
   fun toggle()
 
-  fun getInlineDocumentation(): InlineDocumentation? = null
+  fun getInlineDocumentation(): InlineDocumentation?
 
   fun getInlineDocumentationTarget(): DocumentationTarget?
 

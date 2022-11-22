@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -83,14 +84,16 @@ public final class DocRenderItemImpl implements DocRenderItem {
   public static CustomFoldRegionRenderer createDemoRenderer(@NotNull Editor editor) {
     DocRenderItemImpl item = new DocRenderItemImpl(editor, new TextRange(0, 0), CodeInsightBundle.message(
       "documentation.rendered.documentation.with.href.link"));
-    return new DocRenderer(item);
+    return new DocRenderer(item, DocRenderDefaultLinkActivationHandler.INSTANCE);
   }
 
   DocRenderItemImpl(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable @Nls String textToRender) {
     this.editor = editor;
     this.textToRender = textToRender;
-    highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(null, textRange.getStartOffset(), textRange.getEndOffset(), 0, HighlighterTargetArea.EXACT_RANGE);
+    highlighter = ((MarkupModelEx)editor.getMarkupModel())
+      .addRangeHighlighterAndChangeAttributes(null, textRange.getStartOffset(), textRange.getEndOffset(), 0, HighlighterTargetArea.EXACT_RANGE, false, (h) -> {
+        h.putUserData(DocRenderItemManagerImpl.OWN_HIGHLIGHTER, true);
+      });
     updateIcon(null);
   }
 
@@ -124,7 +127,7 @@ public final class DocRenderItemImpl implements DocRenderItem {
       }
       ItemLocation offsets = new ItemLocation(highlighter);
       Runnable foldingTask = () -> {
-        foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, new DocRenderer(this));
+        foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, new DocRenderer(this, DocRenderDefaultLinkActivationHandler.INSTANCE));
       };
       if (foldingTasks == null) {
         foldingModel.runBatchFoldingOperation(foldingTask, true, false);
@@ -186,18 +189,6 @@ public final class DocRenderItemImpl implements DocRenderItem {
   public @Nullable DocumentationTarget getInlineDocumentationTarget() {
     InlineDocumentation documentation = getInlineDocumentation();
     return documentation == null ? null : documentation.getOwnerTarget();
-  }
-
-  private static void updateRenderers(@NotNull Collection<DocRenderItem> items, boolean recreateContent) {
-    DocRenderItemUpdater.getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.foldRegion), recreateContent);
-  }
-
-  private static void updateRenderers(@NotNull Editor editor, boolean recreateContent) {
-    if (recreateContent) {
-      DocRenderer.clearCachedLoadingPane(editor);
-    }
-    Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
-    if (items != null) updateRenderers(items, recreateContent);
   }
 
   void updateIcon(List<? super Runnable> foldingTasks) {

@@ -160,7 +160,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
   private OptionSet myOptions = new OptionSet();
-  protected final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Map<String, Boolean> myDefaultBreadcrumbVisibility = new HashMap<>();
 
   private int myBlockIndent;
@@ -188,6 +188,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
     Disposer.register(disposable, () -> myPropertyChangeSupport.removePropertyChangeListener(listener));
+  }
+
+  protected void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 
   @NotNull
