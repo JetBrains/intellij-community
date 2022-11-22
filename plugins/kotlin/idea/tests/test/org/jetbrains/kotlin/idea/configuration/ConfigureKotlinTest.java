@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.configuration;
 
 import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
@@ -21,7 +20,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiRequiresStatement;
-import com.intellij.util.ui.UIUtil;
 import kotlin.KotlinVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.arguments.InternalArgument;
@@ -146,9 +144,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         WriteAction.runAndWait(() -> {
             ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, RootsChangeRescanningInfo.NO_RESCAN_NEEDED);
         });
-
-        UIUtil.dispatchAllInvocationEvents();
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
         assertEquals(LanguageVersion.KOTLIN_1_6, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
         assertEquals(LanguageVersion.KOTLIN_1_6, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(myProject).getLanguageVersion());

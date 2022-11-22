@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.util.concurrent.ConcurrentHashMap
@@ -38,11 +37,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
     @RequiresReadLock
     abstract operator fun get(key: Key): Value
 
-    @RequiresReadLock
-    fun values(): Collection<Value> {
-        ApplicationManager.getApplication().assertReadAccessAllowed()
-        return useCache { it.values }
-    }
+    fun values(): Collection<Value> = useCache { it.values }
 
     protected fun checkEntitiesIfRequired(cache: MutableMap<Key, Value>) {
         if (isValidityChecksEnabled && invalidationStamp.isCheckRequired()) {
@@ -83,9 +78,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
         }
     }
 
-    @RequiresWriteLock
     protected fun invalidate() {
-        ApplicationManager.getApplication().assertWriteAccessAllowed()
         useCache { cache ->
             doInvalidate(cache)
         }
@@ -98,17 +91,13 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
         cache.clear()
     }
 
-    @RequiresWriteLock
     protected fun invalidateKeysAndGetOutdatedValues(
         keys: Collection<Key>,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
-    ): Collection<Value> {
-        ApplicationManager.getApplication().assertWriteAccessAllowed()
-        return useCache { cache ->
-            doInvalidateKeysAndGetOutdatedValues(keys, cache).also {
-                invalidationStamp.incInvalidation()
-                checkEntities(cache, validityCondition)
-            }
+    ): Collection<Value> = useCache { cache ->
+        doInvalidateKeysAndGetOutdatedValues(keys, cache).also {
+            invalidationStamp.incInvalidation()
+            checkEntities(cache, validityCondition)
         }
     }
 
@@ -120,12 +109,10 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
         }
     }
 
-    @RequiresWriteLock
     protected fun invalidateKeys(
         keys: Collection<Key>,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
     ) {
-        ApplicationManager.getApplication().assertWriteAccessAllowed()
         useCache { cache ->
             for (key in keys) {
                 cache.remove(key)
@@ -139,12 +126,10 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
      * @param condition is a condition to find entries those will be invalidated and removed from the cache
      * @param validityCondition is a condition to find entries those have to be checked for their validity, see [checkKeyValidity] and [checkValueValidity]
      */
-    @RequiresWriteLock
     protected fun invalidateEntries(
         condition: (Key, Value) -> Boolean,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
     ) {
-        ApplicationManager.getApplication().assertWriteAccessAllowed()
         useCache { cache ->
             val iterator = cache.entries.iterator()
             while (iterator.hasNext()) {
