@@ -63,6 +63,10 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
   private static final String RSYNC = "rsync";
+
+  /**
+   * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
+   */
   private static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
