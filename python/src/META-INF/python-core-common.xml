@@ -829,6 +829,7 @@
   <extensions defaultExtensionNs="com.jetbrains.python.console">
     <executeCustomizer implementation="com.jetbrains.python.console.PyExecuteConsoleCustomizerDefault"/>
     <pyConsoleOutputCustomizer implementation="com.jetbrains.python.console.PyConsoleOutputCustomizerDefault"/>
+    <customizer id="python" implementation="com.jetbrains.python.console.PythonConsoleCustomizer"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains.python.debugger">
