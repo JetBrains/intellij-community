@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -143,7 +144,8 @@ public class RootFileSupplier {
   public static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container, @Nullable Object containerProvider) {
     if (!file.isValid()) {
       if (containerProvider != null) {
-        LOG.error("Invalid root " + file + " in " + container + " provided by " + containerProvider.getClass());
+        Class<?> providerClass = containerProvider.getClass();
+        PluginException.logPluginError(LOG, "Invalid root " + file + " in " + container + " provided by " + providerClass, null, providerClass);
       }
       else {
         LOG.error("Invalid root " + file + " in " + container);
