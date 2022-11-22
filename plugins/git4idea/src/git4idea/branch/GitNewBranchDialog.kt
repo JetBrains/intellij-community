@@ -85,6 +85,9 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         .align(AlignX.FILL)
         .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
         .focused()
+        .applyToComponent {
+          selectAll()
+        }
         .validationOnApply(validateBranchName(true))
         .validationOnInput(validateBranchName(false))
     }
