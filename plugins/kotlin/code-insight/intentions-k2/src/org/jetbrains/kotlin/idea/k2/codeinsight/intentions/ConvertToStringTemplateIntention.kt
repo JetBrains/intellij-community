@@ -118,10 +118,14 @@ private fun buildStringTemplateForBinaryOperand(expr: KtExpression?, forceBraces
     val expression = KtPsiUtil.safeDeparenthesize(expr).let { expression ->
         val dotQualifiedExpression = expression as? KtDotQualifiedExpression
         when {
-            dotQualifiedExpression != null && allowAnalysisOnEdt { dotQualifiedExpression.isToString() } && dotQualifiedExpression.receiverExpression !is KtSuperExpression ->
-                dotQualifiedExpression.receiverExpression
+            dotQualifiedExpression != null && allowAnalysisOnEdt {
+                dotQualifiedExpression.isToString()
+            } && dotQualifiedExpression.receiverExpression !is KtSuperExpression ->
+                return buildStringTemplateForBinaryOperand(dotQualifiedExpression.receiverExpression, forceBraces)
+
             expression is KtLambdaExpression && expression.parent is KtLabeledExpression ->
                 expr
+
             else ->
                 expression
         }

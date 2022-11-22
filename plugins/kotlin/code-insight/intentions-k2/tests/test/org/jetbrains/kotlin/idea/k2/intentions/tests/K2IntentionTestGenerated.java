@@ -1789,6 +1789,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/toString.kt");
         }
 
+        @TestMetadata("toStringChain.kt")
+        public void testToStringChain() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/toStringChain.kt");
+        }
+
         @TestMetadata("toStringOfClassOtherThanAny.kt")
         public void testToStringOfClassOtherThanAny() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/toStringOfClassOtherThanAny.kt");
