@@ -295,7 +295,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
         }
         MODULE_LIBRARY_TYPE -> {
-          val libraryElement = dependencyElement.getChild(LIBRARY_TAG)!!
+          val libraryElement = dependencyElement.getChildTagStrict(LIBRARY_TAG)
           // TODO. Probably we want a fixed name based on hashed library roots
           val nameAttributeValue = libraryElement.getAttributeValue(NAME_ATTRIBUTE)
           val originalName = nameAttributeValue ?: "${LibraryNameGenerator.UNNAMED_LIBRARY_NAME_PREFIX}${nextUnnamedLibraryIndex++}"

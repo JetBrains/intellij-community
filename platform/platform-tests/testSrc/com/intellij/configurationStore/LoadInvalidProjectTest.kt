@@ -54,8 +54,7 @@ class LoadInvalidProjectTest {
   @Test
   fun `load empty iml`() = runBlocking {
     loadProjectAndCheckResults("empty-iml-file") { project ->
-      assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
-      assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
+      assertContainsSingleModuleFoo(project)
       assertThat(errors.single().description).contains("foo.iml")
     }
   }
@@ -63,8 +62,7 @@ class LoadInvalidProjectTest {
   @Test
   fun `malformed xml in iml`() = runBlocking {
     loadProjectAndCheckResults("malformed-xml-in-iml") { project ->
-      assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
-      assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
+      assertContainsSingleModuleFoo(project)
       assertThat(errors.single().description).contains("foo.iml")
     }
   }
@@ -72,8 +70,7 @@ class LoadInvalidProjectTest {
   @Test
   fun `unknown classpath provider in iml`() = runBlocking {
     loadProjectAndCheckResults("unknown-classpath-provider-in-iml") { project ->
-      assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
-      assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
+      assertContainsSingleModuleFoo(project)
       assertThat(errors.single().description).contains("foo.iml")
     }
   }
@@ -85,6 +82,19 @@ class LoadInvalidProjectTest {
       assertThat(ModuleManager.getInstance(project).modules.single().name).isEqualTo("foo")
       assertThat(errors).isEmpty()
     }
+  }
+
+  @Test
+  fun `missing library tag in module library dependency`() = runBlocking {
+    loadProjectAndCheckResults("missing-module-library-tag-in-iml") { project ->
+      assertContainsSingleModuleFoo(project)
+      assertThat(errors.single().description).contains("foo.iml")
+    }
+  }
+
+  private fun assertContainsSingleModuleFoo(project: Project) {
+    assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
+    assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
   }
 
   @Test
