@@ -409,16 +409,18 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   )
 
   private fun retrieveDependencyVersions(project: Project, domModel: MavenDomProjectModel, dependencies: List<DeclaredDependencyData>) {
+    if (dependencies.isEmpty()) return
+
+    val dependencyMap = dependencies.filter { it.version == null && it.artifactId != null }.groupBy({ it.artifactId!! }, { it })
     MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(
       domModel,
       { mavenDomDependency ->
         val groupId = mavenDomDependency.groupId.stringValue
         val artifactId = mavenDomDependency.artifactId.stringValue
         val version = mavenDomDependency.version.stringValue
-
-        if (!version.isNullOrBlank()) {
-          for (dependency in dependencies) {
-            if (artifactId == dependency.artifactId && groupId == dependency.groupId) {
+        if (!version.isNullOrBlank() && dependencyMap.containsKey(artifactId)) {
+          for (dependency in dependencyMap[artifactId]!!) {
+            if (groupId == dependency.groupId) {
               dependency.version = version
             }
           }
