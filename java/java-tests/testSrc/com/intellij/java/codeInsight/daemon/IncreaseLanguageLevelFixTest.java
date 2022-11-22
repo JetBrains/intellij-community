@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,11 +61,11 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
     doHighlighting();
     List<IntentionAction> actions = CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile());
     String message = JavaBundle.message("set.language.level.to.0", level.getPresentableText());
-    boolean found = actions.stream().anyMatch(act -> act.getText().equals(message));
+    boolean found = ContainerUtil.exists(actions, act -> act.getText().equals(message));
     if (!found) {
       LanguageLevel foundLevel = Stream.of(LanguageLevel.values())
-        .filter(l -> actions.stream().anyMatch(
-          act -> act.getText().equals(JavaBundle.message("set.language.level.to.0", l.getPresentableText()))))
+        .filter(l -> ContainerUtil.exists(actions, act -> act.getText()
+          .equals(JavaBundle.message("set.language.level.to.0", l.getPresentableText()))))
         .findFirst().orElse(null);
       if (foundLevel != null) {
         fail("Expected level: "+level+"; actual: "+foundLevel);
