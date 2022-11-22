@@ -70,7 +70,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
   private static final VarargEventId CREATE_BY_NEW_FILE = registerFileTypeEvent("create_by_new_file");
-  private static final VarargEventId EDIT = registerFileTypeEvent("edit");
+  private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_NAME_PATTERN_FIELD);
   private static final VarargEventId OPEN = registerFileTypeEvent(
     "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_PREVIEW_TAB, FILE_NAME_PATTERN_FIELD
   );
@@ -113,6 +113,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
                                 @NotNull VirtualFile file) {
     EDIT.log(project, pairs -> {
       pairs.addAll(buildCommonEventPairs(project, file, false));
+      addFileNamePattern(pairs, file);
     });
   }
 
@@ -133,7 +134,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
       if (durationMs != -1) {
         pairs.add(EventFields.DurationMs.with(durationMs));
       }
-      buildFileNamePattern(pairs, file);
+      addFileNamePattern(pairs, file);
     });
   }
 
@@ -164,8 +165,8 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     return data;
   }
 
-  private static void buildFileNamePattern(@NotNull List<EventPair<?>> data,
-                                           @NotNull VirtualFile file) {
+  private static void addFileNamePattern(@NotNull List<EventPair<?>> data,
+                                         @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (!(fileTypeManager instanceof FileTypeManagerImpl)) {
