@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
 import com.intellij.openapi.util.NlsSafe;
@@ -155,6 +156,13 @@ public interface DfReferenceType extends DfType {
   default boolean isImmutableQualifier() {
     return getMutability() == Mutability.UNMODIFIABLE;
   }
+
+  /**
+   * @param factory factory to create type constraints
+   * @return equivalent reference type where all the constraints are replaced with ones created by a given factory.
+   * @see TypeConstraint#convert(TypeConstraints.TypeConstraintFactory) 
+   */
+  @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory);
 
   @Override
   @NlsSafe @NotNull String toString();
