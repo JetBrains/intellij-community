@@ -2457,6 +2457,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testTopLevelExpression() throws Exception {
                 runTest("testData/refactoring/extractFunction/script/TopLevelExpression.kts");
             }
+
+            @TestMetadata("topLevelFunction.kts")
+            public void testTopLevelFunction() throws Exception {
+                runTest("testData/refactoring/extractFunction/script/topLevelFunction.kts");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
