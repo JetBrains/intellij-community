@@ -14107,6 +14107,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         public void testRedeclarationPropertyConflict() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflict.kt");
         }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/script.kts");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
