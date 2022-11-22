@@ -40,6 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
@@ -62,6 +63,7 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
   private static final String RSYNC = "rsync";
+  private static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
@@ -276,7 +278,12 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
     if (executeCommandInShell && !options.isPassEnvVarsUsingInterop()) {
       commandLine.getEnvironment().forEach((key, val) -> {
-        prependCommand(linuxCommand, "export", CommandLineUtil.posixQuote(key) + "=" + CommandLineUtil.posixQuote(val), "&&");
+        if (ENV_VARIABLE_NAME_PATTERN.matcher(key).matches()) {
+          prependCommand(linuxCommand, "export", key + "=" + CommandLineUtil.posixQuote(val), "&&");
+        }
+        else {
+          LOG.debug("Can not pass environment variable (bad name): '", key, "'");
+        }
       });
       commandLine.getEnvironment().clear();
     }
