@@ -421,6 +421,7 @@ Includes the following features:</p>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
+    <iconMapper mappingFile="MarkdownCoreIconMappings.json"/>
   </extensions>
 
   <applicationListeners>
