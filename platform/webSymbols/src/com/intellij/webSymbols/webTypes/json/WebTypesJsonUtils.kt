@@ -112,20 +112,20 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
     else -> emptySequence()
   })
     .plus(this.additionalProperties.asSequence()
-            .map { (name, list) -> Pair(name, list.mapNotNull { it.value as? GenericContribution }) }
+            .map { (name, list) -> Pair(name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
             .filter { it.second.isNotEmpty() })
 
 internal val GenericContributionsHost.genericContributions: Map<String, List<GenericContribution>>
   get() =
     this.additionalProperties.asSequence()
-      .map { (name, list) -> Pair(name, list.mapNotNull { it.value as? GenericContribution }) }
+      .map { (name, list) -> Pair(name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
       .filter { it.second.isNotEmpty() }
       .toMap()
 
 internal val GenericContributionsHost.genericProperties: Map<String, Any>
   get() =
     this.additionalProperties.asSequence()
-      .map { (name, list) -> Pair(name, list?.mapNotNull { prop -> prop.value.takeIf { it !is GenericContribution } } ?: emptyList()) }
+      .map { (name, list) -> Pair(name, list?.mapNotNull { prop -> prop?.value.takeIf { it !is GenericContribution } } ?: emptyList()) }
       .mapNotNull {
         when (it.second.size) {
           0 -> null
