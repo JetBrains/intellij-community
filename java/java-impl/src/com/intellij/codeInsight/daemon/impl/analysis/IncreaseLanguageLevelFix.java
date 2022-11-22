@@ -64,7 +64,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(file));
+    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(file.getOriginalFile()));
     return new IntentionPreviewInfo.Html(
       JavaBundle.message("increase.language.level.preview.description", module.getName(), myLevel.toJavaVersion()));
   }
