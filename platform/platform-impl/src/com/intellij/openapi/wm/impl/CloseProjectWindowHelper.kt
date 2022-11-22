@@ -7,11 +7,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
@@ -20,10 +16,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.job
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.cancel
 
 open class CloseProjectWindowHelper {
   companion object {
@@ -56,30 +49,20 @@ open class CloseProjectWindowHelper {
     }
   }
 
-  protected open fun getNumberOfOpenedProjects() = ProjectManager.getInstance().openProjects.size
+  protected open fun getNumberOfOpenedProjects(): Int = ProjectManager.getInstance().openProjects.size
 
   @RequiresEdt
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     runInAutoSaveDisabledMode {
-      runBlockingModal(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                       title = "",
-                       cancellation = TaskCancellation.nonCancellable()) {
-        if (project != null) {
-          @Suppress("DEPRECATION")
-          project.coroutineScope.coroutineContext.job.cancelAndJoin()
-          if (project.isOpen) {
-            withContext(Dispatchers.EDT) {
-              ProjectManager.getInstance().closeAndDispose(project)
-            }
-          }
-        }
-
-        ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
-        SaveAndSyncHandler.getInstance().scheduleSave(task = SaveAndSyncHandler.SaveTask(forceSavingAllSettings = true),
-                                                      forceExecuteImmediately = true)
+      @Suppress("DEPRECATION")
+      project?.coroutineScope?.cancel()
+      if (project != null && project.isOpen) {
+        ProjectManager.getInstance().closeAndDispose(project)
       }
+      ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
+      SaveAndSyncHandler.getInstance().scheduleSave(task = SaveAndSyncHandler.SaveTask(forceSavingAllSettings = true),
+                                                    forceExecuteImmediately = true)
     }
-
     WelcomeFrame.showIfNoProjectOpened()
   }
 
