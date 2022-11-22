@@ -20,7 +20,6 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -30,6 +29,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
@@ -40,15 +42,11 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -56,6 +54,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
   public boolean m_ignoreJavadoc; // left here to prevent changes to project files.
 
   public boolean ignoreInModuleStatements = true;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreTheSameName = true;
 
   @Override
   @NotNull
@@ -70,7 +70,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("ignoreInModuleStatements", InspectionGadgetsBundle.message("ignore.in.module.statements.option")));
+      checkbox("ignoreInModuleStatements", InspectionGadgetsBundle.message("ignore.in.module.statements.option")),
+      checkbox("ignoreTheSameName", InspectionGadgetsBundle.message("ignore.the.same.name.option")));
   }
 
   @Override
@@ -220,8 +221,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (element != null && !(element instanceof PsiAnnotation)) {
         return;
       }
-      final PsiFile containingFile = reference.getContainingFile();
-      if (!(containingFile instanceof PsiJavaFile)) {
+      if (!(reference.getContainingFile() instanceof PsiJavaFile containingFile)) {
         return;
       }
       final PsiElement target = reference.resolve();
@@ -232,12 +232,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       boolean reportAsInformationInsideJavadoc = false;
       if (containingComment != null) {
-        if (acceptFqnInJavadoc((PsiJavaFile)containingFile, styleSettings)) {
+        if (acceptFqnInJavadoc(containingFile, styleSettings)) {
           return;
         }
         JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
         if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
-          reportAsInformationInsideJavadoc = !ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, reference.getQualifiedName());
+          reportAsInformationInsideJavadoc = !ImportHelper.isAlreadyImported(containingFile, reference.getQualifiedName());
         }
       }
       final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
@@ -270,6 +270,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         }
         final PsiElement qualifier1 = aReference.getQualifier();
         if (qualifier1 != null) {
+          if (ignoreTheSameName) {
+            Map<String, Set<String>> allReferencesByName = getReferencesFromCache(containingFile);
+            Collection<String> classesWithReferenceName = allReferencesByName.get(aReference.getReferenceName());
+            if (classesWithReferenceName.size() > 1) {
+              continue;
+            }
+          }
           PsiElement elementToHighlight = qualifier1;
           final ProblemHighlightType highlightType;
           if (reportAsInformationInsideJavadoc ||
@@ -284,7 +291,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
           }
 
           final boolean inSameFile = aClass.getContainingFile() == containingFile ||
-                                     ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, qualifiedName);
+                                     ImportHelper.isAlreadyImported(containingFile, qualifiedName);
           registerError(elementToHighlight, highlightType, inSameFile);
         }
         break;
@@ -308,6 +315,50 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         return true;
       }
       return styleSettings.getCustomSettings(JavaCodeStyleSettings.class).useFqNamesInJavadocAlways();
+    }
+  }
+
+  private static Map<String, Set<String>> getReferencesFromCache(PsiJavaFile file) {
+    return CachedValuesManager.getCachedValue(file, () -> {
+      ReferenceCollector referenceCollector = new ReferenceCollector();
+      file.accept(referenceCollector);
+      return CachedValueProvider.Result.create(referenceCollector.getReferences(), PsiModificationTracker.MODIFICATION_COUNT);
+    });
+  }
+
+  private static class ReferenceCollector extends JavaRecursiveElementWalkingVisitor {
+    private final Map<String, Set<String>> referencesByName = new HashMap<>();
+
+    @Override
+    public void visitImportList(@NotNull PsiImportList list) { }
+
+    @Override
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+
+      if (!reference.isQualified()) {
+        return;
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof final PsiClass aClass)) {
+        return;
+      }
+      referencesByName.compute(reference.getReferenceName(), (k, elements) -> {
+        if (elements == null) {
+          elements = new HashSet<>();
+        }
+        elements.add(aClass.getQualifiedName());
+        return elements;
+      });
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
+    }
+
+    public Map<String, Set<String>> getReferences() {
+      return referencesByName;
     }
   }
 }

@@ -30,6 +30,9 @@ public class UnnecessaryFullyQualifiedNameInspectionTest extends IGInspectionTes
   public void testConflictWithTypeParameter() {
     doTest(BASE_DIR + "unnecessary_fqn_type_parameter_conflict", new UnnecessaryFullyQualifiedNameInspection());
   }
+  public void testSkipWarningIfThereIsSameNames() {
+    doTest(BASE_DIR + "unnecessary_fully_qualified_name_skip_warn_if_confusing", new UnnecessaryFullyQualifiedNameInspection());
+  }
 
   private void doTestWithFqnInJavadocSetting(String dirPath, int classNamesInJavadoc) {
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
