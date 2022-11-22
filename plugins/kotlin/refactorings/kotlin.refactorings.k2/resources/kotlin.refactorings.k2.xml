@@ -5,12 +5,13 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.KotlinFirRefactoringsSettings"/>
-    
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.K2CommonRefactoringSettings"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings"/>
     <lang.refactoringSupport language="kotlin" 
                              implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinFirRefactoringSupportProvider"/>
     <refactoring.safeDeleteProcessor
             id="kotlinFirProcessor"
-            implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinFirSafeDeleteProcessor" 
+            implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinFirSafeDeleteProcessor"
             order="before kotlinProcessor"/>
   </extensions>
 </idea-plugin>

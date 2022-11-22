@@ -13,6 +13,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings"/>
 
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.K1CommonRefactoringSettings"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings"/>
+
     <lang.namesValidator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator"/>
 
     <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggestionProvider"/>

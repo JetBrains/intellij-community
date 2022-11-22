@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.isEnumCompanionPropertyWithEntryConflict
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.checkSuperMethodsWithPopup
 import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
@@ -64,16 +64,16 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                 (namedUnwrappedElement is KtParameter && namedUnwrappedElement.hasValOrVar())
     }
 
-    override fun isToSearchInComments(psiElement: PsiElement) = KotlinRefactoringSettings.instance.RENAME_SEARCH_IN_COMMENTS_FOR_FIELD
+    override fun isToSearchInComments(psiElement: PsiElement) = KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PROPERTY
 
     override fun setToSearchInComments(element: PsiElement, enabled: Boolean) {
-        KotlinRefactoringSettings.instance.RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = enabled
+        KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PROPERTY = enabled
     }
 
-    override fun isToSearchForTextOccurrences(element: PsiElement) = KotlinRefactoringSettings.instance.RENAME_SEARCH_FOR_TEXT_FOR_FIELD
+    override fun isToSearchForTextOccurrences(element: PsiElement) = KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PROPERTY
 
     override fun setToSearchForTextOccurrences(element: PsiElement, enabled: Boolean) {
-        KotlinRefactoringSettings.instance.RENAME_SEARCH_FOR_TEXT_FOR_FIELD = enabled
+        KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PROPERTY = enabled
     }
 
     private fun getJvmNames(element: PsiElement): Pair<String?, String?> {

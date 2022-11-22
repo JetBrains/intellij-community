@@ -23,7 +23,10 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.refactoring.*
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.checkSuperMethods
+import org.jetbrains.kotlin.idea.refactoring.checkSuperMethodsWithPopup
+import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsNoWrapping
@@ -40,16 +43,16 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         return element is KtNamedFunction || (element is KtLightMethod && element.kotlinOrigin is KtNamedFunction) || element is FunctionWithSupersWrapper
     }
 
-    override fun isToSearchInComments(psiElement: PsiElement) = KotlinRefactoringSettings.instance.RENAME_SEARCH_IN_COMMENTS_FOR_METHOD
+    override fun isToSearchInComments(psiElement: PsiElement) = KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION
 
     override fun setToSearchInComments(element: PsiElement, enabled: Boolean) {
-        KotlinRefactoringSettings.instance.RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = enabled
+        KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION = enabled
     }
 
-    override fun isToSearchForTextOccurrences(element: PsiElement) = KotlinRefactoringSettings.instance.RENAME_SEARCH_FOR_TEXT_FOR_METHOD
+    override fun isToSearchForTextOccurrences(element: PsiElement) = KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FUNCTION
 
     override fun setToSearchForTextOccurrences(element: PsiElement, enabled: Boolean) {
-        KotlinRefactoringSettings.instance.RENAME_SEARCH_FOR_TEXT_FOR_METHOD = enabled
+        KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FUNCTION = enabled
     }
 
     private fun getJvmName(element: PsiElement): String? {

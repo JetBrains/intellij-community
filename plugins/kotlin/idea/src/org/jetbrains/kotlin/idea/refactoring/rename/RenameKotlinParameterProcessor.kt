@@ -9,7 +9,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.util.or
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.utils.SmartList
 class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
     override fun canProcessElement(element: PsiElement) = element is KtParameter && element.ownerFunction is KtFunction
 
-    override fun isToSearchInComments(psiElement: PsiElement) = KotlinRefactoringSettings.instance.RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE
+    override fun isToSearchInComments(psiElement: PsiElement) = KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER
 
     override fun setToSearchInComments(element: PsiElement, enabled: Boolean) {
-        KotlinRefactoringSettings.instance.RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = enabled
+        KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER = enabled
     }
 
     override fun findCollisions(
