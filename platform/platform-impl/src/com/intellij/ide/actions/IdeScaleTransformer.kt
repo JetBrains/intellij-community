@@ -110,7 +110,7 @@ private abstract class ScalingParameters {
                       private val originalConsoleFontSize: Float) : ScalingParameters() {
     override val consoleFontSize: Float get() = round(originalConsoleFontSize * scale)
     override fun scaledEditorFontSize(fontSize: Float): Float =
-      round(EditorColorsManager.getInstance().globalScheme.editorFontSize2D * scale)
+      round(fontSize * scale)
   }
 
   class FontOriented(override val editorFont: Float) : ScalingParameters() {
