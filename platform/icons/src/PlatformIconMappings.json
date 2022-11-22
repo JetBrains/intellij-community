@@ -157,7 +157,6 @@
       "lombok.svg": "icons/lombok.svg",
       "lombokConfig.svg": "icons/config.svg",
       "manifest.svg": "fileTypes/manifest.svg",
-      "markdown.svg": "icons/MarkdownPlugin.svg",
       "maven.svg": "icons/repositoryLibraryLogo.svg",
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
