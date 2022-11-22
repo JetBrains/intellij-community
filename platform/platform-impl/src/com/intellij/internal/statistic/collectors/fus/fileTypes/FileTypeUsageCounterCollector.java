@@ -48,12 +48,11 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 68);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 69);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
-  private static final EventField<Boolean> IS_IN_READER_MODE = EventFields.Boolean("is_in_reader_mode");
   private static final EventField<Boolean> IS_PREVIEW_TAB = EventFields.Boolean("is_preview_tab");
   private static final String FILE_NAME_PATTERN = "file_name_pattern";
   private static final EventField<String> FILE_NAME_PATTERN_FIELD =
@@ -73,9 +72,9 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final VarargEventId CREATE_BY_NEW_FILE = registerFileTypeEvent("create_by_new_file");
   private static final VarargEventId EDIT = registerFileTypeEvent("edit");
   private static final VarargEventId OPEN = registerFileTypeEvent(
-    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_IN_READER_MODE, IS_PREVIEW_TAB, FILE_NAME_PATTERN_FIELD
+    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_PREVIEW_TAB, FILE_NAME_PATTERN_FIELD
   );
-  private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE, IS_IN_READER_MODE);
+  private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE);
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
     logEdited(project, file);
@@ -110,16 +109,10 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
   }
 
-  private static @Nullable Editor getEditorForVirtualFile(@NotNull Project project,
-                                                          @NotNull VirtualFile file) {
-    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
-    return fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
-  }
-
   private static void logEdited(@NotNull Project project,
                                 @NotNull VirtualFile file) {
     EDIT.log(project, pairs -> {
-      pairs.addAll(buildCommonEventPairs(project, file, null, false));
+      pairs.addAll(buildCommonEventPairs(project, file, false));
     });
   }
 
@@ -127,10 +120,9 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
                                 @NotNull VirtualFile file,
                                 @Nullable FileEditor fileEditor,
                                 long timeToShow, long durationMs) {
-    final Editor editor = getEditorForVirtualFile(project, file);
     final FileEditorComposite composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
     OPEN.log(project, pairs -> {
-      pairs.addAll(buildCommonEventPairs(project, file, editor, true));
+      pairs.addAll(buildCommonEventPairs(project, file, true));
       if (fileEditor != null) {
         pairs.add(FILE_EDITOR.with(fileEditor.getClass()));
         if (composite != null) {
@@ -150,15 +142,13 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   }
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file, boolean withWritable) {
-    final Editor editor = withWritable ? getEditorForVirtualFile(project, file) : null;
     eventId.log(project, pairs -> {
-      pairs.addAll(buildCommonEventPairs(project, file, editor, withWritable));
+      pairs.addAll(buildCommonEventPairs(project, file, withWritable));
     });
   }
 
   private static List<@NotNull EventPair<?>> buildCommonEventPairs(@NotNull Project project,
                                                                    @NotNull VirtualFile file,
-                                                                   @Nullable Editor editor,
                                                                    boolean withWritable) {
     FileType fileType = file.getFileType();
     List<EventPair<?>> data = ContainerUtil.newArrayList(
@@ -170,7 +160,6 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
 
     if (withWritable) {
       data.add(IS_WRITABLE.with(file.isWritable()));
-      data.add(IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file, editor)));
     }
     return data;
   }
