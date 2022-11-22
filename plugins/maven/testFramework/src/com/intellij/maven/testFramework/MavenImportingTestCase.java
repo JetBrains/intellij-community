@@ -697,7 +697,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     });
   }
 
-  protected void readProjects() {
+  protected void readProjects() throws Exception {
     readProjects(myProjectsManager.getProjectsFiles());
   }
 
