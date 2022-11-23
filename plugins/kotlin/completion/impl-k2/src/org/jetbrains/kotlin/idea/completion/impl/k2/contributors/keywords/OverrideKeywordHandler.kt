@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
@@ -80,14 +82,13 @@ internal class OverrideKeywordHandler(
         check(classOrObject !is KtEnumEntry)
 
         val text = getSymbolTextForLookupElement(memberSymbol)
-        val baseIcon = getIcon(memberSymbol)
+        val baseIcon = getBaseIcon(memberSymbol)
         val isImplement = (memberSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         val additionalIcon = if (isImplement) AllIcons.Gutter.ImplementingMethod else AllIcons.Gutter.OverridingMethod
         val icon = RowIcon(baseIcon, additionalIcon)
-        val baseClass = classOrObject.getClassOrObjectSymbol()!!
-        val baseClassIcon = getIcon(baseClass)
         val isSuspendFunction = (memberSymbol as? KtFunctionSymbol)?.isSuspend == true
-        val baseClassName = baseClass.nameOrAnonymous.asString()
+        val baseClassName = member.memberInfo.containingSymbolText?.extractShortNameAsString()
+        val baseClassIcon = member.memberInfo.containingSymbolIcon
 
         val baseLookupElement = with(basicContext.lookupElementFactory) {
             createLookupElement(memberSymbol, basicContext.importStrategyDetector)
@@ -127,6 +128,10 @@ internal class OverrideKeywordHandler(
         if (memberSymbol is KtFunctionSymbol) {
             append(" {...}")
         }
+    }
+
+    private fun String.extractShortNameAsString(): String {
+        return FqName(this).shortName().asString()
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
