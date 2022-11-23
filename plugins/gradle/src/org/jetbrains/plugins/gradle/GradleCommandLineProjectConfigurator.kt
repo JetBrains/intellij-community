@@ -153,17 +153,29 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
     override fun onSuccess(id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
-      LOG.info("Gradle resolve success: ${id.ideProjectId}")
+      LOG.info("Gradle resolve stage finished with success: ${id.ideProjectId}")
       val connection = project.messageBus.simpleConnect()
       connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+        override fun onImportStarted(projectPath: String?) {
+          LOG.info("Gradle data import stage started: ${id.ideProjectId}")
+        }
+
         override fun onImportFinished(projectPath: String?) {
-          LOG.info("Gradle import success: ${id.ideProjectId}")
+          LOG.info("Gradle data import stage finished with success: ${id.ideProjectId}")
+        }
+
+        override fun onFinalTasksFinished(projectPath: String?) {
+          LOG.info("Gradle data import(final tasks) stage finished: ${id.ideProjectId}")
           val future = externalSystemState[id] ?: return
           future.complete(id)
         }
 
+        override fun onFinalTasksStarted(projectPath: String?) {
+          LOG.info("Gradle data import(final tasks) stage started: ${id.ideProjectId}")
+        }
+
         override fun onImportFailed(projectPath: String?) {
-          LOG.info("Gradle import failure: ${id.ideProjectId}")
+          LOG.info("Gradle data import stage finished with failure: ${id.ideProjectId}")
           val future = externalSystemState[id] ?: return
           future.completeExceptionally(IllegalStateException("Gradle project ${id.ideProjectId} import failed."))
         }
@@ -172,22 +184,22 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
     override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
       if (!id.isGradleProjectResolveTask()) return
-      LOG.error("Gradle resolve failure ${id.ideProjectId}", e)
+      LOG.error("Gradle resolve stage finished with failure ${id.ideProjectId}", e)
       val future = externalSystemState[id] ?: return
       future.completeExceptionally(IllegalStateException("Gradle project ${id.ideProjectId} resolve failed.", e))
     }
 
     override fun onCancel(id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
-      LOG.error("Gradle resolve canceled ${id.ideProjectId}")
+      LOG.error("Gradle resolve stage canceled ${id.ideProjectId}")
       val future = externalSystemState[id] ?: return
       future.completeExceptionally(IllegalStateException("Resolve of ${id.ideProjectId} was canceled"))
     }
 
-    override fun onStart(id: ExternalSystemTaskId) {
+    override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
       if (!id.isGradleProjectResolveTask()) return
       externalSystemState[id] = CompletableFuture()
-      LOG.info("Gradle project resolve started ${id.ideProjectId}")
+      LOG.info("Gradle resolve stage started ${id.ideProjectId}, working dir: $workingDir")
     }
 
     fun waitForImportEnd() {
