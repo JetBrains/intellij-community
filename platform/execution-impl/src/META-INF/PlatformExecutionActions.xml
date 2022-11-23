@@ -48,6 +48,8 @@
       </group>
     </group>
 
+    <action id="RunToolbarRollbackToPrevious" class="com.intellij.execution.runToolbar.RunToolbarRollbackToPrevious"/>
+
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
