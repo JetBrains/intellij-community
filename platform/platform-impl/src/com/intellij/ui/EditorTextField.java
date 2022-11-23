@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
@@ -691,7 +690,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
       return;
     }
-    UISettings settings = UISettings.getInstance();
     float currentEditorFontSize = IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize();
     if (editor.getColorsScheme().getEditorFontSize2D() != currentEditorFontSize) {
       editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
@@ -1039,10 +1037,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   public void addSettingsProvider(@NotNull EditorSettingsProvider provider) {
     mySettingsProviders.add(provider);
-  }
-
-  public boolean removeSettingsProvider(@NotNull EditorSettingsProvider provider) {
-    return mySettingsProviders.remove(provider);
   }
 
   private static class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
