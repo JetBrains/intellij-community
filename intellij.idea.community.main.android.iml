@@ -6,7 +6,6 @@
     <orderEntry type="library" scope="RUNTIME" name="studio-grpc" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="studio-proto" level="project" />
     <orderEntry type="module" module-name="intellij.android.core" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.idea.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.layoutlib" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
