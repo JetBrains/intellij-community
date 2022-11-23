@@ -52,7 +52,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       final int total = files.size();
       int i = 0;
       for (final GroovyFile file : files) {
-        if (!file.isValid()) continue;
+        if (!ReadAction.compute(() -> file.isValid())) continue;
         final VirtualFile virtualFile = file.getVirtualFile();
         if (progressIndicator != null) {
           progressIndicator.setText2(virtualFile.getPresentableUrl());
