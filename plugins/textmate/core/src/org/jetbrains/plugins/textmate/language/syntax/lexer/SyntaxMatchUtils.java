@@ -86,15 +86,7 @@ public final class SyntaxMatchUtils {
                                                     boolean matchBeginOfString,
                                                     @NotNull TextMateScope currentScope) {
     TextMateLexerState resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor);
-    SyntaxNodeDescriptor parent = syntaxNodeDescriptor.getParentNode();
-    while (parent != null && parent.getParentNode() != null) {
-      parent = parent.getParentNode();
-    }
-    List<InjectionNodeDescriptor> injections = new ArrayList<>();
-    if (parent != null && parent != syntaxNodeDescriptor) {
-      injections.addAll(parent.getInjections());
-    }
-    injections.addAll(syntaxNodeDescriptor.getInjections());
+    List<InjectionNodeDescriptor> injections = syntaxNodeDescriptor.getInjections();
 
     for (InjectionNodeDescriptor injection : injections) {
       TextMateWeigh selectorWeigh = mySelectorWeigher.weigh(injection.getSelector(), currentScope);

@@ -189,7 +189,7 @@ public class TextMateSyntaxTable {
                               @NotNull Interner<CharSequence> interner) {
     for (Map.Entry<String, PListValue> injectionEntry : pListValue.getPlist().entries()) {
       Plist injectionEntryValue = injectionEntry.getValue().getPlist();
-      result.addInjection(new InjectionNodeDescriptor(injectionEntry.getKey(), loadRealNode(injectionEntryValue, null, interner)));
+      result.addInjection(new InjectionNodeDescriptor(injectionEntry.getKey(), loadRealNode(injectionEntryValue, result, interner)));
     }
   }
 }
