@@ -41,6 +41,43 @@
     },
    },
    {
+    name-part: "",
+    symbol: {
+     matchedName: "html/ng-event-binding-items/<pattern>",
+     name: "<no-name>",
+     origin: "css@1.0 (<none>)",
+     complete: true,
+     priority: NORMAL,
+     has-pattern: true,
+     properties: {
+      ng-binding-pattern: true,
+     },
+     segments: [
+      {
+       name-part: "",
+       symbol: <self>,
+      },
+     ],
+    },
+   },
+   {
+    name-part: "",
+    symbol: {
+     matchedName: "js/ng-custom-events/<pattern>",
+     name: "Custom modifiers for declarative events handling",
+     origin: "custom@1.0 (<none>)",
+     complete: true,
+     priority: NORMAL,
+     has-pattern: true,
+     segments: [
+      {
+       name-part: "",
+       symbol: <self>,
+      },
+     ],
+    },
+   },
+   {
     name-part: "click",
     symbol: {
      matchedName: "js/events/click",

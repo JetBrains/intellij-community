@@ -43,8 +43,7 @@
                 ]
               },
               "value": {
-                "type": "of-match",
-                "kind": "plain"
+                "type": "of-match"
               },
               "vue-custom-prop": {
                 "name": "Custom Vue component property",

@@ -101,6 +101,10 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/TransitionGroup/attributes/v-on:appear.stop.stop.prevent", "vue", true, "vue")
   }
 
+  fun testVueElementBind1() {
+    doTest("html/elements/TransitionGroup/attributes/v-bind:tag", "vue", true, "vue")
+  }
+
   fun testVueElements() {
     doTest("html/vue-components", "vue", "vue")
   }
