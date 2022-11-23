@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringElementListener
@@ -17,15 +16,13 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewUtil
 import org.jetbrains.kotlin.asJava.*
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -45,14 +42,9 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.*
-import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.util.findCallableMemberBySignature
-import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -102,87 +94,6 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         }
     }
 
-    private fun checkAccidentalOverrides(
-        declaration: KtNamedDeclaration,
-        newName: String,
-        descriptor: VariableDescriptor,
-        result: MutableList<UsageInfo>
-    ) {
-        fun reportAccidentalOverride(candidate: PsiNamedElement) {
-            val what = UsageViewUtil.getType(declaration).capitalize()
-            val withWhat = candidate.renderDescription()
-            val where = candidate.representativeContainer()?.renderDescription() ?: return
-            val message = KotlinBundle.message("text.0.will.clash.with.existing.1.in.2", what, withWhat, where)
-            result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
-        }
-
-        if (descriptor !is PropertyDescriptor) return
-        val initialClass = declaration.containingClassOrObject ?: return
-        val initialClassDescriptor = descriptor.containingDeclaration as? ClassDescriptor ?: return
-
-        val prototype = object : PropertyDescriptor by descriptor {
-            override fun getName() = Name.guessByFirstCharacter(newName)
-        }
-
-        DFS.dfs(
-            listOf(initialClassDescriptor),
-            DFS.Neighbors { DescriptorUtils.getSuperclassDescriptors(it) },
-            object : DFS.AbstractNodeHandler<ClassDescriptor, Unit>() {
-                override fun beforeChildren(current: ClassDescriptor): Boolean {
-                    if (current == initialClassDescriptor) return true
-                    (current.findCallableMemberBySignature(prototype))?.let { candidateDescriptor ->
-                        val candidate = candidateDescriptor.source.getPsi() as? PsiNamedElement ?: return false
-                        reportAccidentalOverride(candidate)
-                        return false
-                    }
-                    return true
-                }
-
-                override fun result() {}
-            }
-        )
-
-        if (!declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-            val initialPsiClass = initialClass.toLightClass() ?: return
-            val prototypes = declaration.toLightMethods().mapNotNull {
-                it as KtLightMethod
-                val methodName = accessorNameByPropertyName(newName, it) ?: return@mapNotNull null
-                object : KtLightMethod by it {
-                    override fun getName() = methodName
-                    override fun getSourceElement(): PsiElement? = it.getSourceElement()
-                }
-            }
-
-            DFS.dfs(
-                listOf(initialPsiClass),
-                DFS.Neighbors { DirectClassInheritorsSearch.search(it) },
-                object : DFS.AbstractNodeHandler<PsiClass, Unit>() {
-                    override fun beforeChildren(current: PsiClass): Boolean {
-                        if (current == initialPsiClass) return true
-
-                        if (current is KtLightClass) {
-                            val property = current.kotlinOrigin?.findPropertyByName(newName) ?: return true
-                            reportAccidentalOverride(property)
-                            return false
-                        }
-
-                        for (psiMethod in prototypes) {
-                            current.findMethodBySignature(psiMethod, false)?.let {
-                                val candidate = it.unwrapped as? PsiNamedElement ?: return true
-                                reportAccidentalOverride(candidate)
-                                return false
-                            }
-                        }
-
-                        return true
-                    }
-
-                    override fun result() {}
-                }
-            )
-        }
-    }
-
     override fun findCollisions(
         element: PsiElement,
         newName: String,
@@ -190,12 +101,10 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         result: MutableList<UsageInfo>
     ) {
         val declaration = element.namedUnwrappedElement as? KtNamedDeclaration ?: return
-        val resolutionFacade = declaration.getResolutionFacade()
-        val descriptor = declaration.unsafeResolveToDescriptor(resolutionFacade) as VariableDescriptor
 
         val collisions = SmartList<UsageInfo>()
-        checkRedeclarations(declaration, newName, collisions, resolutionFacade, descriptor)
-        checkAccidentalOverrides(declaration, newName, descriptor, collisions)
+        checkRedeclarations(declaration, newName, collisions)
+        checkAccidentalPropertyOverrides(declaration, newName, collisions)
         checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
         checkNewNameUsagesRetargeting(declaration, newName, collisions)
         result += collisions
