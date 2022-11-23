@@ -7,9 +7,7 @@ import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.UrlFilePath;
 import com.intellij.openapi.vfs.VersionedFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
@@ -17,13 +15,6 @@ public class DiffVcsFacade {
   @NotNull
   public static DiffVcsFacade getInstance() {
     return ApplicationManager.getApplication().getService(DiffVcsFacade.class);
-  }
-
-  @NotNull
-  public FilePath getFilePath(@NotNull @NonNls String path) {
-    return path.contains(URLUtil.SCHEME_SEPARATOR)
-           ? new UrlFilePath(path, false)
-           : new LocalFilePath(path, false);
   }
 
   @NotNull

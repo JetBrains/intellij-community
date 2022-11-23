@@ -7,10 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 
 class DiffVcsFacadeImpl : DiffVcsFacade() {
-  override fun getFilePath(path: String): FilePath {
-    return VcsUtil.getFilePath(path)
-  }
-
   override fun getFilePath(virtualFile: VirtualFile): FilePath {
     return VcsUtil.getFilePath(virtualFile)
   }
