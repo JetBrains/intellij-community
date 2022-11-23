@@ -161,14 +161,14 @@ public class LicensePanel extends NonOpaquePanel {
       List<String> tags = ((PluginNode)plugin).getTags();
       if (tags.contains(Tags.Freemium.name())) {
         updateLink(IdeBundle.message("plugins.configurable.activate.trial.for.full.access"), false);
+        return;
       }
-    } else {
-      PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
-        if (plugin == getPlugin.get()) {
-          updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
-        }
-      });
     }
+    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
+      if (plugin == getPlugin.get()) {
+        updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
+      }
+    });
   }
 
   public static boolean isEA2Product(@Nullable String productCodeOrPluginId) {
