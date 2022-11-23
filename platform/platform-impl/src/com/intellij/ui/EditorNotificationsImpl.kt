@@ -192,6 +192,9 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
         coroutineContext.ensureActive()
 
         try {
+          if (project.isDisposed) {
+            return@launch
+          }
           val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
 
           coroutineContext.ensureActive()
