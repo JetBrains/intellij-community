@@ -4,6 +4,7 @@
 package com.jetbrains.python.console
 
 import com.intellij.xdebugger.frame.XValueChildrenList
+import com.jetbrains.python.console.completion.collectParentReferences
 import com.jetbrains.python.console.protocol.DebugValue
 import com.jetbrains.python.console.protocol.GetArrayResponse
 import com.jetbrains.python.debugger.ArrayChunk
@@ -66,9 +67,9 @@ private fun parseDebugValue(value: String): DataFrameDebugValue.InformationColum
   }
 }
 
-private fun extractDataFrameColumns(pyDebugValue: DataFrameDebugValue,
+private fun extractDataFrameColumns(dfReference: String,
                                     frameAccessor: PydevConsoleCommunication): DataFrameDebugValue.InformationColumns? {
-  val additionalInformation = frameAccessor.evaluate(DataFrameDebugValue.commandExtractPandasColumns(pyDebugValue.name, true), true, true)
+  val additionalInformation = frameAccessor.evaluate(DataFrameDebugValue.commandExtractPandasColumns(dfReference, true), true, true)
   return when (additionalInformation.type) {
     "str" -> additionalInformation.value?.let { parseDebugValue(it) }
     else -> null
@@ -80,7 +81,8 @@ fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFr
   for (debugValue in vars) {
     val pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
     if (frameAccessor is PydevConsoleCommunication && parent !is DataFrameDebugValue && pyDebugValue is DataFrameDebugValue) {
-      val columns = extractDataFrameColumns(pyDebugValue, frameAccessor)
+      val dfReference = collectParentReferences(parent, pyDebugValue)
+      val columns = extractDataFrameColumns(dfReference, frameAccessor)
       columns?.let {
         pyDebugValue.setColumns(it)
       }

@@ -15,6 +15,8 @@ import com.intellij.psi.util.elementType
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.debugger.PyDebugValue
+import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
@@ -33,6 +35,17 @@ data class PandasDataFrameCandidate(val psiName: String, val needValidatorCheck:
 
 // Priority value to control order in CompletionResultSet
 private const val DATAFRAME_COLUMN_PRIORITY = 100.0
+
+fun collectParentReferences(parentDebug: PyDebugValue?, value: DataFrameDebugValue): String {
+  val referencesCollection = mutableListOf<String>()
+  var parent = parentDebug
+  referencesCollection.add(value.name)
+  while (parent != null) {
+    referencesCollection.add(parent.name)
+    parent = parent.parent
+  }
+  return referencesCollection.reversed().joinToString(".")
+}
 
 fun getCompleteAttribute(parameters: CompletionParameters): List<PandasDataFrameCandidate> {
 
