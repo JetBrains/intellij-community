@@ -35,10 +35,6 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     this(initialCapacity, 0.8f);
   }
 
-  RefHashMap() {
-    this(4);
-  }
-
   RefHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     this(4, 0.8f, hashingStrategy);
   }
