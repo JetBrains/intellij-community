@@ -154,8 +154,7 @@ internal class OverrideKeywordHandler(
         private val renderingOptionsForLookupElementRendering =
             KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
                 modifiersRenderer = modifiersRenderer.with {
-                    modifierFilter = KtRendererModifierFilter.without(KtTokens.OPERATOR_KEYWORD) and
-                            KtRendererModifierFilter.without(KtTokens.MODALITY_MODIFIERS)
+                    modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS)
                 }
             }
     }
