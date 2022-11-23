@@ -271,6 +271,7 @@ private suspend fun layoutShared(context: BuildContext) {
       context.productProperties.copyAdditionalFiles(context, context.paths.getDistAll())
     }
   }
+  checkClassFiles(context.paths.distAllDir, context)
 }
 
 private fun findBrandingResource(relativePath: String, context: BuildContext): Path {
@@ -947,7 +948,7 @@ fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar")
   context.notifyArtifactBuilt(updaterJar)
 }
 
-private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
+private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateMultiPlatformProductJson(
@@ -1003,10 +1004,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     compress = context.options.compressZipFiles,
   )
 
-  coroutineScope {
-    launch { checkInArchive(archiveFile = targetFile, pathInArchive = "", context = context) }
-    launch { checkClassFiles(targetFile = targetFile, context = context) }
-  }
+  checkInArchive(archiveFile = targetFile, pathInArchive = "", context = context)
   context.notifyArtifactBuilt(targetFile)
   return targetFile
 }
