@@ -4,6 +4,7 @@ package com.intellij.application.options.editor.fonts;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -27,7 +28,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
   public static final int ITEM_WIDTH = 230;
 
-  private final Dimension myItemSize;
+  private Dimension myItemSize;
   private final boolean myIsPrimary;
 
   protected FontFamilyCombo(boolean isPrimary) {
@@ -35,6 +36,16 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     setSwingPopup(false);
     myIsPrimary = isPrimary;
     setRenderer(new MyListCellRenderer());
+    updateItemSize();
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    updateItemSize();
+  }
+
+  private void updateItemSize() {
     FontMetrics fontMetrics = getFontMetrics(getFont());
     myItemSize = new Dimension(JBUI.scale(ITEM_WIDTH), fontMetrics.getHeight());
   }
@@ -213,7 +224,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
           if (FontFamilyService.isMonospaced(item.myFamilyName)) {
             myMonospacedFamilies.add(item.myFamilyName);
           }
-          item.myFont = JBUI.Fonts.create(item.myFamilyName, JBUI.Fonts.label().getSize());
+          item.myFont = JBUI.Fonts.create(item.myFamilyName, FontPreferences.DEFAULT_FONT_SIZE);
           item.myFontCanDisplayName = item.myFont.canDisplayUpTo(item.myFamilyName) == -1;
         }
         updateMonospacedInfo();
@@ -283,7 +294,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
         SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         if (value.myFont != null) {
           if (value.myFontCanDisplayName) {
-            setFont(value.myFont);
+            setFont(value.myFont.deriveFont((float)JBUI.Fonts.label().getSize()));
           }
           else if (myIsPrimary) {
             attributes = SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
