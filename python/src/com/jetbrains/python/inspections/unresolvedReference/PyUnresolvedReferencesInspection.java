@@ -97,7 +97,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
           final String packageName = components.get(0);
           final Module module = ModuleUtilCore.findModuleForPsiElement(node);
           final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-          if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk, false)) {
+          if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
             return StreamEx
               .of(packageName)
               .append(PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList()))

@@ -358,7 +358,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
 
   fun packageSelected(selectedPackage: DisplayablePackage) {
     val service = project.service<PyPackagingToolWindowService>()
-    val managementEnabled = PyPackageUtil.packageManagementEnabled(service.currentSdk, true)
+    val managementEnabled = PyPackageUtil.packageManagementEnabled(service.currentSdk, true, false)
     showHeaderForPackage(selectedPackage, managementEnabled)
 
     this.selectedPackage = selectedPackage

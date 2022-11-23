@@ -148,7 +148,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
     final Sdk sdk = getSelectedSdk();
     if (sdk == null) return false;
-    if (!PyPackageUtil.packageManagementEnabled(sdk, false)) return false;
+    if (!PyPackageUtil.packageManagementEnabled(sdk, false, false)) return false;
 
     if (PythonSdkUtil.isVirtualEnv(sdk) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
@@ -173,14 +173,14 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected boolean installEnabled() {
-    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk(), false)) return false;
+    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk(), false, false)) return false;
 
     return myHasManagement;
   }
 
   @Override
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
-    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk(), false)) return false;
+    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk(), false, false)) return false;
 
     return myHasManagement && !PyCondaPackageManagerImpl.PYTHON.equals(pyPackage.getName());
   }
