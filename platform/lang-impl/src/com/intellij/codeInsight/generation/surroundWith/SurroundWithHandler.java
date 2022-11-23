@@ -21,6 +21,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -205,7 +206,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   }
 
   static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    WriteAction.run(() -> PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument()));
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;
     if (!editor.getCaretModel().supportsMultipleCarets()) {
