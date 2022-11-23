@@ -43,7 +43,6 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     override var stdOut: Boolean = true
     private val lineProcessor: LineProcessor
     private val myRootReader: BuildOutputInstantReaderImpl
-    private var myCurrentReader: BuildOutputInstantReaderImpl
     private val tasksOutputReaders = mutableMapOf<String, BuildOutputInstantReaderImpl>()
     private val tasksEventIds = mutableMapOf<String, Any>()
 
@@ -68,16 +67,15 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         override fun closeAndGetFuture(): CompletableFuture<Unit> =
           super.closeAndGetFuture().whenComplete { _, _ -> deferredRootEvents.forEach { myBuildProgressListener.onEvent(buildId, it) } }
       }
-      var isBuildException = false
-      myCurrentReader = myRootReader
+
       lineProcessor = object : LineProcessor() {
+        private var myCurrentReader: BuildOutputInstantReaderImpl = myRootReader
         override fun process(line: String) {
           val cleanLine = removeLoggerPrefix(line)
           // skip Gradle test runner output
           if (cleanLine.startsWith("<ijLog>")) return
 
           if (cleanLine.startsWith("> Task :")) {
-            isBuildException = false
             val taskName = cleanLine.removePrefix("> Task ").substringBefore(' ')
             myCurrentReader = tasksOutputReaders[taskName] ?: myRootReader
           }
@@ -85,10 +83,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
                    cleanLine.startsWith("FAILURE: Build failed") ||
                    cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
                    cleanLine.startsWith("BUILD SUCCESSFUL")) {
-            isBuildException = false
             myCurrentReader = myRootReader
           }
-          if (isBuildException && myCurrentReader == myRootReader) return
 
           myCurrentReader.appendln(cleanLine)
           if (myCurrentReader != myRootReader) {
