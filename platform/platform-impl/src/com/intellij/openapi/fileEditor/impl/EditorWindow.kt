@@ -719,12 +719,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       val height = Registry.intValue("ide.splitter.chooser.info.panel.height")
       var width = Registry.intValue("ide.splitter.chooser.info.panel.width")
       val arc = Registry.intValue("ide.splitter.chooser.info.panel.arc")
-      val openShortcuts = String.format(IdeBundle.message("split.with.chooser.move.tab"), getShortcut("SplitChooser.Split"),
-                                        if (SplitterService.getInstance().initialEditorWindow != null) String.format(
-                                          IdeBundle.message("split.with.chooser.duplicate.tab"),
-                                          getShortcut("SplitChooser.Duplicate"))
-                                        else "")
-      val switchShortcuts = String.format(IdeBundle.message("split.with.chooser.switch.tab"), getShortcut("SplitChooser.NextWindow"))
+      val openShortcuts = IdeBundle.message(
+        "split.with.chooser.move.tab",
+        getShortcut("SplitChooser.Split"),
+        if (SplitterService.getInstance().initialEditorWindow != null)
+          IdeBundle.message("split.with.chooser.duplicate.tab", getShortcut("SplitChooser.Duplicate"))
+        else "")
+      val switchShortcuts = IdeBundle.message("split.with.chooser.switch.tab", getShortcut("SplitChooser.NextWindow"))
 
       // Adjust default width to info text
       val font = StartupUiUtil.getLabelFont()
