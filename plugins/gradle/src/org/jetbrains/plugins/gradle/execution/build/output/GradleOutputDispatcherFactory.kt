@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 
 class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
   override val externalSystemId = GradleConstants.SYSTEM_ID
@@ -43,9 +44,9 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     override var stdOut: Boolean = true
     private val lineProcessor: LineProcessor
     private val myRootReader: BuildOutputInstantReaderImpl
-    private val tasksOutputReaders = mutableMapOf<String, BuildOutputInstantReaderImpl>()
+    private val tasksOutputReaders: MutableMap<String, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+    private val tasksEventIds: MutableMap<String, Any> = ConcurrentHashMap()
     private val redefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
-    private val tasksEventIds = mutableMapOf<String, Any>()
 
     init {
       val deferredRootEvents = mutableListOf<BuildEvent>()
