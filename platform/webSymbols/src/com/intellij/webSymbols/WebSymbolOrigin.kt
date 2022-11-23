@@ -23,6 +23,8 @@ interface WebSymbolOrigin {
   val typeSupport: WebSymbolTypeSupport?
     get() = null
 
+  fun loadIcon(path: String): Icon? = null
+
   companion object {
     @JvmStatic
     fun create(framework: FrameworkId? = null,

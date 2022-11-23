@@ -11,9 +11,10 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolOrigin
+import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
-import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.impl.scaleToHeight
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -29,7 +30,8 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol) 
   }
 
   companion object {
-    fun buildDocumentation(doc: WebSymbolDocumentation): DocumentationResult? {
+
+    fun buildDocumentation(origin: WebSymbolOrigin, doc: WebSymbolDocumentation): DocumentationResult? {
       val url2ImageMap = mutableMapOf<String, Image>()
 
       @Suppress("HardCodedStringLiteral")
@@ -39,9 +41,9 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol) 
         .appendSections(doc)
         .appendFootnote(doc)
         .toString()
+        .loadLocalImages(origin, url2ImageMap)
       return DocumentationResult.documentation(contents).images(url2ImageMap).externalUrl(doc.docUrl)
     }
-
 
     private fun StringBuilder.appendDefinition(doc: WebSymbolDocumentation, url2ImageMap: MutableMap<String, Image>): StringBuilder =
       append(DocumentationMarkup.DEFINITION_START)
@@ -125,6 +127,38 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol) 
       append("<img src='$url' height=\"$screenHeight\" width=\"${(screenHeight * icon.iconWidth) / icon.iconHeight}\" border=0 />")
       return this
     }
+
+    private val imgSrcRegex = Regex("<img [^>]*src\\s*=\\s*['\"]([^'\"]+)['\"]")
+
+    private fun String.loadLocalImages(origin: WebSymbolOrigin, url2ImageMap: MutableMap<String, Image>): String {
+      val replaces = imgSrcRegex.findAll(this)
+        .mapNotNull { it.groups[1] }
+        .filter { !it.value.contains(':') }
+        .mapNotNull { group ->
+          origin.loadIcon(group.value)
+            ?.let { IconUtil.toBufferedImage(it, true) }
+            ?.let {
+              val url = "https://img${url2ImageMap.size}"
+              url2ImageMap[url] = it
+              Pair(group.range, url)
+            }
+        }
+        .sortedBy { it.first.first }
+        .toList()
+      if (replaces.isEmpty()) return this
+      val result = StringBuilder()
+      var lastIndex = 0
+      for (replace in replaces) {
+        result.appendRange(this, lastIndex, replace.first.first)
+        result.append(replace.second)
+        lastIndex = replace.first.last + 1
+      }
+      if (lastIndex < this.length) {
+        result.appendRange(this, lastIndex, this.length)
+      }
+      return result.toString()
+    }
+
   }
 
 }
