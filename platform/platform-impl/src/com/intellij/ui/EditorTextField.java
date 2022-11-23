@@ -1085,6 +1085,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     @Override
     public Component getDefaultComponent(Container aContainer) {
       if (invokedFromBeforeOrAfter) return null;     // escape our container
+      if (!(aContainer.isVisible() && aContainer.isDisplayable())) {
+        return null; // shamelessly copied from ContainerOrderFocusTraversalPolicy to fix the case of focus trying to get inside an invisible EditorTextField
+      }
       Editor editor = aContainer instanceof EditorTextField ? ((EditorTextField)aContainer).getEditor() : null;
       if (editor != null) return editor.getContentComponent();
       return aContainer;
