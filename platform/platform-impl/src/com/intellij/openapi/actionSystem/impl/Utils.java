@@ -679,15 +679,23 @@ public final class Utils {
     ClientProperty.put(component, IS_MODAL_CONTEXT, isModalContext);
   }
 
+  /** @deprecated Use {@link AnActionEvent#getUpdateSession()} */
+  @Deprecated(forRemoval = true)
   public static @NotNull UpdateSession getOrCreateUpdateSession(@NotNull AnActionEvent e) {
+    initUpdateSession(e);
+    return e.getUpdateSession();
+  }
+
+  @ApiStatus.Internal
+  public static void initUpdateSession(@NotNull AnActionEvent e) {
     UpdateSession updater = e.getUpdateSession();
-    if (updater == null) {
+    if (updater == UpdateSession.EMPTY) {
       ActionUpdater actionUpdater = new ActionUpdater(
         new PresentationFactory(), e.getDataContext(),
         e.getPlace(), e.isFromContextMenu(), e.isFromActionToolbar());
       updater = actionUpdater.asUpdateSession();
+      e.setUpdateSession(updater);
     }
-    return updater;
   }
 
   private static boolean ourInUpdateSessionForInputEventEDTLoop;
@@ -767,7 +775,7 @@ public final class Utils {
     }
     else {
       List<AnAction> adjusted = new ArrayList<>(actions);
-      rearrangeByPromoters(adjusted, freezeDataContext(dataContext, null));
+      rearrangeByPromoters(adjusted, dataContext);
       result = function.apply(actionUpdater.asUpdateSession(), adjusted);
       actionUpdater.applyPresentationChanges();
     }

@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -138,6 +139,9 @@ public final class ActionUtil {
 
     action.applyTextOverride(e);
     try {
+      if (beforeActionPerformed && e.getUpdateSession() == UpdateSession.EMPTY) {
+        IdeUiService.getInstance().initUpdateSession(e);
+      }
       Runnable runnable = () -> {
         // init group flags from deprecated methods
         boolean isGroup = action instanceof ActionGroup;

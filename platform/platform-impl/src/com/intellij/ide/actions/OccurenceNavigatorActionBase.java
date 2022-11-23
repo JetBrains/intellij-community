@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -73,7 +72,7 @@ abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
       presentation.setVisible(!ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
       return;
     }
-    UpdateSession session = Utils.getOrCreateUpdateSession(event);
+    UpdateSession session = event.getUpdateSession();
     OccurenceNavigator navigator = session.compute(
       this, "getNavigator", ActionUpdateThread.EDT, () -> getNavigator(event.getDataContext()));
     if (navigator == null) {
