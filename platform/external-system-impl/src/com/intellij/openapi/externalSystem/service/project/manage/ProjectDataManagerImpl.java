@@ -212,10 +212,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     topic.onFinalTasksStarted(projectPath);
     try {
       ContainerUtil.reverse(tasks).forEach(Runnable::run);
-      topic.onFinalTasksFinished(projectPath);
     }
     catch (Exception e) {
       LOG.warn(e);
+    }
+    finally {
+      topic.onFinalTasksFinished(projectPath);
     }
   }
 
