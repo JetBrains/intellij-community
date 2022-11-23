@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -51,13 +50,6 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   @Override
   public CodeStyleSettings tryGetSettings(@NotNull VirtualFile file) {
     return getOrCreateCachedValueProvider(file).tryGetSettings();
-  }
-
-  @Override
-  public @Nullable CodeStyleSettings tryGetSettings(@NotNull PsiFile file) {
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return null;
-    return getOrCreateCachedValueProvider(virtualFile).tryGetSettings();
   }
 
   @Override

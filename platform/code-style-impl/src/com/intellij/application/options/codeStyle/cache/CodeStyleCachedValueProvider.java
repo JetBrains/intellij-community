@@ -36,10 +36,10 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
 
   private final static int MAX_COMPUTATION_THREADS = 10;
 
-  private final @NotNull FileViewProvider myFile;
-  private final @NotNull AsyncComputation       myComputation;
+  private final @NotNull FileViewProvider myViewProvider;
+  private final @NotNull AsyncComputation myComputation;
   private final @NotNull Project myProject;
-  private final @NotNull Lock                   myComputationLock = new ReentrantLock() {
+  private final @NotNull Lock myComputationLock = new ReentrantLock() {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof ReentrantLock;
@@ -49,8 +49,8 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   private final static ExecutorService ourExecutorService =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("CodeStyleCachedValueProvider", MAX_COMPUTATION_THREADS);
 
-  CodeStyleCachedValueProvider(@NotNull FileViewProvider file, @NotNull Project project) {
-    myFile = file;
+  CodeStyleCachedValueProvider(@NotNull FileViewProvider viewProvider, @NotNull Project project) {
+    myViewProvider = viewProvider;
     myComputation = new AsyncComputation(project);
     myProject = project;
   }
@@ -63,8 +63,8 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   CodeStyleSettings tryGetSettings() {
     if (myComputationLock.tryLock()) {
       try {
-        myFile.putUserData(CodeStyleCachingService.CALL_TRACE, Thread.currentThread().getStackTrace());
-        return CachedValuesManager.getManager(myProject).getCachedValue(myFile, this);
+        myViewProvider.putUserData(CodeStyleCachingService.CALL_TRACE, Thread.currentThread().getStackTrace());
+        return CachedValuesManager.getManager(myProject).getCachedValue(myViewProvider, this);
       }
       finally {
         myComputationLock.unlock();
@@ -106,8 +106,8 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
 
   private void logCached(@NotNull CodeStyleSettings settings) {
     LOG.debug(String.format(
-      "File: %s (%s), cached: %s, tracker: %d", myFile.toString(), Integer.toHexString(myFile.hashCode()), settings,
-      settings.getModificationTracker().getModificationCount()));
+      "File: %s (%s), cached: %s, tracker: %d", myViewProvider.getVirtualFile().getName(), Integer.toHexString(myViewProvider.hashCode()),
+      settings, settings.getModificationTracker().getModificationCount()));
   }
 
   /**
@@ -165,7 +165,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
       }
     }
 
-    private boolean isRunOnBackground() {
+    private static boolean isRunOnBackground() {
       final Application application = ApplicationManager.getApplication();
       return !application.isUnitTestMode() && !application.isHeadlessEnvironment() && application.isDispatchThread();
     }
@@ -194,6 +194,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         }
         CodeStyleSettings currSettings = getCurrentSettings(file);
         myOldTrackerSetting = currSettings.getModificationTracker().getModificationCount();
+        //noinspection TestOnlyProblems
         if (currSettings != mySettingsManager.getTemporarySettings()) {
           TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
           modifiableSettings.applyIndentOptionsFromProviders(file);
@@ -237,7 +238,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
     public CodeStyleSettings getCurrResult() {
       if (myIsActive.compareAndSet(false, true)) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Computation initiated for " + myFile);
+          LOG.debug("Computation initiated for " + myViewProvider.getVirtualFile().getName());
         }
         start();
       }
@@ -252,7 +253,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
       myScheduledRunnables.clear();
       myIsActive.set(false);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Computation reset for " + myFile);
+        LOG.debug("Computation reset for " + myViewProvider.getVirtualFile().getName());
       }
     }
 
@@ -293,7 +294,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   }
 
   private PsiFile getPsiFile() {
-    return myFile.getPsi(myFile.getBaseLanguage());
+    return myViewProvider.getPsi(myViewProvider.getBaseLanguage());
   }
 
   //
@@ -303,7 +304,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   @Override
   public boolean equals(Object obj) {
     return obj instanceof CodeStyleCachedValueProvider &&
-           Objects.equals(this.myFile, ((CodeStyleCachedValueProvider)obj).myFile);
+           Objects.equals(this.myViewProvider, ((CodeStyleCachedValueProvider)obj).myViewProvider);
   }
 
 
