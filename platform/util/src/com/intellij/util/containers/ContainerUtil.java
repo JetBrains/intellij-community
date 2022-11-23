@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.THashSet;
@@ -124,6 +125,20 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <E> ArrayList<E> newArrayList(E @NotNull ... array) {
     return new ArrayList<>(Arrays.asList(array));
+  }
+
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead
+   *
+   * DO NOT REMOVE this method until {@link ContainerUtil#newArrayList(Iterable)} is removed.
+   * The former is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Collection<? extends E> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("Use `new ArrayList(Collection)` instead. "+iterable.getClass());
+    return new ArrayList<>(iterable);
   }
 
   @Contract(pure = true)
@@ -959,8 +974,8 @@ public final class ContainerUtil {
     return result;
   }
 
-  public static <T> boolean all(T[] array, @NotNull Condition<? super T> condition) {
-    return all(Arrays.asList(array), condition);
+  public static <T> boolean all(T @NotNull [] array, @NotNull Condition<? super T> condition) {
+    return and(array, condition);
   }
 
   public static <T> boolean all(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {

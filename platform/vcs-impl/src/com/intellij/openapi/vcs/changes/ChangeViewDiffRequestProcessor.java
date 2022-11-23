@@ -38,8 +38,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-
 public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
   implements DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
 
@@ -59,7 +57,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   public ListSelection<? extends DiffRequestProducer> collectDiffProducers(boolean selectedOnly) {
     Project project = getProject();
     Wrapper change = getCurrentChange();
-    List<? extends Wrapper> changes = newArrayList(selectedOnly ? iterateSelectedChanges() : iterateAllChanges());
+    List<? extends Wrapper> changes = ContainerUtil.newArrayList(selectedOnly ? iterateSelectedChanges() : iterateAllChanges());
     return ListSelection.create(changes, change)
       .withExplicitSelection(selectedOnly)
       .map(wrapper -> wrapper.createProducer(project));
@@ -187,8 +185,8 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   public void refresh(boolean fromModelRefresh) {
     if (isDisposed()) return;
 
-    List<? extends Wrapper> selectedChanges = newArrayList(iterateSelectedChanges());
-    if (selectedChanges.isEmpty() && showAllChangesForEmptySelection()) selectedChanges = newArrayList(iterateAllChanges());
+    List<? extends Wrapper> selectedChanges = ContainerUtil.newArrayList(iterateSelectedChanges());
+    if (selectedChanges.isEmpty() && showAllChangesForEmptySelection()) selectedChanges = ContainerUtil.newArrayList(iterateAllChanges());
 
     Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
     if (fromModelRefresh &&
@@ -244,7 +242,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   private class MyGoToChangePopupAction extends PresentableGoToChangePopupAction.Default<Wrapper> {
     @Override
     protected @NotNull ListSelection<? extends Wrapper> getChanges() {
-      List<? extends Wrapper> allChanges = newArrayList(iterateAllChanges());
+      List<? extends Wrapper> allChanges = ContainerUtil.newArrayList(iterateAllChanges());
       return ListSelection.create(allChanges, getCurrentChange());
     }
 
@@ -370,7 +368,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Nullable
   public static <T> List<? extends T> toListIfNotMany(@NotNull Iterable<? extends T> iterable, boolean fromUpdate) {
-    if (!fromUpdate) return newArrayList(iterable);
+    if (!fromUpdate) return ContainerUtil.newArrayList(iterable);
 
     List<? extends T> result = JBIterable.from(iterable).take(MANY_CHANGES_THRESHOLD + 1).toList();
     if (result.size() > MANY_CHANGES_THRESHOLD) return null;

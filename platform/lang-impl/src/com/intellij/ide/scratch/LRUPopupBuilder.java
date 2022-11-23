@@ -146,7 +146,7 @@ public abstract class LRUPopupBuilder<T> {
 
   @NotNull
   public ListPopup buildPopup() {
-    List<String> ids = ContainerUtil.newArrayList(restoreLRUItems());
+    List<String> ids = new ArrayList<>(restoreLRUItems());
     if (mySelection != null) {
       ids.add(getStorageId(mySelection));
     }

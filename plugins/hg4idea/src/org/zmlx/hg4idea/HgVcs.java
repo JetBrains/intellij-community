@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +63,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
 public class HgVcs extends AbstractVcs {
@@ -298,7 +298,7 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public List<CommitExecutor> getCommitExecutors() {
-    ArrayList<CommitExecutor> commitExecutors = newArrayList(myCommitAndPushExecutor);
+    ArrayList<CommitExecutor> commitExecutors = ContainerUtil.newArrayList(myCommitAndPushExecutor);
     if (exists(HgUtil.getRepositoryManager(myProject).getRepositories(), r -> r.getRepositoryConfig().isMqUsed())) {
       commitExecutors.add(myMqNewExecutor);
     }
