@@ -33,9 +33,9 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
         val declaration = element.namedUnwrappedElement as? KtNamedDeclaration ?: return
 
         val collisions = SmartList<UsageInfo>()
-        checkRedeclarations(declaration, newName, collisions)
-        checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-        checkNewNameUsagesRetargeting(declaration, newName, collisions)
+        renameRefactoringSupport.checkRedeclarations(declaration, newName, collisions)
+        renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
+        renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
         result += collisions
     }
 
@@ -61,6 +61,6 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
         super.prepareRenaming(element, newName, allRenames, scope)
-        KotlinRenameRefactoringSupport.getInstance().prepareForeignUsagesRenaming(element, newName, allRenames, scope)
+        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
     }
 }

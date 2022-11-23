@@ -88,9 +88,9 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
         val declaration = element.namedUnwrappedElement as? KtNamedDeclaration ?: return
 
         val collisions = SmartList<UsageInfo>()
-        checkRedeclarations(declaration, newName, collisions)
-        checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-        checkNewNameUsagesRetargeting(declaration, newName, collisions)
+        renameRefactoringSupport.checkRedeclarations(declaration, newName, collisions)
+        renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
+        renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
         result += collisions
     }
 

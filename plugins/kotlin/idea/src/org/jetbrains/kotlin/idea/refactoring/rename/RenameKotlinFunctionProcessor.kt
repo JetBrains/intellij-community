@@ -81,9 +81,9 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val declaration = element.unwrapped as? KtNamedFunction ?: return
         checkConflictsAndReplaceUsageInfos(element, allRenames, result)
         result += SmartList<UsageInfo>().also { collisions ->
-            checkRedeclarations(declaration, newName, collisions)
-            checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-            checkNewNameUsagesRetargeting(declaration, newName, collisions)
+            renameRefactoringSupport.checkRedeclarations(declaration, newName, collisions)
+            renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
+            renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
         }
     }
 
@@ -217,7 +217,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                 }
             }
         }
-        KotlinRenameRefactoringSupport.getInstance().prepareForeignUsagesRenaming(element, newName, allRenames, scope)
+        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
     }
 
     /**
@@ -234,7 +234,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
         val ambiguousImportUsages = SmartList<UsageInfo>()
         val simpleImportUsages = SmartList<UsageInfo>()
-        KotlinRenameRefactoringSupport.getInstance().processForeignUsages(element, newName, usages, fallbackHandler = { usage ->
+        renameRefactoringSupport.processForeignUsages(element, newName, usages, fallbackHandler = { usage ->
             if (usage is LostDefaultValuesInOverridingFunctionUsageInfo) {
                 usage.apply()
                 return@processForeignUsages

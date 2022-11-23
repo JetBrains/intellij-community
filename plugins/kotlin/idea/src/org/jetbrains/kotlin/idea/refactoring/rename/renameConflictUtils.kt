@@ -198,7 +198,7 @@ private fun LexicalScope.getRelevantDescriptors(
     }
 }
 
-fun reportShadowing(
+private fun reportShadowing(
     declaration: PsiNamedElement,
     elementToBindUsageInfoTo: PsiElement,
     candidateDescriptor: DeclarationDescriptor,

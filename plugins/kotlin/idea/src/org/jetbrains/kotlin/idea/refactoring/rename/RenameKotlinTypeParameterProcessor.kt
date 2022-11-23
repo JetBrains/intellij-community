@@ -16,6 +16,6 @@ class RenameKotlinTypeParameterProcessor : RenameKotlinPsiProcessor() {
         result: MutableList<UsageInfo>
     ) {
         val declaration = element as? KtTypeParameter ?: return
-        checkRedeclarations(declaration, newName, result)
+        renameRefactoringSupport.checkRedeclarations(declaration, newName, result)
     }
 }

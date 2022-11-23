@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     override fun processForeignUsages(
@@ -21,4 +22,25 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         allRenames: MutableMap<PsiElement, String>,
         scope: SearchScope
     ) {}
+
+    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
+        // TODO
+    }
+
+    override fun checkOriginalUsagesRetargeting(
+        declaration: KtNamedDeclaration,
+        newName: String,
+        originalUsages: MutableList<UsageInfo>,
+        newUsages: MutableList<UsageInfo>
+    ) {
+        // TODO
+    }
+
+    override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
+        // TODO
+    }
+
+    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
+        // TODO
+    }
 }

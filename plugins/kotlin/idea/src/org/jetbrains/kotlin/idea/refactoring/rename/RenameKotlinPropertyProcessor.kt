@@ -103,10 +103,10 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         val declaration = element.namedUnwrappedElement as? KtNamedDeclaration ?: return
 
         val collisions = SmartList<UsageInfo>()
-        checkRedeclarations(declaration, newName, collisions)
-        checkAccidentalPropertyOverrides(declaration, newName, collisions)
-        checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-        checkNewNameUsagesRetargeting(declaration, newName, collisions)
+        renameRefactoringSupport.checkRedeclarations(declaration, newName, collisions)
+        renameRefactoringSupport.checkAccidentalPropertyOverrides(declaration, newName, collisions)
+        renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
+        renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
         result += collisions
     }
 
@@ -254,7 +254,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
             addRenameElements(propertyMethod, (element as PsiNamedElement).name, adjustedPropertyName, allRenames, scope)
         }
 
-        KotlinRenameRefactoringSupport.getInstance().prepareForeignUsagesRenaming(element, newName, allRenames, scope)
+        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
     }
 
     protected enum class UsageKind {

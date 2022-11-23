@@ -31,6 +31,9 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ImportPath
 
 abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
+    
+    protected val renameRefactoringSupport: KotlinRenameRefactoringSupport
+        get() = KotlinRenameRefactoringSupport.getInstance()
 
     class MangledJavaRefUsageInfo(
         val manglingSuffix: String,
@@ -164,7 +167,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         listener: RefactoringElementListener?
     ) {
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
-        KotlinRenameRefactoringSupport.getInstance().processForeignUsages(element, newName, usages, fallbackHandler = { usage ->
+        renameRefactoringSupport.processForeignUsages(element, newName, usages, fallbackHandler = { usage ->
             if (renameMangledUsageIfPossible(usage, element, newName)) return@processForeignUsages
             simpleUsages += usage
         })

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     override fun processForeignUsages(
@@ -22,5 +23,26 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         scope: SearchScope
     ) {
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
+    }
+
+    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
+        org.jetbrains.kotlin.idea.refactoring.rename.checkRedeclarations(declaration, newName, result)
+    }
+
+    override fun checkOriginalUsagesRetargeting(
+        declaration: KtNamedDeclaration,
+        newName: String,
+        originalUsages: MutableList<UsageInfo>,
+        newUsages: MutableList<UsageInfo>
+    ) {
+        org.jetbrains.kotlin.idea.refactoring.rename.checkOriginalUsagesRetargeting(declaration, newName, originalUsages, newUsages)
+    }
+
+    override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
+        org.jetbrains.kotlin.idea.refactoring.rename.checkNewNameUsagesRetargeting(declaration, newName, newUsages)
+    }
+
+    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
+        org.jetbrains.kotlin.idea.refactoring.rename.checkAccidentalPropertyOverrides(declaration, newName, result)
     }
 }

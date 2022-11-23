@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 /**
  * Service for various functionality which have different implementation in K1 and K2 plugin
@@ -19,4 +20,29 @@ interface KotlinRenameRefactoringSupport {
     fun processForeignUsages(element: PsiElement, newName: String, usages: Array<UsageInfo>, fallbackHandler: (UsageInfo) -> Unit)
 
     fun prepareForeignUsagesRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope)
+
+    fun checkRedeclarations(
+        declaration: KtNamedDeclaration,
+        newName: String,
+        result: MutableList<UsageInfo>
+    )
+
+    fun checkOriginalUsagesRetargeting(
+        declaration: KtNamedDeclaration,
+        newName: String,
+        originalUsages: MutableList<UsageInfo>,
+        newUsages: MutableList<UsageInfo>
+    )
+
+    fun checkNewNameUsagesRetargeting(
+        declaration: KtNamedDeclaration,
+        newName: String,
+        newUsages: MutableList<UsageInfo>
+    )
+
+    fun checkAccidentalPropertyOverrides(
+        declaration: KtNamedDeclaration,
+        newName: String,
+        result: MutableList<UsageInfo>
+    )
 }
