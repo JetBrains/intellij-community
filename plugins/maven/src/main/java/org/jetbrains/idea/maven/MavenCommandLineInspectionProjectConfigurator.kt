@@ -138,7 +138,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
   private fun setupDefaultJdk(projects: List<MavenProject>, context: ConfiguratorContext, project: Project) {
 
-    if (ProjectJdkTable.getInstance().allJdks.isNotEmpty()) return
+    if (ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()).isNotEmpty()) return
 
     val maxLevel = projects.flatMap {
       val javaVersions = MavenImportUtil.getMavenJavaVersions(it)
