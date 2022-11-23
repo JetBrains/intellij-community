@@ -61,7 +61,8 @@ internal class FirTypeNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
-    override val explicitReceiver: KtExpression?
+    override val explicitReceiver: KtExpression?,
+    val typeReference: KtTypeReference?,
 ) : FirNameReferencePositionContext()
 
 internal class FirAnnotationTypeNameReferencePositionContext(
@@ -301,7 +302,7 @@ internal object FirPositionCompletionContextDetector {
                 FirIncorrectPositionContext(position)
             }
             else -> null
-        } ?: FirTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)
+        } ?: FirTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, typeReference)
     }
 
     inline fun analyzeInContext(
