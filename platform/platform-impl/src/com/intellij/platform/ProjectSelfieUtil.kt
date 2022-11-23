@@ -6,7 +6,6 @@ package com.intellij.platform
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
@@ -31,7 +30,7 @@ import java.util.*
 
 internal object ProjectSelfieUtil {
   val isEnabled: Boolean
-    get() = Registry.`is`("ide.project.loading.show.last.state", true)
+    get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.project.loading.show.last.state", true)
 
   private fun getSelfieLocation(projectWorkspaceId: String): Path {
     return appSystemDir.resolve("project-selfies-v1").resolve("$projectWorkspaceId.ij-image")
