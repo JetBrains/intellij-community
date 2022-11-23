@@ -66,9 +66,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import static com.intellij.openapi.actionSystem.impl.Utils.getOrCreateUpdateSession;
-
-public final class PreviewFormAction extends AnAction{
+public final class PreviewFormAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**

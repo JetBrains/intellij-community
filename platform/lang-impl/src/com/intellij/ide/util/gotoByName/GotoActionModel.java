@@ -92,7 +92,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   @NotNull
   private UpdateSession newUpdateSession() {
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, myDataContext);
-    return Utils.getOrCreateUpdateSession(event);
+    Utils.initUpdateSession(event);
+    return event.getUpdateSession();
   }
 
   void buildGroupMappings() {

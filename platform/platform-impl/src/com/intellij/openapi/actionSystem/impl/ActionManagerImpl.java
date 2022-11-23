@@ -1655,12 +1655,6 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           inputEvent == null ? 0 : inputEvent.getModifiersEx()
         );
 
-        ActionUtil.performDumbAwareUpdate(action, event, false);
-        if (!event.getPresentation().isEnabled()) {
-          result.setRejected();
-          return;
-        }
-
         ActionUtil.lastUpdateAndCheckDumb(action, event, false);
         if (!event.getPresentation().isEnabled()) {
           result.setRejected();
