@@ -23,9 +23,9 @@ import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArt
 import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.exists
 
 fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
   options.skipDependencySetup = skipDependencySetup
@@ -77,26 +77,28 @@ fun runTestBuild(
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
   runBlocking(Dispatchers.Default) {
-    val reproducibilityTest = BuildArtifactsReproducibilityTest()
-    repeat(reproducibilityTest.iterations) { iterationNumber ->
-      launch {
-        runTestBuild(
-          context = createBuildContext(
-            homePath = homePath,
-            productProperties = productProperties,
-            buildTools = buildTools,
-            communityHomePath = communityHomePath,
-            buildOptionsCustomizer = {
-              buildOptionsCustomizer(it)
-              reproducibilityTest.configure(it)
-            },
-          ),
-          traceSpanName = traceSpanName?.let { "$it-#$iterationNumber" } ?: "#$iterationNumber",
-          onFinish = { build ->
-            onFinish(build)
-            reproducibilityTest.iterationFinished(iterationNumber, build)
-          },
-        )
+    asSingleTraceFile(productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
+      val reproducibilityTest = BuildArtifactsReproducibilityTest()
+      repeat(reproducibilityTest.iterations) { iterationNumber ->
+        launch {
+          doRunTestBuild(
+            context = createBuildContext(
+              homePath = homePath,
+              productProperties = productProperties,
+              buildTools = buildTools,
+              communityHomePath = communityHomePath,
+              buildOptionsCustomizer = {
+                buildOptionsCustomizer(it)
+                reproducibilityTest.configure(it)
+              },
+            ),
+            traceSpanName = "#$iterationNumber",
+            onFinish = { build  ->
+              onFinish(build)
+              reproducibilityTest.iterationFinished(iterationNumber, build)
+            }
+          )
+        }
       }
     }
   }
@@ -104,14 +106,16 @@ fun runTestBuild(
 
 // FIXME: test reproducibility
 suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, onFinish: suspend (context: BuildContext) -> Unit = {}) {
-  val productProperties = context.productProperties
+  asSingleTraceFile(context.productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
+    doRunTestBuild(context, traceSpanName, build)
+  }
+}
 
-  // to see in Jaeger as a one trace
-  val traceFileName = "${productProperties.baseFileName}-trace.json"
+private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?, build: suspend (context: BuildContext) -> Unit) {
   val outDir = context.paths.buildOutputDir
   var error: Throwable? = null
   try {
-    spanBuilder(traceSpanName ?: "test build of ${productProperties.baseFileName}")
+    spanBuilder(traceSpanName ?: "test build of ${context.productProperties.baseFileName}")
       .setAttribute("outDir", outDir.toString())
       .useWithScope2 { span ->
         try {
@@ -127,7 +131,7 @@ suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, o
           }
           span.setStatus(StatusCode.ERROR)
 
-          copyDebugLog(productProperties, context.messages as BuildMessagesImpl)
+          copyDebugLog(context.productProperties, context.messages as BuildMessagesImpl)
 
           if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
             //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
@@ -145,7 +149,6 @@ suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, o
     // close debug logging to prevent locking of output directory on Windows
     (context.messages as BuildMessagesImpl).close()
 
-    copyPerfReport(traceFileName)
     try {
       NioFiles.deleteRecursively(outDir)
     }
@@ -164,25 +167,37 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
   try {
     val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)
-    Files.copy(messages.debugLogFile!!, targetFile, StandardCopyOption.REPLACE_EXISTING)
-    Span.current().addEvent("debug log copied to $targetFile")
+    val debugLogFile = messages.debugLogFile
+    if (debugLogFile?.exists() == true) {
+      Files.copy(debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
+      Span.current().addEvent("debug log copied to $targetFile")
+    }
   }
   catch (e: Throwable) {
     Span.current().addEvent("failed to copy debug log: ${e.message}")
+    e.printStackTrace(System.err)
   }
 }
 
-private fun copyPerfReport(traceFileName: String) {
-  val targetFile = TestLoggerFactory.getTestLogDir().resolve(traceFileName)
-  Files.createDirectories(targetFile.parent)
-  val file = TraceManager.finish() ?: return
+private suspend fun asSingleTraceFile(traceSpanName: String, build: suspend () -> Unit) {
+  val traceFile = TestLoggerFactory.getTestLogDir().resolve("$traceSpanName-trace.json")
+  TracerProviderManager.setOutput(traceFile)
   try {
-    Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING)
-    println("Performance report is written to $targetFile")
+    build()
   }
-  catch (ignore: NoSuchFileException) {
+  finally {
+    publishTraceFile()
   }
-  catch (e: Throwable) {
-    System.err.println("cannot write performance report: ${e.message}")
+}
+
+private fun publishTraceFile() {
+  val trace = TraceManager.finish() ?: return
+  try {
+    println("Performance report is written to $trace")
+    println("##teamcity[publishArtifacts '$trace']")
+  }
+  catch (e: Exception) {
+    System.err.println("cannot write performance report:")
+    e.printStackTrace(System.err)
   }
 }

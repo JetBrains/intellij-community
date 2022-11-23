@@ -14,6 +14,7 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.GlobalScope
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -86,11 +87,17 @@ object TracerProviderManager {
   }
 
   fun finish(): Path? {
-    tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
-    return jaegerJsonSpanExporter.getAndSet(null)?.let {
-      val file = it.file
-      it.shutdown()
-      file
+    return try {
+      tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
+      jaegerJsonSpanExporter.getAndSet(null)?.let {
+        val file = it.file
+        it.shutdown()
+        file
+      }
+    }
+    catch (io: IOException) {
+      io.printStackTrace(System.err)
+      null
     }
   }
 
