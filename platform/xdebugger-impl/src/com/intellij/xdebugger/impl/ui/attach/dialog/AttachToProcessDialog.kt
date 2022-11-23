@@ -28,7 +28,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.attach.*
+import com.intellij.xdebugger.attach.XAttachDebugger
+import com.intellij.xdebugger.attach.XAttachDebuggerProvider
+import com.intellij.xdebugger.attach.XAttachHost
+import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisibleDebuggerProvider
@@ -38,7 +41,6 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStati
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
-import java.awt.KeyboardFocusManager
 import java.awt.event.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -61,13 +63,22 @@ open class AttachToProcessDialog(
     editor.border = JBUI.Borders.empty(0, 0, 0, 0)
     editor.isOpaque = true
 
-    val defaultFocusTraversalKeys = KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(
-      KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS).toMutableSet()
-    defaultFocusTraversalKeys.add(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0))
+    textEditor.addKeyListener(object : KeyListener {
+      override fun keyTyped(e: KeyEvent?) {
+      }
 
-    textEditor.setFocusTraversalKeys(
-      KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-      defaultFocusTraversalKeys)
+      override fun keyPressed(e: KeyEvent?) {
+        if (e?.keyCode != KeyEvent.VK_DOWN) {
+          return
+        }
+
+        textEditor.transferFocus()
+        state.currentList.get()?.selectNextItem()
+      }
+
+      override fun keyReleased(e: KeyEvent?) {
+      }
+    })
   }
 
   private val state = AttachDialogState(disposable)

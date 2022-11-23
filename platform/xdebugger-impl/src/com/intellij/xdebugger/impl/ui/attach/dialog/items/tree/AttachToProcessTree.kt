@@ -17,6 +17,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
 import kotlinx.coroutines.ensureActive
 import javax.swing.JComponent
 import javax.swing.JTree
+import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionListener
 import javax.swing.table.TableCellRenderer
 import javax.swing.table.TableColumn
@@ -93,6 +94,9 @@ internal class AttachToProcessTree(
   }
 
   override fun getSelectedItem(): AttachToProcessElement? = model.getValueAt<AttachTreeProcessNode>(selectedRow)
+  override fun selectNextItem() {
+    selectionModel.selectNext()
+  }
 
   private fun refilterSaveSelection() {
     filters.clear()
@@ -241,4 +245,9 @@ internal suspend fun buildTree(
   val topLevelElements = prepareTreeElements(attachItemsInfo, dialogState)
   val rootNode = AttachTreeRootNode(topLevelElements)
   return AttachToProcessTree(rootNode, dialogState)
+}
+
+internal fun ListSelectionModel.selectNext() {
+  val selectionIndex = minSelectionIndex
+  setSelectionInterval(selectionIndex + 1, selectionIndex + 1)
 }
