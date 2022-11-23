@@ -598,8 +598,8 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
   }
 
-  private static void checkFileIdSanity(int singleFileId) {
-    if(singleFileId <= 0) {
+  private static void checkFileIdSanity(final int singleFileId) {
+    if (singleFileId <= 0) {
       throw new IllegalStateException("fileId(=" + singleFileId + ") must be >0");
     }
   }
