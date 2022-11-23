@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -325,7 +326,10 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public boolean isUseTabCharacter(Project project) {
     if (myUseTabCharacter != null) return myUseTabCharacter.booleanValue();
-    return getIndentOptions(project).USE_TAB_CHARACTER;
+    PsiFile file = getPsiFile(project);
+    return file != null
+           ? CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER
+           : CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
   }
 
   @Override
@@ -380,7 +384,16 @@ public class SettingsImpl implements EditorSettings {
             tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
           }
           else {
-            tabSize = getIndentOptions(project).TAB_SIZE;
+            PsiFile file = getPsiFile(project);
+            if (myEditor != null && myEditor.isViewer()) {
+              FileType fileType = file != null ? file.getFileType() : null;
+              tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+            }
+            else {
+              tabSize = file != null ?
+                        CodeStyle.getIndentOptions(file).TAB_SIZE :
+                        CodeStyle.getSettings(project).getTabSize(null);
+            }
           }
         }
         catch (ProcessCanceledException e) {
@@ -396,10 +409,12 @@ public class SettingsImpl implements EditorSettings {
     }
   }
 
-  @NotNull
-  private CommonCodeStyleSettings.IndentOptions getIndentOptions(Project project) {
-    VirtualFile file = myEditor == null ? null : myEditor.getVirtualFile();
-    return CodeStyle.getIndentOptionsByFileType(project, file);
+  @Nullable
+  private PsiFile getPsiFile(@Nullable Project project) {
+    if (project != null && myEditor != null) {
+      return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
+    }
+    return null;
   }
 
   @Override
