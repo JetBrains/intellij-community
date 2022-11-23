@@ -48,10 +48,7 @@ import javax.swing.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -136,9 +133,10 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
     boolean isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
+    MavenImportingSettings importingSettings = getImportingSettings();
     if (isVeryNewProject) {
       ExternalProjectsManagerImpl.setupCreatedProject(project);
-      MavenProjectsManager.setupCreatedMavenProject(getImportingSettings());
+      MavenProjectsManager.setupCreatedMavenProject(importingSettings);
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -158,8 +156,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
 
-    settings.setGeneralSettings(getGeneralSettings());
-    settings.setImportingSettings(getImportingSettings());
+    MavenGeneralSettings generalSettings = getGeneralSettings();
+    settings.setGeneralSettings(generalSettings);
+    settings.setImportingSettings(importingSettings);
 
     String settingsFile = System.getProperty("idea.maven.import.settings.file");
     if (!StringUtil.isEmptyOrSpaces(settingsFile)) {
@@ -183,20 +182,39 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    List<MavenProject> selectedProjects = new ArrayList<>(getParameters().mySelectedProjects);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
-        !manager.hasProjects() && settings.generalSettings.isShowDialogWithAdvancedSettings()) {
-      showGeneralSettingsConfigurationDialog(project, settings.generalSettings);
+        !manager.hasProjects() && settings.getGeneralSettings().isShowDialogWithAdvancedSettings()) {
+      showGeneralSettingsConfigurationDialog(project, settings.getGeneralSettings(), () -> {
+        performImport(project, model, null, artifactModel, selectedProfiles, selectedProjects, importingSettings, generalSettings);
+      });
+      return Collections.emptyList();
     }
 
-    manager.setIgnoredState(getParameters().mySelectedProjects, false);
+    return performImport(project, model, modulesProvider, artifactModel, selectedProfiles, selectedProjects,
+                         importingSettings, generalSettings);
+  }
+
+  @Nullable
+  private List<Module> performImport(Project project,
+                                     ModifiableModuleModel model,
+                                     ModulesProvider modulesProvider,
+                                     ModifiableArtifactModel artifactModel,
+                                     MavenExplicitProfiles selectedProfiles,
+                                     List<MavenProject> selectedProjects,
+                                     MavenImportingSettings importingSettings,
+                                     MavenGeneralSettings generalSettings) {
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    boolean isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
+    manager.setIgnoredState(selectedProjects, false);
 
 
     if (MavenUtil.isLinearImportEnabled()) {
       Module dummy = MavenImportingManager.getInstance(project).openProjectAndImport(
-        new FilesList(MavenUtil.collectFiles(getParameters().mySelectedProjects)),
-        getImportingSettings(),
-        getGeneralSettings(),
+        new FilesList(MavenUtil.collectFiles(selectedProjects)),
+        importingSettings,
+        generalSettings,
         MavenImportSpec.EXPLICIT_IMPORT
       ).getPreviewModulesCreated();
 
@@ -209,12 +227,12 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     }
 
     if (isVeryNewProject && Registry.is("maven.create.dummy.module.on.first.import")) {
-      Module previewModule = createPreviewModule(project);
-      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, previewModule);
+      Module previewModule = createPreviewModule(project, selectedProjects);
+      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(selectedProjects), selectedProfiles, previewModule);
       return Collections.singletonList(previewModule);
     }
     else {
-      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, null);
+      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(selectedProjects), selectedProfiles, null);
     }
 
     manager.waitForReadingCompletion();
@@ -241,9 +259,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     return manager.importProjects();
   }
 
-  private @Nullable Module createPreviewModule(Project project) {
+  private @Nullable Module createPreviewModule(Project project, List<MavenProject> selectedProjects) {
     if (ModuleManager.getInstance(project).getModules().length == 0) {
-      MavenProject root = ContainerUtil.getFirstItem(getParameters().mySelectedProjects);
+      MavenProject root = ContainerUtil.getFirstItem(selectedProjects);
       if (root == null) return null;
       VirtualFile contentRoot = root.getDirectoryFile();
 
@@ -253,9 +271,13 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
 
-  private static void showGeneralSettingsConfigurationDialog(@NotNull Project project, @NotNull MavenGeneralSettings generalSettings) {
-    MavenEnvironmentSettingsDialog dialog = new MavenEnvironmentSettingsDialog(project, generalSettings);
-    ApplicationManager.getApplication().invokeAndWait(dialog::show);
+  private void showGeneralSettingsConfigurationDialog(@NotNull Project project,
+                                                      @NotNull MavenGeneralSettings generalSettings,
+                                                      Runnable runImportAfter) {
+    MavenEnvironmentSettingsDialog dialog = new MavenEnvironmentSettingsDialog(project, generalSettings, runImportAfter);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      dialog.show();
+    });
   }
 
   private static void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
