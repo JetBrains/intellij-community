@@ -235,6 +235,7 @@ public final class PackageAnnotator {
                          final GlobalSearchScope scope) {
     final Ref<VirtualFile> containingFileRef = new Ref<>();
     final Ref<PsiClass> psiClassRef = new Ref<>();
+    if (myProject.isDisposed()) return;
     final Boolean isInSource = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
       if (myProject.isDisposed()) return null;
       final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(toplevelClassSrcFQName, scope);
