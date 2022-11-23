@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -78,6 +79,14 @@ object CastExpressionFixFactories {
     ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
         // `null` related issue should not be handled by a cast fix.
         if (isDueToNullability || expectedType is KtClassErrorType) return emptyList()
+
+        if (psi is KtExpression) {
+            val actualExpressionType = psi.getKtType()
+            if (actualExpressionType != null && actualType != actualExpressionType) {
+                //don't suggest cast for nested generic argument incompatibilities
+                return emptyList()
+            }
+        }
 
         // Do not offer to cast to an incompatible type.
         if (!actualType.hasCommonSubTypeWith(expectedType)) {

@@ -2637,6 +2637,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch4.kt");
         }
 
+        @TestMetadata("typeMismatch5.kt")
+        public void testTypeMismatch5() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch5.kt");
+        }
+
         @TestMetadata("typeMismatchLongNameRuntime.kt")
         public void testTypeMismatchLongNameRuntime() throws Exception {
             runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatchLongNameRuntime.kt");

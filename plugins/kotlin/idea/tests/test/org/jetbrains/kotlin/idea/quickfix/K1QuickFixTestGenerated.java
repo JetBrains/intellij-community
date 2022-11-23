@@ -14910,6 +14910,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/casts/typeMismatch4.kt");
             }
 
+            @TestMetadata("typeMismatch5.kt")
+            public void testTypeMismatch5() throws Exception {
+                runTest("testData/quickfix/typeMismatch/casts/typeMismatch5.kt");
+            }
+
             @TestMetadata("typeMismatchLongNameRuntime.kt")
             public void testTypeMismatchLongNameRuntime() throws Exception {
                 runTest("testData/quickfix/typeMismatch/casts/typeMismatchLongNameRuntime.kt");
