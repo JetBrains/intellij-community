@@ -14,4 +14,12 @@ public class MavenServerParallelRunner {
   public static <T> void runSequentially(@NotNull Collection<T> collection, @NotNull Consumer<T> method) {
     collection.forEach(method);
   }
+
+  public static <T> void run(boolean runInParallel, @NotNull Collection<T> collection, @NotNull Consumer<T> method) {
+    if (runInParallel) {
+      runInParallel(collection, method);
+    } else {
+      runSequentially(collection, method);
+    }
+  }
 }

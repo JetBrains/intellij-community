@@ -857,7 +857,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         }
 
         boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
-        MavenServerParallelRunner.runInParallel(projectsToResolveDependencies.keySet(), project -> {
+        boolean runInParallel = canResolveDependenciesInParallel();
+        MavenServerParallelRunner.run(runInParallel, projectsToResolveDependencies.keySet(), project -> {
           MavenExecutionResult executionResult = projectsToResolveDependencies.get(project);
           final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
           Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
@@ -872,6 +873,20 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     });
 
     return executionResults;
+  }
+
+  /**
+   * The ThreadLocal approach was introduced in maven 3.8.2 and reverted in 3.8.4 as it caused too many side effects.
+   * More details in Maven 3.8.4 release notes
+   *
+   * @return true if dependencies can be resolved in parallel for better performance
+   */
+  private static boolean canResolveDependenciesInParallel() {
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    if ("3.8.2".equals(mavenVersion) || "3.8.3".equals(mavenVersion)) {
+      return false;
+    }
+    return true;
   }
 
   private static void fillSessionCache(MavenSession mavenSession,
