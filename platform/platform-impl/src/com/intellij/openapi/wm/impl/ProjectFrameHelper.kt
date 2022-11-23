@@ -114,8 +114,7 @@ open class ProjectFrameHelper internal constructor(
       }
     })
     frame.background = JBColor.PanelBackground
-    @Suppress("LeakingThis")
-    rootPane.preInit(frameHelper = this)
+    rootPane.preInit(isInFullScreen = { isInFullScreen })
 
     balloonLayout = if (ActionCenter.isEnabled()) {
       ActionCenterBalloonLayout(rootPane, JBUI.insets(8))

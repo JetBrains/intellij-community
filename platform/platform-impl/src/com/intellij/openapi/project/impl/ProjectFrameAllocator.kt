@@ -342,7 +342,7 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
     val toolbarActionGroups = deferredToolbarActionGroups.await()
     withContext(Dispatchers.EDT) {
       runActivity("toolbar init") {
-        frameHelper.rootPane.initOrCreateToolbar(toolbarActionGroups)
+        frameHelper.rootPane.initToolbar(toolbarActionGroups)
       }
 
       runActivity("north components updating") {
