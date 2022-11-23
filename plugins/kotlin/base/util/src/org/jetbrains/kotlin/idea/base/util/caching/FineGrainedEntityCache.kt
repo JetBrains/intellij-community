@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.util.caching
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.assertReadAccessAllowed
 import com.intellij.openapi.application.assertWriteAccessAllowed
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -23,7 +24,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
     init {
         if (cleanOnLowMemory) {
             @Suppress("LeakingThis")
-            LowMemoryWatcher.register(this::invalidate, this)
+            LowMemoryWatcher.register({ runReadAction { invalidate() } }, this)
         }
 
         @Suppress("LeakingThis")
