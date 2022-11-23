@@ -5,6 +5,7 @@ import com.intellij.maven.testFramework.MavenImportingTestCase;
 import com.intellij.maven.testFramework.MavenWrapperTestFixture;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.After;
 import org.junit.Assume;
@@ -79,6 +80,11 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   public void before() throws Exception {
     myWrapperTestFixture = new MavenWrapperTestFixture(myProject, myMavenVersion);
     myWrapperTestFixture.setUp();
+
+
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    String repoPath = helper.getTestDataPath("local1");
+    setRepositoryPath(repoPath);
   }
 
   @After
@@ -181,9 +187,9 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                                "<artifactId>module1</artifactId>" +
                                "<dependencies>" +
                                "  <dependency>" +
-                               "    <groupId>junit</groupId>" +
-                               "    <artifactId>junit</artifactId>" +
-                               "    <version>${junitVersion}</version>" +
+                               "    <groupId>org.example</groupId>" +
+                               "    <artifactId>intellijmaventest</artifactId>" +
+                               "    <version>${libVersion}</version>" +
                                "  </dependency>" +
                                "</dependencies>"
     );
@@ -194,7 +200,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                   "<packaging>pom</packaging>" +
 
                   "<properties>" +
-                  "    <junitVersion>4.0</junitVersion>" +
+                  "    <libVersion>1.0</libVersion>" +
                   "  </properties>" +
                   "<modules>" +
                   "<module>module1</module>" +
@@ -203,7 +209,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
     waitForReadingCompletion();
     assertModules("project", mn("project", "module1"));
 
-    assertModuleLibDep(mn("project", "module1"), "Maven: junit:junit:4.0");
+    assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:1.0");
 
       /*myWrapperTestFixture.tearDown();
       myWrapperTestFixture.setUp();*/
@@ -216,9 +222,9 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                                "<artifactId>module1</artifactId>" +
                                "<dependencies>" +
                                "  <dependency>" +
-                               "    <groupId>junit</groupId>" +
-                               "    <artifactId>junit</artifactId>" +
-                               "    <version>${junitVersion2}</version>" +
+                               "    <groupId>org.example</groupId>" +
+                               "    <artifactId>intellijmaventest</artifactId>" +
+                               "    <version>${libVersion2}</version>" +
                                "  </dependency>" +
                                "</dependencies>"
     );
@@ -229,14 +235,14 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                   "<packaging>pom</packaging>" +
 
                   "<properties>" +
-                  "    <junitVersion>4.0</junitVersion>" +
-                  "    <junitVersion2>4.1</junitVersion2>" +
+                  "    <libVersion>1.0</libVersion>" +
+                  "    <libVersion2>2.0</libVersion2>" +
                   "  </properties>" +
                   "<modules>" +
                   "<module>module1</module>" +
                   "</modules>");
     waitForReadingCompletion();
-    assertModuleLibDep(mn("project", "module1"), "Maven: junit:junit:4.1");
+    assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:2.0");
   }
 
   @Test
