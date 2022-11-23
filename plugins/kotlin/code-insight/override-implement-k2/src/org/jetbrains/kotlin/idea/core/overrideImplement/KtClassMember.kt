@@ -132,7 +132,7 @@ fun KtAnalysisSession.generateMember(
     }
 
     if (copyDoc) {
-        val kDoc = when (val originalOverriddenPsi = symbol.originalOverriddenSymbol?.psi) {
+        val kDoc = when (val originalOverriddenPsi = symbol.unwrapFakeOverrides.psi) {
             is KtDeclaration ->
                 findDocComment(originalOverriddenPsi)
 

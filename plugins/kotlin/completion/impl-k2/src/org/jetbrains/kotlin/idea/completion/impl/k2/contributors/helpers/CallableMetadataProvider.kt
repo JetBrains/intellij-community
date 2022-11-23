@@ -207,8 +207,8 @@ internal object CallableMetadataProvider {
     }
 
     private fun KtAnalysisSession.isExtensionCallOnTypeParameterReceiver(symbol: KtCallableSymbol): Boolean {
-        val originalSymbol = symbol.originalOverriddenSymbol
-        val receiverParameterType = originalSymbol?.receiverType as? KtTypeParameterType ?: return false
+        val originalSymbol = symbol.unwrapFakeOverrides
+        val receiverParameterType = originalSymbol.receiverType as? KtTypeParameterType ?: return false
         val parameterTypeOwner = receiverParameterType.symbol.getContainingSymbol() ?: return false
         return parameterTypeOwner == originalSymbol
     }
