@@ -49,6 +49,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.actions.MergeSameLineUsagesAction;
 import com.intellij.usages.impl.rules.UsageFilteringRules;
 import com.intellij.usages.rules.*;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -84,9 +85,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent.findClusteringSessionInUsageView;
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
-import static com.intellij.usages.similarity.clustering.ClusteringSearchSession.isSimilarUsagesClusteringEnabled;
 
 public class UsageViewImpl implements UsageViewEx {
   private final int myUniqueIdentifier;
@@ -125,6 +124,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
+  private @Nullable GroupNode myAutoSelectedGroupNode;
 
   public static final Comparator<Usage> USAGE_COMPARATOR_BY_FILE_AND_OFFSET = (o1, o2) -> {
     if (o1 == o2) return 0;
@@ -1378,22 +1378,30 @@ public class UsageViewImpl implements UsageViewEx {
       reportToFUS((PsiElementUsage)usage);
     }
 
-    UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtModelToSwingNodeChangesQueue);
-    myUsageNodes.put(usage, child == null ? NULL_NODE : child);
-
-    if (child != null && getPresentation().isExcludeAvailable()) {
+    UsageNode recentNode = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtModelToSwingNodeChangesQueue);
+    myUsageNodes.put(usage, recentNode == null ? NULL_NODE : recentNode);
+    if (myAutoSelectedGroupNode == null && usage instanceof SimilarUsage && recentNode != null && !myPresentation.isDetachedMode()) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        GroupNode groupNode = ObjectUtils.tryCast(TreeUtil.getPath(myRoot, recentNode).getPath()[1], GroupNode.class);
+        if (groupNode != null && getSelectedNode() instanceof UsageViewTreeModelBuilder.TargetsRootNode) {
+          myAutoSelectedGroupNode = groupNode;
+          showNode(groupNode);
+        }
+      });
+    }
+    if (recentNode != null && getPresentation().isExcludeAvailable()) {
       for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
         if (listener.isExcludedByDefault(this, usage)) {
-          myExclusionHandler.excludeNodeSilently(child);
+          myExclusionHandler.excludeNodeSilently(recentNode);
         }
       }
     }
 
-    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
+    for (Node node = recentNode; node != myRoot && node != null; node = (Node)node.getParent()) {
       node.update(edtFireTreeNodesChangedQueue);
     }
 
-    return child;
+    return recentNode;
   }
 
   private void reportToFUS(@NotNull PsiElementUsage usage) {
@@ -1656,25 +1664,27 @@ public class UsageViewImpl implements UsageViewEx {
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
         if (isDisposed()) return;
-        Node nodeToSelect;
-        if (isSimilarUsagesClusteringEnabled() && findClusteringSessionInUsageView(this) != null) {
-          nodeToSelect = myModel.getFirstGroupNode();
-        }
-        else {
-          nodeToSelect = myModel.getFirstUsageNode();
-        }
+        if (userHasSelectedNode()) return;
+        Node nodeToSelect = ObjectUtils.coalesce(myAutoSelectedGroupNode, myModel.getFirstUsageNode());
         if (nodeToSelect == null) return;
-        Node node = getSelectedNode();
-        if (node != null && !Comparing.equal(new TreePath(node.getPath()), TreeUtil.getFirstNodePath(myTree))) {
-          // user has selected node already
-          return;
-        }
         showNode(nodeToSelect);
         if (getUsageViewSettings().isExpanded() && myUsageNodes.size() < 10000) {
           expandAll();
         }
       });
     }
+  }
+
+  private boolean userHasSelectedNode() {
+    GroupNode autoSelectedGroupNode = myAutoSelectedGroupNode;
+    Node selectedNode = getSelectedNode();
+    if (selectedNode != null) {
+      TreePath expectedPathToBeSelected = autoSelectedGroupNode != null ? TreeUtil.getPathFromRoot(autoSelectedGroupNode) : TreeUtil.getFirstNodePath(myTree);
+      if (!Comparing.equal(TreeUtil.getPathFromRoot(selectedNode), expectedPathToBeSelected)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean isDisposed() {
