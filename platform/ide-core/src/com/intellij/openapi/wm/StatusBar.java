@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 /**
  * Status bar shown on the bottom of IDE frame.
@@ -161,7 +162,8 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    */
   @Nullable
   @ApiStatus.Experimental
-  default FileEditor getCurrentEditor() {
+  @ApiStatus.Internal
+  default Supplier<@Nullable FileEditor> getCurrentEditor() {
     return null;
   }
 }

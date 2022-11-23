@@ -39,8 +39,10 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -64,8 +66,10 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.Restarter
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
@@ -492,13 +496,32 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
-  final override fun createProject(name: String?, path: String): Project? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return newProject(toCanonicalName(path), OpenProjectTask {
+  @RequiresEdt
+  final override fun createProject(name: String?, path: String): Project {
+    val options = OpenProjectTask {
       isNewProject = true
       runConfigurators = false
       projectName = name
-    })
+    }
+    val project = runBlockingModal(
+      owner = ModalTaskOwner.guess(),
+      title = IdeUICustomization.getInstance().projectMessage("progress.title.project.creating.name", name ?: PathUtilRt.getFileName(path)),
+    ) {
+      val file = toCanonicalName(path)
+      removeProjectConfigurationAndCaches(file)
+      val project = instantiateProject(projectStoreBaseDir = file, options = options)
+      initProject(
+        file = file,
+        project = project,
+        isRefreshVfsNeeded = options.isRefreshVfsNeeded,
+        preloadServices = options.preloadServices,
+        template = defaultProject,
+        isTrustCheckNeeded = false,
+      )
+      project.setTrusted(true)
+      project
+    }
+    return project
   }
 
   final override fun loadAndOpenProject(originalFilePath: String): Project? {
@@ -569,7 +592,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path, activity: Activity): Project? {
-    val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+    val app = ApplicationManager.getApplication()
+    val frameAllocator = if (app.isHeadlessEnvironment || app.isUnitTestMode) {
       ProjectFrameAllocator(options)
     }
     else {
@@ -583,7 +607,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     try {
       frameAllocator.run { saveTemplateJob, initFrame ->
         activity.end()
-        val initFrameEarly = !options.isNewProject && options.beforeOpen == null
+        val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
         val project = when {
           options.project != null -> options.project!!
           options.isNewProject -> prepareNewProject(options = options,
@@ -668,7 +692,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
       }
 
-      if (ApplicationManager.getApplication().isUnitTestMode) {
+      if (app.isUnitTestMode) {
         throw e
       }
 
@@ -683,7 +707,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val project = result!!
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    if (!app.isUnitTestMode) {
       val openTimestamp = System.currentTimeMillis()
       @Suppress("DEPRECATION")
       project.coroutineScope?.launch {

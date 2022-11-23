@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.*
@@ -37,6 +38,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.platform.ProjectSelfieUtil
+import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.*
 import com.intellij.util.ui.*
@@ -70,7 +72,7 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
 
 private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
   if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
-    return launch(Dispatchers.IO) {
+    return launch(Dispatchers.IO + CoroutineName("save default project")) {
       saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
     }
   }
@@ -133,8 +135,8 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
             FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList
           }
 
-          async {
-            launch {
+          async(CoroutineName("init project frame and restore editors")) {
+            launch(CoroutineName("assign project to frame")) {
               val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
               val frameHelper = deferredProjectFrameHelper.await()
               withContext(Dispatchers.EDT) {
@@ -286,17 +288,37 @@ private suspend fun restoreEditors(project: Project,
                                    deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>,
                                    anyEditorOpened: CompletableDeferred<Unit>) {
   val fileEditorManager = project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl ?: return
-  val editorComponent = fileEditorManager.init()
 
   service<StartUpPerformanceService>().addActivityListener(project)
+  val (editorComponent, editorState) = withContext(Dispatchers.EDT) { fileEditorManager.init() }
 
-  val frameHelper = deferredProjectFrameHelper.await()
-  withContext(Dispatchers.EDT) {
-    frameHelper.rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
-  }
+  val frameHelper = coroutineScope {
+    // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
+    launch {
+      project.serviceAsync<WolfTheProblemSolver>().join()
+      project.serviceAsync<DaemonCodeAnalyzer>().join()
+    }
 
-  runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
-    editorComponent.restoreEditors(onStartup = true, anyEditorOpened = anyEditorOpened)
+    val frameHelper = deferredProjectFrameHelper.await()
+    launch(Dispatchers.EDT) {
+      frameHelper.rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
+    }
+
+    if (editorState == null) {
+      anyEditorOpened.complete(Unit)
+    }
+    else {
+      runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
+        editorComponent.restoreEditors(state = editorState, onStartup = true, anyEditorOpened = anyEditorOpened)
+      }
+    }
+
+    withContext(Dispatchers.EDT) {
+      frameHelper.rootPane.statusBar?.setEditorProvider {
+        fileEditorManager.selectedEditor
+      }
+    }
+    frameHelper
   }
 
   @Suppress("DEPRECATION")
@@ -353,6 +375,7 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
 
   launch {
     val frameHelper = deferredProjectFrameHelper.await()
+
     frameHelper.installDefaultProjectStatusBarWidgets(project)
     frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
   }

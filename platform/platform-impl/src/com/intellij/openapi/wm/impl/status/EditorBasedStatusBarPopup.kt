@@ -1,390 +1,369 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.status;
+@file:Suppress("LeakingThis")
 
-import com.intellij.ide.DataManager;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.PopupState;
-import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.indexing.IndexingBundle;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+package com.intellij.openapi.wm.impl.status
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
+import com.intellij.ide.DataManager
+import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.*
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
+import com.intellij.openapi.wm.CustomStatusBarWidget
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.StatusBarWidget.Multiframe
+import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
+import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
+import com.intellij.ui.ClickListener
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.PopupState
+import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
+import java.awt.Component
+import java.awt.Point
+import java.awt.event.MouseEvent
+import java.lang.ref.WeakReference
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import kotlin.time.Duration.Companion.milliseconds
 
-import static com.intellij.openapi.util.NlsContexts.StatusBarText;
+@OptIn(FlowPreview::class)
+abstract class EditorBasedStatusBarPopup(
+  project: Project,
+  private val isWriteableFileRequired: Boolean,
+) : EditorBasedWidget(project), Multiframe, CustomStatusBarWidget {
+  private val popupState = PopupState.forPopup()
+  private val component: JPanel
 
-public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
-  private final JPanel myComponent;
-  private final boolean myWriteableFileRequired;
-  protected boolean actionEnabled;
-  private final Alarm update;
+  var isActionEnabled = false
+    protected set
+
+  private val update = MutableSharedFlow<Runnable?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
-  private volatile Reference<Editor> myEditor = new WeakReference<>(null);
+  @Volatile
+  private var editor = WeakReference<Editor?>(null)
 
-  public EditorBasedStatusBarPopup(@NotNull Project project, boolean writeableFileRequired) {
-    super(project);
-    myWriteableFileRequired = writeableFileRequired;
-    update = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-    myComponent = createComponent();
-    myComponent.setVisible(false);
-
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        update();
-        UIEventLogger.StatusBarPopupShown.log(project, EditorBasedStatusBarPopup.this.getClass());
-        showPopup(e);
-        return true;
+  init {
+    component = createComponent()
+    component.isVisible = false
+    object : ClickListener() {
+      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+        update()
+        StatusBarPopupShown.log(project, this@EditorBasedStatusBarPopup.javaClass)
+        showPopup(e)
+        return true
       }
-    }.installOn(myComponent, true);
-    myComponent.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
+    }.installOn(component, true)
+    component.border = JBUI.CurrentTheme.StatusBar.Widget.border()
+
+    @Suppress("DEPRECATION")
+    ApplicationManager.getApplication().coroutineScope.launch {
+      update
+        .debounce(200.milliseconds)
+        .collectLatest(::doUpdate)
+    }.cancelOnDispose(this)
   }
 
-  protected JPanel createComponent() {
-    return new TextPanel.WithIconAndArrows();
+  private suspend fun doUpdate(finishUpdate: Runnable?) {
+    val file = selectedFile
+    val state = readAction {
+      getWidgetState(file)
+    }
+    if (state != WidgetState.NO_CHANGE) {
+      withContext(Dispatchers.EDT) {
+        applyUpdate(finishUpdate = finishUpdate, file = file, state = state)
+      }
+    }
   }
 
-  @Override
-  public final void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    VirtualFile newFile = event.getNewFile();
+  protected open fun createComponent(): JPanel = WithIconAndArrows()
 
-    FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(getProject()).getSelectedEditor(newFile);
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
-    setEditor(editor);
+  override fun selectionChanged(event: FileEditorManagerEvent) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
 
-    fileChanged(newFile);
+    val newFile = event.newFile
+    val fileEditor = if (newFile == null) null else FileEditorManager.getInstance(project).getSelectedEditor(newFile)
+    editor = WeakReference((fileEditor as? TextEditor)?.editor)
+    fileChanged(newFile)
   }
 
   @ApiStatus.Internal
-  public final void setEditor(@Nullable Editor editor) {
-    myEditor = new WeakReference<>(editor);
+  fun setEditor(editor: Editor?) {
+    this.editor = WeakReference(editor)
   }
 
-  public final void selectionChanged(@Nullable VirtualFile newFile) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
+  fun selectionChanged(newFile: VirtualFile?) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
     }
 
-    FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(getProject()).getSelectedEditor(newFile);
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
-    myEditor = new WeakReference<>(editor);
-
-    fileChanged(newFile);
+    val fileEditor = if (newFile == null) null else FileEditorManager.getInstance(project).getSelectedEditor(newFile)
+    editor = WeakReference((fileEditor as? TextEditor)?.editor)
+    fileChanged(newFile)
   }
 
-  private void fileChanged(VirtualFile newFile) {
-    handleFileChange(newFile);
-    update();
+  private fun fileChanged(newFile: VirtualFile?) {
+    handleFileChange(newFile)
+    update()
   }
 
-  protected void handleFileChange(VirtualFile file) {
+  protected open fun handleFileChange(file: VirtualFile?) {}
+
+  override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+    fileChanged(file)
   }
 
-  @Override
-  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    fileChanged(file);
+  override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+    fileChanged(file)
   }
 
-  @Override
-  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    fileChanged(file);
-  }
+  override fun copy(): StatusBarWidget = createInstance(project)
 
-  @Override
-  public final StatusBarWidget copy() {
-    return createInstance(getProject());
-  }
+  override fun getPresentation(): WidgetPresentation? = null
 
-  @Override
-  public @Nullable WidgetPresentation getPresentation() {
-    return null;
-  }
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-    super.install(statusBar);
-    registerCustomListeners();
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent e) {
-        Document document = e.getDocument();
-        updateForDocument(document);
+  override fun install(statusBar: StatusBar) {
+    super.install(statusBar)
+    registerCustomListeners()
+    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(e: DocumentEvent) {
+        val document = e.document
+        updateForDocument(document)
       }
-    }, this);
-    if (myWriteableFileRequired) {
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
-          @Override
-          public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-            if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
-              updateForFile(event.getFile());
+    }, this)
+    if (isWriteableFileRequired) {
+      ApplicationManager.getApplication().messageBus.connect(this)
+        .subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileListener {
+          override fun propertyChanged(event: VirtualFilePropertyEvent) {
+            if (VirtualFile.PROP_WRITABLE == event.propertyName) {
+              updateForFile(event.file)
             }
           }
-        }));
+        }))
     }
-    setEditor(getEditor());
-    update();
+    setEditor(getEditor())
+    update()
   }
 
-  protected void updateForDocument(@Nullable("null means update anyway") Document document) {
-    Editor selectedEditor = myEditor.get();
-    if (document != null && (selectedEditor == null || selectedEditor.getDocument() != document)) return;
-    update();
+  protected open fun updateForDocument(document: Document?) {
+    val selectedEditor = editor.get()
+    if (document == null || !(selectedEditor == null || selectedEditor.document !== document)) {
+      update()
+    }
   }
 
-  protected void updateForFile(@Nullable("null means update anyway") VirtualFile file) {
+  protected open fun updateForFile(file: VirtualFile?) {
     if (file == null) {
-      update();
+      update()
     }
     else {
-      updateForDocument(FileDocumentManager.getInstance().getCachedDocument(file));
+      updateForDocument(FileDocumentManager.getInstance().getCachedDocument(file))
     }
   }
 
-  private void showPopup(@NotNull MouseEvent e) {
-    if (!actionEnabled || myPopupState.isRecentlyHidden()) return; // do not show popup
-    DataContext dataContext = getContext();
-    ListPopup popup = createPopup(dataContext);
-
-    if (popup != null) {
-      Dimension dimension = popup.getContent().getPreferredSize();
-      Point at = new Point(0, -dimension.height);
-      myPopupState.prepareToShow(popup);
-      popup.show(new RelativePoint(e.getComponent(), at));
-      Disposer.register(this, popup); // destroy popup on unexpected project close
+  private fun showPopup(e: MouseEvent) {
+    if (!isActionEnabled || popupState.isRecentlyHidden) {
+      // do not show popup
+      return
     }
+
+    val dataContext = context
+    val popup = createPopup(dataContext) ?: return
+    val dimension = popup.content.preferredSize
+    val at = Point(0, -dimension.height)
+    popupState.prepareToShow(popup)
+    popup.show(RelativePoint(e.component, at))
+    // destroy popup on unexpected project close
+    Disposer.register(this, popup)
   }
 
-  protected @NotNull DataContext getContext() {
-    Editor editor = getEditor();
-    return editor != null ? EditorUtil.getEditorDataContext(editor) :
-           DataManager.getInstance().getDataContext((Component)myStatusBar);
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return myComponent;
-  }
-
-  protected boolean isEmpty() {
-    Boolean result = ObjectUtils.doIfCast(myComponent, TextPanel.WithIconAndArrows.class,
-                                          textPanel -> StringUtil.isEmpty(textPanel.getText()) && !textPanel.hasIcon());
-    return result != null && result;
-  }
-
-  public boolean isActionEnabled() {
-    return actionEnabled;
-  }
-
-  protected void updateComponent(@NotNull WidgetState state) {
-    myComponent.setToolTipText(state.toolTip);
-    ObjectUtils.consumeIfCast(
-      myComponent, TextPanel.WithIconAndArrows.class,
-      textPanel -> {
-        textPanel.setTextAlignment(Component.CENTER_ALIGNMENT);
-        textPanel.setIcon(state.icon);
-        textPanel.setText(state.text);
+  protected val context: DataContext
+    get() {
+      val editor = getEditor()
+      return if (editor == null) {
+        DataManager.getInstance().getDataContext(myStatusBar as Component)
       }
-    );
+      else {
+        EditorUtil.getEditorDataContext(editor)
+      }
+    }
+
+  override fun getComponent(): JComponent = component
+
+  protected open val isEmpty: Boolean
+    get() {
+      return (component as? WithIconAndArrows)?.let { textPanel ->
+        textPanel.text.isNullOrEmpty() && !textPanel.hasIcon()
+      } ?: false
+    }
+
+  protected open fun updateComponent(state: WidgetState) {
+    component.toolTipText = state.toolTip
+    (component as? WithIconAndArrows)?.let { textPanel ->
+      textPanel.setTextAlignment(Component.CENTER_ALIGNMENT)
+      textPanel.icon = state.icon
+      textPanel.text = state.text
+    }
   }
 
   @TestOnly
-  public void updateInTests(boolean immediately) {
-    update();
-    update.drainRequestsInTest();
-    UIUtil.dispatchAllInvocationEvents();
+  fun updateInTests(immediately: Boolean) {
+    if (immediately) {
+      runBlockingModal(ModalTaskOwner.guess(), "") {
+        doUpdate(null)
+      }
+    }
+    else {
+      update()
+    }
+    drainRequestsInTest()
     if (immediately) {
       // for widgets with background activities, the first flush() adds handlers to be called
-      update.drainRequestsInTest();
-      UIUtil.dispatchAllInvocationEvents();
+      drainRequestsInTest()
     }
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @TestOnly
+  private fun drainRequestsInTest() {
+    runBlockingModal(ModalTaskOwner.guess(), "") {
+      val replayCache = update.replayCache
+      for (runnable in replayCache) {
+        doUpdate(runnable)
+      }
+    }
+    UIUtil.dispatchAllInvocationEvents()
   }
 
   @TestOnly
-  public void flushUpdateInTests() {
-    update.drainRequestsInTest();
-    UIUtil.dispatchAllInvocationEvents();
+  fun flushUpdateInTests() {
+    drainRequestsInTest()
   }
 
-  public void update() {
-    update(null);
+  fun update() {
+    update(null)
   }
 
-  public void update(@Nullable Runnable finishUpdate) {
-    if (update.isDisposed()) {
-      return;
+  open fun update(finishUpdate: Runnable?) {
+    check(update.tryEmit(finishUpdate))
+  }
+
+  private fun applyUpdate(finishUpdate: Runnable?, file: VirtualFile?, state: WidgetState) {
+    if (state === WidgetState.NO_CHANGE_MAKE_VISIBLE) {
+      component.isVisible = true
+      return
+    }
+    if (state === WidgetState.HIDDEN) {
+      component.isVisible = false
+      return
     }
 
-    update.cancelAllRequests();
-    update.addRequest(() -> {
-      if (isDisposed()) {
-        return;
+    component.isVisible = true
+    isActionEnabled = state.isActionEnabled && isEnabledForFile(file)
+    component.isEnabled = isActionEnabled
+    updateComponent(state)
+    if (myStatusBar != null && !component.isValid) {
+      myStatusBar.updateWidget(ID())
+    }
+    finishUpdate?.run()
+    afterVisibleUpdate(state)
+  }
+
+  protected open fun afterVisibleUpdate(state: WidgetState) {}
+
+  protected open class WidgetState(val toolTip: @NlsContexts.Tooltip String?,
+                                   val text: @NlsContexts.StatusBarText String?,
+                                   val isActionEnabled: Boolean) {
+    var icon: Icon? = null
+
+    private constructor() : this("", "", false)
+
+    companion object {
+      /**
+       * Return this state if you want to hide the widget
+       */
+      @JvmField
+      val HIDDEN = WidgetState()
+
+      /**
+       * Return this state if you don't want to change widget presentation
+       */
+      @JvmField
+      val NO_CHANGE = WidgetState()
+
+      /**
+       * Return this state if you want to show widget in its previous state
+       * but without updating its content
+       */
+      @JvmField
+      val NO_CHANGE_MAKE_VISIBLE = WidgetState()
+
+      /**
+       * Returns a special state for dumb mode (when indexes are not ready).
+       * Your widget should show this state if it depends on indexes, when DumbService.isDumb is true.
+       *
+       *
+       * Use myConnection.subscribe(DumbService.DUMB_MODE, your_listener) inside registerCustomListeners,
+       * and call update() inside listener callbacks, to refresh your widget state when indexes are loaded
+       */
+      @JvmStatic
+      fun getDumbModeState(name: @Nls String?, widgetPrefix: @NlsContexts.StatusBarText String?): WidgetState {
+        // todo: update accordingly to UX-252
+        return WidgetState(toolTip = ActionUtil.getUnavailableMessage(name!!, false),
+                           text = widgetPrefix + IndexingBundle.message("progress.indexing.updating"),
+                           isActionEnabled = false)
       }
-
-      VirtualFile file = getSelectedFile();
-
-      WidgetState state = ReadAction.compute(() -> {
-        return isDisposed() ? WidgetState.NO_CHANGE : getWidgetState(file);
-      });
-      if (state == WidgetState.NO_CHANGE) {
-        return;
-      }
-      ApplicationManager.getApplication().invokeLater(() -> {
-        applyUpdate(finishUpdate, file, state);
-      }, ModalityState.NON_MODAL, __ -> isDisposed());
-    }, 200);
-  }
-
-  private void applyUpdate(@Nullable Runnable finishUpdate, VirtualFile file, WidgetState state) {
-    if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
-      myComponent.setVisible(true);
-      return;
-    }
-
-    if (state == WidgetState.HIDDEN) {
-      myComponent.setVisible(false);
-      return;
-    }
-
-    myComponent.setVisible(true);
-
-    actionEnabled = state.actionEnabled && isEnabledForFile(file);
-
-    myComponent.setEnabled(actionEnabled);
-    updateComponent(state);
-
-    if (myStatusBar != null && !myComponent.isValid()) {
-      myStatusBar.updateWidget(ID());
-    }
-
-    if (finishUpdate != null) {
-      finishUpdate.run();
-    }
-    afterVisibleUpdate(state);
-  }
-
-  protected void afterVisibleUpdate(@NotNull WidgetState state) {}
-
-  protected static class WidgetState {
-    /**
-     * Return this state if you want to hide the widget
-     */
-    public static final WidgetState HIDDEN = new WidgetState();
-
-    /**
-     * Return this state if you don't want to change widget presentation
-     */
-    public static final WidgetState NO_CHANGE = new WidgetState();
-
-    /**
-     * Return this state if you want to show widget in its previous state
-     * but without updating its content
-     */
-    public static final WidgetState NO_CHANGE_MAKE_VISIBLE = new WidgetState();
-
-    protected final @Tooltip String toolTip;
-    private final @StatusBarText String text;
-    private final boolean actionEnabled;
-    private Icon icon;
-
-    private WidgetState() {
-      this("", "", false);
-    }
-
-    public WidgetState(@Tooltip String toolTip, @StatusBarText String text, boolean actionEnabled) {
-      this.toolTip = toolTip;
-      this.text = text;
-      this.actionEnabled = actionEnabled;
-    }
-
-    /**
-     * Returns a special state for dumb mode (when indexes are not ready).
-     * Your widget should show this state if it depends on indexes, when DumbService.isDumb is true.
-     * <p>
-     * Use myConnection.subscribe(DumbService.DUMB_MODE, your_listener) inside registerCustomListeners,
-     *   and call update() inside listener callbacks, to refresh your widget state when indexes are loaded
-     */
-    public static WidgetState getDumbModeState(@Nls String name, @StatusBarText String widgetPrefix) {
-      // todo: update accordingly to UX-252
-      return new WidgetState(ActionUtil.getUnavailableMessage(name, false),
-                             widgetPrefix + IndexingBundle.message("progress.indexing.updating"),
-                             false);
-    }
-
-    public void setIcon(Icon icon) {
-      this.icon = icon;
-    }
-
-    public @Nls String getText() {
-      return text;
-    }
-
-    public boolean isActionEnabled() {
-      return actionEnabled;
-    }
-
-    public @Tooltip String getToolTip() {
-      return toolTip;
-    }
-
-    public Icon getIcon() {
-      return icon;
     }
   }
 
   @RequiresBackgroundThread
-  protected abstract @NotNull WidgetState getWidgetState(@Nullable VirtualFile file);
+  protected abstract fun getWidgetState(file: VirtualFile?): WidgetState
 
   /**
-   * @param file result of {@link EditorBasedStatusBarPopup#getSelectedFile()}
-   * @return false if widget should be disabled for {@code file}
-   * even if {@link EditorBasedStatusBarPopup#getWidgetState(VirtualFile)} returned {@link WidgetState#actionEnabled}.
+   * @param file result of [EditorBasedStatusBarPopup.getSelectedFile]
+   * @return false if widget should be disabled for `file`
+   * even if [EditorBasedStatusBarPopup.getWidgetState] returned [WidgetState.isActionEnabled].
    */
-  protected boolean isEnabledForFile(@Nullable VirtualFile file) {
-    return file == null || !myWriteableFileRequired || file.isWritable();
-  }
+  protected open fun isEnabledForFile(file: VirtualFile?): Boolean = file == null || !isWriteableFileRequired || file.isWritable
 
-  protected abstract @Nullable ListPopup createPopup(@NotNull DataContext context);
+  protected abstract fun createPopup(context: DataContext): ListPopup?
 
-  protected void registerCustomListeners() {
-  }
+  protected open fun registerCustomListeners() {}
 
-  protected abstract @NotNull StatusBarWidget createInstance(@NotNull Project project);
+  protected abstract fun createInstance(project: Project): StatusBarWidget
 }

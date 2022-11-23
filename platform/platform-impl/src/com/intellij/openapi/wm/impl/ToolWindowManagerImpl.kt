@@ -228,7 +228,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         else if (event.id == FocusEvent.FOCUS_GAINED) {
           val component = event.component ?: return
           processOpenedProjects { project ->
-            for (composite in FileEditorManagerEx.getInstanceEx(project).splitters.getAllComposites()) {
+            for (composite in (FileEditorManagerEx.getInstanceExIfCreated(project) ?: return).activeSplittersComposites) {
               if (composite.allEditors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
                 (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
               }

@@ -88,8 +88,8 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     assert statusBar.getProject() == null ||
            statusBar.getProject().equals(myProject) : "Cannot install widget from one project on status bar of another project";
 
-    myStatusBar = statusBar;
-    Disposer.register(myStatusBar, this);
+    this.myStatusBar = statusBar;
+    Disposer.register(this.myStatusBar, this);
 
     if (myProject.isDisposed()) {
       return;

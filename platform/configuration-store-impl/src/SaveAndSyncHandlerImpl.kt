@@ -67,7 +67,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   init {
     @Suppress("DEPRECATION")
     ApplicationManager.getApplication().coroutineScope.launch {
-      launch {
+      launch(CoroutineName("refresh requests flow processing")) {
         // not collectLatest - wait for previous execution
         refreshRequests
           .debounce(300.milliseconds)
@@ -75,7 +75,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
             doScheduledRefresh()
           }
       }
-      launch {
+      launch(CoroutineName("save requests flow processing")) {
         // not collectLatest - wait for previous execution
         saveRequests
           .collect {

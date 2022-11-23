@@ -628,9 +628,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
     int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), 0, textLength);
 
-    if (getGutterComponentEx().getCurrentAccessibleLine() != null &&
-        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer()))
-    {
+    if (myGutterComponent.getCurrentAccessibleLine() != null &&
+        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer())) {
       escapeGutterAccessibleLine(start, end);
     }
     int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
@@ -1371,7 +1370,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public @NotNull EditorGutterComponentImpl getGutterComponentEx() {
+  public @NotNull EditorGutterComponentEx getGutterComponentEx() {
     return myGutterComponent;
   }
 
@@ -1711,7 +1710,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    if (getGutterComponentEx().getCurrentAccessibleLine() != null) {
+    if (myGutterComponent.getCurrentAccessibleLine() != null) {
       escapeGutterAccessibleLine(e.getOffset(), e.getOffset() + e.getNewLength());
     }
 
@@ -1752,7 +1751,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int endVisLine = offsetToVisualLine(offsetEnd);
     int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
     if (startVisLine <= line && endVisLine >= line) {
-      getGutterComponentEx().escapeCurrentAccessibleLine();
+      myGutterComponent.escapeCurrentAccessibleLine();
     }
   }
 
@@ -2032,9 +2031,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Color getBackgroundColor() {
-    if (myForcedBackground != null) return myForcedBackground;
-
-    return getBackgroundIgnoreForced();
+    return myForcedBackground == null ? getBackgroundIgnoreForced() : myForcedBackground;
   }
 
   @Override
@@ -4762,7 +4759,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 new Point(
                   mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
                   mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
-                ), editor.getGutterComponentEx().getDragImage((GutterIconRenderer)attachedObject), painterListenersDisposable
+                ), editor.myGutterComponent.getDragImage((GutterIconRenderer)attachedObject), painterListenersDisposable
               );
               IdeGlassPaneUtil.installPainter(
                 editorComponent,

@@ -15,6 +15,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -308,12 +309,17 @@ open class ProjectFrameHelper internal constructor(
         if (project == null || !project.isInitialized) {
           return null
         }
+
         val manager = project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl ?: return null
         manager.getLastActiveToolWindows().toList().toTypedArray()
       }
       PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        if (project == null || !project.isInitialized) return null
-        FileEditorManagerEx.getInstanceEx(project).currentWindow?.getSelectedComposite(true)?.selectedEditor
+        if (project == null || !project.isInitialized) {
+          null
+        }
+        else {
+          (project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx)?.selectedEditor
+        }
       }
       else -> null
     }
@@ -336,6 +342,12 @@ open class ProjectFrameHelper internal constructor(
   }
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      rootPane.statusBar!!.setEditorProvider {
+        // see ProjectFrameAllocator.restoreEditors
+        null
+      }
+    }
     project.service<StatusBarWidgetsManager>().init { rootPane.statusBar!! }
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {

@@ -226,7 +226,7 @@ public final class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup im
   }
 
   @Override
-  protected JPanel createComponent() {
+  protected @NotNull JPanel createComponent() {
     myPanel = new CodeStyleStatusBarPanel();
     return myPanel;
   }

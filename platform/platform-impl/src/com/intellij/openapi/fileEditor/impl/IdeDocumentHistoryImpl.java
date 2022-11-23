@@ -177,7 +177,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   protected FileEditorManagerEx getFileEditorManager() {
-    return FileEditorManagerEx.getInstanceEx(myProject);
+    return FileEditorManagerEx.getInstanceExIfCreated(myProject);
   }
 
   private @NotNull static PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
@@ -606,7 +606,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     LOG.assertTrue(file != null, fileEditor.getClass().getName() + " getFile() returned null");
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
 
-    EditorWindow window = editorManager.getCurrentWindow();
+    EditorWindow window = editorManager == null ? null : editorManager.getCurrentWindow();
     EditorComposite composite = window != null ? window.getComposite(file) : null;
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), window, composite != null && composite.isPreview(),
                          getCaretPosition(fileEditor), System.currentTimeMillis());

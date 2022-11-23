@@ -272,6 +272,11 @@ class ToolWindowPane internal constructor(
     (if (isWideScreen) verticalSplitter else horizontalSplitter).innerComponent = component
   }
 
+  @RequiresEdt
+  fun getDocumentComponent(): JComponent? {
+    return (if (isWideScreen) verticalSplitter else horizontalSplitter).innerComponent
+  }
+
   private fun updateToolStripesVisibility(uiSettings: UISettings) {
     val showButtons = !uiSettings.hideToolStripes && !uiSettings.presentationMode
     if (buttonManager.updateToolStripesVisibility(showButtons, state)) {

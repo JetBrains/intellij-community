@@ -94,11 +94,11 @@ internal class MaximizeEditorInSplitAction : DumbAwareAction() {
     fun getSplittersToMaximize(project: Project, editorComponent: Component?): Set<Pair<Splitter, Boolean>> {
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return emptySet()
       val set = HashSet<Pair<Splitter, Boolean>>()
-      var comp = editorComponent
-      while (comp != editorManager.mainSplitters && comp != null) {
-        val parent = comp.parent
+      var component = editorComponent
+      while (component != editorManager.component && component != null) {
+        val parent = component.parent
         if (parent is Splitter && ClientProperty.isTrue(parent, EditorsSplitters.SPLITTER_KEY)) {
-          if (parent.firstComponent == comp) {
+          if (parent.firstComponent == component) {
             if (parent.proportion < parent.maximumProportion) {
               set.add(Pair(parent, true))
             }
@@ -109,7 +109,7 @@ internal class MaximizeEditorInSplitAction : DumbAwareAction() {
             }
           }
         }
-        comp = parent
+        component = parent
       }
       return set
     }

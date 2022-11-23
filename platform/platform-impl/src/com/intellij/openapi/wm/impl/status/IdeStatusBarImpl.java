@@ -55,6 +55,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher, DataProvider {
   private static final Logger LOG = Logger.getInstance(IdeStatusBarImpl.class);
@@ -84,7 +85,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   private @NlsContexts.StatusBarText String myInfo;
 
-  private @Nullable CurrentEditorProvider myEditorProvider;
+  private @Nullable Supplier<@Nullable FileEditor> editorProvider;
 
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
@@ -474,7 +475,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     new NotificationPopup(this, content, backgroundColor);
   }
 
-  public static JComponent wrap(final @NotNull StatusBarWidget widget) {
+  public static JComponent wrap(@NotNull StatusBarWidget widget) {
     if (widget instanceof CustomStatusBarWidget) {
       JComponent component = ((CustomStatusBarWidget)widget).getComponent();
       if (component.getBorder() == null) {
@@ -691,13 +692,13 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public @Nullable FileEditor getCurrentEditor() {
-    return myEditorProvider != null ? myEditorProvider.getCurrentEditor() : null;
+  public @Nullable Supplier<@Nullable FileEditor> getCurrentEditor() {
+    return editorProvider;
   }
 
   @ApiStatus.Internal
   public void setEditorProvider(@Nullable CurrentEditorProvider provider) {
-    myEditorProvider = provider;
+    editorProvider = provider == null ? null : provider::getCurrentEditor;
   }
 
   @Override

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.docking.DockContainer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,11 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public static FileEditorManagerEx getInstanceEx(@NotNull Project project) {
     return (FileEditorManagerEx)getInstance(project);
+  }
+
+
+  public static FileEditorManagerEx getInstanceExIfCreated(@NotNull Project project) {
+    return (FileEditorManagerEx)project.getServiceIfCreated(FileEditorManager.class);
   }
 
   /**
@@ -120,6 +126,11 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract void closeAllFiles();
 
   public abstract @NotNull EditorsSplitters getSplitters();
+
+  @RequiresEdt
+  public @NotNull List<EditorComposite> getActiveSplittersComposites() {
+    return getSplitters().getAllComposites();
+  }
 
   @Override
   public final FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor) {

@@ -1,301 +1,258 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor.impl.text;
+@file:Suppress("LeakingThis")
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.BackgroundableDataProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.ui.JBSwingUtilities;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.fileEditor.impl.text
 
-import javax.swing.*;
-import java.awt.*;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.BackgroundableDataProvider
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.fileTypes.FileTypeEvent
+import com.intellij.openapi.fileTypes.FileTypeListener
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.LoadingDecorator
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent
+import com.intellij.util.FileContentUtilCore
+import com.intellij.util.ui.JBSwingUtilities
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import javax.swing.JPanel
 
-class TextEditorComponent extends JPanel implements DataProvider, Disposable, BackgroundableDataProvider {
-  private static final Logger LOG = Logger.getInstance(TextEditorComponent.class);
+private val LOG = logger<TextEditorComponent>()
 
-  private final Project myProject;
-  private final @NotNull VirtualFile myFile;
-  private final TextEditorImpl myTextEditor;
-  private final @NotNull EditorImpl myEditor;
-  private final LoadingDecorator loadingDecorator;
+private fun assertThread() {
+  ApplicationManager.getApplication().assertIsDispatchThread()
+}
+
+@Internal
+open class TextEditorComponent(
+  private val project: Project,
+  val file: VirtualFile,
+  private val textEditor: TextEditorImpl,
+  private val editorImpl: EditorImpl,
+) : JPanel(BorderLayout()), DataProvider, Disposable, BackgroundableDataProvider {
+  private val loadingDecorator: LoadingDecorator
 
   /**
    * Whether the editor's document is modified or not
    */
-  private boolean myModified;
+  var isModified: Boolean = false
+    private set
+
   /**
    * Whether the editor is valid or not
    */
-  private boolean myValid;
+  private var isValid: Boolean
+  private val editorHighlighterUpdater: EditorHighlighterUpdater
 
-  private final EditorHighlighterUpdater myEditorHighlighterUpdater;
+  override fun add(comp: Component): Component = throw IllegalCallerException()
 
-  TextEditorComponent(@NotNull Project project,
-                      @NotNull VirtualFile file,
-                      @NotNull TextEditorImpl textEditor,
-                      @NotNull EditorImpl editor) {
-    super(new BorderLayout());
+  override fun add(comp: Component, constraints: Any) {
+    throw IllegalCallerException()
+  }
 
-    myProject = project;
-    myFile = file;
-    myTextEditor = textEditor;
-    myEditor = editor;
-    myEditor.getDocument().addDocumentListener(new MyDocumentListener(), this);
-    ((EditorMarkupModel)myEditor.getMarkupModel()).setErrorStripeVisible(true);
-    ((EditorGutterComponentEx)myEditor.getGutterComponentEx()).setForceShowRightFreePaintersArea(true);
-    myEditor.setFile(myFile);
-    myEditor.setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);
-    myEditor.setDropHandler(new FileDropHandler(myEditor));
-    TextEditorProvider.putTextEditor(myEditor, myTextEditor);
-    myEditor.getComponent().setFocusable(false);
+  fun startLoading() {
+    loadingDecorator.startLoading(false)
+  }
+
+  @Volatile
+  var isDisposed = false
+    private set
+
+  init {
+    val editor = editorImpl
+    editor.component.isFocusable = false
+    editor.document.addDocumentListener(MyDocumentListener(), this)
+    (editor.markupModel as EditorMarkupModel).isErrorStripeVisible = true
+    editor.gutterComponentEx.setForceShowRightFreePaintersArea(true)
+    editor.setFile(file)
+    editor.contextMenuGroupId = IdeActions.GROUP_EDITOR_POPUP
+    editor.setDropHandler(FileDropHandler(editor))
+    TextEditorProvider.putTextEditor(editor, textEditor)
 
     // don't show yet another loading indicator on project open - use 3-second delay
-    loadingDecorator = new LoadingDecorator(myEditor.getComponent(), textEditor, EditorsSplitters.isOpenedInBulk(file) ? 3_000 : 300);
-    super.add(loadingDecorator.getComponent(), BorderLayout.CENTER);
-
-    myModified = isModifiedImpl();
-    myValid = isEditorValidImpl();
-    LOG.assertTrue(myValid);
-
-    MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
-    myFile.getFileSystem().addVirtualFileListener(virtualFileListener);
-    Disposer.register(this, () -> myFile.getFileSystem().removeVirtualFileListener(virtualFileListener));
-
-    myEditorHighlighterUpdater = new EditorHighlighterUpdater(myProject, this, myEditor, myFile);
-
-    project.getMessageBus().connect(this).subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
+    loadingDecorator = LoadingDecorator(editor.component, textEditor, if (EditorsSplitters.isOpenedInBulk(file)) 3000 else 300)
+    super.add(loadingDecorator.component, BorderLayout.CENTER)
+    isModified = isModifiedImpl
+    isValid = isEditorValidImpl
+    LOG.assertTrue(isValid)
+    val virtualFileListener = MyVirtualFileListener()
+    file.fileSystem.addVirtualFileListener(virtualFileListener)
+    Disposer.register(this) { file.fileSystem.removeVirtualFileListener(virtualFileListener) }
+    editorHighlighterUpdater = EditorHighlighterUpdater(project, this, editor, file)
+    project.messageBus.connect(this).subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
   }
-
-  @Override
-  public Component add(Component comp) {
-    throw new IllegalCallerException();
-  }
-
-  @Override
-  public void add(@NotNull Component comp, Object constraints) {
-    throw new IllegalCallerException();
-  }
-
-  void startLoading() {
-    loadingDecorator.startLoading(false);
-  }
-
-  private volatile boolean myDisposed;
 
   /**
    * Disposes all resources allocated be the TextEditorComponent. It disposes all created
-   * editors, unregisters listeners. The behaviour of the splitter after disposing is
-   * unpredictable.
+   * editors, unregisters listeners. The behaviour of the splitter after disposing is unpredictable.
    */
-  @Override
-  public void dispose() {
-    disposeEditor();
-    myDisposed = true;
+  override fun dispose() {
+    disposeEditor()
+    isDisposed = true
   }
 
-  public boolean isDisposed() {
-    return myDisposed;
-  }
-
-  public void loadingFinished() {
-    loadingDecorator.stopLoading();
-    myEditor.getComponent().setVisible(true);
-  }
-
-  private static void assertThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  fun loadingFinished() {
+    loadingDecorator.stopLoading()
+    editorImpl.component.isVisible = true
   }
 
   /**
-   * @return most recently used editor. This method never returns {@code null}.
+   * @return most recently used editor
    */
-  @NotNull
-  EditorEx getEditor() {
-    return myEditor;
-  }
+  val editor: EditorEx
+    get() = editorImpl
 
-  private void disposeEditor() {
-    EditorFactory.getInstance().releaseEditor(myEditor);
-  }
-
-  /**
-   * @return whether the editor's document is modified or not
-   */
-  boolean isModified() {
-    assertThread();
-    return myModified;
+  private fun disposeEditor() {
+    EditorFactory.getInstance().releaseEditor(editorImpl)
   }
 
   /**
    * Just calculates "modified" property
    */
-  private boolean isModifiedImpl() {
-    return FileDocumentManager.getInstance().isFileModified(myFile);
-  }
+  private val isModifiedImpl: Boolean
+    get() = FileDocumentManager.getInstance().isFileModified(file)
 
   /**
    * Updates "modified" property and fires event if necessary
    */
-  void updateModifiedProperty() {
-    Boolean oldModified = myModified;
-    myModified = isModifiedImpl();
-    myTextEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, myModified);
+  fun updateModifiedProperty() {
+    val oldModified = isModified
+    isModified = isModifiedImpl
+    textEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, isModified)
   }
 
   /**
-   * Name {@code isValid} is in use in {@code java.awt.Component}
-   * so we change the name of method to {@code isEditorValid}
+   * Name `isValid` is in use in `java.awt.Component`
+   * so we change the name of method to `isEditorValid`
    *
    * @return whether the editor is valid or not
    */
-  boolean isEditorValid() {
-    return myValid && !myEditor.isDisposed();
+  val isEditorValid: Boolean
+    get() = isValid && !editorImpl.isDisposed
+
+  private val isEditorValidImpl: Boolean
+    /**
+     * Just calculates
+     */
+    get() = FileDocumentManager.getInstance().getDocument(file) != null
+
+  private fun updateValidProperty() {
+    val oldValid = isValid
+    isValid = isEditorValidImpl
+    textEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, isValid)
   }
 
-  /**
-   * Just calculates
-   */
-  private boolean isEditorValidImpl() {
-    return FileDocumentManager.getInstance().getDocument(myFile) != null;
-  }
-
-  private void updateValidProperty() {
-    Boolean oldValid = myValid;
-    myValid = isEditorValidImpl();
-    myTextEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, myValid);
-  }
-
-  @Override
-  public @Nullable DataProvider createBackgroundDataProvider() {
-    if (myEditor.isDisposed()) return null;
+  override fun createBackgroundDataProvider(): DataProvider? {
+    if (editorImpl.isDisposed) {
+      return null
+    }
 
     // There's no FileEditorManager for default project (which is used in diff command-line application)
-    FileEditorManager fileEditorManager =
-      !myProject.isDisposed() && !myProject.isDefault() ? FileEditorManager.getInstance(myProject) : null;
-    Caret currentCaret = myEditor.getCaretModel().getCurrentCaret();
-    return dataId -> {
+    val fileEditorManager = if (!project.isDisposed && !project.isDefault) FileEditorManager.getInstance(project) else null
+    val currentCaret = editorImpl.caretModel.currentCaret
+    return DataProvider { dataId ->
       if (fileEditorManager != null) {
-        Object o = fileEditorManager.getData(dataId, myEditor, currentCaret);
-        if (o != null) return o;
+        val o = fileEditorManager.getData(dataId, editorImpl, currentCaret)
+        if (o != null) return@DataProvider o
       }
-
-      if (CommonDataKeys.EDITOR.is(dataId)) {
-        return myEditor;
+      if (CommonDataKeys.EDITOR.`is`(dataId)) {
+        return@DataProvider editorImpl
       }
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return myFile.isValid() ? myFile : null;  // fix for SCR 40329
+      if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) {
+        return@DataProvider if (file.isValid) file else null // fix for SCR 40329
       }
-      return null;
-    };
+      null
+    }
   }
 
   /**
    * Updates "modified" property
    */
-  private final class MyDocumentListener implements DocumentListener {
+  private inner class MyDocumentListener : DocumentListener {
     /**
      * We can reuse this runnable to decrease number of allocated object.
      */
-    private final Runnable myUpdateRunnable;
-    private boolean myUpdateScheduled;
+    private val updateRunnable: Runnable
+    private var isUpdateScheduled = false
 
-    MyDocumentListener() {
-      myUpdateRunnable = () -> {
-        myUpdateScheduled = false;
-        updateModifiedProperty();
-      };
+    init {
+      updateRunnable = Runnable {
+        isUpdateScheduled = false
+        updateModifiedProperty()
+      }
     }
 
-    @Override
-    public void documentChanged(@NotNull DocumentEvent e) {
-      if (!myUpdateScheduled) {
+    override fun documentChanged(e: DocumentEvent) {
+      if (!isUpdateScheduled) {
         // document's timestamp is changed later on undo or PSI changes
-        ApplicationManager.getApplication().invokeLater(myUpdateRunnable);
-        myUpdateScheduled = true;
+        ApplicationManager.getApplication().invokeLater(updateRunnable)
+        isUpdateScheduled = true
       }
     }
   }
 
-  private final class MyFileTypeListener implements FileTypeListener {
-    @Override
-    public void fileTypesChanged(final @NotNull FileTypeEvent event) {
-      assertThread();
+  private inner class MyFileTypeListener : FileTypeListener {
+    override fun fileTypesChanged(event: FileTypeEvent) {
       // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
-      updateValidProperty();
+      updateValidProperty()
     }
   }
 
   /**
    * Updates "valid" property and highlighters (if necessary)
    */
-  private final class MyVirtualFileListener implements VirtualFileListener {
-    @Override
-    public void propertyChanged(final @NotNull VirtualFilePropertyEvent e) {
-      if (VirtualFile.PROP_NAME.equals(e.getPropertyName())) {
+  private inner class MyVirtualFileListener : VirtualFileListener {
+    override fun propertyChanged(e: VirtualFilePropertyEvent) {
+      if (VirtualFile.PROP_NAME == e.propertyName) {
         // File can be invalidated after file changes name (extension also can change). The editor should be removed if it's invalid.
-        updateValidProperty();
-        if (Comparing.equal(e.getFile(), myFile) &&
-            (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(e.getRequestor()) || !Comparing.equal(e.getOldValue(), e.getNewValue()))) {
-          myEditorHighlighterUpdater.updateHighlighters();
+        updateValidProperty()
+        if (e.file == file &&
+            (FileContentUtilCore.FORCE_RELOAD_REQUESTOR == e.requestor || !Comparing.equal<Any>(e.oldValue, e.newValue))) {
+          editorHighlighterUpdater.updateHighlighters()
         }
       }
     }
 
-    @Override
-    public void contentsChanged(@NotNull VirtualFileEvent event) {
-      if (event.isFromSave()) { // commit
-        assertThread();
-        VirtualFile file = event.getFile();
-        LOG.assertTrue(file.isValid());
-        if (myFile.equals(file)) {
-          updateModifiedProperty();
+    override fun contentsChanged(event: VirtualFileEvent) {
+      // commit
+      if (event.isFromSave) {
+        assertThread()
+        val file = event.file
+        LOG.assertTrue(file.isValid)
+        if (file == this@TextEditorComponent.file) {
+          updateModifiedProperty()
         }
       }
     }
   }
 
-  public @NotNull VirtualFile getFile() {
-    return myFile;
-  }
+  // Swing calls us _before_ ours constructor
+  @Suppress("UNNECESSARY_SAFE_CALL", "USELESS_ELVIS")
+  override fun getBackground(): Color? = editorImpl?.backgroundColor ?: super.getBackground()
 
-  @Override
-  public Color getBackground() {
-    //noinspection ConstantConditions
-    return myEditor == null ? super.getBackground() : myEditor.getContentComponent().getBackground();
-  }
-
-  @Override
-  protected Graphics getComponentGraphics(Graphics g) {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
-  }
+  override fun getComponentGraphics(g: Graphics): Graphics = JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
 }

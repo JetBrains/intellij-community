@@ -824,16 +824,18 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   @Override
   public void revalidate() {
-    revalidate(myTracker);
+    if (!myDisposed) {
+      revalidate(myTracker);
+    }
   }
 
   @Override
   public void revalidate(@NotNull PositionTracker<Balloon> tracker) {
-    if (ApplicationManager.getApplication().isDisposed()) {
+    if (myDisposed || ApplicationManager.getApplication().isDisposed()) {
       return;
     }
-    RelativePoint newPosition = tracker.recalculateLocation(this);
 
+    RelativePoint newPosition = tracker.recalculateLocation(this);
     if (newPosition != null) {
       Point newPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutShift);
       invalidateShadow = !Objects.equals(myTargetPoint, newPoint);

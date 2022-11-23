@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.ide.impl.NewProjectUtil
@@ -6,9 +6,9 @@ import com.intellij.ide.projectWizard.NewProjectWizard
 import com.intellij.ide.projectWizard.ProjectTypeStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
+import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.Step
 import com.intellij.openapi.application.ApplicationManager
@@ -16,14 +16,15 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectNode
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
@@ -34,19 +35,19 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.useProject
 import com.intellij.ui.UIBundle
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
-import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ModuleInfo
-import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ProjectInfo
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.artifactId
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.gradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.parentData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.gradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.version
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
+import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ModuleInfo
+import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ProjectInfo
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import java.io.File
@@ -127,7 +128,7 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
   }
 
   fun withProject(projectInfo: ProjectInfo, save: Boolean = false, action: Project.() -> Unit) {
-    createProject(projectInfo).useProject(save = save) { project ->
+    createProject(projectInfo)!!.useProject(save = save) { project ->
       for (moduleInfo in projectInfo.modules) {
         createModule(moduleInfo, project)
       }
@@ -135,7 +136,7 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
     }
   }
 
-  private fun createProject(projectInfo: ProjectInfo): Project {
+  private fun createProject(projectInfo: ProjectInfo): Project? {
     return createProject(projectInfo.rootModule.root.path) {
       configureWizardStepSettings(it, projectInfo.rootModule, null)
     }
@@ -164,7 +165,7 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
     step.addSampleCode = false
   }
 
-  private fun createProject(directory: String, configure: (NewProjectWizardStep) -> Unit): Project {
+  private fun createProject(directory: String, configure: (NewProjectWizardStep) -> Unit): Project? {
     return waitForProjectReload {
       invokeAndWaitIfNeeded {
         val wizard = createWizard(null, directory)

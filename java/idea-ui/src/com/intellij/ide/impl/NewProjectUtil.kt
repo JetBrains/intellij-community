@@ -1,231 +1,237 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.impl;
+package com.intellij.ide.impl
 
-import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.projectWizard.NewProjectWizardCollector;
-import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
-import com.intellij.ide.util.projectWizard.ProjectBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.util.TimeoutUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.impl.OpenProjectTask.Companion.build
+import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
+import com.intellij.ide.impl.ProjectUtil.getOpenProjects
+import com.intellij.ide.impl.ProjectUtil.isSameProject
+import com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation
+import com.intellij.ide.projectWizard.NewProjectWizardCollector
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
+import com.intellij.openapi.roots.CompilerProjectExtension
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.AppUIUtil
+import com.intellij.ui.IdeUICustomization
+import com.intellij.util.TimeoutUtil
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.concurrent.CancellationException
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+object NewProjectUtil {
+  private val LOG = Logger.getInstance(NewProjectUtil::class.java)
 
-public final class NewProjectUtil {
-  private final static Logger LOG = Logger.getInstance(NewProjectUtil.class);
-
-  private NewProjectUtil() { }
-
-  /**
-   * @deprecated Use {@link #createNewProject(AbstractProjectWizard)}, projectToClose param is not used.
-   */
-  @Deprecated(forRemoval = true)
-  public static void createNewProject(@Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
-    createNewProject(wizard);
+  @JvmStatic
+  @Deprecated("Use {@link #createNewProject(AbstractProjectWizard)}, projectToClose param is not used.",
+              ReplaceWith("createNewProject(wizard)", "com.intellij.ide.impl.NewProjectUtil.createNewProject"))
+  fun createNewProject(projectToClose: Project?, wizard: AbstractProjectWizard) {
+    createNewProject(wizard)
   }
 
-  public static void createNewProject(@NotNull AbstractProjectWizard wizard) {
-    String title = JavaUiBundle.message("project.new.wizard.progress.title");
-    Runnable warmUp = () -> ProjectManager.getInstance().getDefaultProject();  // warm-up components
-    boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null);
-
-    long time = 0;
-    WizardContext context = wizard.getWizardContext();
-    if (isNewWizard()) {
-      time = System.nanoTime();
-      NewProjectWizardCollector.logOpen(context);
+  @JvmStatic
+  fun createNewProject(wizard: AbstractProjectWizard) {
+    val title = JavaUiBundle.message("project.new.wizard.progress.title")
+    // warm-up components
+    val warmUp = Runnable { ProjectManager.getInstance().defaultProject }
+    val proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null)
+    var time = 0L
+    val context = wizard.wizardContext
+    if (isNewWizard) {
+      time = System.nanoTime()
+      NewProjectWizardCollector.logOpen(context)
     }
     if (proceed && wizard.showAndGet()) {
-      createFromWizard(wizard);
-      if (isNewWizard()) {
-        NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time));
+      createFromWizard(wizard)
+      if (isNewWizard) {
+        NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time))
       }
-      return;
+      return
     }
-
-    if (isNewWizard()) {
-      NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time));
+    if (isNewWizard) {
+      NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
     }
   }
 
-  public static Project createFromWizard(@NotNull AbstractProjectWizard wizard) {
-    return createFromWizard(wizard, null);
-  }
-
-  public static Project createFromWizard(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) {
-    try {
-      Project newProject = doCreate(wizard, projectToClose);
-      FUCounterUsageLogger.getInstance().logEvent(newProject, "new.project.wizard", "project.created");
-      if (isNewWizard()) {
-        NewProjectWizardCollector.logProjectCreated(newProject, wizard.getWizardContext());
+  @JvmOverloads
+  @JvmStatic
+  fun createFromWizard(wizard: AbstractProjectWizard, projectToClose: Project? = null): Project? {
+    return try {
+      val newProject = doCreate(wizard, projectToClose)
+      @Suppress("DEPRECATION", "removal")
+      FUCounterUsageLogger.getInstance().logEvent(newProject, "new.project.wizard", "project.created")
+      if (isNewWizard) {
+        NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
       }
-      return newProject;
+      newProject
     }
-    catch (IOException e) {
-      AppUIUtil.invokeOnEdt(() -> {
-        Messages.showErrorDialog(e.getMessage(), JavaUiBundle.message("dialog.title.project.initialization.failed"));
-      });
-      return null;
+    catch (e: IOException) {
+      AppUIUtil.invokeOnEdt { Messages.showErrorDialog(e.message, JavaUiBundle.message("dialog.title.project.initialization.failed")) }
+      null
     }
   }
 
-  private static Project doCreate(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) throws IOException {
-    String projectFilePath = wizard.getNewProjectFilePath();
-    for (Project p : ProjectUtil.getOpenProjects()) {
-      if (ProjectUtil.isSameProject(Paths.get(projectFilePath), p)) {
-        ProjectUtil.focusProjectWindow(p, false);
-        return null;
+  @Throws(IOException::class)
+  private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): Project? {
+    val projectFilePath = wizard.newProjectFilePath
+    for (p in getOpenProjects()) {
+      if (isSameProject(Paths.get(projectFilePath), p)) {
+        focusProjectWindow(p, false)
+        return null
       }
     }
-
-    ProjectBuilder projectBuilder = wizard.getProjectBuilder();
-    LOG.debug("builder " + projectBuilder);
-
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    try {
-      Path projectFile = Path.of(projectFilePath);
-      Path projectDir;
-      if (wizard.getStorageScheme() == StorageScheme.DEFAULT) {
-        projectDir = projectFile.getParent();
-        if (projectDir == null) {
-          throw new IOException("Cannot create project in '" + projectFilePath + "': no parent file exists");
-        }
+    val projectBuilder = wizard.projectBuilder
+    LOG.debug("builder $projectBuilder")
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    return try {
+      val projectFile = Path.of(projectFilePath)
+      val projectDir = if (wizard.storageScheme == StorageScheme.DEFAULT) {
+        projectFile.parent ?: throw IOException("Cannot create project in '$projectFilePath': no parent file exists")
       }
       else {
-        projectDir = projectFile;
+        projectFile
       }
-      Files.createDirectories(projectDir);
-
-      Project newProject;
-      if (projectBuilder == null || !projectBuilder.isUpdate()) {
-        String name = wizard.getProjectName();
+      Files.createDirectories(projectDir)
+      val newProject: Project? = if (projectBuilder == null || !projectBuilder.isUpdate) {
+        val name = wizard.projectName
         if (projectBuilder == null) {
-          newProject = projectManager.newProject(projectFile, OpenProjectTask.build().asNewProject().withProjectName(name));
+          projectManager.newProject(projectFile, build().asNewProject().withProjectName(name))
         }
         else {
-          newProject = projectBuilder.createProject(name, projectFilePath);
+          try {
+            projectBuilder.createProject(name, projectFilePath)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+            null
+          }
         }
       }
       else {
-        newProject = projectToClose;
+        projectToClose
       }
 
       if (newProject == null) {
-        return projectToClose;
+        return projectToClose
       }
 
-      String compileOutput = wizard.getNewCompileOutput();
-      setCompilerOutputPath(newProject, compileOutput);
-
+      val compileOutput = wizard.newCompileOutput
+      setCompilerOutputPath(newProject, compileOutput)
       if (projectBuilder != null) {
         // validate can require project on disk
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          newProject.save();
+        if (!ApplicationManager.getApplication().isUnitTestMode) {
+          newProject.save()
         }
-
         if (!projectBuilder.validate(projectToClose, newProject)) {
-          return projectToClose;
+          return projectToClose
         }
-
-        projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
+        projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
       }
 
-      Sdk jdk = wizard.getNewProjectJdk();
+      val jdk = wizard.newProjectJdk
       if (jdk != null) {
-        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> JavaSdkUtil.applyJdkToProject(newProject, jdk)), null, null);
+        CommandProcessor.getInstance().executeCommand(newProject, {
+          ApplicationManager.getApplication().runWriteAction {
+            JavaSdkUtil.applyJdkToProject(newProject, jdk)
+          }
+        }, null, null)
       }
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        boolean needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
-        StartupManager.getInstance(newProject).runAfterOpened(() -> {
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        val needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter
+        StartupManager.getInstance(newProject).runAfterOpened {
           // ensure the dialog is shown after all startup activities are done
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (needToOpenProjectStructure) {
-              ModulesConfigurator.showDialog(newProject, null, null);
-            }
-            ApplicationManager.getApplication().invokeLater(() -> {
-              ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-              if (toolWindow != null) {
-                toolWindow.activate(null);
+          ApplicationManager.getApplication().invokeLater(
+            {
+              if (needToOpenProjectStructure) {
+                ModulesConfigurator.showDialog(newProject, null, null)
               }
-            }, ModalityState.NON_MODAL, newProject.getDisposed());
-          }, ModalityState.NON_MODAL, newProject.getDisposed());
-        });
-      }
-
-      if (newProject != projectToClose) {
-        ProjectUtil.updateLastProjectLocation(projectFile);
-        OpenProjectTask options = OpenProjectTask.build().withProject(newProject);
-        Path fileName = projectFile.getFileName();
-        if (fileName != null) {
-          options = options.withProjectName(fileName.toString());
+              ApplicationManager.getApplication().invokeLater(
+                {
+                  ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
+                }, ModalityState.NON_MODAL, newProject.disposed)
+            }, ModalityState.NON_MODAL, newProject.disposed)
         }
-        TrustedPaths.getInstance().setProjectPathTrusted(projectDir, true);
-        ProjectManagerEx.getInstanceEx().openProject(projectDir, options);
       }
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
+      if (newProject !== projectToClose) {
+        updateLastProjectLocation(projectFile)
+        var options = build().withProject(newProject)
+        val fileName = projectFile.fileName
+        if (fileName != null) {
+          options = options.withProjectName(fileName.toString())
+        }
+        TrustedPaths.getInstance().setProjectPathTrusted(projectDir, true)
+        runBlockingModal(
+          owner = ModalTaskOwner.guess(),
+          title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", fileName.toString()),
+        ) {
+          ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = projectDir, options = options)
+        }
       }
-      return newProject;
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject)
+      }
+
+      newProject
     }
     finally {
-      if (projectBuilder != null) {
-        projectBuilder.cleanup();
-      }
+      projectBuilder?.cleanup()
     }
   }
 
-  public static void setCompilerOutputPath(@NotNull Project project, @NotNull String path) {
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
-      if (extension != null) {
-        String canonicalPath = path;
-        try {
-          canonicalPath = FileUtil.resolveShortWindowsName(path);
+  fun setCompilerOutputPath(project: Project, path: String) {
+    CommandProcessor.getInstance().executeCommand(project, {
+      ApplicationManager.getApplication().runWriteAction {
+        val extension = CompilerProjectExtension.getInstance(project)
+        if (extension != null) {
+          var canonicalPath = path
+          try {
+            canonicalPath = FileUtil.resolveShortWindowsName(path)
+          }
+          catch (ignored: IOException) {
+          }
+          extension.compilerOutputUrl = VfsUtilCore.pathToUrl(canonicalPath)
         }
-        catch (IOException ignored) { }
-        extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
       }
-    }), null, null);
+    }, null, null)
   }
 
-  /** @deprecated Use JavaSdkUtil.applyJdkToProject() directly */
-  @Deprecated()
-  public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {
-    JavaSdkUtil.applyJdkToProject(project, jdk);
+  @JvmStatic
+  @Deprecated("Use JavaSdkUtil.applyJdkToProject() directly ",
+              ReplaceWith("JavaSdkUtil.applyJdkToProject(project, jdk)", "com.intellij.openapi.projectRoots.ex.JavaSdkUtil"))
+  fun applyJdkToProject(project: Project, jdk: Sdk) {
+    JavaSdkUtil.applyJdkToProject(project, jdk)
   }
 
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
-  }
+  private val isNewWizard: Boolean
+    get() = Experiments.getInstance().isFeatureEnabled("new.project.wizard")
 }

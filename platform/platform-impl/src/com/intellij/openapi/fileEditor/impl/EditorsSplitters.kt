@@ -43,13 +43,14 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.util.Alarm
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
@@ -65,6 +66,7 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
+import kotlin.time.Duration.Companion.milliseconds
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
@@ -74,9 +76,8 @@ private val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk
 
 @Suppress("LeakingThis")
 @DirtyUI
-open class EditorsSplitters internal constructor(val manager: FileEditorManagerImpl) : IdePanePanel(BorderLayout()),
+open class EditorsSplitters internal constructor(val manager: FileEditorManagerImpl) : JPanel(BorderLayout()),
                                                                                        UISettingsListener, Disposable {
-
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
@@ -87,19 +88,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
     }
 
-    @JvmStatic
-    fun isOpenedInBulk(file: VirtualFile) = file.getUserData(OPENED_IN_BULK) != null
-
-    @JvmStatic
-    fun createSplitter(orientation: Boolean, proportion: Float, minProp: Float, maxProp: Float): OnePixelSplitter {
-      return object : OnePixelSplitter(orientation, proportion, minProp, maxProp) {
-        override fun createDivider(): Divider {
-          val divider = super.createDivider()
-          divider.background = JBColor.namedColor("EditorPane.splitBorder", JBColor.border())
-          return divider
-        }
-      }
-    }
+    internal fun isOpenedInBulk(file: VirtualFile) = file.getUserData(OPENED_IN_BULK) != null
 
     @JvmStatic
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {
@@ -116,42 +105,24 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
       return false
     }
-
-    private val ACTIVATE_EDITOR_ON_ESCAPE_HANDLER = KeyEventPostProcessor { e ->
-      if (!e.isConsumed && KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR)) {
-        var target = e.component
-        while (target != null && (target !is Window || target is FloatingDecorator) && target !is EditorsSplitters) {
-          target = target.parent
-        }
-        if (target is IdeFrame) {
-          target.project?.let {
-            focusDefaultComponentInSplittersIfPresent(it)
-            e.consume()
-          }
-        }
-      }
-      false
-    }
-
-    private fun enableEditorActivationOnEscape() {
-      val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-      kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
-      kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
-    }
   }
 
-  var lastFocusGainedTime: Long = 0L
+  internal var lastFocusGainedTime: Long = 0L
     private set
 
   private val windows = CopyOnWriteArraySet<EditorWindow>()
 
-  // temporarily used during initialization
+  // temporarily used during initialization of non-main editor splitters
   private val state = AtomicReference<EditorSplitterState?>()
 
   @JvmField
   internal var insideChange: Int = 0
 
-  private val iconUpdaterAlarm = Alarm(this)
+  private val iconUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 200.milliseconds) { toUpdate ->
+    for (file in toUpdate) {
+      doUpdateFileIcon(file)
+    }
+  }
 
   val currentFile: VirtualFile?
     get() = if (currentWindow != null) currentWindow!!.selectedFile else null
@@ -181,8 +152,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       return virtualFiles
     }
 
-  private val filesToUpdateIconsFor = HashSet<VirtualFile>()
-
   init {
     background = JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor())
     val l = PropertyChangeListener { e ->
@@ -208,6 +177,11 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
     })
     enableEditorActivationOnEscape()
+
+    @Suppress("DEPRECATION")
+    manager.project.coroutineScope.launch(CoroutineName("EditorSplitters file icon update")) {
+      iconUpdateChannel.start()
+    }.cancelOnDispose(this)
   }
 
   override fun dispose() {
@@ -306,16 +280,11 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   suspend fun restoreEditors(onStartup: Boolean) {
-    restoreEditors(onStartup, anyEditorOpened = null)
+    restoreEditors(state = state.getAndSet(null) ?: return, onStartup = onStartup, anyEditorOpened = null)
   }
 
-  suspend fun restoreEditors(onStartup: Boolean, anyEditorOpened: CompletableDeferred<Unit>?) {
-    val state = state.getAndSet(null)
-    if (state == null) {
-      anyEditorOpened?.complete(Unit)
-      return
-    }
-
+  @Internal
+  suspend fun restoreEditors(state: EditorSplitterState, onStartup: Boolean, anyEditorOpened: CompletableDeferred<Unit>?) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
     val component = UIBuilder(this, anyEditorOpened).process(state, topPanel)
     anyEditorOpened?.complete(Unit)
@@ -371,9 +340,19 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
   }
 
-  fun closeAllFiles() {
+  fun closeAllFiles(repaint: Boolean = true) {
     val windows = windows.toList()
-    clear()
+    this.windows.clear()
+    for (window in windows) {
+      window.dispose()
+    }
+    removeAll()
+    currentWindow = null
+    // revalidate doesn't repaint correctly after "Close All"
+    if (repaint) {
+      repaint()
+    }
+
     for (window in windows) {
       for (file in window.fileList) {
         window.closeFile(file = file, disposeIfNeeded = false, transferFocus = false)
@@ -388,7 +367,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
   }
 
-  fun readExternal(element: Element) {
+  internal fun readExternal(element: Element) {
     state.set(EditorSplitterState(element))
   }
 
@@ -402,35 +381,22 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun updateFileIcon(file: VirtualFile) {
-    updateFileIconLater(file)
+    iconUpdateChannel.queue(file)
   }
 
-  fun updateFileIconImmediately(file: VirtualFile, icon: Icon) {
+  internal fun updateFileIconImmediately(file: VirtualFile, icon: Icon) {
     for (window in findWindows(file)) {
       window.updateFileIcon(file, icon)
     }
   }
 
-  fun updateFileIconLater(file: VirtualFile) {
-    filesToUpdateIconsFor.add(file)
-    iconUpdaterAlarm.cancelAllRequests()
-    iconUpdaterAlarm.addRequest({
-                                  if (manager.project.isDisposed) return@addRequest
-                                  for (file1 in filesToUpdateIconsFor) {
-                                    updateFileIconAsynchronously(file1)
-                                  }
-                                  filesToUpdateIconsFor.clear()
-                                }, 200, ModalityState.stateForComponent(this))
-  }
-
-  private fun updateFileIconAsynchronously(file: VirtualFile) {
-    ReadAction
-      .nonBlocking<Icon> { IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, manager.project) }
-      .coalesceBy(this, "icon", file)
-      .expireWith(this)
-      .expireWhen { !file.isValid }
-      .finishOnUiThread(ModalityState.any()) { updateFileIconImmediately(file, it) }
-      .submit(NonUrgentExecutor.getInstance())
+  internal suspend fun doUpdateFileIcon(file: VirtualFile) {
+    val icon = readAction {
+      IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, manager.project)
+    }
+    withContext(Dispatchers.EDT) {
+      updateFileIconImmediately(file, icon)
+    }
   }
 
   fun updateFileColor(file: VirtualFile) {
@@ -522,23 +488,27 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   val isInsideChange: Boolean
     get() = insideChange > 0
 
-  fun updateFileBackgroundColorAsync(file: VirtualFile) {
+  internal fun updateFileBackgroundColorAsync(file: VirtualFile) {
     @Suppress("DEPRECATION")
     manager.project.coroutineScope.launch {
-      val color = readAction {
-        EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
-      }
+      updateFileBackgroundColor(file)
+    }
+  }
 
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        val windows = getWindows()
-        for (i in windows.indices) {
-          windows.get(i).updateFileBackgroundColor(file, color)
-        }
+  internal suspend fun updateFileBackgroundColor(file: VirtualFile) {
+    val color = readAction {
+      EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
+    }
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val windows = getWindows()
+      for (i in windows.indices) {
+        windows.get(i).updateFileBackgroundColor(file, color)
       }
     }
   }
 
-  val splitCount: Int
+  internal val splitCount: Int
     get() = if (componentCount > 0) getSplitCount(getComponent(0) as JPanel) else 0
 
   internal open fun afterFileClosed(file: VirtualFile) {}
@@ -716,11 +686,14 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     return windows.asSequence().mapNotNull { it.getComposite(file) }.filterIsInstance<EditorWithProviderComposite>().toList()
   }
 
+  @RequiresEdt
   fun getAllComposites(file: VirtualFile): List<EditorComposite> = windows.mapNotNull { it.getComposite(file) }
 
   private fun findWindows(file: VirtualFile): List<EditorWindow> = windows.filter { it.getComposite(file) != null }
 
   fun getWindows(): Array<EditorWindow> = windows.toTypedArray()
+
+  internal fun getWindowSequence(): Sequence<EditorWindow> = windows.asSequence()
 
   // Collector for windows in tree ordering:
   // get root component and traverse splitters tree:
@@ -835,7 +808,8 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
   override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>) = fileDropHandler.canHandleDrop(transferFlavors)
 }
 
-internal class EditorSplitterState(element: Element) {
+@Internal
+class EditorSplitterState(element: Element) {
   @JvmField
   val first: Element?
   @JvmField
@@ -1000,10 +974,10 @@ private class UIBuilder(private val splitters: EditorsSplitters, private val fir
       return withContext(Dispatchers.EDT) {
         val panel = JPanel(BorderLayout())
         panel.isOpaque = false
-        val splitter = EditorsSplitters.createSplitter(orientation = state.isVertical,
-                                                       proportion = state.proportion,
-                                                       minProp = 0.1f,
-                                                       maxProp = 0.9f)
+        val splitter = createSplitter(orientation = state.isVertical,
+                                      proportion = state.proportion,
+                                      minProp = 0.1f,
+                                      maxProp = 0.9f)
         splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
         panel.add(splitter, BorderLayout.CENTER)
         splitter.firstComponent = firstComponent
@@ -1029,6 +1003,28 @@ private class UIBuilder(private val splitters: EditorsSplitters, private val fir
     process(state = state.secondSplitter!!, context = secondComponent)
     return context
   }
+}
+
+private val ACTIVATE_EDITOR_ON_ESCAPE_HANDLER = KeyEventPostProcessor { e ->
+  if (!e.isConsumed && KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR)) {
+    var target = e.component
+    while (target != null && (target !is Window || target is FloatingDecorator) && target !is EditorsSplitters) {
+      target = target.parent
+    }
+    if (target is IdeFrame) {
+      target.project?.let {
+        EditorsSplitters.focusDefaultComponentInSplittersIfPresent(it)
+        e.consume()
+      }
+    }
+  }
+  false
+}
+
+private fun enableEditorActivationOnEscape() {
+  val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+  kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
+  kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
 }
 
 private fun getSplitCount(component: JComponent): Int {
@@ -1087,4 +1083,14 @@ private fun getLastFocusedSplittersForProject(activeWindow: Window?, project: Pr
                           ?: return null
   return (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedSplitters()
          ?: getSplittersForProject(activeWindow, project)
+}
+
+internal fun createSplitter(orientation: Boolean, proportion: Float, minProp: Float, maxProp: Float): OnePixelSplitter {
+  return object : OnePixelSplitter(orientation, proportion, minProp, maxProp) {
+    override fun createDivider(): Divider {
+      val divider = super.createDivider()
+      divider.background = JBColor.namedColor("EditorPane.splitBorder", JBColor.border())
+      return divider
+    }
+  }
 }
