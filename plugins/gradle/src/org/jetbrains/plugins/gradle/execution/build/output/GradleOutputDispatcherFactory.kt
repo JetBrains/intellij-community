@@ -44,6 +44,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     private val lineProcessor: LineProcessor
     private val myRootReader: BuildOutputInstantReaderImpl
     private val tasksOutputReaders = mutableMapOf<String, BuildOutputInstantReaderImpl>()
+    private val redefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
     private val tasksEventIds = mutableMapOf<String, Any>()
 
     init {
@@ -99,11 +100,13 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       super.onEvent(buildId, event)
       if (event.parentId != buildId) return
       if (event is StartEvent) {
-        tasksOutputReaders[event.message]?.close() // multiple invocations of the same task during the build session
-
-        val parentEventId = event.id
-        tasksOutputReaders[event.message] = BuildOutputInstantReaderImpl(buildId, parentEventId, myBuildProgressListener, parsers)
-        tasksEventIds[event.message] = parentEventId
+        val eventId = event.id
+        val oldValue = tasksOutputReaders.put(event.message,
+                                              BuildOutputInstantReaderImpl(buildId, eventId, myBuildProgressListener, parsers))
+        if (oldValue != null) {  // multiple invocations of the same task during the build session
+          redefinedReaders.add(oldValue)
+        }
+        tasksEventIds[event.message] = eventId
       }
       else if (event is FinishEvent) {
         // unreceived output is still possible after finish task event but w/o long pauses between chunks
@@ -114,10 +117,14 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun closeAndGetFuture(): CompletableFuture<*> {
       lineProcessor.close()
-      val futures = mutableListOf<CompletableFuture<Unit>>()
-      tasksOutputReaders.forEach { (_, reader) -> reader.closeAndGetFuture().let { futures += it } }
-      futures += myRootReader.closeAndGetFuture()
+      val futures = (tasksOutputReaders.values.asSequence()
+                     + redefinedReaders.asSequence()
+                     + sequenceOf(myRootReader))
+        .map { it.closeAndGetFuture() }
+        .toList()
+
       tasksOutputReaders.clear()
+      redefinedReaders.clear()
       return CompletableFuture.allOf(*futures.toTypedArray())
     }
 
