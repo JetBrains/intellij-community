@@ -18,13 +18,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -45,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
 import java.util.*;
 
 public final class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
@@ -148,7 +148,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   }
 
   @Override
-  public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) {
+  public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     LanguageLevel oldLanguageLevel = KEY.getPersistentValue(fileOrDir);
     boolean changed = KEY.setPersistentValue(fileOrDir, level);
     if (!changed) return;
@@ -236,7 +236,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       final LanguageLevel languageLevel =
         PythonSdkUtil.isDisposed(sdk) ? LanguageLevel.getDefault() : PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
       for (VirtualFile root : PyUtil.getSourceRoots(module)) {
-        addRootIndexingTask(root, results, project, languageLevel, true);
+        addRootIndexingTask(root, results, project, languageLevel);
       }
     }
     final LinkedHashSet<Sdk> distinctSdks = new LinkedHashSet<>(moduleSdks.values());
@@ -248,7 +248,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
         if (!root.isValid() || PyTypeShed.INSTANCE.isInside(root)) {
           continue;
         }
-        addRootIndexingTask(root, results, project, languageLevel, false);
+        addRootIndexingTask(root, results, project, languageLevel);
       }
     }
     return results;
@@ -257,11 +257,10 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   private void addRootIndexingTask(@NotNull VirtualFile root,
                                    @NotNull List<Runnable> results,
                                    @NotNull Project project,
-                                   @NotNull LanguageLevel languageLevel,
-                                   boolean iterateAsContent) {
+                                   @NotNull LanguageLevel languageLevel) {
     final VirtualFile parent = root.getParent();
     final boolean shouldSuppressSizeLimit = parent != null && parent.getName().equals(PythonSdkUtil.SKELETON_DIR_NAME);
-    results.add(new UpdateRootTask(project, root, languageLevel, shouldSuppressSizeLimit, iterateAsContent));
+    results.add(new UpdateRootTask(project, root, languageLevel, shouldSuppressSizeLimit));
   }
 
   private static @NotNull LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project,
@@ -321,99 +320,42 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     private final @NotNull VirtualFile myRoot;
     private final @NotNull LanguageLevel myLanguageLevel;
     private final boolean myShouldSuppressSizeLimit;
-    private final boolean myIterateAsContent;
 
     UpdateRootTask(@NotNull Project project, @NotNull VirtualFile root, @NotNull LanguageLevel languageLevel,
-                   boolean shouldSuppressSizeLimit, boolean iterateAsContent) {
+                   boolean shouldSuppressSizeLimit) {
       myProject = project;
       myRoot = root;
       myLanguageLevel = languageLevel;
       myShouldSuppressSizeLimit = shouldSuppressSizeLimit;
-      myIterateAsContent = iterateAsContent;
     }
 
     @Override
     public void run() {
-      // This code is a copy-pasted behaviour of ModuleIndexableFilesIteratorImpl and SdkIndexableFilesIteratorImpl.
-      // Since they are planned to become obsolete next release, and API to iterate any indexable directory/file would be provided,
-      // this dirty solution is good enough
-      if (myIterateAsContent) {
-        ModuleFileIndex index = ReadAction.compute(() -> {
-          if (myProject.isDisposed() || !myRoot.isValid()) return null;
-          DirectoryInfo info = DirectoryIndex.getInstance(myProject).getInfoForFile(myRoot);
-          Module module = info.getModule();
-          if (module == null) return null;
-          return ModuleRootManager.getInstance(module).getFileIndex();
-        });
-        if (index == null) return;
-
-        final PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(myProject);
-        index.iterateContentUnderDirectory(myRoot, (ContentIteratorEx)file -> {
-          if (visitFileToPush(file, propertiesUpdater)) {
-            return ContentIteratorEx.Status.CONTINUE;
-          }
-          return ContentIteratorEx.Status.SKIP_CHILDREN;
-        });
-        return;
-      }
-
       if (myProject.isDisposed() || !ReadAction.compute(() -> myRoot.isValid())) return;
+
+
       final PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(myProject);
 
-      ProjectFileIndex projectFileIndex = ReadAction.compute(() -> {
-        if (myProject.isDisposed()) return null;
-        return ProjectFileIndex.getInstance(myProject);
-      });
-      if (projectFileIndex == null) return;
       VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
-          if (!shouldVisit(file, projectFileIndex, myRoot)) return false;
-          return visitFileToPush(file, propertiesUpdater);
+          return ReadAction.compute(() -> {
+            if (!file.isValid() || PyModuleService.getInstance().isFileIgnored(file)) {
+              return false;
+            }
+            if (file.isDirectory()) {
+              propertiesUpdater.findAndUpdateValue(
+                file,
+                PythonLanguageLevelPusher.this,
+                myLanguageLevel
+              );
+            }
+            if (myShouldSuppressSizeLimit) {
+              SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);
+            }
+            return true;
+          });
         }
-      });
-    }
-
-    private static boolean shouldVisit(@NotNull VirtualFile file, @NotNull ProjectFileIndex index, @NotNull VirtualFile root) {
-      if (file.is(VFileProperty.SYMLINK)) {
-        if (!Registry.is("indexer.follows.symlinks")) {
-          return false;
-        }
-        VirtualFile targetFile = file.getCanonicalFile();
-        if (targetFile == null || targetFile.is(VFileProperty.SYMLINK)) {
-          // Broken or recursive symlink. The second check should not happen but let's guarantee no StackOverflowError.
-          return false;
-        }
-        if (root.equals(file)) {
-          return true;
-        }
-        return shouldVisit(targetFile, index, root);
-      }
-      if (!(file instanceof VirtualFileWithId) || ((VirtualFileWithId)file).getId() <= 0) {
-        return false;
-      }
-      if (ReadAction.compute(() -> index.isExcluded(file))) {
-        return false;
-      }
-      return true;
-    }
-
-    private Boolean visitFileToPush(@NotNull VirtualFile file, PushedFilePropertiesUpdater propertiesUpdater) {
-      return ReadAction.compute(() -> {
-        if (!file.isValid() || PyModuleService.getInstance().isFileIgnored(file)) {
-          return false;
-        }
-        if (file.isDirectory()) {
-          propertiesUpdater.findAndUpdateValue(
-            file,
-            PythonLanguageLevelPusher.this,
-            myLanguageLevel
-          );
-        }
-        if (myShouldSuppressSizeLimit) {
-          SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);
-        }
-        return true;
       });
     }
 
