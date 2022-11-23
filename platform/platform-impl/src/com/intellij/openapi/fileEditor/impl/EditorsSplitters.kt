@@ -807,7 +807,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         }
       }
     }
-    return window.split(SwingConstants.VERTICAL, true, file, requestFocus)
+    return window.split(JSplitPane.HORIZONTAL_SPLIT, true, file, requestFocus)
   }
 }
 
