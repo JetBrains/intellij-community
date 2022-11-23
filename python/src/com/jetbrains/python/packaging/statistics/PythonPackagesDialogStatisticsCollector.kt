@@ -15,5 +15,8 @@ class PythonPackagesDialogStatisticsCollector : CounterUsagesCollector() {
 
     @JvmStatic
     val packagingDialogEvent = GROUP.registerEvent("dialog.opened")
+
+    @JvmStatic
+    val packageUninstalledEvent = GROUP.registerEvent("package.uninstalled")
   }
 }
