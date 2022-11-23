@@ -48,7 +48,7 @@ public class CompileAction extends CompileActionBase {
       if (files.length > 0) {
         ProjectTaskManager.getInstance(project).compile(files);
       }
-      else if (!ActionPlaces.isShortcutPlace(event.getPlace())) {
+      else {
         module = dataContext.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
         if (module != null) {
           ProjectTaskManager.getInstance(project).rebuild(module);
