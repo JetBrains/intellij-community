@@ -35,6 +35,7 @@ class ProductivityFeedbackDialog(
   private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 
   private val FEEDBACK_REPORT_ID_VALUE = "productivity_metric_feedback"
+  private val FEEDBACK_PRIVACY_CONSENT_TYPE_VALUE = "productivity_metric_feedback_consent"
 
   private val systemInfoData: Lazy<CommonFeedbackSystemInfoData> = lazy { CommonFeedbackSystemInfoData.getCurrentData() }
 
@@ -65,7 +66,7 @@ class ProductivityFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
-    val feedbackData = FeedbackRequestData(FEEDBACK_REPORT_ID_VALUE, createCollectedDataJsonString())
+    val feedbackData = FeedbackRequestData(FEEDBACK_REPORT_ID_VALUE, createCollectedDataJsonString(), FEEDBACK_PRIVACY_CONSENT_TYPE_VALUE)
     submitFeedback(project, feedbackData,
                    { }, { },
                    if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
