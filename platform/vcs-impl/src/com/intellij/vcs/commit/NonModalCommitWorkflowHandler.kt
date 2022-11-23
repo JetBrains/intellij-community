@@ -265,7 +265,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private fun appendShowDetailsNotificationActions(notification: Notification, failures: List<CommitCheckFailure>) {
     for (failure in failures.filterIsInstance<CommitCheckFailure.WithDetails>()) {
-      notification.addAction(NotificationAction.create(failure.viewDetailsActionText) { _, _ ->
+      notification.addAction(NotificationAction.create(failure.viewDetailsActionText.dropMnemonic()) { _, _ ->
         failure.viewDetails(CommitProblemPlace.NOTIFICATION)
       })
     }

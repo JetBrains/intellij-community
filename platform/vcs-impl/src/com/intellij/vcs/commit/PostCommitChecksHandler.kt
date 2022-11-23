@@ -192,7 +192,7 @@ class PostCommitChecksHandler(val project: Project) {
       notification.setDisplayId(VcsNotificationIdsHolder.POST_COMMIT_CHECKS_FAILED)
 
       for (problem in problems.filterIsInstance<CommitProblemWithDetails>()) {
-        notification.addAction(NotificationAction.createSimple(problem.showDetailsAction) {
+        notification.addAction(NotificationAction.createSimple(problem.showDetailsAction.dropMnemonic()) {
           CommitSessionCollector.getInstance(project).logCommitProblemViewed(problem, CommitProblemPlace.NOTIFICATION)
           problem.showDetails(project)
         })
