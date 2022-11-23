@@ -174,7 +174,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       try {
         final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
         for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
-          if (it.next().exists()) {
+          if (repoManager.isValidArchive(it.next())) {
             it.remove(); // leaving only non-existing stuff requiring synchronization
           }
         }
