@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.components.service
+import com.intellij.psi.PsiElement
+import com.intellij.psi.search.SearchScope
+import com.intellij.usageView.UsageInfo
 
 /**
  * Service for various functionality which have different implementation in K1 and K2 plugin
@@ -12,4 +15,8 @@ interface KotlinRenameRefactoringSupport {
         @JvmStatic
         fun getInstance(): KotlinRenameRefactoringSupport = service()
     }
+
+    fun processForeignUsages(element: PsiElement, newName: String, usages: Array<UsageInfo>, fallbackHandler: (UsageInfo) -> Unit)
+
+    fun prepareForeignUsagesRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope)
 }

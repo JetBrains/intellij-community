@@ -345,7 +345,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
             addRenameElements(propertyMethod, (element as PsiNamedElement).name, adjustedPropertyName, allRenames, scope)
         }
 
-        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
+        KotlinRenameRefactoringSupport.getInstance().prepareForeignUsagesRenaming(element, newName, allRenames, scope)
     }
 
     protected enum class UsageKind {

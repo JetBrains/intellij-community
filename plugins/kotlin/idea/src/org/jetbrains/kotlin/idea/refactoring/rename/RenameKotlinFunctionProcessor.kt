@@ -217,7 +217,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                 }
             }
         }
-        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
+        KotlinRenameRefactoringSupport.getInstance().prepareForeignUsagesRenaming(element, newName, allRenames, scope)
     }
 
     /**
@@ -234,10 +234,10 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
         val ambiguousImportUsages = SmartList<UsageInfo>()
         val simpleImportUsages = SmartList<UsageInfo>()
-        ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler = { usage ->
+        KotlinRenameRefactoringSupport.getInstance().processForeignUsages(element, newName, usages, fallbackHandler = { usage ->
             if (usage is LostDefaultValuesInOverridingFunctionUsageInfo) {
                 usage.apply()
-                return@processAll
+                return@processForeignUsages
             }
 
             when (usage.importState()) {

@@ -61,6 +61,6 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
         super.prepareRenaming(element, newName, allRenames, scope)
-        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
+        KotlinRenameRefactoringSupport.getInstance().prepareForeignUsagesRenaming(element, newName, allRenames, scope)
     }
 }

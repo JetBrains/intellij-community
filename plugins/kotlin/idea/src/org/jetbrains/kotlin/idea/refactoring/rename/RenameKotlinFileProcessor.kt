@@ -66,7 +66,7 @@ class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
         val kotlinUsages = ArrayList<UsageInfo>(usages.size)
 
-        ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler = {
+        KotlinRenameRefactoringSupport.getInstance().processForeignUsages(element, newName, usages, fallbackHandler = {
             kotlinUsages += it
         })
 
