@@ -476,7 +476,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
 
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
-            // TODO: do something with always false branches in exhaustive when statements
             // TODO: return x && y.let {return...}
             var parent = expression.parent
             if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
