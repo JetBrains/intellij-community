@@ -171,7 +171,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (ourProject != null) {
       closeAndDeleteProject();
     }
-    ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
+    ApplicationManager.getApplication().runWriteAction(() -> cleanPersistedVFSContent());
 
     Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
     ourProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(tempDirectory, descriptor.getOpenProjectOptions()));
@@ -427,7 +427,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   static void tearDownSourceRoot(@NotNull Project project) {
     WriteCommandAction.runWriteCommandAction(project, () -> {
-      VirtualFile sourceRoot = ourSourceRoot;
+      VirtualFile sourceRoot = getSourceRoot();
       if (sourceRoot == null) {
         return;
       }
