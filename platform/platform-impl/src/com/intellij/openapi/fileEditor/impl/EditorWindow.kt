@@ -719,10 +719,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       val height = Registry.intValue("ide.splitter.chooser.info.panel.height")
       var width = Registry.intValue("ide.splitter.chooser.info.panel.width")
       val arc = Registry.intValue("ide.splitter.chooser.info.panel.arc")
-      val getShortcut: (actionId: String) -> String = { actionId ->
-        val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
-        KeymapUtil.getKeystrokeText(shortcut?.firstKeyStroke)
-      }
       val openShortcuts = String.format(IdeBundle.message("split.with.chooser.move.tab"), getShortcut("SplitChooser.Split"),
                                         if (SplitterService.getInstance().initialEditorWindow != null) String.format(
                                           IdeBundle.message("split.with.chooser.duplicate.tab"),
@@ -764,6 +760,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       if (owner.getWindows().size > 1) {
         g.drawString(switchShortcuts, centerX - switchShortcutsWidth / 2, textY + fontMetrics.height)
       }
+    }
+
+    private fun getShortcut(actionId: String): @NlsSafe String {
+      val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
+      return KeymapUtil.getKeystrokeText(shortcut?.firstKeyStroke)
     }
 
     fun positionChanged(position: RelativePosition) {
