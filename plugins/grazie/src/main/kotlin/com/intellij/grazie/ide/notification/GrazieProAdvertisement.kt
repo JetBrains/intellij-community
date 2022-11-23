@@ -18,7 +18,8 @@ import java.time.Duration
 private val grazieProfessionalPluginId
   get() = PluginId.getId("com.intellij.grazie.pro")
 
-private val isGrazieProfessionalInstalled by lazy { PluginManager.isPluginInstalled(grazieProfessionalPluginId) }
+private val isGrazieProfessionalInstalled
+  get() = PluginManager.isPluginInstalled(grazieProfessionalPluginId)
 
 private const val NOTIFICATION_SHOWN = "Grazie.Professional.Advertisement.Shown"
 private val IGNORE_DELAY = Duration.ofDays(14).toMillis()
