@@ -159,7 +159,7 @@ class Main {
         yield MARCH;
       }
       case 4 -> {
-        yield Math.random() > 0.5 ? APRIL : (Math.random() > 0.5 ? (Math.random() > 0.5 ? APRIL : APRIL) : 42);
+        yield Math.random() > 0.5 ? APRIL : (Math.random() > 0.5 ? (Math.random() > 0.5 ? APRIL : APRIL) : APRIL);
       }
       default -> 42;
     };

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -34,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -233,7 +231,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     if (allowed == null) return;
     PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(expression, null);
     if (scope == null) scope = expression;
-    if (!isAllowed(expression, scope, allowed, expression.getManager(), null)) {
+    if (!isAllowed(expression, scope, allowed, expression.getManager())) {
       registerProblem(expression, allowed, holder);
     }
   }
@@ -296,7 +294,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
                                                   @NotNull ProblemsHolder holder) {
     final PsiManager manager = PsiManager.getInstance(holder.getProject());
 
-    if (!argument.getTextRange().isEmpty() && !isAllowed(argument, parameter.getDeclarationScope(), allowedValues, manager, null)) {
+    if (!argument.getTextRange().isEmpty() && !isAllowed(argument, parameter.getDeclarationScope(), allowedValues, manager)) {
       registerProblem(argument, allowedValues, holder);
     }
   }
@@ -382,117 +380,64 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
 
   private static boolean isAllowed(@NotNull final PsiExpression argument, @NotNull final PsiElement scope,
                                    @NotNull final AllowedValues allowedValues,
-                                   @NotNull final PsiManager manager,
-                                   @Nullable Set<PsiExpression> visited) {
-    if (isGoodExpression(argument, allowedValues, scope, manager, visited)) return true;
+                                   @NotNull final PsiManager manager) {
+    if (isGoodExpression(argument, allowedValues, scope, manager)) return true;
 
-    return processValuesFlownTo(argument, scope, manager,
-                                expression -> isGoodExpression(expression, allowedValues, scope, manager, visited));
+    return processValuesFlownTo(argument, scope, manager, expression -> isGoodExpression(expression, allowedValues, scope, manager));
   }
 
   private static boolean isGoodExpression(@NotNull PsiExpression argument,
                                           @NotNull AllowedValues allowedValues,
                                           @NotNull PsiElement scope,
-                                          @NotNull PsiManager manager,
-                                          @Nullable Set<PsiExpression> visited) {
-    PsiExpression expression = PsiUtil.deparenthesizeExpression(argument);
-    if (expression == null) return true;
-    if (visited == null) visited = new HashSet<>();
-    if (!visited.add(expression)) return false;
-    if (expression instanceof PsiConditionalExpression cond) {
-      PsiExpression thenExpression = cond.getThenExpression();
-      boolean thenAllowed = thenExpression == null || isAllowed(thenExpression, scope, allowedValues, manager, visited);
-      if (!thenAllowed) return false;
-      PsiExpression elseExpression = cond.getElseExpression();
-      return elseExpression == null || isAllowed(elseExpression, scope, allowedValues, manager, visited);
-    }
-    else if (expression instanceof PsiSwitchExpression switchExpression) {
-      return isGoodSwitchExpression(switchExpression, allowedValues, scope, manager, visited);
+                                          @NotNull PsiManager manager) {
+    if (argument instanceof PsiParenthesizedExpression ||
+        argument instanceof PsiConditionalExpression ||
+        argument instanceof PsiSwitchExpression) {
+      return ExpressionUtils.nonStructuralChildren(argument).allMatch(e -> isAllowed(e, scope, allowedValues, manager));
     }
 
-    if (isOneOf(expression, allowedValues, manager)) return true;
+    if (isOneOf(argument, allowedValues, manager)) return true;
 
     if (allowedValues.isFlagSet()) {
-      PsiExpression zero = getLiteralExpression(expression, manager, "0");
-      if (MagicConstantUtils.same(expression, zero, manager)
+      PsiExpression zero = getLiteralExpression(argument, manager, "0");
+      if (MagicConstantUtils.same(argument, zero, manager)
           // if for some crazy reason the constant with value "0" is included to allowed values for flags, do not treat literal "0" as allowed value anymore
           // see e.g. Font.BOLD=1, Font.ITALIC=2, Font.PLAIN=0
           && !allowedValues.hasZeroValue()) return true;
-      PsiExpression minusOne = getLiteralExpression(expression, manager, "-1");
-      if (MagicConstantUtils.same(expression, minusOne, manager)) return true;
-      if (expression instanceof PsiPolyadicExpression polyadic) {
+      PsiExpression minusOne = getLiteralExpression(argument, manager, "-1");
+      if (MagicConstantUtils.same(argument, minusOne, manager)) return true;
+      if (argument instanceof PsiPolyadicExpression polyadic) {
         IElementType tokenType = polyadic.getOperationTokenType();
         if (JavaTokenType.OR.equals(tokenType) || JavaTokenType.XOR.equals(tokenType) ||
             JavaTokenType.AND.equals(tokenType) || JavaTokenType.PLUS.equals(tokenType)) {
-          for (PsiExpression operand : polyadic.getOperands()) {
-            if (!isAllowed(operand, scope, allowedValues, manager, visited)) return false;
-          }
-          return true;
+          return ContainerUtil.all(polyadic.getOperands(), e -> isAllowed(e, scope, allowedValues, manager));
         }
       }
-      if (expression instanceof PsiPrefixExpression prefixExpression &&
+      if (argument instanceof PsiPrefixExpression prefixExpression &&
           JavaTokenType.TILDE.equals(prefixExpression.getOperationTokenType())) {
         PsiExpression operand = prefixExpression.getOperand();
-        return operand == null || isAllowed(operand, scope, allowedValues, manager, visited);
+        return operand == null || isAllowed(operand, scope, allowedValues, manager);
       }
     }
 
     PsiModifierListOwner owner = null;
     AllowedValues allowedForRef = null;
-    if (expression instanceof PsiReference reference) {
+    if (argument instanceof PsiReference reference) {
       owner = ObjectUtils.tryCast(reference.resolve(), PsiModifierListOwner.class);
     }
-    else if (expression instanceof PsiMethodCallExpression call) {
+    else if (argument instanceof PsiMethodCallExpression call) {
       allowedForRef = SPECIAL_CASES.mapFirst(call);
       owner = call.resolveMethod();
     }
 
     if (allowedForRef == null && owner != null) {
-      allowedForRef = MagicConstantUtils.getAllowedValues(owner, PsiUtil.getTypeByPsiElement(owner), expression);
+      allowedForRef = MagicConstantUtils.getAllowedValues(owner, PsiUtil.getTypeByPsiElement(owner), argument);
     }
     if (allowedForRef != null && allowedForRef.isSubsetOf(allowedValues, manager)) {
       return true;
     }
 
-    return PsiType.NULL.equals(expression.getType());
-  }
-
-  private static boolean isGoodSwitchExpression(PsiSwitchExpression switchExpression,
-                                                AllowedValues values,
-                                                PsiElement scope,
-                                                PsiManager manager,
-                                                Set<PsiExpression> visited) {
-    PsiCodeBlock body = switchExpression.getBody();
-    if (body == null) return true;
-    List<PsiSwitchLabeledRuleStatement> rules = ContainerUtil.filterIsInstance(body.getStatements(), PsiSwitchLabeledRuleStatement.class);
-    for (PsiSwitchLabeledRuleStatement rule : rules) {
-      if (rule.getBody() instanceof PsiExpressionStatement expressionStatement) {
-        if (!isAllowed(expressionStatement.getExpression(), scope, values, manager, visited)) {
-          return false;
-        }
-      }
-    }
-    final ControlFlow controlFlow;
-    try {
-      controlFlow = ControlFlowFactory.getInstance(switchExpression.getProject())
-        .getControlFlow(switchExpression, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-    }
-    catch (AnalysisCanceledException ignored) {
-      return true;
-    }
-    int startOffset = controlFlow.getStartOffset(switchExpression);
-    int endOffset = controlFlow.getEndOffset(switchExpression);
-    if (startOffset < 0 || endOffset < 0) return true;
-    Collection<PsiStatement> exitStatements =
-      ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiYieldStatement.class);
-    for (PsiStatement exitStatement : exitStatements) {
-      PsiYieldStatement yieldStatement = (PsiYieldStatement)exitStatement;
-      PsiExpression expression = yieldStatement.getExpression();
-      if (expression != null && !isAllowed(expression, scope, values, manager, visited)) {
-        return false;
-      }
-    }
-    return true;
+    return PsiType.NULL.equals(argument.getType());
   }
 
   private static final Key<Map<String, PsiExpression>> LITERAL_EXPRESSION_CACHE = Key.create("LITERAL_EXPRESSION_CACHE");
@@ -512,10 +457,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static boolean isOneOf(@NotNull PsiExpression expression, @NotNull AllowedValues allowedValues, @NotNull PsiManager manager) {
-    for (PsiAnnotationMemberValue allowedValue : allowedValues.getValues()) {
-      if (MagicConstantUtils.same(allowedValue, expression, manager)) return true;
-    }
-    return false;
+    return ContainerUtil.exists(allowedValues.getValues(), e -> MagicConstantUtils.same(e, expression, manager));
   }
 
   static boolean processValuesFlownTo(@NotNull final PsiExpression argument,
