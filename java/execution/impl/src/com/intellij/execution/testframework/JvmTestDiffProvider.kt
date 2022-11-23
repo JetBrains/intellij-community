@@ -22,8 +22,9 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
         ?.containingFile?.navigationElement?.asSafely<PsiFile>() ?: return@forEach
       val virtualFile = file.virtualFile ?: return@forEach
       val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return@forEach
-      val startOffset = document.getLineStartOffset(location.lineNumber - 1)
-      val endOffset = document.getLineEndOffset(location.lineNumber - 1)
+      val lineNumber = location.lineNumber ?: return@forEach
+      val startOffset = document.getLineStartOffset(lineNumber - 1)
+      val endOffset = document.getLineEndOffset(lineNumber - 1)
       val failedCall = getFailedCall(file, startOffset, endOffset) ?: return@forEach
       val expected = getExpected(failedCall, expectedParamIndex) ?: return@forEach
       expectedParamIndex = getParamIndex(expected)
@@ -57,7 +58,7 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
             return NativeLocation
           } else {
             val fileName = location.substringBefore(':')
-            val lineNumber = location.substringAfter(':').toInt()
+            val lineNumber = location.substringAfter(':').toIntOrNull()
             return FileLocation(fileName, lineNumber)
           }
         }
@@ -66,7 +67,7 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
 
     object NativeLocation : Location
 
-    data class FileLocation(val fileName: String, val lineNumber: Int) : Location
+    data class FileLocation(val fileName: String, val lineNumber: Int?) : Location
 
     companion object {
       fun parse(line: String): JavaStackFrame {
