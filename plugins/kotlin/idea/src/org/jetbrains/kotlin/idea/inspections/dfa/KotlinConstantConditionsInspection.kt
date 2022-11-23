@@ -23,6 +23,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -38,6 +40,7 @@ import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isConstant
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -526,7 +529,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         if (receiver is KtQualifiedExpression) {
                             receiver = receiver.selectorExpression
                         }
-                        if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtEnumEntry) {
+                        if (receiver is KtSimpleNameExpression &&
+                            receiver.resolveMainReferenceToDescriptors()
+                                .any { desc -> desc is ClassDescriptor && desc.kind == ClassKind.ENUM_ENTRY }
+                        ) {
                             // ordinal() call on explicit enum constant
                             return true
                         }
