@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
@@ -30,6 +31,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
 import java.io.IOException
+import java.lang.ref.Reference
 import java.util.concurrent.Callable
 
 internal class IntentionPreviewComputable(private val project: Project,
@@ -59,7 +61,7 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   private fun tryCreateDiffContent(): IntentionPreviewInfo? {
     try {
-      return SideEffectGuard.computeWithoutSideEffects<IntentionPreviewInfo?, Exception> { generatePreview() }
+      return generatePreview()
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -111,13 +113,19 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
     originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()
+    // force settings initialization, as it may spawn EDT action which is not allowed inside generatePreview()
+    val settings = CodeStyle.getSettings(editorCopy)
     IntentionPreviewUtils.previewSession(editorCopy) {
-      PostprocessReformattingAspect.getInstance(project)
-        .postponeFormattingInside { info = action.generatePreview(project, editorCopy, psiFileCopy) }
+      PostprocessReformattingAspect.getInstance(project).postponeFormattingInside {
+        info = SideEffectGuard.computeWithoutSideEffects<IntentionPreviewInfo?, Exception> {
+          action.generatePreview(project, editorCopy, psiFileCopy)
+        }
+      }
     }
     if (info == IntentionPreviewInfo.FALLBACK_DIFF && fileToCopy == origFile) {
-      info = generateFallbackDiff(editorCopy, psiFileCopy)
+      info = SideEffectGuard.computeWithoutSideEffects<IntentionPreviewInfo?, Exception> { generateFallbackDiff(editorCopy, psiFileCopy) }
     }
+    Reference.reachabilityFence(settings)
     val manager = PsiDocumentManager.getInstance(project)
     manager.commitDocument(editorCopy.document)
     manager.doPostponedOperationsAndUnblockDocument(editorCopy.document)
