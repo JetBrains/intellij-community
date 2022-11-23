@@ -238,7 +238,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
       class Bar : TestCase() { }
 
       @RunWith(Suite::class)
-      @Suite.SuiteClasses(Foo.Companion::class)
+      @Suite.SuiteClasses(Foo::class)
       class JUnit3Test {
         companion object {
         }

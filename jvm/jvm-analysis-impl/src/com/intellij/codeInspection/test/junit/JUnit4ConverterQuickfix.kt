@@ -18,6 +18,7 @@ import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -245,7 +246,13 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
             val qualified = node.valueArguments.first().asSafely<UQualifiedReferenceExpression>()
             if(qualified?.selector?.asSafely<UCallExpression>()?.isSuite() == false) return false // don't show conflict in preview
             val receiver = qualified?.receiver.asSafely<UReferenceExpression>() ?: return false
-            classLiterals.add(receiver.getQualifiedName() ?: return false)
+            val suiteClass = receiver.resolve().toUElementOfType<UClass>()?.javaPsi
+            val suiteFqn = if (InheritanceUtil.isInheritor(suiteClass, JUNIT_FRAMEWORK_TEST_CASE)) {
+              suiteClass?.qualifiedName
+            } else {
+              suiteClass?.containingClass?.qualifiedName // receiver was companion object
+            }
+            classLiterals.add(suiteFqn ?: return false)
           }
           addTestSuiteMatcher.uCallMatches(node) -> {
             val type = node.valueArguments
