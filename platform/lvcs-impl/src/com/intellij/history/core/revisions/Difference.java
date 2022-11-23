@@ -2,16 +2,15 @@
 
 package com.intellij.history.core.revisions;
 
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +51,9 @@ public class Difference {
     Entry entry = getRight();
     if (myRightContentCurrent && entry != null) {
       VirtualFile file = gw.findVirtualFile(entry.getPath());
-      if (file != null) return new CurrentContentRevision(VcsUtil.getFilePath(file));
+      if (file != null) {
+        return new CurrentContentRevision(Paths.createDvcsFilePath(file));
+      }
     }
     return createContentRevision(entry, gw);
   }
@@ -63,13 +64,13 @@ public class Difference {
     return new ByteBackedContentRevision() {
       @Override
       @Nullable
-      public String getContent() throws VcsException {
+      public String getContent() {
         if (e.isDirectory()) return null;
         return e.getContent().getString(e, gw);
       }
 
       @Override
-      public byte @Nullable [] getContentAsBytes() throws VcsException {
+      public byte @Nullable [] getContentAsBytes() {
         if (e.isDirectory()) return null;
         return e.getContent().getBytes();
       }
@@ -77,7 +78,7 @@ public class Difference {
       @Override
       @NotNull
       public FilePath getFile() {
-        return VcsUtil.getFilePath(e.getPath(), e.isDirectory());
+        return Paths.createDvcsFilePath(e.getPath(), e.isDirectory());
       }
 
       @Override
