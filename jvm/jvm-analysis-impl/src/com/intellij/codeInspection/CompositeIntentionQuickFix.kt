@@ -10,9 +10,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
-import org.jetbrains.uast.toUElement
 
 /**
  * A quickfix that can call multiple JVM intention actions and bundle them into a single quick fix.
@@ -25,18 +23,12 @@ abstract class CompositeIntentionQuickFix: LocalQuickFix {
     val editor = IntentionPreviewUtils.getPreviewEditor() ?: return IntentionPreviewInfo.EMPTY
     val target = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element)
     getActions(project, previewDescriptor).forEach { factory ->
-      val actions = factory(target.element?.javaPhysElement() ?: return@forEach)
+      val actions = factory(target.element?.nonPreviewElement ?: return@forEach)
       actions.forEach { action ->
         action.generatePreview(project, editor, containingFile)
       }
     }
     return IntentionPreviewInfo.DIFF
-  }
-
-  private fun PsiElement.javaPhysElement(): JvmModifiersOwner? {
-    // workaround because langElement.originalElement doesn't always work
-    val langPhysElement = PsiTreeUtil.findSameElementInCopy(navigationElement, navigationElement.containingFile.originalFile)
-    return langPhysElement.toUElement()?.javaPsi?.asSafely<JvmModifiersOwner>()
   }
 
   protected fun applyFixes(project: Project, descriptor: ProblemDescriptor, element: PsiElement) {

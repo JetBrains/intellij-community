@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.isInheritorOf
+import com.intellij.codeInspection.nonPreviewElement
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.ApplicationManager
@@ -212,14 +213,16 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
   }
 
   private fun transformSetUpOrTearDownMethod(method: UMethod) {
-    val fixModifierOverrideActions = createModifierActions(method.javaPsi, modifierRequest(JvmModifier.PUBLIC, true)) +
-                                     createChangeOverrideActions(method.javaPsi, shouldBePresent = false)
-    fixModifierOverrideActions.forEach {
+    val project = method.javaPsi.project
+    val nonPreviewElement = method.javaPsi.nonPreviewElement ?: return
+    val actions = createModifierActions(nonPreviewElement, modifierRequest(JvmModifier.PUBLIC, true)) +
+                  createChangeOverrideActions(nonPreviewElement, shouldBePresent = false)
+    actions.forEach {
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-        it.generatePreview(method.javaPsi.project, IntentionPreviewUtils.getPreviewEditor() ?: return, method.javaPsi.containingFile)
+        it.generatePreview(project, IntentionPreviewUtils.getPreviewEditor() ?: return, method.sourcePsi?.containingFile ?: return)
       }
       else {
-        it.invoke(method.javaPsi.project, null, method.javaPsi.containingFile)
+        it.invoke(project, null, method.sourcePsi?.containingFile ?: return)
       }
     }
     method.accept(SuperCallRemoverVisitor(method.name))
