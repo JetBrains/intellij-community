@@ -90,7 +90,7 @@ class KtClassDef(val cls: ClassDescriptor) : TypeConstraints.ClassDef {
             val descriptor = context.findModuleDescriptor().resolveClassByFqName(name.toSafe(), NoLookupLocation.FROM_IDE)
             return when {
               descriptor == null -> TypeConstraints.unresolved(name.asString())
-              descriptor.kind == ClassKind.OBJECT && descriptor.modality == Modality.FINAL -> TypeConstraints.singleton(KtClassDef(descriptor))
+              descriptor.kind == ClassKind.OBJECT -> TypeConstraints.singleton(KtClassDef(descriptor))
               else -> TypeConstraints.exactClass(KtClassDef(descriptor))
             }
         }
