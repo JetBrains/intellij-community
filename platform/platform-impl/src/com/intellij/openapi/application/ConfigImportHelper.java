@@ -19,10 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.impl.ProgressResult;
-import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -60,8 +59,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -969,21 +968,14 @@ public final class ConfigImportHelper {
   private static void downloadUpdatesForIncompatiblePlugins(@NotNull Path newPluginsDir,
                                                             @NotNull ConfigImportOptions options,
                                                             @NotNull List<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    if (options.headless) {
-      CompletableFuture<ProgressResult<Object>> future = new ProgressRunner<>(indicator -> {
-        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, indicator);
-        return null;
-      }).submit();
+    Consumer<? super ProgressIndicator> indicatorConsumer = indicator -> {
+      downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, indicator);
+    };
 
-      try {
-        Throwable throwable = future.get().getThrowable();
-        if (throwable != null) {
-          throw new RuntimeException(throwable);
-        }
-      }
-      catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
+    if (options.headless) {
+      PluginDownloader.runSynchronouslyInBackground(() -> {
+        indicatorConsumer.accept(new EmptyProgressIndicator());
+      });
     }
     else {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -993,10 +985,10 @@ public final class ConfigImportHelper {
       AppUIUtil.updateWindowIcon(dialog);
 
       SplashManager.executeWithHiddenSplash(dialog, () -> {
-        new Thread(() -> {
-          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
+        PluginDownloader.runSynchronouslyInBackground(() -> {
+          indicatorConsumer.accept(dialog.getIndicator());
           SwingUtilities.invokeLater(() -> dialog.setVisible(false));
-        }, "Plugin migration downloader").start();
+        });
         dialog.setVisible(true);
       });
     }

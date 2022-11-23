@@ -23,6 +23,7 @@ import com.intellij.util.Urls;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -440,5 +441,17 @@ public final class PluginDownloader {
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
       .addParameters(Collections.unmodifiableMap(parameters))
       .toExternalForm();
+  }
+
+  @ApiStatus.Internal
+  public static void runSynchronouslyInBackground(@NotNull Runnable runnable) {
+    try {
+      Thread thread = new Thread(runnable, "Plugin downloader");
+      thread.start();
+      thread.join();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
