@@ -260,9 +260,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
         if (statement == null) {
           return;
         }
-        final @NonNls String modifier = JavaCodeStyleSettings.getInstance(lastExpression.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "";
-        final String statementText = modifier + CommonClassNames.JAVA_LANG_STRING + ' ' + variableName + "=" + expressionText + ';';
+        final @NonNls String modifier =
+          JavaCodeStyleSettings.getInstance(lastExpression.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "";
         toDelete.forEach(tracker::delete);
+        final String statementText = modifier + CommonClassNames.JAVA_LANG_STRING + ' ' + variableName + "=" + expressionText + ';';
         tracker.replaceAndRestoreComments(statement, statementText);
         PsiReplacementUtil.replaceExpression(lastExpression, variableName);
       }
@@ -548,6 +549,11 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       myParent = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiIfStatement.class, PsiLoopStatement.class);
     }
 
+    private void setPossibleSideEffect(PsiExpression expression) {
+      if (myPossibleSideEffect != null && expression != null) return;
+      myPossibleSideEffect = expression;
+    }
+
     public boolean isReplaceable() {
       return myReplaceable && myToStringFound;
     }
@@ -569,7 +575,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       super.visitAssignmentExpression(expression);
       if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)
           && !isToStringCallForCurrentBuilder(expression.getRExpression())) {
-        myPossibleSideEffect = expression;
+        setPossibleSideEffect(expression);
       }
     }
 
@@ -588,7 +594,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)) {
-        myPossibleSideEffect = expression;
+        setPossibleSideEffect(expression);
       }
     }
 
@@ -600,12 +606,12 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
-        myPossibleSideEffect = expression;
+        setPossibleSideEffect(expression);
         return;
       }
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
-        myPossibleSideEffect = expression;
+        setPossibleSideEffect(expression);
         return;
       }
       final String name = aClass.getQualifiedName();
@@ -617,7 +623,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       if (isArgumentOfStringBuilderMethod(expression)) {
         return;
       }
-      myPossibleSideEffect = expression;
+      setPossibleSideEffect(expression);
     }
 
     private boolean isArgumentOfStringBuilderMethod(PsiExpression expression) {
@@ -698,7 +704,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       }
       if (ExpressionUtils.isImplicitToStringCall(expression)) {
         if (myPossibleSideEffect != null && PsiTreeUtil.isAncestor(myPossibleSideEffect, expression, true)) {
-          myPossibleSideEffect = null;
+          setPossibleSideEffect(null);
         }
         myToStringFound = true;
         return;
@@ -719,7 +725,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
             // assume that a method call where the toString() is used as an argument, if present,
             // does not modify any state used in the string concatenation. If a case like this is found
             // in the wild this check can be removed, at the cost of an uglier quick fix.
-            myPossibleSideEffect = null;
+            setPossibleSideEffect(null);
           }
           myToStringFound = true;
           return;
