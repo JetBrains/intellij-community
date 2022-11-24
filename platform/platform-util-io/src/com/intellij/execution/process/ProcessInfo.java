@@ -3,6 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ public class ProcessInfo {
   @NotNull private final String myExecutableName;
   @NotNull private final String myArgs;
   @Nullable private final String myUser;
+  @NotNull private final ThreeState myOwnedByCurrentUser;
 
   public ProcessInfo(int pid,
                      @NotNull String commandLine,
@@ -43,7 +45,7 @@ public class ProcessInfo {
                      @NotNull String args,
                      @Nullable String executablePath,
                      int parentPid) {
-    this(pid, commandLine, executableName, args, executablePath, parentPid, null);
+    this(pid, commandLine, executableName, args, executablePath, parentPid, null, ThreeState.UNSURE);
   }
 
   public ProcessInfo(int pid,
@@ -52,7 +54,8 @@ public class ProcessInfo {
                      @NotNull String args,
                      @Nullable String executablePath,
                      int parentPid,
-                     @Nullable String user) {
+                     @Nullable String user,
+                     @NotNull ThreeState isOwnedByCurrentUser) {
     myPid = pid;
     myCommandLine = commandLine;
     myExecutableName = executableName;
@@ -60,6 +63,7 @@ public class ProcessInfo {
     myArgs = args;
     myParentPid = parentPid;
     myUser = user;
+    myOwnedByCurrentUser = isOwnedByCurrentUser;
   }
 
   public int getPid() {
@@ -113,6 +117,16 @@ public class ProcessInfo {
     return myUser;
   }
 
+  /**
+   * @return {@link ThreeState#UNSURE} if there is no information about the current user,
+   * {@link ThreeState#YES} if process' user matches the current user who listed processes,
+   * {@link ThreeState#NO} otherwise.
+   */
+  @NotNull
+  public ThreeState isOwnedByCurrentUser() {
+    return myOwnedByCurrentUser;
+  }
+
   @Override
   public String toString() {
     return myPid + (myUser != null ? " " + myUser : "") + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'" +
@@ -133,7 +147,7 @@ public class ProcessInfo {
     if (!myExecutablePath.equals(info.myExecutablePath)) return false;
     if (myParentPid != info.myParentPid) return false;
     if (!Objects.equals(myUser, ((ProcessInfo)o).myUser)) return false;
-
+    if (!myOwnedByCurrentUser.equals(((ProcessInfo)o).myOwnedByCurrentUser)) return false;
     return true;
   }
 
@@ -145,6 +159,7 @@ public class ProcessInfo {
     result = 31 * result + myCommandLine.hashCode();
     result = 31 * result + myParentPid;
     result = 31 * result + (myUser != null ? myUser.hashCode() : 0);
+    result = 31 * result + myOwnedByCurrentUser.hashCode();
     return result;
   }
 }
