@@ -1349,10 +1349,11 @@
         <constraint name="Init" minCount="0" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Potential memory leak: don't hold PsiElement inside quick fix, use SmartPsiElementPointer or instead of; also see LocalQuickFixOnPsiElement" text="class $Class$ { &#10;  val $FieldName$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
+      <searchConfiguration name="Potential memory leak: don't hold PsiElement inside quick fix, use SmartPsiElementPointer or instead of; also see LocalQuickFixOnPsiElement" text="class $Class$ { &#10;  val $FieldName$ = $Initializer$&#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="Class" regexp="com.intellij.codeInspection.LocalQuickFix" withinHierarchy="true" within="" contains="" />
         <constraint name="FieldName" nameOfExprType="PsiElement" exprTypeWithinHierarchy="true" maxCount="2147483647" target="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+        <constraint name="Initializer" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="Potential non-desired escape from lambda expression" text="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod.class, true, PsiClass.class)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class)">
         <constraint name="Parameter" within="" contains="" />
