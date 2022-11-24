@@ -318,6 +318,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
     runWithSpan(myCompletionTracer, contributor.getClass().getSimpleName(), span -> {
       super.getVariantsFromContributor(params, contributor, result);
+      span.setAttribute("avoid_null_value", true);
     });
   }
 
