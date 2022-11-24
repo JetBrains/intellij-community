@@ -1,5 +1,4 @@
 import de.undercouch.gradle.tasks.download.Download
-import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -11,7 +10,7 @@ fun properties(key: String): String {
 plugins {
   java
   id("org.jetbrains.kotlin.jvm") version "1.7.10"
-  id("org.jetbrains.intellij") version "1.9.0"
+  id("org.jetbrains.intellij") version "1.10.0"
   id("org.jetbrains.changelog") version "1.3.1"
   id("org.jetbrains.qodana") version "0.1.13"
   id("org.jetbrains.grammarkit") version "2021.2.2"
@@ -54,19 +53,7 @@ val generateLexerAndParser by tasks.registering {
   dependsOn("generateLexer", "generateParser")
 }
 
-@OptIn(ExperimentalStdlibApi::class)
-val commonJvmArgs = buildList {
-  val commonArgs = listOf(
-    "-Xmx750m",
-    "-Didea.jna.unpacked=true",
-    "-Djna.nounpack=true"
-  )
-  addAll(commonArgs)
-  if (OperatingSystem.current().isMacOsX) {
-    val path = project.properties["jnaLibsPath"] ?: System.getenv("JNA_LIBS_PATH")
-    add("-Djna.boot.library.path=$path")
-  }
-}
+val commonJvmArgs = listOf("-Xmx750m")
 
 val mermaidVersion = properties("mermaidVersion")
 val mermaidArtifactName = "mermaid.min.js"
