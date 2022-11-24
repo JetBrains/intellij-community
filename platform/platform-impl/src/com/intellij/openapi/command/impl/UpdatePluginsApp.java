@@ -9,7 +9,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jvnet.winp.Main;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -20,9 +19,8 @@ import java.util.Set;
  * Works in two stages. On the first run, it collects available updates and writes an update script. The second run needs
  * {@code idea.force.plugin.updates = "true"} system property to apply the updates.
  *
- * @author Konstantin Bulenkov
- * @see Main#FORCE_PLUGIN_UPDATES
- * @see Main#installPluginUpdates()
+ * @see AppMode#FORCE_PLUGIN_UPDATES
+ * @see com.intellij.idea.Main#installPluginUpdates
  */
 final class UpdatePluginsApp implements ApplicationStarter {
   @Override

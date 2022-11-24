@@ -129,6 +129,7 @@ object CommandLineProcessor {
       else {
         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
       }
+      @Suppress("DEPRECATION")
       project.coroutineScope.launch(Dispatchers.EDT) {
         navigatable.navigate(true)
       }
@@ -150,6 +151,7 @@ object CommandLineProcessor {
 
   @ApiStatus.Internal
   fun scheduleProcessProtocolCommand(rawUri: @NlsSafe String) {
+    @Suppress("DEPRECATION")
     ApplicationManager.getApplication().coroutineScope.launch {
       processProtocolCommand(rawUri)
     }
@@ -179,6 +181,7 @@ object CommandLineProcessor {
 
     if (cliResult.message != null) {
       val title = IdeBundle.message("ide.protocol.cannot.title")
+      @Suppress("DEPRECATION")
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, cliResult.message!!, NotificationType.WARNING)
         .addAction(ShowLogAction.notificationAction())
         .notify(null)
@@ -188,13 +191,11 @@ object CommandLineProcessor {
 
   private val PROTOCOL_EP_NAME = ExtensionPointName<ProtocolHandler>("com.intellij.protocolHandler")
 
+  @Suppress("IfThenToElvis")
   private suspend fun processProtocol(scheme: String, query: String): CliResult {
-    for (handler in PROTOCOL_EP_NAME.lazySequence()) {
-      if (scheme == handler.scheme) {
-        return handler.process(query)
-      }
-    }
-    return CliResult(/* exitCode = */ 0, /* message = */ IdeBundle.message("ide.protocol.unsupported", scheme))
+    val handler = PROTOCOL_EP_NAME.lazySequence().find { scheme == it.scheme }
+    return if (handler != null) handler.process(query)
+           else CliResult(0, IdeBundle.message("ide.protocol.unsupported", scheme))
   }
 
   private suspend fun processInternalProtocol(query: String): CliResult {
