@@ -31,7 +31,7 @@ class GradleCompletionTest : GradleCodeInsightTestCase() {
   @BaseGradleVersionSource
   fun testGrayOutForeignCompletionElement(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
-      testCompletion("repositories { mavenCentral { go<caret> } }") {
+      testCompletion("build.gradle", "repositories { mavenCentral { go<caret> } }") {
         var hasGoogle = false
         for (element in it) {
           if (element.lookupString != "google") {

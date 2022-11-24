@@ -2,9 +2,9 @@
 
 <extensions defaultExtensionNs="com.intellij">
   <!--<elementDescriptionProvider implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogDescriptionProvider"/>-->
-  <!--<findUsagesHandlerFactory implementation="org.jetbrains.plugins.gradle.toml.findUsages.GradleVersionCatalogFindUsagesFactory"/>-->
-  <!--<psi.referenceContributor language="TOML"-->
-  <!--                          implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogReferenceContributor"/>-->
+  <findUsagesHandlerFactory implementation="org.jetbrains.plugins.gradle.toml.findUsages.GradleVersionCatalogFindUsagesFactory"/>
+  <psi.referenceContributor language="TOML"
+                            implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogReferenceContributor"/>
   <!--<renameInputValidator implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogRenameInputValidator"/>-->
 
   <!--<typedHandler implementation="org.jetbrains.plugins.gradle.toml.completion.VersionCatalogTypedHandler" id="tomlVersionCatalogAuto"/>-->
