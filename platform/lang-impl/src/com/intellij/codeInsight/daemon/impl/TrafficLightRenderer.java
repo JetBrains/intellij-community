@@ -182,11 +182,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     errorCount.put(infoSeverity, errorCount.getInt(infoSeverity) + delta);
   }
 
+  /**
+   * when highlighting level changed, re-create TrafficLightRenderer (and recompute levels in its ctr)
+   * @see ErrorStripeUpdateManager#setOrRefreshErrorStripeRenderer(EditorMarkupModel, PsiFile)
+   */
   public boolean isValid() {
-    /**
-     * when highlighting level changed, re-create TrafficLightRenderer (and recompute levels in its ctr)
-     * @see ErrorStripeUpdateManager#setOrRefreshErrorStripeRenderer(EditorMarkupModel, PsiFile)
-     */
     PsiFile psiFile = getPsiFile();
     return psiFile != null
            && HighlightingSettingsPerFile.getInstance(psiFile.getProject()).getModificationCount() == myHighlightingSettingsModificationCount;
