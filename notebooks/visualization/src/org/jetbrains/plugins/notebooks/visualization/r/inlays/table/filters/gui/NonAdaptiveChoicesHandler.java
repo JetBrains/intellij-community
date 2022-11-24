@@ -98,7 +98,7 @@ class NonAdaptiveChoicesHandler extends ChoicesHandler {
             // a change in ONE column is always handled as an update
             // (every update is handled by re-extracting the choices
             FilterEditor editor = handler.getEditor(column);
-            if ((editor != null) && editor.isEnabled()) {
+            if (editor.isEnabled()) {
                 setChoicesFromModel(editor, model);
             }
         } else {
