@@ -166,6 +166,10 @@ tasks {
     systemProperty("jb.consents.confirmation.enabled", "false")
   }
 
+  runPluginVerifier {
+    ideVersions.set(properties("pluginVerifierVersions").split(",").map(String::trim))
+  }
+
   signPlugin {
     certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
     privateKey.set(System.getenv("PRIVATE_KEY"))

@@ -6,6 +6,14 @@ job("Mermaid / Build") {
   }
 }
 
+job("Mermaid / Plugin Verifier") {
+  container("openjdk:17") {
+    shellScript {
+      content = "./gradlew runPluginVerifier"
+    }
+  }
+}
+
 val marketplaceToken
   get() = Secrets("mermaid_marketplace_token")
 
