@@ -43,7 +43,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 public class StringBufferReplaceableByStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  static final String STRING_JOINER = "java.util.StringJoiner";
+  private static final String STRING_JOINER = "java.util.StringJoiner";
   private static final CallMatcher STRING_JOINER_ADD = CallMatcher.instanceCall(STRING_JOINER, "add").parameterCount(1);
 
   @Override
@@ -69,7 +69,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     return new StringBufferReplaceableByStringVisitor();
   }
 
-  static boolean isConcatenatorConstruction(PsiNewExpression expression) {
+  private static boolean isConcatenatorConstruction(PsiNewExpression expression) {
     final PsiType type = expression.getType();
     if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER, type) ||
         TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUILDER, type)) {
@@ -84,13 +84,13 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     return false;
   }
 
-  static boolean isConcatenatorType(PsiType type) {
+  private static boolean isConcatenatorType(PsiType type) {
     return TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER, type) ||
            TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUILDER, type) ||
            TypeUtils.typeEquals(STRING_JOINER, type);
   }
 
-  static boolean isAppendCall(PsiElement element) {
+  private static boolean isAppendCall(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;
     }
@@ -110,7 +110,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     return arguments.length == 1;
   }
 
-  static boolean isToStringCall(PsiElement element) {
+  private static boolean isToStringCall(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;
     }
@@ -126,7 +126,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
   }
 
   @Nullable
-  static PsiExpression getCompleteExpression(PsiExpression qualifier) {
+  private static PsiExpression getCompleteExpression(PsiExpression qualifier) {
     while (true) {
       if (ExpressionUtils.isImplicitToStringCall(qualifier)) {
         return qualifier;
@@ -567,9 +567,21 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)) {
+      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)
+          && !isToStringCallForCurrentBuilder(expression.getRExpression())) {
         myPossibleSideEffect = expression;
       }
+    }
+
+    private boolean isToStringCallForCurrentBuilder(@Nullable PsiExpression expression) {
+      if (expression == null) {
+        return false;
+      }
+      PsiExpression downExpression = PsiUtil.skipParenthesizedExprDown(expression);
+      if (!(downExpression instanceof PsiMethodCallExpression psiMethodCallExpression)) {
+        return false;
+      }
+      return isToStringCall(psiMethodCallExpression) && isCallToStringBuilderMethod(psiMethodCallExpression);
     }
 
     @Override
