@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.util.io.PersistentHashMapValueStorage.*;
+import static java.util.Comparator.comparing;
 
 // todo rewrite: it's an app service for now but its lifecycle should be synchronized with stub index.
 @ApiStatus.Internal
@@ -250,8 +252,16 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       });
 
       registerSerializer(PsiFileStubImpl.TYPE);
-      List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
+
+      final List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
+
       final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
+      Arrays.sort(
+        stubElementTypes,         
+        comparing((IElementType type) -> type.getLanguage().getID())
+          //TODO RC: not sure .debugName is enough for stable sorting. Maybe use .getClass() instead?
+          .thenComparing(type -> type.getDebugName())
+      );
       for (IElementType type : stubElementTypes) {
         if (type instanceof StubFileElementType &&
             StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType<?>)type).getExternalId())) {
@@ -260,7 +270,13 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
         registerSerializer((StubSerializer<?>)type);
       }
-      for (StubFieldAccessor lazySerializer : lazySerializers) {
+
+      final List<StubFieldAccessor> sortedLazySerializers = lazySerializers.stream()
+        //TODO RC: is .externalId enough for stable sorting? Seems like .myField is also important,
+        //         but it should also be dependent on .externalId...
+        .sorted(comparing(sfa -> sfa.externalId))
+        .toList();
+      for (StubFieldAccessor lazySerializer : sortedLazySerializers) {
         registerSerializer(lazySerializer.externalId, lazySerializer);
       }
       mySerializersLoaded = true;

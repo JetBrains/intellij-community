@@ -17,20 +17,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Assigns & store unique integral id for {@link Data} instances.
+ * Assigns & store unique integer id for {@link Data} instances, provides bidirectional mapping
+ * <code>id <-> Data</code>.
  * <br/>
- * Generally, 3 files are used to support the mapping: <code>.keystream</code>, <code>.storage</code>, and <code>.storage_i</code>.
- * Data instance is stored in a <code>.keystream</code>, file, and record offset is converted to its id. Mapping
- * <code>(hashCode(Data) -> id)</code> is stored in a BTree (<code>.storage_i</code>), and <code>.storage</code> file is used to
- * resolve hashcode collisions.
+ * Generally, 3 files are used to support the mapping:
+ * <ul>
+ * <li><code>{enumerator-name}.keystream</code></li>
+ * <li><code>{enumerator-name}.storage</code></li>
+ * <li><code>{enumerator-name}.storage_i</code></li>
+ * </ul>.
+ * Data instances are stored in a <code>{name}.keystream</code>, file, and apt record offset is ~ its id.
+ * Mapping <code>(hashCode(Data) -> id)</code> is stored in a BTree (<code>{name}.storage_i</code>),
+ * and <code>{name}.storage</code> file is used to resolve hashcode collisions.
  * <br/>
- * How are collisions resolved: if there are >1 id for the same hashCode, then collided ids are written into the <code>.storage</code>
- * file as pairs <code>(id, nextPairOffset)</code>, and BTree keeps mapping <code>(hashCode -> -offset)</code> there 'offset' is the
- * offset of the first such pair in a <code>.storage</code> file.
  * <br/>
- * In some cases collisions are impossible -- e.g. if {@link Data} itself is basically an int, or could be serialized to an int, so
- * there is a bijection between {@link Data} and its hashcode. In such cases {@link #myInlineKeysNoMapping} param allows to skip
- * collision resolution paths altogether.
+ * How are collisions resolved: if there are >1 id for the same hashCode (i.e. there are >1 Data instances
+ * with the same hashCode stored in the enumerator), then BTree stores mapping <code>(hashCode(Data) -> -offset)</code>
+ * (i.e. negative offset value) there <code>offset</code> refers to a collision resolution chain in the
+ * <code>{name}.storage</code> file. Collision resolution chain is just a chain of pairs <code>(id, nextPairOffset)</code>.
+ * <br/>
+ * <br/>
+ * In some cases collisions are impossible -- e.g. if {@link Data} itself is basically an integer, or could
+ * be serialized to an integer, so there is a bijection between {@link Data} and its hashcode. In such
+ * cases {@link #myInlineKeysNoMapping} param allows to skip collision resolution paths altogether.
  */
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int BTREE_PAGE_SIZE;
