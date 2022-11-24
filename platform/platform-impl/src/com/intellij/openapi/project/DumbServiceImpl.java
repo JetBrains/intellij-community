@@ -75,7 +75,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private volatile @Nullable Thread myWaitIntolerantThread;
 
-  private class DumbTaskListener implements DumbServiceGuiExecutor.DumbTaskListener {
+  private class DumbTaskListener implements MergingQueueGuiExecutor.ExecutorStateListener {
     /*
      * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
      * always a failure of DumbServiceGuiTaskQueue.

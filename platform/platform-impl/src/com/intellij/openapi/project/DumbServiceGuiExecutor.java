@@ -16,7 +16,7 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
   DumbServiceGuiExecutor(@NotNull Project project,
                          @NotNull DumbServiceMergingTaskQueue queue,
                          @NotNull DumbServiceHeavyActivities heavyActivities,
-                         @NotNull DumbTaskListener listener) {
+                         @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener) {
     super(project, queue, listener);
     myHeavyActivities = heavyActivities;
   }

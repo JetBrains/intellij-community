@@ -29,7 +29,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
 
   private static final Logger LOG = Logger.getInstance(MergingQueueGuiExecutor.class);
 
-  public interface DumbTaskListener {
+  public interface ExecutorStateListener {
     /**
      * @return false if queue processing should be terminated (afterLastTask will not be invoked in this case). True to start queue processing.
      */
@@ -43,10 +43,10 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     void afterLastTask();
   }
 
-  private static class SafeDumbTaskListenerWrapper implements DumbTaskListener {
-    private final DumbTaskListener delegate;
+  private static class SafeExecutorStateListenerWrapper implements ExecutorStateListener {
+    private final ExecutorStateListener delegate;
 
-    private SafeDumbTaskListenerWrapper(DumbTaskListener delegate) {
+    private SafeExecutorStateListenerWrapper(ExecutorStateListener delegate) {
       this.delegate = delegate;
     }
 
@@ -81,14 +81,14 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   private final Project myProject;
   private final MergingTaskQueue<T> myTaskQueue;
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
-  private final DumbTaskListener myListener;
+  private final ExecutorStateListener myListener;
 
   protected MergingQueueGuiExecutor(@NotNull Project project,
                           @NotNull MergingTaskQueue<T> queue,
-                          @NotNull DumbTaskListener listener) {
+                          @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener) {
     myProject = project;
     myTaskQueue = queue;
-    myListener = new SafeDumbTaskListenerWrapper(listener);
+    myListener = new SafeExecutorStateListenerWrapper(listener);
   }
 
   protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,

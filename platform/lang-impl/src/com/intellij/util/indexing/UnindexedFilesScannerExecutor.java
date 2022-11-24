@@ -21,7 +21,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   private static final Logger LOG = Logger.getInstance(UnindexedFilesScannerExecutor.class);
   private final AtomicReference<ProgressIndicator> runningTask = new AtomicReference<>();
 
-  private static class TaskQueueListener implements MergingQueueGuiExecutor.DumbTaskListener {
+  private static class TaskQueueListener implements ExecutorStateListener {
     private final Project project;
 
     private TaskQueueListener(Project project) { this.project = project; }
