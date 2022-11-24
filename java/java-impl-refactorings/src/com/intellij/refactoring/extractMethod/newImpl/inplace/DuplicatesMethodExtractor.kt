@@ -90,7 +90,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
     val changedExpressions = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }
     val duplicatesFinder = finder.withPredefinedChanges(changedExpressions.toSet())
 
-    val duplicatesWithUnifiedParameters = duplicates.mapNotNull { duplicatesFinder.createDuplicate(it.pattern, it.candidate) }
+    val duplicatesWithUnifiedParameters = duplicates.mapNotNull { duplicatesFinder.tryExtractDuplicate(it.pattern, it.candidate) }
 
     val updatedParameters: List<InputParameter> = findNewParameters(extractOptions.inputParameters, duplicatesWithUnifiedParameters)
 

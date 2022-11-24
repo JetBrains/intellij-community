@@ -46,8 +46,9 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
       object : JavaRecursiveElementWalkingVisitor(){
         override fun visitExpression(expression: PsiExpression) {
           if (expression in ignoredElements) return
+          //skip cases when the whole expression will be detected as a change
           val duplicate = if (areNodesEquivalent(patternExpression, expression)) {
-            createDuplicate(listOf(patternExpression), listOf(expression))
+            tryExtractDuplicate(listOf(patternExpression), listOf(expression))
           } else {
             null
           }
@@ -63,7 +64,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
         override fun visitStatement(statement: PsiStatement) {
           if (statement in ignoredElements) return
           val siblings = siblingsOf(statement).take(pattern.size).toList()
-          val duplicate = createDuplicate(pattern, siblings)
+          val duplicate = tryExtractDuplicate(pattern, siblings)
           if (duplicate != null) {
             duplicates += duplicate
             ignoredElements += duplicate.candidate
@@ -92,7 +93,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     return siblingsOf(element?.firstChild).toList()
   }
 
-  fun createDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
+  fun tryExtractDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
     val changedExpressions = ArrayList<ChangedExpression>()
     if (!traverseAndCollectChanges(pattern, candidate, changedExpressions)) return null
     return removeInternalReferences(Duplicate(pattern, candidate, changedExpressions))
@@ -122,7 +123,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
   /**
    * Does recursive equivalence check for [pattern] and [candidate] nodes.
    * Puts parametrized expressions into [changedExpressions] list.
-   * @return false if are [pattern] and [candidate] are not parametrized duplicates.
+   * @return false if [pattern] and [candidate] are not parametrized duplicates.
    */
   private fun traverseAndCollectChanges(pattern: List<PsiElement>,
                                         candidate: List<PsiElement>,
