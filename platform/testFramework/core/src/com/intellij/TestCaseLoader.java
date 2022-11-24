@@ -273,7 +273,7 @@ public class TestCaseLoader {
     System.out.printf("Finishing warmup initialization. Found %s classes%n", testCaseClasses.size());
 
     if (testCaseClasses.isEmpty()) {
-      throw new IllegalStateException("Fair bucketing or Nastradamus is enabled, but 0 test classes were found for warmup");
+      System.err.println("Fair bucketing or Nastradamus is enabled, but 0 test classes were found for warmup");
     }
 
     return testCaseClasses;
