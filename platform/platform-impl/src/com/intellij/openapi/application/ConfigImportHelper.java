@@ -60,7 +60,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -968,13 +967,9 @@ public final class ConfigImportHelper {
   private static void downloadUpdatesForIncompatiblePlugins(@NotNull Path newPluginsDir,
                                                             @NotNull ConfigImportOptions options,
                                                             @NotNull List<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    Consumer<? super ProgressIndicator> indicatorConsumer = indicator -> {
-      downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, indicator);
-    };
-
     if (options.headless) {
       PluginDownloader.runSynchronouslyInBackground(() -> {
-        indicatorConsumer.accept(new EmptyProgressIndicator());
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, new EmptyProgressIndicator());
       });
     }
     else {
@@ -986,7 +981,7 @@ public final class ConfigImportHelper {
 
       SplashManager.executeWithHiddenSplash(dialog, () -> {
         PluginDownloader.runSynchronouslyInBackground(() -> {
-          indicatorConsumer.accept(dialog.getIndicator());
+          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
           SwingUtilities.invokeLater(() -> dialog.setVisible(false));
         });
         dialog.setVisible(true);
