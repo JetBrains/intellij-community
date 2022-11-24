@@ -13,6 +13,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @JvmDefaultWithCompatibility
+@Deprecated("Use Kotlin UI DSL Version 2")
 interface BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
