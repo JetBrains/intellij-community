@@ -320,8 +320,6 @@ Includes the following features:</p>
     <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceDownloadLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="HTML"
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
@@ -457,11 +455,6 @@ Includes the following features:</p>
 
     <fenceLanguageProvider id="DefaultMermaidCodeFenceLanguageProvider"
                            implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
-    <browserPreviewExtensionProvider id="DefaultMermaidBrowserExtensionProvider"
-                                     implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
-    <!--suppress PluginXmlValidity -->
-    <fenceGeneratingProvider id="DefaultMermaidCodeGeneratingProviderExtension"
-                             implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
 
