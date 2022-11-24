@@ -26,12 +26,12 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 
-internal fun showHint(dataContext: DataContext, cs: CoroutineScope, project: Project, panel: NewNavBarPanel) {
+internal fun CoroutineScope.showHint(dataContext: DataContext, project: Project, panel: NewNavBarPanel) {
   val wrappedPanel = wrapNavbarPanel(panel)
-  val hint = createHint(cs, wrappedPanel)
+  val hint = createHint(wrappedPanel)
   panel.onSizeChange = Runnable { hint.size = wrappedPanel.preferredSize }
 
-  cs.awaitCancellation {
+  awaitCancellation {
     hint.hide()
   }
 
@@ -82,7 +82,7 @@ private fun wrapNavbarPanel(panel: NewNavBarPanel): JPanel =
     }
   }
 
-private fun createHint(cs: CoroutineScope, contents: JPanel): LightweightHint =
+private fun CoroutineScope.createHint(contents: JPanel): LightweightHint =
   object : LightweightHint(contents) {
     init {
       setForceShowAsPopup(true)
@@ -90,7 +90,7 @@ private fun createHint(cs: CoroutineScope, contents: JPanel): LightweightHint =
     }
     override fun hide() {
       super.hide()
-      cs.cancel(null)
+      cancel(null)
     }
   }
 

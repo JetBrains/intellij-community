@@ -85,7 +85,7 @@ internal class NavBarService(private val project: Project) : Disposable {
           // wait while panel will fill itself with item components
           yield()
         }
-        showHint(dataContext, barScope, project, component)
+        showHint(dataContext, project, component)
         vm.selectTail()
         vm.showPopup()
       }
