@@ -83,7 +83,7 @@ val downloadMermaidArtifact by tasks.creating(type = Download::class) {
 val copyMermaidArtifactToResources by tasks.creating(type = Copy::class) {
   dependsOn(downloadMermaidArtifact)
   from(mermaidArtifactPath)
-  destinationDir = buildDir.resolve("resources/main/com/intellij/mermaid/jcef")
+  destinationDir = buildDir.resolve("resources/main/com/intellij/mermaid/markdown/jcef")
   to(mermaidArtifactName)
 }
 

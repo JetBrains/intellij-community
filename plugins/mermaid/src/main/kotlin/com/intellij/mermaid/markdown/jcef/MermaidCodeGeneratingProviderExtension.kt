@@ -1,4 +1,4 @@
-package com.intellij.mermaid.jcef
+package com.intellij.mermaid.markdown.jcef
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.io.FileUtil

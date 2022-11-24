@@ -1,4 +1,4 @@
-package com.intellij.mermaid.jcef
+package com.intellij.mermaid.markdown.jcef
 
 import com.intellij.openapi.util.Disposer
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
@@ -6,11 +6,12 @@ import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
-@Suppress("UnstableApiUsage")
 class MermaidBrowserExtension(panel: MarkdownHtmlPanel) : MarkdownBrowserPreviewExtension, ResourceProvider {
   init {
+    @Suppress("UnstableApiUsage")
     panel.browserPipe?.subscribe(storeFileEventName, ::storeFileEvent)
     Disposer.register(this) {
+      @Suppress("UnstableApiUsage")
       panel.browserPipe?.removeSubscription(storeFileEventName, ::storeFileEvent)
     }
   }
@@ -61,6 +62,7 @@ class MermaidBrowserExtension(panel: MarkdownHtmlPanel) : MarkdownBrowserPreview
     private const val THEME_DEFINITION_FILENAME = "mermaid/themeDefinition.js"
     private const val storeFileEventName = "storeMermaidFile"
 
+    @Suppress("UnstableApiUsage")
     private val generatingProvider
       get() = MarkdownExtensionsUtil.findCodeFenceGeneratingProvider<MermaidCodeGeneratingProviderExtension>()
   }

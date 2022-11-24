@@ -1,4 +1,4 @@
-package com.intellij.mermaid.jcef
+package com.intellij.mermaid.markdown
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
