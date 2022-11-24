@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
+//import org.jetbrains.plugins.gradle.service.resolve.static.getStaticallyHandledExtensions
 import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.IProperty
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -12,6 +13,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleExtensionsData
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
@@ -34,12 +36,12 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
     val name = processor.getName(state)
 
     val resolvedProperties = processPropertiesFromFile(aClass, processor, place, state)
-
+    val versionCatalogProperties = processPropertiesFromCatalog(name, place, processor, state) ?: return
 
     val properties = if (name == null) data.findAllProperties() else listOfNotNull(data.findProperty(name))
 
     for (property in properties) {
-      if (property.name in resolvedProperties) {
+      if (property.name in resolvedProperties || property.name in versionCatalogProperties) {
         continue
       }
       if (!processor.execute(GradleGroovyProperty(property.name, property.typeFqn, property.value, file), state)) {
@@ -91,6 +93,25 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
       return newProperty
     }
 
+
+    class StaticVersionCatalogProperty(place: PsiElement, name: String, val clazz: PsiClass) : GroovyPropertyBase(name, place) {
+      override fun getPropertyType(): PsiType {
+        return PsiElementFactory.getInstance(project).createType(clazz, PsiSubstitutor.EMPTY)
+      }
+    }
+
+    fun processPropertiesFromCatalog(name: String?, place: PsiElement, processor: PsiScopeProcessor, state: ResolveState) : Set<String>? {
+      val staticExtensions = getGradleStaticallyHandledExtensions(place.project)
+      val names = if (name == null) staticExtensions else listOf(name).filter { it in staticExtensions }
+      val properties = mutableSetOf<String>()
+      for (extName in names) {
+        val accessor = getVersionCatalogAccessor(place, extName) ?: continue
+        if (!processor.execute(StaticVersionCatalogProperty(place, extName, accessor), state)) {
+          return null
+        }
+      }
+      return properties
+    }
 
     fun getExtensionsFor(psiElement: PsiElement): GradleExtensionsData? {
       val project = psiElement.project

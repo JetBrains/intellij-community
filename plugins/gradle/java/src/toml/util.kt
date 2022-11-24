@@ -13,7 +13,7 @@ import com.intellij.util.containers.tail
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
+import org.jetbrains.plugins.gradle.util.*
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.name
 
@@ -101,26 +101,6 @@ private class TomlVersionCatalogVisitor(containingClasses: List<PsiClass>, val t
   }
 }
 
-internal fun getCapitalizedAccessorName(method: PsiMethod): String? {
-  val propertyName = GroovyPropertyUtils.getPropertyName(method) ?: return null
-  val methodFinalPart = GroovyPropertyUtils.capitalize(propertyName)
-  val methodParts = method.containingClass?.takeUnless { it.name?.startsWith(
-    LIBRARIES_FOR_PREFIX) == true }?.name?.trimAccessorName()
-  return (methodParts ?: "") + methodFinalPart
-}
-
-
-private fun String.trimAccessorName(): String {
-  for (suffix in listOf(BUNDLE_ACCESSORS_SUFFIX,
-                        LIBRARY_ACCESSORS_SUFFIX,
-                        PLUGIN_ACCESSORS_SUFFIX,
-                        VERSION_ACCESSORS_SUFFIX)) {
-    if (endsWith(suffix)) return substringBeforeLast(suffix)
-  }
-  return this
-}
-
-
 private enum class TomlHeaderKind {
   VERSIONS,
   BUNDLES,
@@ -156,11 +136,3 @@ private const val TOML_TABLE_PLUGINS = "plugins"
 private const val METHOD_GET_PLUGINS = "getPlugins"
 private const val METHOD_GET_VERSIONS = "getVersions"
 private const val METHOD_GET_BUNDLES = "getBundles"
-
-
-internal const val BUNDLE_ACCESSORS_SUFFIX = "BundleAccessors"
-internal const val LIBRARY_ACCESSORS_SUFFIX = "LibraryAccessors"
-internal const val PLUGIN_ACCESSORS_SUFFIX = "PluginAccessors"
-internal const val VERSION_ACCESSORS_SUFFIX = "VersionAccessors"
-
-internal const val LIBRARIES_FOR_PREFIX = "LibrariesFor"
