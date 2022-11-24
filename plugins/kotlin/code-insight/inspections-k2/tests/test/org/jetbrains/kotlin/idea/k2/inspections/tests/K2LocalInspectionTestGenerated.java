@@ -1575,6 +1575,69 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode")
+    public static class EqualsOrHashCode extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equals.kt");
+        }
+
+        @TestMetadata("equalsInExpectClass.kt")
+        public void testEqualsInExpectClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsInExpectClass.kt");
+        }
+
+        @TestMetadata("equalsWithKotlinAnyParam.kt")
+        public void testEqualsWithKotlinAnyParam() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinAnyParam.kt");
+        }
+
+        @TestMetadata("equalsWithKotlinAnyParam2.kt")
+        public void testEqualsWithKotlinAnyParam2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinAnyParam2.kt");
+        }
+
+        @TestMetadata("equalsWithKotlinBoolean.kt")
+        public void testEqualsWithKotlinBoolean() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinBoolean.kt");
+        }
+
+        @TestMetadata("hashCode.kt")
+        public void testHashCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/hashCode.kt");
+        }
+
+        @TestMetadata("hashCodeInChildClass.kt")
+        public void testHashCodeInChildClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/hashCodeInChildClass.kt");
+        }
+
+        @TestMetadata("hashCodeInExpectClass.kt")
+        public void testHashCodeInExpectClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/hashCodeInExpectClass.kt");
+        }
+
+        @TestMetadata("inheritClassWithTypeParam.kt")
+        public void testInheritClassWithTypeParam() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/inheritClassWithTypeParam.kt");
+        }
+
+        @TestMetadata("inheritUserDefinedClassAny.kt")
+        public void testInheritUserDefinedClassAny() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/inheritUserDefinedClassAny.kt");
+        }
+
+        @TestMetadata("superClassWithDifferentEquals.kt")
+        public void testSuperClassWithDifferentEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/superClassWithDifferentEquals.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
