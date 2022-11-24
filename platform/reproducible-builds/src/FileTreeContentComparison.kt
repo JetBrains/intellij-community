@@ -37,7 +37,8 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     class ProcessCallResult(val exitCode: Int, val stdOut: String)
 
     private fun isAvailable(vararg command: String): Boolean = try {
-      process(*command, ignoreExitCode = true).exitCode == 0
+      process(*command, ignoreExitCode = true)
+      true
     }
     catch (e: IOException) {
       System.err.println("${command.first()} is not available: ${e.message}")
@@ -148,7 +149,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
         }
         else {
           println("unsquashfs should be installed to compare content of .snap, skipping")
-          null
+          compareChecksum(relativeFilePath, path1, path2)
         }
       }
       else -> compareChecksum(relativeFilePath, path1, path2)
