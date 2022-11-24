@@ -145,7 +145,8 @@ private suspend fun waitForBuilders(project: Project, rebuild: Boolean, builders
           launch {
             try {
               ConsoleLog.info("Starting builder $builder for id ${builder.getBuilderId()}")
-              builder.buildProject(rebuild)
+              val status = builder.buildProject(rebuild)
+              ConsoleLog.info("Builder $builder finished with status: $status")
             }
             catch (e: CancellationException) {
               throw e

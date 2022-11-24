@@ -8,10 +8,10 @@ import org.jetbrains.concurrency.asDeferred
 internal class PlatformBuildWarmupSupport(val project: Project) : ProjectBuildWarmupSupport {
   override fun getBuilderId() = "PLATFORM"
 
-  override suspend fun buildProject(rebuild: Boolean) {
-    println("Starting platform build with ProjectTaskManager")
+  override suspend fun buildProject(rebuild: Boolean): String {
     val projectTaskManager = ProjectTaskManager.getInstance(project)
+
     val result = (if (rebuild) projectTaskManager.rebuildAllModules() else projectTaskManager.buildAllModules()).asDeferred().await()
-    println("Platform build has finished: hasErrors=${result?.hasErrors()}, isAborted=${result?.isAborted}")
+    return "Platform build has finished: hasErrors=${result?.hasErrors()}, isAborted=${result?.isAborted}"
   }
 }
