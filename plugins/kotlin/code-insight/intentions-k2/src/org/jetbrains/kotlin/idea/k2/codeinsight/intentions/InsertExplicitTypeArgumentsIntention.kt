@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.types.Variance
 
 class InsertExplicitTypeArgumentsIntention :
     AbstractKotlinApplicableIntentionWithContext<KtCallExpression, String>(KtCallExpression::class) {
@@ -36,7 +37,7 @@ class InsertExplicitTypeArgumentsIntention :
             for (symbol in typeParameterSymbols) {
                 val type = resolvedCall.typeArgumentsMapping[symbol]
                 if (type == null || type.containsErrorType() || !type.isDenotable) return null
-                add(type.render())
+                add(type.render(position = Variance.OUT_VARIANCE))
             }
         }
 
@@ -54,13 +55,14 @@ class InsertExplicitTypeArgumentsIntention :
 context(KtAnalysisSession)
 private fun KtType.containsErrorType(): Boolean = when (this) {
     is KtClassErrorType -> true
+    is KtTypeErrorType -> true
     is KtFunctionalType -> {
         (receiverType?.containsErrorType() == true)
                 || returnType.containsErrorType()
                 || parameterTypes.any { it.containsErrorType() }
-                || typeArguments.any { it.type?.containsErrorType() == true }
+                || ownTypeArguments.any { it.type?.containsErrorType() == true }
     }
-    is KtNonErrorClassType -> typeArguments.any { it.type?.containsErrorType() == true }
+    is KtNonErrorClassType -> ownTypeArguments.any { it.type?.containsErrorType() == true }
     is KtDefinitelyNotNullType -> original.containsErrorType()
     is KtFlexibleType -> lowerBound.containsErrorType() || upperBound.containsErrorType()
     is KtIntersectionType -> conjuncts.any { it.containsErrorType() }

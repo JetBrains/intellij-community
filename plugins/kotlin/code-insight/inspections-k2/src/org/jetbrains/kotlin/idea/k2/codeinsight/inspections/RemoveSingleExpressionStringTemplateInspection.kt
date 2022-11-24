@@ -41,14 +41,12 @@ internal class RemoveSingleExpressionStringTemplateInspection :
         // e.g., it may be reparsed and recreated and old reference will become stale and invalid.
         val expression = element.singleExpressionOrNull() ?: return
 
-            val newElement = if (context.isString) {
-                expression
-            } else {
-                KtPsiFactory(stringTemplateExpression.project).createExpressionByPattern(
-                    pattern = "$0.$1()", expression, "toString"
-                )
-            }
-            stringTemplateExpression.replace(newElement)
+        val newElement = if (context.isString) {
+            expression
+        } else {
+            KtPsiFactory(project).createExpressionByPattern(
+                pattern = "$0.$1()", expression, "toString"
+            )
         }
         element.replace(newElement)
     }

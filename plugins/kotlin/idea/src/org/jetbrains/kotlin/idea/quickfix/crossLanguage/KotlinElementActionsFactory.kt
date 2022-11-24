@@ -482,7 +482,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         private fun doChangeType(target: KtCallableDeclaration) {
             val oldType = target.typeReference
             val typeName = primitiveTypeMapping.getOrDefault(request.qualifiedName, request.qualifiedName ?: target.typeName() ?: return)
-            val psiFactory = KtPsiFactory(project)
+            val psiFactory = KtPsiFactory(target.project)
             val annotations = request.annotations.joinToString(" ") { "@${renderAnnotation(target, it, psiFactory)}" }
             val newType = psiFactory.createType("$annotations $typeName".trim())
             target.typeReference = newType
