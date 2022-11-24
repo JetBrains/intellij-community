@@ -182,7 +182,7 @@ data class JdkItem(
 
 enum class JdkPackageType(@NonNls val type: String) {
   ZIP("zip") {
-    override fun openDecompressor(archiveFile: Path): Decompressor = Decompressor.Zip(archiveFile).withZipExtensionsIfUnix()
+    override fun openDecompressor(archiveFile: Path): Decompressor = Decompressor.Zip(archiveFile).withZipExtensions()
   },
 
   @Suppress("SpellCheckingInspection")
