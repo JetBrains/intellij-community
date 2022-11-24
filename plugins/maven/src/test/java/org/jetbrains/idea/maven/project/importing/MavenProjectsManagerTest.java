@@ -1369,7 +1369,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   private void scheduleProjectImportAndWait() {
     assertTrue(hasProjectsToBeImported()); // otherwise all imports will be skip
-    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh(false);
+    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
     resolveDependenciesAndImport();
     assertFalse(hasProjectsToBeImported()); // otherwise project settings was modified while importing
   }
@@ -1381,7 +1381,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
    * problem in MavenProjectsAware#collectSettingsFiles() / yieldAll(projectsTree.projectsFiles.map { it.path })
    */
   private void scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
-    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh(false);
+    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
     resolveDependenciesAndImport();
   }
 }

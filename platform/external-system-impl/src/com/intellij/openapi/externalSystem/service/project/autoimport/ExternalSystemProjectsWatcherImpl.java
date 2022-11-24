@@ -48,7 +48,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
       for (Contributor contributor : EP_NAME.getExtensions()) {
         contributor.markDirtyAllExternalProjects(project);
       }
-      projectTracker.scheduleProjectRefresh(false);
+      projectTracker.scheduleProjectRefresh();
     }, project.getDisposed());
   }
 
@@ -64,7 +64,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
       for (Contributor contributor : EP_NAME.getExtensions()) {
         contributor.markDirty(module);
       }
-      projectTracker.scheduleProjectRefresh(false);
+      projectTracker.scheduleProjectRefresh();
     }, module.getDisposed());
   }
 
@@ -79,7 +79,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
       for (Contributor contributor : EP_NAME.getExtensions()) {
         contributor.markDirty(projectPath);
       }
-      projectTracker.scheduleProjectRefresh(false);
+      projectTracker.scheduleProjectRefresh();
     }, project.getDisposed());
   }
 
