@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.winp.Main;
@@ -59,7 +60,13 @@ final class UpdatePluginsApp implements ApplicationStarter {
     log("Plugins to update:");
     availableUpdates.forEach(d -> log("\t" + d.getPluginName()));
 
-    if (UpdateInstaller.installPluginUpdates(availableUpdates, new EmptyProgressIndicator())) {
+    Collection<PluginDownloader> pluginsToUpdate = availableUpdates;
+    Ref<Boolean> installed = Ref.create();
+    PluginDownloader.runSynchronouslyInBackground(() -> {
+      installed.set(UpdateInstaller.installPluginUpdates(pluginsToUpdate, new EmptyProgressIndicator()));
+    });
+
+    if (installed.get()) {
       System.exit(0);
     }
     else {

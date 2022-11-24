@@ -4,7 +4,6 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
@@ -104,23 +103,8 @@ internal object UpdateInstaller {
   }
 
   @JvmStatic
-  fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
-    val application = ApplicationManager.getApplication()
-    if (application != null && !application.isHeadlessEnvironment) {
-      application.assertIsNonDispatchThread()
-      return downloadAndInstall(downloaders, indicator)
-    }
-    else {
-      var installed = false
-      PluginDownloader.runSynchronouslyInBackground {
-        installed = downloadAndInstall(downloaders, indicator)
-      }
-      return installed
-    }
-  }
-
   @RequiresBackgroundThread
-  private fun downloadAndInstall(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
+  fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
     val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
     if (downloadedPluginUpdates.isEmpty()) {
       return false
