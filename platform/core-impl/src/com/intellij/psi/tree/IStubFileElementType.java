@@ -59,6 +59,11 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
     return new DefaultStubBuilder();
   }
 
+  /**
+   * Can only depend on getLanguage() or getDebugName(), should be calculated inplace.
+   * MUST NOT be calculated from any other non-static local variables as it can lead to race-conditions
+   * (<a href="https://youtrack.jetbrains.com/issue/IDEA-306646">IDEA-306646</a>).
+   */
   @NonNls
   @NotNull
   @Override
