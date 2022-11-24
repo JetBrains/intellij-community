@@ -356,13 +356,5 @@ class AutoImportProjectTracker(
     fun enableAsyncAutoReloadInTests(parentDisposable: Disposable) {
       asyncChangesProcessingProperty.set(true, parentDisposable)
     }
-
-    private fun <T> ObservableMutableProperty<T>.set(value: T, parentDisposable: Disposable) {
-      val oldValue = get()
-      set(value)
-      parentDisposable.whenDisposed {
-        set(oldValue)
-      }
-    }
   }
 }
