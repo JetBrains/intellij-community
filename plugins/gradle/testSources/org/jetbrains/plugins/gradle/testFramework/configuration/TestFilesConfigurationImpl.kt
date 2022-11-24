@@ -8,6 +8,7 @@ import java.util.HashMap
 
 open class TestFilesConfigurationImpl : TestFilesConfiguration {
 
+  private val directories = HashSet<String>()
   private val files = HashMap<String, String>()
   private val builders = ArrayList<(VirtualFile) -> Unit>()
 
@@ -17,6 +18,10 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
 
   override fun getFile(relativePath: String): String {
     return requireNotNull(findFile(relativePath)) { "Cannot find file $relativePath" }
+  }
+
+  override fun withDirectory(relativePath: String) {
+    directories.add(relativePath)
   }
 
   override fun withFile(relativePath: String, content: String) {
@@ -29,18 +34,18 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
 
   override fun areContentsEqual(root: VirtualFile): Boolean {
     for ((path, expectedContent) in files) {
-      val content = loadText(root, path)
+      val file = root.findFile(path) ?: return false
+      val content = file.loadText()
       if (expectedContent != content) {
         return false
       }
     }
-    return true
-  }
-
-  private fun loadText(root: VirtualFile, relativePath: String): String? {
-    return runReadAction {
-      root.findFile(relativePath)?.loadText()
+    for (path in directories) {
+      if (root.findDirectory(path) == null) {
+        return false
+      }
     }
+    return true
   }
 
   override fun createFiles(root: VirtualFile) {
@@ -48,6 +53,9 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
       for ((path, content) in files) {
         val file = root.createFile(path)
         file.text = content
+      }
+      for (path in directories) {
+        root.createDirectory(path)
       }
     }
     builders.forEach { it(root) }

@@ -49,10 +49,10 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testGradleGroovyImplicitUsages(gradleVersion: GradleVersion) {
-    test(gradleVersion, BUILDSRC_FIXTURE) {
+    test(gradleVersion, BUILD_SRC_FIXTURE) {
       fixture.enableInspections(GroovyUnusedDeclarationInspection(), UnusedDeclarationInspectionBase(true))
-      testHighlighting("buildSrc/src/main/groovy/org/buildsrc/GrTask.groovy", """
-        |package org.buildsrc
+      testHighlighting("buildSrc/src/main/groovy/org/example/GrTask.groovy", """
+        |package org.example
         |
         |import org.gradle.api.DefaultTask
         |import org.gradle.api.tasks.Classpath
@@ -93,10 +93,10 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testGradleJavaImplicitUsages(gradleVersion: GradleVersion) {
-    test(gradleVersion, BUILDSRC_FIXTURE) {
+    test(gradleVersion, BUILD_SRC_FIXTURE) {
       fixture.enableInspections(GroovyUnusedDeclarationInspection(), UnusedDeclarationInspectionBase(true))
-      testHighlighting("buildSrc/src/main/java/org/buildsrc/JavaTask.java", """
-        |package org.buildsrc;
+      testHighlighting("buildSrc/src/main/java/org/example/JavaTask.java", """
+        |package org.example;
         |
         |import org.gradle.api.DefaultTask;
         |import org.gradle.api.tasks.*;
@@ -193,11 +193,12 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       }
     }
 
-    private val BUILDSRC_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc") {
+    private val BUILD_SRC_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc") {
       withSettingsFile {
         setProjectName("GradleHighlightingTest-buildSrc")
       }
-      withFile("buildSrc/src/main/groovy/Dummy.groovy", "")
+      withDirectory("buildSrc/src/main/groovy")
+      withDirectory("buildSrc/src/main/java")
     }
   }
 }
