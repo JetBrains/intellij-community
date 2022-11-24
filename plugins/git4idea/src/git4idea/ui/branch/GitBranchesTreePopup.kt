@@ -552,6 +552,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   override fun onSpeedSearchPatternChanged() {
+    val currentPrefix = speedSearch.enteredPrefix
+    if (currentPrefix?.endsWith(" ") == true) {
+      speedSearch.updatePattern(currentPrefix.trimEnd())
+      return
+    }
+
     with(uiScope(this)) {
       launch {
         searchPatternStateFlow.emit(speedSearch.enteredPrefix.nullize(true))
