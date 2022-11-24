@@ -4,9 +4,7 @@ package org.intellij.plugins.markdown.extensions.jcef.mermaid
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.lang.Language
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
 
@@ -25,18 +23,16 @@ internal class MermaidCodeFenceLanguageProvider: CodeFenceLanguageProvider {
     if (isMermaidPluginInstalled()) {
       return emptyList()
     }
+    val project = parameters.originalFile.project
     val language = obtainMermaidLanguage()
-    val lookupElement = LookupElementBuilder.create(MERMAID).withIcon(language.associatedFileType?.icon)
+    val lookupElement = LookupElementBuilder.create(MERMAID)
+      .withIcon(language.associatedFileType?.icon)
+      .withInsertHandler { _, _ -> advertiseMermaidPlugin(project) }
     return listOf(lookupElement)
   }
 
   companion object {
     private const val MERMAID = "mermaid"
-
-    private fun isMermaidPluginInstalled(): Boolean {
-      val mermaidId = PluginId.findId("com.intellij.mermaid") ?: return false
-      return PluginManager.isPluginInstalled(mermaidId)
-    }
 
     internal fun isMermaidInfoString(infoString: String): Boolean {
       return infoString == MERMAID
