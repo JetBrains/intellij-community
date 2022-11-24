@@ -105,15 +105,13 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
   public void testUnderscore() {
     String summary = "foo_bar";
     TaskManager.getManager(getProject()).activateTask(new LocalTaskImpl("", summary), false);
-    TestActionEvent event = new TestActionEvent();
-    event.IsFromActionToolbar = true;
+    AnActionEvent event = TestActionEvent.createTestToolbarEvent(null);
     new SwitchTaskAction().update(event);
     assertEquals(summary, event.getPresentation().getText());
   }
 
   private static Presentation doTest(AnAction action, ActionToolbarImpl toolbar) {
-    TestActionEvent event = new TestActionEvent(toolbar.getPresentation(action));
-    event.IsFromActionToolbar = true;
+    AnActionEvent event = TestActionEvent.createTestToolbarEvent(toolbar.getPresentation(action));
     action.update(event);
     return event.getPresentation();
   }
