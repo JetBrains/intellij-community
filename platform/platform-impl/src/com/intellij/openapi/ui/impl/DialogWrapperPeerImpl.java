@@ -30,8 +30,6 @@ import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -734,12 +732,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       DialogWrapper wrapper = myDialogWrapper == null ? null : myDialogWrapper.get();
       if (wrapper != null) {
         wrapper.beforeShowCallback();
-      }
-
-      // Workaround for switching workspaces on dialog show
-      if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing", false) && !dialogWrapper.isModalProgress()) {
-        final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject.get());
-        AppIcon.getInstance().requestFocus(frame);
       }
 
       if (!SystemInfo.isMac || !WindowRoundedCornersManager.isAvailable()) {
