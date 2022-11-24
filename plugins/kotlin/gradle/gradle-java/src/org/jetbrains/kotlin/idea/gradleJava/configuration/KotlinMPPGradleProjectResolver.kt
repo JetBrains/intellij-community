@@ -127,7 +127,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 val projectManager = ProjectManager.getInstance()
                 val project = projectManager.openProjects.firstOrNull { it.basePath == resolverCtx.projectPath }
                 if (project != null) {
-                    mppModel.kotlinGradlePluginVersion?.let { version ->
+                    KotlinPluginLayout.instance.standaloneCompilerVersion.let { version ->
                         showDeprecatedKotlinJsCompilerWarning(
                             project,
                             version,
@@ -627,9 +627,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
         fun showDeprecatedKotlinJsCompilerWarning(
             project: Project,
-            kotlinGradlePluginVersion: KotlinGradlePluginVersion,
+            kotlinPluginVersion: IdeKotlinVersion,
         ) {
-            kotlinGradlePluginVersion.invokeWhenAtLeast("1.7.0") {
+            if (kotlinPluginVersion.kotlinVersion.isAtLeast(1, 7, 0)) {
                 if (
                     !PropertiesComponent.getInstance(project).getBoolean(IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION, false)
                 ) {
