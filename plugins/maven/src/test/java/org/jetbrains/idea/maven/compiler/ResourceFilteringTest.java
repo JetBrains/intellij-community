@@ -337,7 +337,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                   "      <filtering>true</filtering>" +
                   "    </resource>" +
                   "  </resources>" +
-                  "" +
                   "    <plugins>" +
                   "      <plugin>" +
                   "        <artifactId>maven-resources-plugin</artifactId>" +
@@ -1029,8 +1028,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "" +
-
                   "<build>" +
                   "  <resources>" +
                   "    <resource>" +
@@ -1057,8 +1054,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "" +
-
                   "<build>" +
                   "  <resources>" +
                   "    <resource>" +
@@ -1086,8 +1081,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "" +
-
                   "<build>" +
                   "  <resources>" +
                   "    <resource>" +
@@ -1112,8 +1105,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "" +
-
                   "<build>" +
                   "  <resources>" +
                   "    <resource>" +
@@ -1141,8 +1132,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "" +
-
                   "<build>" +
                   "  <resources>" +
                   "    <resource>" +
@@ -1152,7 +1141,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                   "      <directory>resources2</directory>" +
                   "    </resource>" +
                   "  </resources>" +
-                  "" +
                   "  <plugins>" +
                   "    <plugin>" +
                   "      <artifactId>maven-resources-plugin</artifactId>" +
@@ -1177,8 +1165,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "" +
-
                   "<build>" +
                   "  <resources>" +
                   "    <resource>" +
@@ -1189,7 +1175,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                   "      <directory>resources2</directory>" +
                   "    </resource>" +
                   "  </resources>" +
-                  "" +
                   "  <plugins>" +
                   "    <plugin>" +
                   "      <artifactId>maven-resources-plugin</artifactId>" +

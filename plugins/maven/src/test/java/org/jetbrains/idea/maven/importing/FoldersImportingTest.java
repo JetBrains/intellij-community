@@ -1845,7 +1845,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                                               "                     ${project.basedir}/../AA/src/test/resources" +
                                               "                </directory>" +
                                               "            </testResource>" +
-                                              "" +
                                               "        </testResources>" +
                                               "    </build>"
     );

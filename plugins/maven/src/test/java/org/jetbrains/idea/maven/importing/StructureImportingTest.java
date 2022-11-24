@@ -874,12 +874,10 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-
                   "<properties>" +
                   "  <maven.compiler.release>8</maven.compiler.release>" +
                   "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
                   "</properties>" +
-                  "" +
                   " <build>\n" +
                   "  <plugins>" +
                   "    <plugin>" +

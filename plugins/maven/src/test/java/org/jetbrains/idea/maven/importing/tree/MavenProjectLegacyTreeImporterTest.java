@@ -196,7 +196,6 @@ public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImporti
                   "  <maven.compiler.release>8</maven.compiler.release>" +
                   "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
                   "</properties>" +
-                  "" +
                   " <build>\n" +
                   "  <plugins>" +
                   "    <plugin>" +

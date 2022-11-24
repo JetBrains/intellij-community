@@ -65,9 +65,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
                      "<modules>" +
                      "  <module>" +
-                     "" +
                      "  m" +
-                     "" +
                      "  </module>" +
                      "</modules>");
 
@@ -1072,13 +1070,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
-                     "" +
                      "<parent>" +
                      "  <groupId>test</groupId>" +
                      "  <artifactId>child</artifactId>" +
                      "  <version>1</version>" +
                      "</parent>" +
-
                      "<modules>" +
                      " <module>child</module>" +
                      "</modules>");

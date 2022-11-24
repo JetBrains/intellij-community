@@ -185,8 +185,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "            System.out.println(sconf);" +
            "        }" +
            "    }" +
-           "}" +
-           "");
+           "}");
   }
 
   public void testTernary() {

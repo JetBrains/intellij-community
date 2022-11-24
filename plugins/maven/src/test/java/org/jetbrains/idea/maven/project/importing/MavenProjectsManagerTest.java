@@ -308,8 +308,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-                     "");
+                     "<packaging>pom</packaging>");
     scheduleProjectImportAndWait();
 
     assertEquals(2, getProjectsTree().getRootProjects().size());
@@ -1238,7 +1237,6 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                   "  <maven.compiler.release>8</maven.compiler.release>" +
                   "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
                   "</properties>" +
-                  "" +
                   " <build>\n" +
                   "  <plugins>" +
                   "    <plugin>" +

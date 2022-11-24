@@ -355,7 +355,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
                     "<version>1</version>" +
-                    "" +
                     "<build>" +
                     "  <extensions>" +
                     "    <extension>" +
@@ -388,7 +387,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<description>throw!</description>" +
-                     "" +
                      "<build>" +
                      "  <extensions>" +
                      "    <extension>" +
