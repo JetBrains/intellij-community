@@ -45,7 +45,7 @@ class ReconstructTypeInCastOrIsIntention : SelfTargetingOffsetIndependentIntenti
 
     override fun applyTo(element: KtTypeReference, editor: Editor?) {
         val type = getReconstructedType(element)!!
-        val newType = KtPsiFactory(element).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type))
+        val newType = KtPsiFactory(element.project).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type))
         ShortenReferences.DEFAULT.process(element.replaced(newType))
     }
 

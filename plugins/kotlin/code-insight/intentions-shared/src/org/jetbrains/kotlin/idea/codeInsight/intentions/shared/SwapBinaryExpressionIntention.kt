@@ -66,7 +66,7 @@ class SwapBinaryExpressionIntention : SelfTargetingIntention<KtBinaryExpression>
         val leftCopy = left.copied()
         left.replace(rightCopy)
         right.replace(leftCopy)
-        element.replace(KtPsiFactory(element).createExpressionByPattern("$0 $convertedOperator $1", element.left!!, element.right!!))
+        element.replace(KtPsiFactory(element.project).createExpressionByPattern("$0 $convertedOperator $1", element.left!!, element.right!!))
     }
 
     private fun leftSubject(element: KtBinaryExpression): KtExpression? =

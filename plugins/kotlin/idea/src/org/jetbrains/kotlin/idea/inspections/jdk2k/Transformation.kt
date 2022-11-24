@@ -24,7 +24,7 @@ interface Transformation {
 
 object WithoutAdditionalTransformation : Transformation {
     override fun invoke(callExpression: KtCallExpression, replacement: Replacement) {
-        val psiFactory = KtPsiFactory(callExpression)
+        val psiFactory = KtPsiFactory(callExpression.project)
         val calleeLength = callExpression.calleeExpression?.textLength ?: return
         val replaced = callExpression.getQualifiedExpressionForSelectorOrThis().replaced(
             psiFactory.createExpression("${replacement.kotlinFunctionFqName}${callExpression.text.substring(calleeLength)}")
@@ -36,7 +36,7 @@ object WithoutAdditionalTransformation : Transformation {
 object ToExtensionFunctionWithNonNullableReceiver : Transformation {
     override fun invoke(callExpression: KtCallExpression, replacement: Replacement) {
         val file = callExpression.containingKtFile
-        val psiFactory = KtPsiFactory(callExpression)
+        val psiFactory = KtPsiFactory(callExpression.project)
         val valueArguments = callExpression.valueArguments
         val typeArguments = callExpression.typeArgumentList?.text ?: ""
         val receiverText = valueArguments.first().getArgumentExpression()

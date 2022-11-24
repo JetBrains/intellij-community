@@ -123,11 +123,11 @@ fun removeRedundantSetter(setter: KtPropertyAccessor) {
 fun KtExpression.negate(reformat: Boolean = true, isBooleanExpression: (KtExpression) -> Boolean): KtExpression {
     val specialNegation = specialNegation(reformat, isBooleanExpression)
     if (specialNegation != null) return specialNegation
-    return KtPsiFactory(this).createExpressionByPattern(pattern = "!$0", this, reformat = reformat)
+    return KtPsiFactory(project).createExpressionByPattern(pattern = "!$0", this, reformat = reformat)
 }
 
 private fun KtExpression.specialNegation(reformat: Boolean, isBooleanExpression: (KtExpression) -> Boolean): KtExpression? {
-    val factory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
     when (this) {
         is KtPrefixExpression -> {
             if (operationReference.getReferencedName() == "!") {
@@ -145,14 +145,14 @@ private fun KtExpression.specialNegation(reformat: Boolean, isBooleanExpression:
             if (operator !in NEGATABLE_OPERATORS) return null
             val left = left ?: return null
             val right = right ?: return null
-            return factory.createExpressionByPattern(
+            return psiFactory.createExpressionByPattern(
                 "$0 $1 $2", left, getNegatedOperatorText(operator), right,
                 reformat = reformat
             )
         }
 
         is KtIsExpression -> {
-            return factory.createExpressionByPattern(
+            return psiFactory.createExpressionByPattern(
                 "$0 $1 $2",
                 leftHandSide,
                 if (isNegated) "is" else "!is",
@@ -163,8 +163,8 @@ private fun KtExpression.specialNegation(reformat: Boolean, isBooleanExpression:
 
         is KtConstantExpression -> {
             return when (text) {
-                "true" -> factory.createExpression("false")
-                "false" -> factory.createExpression("true")
+                "true" -> psiFactory.createExpression("false")
+                "false" -> psiFactory.createExpression("true")
                 else -> null
             }
         }

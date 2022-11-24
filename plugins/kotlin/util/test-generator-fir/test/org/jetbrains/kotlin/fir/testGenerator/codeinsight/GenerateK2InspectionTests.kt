@@ -35,6 +35,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/liftOut/whenToReturn")
             model("${idea}/inspectionsLocal/inconsistentCommentForJavaParameter")
             model("${idea}/inspectionsLocal/whenWithOnlyElse")
+            model("${idea}/inspectionsLocal/equalsOrHashCode")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
 
@@ -43,6 +44,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspections/enumValuesSoftDeprecateMigration", pattern = pattern)
             model("${idea}/inspections/redundantUnitReturnType", pattern = pattern)
             model("${idea}/inspections/redundantIf", pattern = pattern)
+            model("${idea}/inspections/equalsAndHashCode", pattern = pattern)
             model("${idea}/intentions/convertToStringTemplate", pattern = pattern)
         }
 

@@ -459,7 +459,7 @@ class KotlinPullUpHelper(
             val movedMember: KtCallableDeclaration
             val clashingSuper = fixOverrideAndGetClashingSuper(member, memberCopy)
 
-            val psiFactory = KtPsiFactory(member)
+            val psiFactory = KtPsiFactory(member.project)
 
             val originalIsAbstract = member.hasModifier(KtTokens.ABSTRACT_KEYWORD)
             val toAbstract = when {
@@ -554,7 +554,7 @@ class KotlinPullUpHelper(
     }
 
     override fun moveFieldInitializations(movedFields: LinkedHashSet<PsiField>) {
-        val psiFactory = KtPsiFactory(data.sourceClass)
+        val psiFactory = KtPsiFactory(data.sourceClass.project)
 
         fun KtClassOrObject.getOrCreateClassInitializer(): KtAnonymousInitializer {
             getOrCreateBody().declarations.lastOrNull { it is KtAnonymousInitializer }?.let { return it as KtAnonymousInitializer }

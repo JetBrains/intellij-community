@@ -31,7 +31,7 @@ class KotlinConstructorDelegationCallUsage(
 
         if (changeInfo.getNewParametersCount() == 0 && !isThisCall && !elementToWorkWith.isImplicit) {
             (elementToWorkWith.parent as? KtSecondaryConstructor)?.colon?.delete()
-            elementToWorkWith.replace(KtPsiFactory(element).creareDelegatedSuperTypeEntry(""))
+            elementToWorkWith.replace(KtPsiFactory(element.project).creareDelegatedSuperTypeEntry(""))
         }
 
         return result

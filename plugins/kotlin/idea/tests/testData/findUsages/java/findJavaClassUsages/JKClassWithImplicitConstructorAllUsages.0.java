@@ -12,3 +12,5 @@ public class <caret>A {
 
     }
 }
+
+// FIR_COMPARISON

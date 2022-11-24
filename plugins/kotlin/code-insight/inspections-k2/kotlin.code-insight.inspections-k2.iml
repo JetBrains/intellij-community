@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.facet" />
   </component>
 </module>

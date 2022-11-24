@@ -42,7 +42,7 @@ class CastExpressionFix(element: KtExpression, type: KotlinType) : KotlinQuickFi
 
     public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val expressionToInsert = KtPsiFactory(file).createExpressionByPattern("$0 as $1", element, typeSourceCode)
+        val expressionToInsert = KtPsiFactory(project).createExpressionByPattern("$0 as $1", element, typeSourceCode)
         val newExpression = element.replaced(expressionToInsert)
         ShortenReferences.DEFAULT.process((KtPsiUtil.safeDeparenthesize(newExpression) as KtBinaryExpressionWithTypeRHS).right!!)
         editor?.caretModel?.moveToOffset(newExpression.endOffset)

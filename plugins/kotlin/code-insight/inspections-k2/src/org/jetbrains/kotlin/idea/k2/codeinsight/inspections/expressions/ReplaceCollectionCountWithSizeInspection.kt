@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -41,7 +42,7 @@ internal class ReplaceCollectionCountWithSizeInspection : AbstractKotlinApplicab
     }
 
     override fun apply(element: KtCallExpression, project: Project, editor: Editor?) {
-        element.replace(KtPsiFactory(element).createExpression("size"))
+        element.replace(KtPsiFactory(element.project).createExpression("size"))
     }
 }
 

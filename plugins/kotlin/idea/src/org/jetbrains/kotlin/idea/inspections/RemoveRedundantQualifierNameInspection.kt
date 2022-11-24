@@ -143,7 +143,7 @@ private fun KtDotQualifiedExpression.applicableExpression(
     }
 
     val expressionText = originalExpression.text.substring(lastChild.startOffset - originalExpression.startOffset)
-    val newExpression = KtPsiFactory(originalExpression).createExpressionIfPossible(expressionText) ?: return null
+    val newExpression = KtPsiFactory(project).createExpressionIfPossible(expressionText) ?: return null
     val newContext = newExpression.analyzeAsReplacement(originalExpression, oldContext)
     val newDescriptor = newExpression.selector()?.declarationDescriptor(newContext) ?: return null
 

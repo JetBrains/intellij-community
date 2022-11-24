@@ -83,6 +83,11 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/compilationErrors/ExpectedNestedClassInObject.kt"));
         }
 
+        @TestMetadata("FunctionWithoutName.kt")
+        public void testFunctionWithoutName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/compilationErrors/FunctionWithoutName.kt"));
+        }
+
         @TestMetadata("JvmPackageName.kt")
         public void testJvmPackageName() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/compilationErrors/JvmPackageName.kt"));
@@ -96,6 +101,11 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
         @TestMetadata("PrivateInTrait.kt")
         public void testPrivateInTrait() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/compilationErrors/PrivateInTrait.kt"));
+        }
+
+        @TestMetadata("PropertyWithoutName.kt")
+        public void testPropertyWithoutName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/compilationErrors/PropertyWithoutName.kt"));
         }
 
         @TestMetadata("RepetableAnnotations.kt")

@@ -40,7 +40,7 @@ private class ConvertPairConstructorToToFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val expression = descriptor.psiElement as? KtCallExpression ?: return
         val args = expression.valueArguments.mapNotNull { it.getArgumentExpression() }.toTypedArray()
-        expression.replace(KtPsiFactory(expression).createExpressionByPattern("$0 to $1", *args))
+        expression.replace(KtPsiFactory(project).createExpressionByPattern("$0 to $1", *args))
     }
 }
 

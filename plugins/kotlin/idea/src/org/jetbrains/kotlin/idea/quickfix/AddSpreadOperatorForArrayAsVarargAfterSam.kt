@@ -30,6 +30,6 @@ class AddSpreadOperatorForArrayAsVarargAfterSamFix(element: PsiElement) : Kotlin
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
 
-        element.addBefore(KtPsiFactory(file).createStar(), element.firstChild)
+        element.addBefore(KtPsiFactory(project).createStar(), element.firstChild)
     }
 }

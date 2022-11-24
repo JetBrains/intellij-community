@@ -22,7 +22,7 @@ class ConvertOrdinaryPropertyToLazyIntention : SelfTargetingIntention<KtProperty
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
         val initializer = element.initializer ?: return
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val newExpression = if (initializer is KtCallExpression && initializer.isCalling(FqName("kotlin.run"))) {
             initializer.calleeExpression?.replace(psiFactory.createExpression("lazy"))
             initializer

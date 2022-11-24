@@ -44,7 +44,7 @@ internal class RemoveSingleExpressionStringTemplateInspection :
         val newElement = if (context.isString) {
             expression
         } else {
-            KtPsiFactory(element).createExpressionByPattern(
+            KtPsiFactory(project).createExpressionByPattern(
                 pattern = "$0.$1()", expression, "toString"
             )
         }

@@ -482,7 +482,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         private fun doChangeType(target: KtCallableDeclaration) {
             val oldType = target.typeReference
             val typeName = primitiveTypeMapping.getOrDefault(request.qualifiedName, request.qualifiedName ?: target.typeName() ?: return)
-            val psiFactory = KtPsiFactory(target)
+            val psiFactory = KtPsiFactory(target.project)
             val annotations = request.annotations.joinToString(" ") { "@${renderAnnotation(target, it, psiFactory)}" }
             val newType = psiFactory.createType("$annotations $typeName".trim())
             target.typeReference = newType
@@ -546,7 +546,7 @@ internal fun addAnnotationEntry(
         "${annotationTarget.renderName}:"
     }
 
-    val psiFactory = KtPsiFactory(target)
+    val psiFactory = KtPsiFactory(target.project)
     // could be generated via descriptor when KT-30478 is fixed
     val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(target, request, psiFactory)
     return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))

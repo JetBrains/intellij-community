@@ -149,7 +149,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         ) return null
 
         val targetClass = classDescriptor.source.getPsi() as KtClass
-        val psiFactory = KtPsiFactory(targetClass)
+        val psiFactory = KtPsiFactory(targetClass.project)
 
         val validator = CollectingNameValidator()
 

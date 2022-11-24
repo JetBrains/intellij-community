@@ -37,10 +37,10 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
 
     override fun applyTo(element: KtWhenExpression, editor: Editor?) {
         val commentSaver = CommentSaver(element)
+        val psiFactory = KtPsiFactory(element.project)
 
-        val factory = KtPsiFactory(element)
         val isTrueOrFalseCondition = element.isTrueOrFalseCondition()
-        val ifExpression = factory.buildExpression {
+        val ifExpression = psiFactory.buildExpression {
             val entries = element.entries
             for ((i, entry) in entries.withIndex()) {
                 if (i > 0) {
@@ -50,7 +50,7 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
                 if (entry.isElse || (isTrueOrFalseCondition && i == 1)) {
                     appendExpression(branch)
                 } else {
-                    val condition = factory.combineWhenConditions(entry.conditions, element.subjectExpression)
+                    val condition = psiFactory.combineWhenConditions(entry.conditions, element.subjectExpression)
                     appendFixedText("if (")
                     appendExpression(condition)
                     appendFixedText(")")

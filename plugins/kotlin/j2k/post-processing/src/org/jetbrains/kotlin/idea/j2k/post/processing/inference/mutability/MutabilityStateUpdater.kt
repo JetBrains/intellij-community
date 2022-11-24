@@ -45,9 +45,9 @@ class MutabilityStateUpdater : StateUpdater() {
                 toMutable && initialFqName in immutableToMutable -> immutableToMutable[initialFqName]
                 else -> null
             } ?: return
-            val factory = KtPsiFactory(typeElement)
-            userTypeElement.referenceExpression?.replace(factory.createSimpleName(newFqName.shortName().identifier))
-            userTypeElement.qualifier.safeAs<KtUserType>()?.replace(factory.createType(newFqName.parent().asString()).typeElement ?: return)
+            val psiFactory = KtPsiFactory(typeElement.project)
+            userTypeElement.referenceExpression?.replace(psiFactory.createSimpleName(newFqName.shortName().identifier))
+            userTypeElement.qualifier.safeAs<KtUserType>()?.replace(psiFactory.createType(newFqName.parent().asString()).typeElement ?: return)
         }
 
         val mutableToImmutable = mapOf(

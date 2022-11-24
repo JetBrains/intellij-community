@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.build.events.MessageEvent
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.*
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
@@ -11,6 +13,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizeP
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.toCanonicalPath
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
@@ -29,7 +33,6 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.gradle.configuration.*
@@ -38,13 +41,12 @@ import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetH
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.*
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.getCompilations
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesByCompilations
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.calculateRunTasks
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getGradleModuleQualifiedName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleJava.notification.KOTLIN_JS_COMPILER_SHOULD_BE_NOTIFIED
+import org.jetbrains.kotlin.idea.gradleJava.notification.IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
@@ -54,7 +56,7 @@ import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataPropert
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.tooling.core.Extras
+import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -83,14 +85,11 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
     }
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
-        return setOf(
-            KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java,
-            IdeaKotlinDependency::class.java, Extras::class.java, Unit::class.java
-        )
+        return setOf(KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java, Unit::class.java)
     }
 
     override fun getExtraProjectModelClasses(): Set<Class<out Any>> {
-        return setOf(KotlinMPPGradleModel::class.java, KotlinTarget::class.java, IdeaKotlinDependency::class.java, Extras::class.java)
+        return setOf(KotlinMPPGradleModel::class.java, KotlinTarget::class.java)
     }
 
     override fun getExtraCommandLineArgs(): List<String> =
@@ -119,6 +118,18 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             if (!nativeDebugAdvertised && mppModel.kotlinNativeHome.isNotEmpty() && !SystemInfo.isWindows) {
                 nativeDebugAdvertised = true
                 suggestNativeDebug(resolverCtx.projectPath)
+            }
+            if (mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
+                val projectManager = ProjectManager.getInstance()
+                val project = projectManager.openProjects.firstOrNull { it.basePath == resolverCtx.projectPath }
+                if (project != null) {
+                    mppModel.kotlinGradlePluginVersion?.let { version ->
+                        showDeprecatedKotlinJsCompilerWarning(
+                            project,
+                            version,
+                        )
+                    }
+                }
             }
             if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio && !PlatformUtils.isMobileIde() &&
                 !PlatformUtils.isAppCode()
@@ -609,51 +620,36 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             ideModule.kotlinGradleProjectDataOrFail.pureKotlinSourceFolders.addAll(mppModelPureKotlinSourceFolders)
         }
 
-        @OptIn(KotlinGradlePluginVersionDependentApi::class)
+        fun showDeprecatedKotlinJsCompilerWarning(
+            project: Project,
+            kotlinGradlePluginVersion: KotlinGradlePluginVersion,
+        ) {
+            kotlinGradlePluginVersion.invokeWhenAtLeast("1.7.0") {
+                if (
+                    !PropertiesComponent.getInstance(project).getBoolean(IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION, false)
+                ) {
+                    PropertiesComponent.getInstance(project).setValue(KOTLIN_JS_COMPILER_SHOULD_BE_NOTIFIED, true)
+                }
+            }
+        }
+
+        internal data class CompilationWithDependencies(
+            val compilation: KotlinCompilation,
+            val substitutedDependencies: List<ExternalDependency>
+        ) {
+            private val konanTarget: String?
+                get() = compilation.nativeExtensions?.konanTarget
+
+            val dependencyNames: Map<String, ExternalDependency> by lazy {
+                substitutedDependencies.associateBy { it.name.removeSuffixIfPresent(" | $konanTarget") }
+            }
+        }
+
         fun populateModuleDependencies(
             gradleModule: IdeaModule,
             ideProject: DataNode<ProjectData>,
             ideModule: DataNode<ModuleData>,
             resolverCtx: ProjectResolverContext
-        ) {
-            val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
-            val dependenciesContainer = mppModel.dependencies
-
-            if (dependenciesContainer != null) {
-                populateModuleDependenciesWithDependenciesContainer(gradleModule, ideModule, resolverCtx, mppModel, dependenciesContainer)
-            } else {
-                populateModuleDependenciesWithoutDependenciesContainer(gradleModule, ideProject, ideModule, resolverCtx)
-            }
-        }
-
-        /**
-         *  New Kotlin Gradle Plugin versions will provide this dependencies container
-         */
-        private fun populateModuleDependenciesWithDependenciesContainer(
-            gradleModule: IdeaModule,
-            ideModule: DataNode<ModuleData>,
-            resolverCtx: ProjectResolverContext,
-            mppModel: KotlinMPPGradleModel,
-            dependencies: IdeaKotlinDependenciesContainer
-        ) {
-            mppModel.sourceSetsByName.values.forEach { sourceSet ->
-                val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
-                val sourceSetDataNode = ideModule.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
-                dependencies[sourceSet.name].forEachIndexed { index, dependency ->
-                    sourceSetDataNode.addDependency(dependency)?.data?.setOrder(index)
-                }
-            }
-        }
-
-        /**
-         * Implementation for older Kotlin Gradle plugins that will use
-         * IntelliJ injected code to resolve dependencies
-         */
-        private fun populateModuleDependenciesWithoutDependenciesContainer(
-            gradleModule: IdeaModule,
-            ideProject: DataNode<ProjectData>,
-            ideModule: DataNode<ModuleData>,
-            resolverCtx: ProjectResolverContext,
         ) {
             val context = createKotlinMppPopulateModuleDependenciesContext(
                 gradleModule = gradleModule,
@@ -661,7 +657,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 ideModule = ideModule,
                 resolverCtx = resolverCtx
             ) ?: return
-
             populateModuleDependenciesByCompilations(context)
             populateModuleDependenciesByPlatformPropagation(context)
             populateModuleDependenciesBySourceSetVisibilityGraph(context)

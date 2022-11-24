@@ -42,8 +42,8 @@ class SurroundWithNullCheckFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val nullableExpression = nullableExpressionPointer.element ?: return
-        val factory = KtPsiFactory(element)
-        val surrounded = factory.createExpressionByPattern("if ($0 != null) { $1 }", nullableExpression, element)
+        val psiFactory = KtPsiFactory(project)
+        val surrounded = psiFactory.createExpressionByPattern("if ($0 != null) { $1 }", nullableExpression, element)
         element.replace(surrounded)
     }
 

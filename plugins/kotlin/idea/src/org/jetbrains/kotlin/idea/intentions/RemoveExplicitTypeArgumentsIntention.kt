@@ -197,7 +197,7 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
         element.delete()
 
         if (isBetweenLambdaArguments) {
-            prevCallExpression?.replace(KtPsiFactory(element).createExpressionByPattern("($0)", prevCallExpression))
+            prevCallExpression?.replace(KtPsiFactory(element.project).createExpressionByPattern("($0)", prevCallExpression))
         }
     }
 }

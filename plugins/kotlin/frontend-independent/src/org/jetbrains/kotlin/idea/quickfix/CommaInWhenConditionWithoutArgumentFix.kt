@@ -46,7 +46,7 @@ class CommaInWhenConditionWithoutArgumentFix(element: KtWhenExpression) : Kotlin
                     val conditionsData = getConditionsDataOrNull(whenEntry) ?: return
                     // Leave branch untouched if there are no valid conditions
                     if (conditionsData.conditions.isEmpty()) continue
-                    val replacement = KtPsiFactory(whenEntry).buildExpression {
+                    val replacement = KtPsiFactory(whenEntry.project).buildExpression {
                         appendExpressions(conditionsData.conditions, separator = "||")
                     }
                     whenEntry.deleteChildRange(conditionsData.first, conditionsData.last)

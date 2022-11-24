@@ -39,7 +39,7 @@ sealed class ConvertLambdaLineIntention(private val toMultiLine: Boolean) : Self
     override fun applyTo(element: KtLambdaExpression, editor: Editor?) {
         val functionLiteral = element.functionLiteral
         val body = functionLiteral.bodyBlockExpression ?: return
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         if (toMultiLine) {
             body.allChildren.forEach {
                 if (it.node.elementType == KtTokens.SEMICOLON) {

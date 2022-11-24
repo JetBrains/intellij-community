@@ -64,7 +64,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
 
             if (data.initializer !is KtParenthesizedExpression
                 && data.initializer.isMultiLine()
-                && createElvisExpression(element, data, KtPsiFactory(element)).left is KtParenthesizedExpression
+                && createElvisExpression(element, data, KtPsiFactory(element.project)).left is KtParenthesizedExpression
             ) return null
 
             val type = data.ifNullExpression.analyze().getType(data.ifNullExpression) ?: return null
@@ -78,7 +78,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
         fun applyTo(element: KtIfExpression): KtBinaryExpression {
             val data = calcData(element)!!
             val (initializer, declaration, _, _) = data
-            val factory = KtPsiFactory(element)
+            val factory = KtPsiFactory(element.project)
 
             val explicitTypeToSet = when {
                 // for var with no explicit type, add it so that the actual change won't change

@@ -137,7 +137,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val valueParameters = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
             if (includeExplicitParameters && valueParameters.isEmpty()) {
                 val expectedType = ktLambdaExpression.getExpectedType() as? KtFunctionalType
-                val lambdaImplicitReceiverType = expectedType?.typeArguments?.get(0)?.type?.asPsiType(
+                val lambdaImplicitReceiverType = expectedType?.ownTypeArguments?.get(0)?.type?.asPsiType(
                     ktLambdaExpression,
                     KtTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
@@ -183,6 +183,22 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {
         return psiElement.annotations
+    }
+
+    override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
+        analyzeForUast(ktExpression) {
+            return ktExpression.collectCallCandidates().asSequence().mapNotNull {
+                when (val candidate = it.candidate) {
+                    is KtFunctionCall<*> -> {
+                        toPsiMethod(candidate.partiallyAppliedSymbol.symbol, ktExpression)
+                    }
+                    is KtCompoundAccessCall -> {
+                        toPsiMethod(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol, ktExpression)
+                    }
+                    else -> null
+                }
+            }
+        }
     }
 
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
@@ -360,7 +376,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                             buildClassType(enumClassId)
                         }
                     else ->
-                        buildClassType(classOrObject.getClassOrObjectSymbol())
+                        classOrObject.getClassOrObjectSymbol()?.let(::buildClassType)
                 } ?: return null
                 val psiClass = toPsiClass(ktType, source = null, classOrObject, classOrObject.typeOwnerKind)
                 return when (classOrObject) {
@@ -419,7 +435,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType? {
         analyzeForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
-            if (ktType is KtClassErrorType) return null
+            if (ktType is KtErrorType) return null
             return toPsiType(ktType, source, ktTypeReference, ktTypeReference.typeOwnerKind, boxed)
         }
     }
@@ -427,7 +443,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
         analyzeForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
-            if (ktType is KtClassErrorType) return null
+            if (ktType is KtErrorType) return null
             return toPsiType(ktType, containingLightDeclaration, ktTypeReference, ktTypeReference.typeOwnerKind)
         }
     }
@@ -482,7 +498,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
+    override fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType? {
+        if (ktFunction is KtConstructor<*>) return null
         analyzeForUast(ktFunction) {
             return toPsiType(ktFunction.getFunctionalType(), source, ktFunction, ktFunction.typeOwnerKind)
         }
@@ -492,7 +509,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val sourcePsi = uLambdaExpression.sourcePsi
         analyzeForUast(sourcePsi) {
             val samType = sourcePsi.getExpectedType()
-                ?.takeIf { it !is KtClassErrorType && it.isFunctionalInterfaceType }
+                ?.takeIf { it !is KtErrorType && it.isFunctionalInterfaceType }
                 ?.lowerBoundIfFlexible()
                 ?: return null
             return toPsiType(samType, uLambdaExpression, sourcePsi, sourcePsi.typeOwnerKind)

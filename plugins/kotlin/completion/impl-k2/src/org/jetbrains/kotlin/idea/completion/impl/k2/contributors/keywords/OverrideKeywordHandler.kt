@@ -21,6 +21,9 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModalityModifierProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
@@ -31,6 +34,7 @@ import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 
 internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext
@@ -75,13 +79,14 @@ internal class OverrideKeywordHandler(
     ): OverridesCompletionLookupElementDecorator {
         val memberSymbol = member.symbol
         check(memberSymbol is KtNamedSymbol)
+        check(classOrObject !is KtEnumEntry)
 
         val text = getSymbolTextForLookupElement(memberSymbol)
         val baseIcon = getIcon(memberSymbol)
         val isImplement = (memberSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         val additionalIcon = if (isImplement) AllIcons.Gutter.ImplementingMethod else AllIcons.Gutter.OverridingMethod
         val icon = RowIcon(baseIcon, additionalIcon)
-        val baseClass = classOrObject.getClassOrObjectSymbol()
+        val baseClass = classOrObject.getClassOrObjectSymbol()!!
         val baseClassIcon = getIcon(baseClass)
         val isSuspendFunction = (memberSymbol as? KtFunctionSymbol)?.isSuspend == true
         val baseClassName = baseClass.nameOrAnonymous.asString()
@@ -163,9 +168,11 @@ internal class OverrideKeywordHandler(
 
     companion object {
         private val renderingOptionsForLookupElementRendering =
-            KtGenerateMembersHandler.renderOption.copy(
-                renderUnitReturnType = false,
-                renderDeclarationHeader = true
-            )
+            KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+                modifiersRenderer = modifiersRenderer.with {
+                    modifierFilter = KtRendererModifierFilter.without(KtTokens.OPERATOR_KEYWORD) and
+                            KtRendererModifierFilter.without(KtTokens.MODALITY_MODIFIERS)
+                }
+            }
     }
 }

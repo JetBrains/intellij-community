@@ -317,7 +317,7 @@ private fun MatchResult.generateCallChain(loop: KtForExpression, reformat: Boole
 
     var callChain = sequenceExpression
 
-    val psiFactory = KtPsiFactory(loop)
+    val psiFactory = KtPsiFactory(loop.project)
     val chainedCallGenerator = object : ChainedCallGenerator {
         override val receiver: KtExpression
             get() = callChain

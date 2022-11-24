@@ -156,7 +156,7 @@ sealed class CreateCallableFromCallActionFactory<E : KtExpression>(
         return mainCallable.copy(
             receiverTypeInfo = receiverTypeInfo,
             possibleContainers = emptyList(),
-            modifierList = KtPsiFactory(originalExpression).createModifierList(KtTokens.ABSTRACT_KEYWORD)
+            modifierList = KtPsiFactory(project).createModifierList(KtTokens.ABSTRACT_KEYWORD)
         )
     }
 
@@ -280,9 +280,10 @@ sealed class CreateCallableFromCallActionFactory<E : KtExpression>(
             }
             val parentFunction = expression.getStrictParentOfType<KtNamedFunction>()
             val modifierList = if (parentFunction?.hasModifier(KtTokens.INLINE_KEYWORD) == true) {
+                val psiFactory = KtPsiFactory(expression.project)
                 when {
-                    parentFunction.isPublic -> KtPsiFactory(expression).createModifierList(KtTokens.PUBLIC_KEYWORD)
-                    parentFunction.isProtected() -> KtPsiFactory(expression).createModifierList(KtTokens.PROTECTED_KEYWORD)
+                    parentFunction.isPublic -> psiFactory.createModifierList(KtTokens.PUBLIC_KEYWORD)
+                    parentFunction.isProtected() -> psiFactory.createModifierList(KtTokens.PROTECTED_KEYWORD)
                     else -> null
                 }
             } else {

@@ -53,7 +53,7 @@ open class ReplaceAnnotationFix(
         val annotationInnerText = argumentClassFqName?.let { "${it.render()}::class"}
         if (existingEntry != null) {
             if (annotationInnerText == null) return
-            val psiFactory = KtPsiFactory(existingEntry)
+            val psiFactory = KtPsiFactory(project)
             existingEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
                 ?: existingEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), existingEntry.lastChild)
             ShortenReferences.DEFAULT.process(existingEntry)

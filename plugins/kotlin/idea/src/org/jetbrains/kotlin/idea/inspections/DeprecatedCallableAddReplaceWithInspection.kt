@@ -56,7 +56,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         assert('\n' !in replaceWith.expression && '\r' !in replaceWith.expression) { "Formatted expression text should not contain \\n or \\r" }
 
         val annotationEntry = element.deprecatedAnnotationWithNoReplaceWith()!!
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
 
         var escapedText = replaceWith.expression.replace("\\", "\\\\").replace("\"", "\\\"")
 
@@ -172,7 +172,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
 
         val text = replacementExpression.text
         var expression = try {
-            KtPsiFactory(this).createExpression(text.replace('\n', ' '))
+            KtPsiFactory(project).createExpression(text.replace('\n', ' '))
         } catch (e: Throwable) { // does not parse in one line
             return null
         }

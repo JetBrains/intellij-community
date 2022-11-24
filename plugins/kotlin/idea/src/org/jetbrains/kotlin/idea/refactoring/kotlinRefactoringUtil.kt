@@ -140,7 +140,7 @@ fun PsiElement.isInKotlinAwareSourceRoot(): Boolean =
     !isOutsideKotlinAwareSourceRoot(containingFile)
 
 fun KtFile.createTempCopy(text: String? = null): KtFile {
-    val tmpFile = KtPsiFactory(this).createAnalyzableFile(name, text ?: this.text ?: "", this)
+    val tmpFile = KtPsiFactory.contextual(this).createFile(name, text ?: this.text ?: "")
     tmpFile.originalFile = this
     return tmpFile
 }
@@ -818,7 +818,7 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
         val psiBeforeLastParameter = lastOriginalParameter.prevSibling
         val withMultiline =
             (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')
-        val extraSpace = if (withMultiline) KtPsiFactory(originalList).createNewLine() else null
+        val extraSpace = if (withMultiline) KtPsiFactory(originalList.project).createNewLine() else null
         originalList.addRangeAfter(newParameters[commonCount - 1].nextSibling, newParameters.last(), lastOriginalParameter)
         if (extraSpace != null) {
             val addedItems = originalList.itemsFun().subList(commonCount, newCount)
@@ -867,7 +867,7 @@ fun getQualifiedTypeArgumentList(initializer: KtExpression): KtTypeArgumentList?
         IdeDescriptorRenderers.SOURCE_CODE_NOT_NULL_TYPE_APPROXIMATION.renderType(it.unCapture())
     }
 
-    return KtPsiFactory(initializer).createTypeArguments(renderedList)
+    return KtPsiFactory(initializer.project).createTypeArguments(renderedList)
 }
 
 fun addTypeArgumentsIfNeeded(expression: KtExpression, typeArgumentList: KtTypeArgumentList) {

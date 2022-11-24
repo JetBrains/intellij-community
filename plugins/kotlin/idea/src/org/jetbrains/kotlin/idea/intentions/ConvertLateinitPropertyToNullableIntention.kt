@@ -29,6 +29,6 @@ class ConvertLateinitPropertyToNullableIntention : SelfTargetingIntention<KtProp
         val nullableType = element.analyze(BodyResolveMode.PARTIAL)[BindingContext.TYPE, typeReference]?.makeNullable() ?: return
         element.removeModifier(KtTokens.LATEINIT_KEYWORD)
         element.setType(nullableType)
-        element.initializer = KtPsiFactory(element).createExpression(KtTokens.NULL_KEYWORD.value)
+        element.initializer = KtPsiFactory(element.project).createExpression(KtTokens.NULL_KEYWORD.value)
     }
 }

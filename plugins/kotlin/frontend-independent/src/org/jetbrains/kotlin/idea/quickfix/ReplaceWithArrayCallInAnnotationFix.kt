@@ -32,7 +32,7 @@ class ReplaceWithArrayCallInAnnotationFix(argument: KtExpression) : KotlinPsiOnl
 
     private fun surroundWithArrayLiteral(argument: KtValueArgument) {
         val argumentExpression = argument.getArgumentExpression() ?: return
-        val factory = KtPsiFactory(argumentExpression)
+        val factory = KtPsiFactory(argumentExpression.project)
         val surrounded = factory.createExpressionByPattern("[$0]", argumentExpression)
 
         argumentExpression.replace(surrounded)

@@ -55,7 +55,7 @@ class RenameKotlinImplicitLambdaParameter : KotlinVariableInplaceRenameHandler()
             val target = itExpression.mainReference.resolveToDescriptors(itExpression.analyze()).single()
             val containingDescriptor = target.containingDeclaration ?: return null
             val functionLiteral = DescriptorToSourceUtils.descriptorToDeclaration(containingDescriptor) as? KtFunctionLiteral ?: return null
-            val newExpr = KtPsiFactory(itExpression).createExpression("{ it -> }") as KtLambdaExpression
+            val newExpr = KtPsiFactory(itExpression.project).createExpression("{ it -> }") as KtLambdaExpression
             val arrow = newExpr.functionLiteral.arrow ?: return null
             runWriteAction {
                 functionLiteral.addRangeAfter(

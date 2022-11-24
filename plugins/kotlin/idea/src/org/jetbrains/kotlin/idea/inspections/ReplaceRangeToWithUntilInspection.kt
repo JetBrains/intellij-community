@@ -72,7 +72,7 @@ sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspe
             val args = element.getArguments() ?: return
             val operator = if (useRangeUntil) "..<" else " until "
             element.replace(
-                KtPsiFactory(element).createExpressionByPattern(
+                KtPsiFactory(element.project).createExpressionByPattern(
                     "$0$operator$1",
                     args.first ?: return,
                     (args.second?.deparenthesize() as? KtBinaryExpression)?.left ?: return

@@ -39,7 +39,7 @@ class RemoveExplicitSuperQualifierIntention : SelfTargetingRangeIntention<KtSupe
         val bindingContext = selector.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
         if (selector.getResolvedCall(bindingContext) == null) return null
 
-        val newQualifiedExpression = KtPsiFactory(element).createExpressionByPattern(
+        val newQualifiedExpression = KtPsiFactory(element.project).createExpressionByPattern(
             "$0.$1", toNonQualified(element, reformat = false), selector,
             reformat = false
         ) as KtQualifiedExpression
@@ -56,11 +56,11 @@ class RemoveExplicitSuperQualifierIntention : SelfTargetingRangeIntention<KtSupe
     }
 
     private fun toNonQualified(superExpression: KtSuperExpression, reformat: Boolean): KtSuperExpression {
-        val factory = KtPsiFactory(superExpression)
+        val psiFactory = KtPsiFactory(superExpression.project)
         val labelName = superExpression.getLabelNameAsName()
         return (if (labelName != null)
-            factory.createExpressionByPattern("super@$0", labelName, reformat = reformat)
+            psiFactory.createExpressionByPattern("super@$0", labelName, reformat = reformat)
         else
-            factory.createExpression("super")) as KtSuperExpression
+            psiFactory.createExpression("super")) as KtSuperExpression
     }
 }

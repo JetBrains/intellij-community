@@ -23,9 +23,9 @@ class ConvertCollectionFix(element: KtExpression, val type: CollectionType) : Ko
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        val factory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(project)
 
-        val replaced = expression.replaced(factory.createExpressionByPattern("$0.$1", expression, type.functionCall))
+        val replaced = expression.replaced(psiFactory.createExpressionByPattern("$0.$1", expression, type.functionCall))
         editor?.caretModel?.moveToOffset(replaced.endOffset)
     }
 

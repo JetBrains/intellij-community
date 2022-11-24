@@ -16,9 +16,9 @@ abstract class KotlinControlFlowExpressionSurrounderBase : KotlinExpressionSurro
     override fun isApplicableToStatements() = false
 
     override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange? {
-        val factory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(project)
 
-        val newElement = factory.createExpressionByPattern(getPattern(), expression.text)
+        val newElement = psiFactory.createExpressionByPattern(getPattern(), expression.text)
         val replaced = expression.replaced(newElement)
 
         CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(replaced)

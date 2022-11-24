@@ -71,7 +71,7 @@ fun KtModifierListOwner.addAnnotation(
         else -> "@${useSiteTargetPrefix}${annotationFqName.render()}($annotationInnerText)"
     }
 
-    val psiFactory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
     val modifierList = modifierList
 
     if (modifierList == null) {

@@ -160,7 +160,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
             val bindingContext = containingClass.analyze(BodyResolveMode.PARTIAL)
             val fqName =
                 bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, containingClass]?.fqNameOrNull()?.asString() ?: return emptyList()
-            val psiFactory = KtPsiFactory(targetClass)
+            val psiFactory = KtPsiFactory(targetClass.project)
             val newReceiver = psiFactory.createExpression(fqName)
             return ReferencesSearch.search(targetClass, targetClass.useScope).mapNotNull {
                 val callExpression = it.element.parent as? KtCallExpression ?: return@mapNotNull null

@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 internal object FirSuperEntriesProvider {
     fun KtAnalysisSession.getSuperClassesAvailableForSuperCall(context: PsiElement): List<KtNamedClassOrObjectSymbol> {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
-        val containingClassSymbol = containingClass.getClassOrObjectSymbol()
+        val containingClassSymbol = containingClass.getClassOrObjectSymbol() ?: return emptyList()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
             val classType = superType as? KtNonErrorClassType ?: return@mapNotNull null
             classType.classSymbol as? KtNamedClassOrObjectSymbol

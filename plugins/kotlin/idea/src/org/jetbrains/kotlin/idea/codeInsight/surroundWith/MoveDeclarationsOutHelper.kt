@@ -77,9 +77,10 @@ private fun kotlinStyleDeclareOut(
     property: KtProperty
 ) {
     val name = property.name ?: return
-    var declaration = KtPsiFactory(property).createProperty(name, property.typeReference?.text, property.isVar, null)
+    val psiFactory = KtPsiFactory(property.project)
+    var declaration = psiFactory.createProperty(name, property.typeReference?.text, property.isVar, null)
     declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
-    container.addAfter(KtPsiFactory(declaration).createEQ(), declaration)
+    container.addAfter(psiFactory.createEQ(), declaration)
     propertiesDeclarations.add(declaration)
     property.initializer?.let {
         resultStatements.add(property.replace(it))
@@ -103,7 +104,7 @@ private fun declareOut(
 
 private fun createVariableAssignment(property: KtProperty): KtBinaryExpression {
     val propertyName = property.name ?: error("Property should have a name " + property.text)
-    val assignment = KtPsiFactory(property).createExpression("$propertyName = x") as KtBinaryExpression
+    val assignment = KtPsiFactory(property.project).createExpression("$propertyName = x") as KtBinaryExpression
     val right = assignment.right ?: error("Created binary expression should have a right part " + assignment.text)
     val initializer = property.initializer ?: error("Initializer should exist for property " + property.text)
     right.replace(initializer)
@@ -133,7 +134,7 @@ private fun createProperty(property: KtProperty, propertyType: KotlinType, initi
         else -> null
     }
 
-    return KtPsiFactory(property).createProperty(property.name!!, typeString, property.isVar, initializer)
+    return KtPsiFactory(property.project).createProperty(property.name!!, typeString, property.isVar, initializer)
 }
 
 private fun needToDeclareOut(element: PsiElement, lastStatementOffset: Int, scope: SearchScope): Boolean {

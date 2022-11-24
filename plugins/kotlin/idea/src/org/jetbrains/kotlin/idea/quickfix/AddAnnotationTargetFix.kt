@@ -53,8 +53,8 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
 
         annotationClass.runOnExpectAndAllActuals(useOnSelf = true) {
             val ktClass = it.safeAs<KtClass>() ?: return@runOnExpectAndAllActuals
-            val psiFactory = KtPsiFactory(annotationEntry)
             runWriteAction {
+                val psiFactory = KtPsiFactory(project)
                 ktClass.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
             }
         }
