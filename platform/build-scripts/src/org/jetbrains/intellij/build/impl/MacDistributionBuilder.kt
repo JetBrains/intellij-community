@@ -186,24 +186,14 @@ class MacDistributionBuilder(override val context: BuildContext,
         }
       }
       else {
-        buildAndSignDmgFromZip(macZip = macZip,
-                               macZipWithoutRuntime = macZipWithoutRuntime,
-                               arch = arch,
-                               builtinModule = context.builtinModule)
+        buildForArch(builtinModule = context.builtinModule,
+                     arch = arch,
+                     macZip = macZip,
+                     macZipWithoutRuntime = macZipWithoutRuntime,
+                     customizer = customizer,
+                     context = context)
       }
     }
-  }
-
-  suspend fun buildAndSignDmgFromZip(macZip: Path,
-                                     macZipWithoutRuntime: Path?,
-                                     arch: JvmArchitecture,
-                                     builtinModule: BuiltinModulesFileData?) {
-    buildForArch(builtinModule = builtinModule,
-                 arch = arch,
-                 macZip = macZip,
-                 macZipWithoutRuntime = macZipWithoutRuntime,
-                 customizer = customizer,
-                 context = context)
   }
 
   private fun layoutMacApp(ideaPropertiesFile: Path,

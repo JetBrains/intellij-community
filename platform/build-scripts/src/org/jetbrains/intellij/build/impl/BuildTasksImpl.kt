@@ -56,7 +56,6 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
-import java.util.stream.Collectors
 import kotlin.io.path.setLastModifiedTime
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
@@ -73,25 +72,6 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
 
   override suspend fun buildDistributions() {
     buildDistributions(context)
-  }
-
-  override suspend fun buildDmg(macZipDir: Path) {
-    supervisorScope {
-      sequenceOf(JvmArchitecture.x64, JvmArchitecture.aarch64)
-        .map { arch ->
-          val macZip = find(directory = macZipDir, suffix = "${arch}.zip", context = context)
-          val builtModule = readBuiltinModulesFile(find(directory = macZipDir, suffix = "builtinModules.json", context = context))
-          async {
-            MacDistributionBuilder(context = context,
-                                   customizer = context.macDistributionCustomizer!!,
-                                   ideaProperties = null).buildAndSignDmgFromZip(macZip = macZip,
-                                                                                 macZipWithoutRuntime = null,
-                                                                                 arch = arch,
-                                                                                 builtinModule = builtModule)
-          }
-        }
-        .toList()
-    }.collectCompletedOrError()
   }
 
   override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>) {
@@ -350,19 +330,6 @@ private fun downloadMissingLibrarySources(
 private class DistributionForOsTaskResult(@JvmField val builder: OsSpecificDistributionBuilder,
                                           @JvmField val arch: JvmArchitecture,
                                           @JvmField val outDir: Path)
-
-private fun find(directory: Path, suffix: String, context: BuildContext): Path {
-  Files.walk(directory).use { stream ->
-    val found = stream.filter { (it.fileName.toString()).endsWith(suffix) }.collect(Collectors.toList())
-    if (found.isEmpty()) {
-      context.messages.error("No file with suffix $suffix is found in $directory")
-    }
-    if (found.size > 1) {
-      context.messages.error("Multiple files with suffix $suffix are found in $directory:\n${found.joinToString(separator = "\n")}")
-    }
-    return found.first()
-  }
-}
 
 private suspend fun buildOsSpecificDistributions(context: BuildContext): List<DistributionForOsTaskResult> {
   val stepMessage = "build OS-specific distributions"
