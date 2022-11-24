@@ -19,7 +19,7 @@
     <appStarter id="-version" implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter id="listBundledPlugins" implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
     <appStarter id="installPlugins" implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
-    <appStarter id="warmup" implementation="com.intellij.warmup.ProjectIndexesWarmup"/>
+    <appStarter id="warmup" implementation="com.intellij.warmup.ProjectCachesWarmup"/>
     <appStarter id="buildEventsScheme" implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter"/>
     <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
     <appStarter id="dumpLaunchParameters" implementation="com.intellij.internal.statistic.utils.DumpLaunchParametersStarter"/>

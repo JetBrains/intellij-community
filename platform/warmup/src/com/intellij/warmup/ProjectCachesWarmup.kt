@@ -17,7 +17,7 @@ import kotlinx.coroutines.future.asDeferred
 import kotlin.math.max
 import kotlin.system.exitProcess
 
-internal class ProjectIndexesWarmup : ModernApplicationStarter() {
+internal class ProjectCachesWarmup : ModernApplicationStarter() {
   override val commandName: String
     get() = "warmup"
 
