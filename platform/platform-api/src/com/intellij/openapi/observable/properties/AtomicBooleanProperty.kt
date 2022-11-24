@@ -37,6 +37,12 @@ class AtomicBooleanProperty(
     return newValue
   }
 
+  override fun getAndSet(newValue: Boolean): Boolean {
+    val oldValue = value.getAndSet(newValue)
+    fireChangeEvents(oldValue, newValue)
+    return oldValue
+  }
+
   fun compareAndSet(expect: Boolean, update: Boolean): Boolean {
     val succeed = value.compareAndSet(expect, update)
     if (succeed) {
