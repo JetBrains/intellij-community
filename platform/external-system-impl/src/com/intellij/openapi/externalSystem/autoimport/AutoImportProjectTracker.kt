@@ -19,6 +19,7 @@ import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.observable.properties.*
+import com.intellij.openapi.observable.properties.set
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
@@ -27,10 +28,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.LocalTimeCounter.currentTime
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.streams.asStream
 
+@ApiStatus.Internal
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
 class AutoImportProjectTracker(
   private val project: Project
@@ -74,9 +77,9 @@ class AutoImportProjectTracker(
       }
     }
 
-  override fun scheduleProjectRefresh(force: Boolean) {
+  override fun scheduleProjectRefresh() {
     LOG.debug("Schedule project reload", Throwable())
-    schedule(priority = 0, dispatchIterations = 1) { reloadProject(force, explicitReload = true) }
+    schedule(priority = 0, dispatchIterations = 1) { reloadProject(explicitReload = true) }
   }
 
   override fun scheduleChangeProcessing() {
@@ -94,7 +97,7 @@ class AutoImportProjectTracker(
    */
   private fun scheduleDelayedSmartProjectReload() {
     LOG.debug("Schedule delayed project reload")
-    schedule(priority = 2, dispatchIterations = 9) { reloadProject(false, explicitReload = false) }
+    schedule(priority = 2, dispatchIterations = 9) { reloadProject(explicitReload = false) }
   }
 
   private fun schedule(priority: Int, dispatchIterations: Int, action: () -> Unit) {
@@ -124,13 +127,13 @@ class AutoImportProjectTracker(
     }
   }
 
-  private fun reloadProject(force: Boolean, explicitReload: Boolean) {
+  private fun reloadProject(explicitReload: Boolean) {
     LOG.debug("Incremental project reload")
 
     val projectsToReload = projectDataMap.values
       .filter { (explicitReload || it.isActivated) && !it.isUpToDate() }
 
-    if ((isDisabledAutoReload() || projectsToReload.isEmpty()) && !force) {
+    if (isDisabledAutoReload() || projectsToReload.isEmpty()) {
       LOG.debug("Skipped all projects reload")
       updateProjectNotification()
       return
@@ -158,8 +161,7 @@ class AutoImportProjectTracker(
   }
 
   private fun isDisabledAutoReload(): Boolean {
-    return Registry.`is`("external.system.auto.import.disabled") ||
-           !isEnabledAutoReload ||
+    return !isEnabledAutoReload ||
            projectChangeOperation.isOperationInProgress() ||
            projectReloadOperation.isOperationInProgress()
   }
@@ -323,11 +325,12 @@ class AutoImportProjectTracker(
   companion object {
     val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
 
-    @TestOnly
     @JvmStatic
     fun getInstance(project: Project): AutoImportProjectTracker {
       return ExternalSystemProjectTracker.getInstance(project) as AutoImportProjectTracker
     }
+
+    private val onceIgnoreDisableAutoReloadRegistryProperty = AtomicBooleanProperty(false)
 
     private val enableAutoReloadProperty = AtomicBooleanProperty(
       !ApplicationManager.getApplication().isUnitTestMode
@@ -338,8 +341,13 @@ class AutoImportProjectTracker(
       || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
     )
 
-    private val isEnabledAutoReload by enableAutoReloadProperty
-    val isAsyncChangesProcessing get() = asyncChangesProcessingProperty.get()
+    private val isEnabledAutoReload: Boolean
+      get() = enableAutoReloadProperty.get() &&
+              (onceIgnoreDisableAutoReloadRegistryProperty.getAndSet(false) ||
+               !Registry.`is`("external.system.auto.import.disabled"))
+
+    val isAsyncChangesProcessing: Boolean
+      get() = asyncChangesProcessingProperty.get()
 
     /**
      * Enables auto-import in tests
@@ -351,10 +359,24 @@ class AutoImportProjectTracker(
       enableAutoReloadProperty.set(true, parentDisposable)
     }
 
+    /**
+     * Enables async auto-reload processing in tests
+     * Note: async processing enabled out of tests
+     */
     @TestOnly
     @JvmStatic
     fun enableAsyncAutoReloadInTests(parentDisposable: Disposable) {
       asyncChangesProcessingProperty.set(true, parentDisposable)
+    }
+
+    /**
+     * Ignores once disable auto-reload registry.
+     * Make sense only in pair with registry key `external.system.auto.import.disabled`.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun onceIgnoreDisableAutoReloadRegistry() {
+      onceIgnoreDisableAutoReloadRegistryProperty.set(true)
     }
   }
 }

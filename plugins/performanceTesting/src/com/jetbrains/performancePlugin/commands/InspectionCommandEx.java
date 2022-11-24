@@ -304,6 +304,6 @@ public class InspectionCommandEx extends AbstractCommand {
     public String directory;
 
     @Argument
-    final public boolean hideResults = false;
+    public boolean hideResults = false;
   }
 }

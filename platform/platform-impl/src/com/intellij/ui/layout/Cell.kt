@@ -634,7 +634,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun commentNoWrap(@DetailedDescription text: String): CellBuilder<JLabel> {
     return component(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }

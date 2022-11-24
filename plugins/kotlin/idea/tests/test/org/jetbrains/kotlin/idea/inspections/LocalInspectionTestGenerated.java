@@ -16166,6 +16166,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/companionViaImport2.kt");
         }
 
+        @TestMetadata("contextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/contextReceiver.kt");
+        }
+
         @TestMetadata("dataInlineClassDeclaration.kt")
         public void testDataInlineClassDeclaration() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclaration.kt");
