@@ -295,8 +295,8 @@ public final class DiffUtil {
 
     editor.getSettings().setShowIntentionBulb(false);
     MarkupModelEx model = editor.getMarkupModel();
-    if (model instanceof EditorMarkupModel) {
-      ((EditorMarkupModel)model).setErrorStripeVisible(true);
+    if (model instanceof EditorMarkupModel editorMarkupModel) {
+      editorMarkupModel.setErrorStripeVisible(true);
     }
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
 
