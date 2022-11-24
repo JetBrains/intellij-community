@@ -1,13 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling.serialization
 
-import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinSerializationContext
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
 import org.jetbrains.plugins.gradle.tooling.serialization.DefaultSerializationService
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService
-import java.util.ServiceLoader
 
+/**
+ * Right now, this SerializationService is not working in production environments, since this class is not
+ * available to the ToolingSerializer.
+ */
 class KotlinMppModelSerializationService : SerializationService<KotlinMPPGradleModel> {
 
     private val defaultService = DefaultSerializationService()
@@ -19,21 +21,12 @@ class KotlinMppModelSerializationService : SerializationService<KotlinMPPGradleM
     @OptIn(KotlinGradlePluginVersionDependentApi::class)
     override fun read(`object`: ByteArray, modelClazz: Class<out KotlinMPPGradleModel>): KotlinMPPGradleModel {
         val model = defaultService.read(`object`, modelClazz) as KotlinMPPGradleModel
-
-        return KotlinMPPGradleModelImpl(model, mutableMapOf()).copy(
-            dependencies = model.dependencies
-                ?.let { container -> container as? IdeaKotlinSerializedDependenciesContainer }
-                ?.deserialize()
-        )
+        (model.dependencies as? IdeaKotlinSerializedDependenciesContainer)
+            ?.deserialize(IdeaKotlinSerializationContext(KotlinMppModelSerializationService::class.java.classLoader))
+        return model
     }
 
     override fun getModelClass(): Class<out KotlinMPPGradleModel> {
         return KotlinMPPGradleModel::class.java
     }
-}
-
-private fun IdeaKotlinSerializedDependenciesContainer.deserialize(): IdeaKotlinDependenciesContainer {
-    val serializationContext = ServiceLoader.load(IdeaKotlinSerializationContext::class.java).firstOrNull()
-        ?: error("Missing ${IdeaKotlinSerializationContext::class.java.name}")
-    return deserialize(serializationContext)
 }
