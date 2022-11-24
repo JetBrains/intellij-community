@@ -452,15 +452,14 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   public @Nullable Map<String, String> getEnvironment() {
     try {
-      ProcessOutput processOutput =
-        executeOnWsl(Collections.singletonList("env"),
-                     new WSLCommandLineOptions()
-                       .setExecuteCommandInShell(true)
-                       .setExecuteCommandInLoginShell(true)
-                       .setExecuteCommandInInteractiveShell(true),
-                     5000,
-                     null);
-      if (processOutput.getExitCode() == 0){
+      ProcessOutput processOutput = WslExecution.executeInShellAndGetCommandOnlyStdout(
+        this, new GeneralCommandLine("env"),
+        new WSLCommandLineOptions()
+          .setExecuteCommandInShell(true)
+          .setExecuteCommandInLoginShell(true)
+          .setExecuteCommandInInteractiveShell(true),
+        5000);
+      if (processOutput.getExitCode() == 0) {
         Map<String, String> result = new HashMap<>();
         for (String string : processOutput.getStdoutLines()) {
           int assignIndex = string.indexOf('=');
