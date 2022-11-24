@@ -33,6 +33,9 @@ public class LineStatusTrackerBaseContentUtil {
   @Nullable
   public static BaseContent getBaseRevision(@NotNull Project project, @NotNull VirtualFile file) {
     if (!isHandledByVcs(project, file)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("File is not under VCS: %s", file));
+      }
       return createFromProvider(project, file);
     }
 
@@ -40,15 +43,27 @@ public class LineStatusTrackerBaseContentUtil {
 
     Change change = changeListManager.getChange(file);
     if (change != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Content by Change %s: %s", change, file));
+      }
       return createFromLocalChange(project, change);
     }
 
     FileStatus status = changeListManager.getStatus(file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("File status is %s: %s", status, file));
+    }
+
     if (status == FileStatus.HIJACKED) {
       return createForHijacked(project, file);
     }
     if (status == FileStatus.NOT_CHANGED) {
-      return createForModifiedDocument(project, file);
+      if (FileDocumentManager.getInstance().isFileModified(file)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("Document is modified: %s", file));
+        }
+        return createForModifiedDocument(project, file);
+      }
     }
     return null;
   }
@@ -57,6 +72,10 @@ public class LineStatusTrackerBaseContentUtil {
   private static BaseContent createFromProvider(@NotNull Project project, @NotNull VirtualFile file) {
     VcsBaseContentProvider provider = findProviderFor(project, file);
     if (provider == null) return null;
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("Content by provider %s: %s", provider, file));
+    }
     return provider.getBaseRevision(file);
   }
 
@@ -85,7 +104,6 @@ public class LineStatusTrackerBaseContentUtil {
     if (diffProvider == null || cp == null) return null;
 
     if (!cp.isModifiedDocumentTrackingRequired()) return null;
-    if (!FileDocumentManager.getInstance().isFileModified(file)) return null;
 
     ContentRevision beforeRevision = diffProvider.createCurrentFileContent(file);
     if (beforeRevision == null) return null;
