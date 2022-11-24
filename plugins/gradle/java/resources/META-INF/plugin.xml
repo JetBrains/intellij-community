@@ -34,9 +34,9 @@
                     dynamic="true"/>
     <extensionPoint name="externallyHandledExtensions" interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
                     dynamic="true"/>
-    <!--<extensionPoint name="dslInspectionProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">-->
-    <!--  <with attribute="implementationClass" implements="org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider"/>-->
-    <!--</extensionPoint>-->
+    <extensionPoint name="dslInspectionProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -107,36 +107,36 @@
     <registryKey key="gradle.refresh.project.outputs" defaultValue="true"
                  description="After a Gradle task, do a shallow refresh of modules outputs in VFS"/>
 
-    <!--<localInspection language="" groupPath="Gradle" shortName="ConfigurationAvoidance"-->
-    <!--                 bundle="messages.GradleInspectionBundle"-->
-    <!--                 key="inspection.display.name.configuration.avoidance" groupKey="inspection.best.practises" groupBundle="messages.GradleInspectionBundle"-->
-    <!--                 enabledByDefault="true" level="WARNING"-->
-    <!--                 implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>-->
+    <localInspection language="" groupPath="Gradle" shortName="ConfigurationAvoidance"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.configuration.avoidance" groupKey="inspection.best.practises" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>
 
 
-    <!--<localInspection language="" groupPath="Gradle" shortName="DependencyNotationArgument"-->
-    <!--                 bundle="messages.GradleInspectionBundle"-->
-    <!--                 key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"-->
-    <!--                 enabledByDefault="true" level="WARNING"-->
-    <!--                 implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>-->
+    <localInspection language="" groupPath="Gradle" shortName="DependencyNotationArgument"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>
 
-    <!--<localInspection language="" groupPath="Gradle" shortName="ForeignDelegate"-->
-    <!--                 bundle="messages.GradleInspectionBundle"-->
-    <!--                 key="inspection.display.name.foreign.delegate" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"-->
-    <!--                 enabledByDefault="true" level="WEAK WARNING"-->
-    <!--                 implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection"/>-->
+    <localInspection language="" groupPath="Gradle" shortName="ForeignDelegate"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.foreign.delegate" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection"/>
 
-    <!--<localInspection language="" groupPath="Gradle" shortName="IncorrectPluginDslStructure"-->
-    <!--                 bundle="messages.GradleInspectionBundle"-->
-    <!--                 key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"-->
-    <!--                 enabledByDefault="true" level="ERROR"-->
-    <!--                 implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspection"/>-->
+    <localInspection language="" groupPath="Gradle" shortName="IncorrectPluginDslStructure"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspection"/>
 
-    <!--<localInspection language="" groupPath="Gradle" shortName="DeprecatedConfigurations"-->
-    <!--                 bundle="messages.GradleInspectionBundle"-->
-    <!--                 key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"-->
-    <!--                 enabledByDefault="true" level="WARNING"-->
-    <!--                 implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>-->
+    <localInspection language="" groupPath="Gradle" shortName="DeprecatedConfigurations"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
 
 
 
