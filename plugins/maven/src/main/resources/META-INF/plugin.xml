@@ -335,6 +335,9 @@
     <registryKey key="maven.consumer.pom.support" defaultValue="false"
                  description="Enable Maven consumer pom support"/>
 
+    <registryKey key="maven.import.to.workspace.model.fast.facet.creation" defaultValue="false"
+                 description="Create facets in a background thread instead of EDT"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>

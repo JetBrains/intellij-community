@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -173,72 +174,86 @@ public final class MavenLegacyModuleImporter {
                                             new ModifiableModelsProviderProxyWrapper(myModifiableModelsProvider)));
     }
 
+    private void doConfigurationStep(Runnable step) {
+      if (Registry.is("maven.import.to.workspace.model.fast.facet.creation")) {
+        step.run();
+      } else {
+        MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), step);
+      }
+    }
+
     void preConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
-      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
-        if (myModule.isDisposed()) return;
+      doConfigurationStep(() -> doPreConfig(counters));
+    }
 
-        final ModuleType moduleType = ModuleType.get(myModule);
+    private void doPreConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+      if (myModule.isDisposed()) return;
 
-        for (final MavenImporter importer : myImporters) {
-          try {
-            if (importer.getModuleType() == moduleType) {
-              measureImporterTime(importer, counters, true, () -> {
-                importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
-              });
-            }
-          }
-          catch (Exception e) {
-            MavenLog.LOG.error("Exception in MavenImporter.preConfig, skipping it.", e);
+      final ModuleType moduleType = ModuleType.get(myModule);
+
+      for (final MavenImporter importer : myImporters) {
+        try {
+          if (importer.getModuleType() == moduleType) {
+            measureImporterTime(importer, counters, true, () -> {
+              importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
+            });
           }
         }
-      });
+        catch (Exception e) {
+          MavenLog.LOG.error("Exception in MavenImporter.preConfig, skipping it.", e);
+        }
+      }
     }
 
     void config(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
-      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
-        if (myModule.isDisposed()) return;
-        final ModuleType<?> moduleType = ModuleType.get(myModule);
-        for (final MavenImporter importer : myImporters) {
-          if (importer.getModuleType() == moduleType) {
-            try {
-              measureImporterTime(importer, counters, false, () -> {
-                importer.process(myModifiableModelsProvider,
-                                 myModule,
-                                 myRootModelAdapter,
-                                 myMavenProjectsTree,
-                                 myMavenProject,
-                                 myMavenProjectChanges,
-                                 myMavenProjectToModuleName,
-                                 postTasks);
-                });
-              }
-              catch (Exception e) {
-                MavenLog.LOG.error("Exception in MavenImporter.config, skipping it.", e);
-              }
+      doConfigurationStep(() -> doConfig(postTasks, counters));
+    }
+
+    private void doConfig(List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+      if (myModule.isDisposed()) return;
+      final ModuleType<?> moduleType = ModuleType.get(myModule);
+      for (final MavenImporter importer : myImporters) {
+        if (importer.getModuleType() == moduleType) {
+          try {
+            measureImporterTime(importer, counters, false, () -> {
+              importer.process(myModifiableModelsProvider,
+                               myModule,
+                               myRootModelAdapter,
+                               myMavenProjectsTree,
+                               myMavenProject,
+                               myMavenProjectChanges,
+                               myMavenProjectToModuleName,
+                               postTasks);
+              });
+            }
+            catch (Exception e) {
+              MavenLog.LOG.error("Exception in MavenImporter.config, skipping it.", e);
             }
           }
-        });
+        }
     }
 
     void postConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
-      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
-        if (myModule.isDisposed()) return;
+      doConfigurationStep(() -> doPostConfig(counters));
+    }
 
-        final ModuleType moduleType = ModuleType.get(myModule);
+    private void doPostConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+      if (myModule.isDisposed()) return;
 
-        for (final MavenImporter importer : myImporters) {
-          try {
-            if (importer.getModuleType() == moduleType) {
-              measureImporterTime(importer, counters, false, () -> {
-                importer.postProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
-              });
-            }
-          }
-          catch (Exception e) {
-            MavenLog.LOG.error("Exception in MavenImporter.postConfig, skipping it.", e);
+      final ModuleType moduleType = ModuleType.get(myModule);
+
+      for (final MavenImporter importer : myImporters) {
+        try {
+          if (importer.getModuleType() == moduleType) {
+            measureImporterTime(importer, counters, false, () -> {
+              importer.postProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
+            });
           }
         }
-      });
+        catch (Exception e) {
+          MavenLog.LOG.error("Exception in MavenImporter.postConfig, skipping it.", e);
+        }
+      }
     }
 
     private static void measureImporterTime(MavenImporter importer,
