@@ -39,6 +39,7 @@ import com.intellij.ui.SimpleTextAttributes.*
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -149,7 +150,8 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
   override fun getIcon(): Icon? =
     try {
       data.getIcon(0)?.let {
-        IconUtil.cropIcon(it, 16 * 2, 16 * 2)
+        val maxDimension = JBUI.scale(16 * 2)
+        IconUtil.cropIcon(it, maxDimension, maxDimension)
       }
     }
     catch (e: IndexNotReadyException) {
