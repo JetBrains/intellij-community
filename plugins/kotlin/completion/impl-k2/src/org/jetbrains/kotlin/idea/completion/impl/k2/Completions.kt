@@ -56,6 +56,10 @@ internal object Completions {
                 complete(factory.typeParameterConstraintNameInWhereClauseContributor(0), positionContext)
             }
 
+            is FirMemberDeclarationExpectedPositionContext -> {
+                complete(factory.keywordContributor(0), positionContext)
+            }
+
             is FirUnknownPositionContext -> {
                 complete(factory.keywordContributor(0), positionContext)
             }
