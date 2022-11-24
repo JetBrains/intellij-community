@@ -47,6 +47,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                 module("multimod-hmpp.api-jvm.test") {
                     targetPlatform(jvm)
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
+                    if (kotlinPluginVersion >= KotlinToolingVersion("1.8.20-dev-1629")) // KTIJ-23756
+                        moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.RUNTIME)
                 }
                 module("multimod-hmpp.bottom-mpp") {
                     targetPlatform(jvm)
@@ -345,6 +347,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     targetPlatform(jvm)
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.plain-jvm.main", DependencyScope.COMPILE)
+                    if (kotlinPluginVersion >= KotlinToolingVersion("1.8.20-dev-1629")) // KTIJ-23756
+                        moduleDependency("multimod-hmpp.plain-jvm.main", DependencyScope.RUNTIME)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaMain", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main", DependencyScope.COMPILE)
