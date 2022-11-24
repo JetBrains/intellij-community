@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
@@ -147,6 +148,7 @@ public final class ActionMenu extends JBMenu {
       mySpecialMenu.setInvoker(this);
       popupListener = createWinListener(mySpecialMenu);
       ReflectionUtil.setField(JMenu.class, this, JPopupMenu.class, "popupMenu", mySpecialMenu);
+      UiInspectorUtil.registerProvider(mySpecialMenu, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup.getAction(), myPlace));
     }
     return super.getPopupMenu();
   }
