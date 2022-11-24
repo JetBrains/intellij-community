@@ -9,7 +9,7 @@ import com.intellij.psi.util.CachedValuesManager
 import dk.brics.automaton.Automaton
 import dk.brics.automaton.RegExp
 import dk.brics.automaton.RunAutomaton
-import org.ec4j.core.model.GlobVisibilityWorkaround
+import org.editorconfig.configmanagement.GlobVisibilityWorkaround
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigPattern
 import org.editorconfig.language.util.EditorConfigPresentationUtil
@@ -72,7 +72,7 @@ object EditorConfigAutomatonBuilder {
     else {
       source = "**/$source"
     }
-    source = GlobVisibilityWorkaround.convertGlobToRegEx(source)
+    source = GlobVisibilityWorkaround.globToRegEx(source)
     return source.replace("(?:", "(")
   }
 
