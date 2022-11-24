@@ -9,6 +9,8 @@ import org.jetbrains.completion.full.line.local.MavenMetadata
 import org.jetbrains.completion.full.line.local.ModelSchema
 import org.jetbrains.completion.full.line.local.decodeFromXml
 import java.io.File
+import java.util.*
+import kotlin.collections.HashMap
 
 class MavenModelsManager(private val root: File) : ModelsManager {
   private val cached: HashMap<String, ModelSchema> = HashMap()
@@ -58,7 +60,10 @@ class MavenModelsManager(private val root: File) : ModelsManager {
   override fun update(language: Language, force: Boolean) = download(language, force)
 
   private fun mavenHost(language: Language): String {
+    var langId = language.id.lowercase()
+    if (langId == "python") langId = "python-v2" // TODO: temp fix for new models
+
     return "https://packages.jetbrains.team/maven/p/ccrm/flcc-local-models" +
-           "/org/jetbrains/completion/full/line/local-model-${language.id.toLowerCase()}"
+           "/org/jetbrains/completion/full/line/local-model-$langId"
   }
 }
