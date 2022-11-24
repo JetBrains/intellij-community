@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.VcsBaseContentProvider.BaseContent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,52 +31,73 @@ public class LineStatusTrackerBaseContentUtil {
   }
 
   @Nullable
-  public static VcsBaseContentProvider.BaseContent getBaseRevision(@NotNull Project project, @NotNull final VirtualFile file) {
+  public static BaseContent getBaseRevision(@NotNull Project project, @NotNull VirtualFile file) {
     if (!isHandledByVcs(project, file)) {
-      VcsBaseContentProvider provider = findProviderFor(project, file);
-      return provider == null ? null : provider.getBaseRevision(file);
+      return createFromProvider(project, file);
     }
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
     Change change = changeListManager.getChange(file);
     if (change != null) {
-      ContentRevision beforeRevision = change.getBeforeRevision();
-      return beforeRevision == null ? null : createBaseContent(project, beforeRevision);
+      return createFromLocalChange(project, change);
     }
 
     FileStatus status = changeListManager.getStatus(file);
     if (status == FileStatus.HIJACKED) {
-      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-      DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
-      if (diffProvider != null) {
-        VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);
-        return currentRevision == null ? null : new HijackedBaseContent(project, diffProvider, file, currentRevision);
-      }
+      return createForHijacked(project, file);
     }
-
     if (status == FileStatus.NOT_CHANGED) {
-      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-      DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
-      ChangeProvider cp = vcs != null ? vcs.getChangeProvider() : null;
-      if (diffProvider != null && cp != null) {
-        if (cp.isModifiedDocumentTrackingRequired() &&
-            FileDocumentManager.getInstance().isFileModified(file)) {
-          ContentRevision beforeRevision = diffProvider.createCurrentFileContent(file);
-          if (beforeRevision != null) return createBaseContent(project, beforeRevision);
-        }
-      }
+      return createForModifiedDocument(project, file);
     }
-
     return null;
   }
 
+  @Nullable
+  private static BaseContent createFromProvider(@NotNull Project project, @NotNull VirtualFile file) {
+    VcsBaseContentProvider provider = findProviderFor(project, file);
+    if (provider == null) return null;
+    return provider.getBaseRevision(file);
+  }
+
+  private static @Nullable BaseContent createFromLocalChange(@NotNull Project project, @NotNull Change change) {
+    ContentRevision beforeRevision = change.getBeforeRevision();
+    if (beforeRevision == null) return null;
+    return createBaseContent(project, beforeRevision);
+  }
+
+  private static @Nullable BaseContent createForHijacked(@NotNull Project project, @NotNull VirtualFile file) {
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+    if (vcs == null) return null;
+    DiffProvider diffProvider = vcs.getDiffProvider();
+    if (diffProvider == null) return null;
+
+    VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);
+    if (currentRevision == null) return null;
+    return new HijackedBaseContent(project, diffProvider, file, currentRevision);
+  }
+
+  private static @Nullable BaseContent createForModifiedDocument(@NotNull Project project, @NotNull VirtualFile file) {
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+    if (vcs == null) return null;
+    DiffProvider diffProvider = vcs.getDiffProvider();
+    ChangeProvider cp = vcs.getChangeProvider();
+    if (diffProvider == null || cp == null) return null;
+
+    if (!cp.isModifiedDocumentTrackingRequired()) return null;
+    if (!FileDocumentManager.getInstance().isFileModified(file)) return null;
+
+    ContentRevision beforeRevision = diffProvider.createCurrentFileContent(file);
+    if (beforeRevision == null) return null;
+    return createBaseContent(project, beforeRevision);
+  }
+
   @NotNull
-  public static VcsBaseContentProvider.BaseContent createBaseContent(@NotNull Project project, @NotNull ContentRevision contentRevision) {
+  public static BaseContent createBaseContent(@NotNull Project project, @NotNull ContentRevision contentRevision) {
     return new BaseContentImpl(project, contentRevision);
   }
 
-  private static class BaseContentImpl implements VcsBaseContentProvider.BaseContent {
+  private static class BaseContentImpl implements BaseContent {
     @NotNull private final Project myProject;
     @NotNull private final ContentRevision myContentRevision;
 
@@ -97,7 +119,7 @@ public class LineStatusTrackerBaseContentUtil {
     }
   }
 
-  private static class HijackedBaseContent implements VcsBaseContentProvider.BaseContent {
+  private static class HijackedBaseContent implements BaseContent {
     @Nullable private final Project myProject;
     @NotNull private final DiffProvider myDiffProvider;
     @NotNull private final VirtualFile myFile;
