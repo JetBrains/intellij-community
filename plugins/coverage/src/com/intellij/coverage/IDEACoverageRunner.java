@@ -181,7 +181,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     write2file(file, sessionDataFilePath);
     write2file(file, String.valueOf(testTracking));
     write2file(file, Boolean.FALSE.toString()); //append unloaded
-    write2file(file, Boolean.FALSE.toString());//merge with existing
+    write2file(file, String.valueOf(Registry.is("idea.coverage.merge.report"))); //merge with existing
     write2file(file, String.valueOf(!branchCoverage));
     if (sourceMapPath != null) {
       write2file(file, Boolean.TRUE.toString());
