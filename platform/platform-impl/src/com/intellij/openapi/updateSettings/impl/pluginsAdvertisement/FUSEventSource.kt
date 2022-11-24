@@ -19,7 +19,7 @@ private const val FUS_GROUP_ID = "plugins.advertiser"
 
 private val GROUP = EventLogGroup(
   FUS_GROUP_ID,
-  3,
+  4,
 )
 
 private val SOURCE_FIELD = EventFields.Enum(
