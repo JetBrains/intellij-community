@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.serialization.IdeaKotlinSerializationContext
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
@@ -982,20 +983,16 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 }
 
 fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradleModel? {
-    val mppModel = this.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)
-    return if (mppModel is Proxy) {
-        this.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)
-            ?.let { kotlinMppModel ->
-                KotlinMPPGradleProjectResolver.proxyObjectCloningCache[kotlinMppModel] as? KotlinMPPGradleModelImpl
-                    ?: KotlinMPPGradleModelImpl(
-                        kotlinMppModel,
-                        KotlinMPPGradleProjectResolver.proxyObjectCloningCache
-                    ).also {
-                        KotlinMPPGradleProjectResolver.proxyObjectCloningCache[kotlinMppModel] = it
-                    }
-            }
-    } else {
-        mppModel
+    return this.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)?.let { mppModel ->
+        if (mppModel is Proxy) {
+            KotlinMPPGradleProjectResolver.proxyObjectCloningCache[mppModel] as? KotlinMPPGradleModelImpl
+                ?: KotlinMPPGradleModelImpl(mppModel, KotlinMPPGradleProjectResolver.proxyObjectCloningCache).also {
+                    KotlinMPPGradleProjectResolver.proxyObjectCloningCache[mppModel] = it
+                }
+        } else mppModel
+    }.also { mppModel ->
+        @OptIn(KotlinGradlePluginVersionDependentApi::class)
+        (mppModel?.dependencies as? IdeaKotlinSerializedDependenciesContainer)
+            ?.deserializeIfNecessary(IdeaKotlinSerializationContext(KotlinMPPGradleProjectResolver::class.java.classLoader))
     }
 }
-
