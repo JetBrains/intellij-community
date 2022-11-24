@@ -80,7 +80,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
             if (type.isBuiltinFunctionalType) {
                 val hasRestrictSuspensionAnnotation = type.getReceiverTypeFromFunctionType()?.isRestrictsSuspensionReceiver() ?: false
-                return if (!hasRestrictSuspensionAnnotation && type.isSuspendFunctionType) NonBlocking.INSTANCE else Blocking
+                return if (!hasRestrictSuspensionAnnotation && type.isSuspendFunctionType) Unsure else Blocking
             }
         }
 
@@ -194,7 +194,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
         if (this is ConstructorDescriptor && constructedClass.fqNameOrNull()?.asString() == COROUTINE_NAME) return Unsure
 
-        val fqnOrNull = fqNameOrNull()?.asString() ?: return NonBlocking.INSTANCE
+        val fqnOrNull = fqNameOrNull()?.asString() ?: return Unsure
         return when(fqnOrNull) {
             IO_DISPATCHER_FQN -> Blocking
             MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking.INSTANCE
