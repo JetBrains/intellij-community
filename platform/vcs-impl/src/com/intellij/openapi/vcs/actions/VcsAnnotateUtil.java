@@ -31,8 +31,7 @@ public final class VcsAnnotateUtil {
   @Nullable
   public static Editor getEditorFor(@NotNull VirtualFile file, @NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    if (editor instanceof EditorEx &&
-        file.equals(((EditorEx)editor).getVirtualFile())) {
+    if (editor instanceof EditorEx && file.equals(editor.getVirtualFile())) {
       return editor;
     }
 

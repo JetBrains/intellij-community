@@ -155,7 +155,7 @@ public final class EditorTestUtil {
     HighlighterIterator editorIterator = editor.getHighlighter().createIterator(0);
 
     EditorHighlighter freshHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(
-      project, ((EditorEx)editor).getVirtualFile());
+      project, editor.getVirtualFile());
     freshHighlighter.setEditor((EditorImpl)editor);
     freshHighlighter.setText(editor.getDocument().getImmutableCharSequence());
     HighlighterIterator freshIterator = freshHighlighter.createIterator(0);

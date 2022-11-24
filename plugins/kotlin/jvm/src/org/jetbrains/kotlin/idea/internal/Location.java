@@ -11,6 +11,8 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.psi.KtFile;
 
+import java.util.Objects;
+
 public class Location {
     @Nullable
     final Editor editor;
@@ -31,7 +33,7 @@ public class Location {
             startOffset = editor.getSelectionModel().getSelectionStart();
             endOffset = editor.getSelectionModel().getSelectionEnd();
 
-            VirtualFile vFile = ((EditorEx) editor).getVirtualFile();
+            VirtualFile vFile = editor.getVirtualFile();
             if (vFile == null) {
                 ktFile = null;
             }
@@ -73,15 +75,13 @@ public class Location {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Location)) return false;
-
-        Location location = (Location)o;
+        if (!(o instanceof Location location)) return false;
 
         if (modificationStamp != location.modificationStamp) return false;
         if (endOffset != location.endOffset) return false;
         if (startOffset != location.startOffset) return false;
-        if (editor != null ? !editor.equals(location.editor) : location.editor != null) return false;
-        if (ktFile != null ? !ktFile.equals(location.ktFile) : location.ktFile != null) return false;
+        if (!Objects.equals(editor, location.editor)) return false;
+        if (!Objects.equals(ktFile, location.ktFile)) return false;
 
         return true;
     }
