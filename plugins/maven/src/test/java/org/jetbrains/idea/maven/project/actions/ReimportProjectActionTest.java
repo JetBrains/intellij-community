@@ -30,8 +30,8 @@ public class ReimportProjectActionTest extends MavenMultiVersionImportingTestCas
     importProject();
 
     var action = new ReimportProjectAction();
-    var parentActionVisible = action.isVisible(new TestActionEvent(createTestDataContext(parentFile), action));
-    var m1ActionVisible = action.isVisible(new TestActionEvent(createTestDataContext(m1File), action));
+    var parentActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(parentFile)));
+    var m1ActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(m1File)));
 
     assertTrue(parentActionVisible);
     assertTrue(m1ActionVisible);
@@ -43,7 +43,7 @@ public class ReimportProjectActionTest extends MavenMultiVersionImportingTestCas
     myProjectsManager.setIgnoredState(Collections.singletonList(mavenProject), true);
     assertTrue(myProjectsManager.isIgnored(mavenProject));
 
-    var m1IgnoredActionVisible = action.isVisible(new TestActionEvent(createTestDataContext(m1File), action));
+    var m1IgnoredActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(m1File)));
     assertFalse(m1IgnoredActionVisible);
   }
 }

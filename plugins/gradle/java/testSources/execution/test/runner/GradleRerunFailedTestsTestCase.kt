@@ -139,7 +139,7 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
   fun performRerunFailedTestsAction(): Boolean = invokeAndWaitIfNeeded {
     val rerunAction = GradleRerunFailedTestsAction(testExecutionConsole)
     rerunAction.setModelProvider { testExecutionConsole.resultsViewer }
-    val actionEvent = TestActionEvent(
+    val actionEvent = TestActionEvent.createTestEvent(
       SimpleDataContext.builder()
         .add(ExecutionDataKeys.EXECUTION_ENVIRONMENT, testExecutionEnvironment)
         .add(CommonDataKeys.PROJECT, myProject)

@@ -62,7 +62,7 @@ suspend fun performAction(
 ) {
   withSelectedFileIfNeeded(selectedFile) {
     withContext(Dispatchers.EDT) {
-      action.actionPerformed(TestActionEvent {
+      action.actionPerformed(TestActionEvent.createTestEvent {
         when {
           ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
           CommonDataKeys.PROJECT.`is`(it) -> project

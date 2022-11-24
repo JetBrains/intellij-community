@@ -22,10 +22,10 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
@@ -47,7 +47,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val info = TestRunLineMarkerProvider().getInfo(identifier)!!
     val runAction = info.actions.first() as ExecutorAction
     val context = getContextByLocation(element)
-    runAction.getChildren(TestActionEvent(context.dataContext))
+    runAction.getChildren(TestActionEvent.createTestEvent(context.dataContext))
   }
 
   protected fun assertGutterRunActionsSize(element: PsiNameIdentifierOwner, expectedSize: Int) {

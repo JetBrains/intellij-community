@@ -6,6 +6,7 @@ import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.TextEditor
@@ -23,9 +24,9 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
@@ -295,9 +296,9 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
         UIUtil.dispatchAllInvocationEvents()
     }
 
-    private fun getActionEvent(action: AnAction): TestActionEvent {
+    private fun getActionEvent(action: AnAction): AnActionEvent {
         val context = TestDataProvider(project)
-        return TestActionEvent(context::getData, action)
+        return TestActionEvent.createTestEvent(action, context::getData)
     }
 
     protected fun doTestScratchText(): String {

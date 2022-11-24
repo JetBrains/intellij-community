@@ -29,19 +29,23 @@ public final class TestActionEvent extends AnActionEvent {
 
   private static final String PLACE = "";
 
+  @Deprecated(forRemoval = true)
   public TestActionEvent(@NotNull DataContext dataContext,
                          @NotNull AnAction action) {
     super(null, dataContext, PLACE, action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0);
   }
 
+  @Deprecated(forRemoval = true)
   public TestActionEvent(@NotNull AnAction action) {
     this(DataManager.getInstance().getDataContext(), action);
   }
 
+  @Deprecated(forRemoval = true)
   public TestActionEvent(DataContext context) {
     super(null, context, PLACE, new Presentation(), ActionManager.getInstance(), 0);
   }
 
+  @Deprecated(forRemoval = true)
   public TestActionEvent() {
     super(null, DataManager.getInstance().getDataContext(), PLACE, new Presentation(), ActionManager.getInstance(), 0);
   }

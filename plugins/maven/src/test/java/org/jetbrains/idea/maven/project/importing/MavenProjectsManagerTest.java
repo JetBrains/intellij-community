@@ -1325,7 +1325,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     configConfirmationForYesAnswer();
 
     RemoveManagedFilesAction action = new RemoveManagedFilesAction();
-    action.actionPerformed(new TestActionEvent(createTestDataContext(mavenParentPom), action));
+    action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)));
     assertEquals(1, ModuleManager.getInstance(myProject).getModules().length);
     assertEquals("non-maven", ModuleManager.getInstance(myProject).getModules()[0].getName());
     assertEmpty(myProjectsManager.getIgnoredFilesPaths());

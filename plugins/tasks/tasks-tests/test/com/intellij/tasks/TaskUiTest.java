@@ -40,10 +40,10 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     SwitchTaskAction combo = null;
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true);
-    AnAction[] children = group.getChildren(new TestActionEvent());
+    AnAction[] children = group.getChildren(TestActionEvent.createTestEvent());
     for (AnAction child : children) {
       if (child instanceof ActionGroup) {
-        AnAction[] actions = ((ActionGroup)child).getChildren(new TestActionEvent());
+        AnAction[] actions = ((ActionGroup)child).getChildren(TestActionEvent.createTestEvent());
         for (AnAction action : actions) {
           if (action instanceof SwitchTaskAction) {
             combo = (SwitchTaskAction)action;
