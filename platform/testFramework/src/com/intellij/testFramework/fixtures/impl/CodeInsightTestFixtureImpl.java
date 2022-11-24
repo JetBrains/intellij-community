@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
@@ -1642,8 +1643,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
     Project project = getProject();
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
-
     PsiFileImpl file = (PsiFileImpl)getHostFile();
+    if (!ReadAction.compute(() -> ProblemHighlightFilter.shouldHighlightFile(file))) {
+      boolean inSource = ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInSource(myFile));
+      throw new IllegalStateException("ProblemHighlightFilter.shouldHighlightFile('" + myFile + "') == false, so can't highlight it." +
+                                      (inSource ? "" : " Maybe it's because the file is outside source folders? (source folders: " +
+                                      ReadAction.compute(() -> Arrays.toString(ProjectRootManager.getInstance(project).getContentSourceRoots()))+")"));
+    }
     FileElement hardRefToFileElement = file.calcTreeElement();//to load text
 
     // to load AST for changed files before it's prohibited by "fileTreeAccessFilter"
