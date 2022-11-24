@@ -48,6 +48,44 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/backticked")
+    public static class Backticked extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ClassifierNameWithSpace.kt")
+        public void testClassifierNameWithSpace() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/ClassifierNameWithSpace.kt");
+        }
+
+        @TestMetadata("FunNameWithSpace.kt")
+        public void testFunNameWithSpace() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/FunNameWithSpace.kt");
+        }
+
+        @TestMetadata("KT19863.kt")
+        public void testKT19863() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/KT19863.kt");
+        }
+
+        @TestMetadata("KT19864.kt")
+        public void testKT19864() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/KT19864.kt");
+        }
+
+        @TestMetadata("PreferMatchingKeyword.kt")
+        public void testPreferMatchingKeyword() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/PreferMatchingKeyword.kt");
+        }
+
+        @TestMetadata("VariableNameWithSpace.kt")
+        public void testVariableNameWithSpace() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/VariableNameWithSpace.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/testData/handlers/basic/callableReference")
     public static class CallableReference extends AbstractPerformanceBasicCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1055,16 +1093,6 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/KT14130.kt");
         }
 
-        @TestMetadata("KT19863.kt")
-        public void testKT19863() throws Exception {
-            runTest("../completion/testData/handlers/basic/KT19863.kt");
-        }
-
-        @TestMetadata("KT19864.kt")
-        public void testKT19864() throws Exception {
-            runTest("../completion/testData/handlers/basic/KT19864.kt");
-        }
-
         @TestMetadata("KT23627.kt")
         public void testKT23627() throws Exception {
             runTest("../completion/testData/handlers/basic/KT23627.kt");
@@ -1108,11 +1136,6 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("PreferClassToConstructor.kt")
         public void testPreferClassToConstructor() throws Exception {
             runTest("../completion/testData/handlers/basic/PreferClassToConstructor.kt");
-        }
-
-        @TestMetadata("PreferMatchingKeyword.kt")
-        public void testPreferMatchingKeyword() throws Exception {
-            runTest("../completion/testData/handlers/basic/PreferMatchingKeyword.kt");
         }
 
         @TestMetadata("ReceiverParam.kt")
