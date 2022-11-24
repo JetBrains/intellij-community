@@ -36,6 +36,8 @@ import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.PlatformVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
@@ -133,7 +135,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 val projectManager = ProjectManager.getInstance()
                 val project = projectManager.openProjects.firstOrNull { it.basePath == resolverCtx.projectPath }
                 if (project != null) {
-                    mppModel.kotlinGradlePluginVersion?.let { version ->
+                    KotlinPluginLayout.standaloneCompilerVersion.let { version ->
                         showDeprecatedKotlinJsCompilerWarning(
                             project,
                             version,
@@ -632,9 +634,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
         fun showDeprecatedKotlinJsCompilerWarning(
             project: Project,
-            kotlinGradlePluginVersion: KotlinGradlePluginVersion,
+            kotlinPluginVersion: IdeKotlinVersion,
         ) {
-            kotlinGradlePluginVersion.invokeWhenAtLeast("1.7.0") {
+            if (kotlinPluginVersion.kotlinVersion.isAtLeast(1, 7, 0)) {
                 if (
                     !PropertiesComponent.getInstance(project).getBoolean(IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION, false)
                 ) {
