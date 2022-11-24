@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.UriUtil;
@@ -34,7 +35,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class OutputChecker {
   public static final Key[] OUTPUT_ORDER = {ProcessOutputTypes.SYSTEM, ProcessOutputTypes.STDOUT, ProcessOutputTypes.STDERR};
@@ -165,7 +167,7 @@ public class OutputChecker {
           System.out.println("Rest from actual text is: \"" + actual.substring(len) + "\"");
         }
 
-        assertEquals(originalText, actual);
+        throw new FileComparisonFailure(null, expected, actual, outFile.getPath());
       }
     }
   }
