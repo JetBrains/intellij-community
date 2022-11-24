@@ -71,26 +71,26 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     final String[] excludeAnnotations = getExcludeAnnotations(project);
     List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> targetParameters =
       javaParameters.getTargetDependentParameters().asTargetParameters();
-    targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> createArgumentTargetParameter(agentPath, sessionDataFilePath,
-                                                                                                                                             patterns, excludePatterns, excludeAnnotations,
-                                                                                                                                             testTracking,
-                                                                                                                                             branchCoverage, sourceMapPath));
+    targetParameters.add(request -> createArgumentTargetParameter(agentPath, sessionDataFilePath,
+                                                                  patterns, excludePatterns, excludeAnnotations,
+                                                                  testTracking,
+                                                                  branchCoverage, sourceMapPath));
     if (!Registry.is("idea.coverage.thread.safe.enabled")) {
-      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false"));
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false"));
     }
     if (!branchCoverage && Registry.is("idea.coverage.new.sampling.enabled")) {
-      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true"));
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true"));
     }
     if (branchCoverage && Registry.is("idea.coverage.new.tracing.enabled")) {
-      targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true"));
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true"));
       if (testTracking && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
-        targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
+        targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
       }
     }
     if (project != null) {
       final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
       if (optionsProvider.ignoreEmptyPrivateConstructors()) {
-        targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true"));
+        targetParameters.add(request -> JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true"));
       }
     }
   }
