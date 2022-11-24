@@ -174,6 +174,20 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implem
         if (count > 1 && hasCharsetType(parameters[count - 1]) || parameters[0].getType().equalsToText("java.io.Writer")) {
           return;
         }
+        if (count == 1) {
+          PsiExpressionList args = expression.getArgumentList();
+          if (args != null &&
+              PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(args.getExpressions())) instanceof PsiReferenceExpression ref &&
+              ref.resolve() instanceof PsiField field) {
+            if (field.getName().equals("out") || field.getName().equals("err")) {
+              PsiClass containingClass = field.getContainingClass();
+              if (containingClass != null && CommonClassNames.JAVA_LANG_SYSTEM.equals(containingClass.getQualifiedName())) {
+                // new PrintWriter(System.out): likely system default encoding is expected
+                return;
+              }
+            }
+          }
+        }
       }
       else if ("java.util.Formatter".equals(qName)) {
         if (count > 1 && hasCharsetType(parameters[1])) {

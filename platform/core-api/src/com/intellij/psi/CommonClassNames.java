@@ -16,6 +16,7 @@ public interface CommonClassNames {
 
   String JAVA_UTIL_OBJECTS = "java.util.Objects";
 
+  String JAVA_LANG_SYSTEM = "java.lang.System";
   String JAVA_LANG_THROWABLE = "java.lang.Throwable";
   String JAVA_LANG_EXCEPTION = "java.lang.Exception";
   String JAVA_LANG_ERROR = "java.lang.Error";
