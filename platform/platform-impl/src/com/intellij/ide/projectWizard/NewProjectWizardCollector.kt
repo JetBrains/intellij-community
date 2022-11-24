@@ -30,7 +30,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
     // @formatter:off
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 12)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 13)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
@@ -42,6 +42,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
     private val addSampleCodeField = EventFields.Boolean("add_sample_code")
+    private val addSampleOnboardingTipsField = EventFields.Boolean("add_sample_onboarding_tips")
     private val buildSystemField = BoundedStringEventField.lowercase("build_system", *NewProjectWizardConstants.BuildSystem.ALL)
     private val buildSystemDslField = BoundedStringEventField.lowercase("build_system_dsl", *NewProjectWizardConstants.Language.ALL_DSL)
     private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
@@ -69,6 +70,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val dslChangedEvent = GROUP.registerVarargEvent("build.system.dsl.changed", sessionIdField, screenNumField, languageField, buildSystemField, buildSystemDslField)
     private val parentChangedEvent = GROUP.registerVarargEvent("build.system.parent.changed", sessionIdField, screenNumField, languageField, buildSystemField, buildSystemParentField)
     private val addSampleCodeChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.code.changed", sessionIdField, screenNumField, languageField, buildSystemField, addSampleCodeField)
+    private val addSampleOnboardingTipsChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.changed", sessionIdField, screenNumField, languageField, buildSystemField, addSampleOnboardingTipsField)
     private val moduleNameChangedEvent = GROUP.registerVarargEvent("build.system.module.name.changed", sessionIdField, screenNumField, languageField, buildSystemField)
     private val contentRootChangedEvent = GROUP.registerVarargEvent("build.system.content.root.changed", sessionIdField, screenNumField, languageField, buildSystemField)
     private val moduleFileLocationChangedEvent = GROUP.registerVarargEvent("build.system.module.file.location.changed", sessionIdField, screenNumField, languageField, buildSystemField)
@@ -144,6 +146,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     fun logDslChanged(context: WizardContext, language: String, buildSystem: String, dsl: String) = dslChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(screenNumField, context.screen), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemDslField, dsl))
     fun logParentChanged(context: WizardContext, language: String, buildSystem: String, isNone: Boolean) = parentChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(screenNumField, context.screen), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemParentField, isNone))
     fun logAddSampleCodeChanged(context: WizardContext, language: String, buildSystem: String, isSelected: Boolean) = addSampleCodeChangedEvent.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, languageField with language, buildSystemField with buildSystem, addSampleCodeField with isSelected)
+    fun logAddSampleOnboardingTipsChanged(context: WizardContext, language: String, buildSystem: String, isSelected: Boolean) = addSampleOnboardingTipsChangedEvent.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, languageField with language, buildSystemField with buildSystem, addSampleOnboardingTipsField with isSelected)
     fun logModuleNameChanged(context: WizardContext, language: String, buildSystem: String) = moduleNameChangedEvent.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, languageField with language, buildSystemField with buildSystem)
     fun logContentRootChanged(context: WizardContext, language: String, buildSystem: String) = contentRootChangedEvent.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, languageField with language, buildSystemField with buildSystem)
     fun logModuleFileLocationChanged(context: WizardContext, language: String, buildSystem: String) = moduleFileLocationChangedEvent.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, languageField with language, buildSystemField with buildSystem)
@@ -158,6 +161,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     fun NewProjectWizardStep.logDslChanged(isUseKotlinDsl: Boolean) = logDslChanged(context, language, buildSystem, isUseKotlinDsl)
     fun NewProjectWizardStep.logParentChanged(isNone: Boolean) = logParentChanged(context, language, buildSystem, isNone)
     fun NewProjectWizardStep.logAddSampleCodeChanged(isSelected: Boolean) = logAddSampleCodeChanged(context, language, buildSystem, isSelected)
+    fun NewProjectWizardStep.logAddSampleOnboardingTipsChangedEvent(isSelected: Boolean) = logAddSampleOnboardingTipsChanged(context, language, buildSystem, isSelected)
     fun NewProjectWizardStep.logModuleNameChanged() = logModuleNameChanged(context, language, buildSystem)
     fun NewProjectWizardStep.logContentRootChanged() = logContentRootChanged(context, language, buildSystem)
     fun NewProjectWizardStep.logModuleFileLocationChanged()  = logModuleFileLocationChanged(context, language, buildSystem)

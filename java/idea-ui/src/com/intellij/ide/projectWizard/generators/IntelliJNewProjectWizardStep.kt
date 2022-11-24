@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleOnboardingTipsChangedEvent
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logContentRootChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleFileLocationChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
@@ -104,6 +105,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         row {
           checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
             .bindSelected(generateOnboardingTipsProperty)
+            .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
         }
       }.enabledIf(addSampleCode.selected)
       collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {

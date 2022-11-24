@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleOnboardingTipsChangedEvent
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
@@ -55,6 +56,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         row {
           checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
             .bindSelected(generateOnboardingTipsProperty)
+            .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
         }
       }.enabledIf(addSampleCode.selected)
     }
