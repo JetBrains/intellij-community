@@ -5,12 +5,12 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Map;
 
 /**
  * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
@@ -22,7 +22,7 @@ public final class FrameBoundsConverter {
    * @param bounds the bounds in the device space
    * @return the bounds in the user space
    */
-  public static @NotNull Map.Entry<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
+  public static @NotNull Pair<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
     int centerX = b.x + b.width / 2;
     int centerY = b.y + b.height / 2;
@@ -51,12 +51,12 @@ public final class FrameBoundsConverter {
         if (b.height > screen.height) {
           b.height = screen.height;
         }
-        return Map.entry(bounds, gd);
+        return new Pair<>(bounds, gd);
       }
     }
     // we didn't find proper device at all, probably it was an external screen that is unavailable now, we cannot use specified bounds
     ScreenUtil.fitToScreen(b);
-    return Map.entry(bounds, null);
+    return new Pair<>(bounds, null);
   }
 
   /**

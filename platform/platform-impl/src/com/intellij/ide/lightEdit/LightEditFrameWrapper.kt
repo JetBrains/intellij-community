@@ -85,7 +85,7 @@ internal class LightEditFrameWrapper(
           windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
         }
         frameInfo.bounds?.let {
-          frame.frame.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it).key
+          frame.frame.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it).first
         }
       }
 
@@ -115,7 +115,7 @@ internal class LightEditFrameWrapper(
     get() = editPanel!!
 
   override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
-    return LightEditRootPane(frame = frame, frameHelper = this, parentDisposable = this)
+    return LightEditRootPane(frame = frame, parentDisposable = this)
   }
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
@@ -162,7 +162,6 @@ internal class LightEditFrameWrapper(
   }
 
   private inner class LightEditRootPane(frame: JFrame,
-                                        frameHelper: IdeFrame,
                                         parentDisposable: Disposable) : IdeRootPane(frame = frame,
                                                                                     parentDisposable = parentDisposable,
                                                                                     loadingState = null) {

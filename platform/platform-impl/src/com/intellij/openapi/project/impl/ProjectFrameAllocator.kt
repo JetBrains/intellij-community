@@ -391,7 +391,7 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
     val boundsAndDevice = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
     val state = frameInfo.extendedState
     val isMaximized = FrameInfoHelper.isMaximized(state)
-    val graphicsDevice = boundsAndDevice.value
+    val graphicsDevice = boundsAndDevice.second
     return object : ProjectFrameProducer {
       override val device = graphicsDevice
 
@@ -399,9 +399,9 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
         val frame = IdeFrameImpl()
         SplashManager.hideBeforeShow(frame)
         if (isMaximized && frame.extendedState == Frame.NORMAL) {
-          frame.normalBounds = boundsAndDevice.key
+          frame.normalBounds = boundsAndDevice.first
         }
-        frame.bounds = boundsAndDevice.key
+        frame.bounds = boundsAndDevice.first
         frame.extendedState = state
         frame.minimumSize = Dimension(340, frame.minimumSize.height)
         return frame
