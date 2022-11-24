@@ -7,11 +7,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptySet;
 
 /**
@@ -24,7 +24,7 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
   public static Collection<AbstractVcs> getActiveVcses(@NotNull VcsContext dataContext) {
     Project project = dataContext.getProject();
 
-    return project != null ? newHashSet(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) : emptySet();
+    return project != null ? ContainerUtil.newHashSet(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) : emptySet();
   }
 
   @Override

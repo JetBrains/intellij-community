@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.psi.search.GlobalSearchScope.*;
 import static com.intellij.psi.search.GlobalSearchScopesCore.projectProductionScope;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
@@ -194,7 +193,7 @@ public abstract class MetaAnnotationUtil {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       GlobalSearchScope projectScope = module.getModuleWithDependenciesScope();
       GlobalSearchScope javaScope =
-        filesScope(module.getProject(), newHashSet(getJavaAnnotationInheritorIds(module.getProject(), projectScope)));
+        filesScope(module.getProject(), ContainerUtil.newHashSet(getJavaAnnotationInheritorIds(module.getProject(), projectScope)));
       GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(module.getProject(), projectScope);
       return Result.createSingleDependency(
         javaScope.uniteWith(otherScope),
