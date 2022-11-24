@@ -126,6 +126,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
     LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(Runnable { updateTrackingSettings() }, this)
+    VcsBaseContentProvider.EP_NAME.addChangeListener(project, { onEverythingChanged() }, this)
 
     updatePartialChangeListsAvailability()
 
@@ -1363,7 +1364,7 @@ private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerCont
 
 private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
-    if (!VcsFileStatusProvider.getInstance(project).isSupported(file)) return false
+    if (!LineStatusTrackerBaseContentUtil.isSupported(project, file)) return false
 
     val status = FileStatusManager.getInstance(project).getStatus(file)
     if (status == FileStatus.ADDED ||
@@ -1376,7 +1377,7 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
   }
 
   override fun getContentInfo(project: Project, file: VirtualFile): ContentInfo? {
-    val baseContent = VcsFileStatusProvider.getInstance(project).getBaseRevision(file) ?: return null
+    val baseContent = LineStatusTrackerBaseContentUtil.getBaseRevision(project, file) ?: return null
     return BaseRevisionContentInfo(baseContent, file.charset)
   }
 
