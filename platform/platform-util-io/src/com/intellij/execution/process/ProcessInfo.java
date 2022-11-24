@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ProcessInfo {
@@ -19,6 +20,7 @@ public class ProcessInfo {
   @NotNull private final Optional<String> myExecutablePath;
   @NotNull private final String myExecutableName;
   @NotNull private final String myArgs;
+  @Nullable private final String myUser;
 
   public ProcessInfo(int pid,
                      @NotNull String commandLine,
@@ -41,12 +43,23 @@ public class ProcessInfo {
                      @NotNull String args,
                      @Nullable String executablePath,
                      int parentPid) {
+    this(pid, commandLine, executableName, args, executablePath, parentPid, null);
+  }
+
+  public ProcessInfo(int pid,
+                     @NotNull String commandLine,
+                     @NotNull String executableName,
+                     @NotNull String args,
+                     @Nullable String executablePath,
+                     int parentPid,
+                     @Nullable String user) {
     myPid = pid;
     myCommandLine = commandLine;
     myExecutableName = executableName;
     myExecutablePath = StringUtil.isNotEmpty(executablePath) ? Optional.of(executablePath) : Optional.empty();
     myArgs = args;
     myParentPid = parentPid;
+    myUser = user;
   }
 
   public int getPid() {
@@ -94,9 +107,15 @@ public class ProcessInfo {
     return myArgs;
   }
 
+  @Nullable
+  @NlsSafe
+  public String getUser() {
+    return myUser;
+  }
+
   @Override
   public String toString() {
-    return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'" +
+    return myPid + (myUser != null ? " " + myUser : "") + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'" +
            myExecutablePath.map(s -> " " + s).orElse("");
   }
 
@@ -113,6 +132,7 @@ public class ProcessInfo {
     if (!myCommandLine.equals(info.myCommandLine)) return false;
     if (!myExecutablePath.equals(info.myExecutablePath)) return false;
     if (myParentPid != info.myParentPid) return false;
+    if (!Objects.equals(myUser, ((ProcessInfo)o).myUser)) return false;
 
     return true;
   }
@@ -124,6 +144,7 @@ public class ProcessInfo {
     result = 31 * result + myArgs.hashCode();
     result = 31 * result + myCommandLine.hashCode();
     result = 31 * result + myParentPid;
+    result = 31 * result + (myUser != null ? myUser.hashCode() : 0);
     return result;
   }
 }

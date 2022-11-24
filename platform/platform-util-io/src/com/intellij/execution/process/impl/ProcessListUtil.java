@@ -29,10 +29,7 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
@@ -119,6 +116,7 @@ public final class ProcessListUtil {
       return null;
     }
 
+    Map<Long, String> owners = getProcessOwners();
     List<ProcessInfo> result = new ArrayList<>();
 
     for (File each : processes) {
@@ -169,7 +167,8 @@ public final class ProcessListUtil {
                                  PathUtil.getFileName(cmdline.get(0)),
                                  StringUtil.join(cmdline.subList(1, cmdline.size()), " "),
                                  executablePath,
-                                 parentPid
+                                 parentPid,
+                                 owners.get((long)pid)
       ));
     }
     return result;
@@ -206,7 +205,7 @@ public final class ProcessListUtil {
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.substring(command.length()).trim();
 
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid));
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid, each.user));
     }
     return result;
   }
@@ -238,7 +237,7 @@ public final class ProcessListUtil {
       String args = each.commandLine.startsWith(command) ? each.commandLine.substring(command.length()).trim()
                                                          : each.commandLine;
 
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid));
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid, each.user));
     }
     return result;
   }
@@ -300,7 +299,9 @@ public final class ProcessListUtil {
     if (exeFile == null) {
       return null;
     }
-    return parseCommandOutput(Collections.singletonList(exeFile.toAbsolutePath().toString()), ProcessListUtil::parseWinProcessListHelperOutput, StandardCharsets.UTF_8);
+    return parseCommandOutput(Collections.singletonList(exeFile.toAbsolutePath().toString()),
+                              output -> parseWinProcessListHelperOutput(output, getProcessOwners()),
+                              StandardCharsets.UTF_8);
   }
 
   private static void logErrorTestSafe(@NonNls String message) {
@@ -349,7 +350,7 @@ public final class ProcessListUtil {
     return null;
   }
 
-  static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
+  static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output, @NotNull Map<Long, String> processOwners) {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
     if (lines.length % 4 != 0) {
@@ -399,7 +400,7 @@ public final class ProcessListUtil {
       else {
         args = extractCommandLineArgs(commandLine, name);
       }
-      result.add(new ProcessInfo(id, commandLine, name, args, null, parentId));
+      result.add(new ProcessInfo(id, commandLine, name, args, null, parentId, processOwners.get((long)id)));
     }
     return result;
   }
@@ -428,10 +429,10 @@ public final class ProcessListUtil {
 
   static @Nullable List<ProcessInfo> getProcessListUsingWindowsWMIC() {
     return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,ParentProcessId,Commandline,ExecutablePath"),
-                              ProcessListUtil::parseWMICOutput);
+                              output -> parseWMICOutput(output, getProcessOwners()));
   }
 
-  static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output) {
+  static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output, @NotNull Map<Long, String> processOwners) {
     List<ProcessInfo> result = new ArrayList<>();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
@@ -473,7 +474,7 @@ public final class ProcessListUtil {
         args = extractCommandLineArgs(commandLine, name);
       }
 
-      result.add(new ProcessInfo(pid, commandLine, name, args, executablePath, parentPid));
+      result.add(new ProcessInfo(pid, commandLine, name, args, executablePath, parentPid, processOwners.get((long)pid)));
     }
     return result;
   }
@@ -498,7 +499,11 @@ public final class ProcessListUtil {
         String name = next[0];
         if (name.isEmpty()) continue;
 
-        result.add(new ProcessInfo(pid, name, name, ""));
+        String userName = next.length > 6 ? next[6] : null;
+        if ("N/A".equals(userName)) {
+          userName = null;
+        }
+        result.add(new ProcessInfo(pid, name, name, "", null, -1, userName));
       }
     }
     catch (IOException e) {
@@ -513,6 +518,20 @@ public final class ProcessListUtil {
       }
     }
 
+    return result;
+  }
+
+  /**
+   * @return map from process id to process owner name
+   */
+  private static @NotNull Map<Long, String> getProcessOwners() {
+    Map<Long, String> result = new HashMap<>();
+    ProcessHandle.allProcesses().forEach(it -> {
+      long pid = it.pid();
+      ProcessHandle.Info info = it.info();
+      String user = info.user().orElse(null);
+      result.put(pid, user);
+    });
     return result;
   }
 }

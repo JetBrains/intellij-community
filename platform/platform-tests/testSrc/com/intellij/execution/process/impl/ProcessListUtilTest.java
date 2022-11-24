@@ -7,7 +7,9 @@ import com.intellij.openapi.util.SystemInfo;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
 
@@ -39,10 +41,10 @@ public class ProcessListUtilTest extends TestCase {
         10000     3 S    user    ./dir/dir/file param2 param2"""
     );
     assertOrderedEquals(infos,
-                        new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0),
-                        new ProcessInfo(2, "./dir/dir/file", "file", "", "./dir/dir/file", 1),
-                        new ProcessInfo(3, "./dir/dir/file param param", "file", "param param", "./dir/dir/file", 2),
-                        new ProcessInfo(10000, "./dir/dir/file param2 param2", "file", "param2 param2", "./dir/dir/file", 3));
+                        new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user"),
+                        new ProcessInfo(2, "./dir/dir/file", "file", "", "./dir/dir/file", 1, "user"),
+                        new ProcessInfo(3, "./dir/dir/file param param", "file", "param param", "./dir/dir/file", 2, "user"),
+                        new ProcessInfo(10000, "./dir/dir/file param2 param2", "file", "param2 param2", "./dir/dir/file", 3, "user"));
   }
 
   public void testMac_DoNotIncludeProcessedMissingOnTheSecondPSRun() {
@@ -60,7 +62,7 @@ public class ProcessListUtilTest extends TestCase {
             5     1 S    user    /dir/file
         """
     );
-    assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0));
+    assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user"));
   }
 
   public void testMac_DoNotIncludeProcessedChangedOnTheSecondPSRun() {
@@ -82,7 +84,7 @@ public class ProcessListUtilTest extends TestCase {
             4     3 S    user    /dir/file/1
         """
     );
-    assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file param", "file", "param", "/dir/file", 0));
+    assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file param", "file", "param", "/dir/file", 0, "user"));
   }
 
   public void testMac_DoNotIncludeZombies() {
@@ -102,7 +104,7 @@ public class ProcessListUtilTest extends TestCase {
             3     1 SZ   user    /dir/file
         """
     );
-    assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0));
+    assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user"));
   }
 
   public void testMac_VariousFormsPidStatUser() {
@@ -121,8 +123,8 @@ public class ProcessListUtilTest extends TestCase {
         """
     );
     assertOrderedEquals(infos,
-                        new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0),
-                        new ProcessInfo(101, "/dir/file", "file", "", "/dir/file", 1));
+                        new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user"),
+                        new ProcessInfo(101, "/dir/file", "file", "", "/dir/file", 1, "user_name"));
   }
 
   public void testMac_WrongFormat() {
@@ -197,12 +199,17 @@ public class ProcessListUtilTest extends TestCase {
         explorer.exe              C:\\WINDOWS\\Explorer.EXE                                C:\\WINDOWS\\Explorer.EXE                       3068                                     3164      \s
         TPAutoConnect.exe         TPAutoConnect.exe -q -i vmware -a COM1 -F 30                                                         3164                                     3336      \s
         conhost.exe               \\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4                \\??\\C:\\WINDOWS\\system32\\conhost.exe           0                                        3348      \s
-        """);
+        """, Map.of(
+        304L, "user1",
+        3052L, "user2",
+        3068L, "user1",
+        3164L, "user3"
+      ));
     assertOrderedEquals(infos,
-                        new ProcessInfo(304, "smss.exe", "smss.exe", "", null, 0),
-                        new ProcessInfo(3052, "sihost.exe", "sihost.exe", "", null, 304),
-                        new ProcessInfo(3068, "taskhostw.exe {222A245B-E637-4AE9-A93F-A59CA119A75E}", "taskhostw.exe", "{222A245B-E637-4AE9-A93F-A59CA119A75E}", null, 0),
-                        new ProcessInfo(3164, "C:\\WINDOWS\\Explorer.EXE", "explorer.exe", "", "C:\\WINDOWS\\Explorer.EXE", 3068),
+                        new ProcessInfo(304, "smss.exe", "smss.exe", "", null, 0, "user1"),
+                        new ProcessInfo(3052, "sihost.exe", "sihost.exe", "", null, 304, "user2"),
+                        new ProcessInfo(3068, "taskhostw.exe {222A245B-E637-4AE9-A93F-A59CA119A75E}", "taskhostw.exe", "{222A245B-E637-4AE9-A93F-A59CA119A75E}", null, 0, "user1"),
+                        new ProcessInfo(3164, "C:\\WINDOWS\\Explorer.EXE", "explorer.exe", "", "C:\\WINDOWS\\Explorer.EXE", 3068, "user3"),
                         new ProcessInfo(3336, "TPAutoConnect.exe -q -i vmware -a COM1 -F 30", "TPAutoConnect.exe", "-q -i vmware -a COM1 -F 30", null, 3164),
                         new ProcessInfo(3348, "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4", "conhost.exe", "0x4", "\\??\\C:\\WINDOWS\\system32\\conhost.exe", 0));
   }
@@ -214,7 +221,7 @@ public class ProcessListUtilTest extends TestCase {
         System Idle Process                                                                            -1                                  0         \s
         System                                                                                         0                                   4         \s
         smss.exe                                                                                       0                                   304       \s
-        """);
+        """, Collections.emptyMap());
     assertOrderedEquals(infos,
                         new ProcessInfo(4, "System", "System", "", null, 0),
                         new ProcessInfo(304, "smss.exe", "smss.exe", "", null, 0));
@@ -222,29 +229,29 @@ public class ProcessListUtilTest extends TestCase {
 
   public void testWindows_WMIC_WrongFormat() {
     assertNull(ProcessListUtil.parseWMICOutput(
-      ""));
+      "", Collections.emptyMap()));
     assertNull(ProcessListUtil.parseWMICOutput(
-      "wrong format"));
+      "wrong format", Collections.emptyMap()));
     assertEmpty(ProcessListUtil.parseWMICOutput(
-      "Caption                   CommandLine                   ExecutablePath                         ParentProcessId                         ProcessId  \n"));
+      "Caption                   CommandLine                   ExecutablePath                         ParentProcessId                         ProcessId  \n", Collections.emptyMap()));
     assertNull(ProcessListUtil.parseWMICOutput(
-      "smss.exe                                                                         304        \n"));
+      "smss.exe                                                                         304        \n", Collections.emptyMap()));
 
     assertNull(ProcessListUtil.parseWMICOutput(
       """
         Caption                   XXX                ExecutablePath                                    ProcessId \s
         smss.exe                                                                                       304       \s
-        """));
+        """, Collections.emptyMap()));
     assertNull(ProcessListUtil.parseWMICOutput(
       """
         Caption                   CommandLine               ExecutablePath                             XXX \s
         smss.exe                                                                                       304       \s
-        """));
+        """, Collections.emptyMap()));
     assertEmpty(ProcessListUtil.parseWMICOutput(
       """
         Caption                   CommandLine               ExecutablePath                         ParentProcessId                         ProcessId \s
                                                                                                                  \s
-        """));
+        """, Collections.emptyMap()));
   }
 
   public void testWindows_TaskList() {
@@ -259,11 +266,11 @@ public class ProcessListUtilTest extends TestCase {
         """);
     assertOrderedEquals(infos,
                         new ProcessInfo(304, "smss.exe", "smss.exe", ""),
-                        new ProcessInfo(3052, "sihost.exe", "sihost.exe", ""),
-                        new ProcessInfo(3068, "taskhostw.exe", "taskhostw.exe", ""),
-                        new ProcessInfo(3164, "explorer.exe", "explorer.exe", ""),
-                        new ProcessInfo(3336, "TPAutoConnect.exe", "TPAutoConnect.exe", ""),
-                        new ProcessInfo(3348, "conhost.exe", "conhost.exe", ""));
+                        new ProcessInfo(3052, "sihost.exe", "sihost.exe", "",  null, -1, "VM-WINDOWS\\Anton Makeev"),
+                        new ProcessInfo(3068, "taskhostw.exe", "taskhostw.exe", "",  null, -1, "VM-WINDOWS\\Anton Makeev"),
+                        new ProcessInfo(3164, "explorer.exe", "explorer.exe", "", null, -1, "VM-WINDOWS\\Anton Makeev"),
+                        new ProcessInfo(3336, "TPAutoConnect.exe", "TPAutoConnect.exe", "",  null, -1, "VM-WINDOWS\\Anton Makeev"),
+                        new ProcessInfo(3348, "conhost.exe", "conhost.exe", "",  null, -1, "VM-WINDOWS\\Anton Makeev"));
   }
 
   public void testWindows_TaskList_WrongFormat() {
@@ -292,24 +299,28 @@ public class ProcessListUtilTest extends TestCase {
         parentPid:12300
         name:cmd.exe
         cmd:"C:\\\\WINDOWS\\\\system32\\\\cmd.exe" /c "pause\\necho 123"
-        """
-    );
+        """,
+      Map.of(
+        19608L, "user1",
+        12300L, "user2",
+        26284L, "user1"
+      ));
     assertOrderedEquals(
       infos,
-      new ProcessInfo(19608, "\"C:\\Users\\grahams\\AppData\\Local\\SourceTree\\app-3.1.3\\SourceTree.exe\"", "SourceTree.exe", "", null, 0),
-      new ProcessInfo(12300, "\\??\\C:\\Windows\\system32\\conhost.exe 0x4", "conhost.exe", "0x4", null, 0),
+      new ProcessInfo(19608, "\"C:\\Users\\grahams\\AppData\\Local\\SourceTree\\app-3.1.3\\SourceTree.exe\"", "SourceTree.exe", "", null, 0, "user1"),
+      new ProcessInfo(12300, "\\??\\C:\\Windows\\system32\\conhost.exe 0x4", "conhost.exe", "0x4", null, 0, "user2"),
       new ProcessInfo(26284,
                       "\"C:\\Program Files\\Unity Hub\\Unity Hub.exe\" --no-sandbox --lang=en-US --node-integration=true /prefetch:1",
                       "Unity Hub.exe",
-                      "--no-sandbox --lang=en-US --node-integration=true /prefetch:1", null, 0),
+                      "--no-sandbox --lang=en-US --node-integration=true /prefetch:1", null, 0, "user1"),
       new ProcessInfo(25064,
                       "\"C:\\WINDOWS\\system32\\cmd.exe\" /c \"pause\necho 123\"",
                       "cmd.exe",
-                      "/c \"pause\necho 123\"", null, 12300)
+                      "/c \"pause\necho 123\"", null, 12300, null)
     );
 
-    assertNull(ProcessListUtil.parseWinProcessListHelperOutput(""));
-    assertNull(ProcessListUtil.parseWinProcessListHelperOutput("Hello"));
+    assertNull(ProcessListUtil.parseWinProcessListHelperOutput("", Collections.emptyMap()));
+    assertNull(ProcessListUtil.parseWinProcessListHelperOutput("Hello", Collections.emptyMap()));
     assertNull(ProcessListUtil.parseWinProcessListHelperOutput("""
                                                                  pid:12345
                                                                  name:git.exe
@@ -317,7 +328,7 @@ public class ProcessListUtilTest extends TestCase {
                                                                  pid:1x
                                                                  name:node.exe
                                                                  cmd:node.exe qq
-                                                                 """
-    ));
+                                                                 """,
+                                                               Collections.emptyMap()));
   }
 }
