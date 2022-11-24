@@ -328,6 +328,9 @@ Includes the following features:</p>
 
     <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>
 
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidLineMarkerAdvertisementProvider"/>
+
     <intentionAction>
       <language>Markdown</language>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>

@@ -65,10 +65,14 @@ internal fun advertiseMermaidPlugin(project: Project) {
   }
 }
 
+internal fun installMermaidPlugin(project: Project?, onSuccess: () -> Unit = {}) {
+  installAndEnable(project, setOf(mermaidPluginId), true, onSuccess = onSuccess)
+}
+
 private class InstallMermaidPluginAction: NotificationAction(MarkdownBundle.message("markdown.notification.mermaid.advertisement.install.action.text")) {
   override fun actionPerformed(event: AnActionEvent, notification: Notification) {
     val project = event.project
-    installAndEnable(project, setOf(mermaidPluginId), true) {
+    installMermaidPlugin(project) {
       notification.expire()
     }
   }
