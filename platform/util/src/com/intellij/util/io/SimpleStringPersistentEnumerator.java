@@ -122,6 +122,7 @@ public final class SimpleStringPersistentEnumerator implements DataEnumerator<St
       }
 
       Files.createDirectories(file.getParent());
+      //FIXME RC: class-level javadoc states values stored in UTF8, but here it is .defaultCharset()!
       Files.write(file, Arrays.asList(names), Charset.defaultCharset());
     }
     catch (IOException e) {
