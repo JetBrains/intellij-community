@@ -1,0 +1,24 @@
+<idea-plugin>
+
+<extensions defaultExtensionNs="com.intellij">
+  <!--<elementDescriptionProvider implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogDescriptionProvider"/>-->
+  <!--<findUsagesHandlerFactory implementation="org.jetbrains.plugins.gradle.toml.findUsages.GradleVersionCatalogFindUsagesFactory"/>-->
+  <!--<psi.referenceContributor language="TOML"-->
+  <!--                          implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogReferenceContributor"/>-->
+  <!--<renameInputValidator implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogRenameInputValidator"/>-->
+
+  <!--<typedHandler implementation="org.jetbrains.plugins.gradle.toml.completion.VersionCatalogTypedHandler" id="tomlVersionCatalogAuto"/>-->
+  <!--<completion.contributor language="TOML"-->
+  <!--                        implementationClass="org.jetbrains.plugins.gradle.toml.completion.VersionCatalogCompletionContributor"/>-->
+
+
+
+  <!--<localInspection language="TOML" groupPath="Gradle" shortName="UnusedVersionCatalogEntry"-->
+  <!--                 bundle="messages.GradleInspectionBundle" key="inspection.display.name.unused.version.catalog.entry"-->
+  <!--                 groupBundle="messages.GradleInspectionBundle" groupKey="inspection.style"-->
+  <!--                 enabledByDefault="true"-->
+  <!--                 implementationClass="org.jetbrains.plugins.gradle.codeInspection.toml.UnusedVersionCatalogEntryInspection"/>-->
+
+
+</extensions>
+</idea-plugin>

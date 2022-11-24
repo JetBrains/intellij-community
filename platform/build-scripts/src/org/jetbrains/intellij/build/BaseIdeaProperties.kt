@@ -75,6 +75,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = JB_BUNDLED_PLUGINS + persiste
   "intellij.android.gradle.dsl",
   "intellij.gradle.java",
   "intellij.gradle.java.maven",
+  "intellij.gradle.analysis",
   "intellij.vcs.git",
   "intellij.vcs.svn",
   "intellij.vcs.hg",

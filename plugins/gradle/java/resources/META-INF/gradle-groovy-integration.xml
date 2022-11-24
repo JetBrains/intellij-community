@@ -1,6 +1,6 @@
 <idea-plugin>
-  <depends optional="true" config-file="gradle-groovy-toml-integration.xml">org.toml.lang</depends>
   <depends>com.intellij.completion.ml.ranking</depends>
+  <depends optional="true" config-file="gradle-groovy-toml-integration.xml">org.toml.lang</depends>
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"
@@ -25,6 +25,7 @@
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
     <testLocationCustomizer implementation="org.jetbrains.plugins.gradle.execution.test.runner.spock.SpockGradleTestLocationCustomizer"/>
+    <!--<dslInspectionProvider language="Groovy" implementationClass="org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyGradleDslInspectionProvider"/>-->
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -65,38 +66,6 @@
                      key="jcenter.repository" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.JCenterRepositoryInspection"/>
-
-    <localInspection language="Groovy" groupPath="Gradle" shortName="DependencyNotationArgument"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>
-
-    <localInspection language="Groovy" groupPath="Gradle" shortName="ForeignDelegate"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.foreign.delegate" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection"/>
-
-    <localInspection language="Groovy" groupPath="Gradle" shortName="IncorrectPluginDslStructure"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity" groupBundle="messages.GroovyBundle"
-                     enabledByDefault="true" level="ERROR"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspection"/>
-
-    <localInspection language="Groovy" groupPath="Gradle" shortName="ConfigurationAvoidance"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.configuration.avoidance" groupKey="inspection.best.practises" groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>
-
-    <localInspection language="Groovy" groupPath="Gradle" shortName="DeprecatedConfigurations"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity" groupBundle="messages.GroovyBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
-
-
 
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>
