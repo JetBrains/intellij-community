@@ -12,6 +12,9 @@
   <xi:include href="/META-INF/dvcs.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/smart-update.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"
