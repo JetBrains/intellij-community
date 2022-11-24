@@ -133,10 +133,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
         public void applyDefaults(@NotNull List<? extends Editor> editors) {
           if (!myTextSettings.isUseSoftWraps()) {
             for (Editor editor : editors) {
-              if (editor instanceof EditorImpl editorImpl &&
-                  editorImpl.getSoftWrapModel().shouldSoftWrapsBeForced()) {
-                myForcedSoftWrap = true;
-              }
+              myForcedSoftWrap = myForcedSoftWrap || ((EditorImpl)editor).getSoftWrapModel().shouldSoftWrapsBeForced();
             }
           }
           super.applyDefaults(editors);
@@ -248,9 +245,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     private void apply(@NotNull HighlightingLevel layer) {
       for (Editor editor : myEditors.get()) {
-        if (editor instanceof EditorImpl editorImpl) {
-          editorImpl.setHighlightingPredicate(layer.getCondition());
-        }
+        ((EditorImpl)editor).setHighlightingPredicate(layer.getCondition());
       }
     }
 

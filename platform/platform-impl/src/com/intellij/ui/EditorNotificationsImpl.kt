@@ -177,7 +177,7 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
       // delay for debounce
       delay(100)
 
-      if (!readAction { file.isValid }) {
+      if (!file.isValid) {
         return@launch
       }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -169,7 +169,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
       return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
     }
     EditorWindowTrackerImpl tracker = (EditorWindowTrackerImpl)ApplicationManager.getApplication().getService(EditorWindowTracker.class);
-    return tracker.createEditor(documentWindow, hostEditor, injectedFile);
+    return tracker.createEditor(documentWindow, (EditorImpl)hostEditor, injectedFile);
   }
 
   public static Editor openEditorFor(@NotNull PsiFile file, @NotNull Project project) {
@@ -186,7 +186,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     if (editor == null || editor instanceof EditorWindow || editor.isDisposed()) return editor;
     if (document instanceof DocumentWindowImpl) {
       EditorWindowTrackerImpl tracker = (EditorWindowTrackerImpl)ApplicationManager.getApplication().getService(EditorWindowTracker.class);
-      return tracker.createEditor((DocumentWindowImpl)document, editor, file);
+      return tracker.createEditor((DocumentWindowImpl)document, (EditorImpl)editor, file);
     }
     return editor;
   }

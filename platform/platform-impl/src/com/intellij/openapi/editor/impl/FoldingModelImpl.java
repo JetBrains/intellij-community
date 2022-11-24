@@ -535,7 +535,6 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   }
 
-  @Override
   public boolean isInBatchFoldingOperation() {
     return myIsBatchFoldingProcessing;
   }

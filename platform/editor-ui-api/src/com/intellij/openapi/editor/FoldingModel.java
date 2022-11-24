@@ -119,8 +119,6 @@ public interface FoldingModel {
    */
   void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition);
 
-  boolean isInBatchFoldingOperation();
-
   /**
    * Creates a fold region with custom representation (defined by the provided renderer). Created region spans whole document lines, and
    * always remains in a collapsed state (it can be removed, but not expanded).

@@ -62,9 +62,4 @@ class TextComponentFoldingModel implements FoldingModel {
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion) {
   }
-
-  @Override
-  public boolean isInBatchFoldingOperation() {
-    return false;
-  }
 }

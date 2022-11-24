@@ -2,7 +2,6 @@
 package com.intellij.execution.testframework
 
 import com.intellij.execution.testframework.actions.TestDiffProvider
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -28,7 +27,7 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
       val failedCall = getFailedCall(file, startOffset, endOffset) ?: return@forEach
       val expected = getExpected(failedCall, expectedParamIndex) ?: return@forEach
       expectedParamIndex = getParamIndex(expected)
-      return InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, expected.textOffset + 1)
+      return expected
     }
     return null
   }

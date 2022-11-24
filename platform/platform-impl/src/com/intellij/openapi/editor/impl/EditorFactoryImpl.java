@@ -239,9 +239,7 @@ public class EditorFactoryImpl extends EditorFactory {
     }
     finally {
       try {
-        if (editor instanceof EditorImpl) {
-          ((EditorImpl)editor).release();
-        }
+        ((EditorImpl)editor).release();
       }
       finally {
         for (ClientEditorManager clientEditors : ClientEditorManager.getAllInstances()) {
