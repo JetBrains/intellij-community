@@ -257,12 +257,12 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       Component c = renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        if (userObject instanceof ViewerNodeDescriptor) {
-          Object element = ((ViewerNodeDescriptor)userObject).getElement();
-          if (c instanceof NodeRenderer) {
-            ((NodeRenderer)c).setToolTipText(element == null ? null : element.getClass().getName());
+        if (userObject instanceof ViewerNodeDescriptor descriptor) {
+          Object element = descriptor.getElement();
+          if (c instanceof NodeRenderer nodeRenderer) {
+            nodeRenderer.setToolTipText(element.getClass().getName());
           }
-          if (element instanceof PsiElement && FileContextUtil.getFileContext(((PsiElement)element).getContainingFile()) != null ||
+          if (element instanceof PsiElement psiElement && FileContextUtil.getFileContext(psiElement.getContainingFile()) != null ||
               element instanceof ViewerTreeStructure.Inject) {
             TextAttributes attr =
               EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
