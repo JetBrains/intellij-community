@@ -18,7 +18,7 @@ class InlayProviderOption {
    */
   @Attribute("optionId")
   @RequiredElement
-  var myOptionId: String? = null
+  var optionId: String? = null
 
   @Attribute("enabledByDefault")
   @RequiredElement
@@ -43,12 +43,12 @@ class InlayProviderOption {
   fun getName(bean: InlayHintsProviderExtensionBean): @Nls String {
     val localizedString = bean.getLocalizedString(bundle, nameKey)
     return if (localizedString != null) localizedString else {
-      LOG.warn("Not found key in bundle for option $myOptionId in ${bean.requiredProviderId()}")
+      LOG.warn("Not found key in bundle for option $optionId in ${bean.requiredProviderId()}")
       nameKey!!
     }
   }
 
-  fun getOptionId() : String {
-    return myOptionId!!
+  fun requireOptionId() : String {
+    return optionId!!
   }
 }

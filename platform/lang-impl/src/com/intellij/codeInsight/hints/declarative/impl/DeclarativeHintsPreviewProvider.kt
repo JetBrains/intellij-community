@@ -15,7 +15,7 @@ object DeclarativeHintsPreviewProvider {
   private const val MAIN_PREVIEW_NAME = "preview"
 
   fun getPreview(language: Language, providerId: String, provider: InlayHintsProvider): String? {
-    return getOptionPreview(provider, language, MAIN_PREVIEW_NAME, providerId)
+    return getOptionPreview(provider, language, optionId = MAIN_PREVIEW_NAME, providerId)
   }
 
   fun getOptionPreview(language: Language, providerId: String, optionId: String, provider: InlayHintsProvider): String? {
@@ -23,18 +23,24 @@ object DeclarativeHintsPreviewProvider {
   }
 
   private fun getOptionPreview(provider: InlayHintsProvider, language: Language, optionId: String, providerId: String): String? {
-    val fileType = language.associatedFileType ?: PlainTextFileType.INSTANCE
-    return getTextFromStream(providerId, provider, fileType.defaultExtension, optionId)
-  }
-
-  private fun getTextFromStream(
-    providerId: String,
-    provider: Any,
-    extension: String,
-    caseId: String
-  ): String? {
-    val path = "inlayProviders/$providerId/$caseId.$extension"
+    val path = getPreviewOptionSearchPath(providerId, language, optionId)
     val stream = provider.javaClass.classLoader.getResourceAsStream(path)
     return if (stream != null) ResourceUtil.loadText(stream) else null
+  }
+
+  fun getPreviewSearchPath(
+    providerId: String,
+    language: Language
+  ) : String {
+    return getPreviewOptionSearchPath(providerId, language, MAIN_PREVIEW_NAME)
+  }
+
+  private fun getPreviewOptionSearchPath(
+    providerId: String,
+    language: Language,
+    optionId: String
+  ) : String {
+    val extension = language.associatedFileType ?: PlainTextFileType.INSTANCE
+    return "inlayProviders/$providerId/$optionId.${extension.defaultExtension}"
   }
 }

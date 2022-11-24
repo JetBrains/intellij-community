@@ -20,7 +20,7 @@ class DeclarativeHintsDefaultProviderFactory : InlayHintsProviderFactory {
     }
     return beans.map {
       val options = it.options
-        .map { option -> InlayOptionInfo(option.getOptionId(), option.enabledByDefault, option.getName(it)) }
+        .map { option -> InlayOptionInfo(option.requireOptionId(), option.enabledByDefault, option.getName(it)) }
         .toSet()
       InlayProviderInfo(it.instance, it.providerId!!, options, it.isEnabledByDefault, it.getProviderName())
     }

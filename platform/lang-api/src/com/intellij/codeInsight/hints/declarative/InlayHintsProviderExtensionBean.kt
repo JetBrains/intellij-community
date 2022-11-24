@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.Nls
 
@@ -56,8 +57,9 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   @Attribute
   var providerId: String? = null
 
-  @XCollection
-  var options: List<InlayProviderOption> = emptyList()
+  @get:Property(surroundWithTag = false)
+  @get:XCollection(elementName = "option")
+  var options: List<InlayProviderOption> = ArrayList()
 
   @RequiredElement
   @Attribute
@@ -67,7 +69,6 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   @Attribute
   var nameKey: String? = null
 
-  @RequiredElement
   @Attribute
   var descriptionKey: String? = null
 
@@ -94,8 +95,10 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
     return getLocalizedString(bundle!!, nameKey!!)!!
   }
 
-  fun getDescription() : @Nls String {
-    return getLocalizedString(bundle!!, descriptionKey!!)!!
+  fun getDescription() : @Nls String? {
+    val bundleName = bundle ?: return null
+    val descriptionKey = descriptionKey ?: return null
+    return getLocalizedString(bundleName, descriptionKey)!!
   }
 
   internal fun getLocalizedString(bundleName: String?, key: String?): @Nls String? {

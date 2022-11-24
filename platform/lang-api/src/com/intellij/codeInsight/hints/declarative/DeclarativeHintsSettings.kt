@@ -38,6 +38,8 @@ class DeclarativeInlayHintsSettings(private val project: Project) : SimplePersis
   fun setOptionEnabled(optionId: String, providerId: String, value: Boolean) {
     if (!value) {
       state.disabledOptions.add(getSerializedId(providerId, optionId))
+    } else {
+      state.disabledOptions.remove(getSerializedId(providerId, optionId))
     }
   }
 

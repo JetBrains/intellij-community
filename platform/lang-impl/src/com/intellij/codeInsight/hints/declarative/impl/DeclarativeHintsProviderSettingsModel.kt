@@ -29,13 +29,13 @@ class DeclarativeHintsProviderSettingsModel(
   private fun loadOptionsFromSettings(): List<MutableOption> = providerDescription.options
     .map {
       val enabledByDefault = it.enabledByDefault
-      val enabled = settings.isOptionEnabled(it.getOptionId(), providerDescription.requiredProviderId()) ?: enabledByDefault
+      val enabled = settings.isOptionEnabled(it.requireOptionId(), providerDescription.requiredProviderId()) ?: enabledByDefault
       MutableOption(it, enabled, enabledByDefault)
     }
 
   private val _cases: List<ImmediateConfigurable.Case> = options.map { option ->
     ImmediateConfigurable.Case(option.description.getName(providerDescription),
-                               option.description.getOptionId(),
+                               option.description.requireOptionId(),
                                loadFromSettings = {
                                  option.isEnabled
                                },
@@ -53,7 +53,7 @@ class DeclarativeHintsProviderSettingsModel(
   override val component: JComponent
     get() = customSettingsProvider.createComponent(project, language)
 
-  override val description: String
+  override val description: String?
     get() = providerDescription.getDescription()
 
   override val previewText: String?
@@ -70,7 +70,7 @@ class DeclarativeHintsProviderSettingsModel(
     val providerId = providerDescription.requiredProviderId()
     val provider = providerDescription.instance
 
-    val enabledOptions = providerDescription.options.associateBy(keySelector = { it.getOptionId() },
+    val enabledOptions = providerDescription.options.associateBy(keySelector = { it.requireOptionId() },
                                                                  valueTransform = { true }) // we enable all the options
     val pass = DeclarativeInlayHintsPassFactory.createPassForPreview(file, editor, provider, providerId, enabledOptions,
                                                                      isDisabled = !isEnabled)
@@ -82,14 +82,14 @@ class DeclarativeHintsProviderSettingsModel(
 
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
     val caseId = case.id
-    val option = providerDescription.options.firstOrNull { it.getOptionId() == caseId } ?: return null
+    val option = providerDescription.options.firstOrNull { it.requireOptionId() == caseId } ?: return null
 
     return option.getDescription(providerDescription)
   }
 
   override fun apply() {
     for (option in options) {
-      settings.setOptionEnabled(option.description.getOptionId(), id, option.isEnabled)
+      settings.setOptionEnabled(option.description.requireOptionId(), id, option.isEnabled)
     }
     settings.setProviderEnabled(id, isEnabled)
     val newSettingsCopy = customSettingsProvider.getSettingsCopy()
@@ -98,18 +98,24 @@ class DeclarativeHintsProviderSettingsModel(
   }
 
   override fun isModified(): Boolean {
-    if (providerDescription.isEnabledByDefault != isEnabled && settings.isProviderEnabled(id) != isEnabled) return true
+    if (isEnabled != isProviderEnabledInSettings()) {
+      return true
+    }
+
     if (customSettingsProvider.isDifferentFrom(project, savedSettings)) return true
-    return options.any { it.isEnabledByDefault != it.isEnabled && it.isEnabled != isOptionEnabled(it.description) }
+    return options.any { it.isEnabled != isOptionEnabledInSettings(it.description) }
   }
 
-  private fun isOptionEnabled(option: InlayProviderOption) =
-    settings.isOptionEnabled(option.getOptionId(), id) ?: option.enabledByDefault
+  private fun isProviderEnabledInSettings() = settings.isProviderEnabled(providerDescription.requiredProviderId()) ?: providerDescription.isEnabledByDefault
+
+  private fun isOptionEnabledInSettings(option: InlayProviderOption) =
+    settings.isOptionEnabled(option.requireOptionId(), id) ?: option.enabledByDefault
 
   override fun reset() {
     for (option in options) {
-      option.isEnabled = (settings.isOptionEnabled(option.description.getOptionId(), id) ?: option.description.enabledByDefault)
+      option.isEnabled = (settings.isOptionEnabled(option.description.requireOptionId(), id) ?: option.description.enabledByDefault)
     }
+    settings.setProviderEnabled(providerDescription.requiredProviderId(), isProviderEnabledInSettings())
     customSettingsProvider.persistSettings(project, savedSettings, language)
   }
 
