@@ -44,6 +44,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchesTreeModel.BranchTypeUnderRepository
+import git4idea.ui.branch.GitBranchesTreeModel.BranchUnderRepository
 import git4idea.ui.branch.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
 import git4idea.ui.branch.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.GitBranchesTreeUtil.selectFirstLeaf
@@ -69,6 +70,7 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 import kotlin.math.min
+import kotlin.reflect.KClass
 
 class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, parent: JBPopup? = null, parentValue: Any? = null)
   : WizardPopup(project, parent, step),
@@ -149,6 +151,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val haveBranches = traverseNodesAndExpand()
     if (haveBranches) {
       selectPreferred()
+      expandCurrentBranches()
     }
     super.updateSpeedSearchColors(!haveBranches)
     if (!pattern.isNullOrBlank()) {
@@ -156,23 +159,52 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
   }
 
+  private fun expandCurrentBranches() {
+    TreeUtil.treeTraverser(tree)
+      .mapNotNull { node ->
+        when {
+          node is GitBranch && isChild() && treeStep.repositories.any { it.currentBranch == node } -> node
+          node is GitBranch && !isChild() && treeStep.repositories.all { it.currentBranch == node } -> node
+          node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
+          else -> null
+        }
+      }
+      .mapNotNull(treeStep::createTreePathFor)
+      .forEach { path -> TreeUtil.promiseExpand(tree, path) }
+  }
+
   private fun traverseNodesAndExpand(): Boolean {
     val model = tree.model
     var haveBranches = false
+
     TreeUtil.treeTraverser(tree)
-      .filter(Conditions.or(Conditions.instanceOf(GitBranchType::class.java),
-                            Conditions.instanceOf(BranchTypeUnderRepository::class.java)))
+      .filter(GitBranchType::class or BranchTypeUnderRepository::class or GitBranch::class or BranchUnderRepository::class)
       .forEach { node ->
         if (!haveBranches && !model.isLeaf(node)) {
           haveBranches = true
         }
-        if (node is BranchTypeUnderRepository) {
-          treeStep.createTreePathFor(node)?.let { path -> TreeUtil.promiseExpand(tree, path) }
+
+        val nodeToExpand = when {
+          node is GitBranch && isChild() && treeStep.repositories.any { it.currentBranch == node } -> node
+          node is GitBranch && !isChild() && treeStep.repositories.all { it.currentBranch == node } -> node
+          node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
+          node is BranchTypeUnderRepository -> node
+          else -> null
+        }
+
+        if (nodeToExpand != null) {
+          treeStep.createTreePathFor(nodeToExpand)?.let { path -> TreeUtil.promiseExpand(tree, path) }
         }
       }
 
     return haveBranches
   }
+
+  private infix fun <T : Any> Condition<Any>.or(other: KClass<T>): Condition<Any> =
+    Conditions.or(this, Conditions.instanceOf(other.java))
+
+  private infix fun <F : Any, S : Any> KClass<F>.or(other: KClass<S>): Condition<Any> =
+    Conditions.or(Conditions.instanceOf(this.java), Conditions.instanceOf(other.java))
 
   internal fun restoreDefaultSize() {
     userResized = false
@@ -219,7 +251,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   private fun toggleFavorite(userObject: Any?) {
-    val branchUnderRepository = userObject as? GitBranchesTreeModel.BranchUnderRepository
+    val branchUnderRepository = userObject as? BranchUnderRepository
     val branch = userObject as? GitBranch ?: branchUnderRepository?.branch ?: return
     val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.repositories
     val branchType = GitBranchType.of(branch)
@@ -412,6 +444,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   override fun afterShow() {
     selectPreferred()
+    expandCurrentBranches()
     if (treeStep.isSpeedSearchEnabled) {
       installSpeedSearchActions()
     }
@@ -489,7 +522,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (selected != null) {
       val userObject = TreeUtil.getUserObject(selected)
       val point = e?.point
-      val branchUnderRepository = userObject as? GitBranchesTreeModel.BranchUnderRepository
+      val branchUnderRepository = userObject as? BranchUnderRepository
       val branch = userObject as? GitBranch ?: branchUnderRepository?.branch
       if (point != null && branch != null && isMainIconAt(point, branch)) {
         toggleFavorite(userObject)
