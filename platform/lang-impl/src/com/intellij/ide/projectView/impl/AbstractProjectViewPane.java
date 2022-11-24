@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.SimpleColoredComponent;
@@ -606,12 +607,16 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @NotNull
   public List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object value = getValueFromNode(node);
-    JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile ? JBIterable.of(value) :
+    JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile || value instanceof PsiAwareObject ? JBIterable.of(value) :
                        value instanceof Object[] ? JBIterable.of((Object[])value) :
                        value instanceof Iterable ? JBIterable.from((Iterable<?>)value) :
                        JBIterable.of(TreeUtil.getUserObject(node));
     return it.flatten(o -> o instanceof RootsProvider ? ((RootsProvider)o).getRoots() : Collections.singleton(o))
-      .map(o -> o instanceof VirtualFile ? PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)o) : o)
+      .map(o -> o instanceof VirtualFile
+                ? PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)o)
+                : o instanceof PsiAwareObject
+                  ? ((PsiAwareObject)o).findElement(myProject)
+                  : o)
       .filter(PsiElement.class)
       .filter(PsiElement::isValid)
       .toList();
