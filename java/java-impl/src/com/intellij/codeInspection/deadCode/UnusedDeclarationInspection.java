@@ -336,4 +336,9 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
     }
   }
+
+  @Override
+  public boolean isReadActionNeeded() {
+    return true;
+  }
 }

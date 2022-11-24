@@ -417,22 +417,24 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public synchronized void updateContent() {
-    getTool().checkForReachableRefs(getContext());
-    clearContents();
-    final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
-    getContext().getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
-        RefJavaElement refElement = (RefJavaElement)refEntity;
-        if (!compareVisibilities(refElement, localInspectionTool)) return;
-        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
-              (myFixedElements.containsKey(refElement) ||
-              isExcluded(refEntity) ||
-              isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
-          if (skipEntryPoints(refElement)) return;
-          registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
+    ReadAction.run(() -> {
+      getTool().checkForReachableRefs(getContext());
+      clearContents();
+      final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
+      getContext().getRefManager().iterate(new RefJavaVisitor() {
+        @Override public void visitElement(@NotNull RefEntity refEntity) {
+          if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
+          RefJavaElement refElement = (RefJavaElement)refEntity;
+          if (!compareVisibilities(refElement, localInspectionTool)) return;
+          if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
+                (myFixedElements.containsKey(refElement) ||
+                 isExcluded(refEntity) ||
+                 isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
+            if (skipEntryPoints(refElement)) return;
+            registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
+          }
         }
-      }
+      });
     });
     updateProblemElements();
   }
