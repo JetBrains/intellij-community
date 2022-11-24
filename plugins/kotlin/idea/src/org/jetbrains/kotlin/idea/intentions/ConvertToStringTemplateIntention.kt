@@ -56,7 +56,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
         @JvmStatic
         fun buildReplacement(expression: KtBinaryExpression): KtStringTemplateExpression {
             val rightText = buildText(expression.right, false)
-            return fold(expression.left, rightText, KtPsiFactory(expression))
+            return fold(expression.left, rightText, KtPsiFactory(expression.project))
         }
 
         private fun fold(left: KtExpression?, right: String, factory: KtPsiFactory): KtStringTemplateExpression {

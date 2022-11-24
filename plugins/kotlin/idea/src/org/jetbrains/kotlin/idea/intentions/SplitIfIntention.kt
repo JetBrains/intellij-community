@@ -40,7 +40,7 @@ class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::clas
         val thenBranch = ifExpression.then!!
         val elseBranch = ifExpression.`else`
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         val innerIf = psiFactory.createIf(rightExpression, thenBranch, elseBranch)
 
@@ -76,7 +76,7 @@ class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::clas
         val endOffset = conditionRange.length
         val rightString = condition.text.substring(startOffset, endOffset)
 
-        val expression = KtPsiFactory(element).createExpression(rightString)
+        val expression = KtPsiFactory(element.project).createExpression(rightString)
         commentSaver.elementCreatedByText(expression, condition, TextRange(startOffset, endOffset))
         return expression
     }

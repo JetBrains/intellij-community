@@ -30,7 +30,7 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
         val typeAliasDescriptor = typeAlias.unsafeResolveToDescriptor() as TypeAliasDescriptor
         val typeToInline = typeAliasDescriptor.expandedType
         val typeConstructorsToInline = typeAliasDescriptor.typeConstructor.parameters.map { it.typeConstructor }
-        val psiFactory = KtPsiFactory(typeAlias)
+        val psiFactory = KtPsiFactory(typeAlias.project)
 
         fun inlineIntoType(usage: KtUserType): KtElement? {
             val context = usage.analyze(BodyResolveMode.PARTIAL)

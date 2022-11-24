@@ -413,13 +413,13 @@ private val ITERABLE_LIKE_CLASS_IDS =
 
 private fun KtAnalysisSession.getIterableElementType(type: KtType): KtType? {
     if (type is KtNonErrorClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
-        return type.typeArguments.singleOrNull()?.type
+        return type.ownTypeArguments.singleOrNull()?.type
     }
 
     for (supertype in type.getAllSuperTypes()) {
         if (supertype is KtNonErrorClassType) {
             if (supertype.classId in ITERABLE_LIKE_CLASS_IDS) {
-                return supertype.typeArguments.singleOrNull()?.type
+                return supertype.ownTypeArguments.singleOrNull()?.type
             }
         }
     }

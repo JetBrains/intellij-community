@@ -17,7 +17,7 @@ class ConvertBlockCommentToLineCommentIntention : SelfTargetingIntention<PsiComm
     override fun isApplicableTo(element: PsiComment, caretOffset: Int): Boolean = element.isBlockComment()
 
     override fun applyTo(element: PsiComment, editor: Editor?) {
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         val prevSibling = element.prevSibling
         val indent = if (prevSibling is PsiWhiteSpace) {

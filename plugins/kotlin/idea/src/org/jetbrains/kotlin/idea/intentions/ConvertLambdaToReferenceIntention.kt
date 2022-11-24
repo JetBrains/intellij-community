@@ -53,7 +53,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isDynamic
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
-import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("DEPRECATION")
@@ -197,7 +196,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
 
     override fun applyTo(element: KtLambdaExpression, editor: Editor?) {
         val referenceName = buildReferenceText(element) ?: return
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val parent = element.parent
 
         val outerCallExpression = parent.getStrictParentOfType<KtCallExpression>()
@@ -217,7 +216,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                 }
             }
             // Without lambda argument syntax, just replace lambda with reference
-            val callableReferenceExpr = factory.createCallableReferenceExpression(referenceName) ?: return
+            val callableReferenceExpr = psiFactory.createCallableReferenceExpression(referenceName) ?: return
             (element.replace(callableReferenceExpr) as? KtElement)?.let { ShortenReferences.RETAIN_COMPANION.process(it) }
         } else {
             // Otherwise, replace the whole argument list for lambda argument-using call
@@ -229,7 +228,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             val useNamedArguments = valueParameters.any { it.hasDefaultValue() } && hadDefaultValues
                     || arguments.any { it.isNamed() }
 
-            val newArgumentList = factory.buildValueArgumentList {
+            val newArgumentList = psiFactory.buildValueArgumentList {
                 appendFixedText("(")
                 arguments.forEach { argument ->
                     val argumentName = argument.getArgumentName()

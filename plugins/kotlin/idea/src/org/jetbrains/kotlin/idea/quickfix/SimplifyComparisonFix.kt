@@ -23,7 +23,7 @@ class SimplifyComparisonFix(element: KtExpression, val value: Boolean) : KotlinQ
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val replacement = KtPsiFactory(element).createExpression("$value")
+        val replacement = KtPsiFactory(project).createExpression("$value")
         val result = element.replaced(replacement)
 
         val booleanExpression = result.getNonStrictParentOfType<KtBinaryExpression>()

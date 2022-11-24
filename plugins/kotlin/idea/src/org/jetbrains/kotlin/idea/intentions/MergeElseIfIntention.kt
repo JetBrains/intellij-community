@@ -23,10 +23,8 @@ class MergeElseIfIntention : SelfTargetingIntention<KtIfExpression>(
         val condition = nestedIf.condition ?: return
         val nestedBody = nestedIf.then ?: return
 
-        val factory = KtPsiFactory(element)
-        element.`else`?.replace(
-            factory.createExpressionByPattern("if ($0) $1", condition, nestedBody)
-        )
+        val psiFactory = KtPsiFactory(element.project)
+        element.`else`?.replace(psiFactory.createExpressionByPattern("if ($0) $1", condition, nestedBody))
     }
 
     companion object {

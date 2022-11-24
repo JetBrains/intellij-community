@@ -192,7 +192,7 @@ abstract class KotlinGenerateTestSupportActionBase(
     }
 
     private fun substituteNewName(function: KtNamedFunction, name: String): KtNamedFunction {
-        val psiFactory = KtPsiFactory(function)
+        val psiFactory = KtPsiFactory(function.project)
 
         // First replace all DUMMY_NAME occurrences in names as they need special treatment due to quotation
         var function1 = function

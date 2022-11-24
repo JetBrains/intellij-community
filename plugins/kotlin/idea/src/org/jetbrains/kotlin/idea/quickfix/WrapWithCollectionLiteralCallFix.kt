@@ -23,13 +23,13 @@ class WrapWithCollectionLiteralCallFix private constructor(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        val factory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(project)
 
         val replaced =
             if (wrapInitialElement)
-                expression.replaced(factory.createExpressionByPattern("$functionName($0)", expression))
+                expression.replaced(psiFactory.createExpressionByPattern("$functionName($0)", expression))
             else
-                expression.replaced(factory.createExpression("$functionName()"))
+                expression.replaced(psiFactory.createExpression("$functionName()"))
 
         editor?.caretModel?.moveToOffset(replaced.endOffset)
     }

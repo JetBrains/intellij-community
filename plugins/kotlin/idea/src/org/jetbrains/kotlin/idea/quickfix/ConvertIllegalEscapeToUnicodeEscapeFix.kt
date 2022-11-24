@@ -19,7 +19,7 @@ class ConvertIllegalEscapeToUnicodeEscapeFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = this.element ?: return
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
         when (element) {
             is KtConstantExpression -> element.replace(psiFactory.createExpression("'$unicodeEscape'"))
             is KtEscapeStringTemplateEntry -> element.replace(psiFactory.createStringTemplate(unicodeEscape).entries.first())

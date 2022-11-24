@@ -106,7 +106,7 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         val callExpression = expression
         val fullCallExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
         if (newElementName == OperatorNameConventions.GET.asString() && callExpression.typeArguments.isEmpty()) {
-            val arrayAccessExpression = KtPsiFactory(callExpression).buildExpression {
+            val arrayAccessExpression = KtPsiFactory(callExpression.project).buildExpression {
                 if (fullCallExpression is KtQualifiedExpression) {
                     appendExpression(fullCallExpression.receiverExpression)
                     appendFixedText(fullCallExpression.operationSign.value)
@@ -137,7 +137,7 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
         // get/set becomes ordinary method
         if (newName == null) {
-            val psiFactory = KtPsiFactory(expression)
+            val psiFactory = KtPsiFactory(expression.project)
 
             val newGetterName = if (getter) newElementName else JvmAbi.getterName(expression.getReferencedName())
 
@@ -207,7 +207,7 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     override fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
-        val psiFactory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(expression.project)
         val newArgument = psiFactory.createArgument(
           expression.getArgumentExpression(),
           Name.identifier(newElementName.quoteIfNeeded()),
@@ -246,7 +246,7 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     private fun SyntheticPropertyAccessorReference.renameByPropertyName(newName: String): KtNameReferenceExpression {
-        val nameIdentifier = KtPsiFactory(expression).createNameIdentifier(newName)
+        val nameIdentifier = KtPsiFactory(expression.project).createNameIdentifier(newName)
         expression.getReferencedNameElement().replace(nameIdentifier)
         return expression
     }
@@ -263,7 +263,7 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         assert(!fqName.isRoot) { "Can't set empty FqName for element $this" }
 
         val shortName = fqName.shortName().asString()
-        val psiFactory = KtPsiFactory(this)
+        val psiFactory = KtPsiFactory(project)
         val parent = parent
 
         if (parent is KtUserType && !fqName.isOneSegmentFQN()) {

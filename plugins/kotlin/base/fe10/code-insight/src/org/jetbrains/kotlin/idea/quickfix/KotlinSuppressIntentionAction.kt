@@ -114,7 +114,7 @@ class KotlinSuppressIntentionAction(
         assert(suppressAt !is KtDeclaration) { "Declarations should have been checked for above" }
 
         val placeholderText = "PLACEHOLDER_ID"
-        val annotatedExpression = KtPsiFactory(suppressAt).createExpression(suppressAnnotationText(id) + "\n" + placeholderText)
+        val annotatedExpression = KtPsiFactory(project).createExpression(suppressAnnotationText(id) + "\n" + placeholderText)
 
         val copy = suppressAt.copy()!!
 
@@ -129,7 +129,7 @@ class KotlinSuppressIntentionAction(
     private fun addArgumentToSuppressAnnotation(entry: KtAnnotationEntry, id: String) {
         // add new arguments to an existing entry
         val args = entry.valueArgumentList
-        val psiFactory = KtPsiFactory(entry)
+        val psiFactory = KtPsiFactory(project)
         val newArgList = psiFactory.createCallArguments("($id)")
         when {
             args == null -> // new argument list

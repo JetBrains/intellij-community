@@ -163,7 +163,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
 
         val typeParameterList = newTypeParameterList(element)
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
 
         val (extension, bodyTypeToSelect) =
             runWriteAction {
@@ -316,7 +316,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         if (classParams.isEmpty()) return null
         val allTypeParameters = classParams + member.typeParameters
         val text = allTypeParameters.joinToString(",", "<", ">") { it.textWithoutVariance() }
-        return KtPsiFactory(member).createDeclaration<KtFunction>("fun $text foo()").typeParameterList
+        return KtPsiFactory(member.project).createDeclaration<KtFunction>("fun $text foo()").typeParameterList
     }
 
     private fun KtTypeParameter.textWithoutVariance(): String {

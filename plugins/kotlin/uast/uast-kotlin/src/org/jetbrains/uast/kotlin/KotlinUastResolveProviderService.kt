@@ -323,7 +323,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             ?.toPsiType(containingLightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
     }
 
-    override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
+    override fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType? {
+        if (ktFunction is KtConstructor<*>) return null
         val descriptor = ktFunction.analyze()[BindingContext.FUNCTION, ktFunction] ?: return null
         val returnType = descriptor.returnType ?: return null
 

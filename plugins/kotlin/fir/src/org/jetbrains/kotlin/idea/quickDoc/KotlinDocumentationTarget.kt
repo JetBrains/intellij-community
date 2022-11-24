@@ -18,8 +18,14 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtRendererBodyMemberScopeProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtRendererBodyMemberScopeSorter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -64,13 +70,13 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
     }
 
     companion object {
-        internal val RENDERING_OPTIONS = KtDeclarationRendererOptions(
-            typeRendererOptions = KtTypeRendererOptions.SHORT_NAMES,
-            renderUnitReturnType = true,
-            renderDefaultParameterValue = true,
-            renderDeclarationHeader = true,
-            approximateTypes = true
-        )
+        internal val RENDERING_OPTIONS = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
+            propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
+            bodyMemberScopeProvider = KtRendererBodyMemberScopeProvider.NONE
+            singleTypeParameterRenderer = KtSingleTypeParameterSymbolRenderer.WITH_COMMA_SEPARATED_BOUNDS
+            parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.THREE_DOTS
+        }
     }
 }
 

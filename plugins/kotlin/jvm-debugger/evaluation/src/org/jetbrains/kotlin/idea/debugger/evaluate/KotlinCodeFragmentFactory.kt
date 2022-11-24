@@ -301,6 +301,6 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         sb.append(funWithLocalVariables)
 
-        return KtPsiFactory(javaContext.project).createAnalyzableFile("fakeFileForJavaContextInDebugger.kt", sb.toString(), javaContext)
+        return KtPsiFactory.contextual(javaContext).createFile("fakeFileForJavaContextInDebugger.kt", sb.toString())
     }
 }

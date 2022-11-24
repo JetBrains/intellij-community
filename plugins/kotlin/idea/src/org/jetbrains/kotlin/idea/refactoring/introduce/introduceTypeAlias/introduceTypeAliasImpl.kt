@@ -43,7 +43,7 @@ sealed class IntroduceTypeAliasAnalysisResult {
 private fun IntroduceTypeAliasData.getTargetScope() = targetSibling.getResolutionScope(bindingContext, resolutionFacade)
 
 fun IntroduceTypeAliasData.analyze(): IntroduceTypeAliasAnalysisResult {
-    val psiFactory = KtPsiFactory(originalTypeElement)
+    val psiFactory = KtPsiFactory(originalTypeElement.project)
 
     val contextExpression = originalTypeElement.getStrictParentOfType<KtExpression>()!!
     val targetScope = getTargetScope()
@@ -148,7 +148,7 @@ fun findDuplicates(typeAlias: KtTypeAlias): Map<KotlinPsiRange, () -> Unit> {
     val unifierParameters = typeAliasDescriptor.declaredTypeParameters.map { UnifierParameter(it, null) }
     val unifier = KotlinPsiUnifier(unifierParameters)
 
-    val psiFactory = KtPsiFactory(typeAlias)
+    val psiFactory = KtPsiFactory(typeAlias.project)
 
     fun replaceTypeElement(occurrence: KtTypeElement, typeArgumentsText: String) {
         occurrence.replace(psiFactory.createType("$aliasName$typeArgumentsText").typeElement!!)
@@ -239,7 +239,7 @@ private var KtTypeReference.typeParameterInfo: TypeParameter? by CopyablePsiUser
 
 fun IntroduceTypeAliasDescriptor.generateTypeAlias(previewOnly: Boolean = false): KtTypeAlias {
     val originalElement = originalData.originalTypeElement
-    val psiFactory = KtPsiFactory(originalElement)
+    val psiFactory = KtPsiFactory(originalElement.project)
 
     for (typeParameter in typeParameters)
         for (it in typeParameter.typeReferenceInfos) {

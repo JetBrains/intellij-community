@@ -20,7 +20,7 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
     )
 
     private val SAVED_TREE_KEY = Key<TreeElement>("SAVED_TREE")
-    private val psiFactory = KtPsiFactory(originalElements.first!!)
+    private val psiFactory = KtPsiFactory(originalElements.first!!.project)
 
     private abstract class TreeElement {
         companion object {

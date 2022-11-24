@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -135,7 +136,7 @@ private fun KtExpression.isSelectorOfDotQualifiedExpression(): Boolean {
 private fun KtExpression.addImplicitThis(input: ImplicitThisInspection.ImplicitReceiverInfo) {
     val reference = if (this is KtCallableReferenceExpression) callableReference else this
     val thisExpressionText = if (input.isUnambiguousLabel) "this" else "this@${input.receiverLabel?.render()}"
-    val factory = KtPsiFactory(this)
+    val factory = KtPsiFactory(project)
     with(reference) {
         when (parent) {
             is KtCallExpression -> parent.replace(factory.createExpressionByPattern("$0.$1", thisExpressionText, parent))

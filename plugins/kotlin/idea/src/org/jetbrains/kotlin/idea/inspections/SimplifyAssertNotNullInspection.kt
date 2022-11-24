@@ -67,10 +67,10 @@ class SimplifyAssertNotNullInspection : AbstractApplicabilityBasedInspection<KtC
         val commentSaver = CommentSaver(element)
 
         if (message == null) {
-            val newInitializer = KtPsiFactory(element).createExpressionByPattern("$0!!", initializer)
+            val newInitializer = KtPsiFactory(project).createExpressionByPattern("$0!!", initializer)
             initializer.replace(newInitializer)
         } else {
-            val newInitializer = KtPsiFactory(element).createExpressionByPattern("$0 ?: kotlin.error($1)", initializer, message)
+            val newInitializer = KtPsiFactory(project).createExpressionByPattern("$0 ?: kotlin.error($1)", initializer, message)
             val result = initializer.replace(newInitializer)
 
             val qualifiedExpression = (result as KtBinaryExpression).right as KtDotQualifiedExpression

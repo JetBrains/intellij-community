@@ -38,6 +38,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/testData/declaration/commentsOnProperties.kt");
     }
 
+    @TestMetadata("companionInAnnotation.kt")
+    public void testCompanionInAnnotation() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/companionInAnnotation.kt");
+    }
+
     @TestMetadata("constructorProperties.kt")
     public void testConstructorProperties() throws Exception {
         runTest("../../uast-kotlin-fir/testData/declaration/constructorProperties.kt");

@@ -101,7 +101,7 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
                 }
             }
         ) return
-        addAnnotationEntry(KtPsiFactory(this).createAnnotationEntry("@${fqName.asString()}"))
+        addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@${fqName.asString()}"))
     }
 
     internal data class JKMemberInfoWithUsages(

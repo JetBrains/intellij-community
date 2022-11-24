@@ -47,7 +47,7 @@ internal fun MutableCodeToInline.introduceValue(
 ) {
     assert(usages.all { it in this })
 
-    val psiFactory = KtPsiFactory(value)
+    val psiFactory = KtPsiFactory(value.project)
 
     val bindingContext = expressionToBeReplaced.analyze(BodyResolveMode.FULL)
 

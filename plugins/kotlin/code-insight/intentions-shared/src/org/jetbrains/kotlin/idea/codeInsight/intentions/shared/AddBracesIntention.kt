@@ -61,7 +61,7 @@ internal class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement:
 
     companion object {
         fun addBraces(element: KtElement, expression: KtExpression) {
-            val psiFactory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
 
             val semicolon = element.getNextSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.SEMICOLON }
             if (semicolon != null) {

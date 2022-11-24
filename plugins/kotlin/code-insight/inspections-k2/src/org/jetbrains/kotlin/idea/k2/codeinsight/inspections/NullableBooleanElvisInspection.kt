@@ -79,7 +79,7 @@ class NullableBooleanElvisInspection : AbstractKotlinApplicableInspection<KtBina
         val isFalse = KtPsiUtil.isFalseConstant(rhs)
         val constantToCompare = if (isFalse) "true" else "false"
         val operator = if (isFalse xor hasNegation) "==" else "!="
-        replaced(KtPsiFactory(rhs).buildExpression {
+        replaced(KtPsiFactory(project).buildExpression {
             appendExpression(lhs)
             appendFixedText(" $operator $constantToCompare")
         })

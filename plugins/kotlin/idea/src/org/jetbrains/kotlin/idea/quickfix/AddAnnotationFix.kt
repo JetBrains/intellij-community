@@ -41,7 +41,7 @@ open class AddAnnotationFix(
         val annotationInnerText = argumentClassFqName?.let { "${it.render()}::class" }
         if (annotationEntry != null) {
             if (annotationInnerText == null) return
-            val psiFactory = KtPsiFactory(declaration)
+            val psiFactory = KtPsiFactory(project)
             annotationEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
                 ?: annotationEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), annotationEntry.lastChild)
             ShortenReferences.DEFAULT.process(annotationEntry)

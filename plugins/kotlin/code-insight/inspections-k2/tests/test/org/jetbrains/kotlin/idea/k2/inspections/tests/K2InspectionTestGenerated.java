@@ -70,6 +70,23 @@ public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/equalsAndHashCode")
+    public abstract static class EqualsAndHashCode extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/equalsAndHashCode/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/equalsAndHashCode/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertToStringTemplate")
     public abstract static class ConvertToStringTemplate extends AbstractK2InspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

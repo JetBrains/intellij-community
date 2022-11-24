@@ -53,7 +53,7 @@ class AddStarProjectionsFix(element: KtUserType, private val argumentCount: Int)
         assert(element.typeArguments.isEmpty())
 
         val typeString = TypeReconstructionUtil.getTypeNameAndStarProjectionsString(element.text, argumentCount)
-        val replacement = KtPsiFactory(file).createType(typeString).typeElement.sure { "No type element after parsing " + typeString }
+        val replacement = KtPsiFactory(project).createType(typeString).typeElement.sure { "No type element after parsing " + typeString }
         element.replace(replacement)
     }
 }
@@ -68,7 +68,7 @@ class AddStartProjectionsForInnerClass(element: KtTypeReference) : KotlinQuickFi
         val typeReference = element ?: return
         val targetClasses = getTargetClasses(typeReference) ?: return
         val replaceString = createReplaceString(targetClasses)
-        typeReference.replace(KtPsiFactory(file).createType(replaceString))
+        typeReference.replace(KtPsiFactory(project).createType(replaceString))
     }
 
     private fun getTargetClasses(typeReference: KtTypeReference): List<ClassDescriptor>? {

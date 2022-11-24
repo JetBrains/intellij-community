@@ -36,7 +36,7 @@ class MergeIfsIntention : SelfTargetingIntention<KtIfExpression>(KtIfExpression:
             val secondCondition = nestedIf.condition ?: return -1
             val nestedBody = nestedIf.then ?: return -1
 
-            val factory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
 
             val comments = element.allChildren.filter { it is PsiComment }.toList() + then.safeAs<KtBlockExpression>()
                 ?.allChildren
@@ -48,14 +48,14 @@ class MergeIfsIntention : SelfTargetingIntention<KtIfExpression>(KtIfExpression:
                 val parent = element.parent
                 comments.forEach { comment ->
                     parent.addBefore(comment, element)
-                    parent.addBefore(factory.createNewLine(), element)
+                    parent.addBefore(psiFactory.createNewLine(), element)
                     comment.delete()
                 }
 
                 element.findExistingEditor()?.caretModel?.moveToOffset(element.startOffset)
             }
 
-            condition.replace(factory.createExpressionByPattern("$0 && $1", condition, secondCondition))
+            condition.replace(psiFactory.createExpressionByPattern("$0 && $1", condition, secondCondition))
             return then.replace(nestedBody).reformatted(true).textRange.startOffset
         }
 

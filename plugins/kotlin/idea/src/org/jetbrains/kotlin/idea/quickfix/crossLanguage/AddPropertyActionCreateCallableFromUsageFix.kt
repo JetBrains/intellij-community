@@ -35,7 +35,7 @@ class AddPropertyActionCreateCallableFromUsageFix(
             val resolutionFacade = targetContainer.getResolutionFacade()
             val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
             val initializer = if(!isLateinitPreferred) {
-                KtPsiFactory(targetContainer).createExpression("TODO(\"initialize me\")")
+                KtPsiFactory(targetContainer.project).createExpression("TODO(\"initialize me\")")
             } else null
             val ktType = (propertyType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: nullableAnyType
             val propertyInfo = PropertyInfo(

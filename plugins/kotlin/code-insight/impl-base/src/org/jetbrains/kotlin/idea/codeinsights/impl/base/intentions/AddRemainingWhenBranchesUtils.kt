@@ -40,7 +40,7 @@ object AddRemainingWhenBranchesUtils {
     }
 
     fun generateWhenBranches(element: KtWhenExpression, missingCases: List<WhenMissingCase>) {
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val whenCloseBrace = element.closeBrace ?: run {
             val craftingMaterials = psiFactory.createExpression("when(1){}") as KtWhenExpression
             if (element.rightParenthesis == null) {

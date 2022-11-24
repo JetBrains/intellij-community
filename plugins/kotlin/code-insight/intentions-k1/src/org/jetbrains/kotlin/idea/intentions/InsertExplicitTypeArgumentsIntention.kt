@@ -76,7 +76,7 @@ class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallE
                 IdeDescriptorRenderers.SOURCE_CODE.renderType(args.getValue(it))
             }
 
-            return KtPsiFactory(element).createTypeArguments(text)
+            return KtPsiFactory(element.project).createTypeArguments(text)
         }
     }
 }

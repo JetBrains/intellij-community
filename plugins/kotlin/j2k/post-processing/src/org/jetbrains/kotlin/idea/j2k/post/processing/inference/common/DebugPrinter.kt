@@ -58,10 +58,10 @@ class DebugPrinter(private val inferenceContext: InferenceContext) {
     }
 
     fun PsiElement.addTypeVariablesNames() {
-        val factory = KtPsiFactory(this)
+        val psiFactory = KtPsiFactory(project)
         for (typeElement in collectDescendantsOfType<KtTypeElement>()) {
             val typeVariableName = this@DebugPrinter.inferenceContext.typeElementToTypeVariable[typeElement]?.name ?: continue
-            val comment = factory.createComment("/*$typeVariableName@*/")
+            val comment = psiFactory.createComment("/*$typeVariableName@*/")
             typeElement.parent.addBefore(comment, typeElement)
         }
     }

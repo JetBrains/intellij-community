@@ -351,8 +351,8 @@ internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
 
             if (KotlinBuiltIns.isString(rightType)) {
                 return {
-                    val factory = KtPsiFactory(element)
-                    element.left!!.replace(factory.buildExpression {
+                    val psiFactory = KtPsiFactory(element.project)
+                    element.left!!.replace(psiFactory.buildExpression {
                         appendFixedText("(")
                         appendExpression(element.left)
                         appendFixedText(").toString()")
@@ -376,7 +376,7 @@ internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
                 if (resolved is KtVariableDeclaration && resolved.hasInitializer()) {
                     val anonymousObject = element.getParentOfType<KtClassOrObject>(true) ?: return null
                     if (resolved.initializer!!.getChildOfType<KtClassOrObject>() == anonymousObject) {
-                        return { element.replaced(KtPsiFactory(element).createThisExpression()) }
+                        return { element.replaced(KtPsiFactory(element.project).createThisExpression()) }
                     }
                 }
             }
@@ -400,7 +400,7 @@ internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
             if (variable.nameAsName == element.getReferencedNameAsName() &&
                 variable.initializer?.getChildOfType<KtClassOrObject>() == anonymousObject
             ) {
-                return { element.replaced(KtPsiFactory(element).createThisExpression()) }
+                return { element.replaced(KtPsiFactory(element.project).createThisExpression()) }
             }
 
             return null

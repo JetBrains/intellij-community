@@ -27,7 +27,7 @@ class ConvertVarargParameterToArrayIntention : SelfTargetingIntention<KtParamete
         val type = element.descriptor?.type ?: return
         val newType = if (KotlinBuiltIns.isPrimitiveArray(type)) type.toString() else "Array<${typeReference.text}>"
 
-        typeReference.replace(KtPsiFactory(element).createType(newType))
+        typeReference.replace(KtPsiFactory(element.project).createType(newType))
         element.removeModifier(KtTokens.VARARG_KEYWORD)
     }
 

@@ -45,7 +45,7 @@ fun splitPropertyDeclaration(property: KtProperty): KtBinaryExpression? {
 
     val explicitTypeToSet = if (property.typeReference != null) null else initializer.analyze().getType(initializer)
 
-    val psiFactory = KtPsiFactory(property)
+    val psiFactory = KtPsiFactory(property.project)
     var assignment = psiFactory.createExpressionByPattern("$0 = $1", property.nameAsName!!, initializer)
 
     assignment = parent.addAfter(assignment, property) as KtBinaryExpression

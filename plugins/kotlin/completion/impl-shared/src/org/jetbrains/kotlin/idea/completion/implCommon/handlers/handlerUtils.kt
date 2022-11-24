@@ -62,7 +62,7 @@ fun removeRedundantBracesInStringTemplate(context: InsertionContext) {
             if (canPlaceAfterSimpleNameEntry(entry.nextSibling)) {
                 context.tailOffset++ // place after '}' otherwise it gets invalidated
                 val name = nameExpression.getReferencedName()
-                val newEntry = KtPsiFactory(entry).createSimpleNameStringTemplateEntry(name)
+                val newEntry = KtPsiFactory(context.project).createSimpleNameStringTemplateEntry(name)
                 entry.replace(newEntry)
             }
         }

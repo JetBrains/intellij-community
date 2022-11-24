@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -142,6 +144,39 @@ interface UastApiFixtureTestBase : UastPluginSelection {
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("Runnable", uCallExpression.methodName)
         TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, uCallExpression.kind)
+    }
+
+    // Regression test from KTIJ-23503
+    fun checkExpressionTypeFromIncorrectObject(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Outer() {
+                    object { // <no name provided>
+                        class Inner() {}
+
+                        fun getInner() = Inner()
+                    }
+                }
+
+                fun main(args: Array<String>) {
+                    val inner = Outer.getInner()
+                }
+            """.trimIndent()
+        )
+
+        val errorType = "PsiType:<ErrorType>"
+        val expectedPsiTypes = setOf("PsiType:Inner", errorType)
+        myFixture.file.accept(object : PsiRecursiveElementVisitor() {
+            override fun visitElement(element: PsiElement) {
+                // Mimic what [IconLineMarkerProvider#collectSlowLineMarkers] does.
+                element.toUElementOfType<UCallExpression>()?.let {
+                    val expressionType = it.getExpressionType()?.toString() ?: errorType
+                    TestCase.assertTrue(expressionType in expectedPsiTypes)
+                }
+
+                super.visitElement(element)
+            }
+        })
     }
 
 }

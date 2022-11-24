@@ -60,16 +60,18 @@ class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<
         }
 
         fun convertPropertyInitializerToGetter(property: KtProperty, editor: Editor?) {
+            val psiFactory = KtPsiFactory(property.project)
+
             val initializer = property.initializer!!
-            val getter = KtPsiFactory(property).createPropertyGetter(initializer)
+            val getter = psiFactory.createPropertyGetter(initializer)
             val setter = property.setter
 
             when {
                 setter != null -> property.addBefore(getter, setter)
                 property.isVar -> {
                     property.add(getter)
-                    val notImplemented = KtPsiFactory(property).createExpression("TODO()")
-                    val notImplementedSetter = KtPsiFactory(property).createPropertySetter(notImplemented)
+                    val notImplemented = psiFactory.createExpression("TODO()")
+                    val notImplementedSetter = psiFactory.createPropertySetter(notImplemented)
                     property.add(notImplementedSetter)
                 }
 

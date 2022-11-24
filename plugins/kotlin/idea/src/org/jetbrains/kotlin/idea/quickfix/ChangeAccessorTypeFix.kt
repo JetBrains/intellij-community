@@ -40,7 +40,7 @@ class ChangeAccessorTypeFix(element: KtPropertyAccessor) : KotlinQuickFixAction<
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val type = getType()!!
-        val newTypeReference = KtPsiFactory(file).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type))
+        val newTypeReference = KtPsiFactory(project).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type))
 
         val typeReference = if (element.isGetter) element.returnTypeReference else element.parameter!!.typeReference
 

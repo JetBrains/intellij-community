@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.Abs
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2QuickFixTest
+import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2QuickFixMultiModuleTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
 
@@ -35,6 +36,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/liftOut/whenToReturn")
             model("${idea}/inspectionsLocal/inconsistentCommentForJavaParameter")
             model("${idea}/inspectionsLocal/whenWithOnlyElse")
+            model("${idea}/inspectionsLocal/equalsOrHashCode")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
 
@@ -43,6 +45,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspections/enumValuesSoftDeprecateMigration", pattern = pattern)
             model("${idea}/inspections/redundantUnitReturnType", pattern = pattern)
             model("${idea}/inspections/redundantIf", pattern = pattern)
+            model("${idea}/inspections/equalsAndHashCode", pattern = pattern)
             model("${idea}/intentions/convertToStringTemplate", pattern = pattern)
         }
 
@@ -51,6 +54,10 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/redundantIf", pattern = pattern)
             model("${idea}/quickfix/redundantModalityModifier", pattern = pattern)
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
+        }
+
+        testClass<AbstractK2QuickFixMultiModuleTest> {
+            model("code-insight/inspections-k2/tests/testData/multiModuleQuickFix", pattern = Patterns.DIRECTORY, depth = 1)
         }
     }
 

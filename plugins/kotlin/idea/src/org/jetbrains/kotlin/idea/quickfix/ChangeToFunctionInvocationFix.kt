@@ -19,7 +19,7 @@ class ChangeToFunctionInvocationFix(element: KtExpression) : KotlinQuickFixActio
 
     public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
         val nextLiteralStringEntry = element.parent.nextSibling as? KtLiteralStringTemplateEntry
         val nextText = nextLiteralStringEntry?.text
         if (nextText != null && nextText.startsWith("(") && nextText.contains(")")) {
@@ -30,9 +30,9 @@ class ChangeToFunctionInvocationFix(element: KtExpression) : KotlinQuickFixActio
             } else {
                 nextLiteralStringEntry.delete()
             }
-            element.replace(KtPsiFactory(file).createExpression("${element.text}$parentheses"))
+            element.replace(psiFactory.createExpression("${element.text}$parentheses"))
         } else {
-            element.replace(KtPsiFactory(file).createExpression("${element.text}()"))
+            element.replace(psiFactory.createExpression("${element.text}()"))
         }
     }
 

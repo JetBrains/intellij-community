@@ -58,7 +58,7 @@ object CreatePropertyDelegateAccessorsActionFactory : CreateCallableMemberFromUs
 
         val callableInfos = SmartList<CallableInfo>()
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         if (isApplicableForAccessor(propertyDescriptor.getter)) {
             val getterInfo = FunctionInfo(

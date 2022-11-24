@@ -51,7 +51,7 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
             ?: listOf(Fe10KotlinNameSuggester.suggestNameByName("O", validator))
 
         val className = classNames.first()
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         val targetSibling = element.parentsWithSelf.first { it.parent == targetParent }
 

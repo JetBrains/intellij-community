@@ -29,7 +29,7 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
 
     override fun applyTo(element: KtCallElement, editor: Editor?) {
         val resolvedCall = element.resolveToCall() ?: return
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         for ((argument, parameter) in element.valueArguments.filterIsInstance<KtValueArgument>().resolve(resolvedCall)) {
             if (argument.hasBlockCommentWithName()) continue
             val parent = argument.parent

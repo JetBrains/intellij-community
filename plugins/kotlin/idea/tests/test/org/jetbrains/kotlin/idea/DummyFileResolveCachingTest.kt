@@ -21,7 +21,7 @@ class DummyFileResolveCachingTest : LightJavaCodeInsightFixtureTestCase() {
         myFixture.configureByText(KotlinFileType.INSTANCE, "")
 
         val dummyFileText = "import java.util.Properties"
-        val dummyFile = KtPsiFactory(project).createAnalyzableFile("Dummy.kt", dummyFileText, file)
+        val dummyFile = KtPsiFactory.contextual(file).createFile("Dummy.kt", dummyFileText)
 
         fun findClassifier(identifier: String) = dummyFile.getResolutionFacade().getFileResolutionScope(dummyFile)
             .findClassifier(Name.identifier(identifier), NoLookupLocation.FROM_IDE)

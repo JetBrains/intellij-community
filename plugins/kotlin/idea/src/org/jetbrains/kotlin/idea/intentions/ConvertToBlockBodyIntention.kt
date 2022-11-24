@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
 import org.jetbrains.kotlin.idea.core.setType
-import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.idea.util.resultingWhens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -56,22 +55,22 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
 
             fun generateBody(returnsValue: Boolean): KtExpression {
                 val bodyType = body.analyze().getType(body)
-                val factory = KtPsiFactory(declaration)
-                if (bodyType != null && bodyType.isUnit() && body is KtNameReferenceExpression) return factory.createEmptyBody()
+                val psiFactory = KtPsiFactory(declaration.project)
+                if (bodyType != null && bodyType.isUnit() && body is KtNameReferenceExpression) return psiFactory.createEmptyBody()
                 val unitWhenAsResult = (bodyType == null || bodyType.isUnit()) && body.resultingWhens().isNotEmpty()
                 val needReturn = returnsValue && (bodyType == null || (!bodyType.isUnit() && !bodyType.isNothing()))
                 return if (needReturn || unitWhenAsResult) {
                     val annotatedExpr = body as? KtAnnotatedExpression
                     val returnedExpr = annotatedExpr?.baseExpression ?: body
-                    val block = factory.createSingleStatementBlock(factory.createExpressionByPattern("return $0", returnedExpr))
+                    val block = psiFactory.createSingleStatementBlock(psiFactory.createExpressionByPattern("return $0", returnedExpr))
                     val statement = block.firstStatement
                     annotatedExpr?.annotationEntries?.forEach {
                         block.addBefore(it, statement)
-                        block.addBefore(factory.createNewLine(), statement)
+                        block.addBefore(psiFactory.createNewLine(), statement)
                     }
                     block
                 } else {
-                    factory.createSingleStatementBlock(body)
+                    psiFactory.createSingleStatementBlock(body)
                 }
             }
 
