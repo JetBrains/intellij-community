@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <referencesSearch implementation="org.jetbrains.plugins.gradle.findUsages.GradlePropertyReferencesSearcher"/>
-    <!--<properties.implicitPropertyUsageProvider implementation="org.jetbrains.plugins.gradle.findUsages.GradleImplicitPropertyUsageProvider"/>-->
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.plugins.gradle.findUsages.GradleImplicitPropertyUsageProvider"/>
   </extensions>
 </idea-plugin>
