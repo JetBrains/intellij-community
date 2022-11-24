@@ -67,23 +67,7 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   private val ytUrl = "https://youtrack.jetbrains.com/newissue?project=GTW&amp;clearDraft=true&amp;description=\$DESCR"
   private val remoteDevYouTrackFlag = "-D$ytKey=$ytUrl"
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
-    if (!vmOptionsFile.exists()) { // on macos
-      FileUtil.createIfNotExists(vmOptionsFile.toFile())
-    }
 
-    require(vmOptionsFile.isFile() && vmOptionsFile.exists())
-
-    val originalContent = vmOptionsFile.readText(Charsets.UTF_8)
-    if (CodeWithMeGuestLauncher.isUnattendedModeUri(connectionUri)) {
-      if (!originalContent.contains(remoteDevYouTrackFlag)) {
-        val patchedContent = originalContent + "\n" + remoteDevYouTrackFlag
-        vmOptionsFile.writeText(patchedContent)
-      }
-    }
-    else {
-      val removed = originalContent.replace(remoteDevYouTrackFlag, "")
-      vmOptionsFile.writeText(removed)
-    }
   }
 
   override val clientLaunched: Signal<Unit> = Signal()
