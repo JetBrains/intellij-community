@@ -13,11 +13,11 @@
 
 
 
-  <!--<localInspection language="TOML" groupPath="Gradle" shortName="UnusedVersionCatalogEntry"-->
-  <!--                 bundle="messages.GradleInspectionBundle" key="inspection.display.name.unused.version.catalog.entry"-->
-  <!--                 groupBundle="messages.GradleInspectionBundle" groupKey="inspection.style"-->
-  <!--                 enabledByDefault="true"-->
-  <!--                 implementationClass="org.jetbrains.plugins.gradle.codeInspection.toml.UnusedVersionCatalogEntryInspection"/>-->
+  <localInspection language="TOML" groupPath="Gradle" shortName="UnusedVersionCatalogEntry"
+                   bundle="messages.GradleInspectionBundle" key="inspection.display.name.unused.version.catalog.entry"
+                   groupBundle="messages.GradleInspectionBundle" groupKey="inspection.style"
+                   enabledByDefault="true"
+                   implementationClass="org.jetbrains.plugins.gradle.codeInspection.toml.UnusedVersionCatalogEntryInspection"/>
 
 
 </extensions>
