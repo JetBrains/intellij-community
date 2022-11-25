@@ -4,6 +4,7 @@ package com.intellij.ide.gdpr;
 import com.fasterxml.jackson.jr.ob.JSON;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -69,9 +70,12 @@ public final class ConsentOptions {
 
       @Override
       public void writeConfirmedConsents(@NotNull String data) throws IOException {
+        GdprSettingsChangeListener syncPublisher =
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(GdprSettingsChangeListener.Companion.getTOPIC());
         Path confirmedConsentsFile = getConfirmedConsentsFile();
         Files.createDirectories(confirmedConsentsFile.getParent());
         Files.writeString(confirmedConsentsFile, data);
+        syncPublisher.consentWritten();
       }
 
       @Override
@@ -247,7 +251,7 @@ public final class ConsentOptions {
   public @NotNull Pair<List<Consent>, Boolean> getConsents() {
     return getConsents(consent -> true);
   }
-  
+
   public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (isEAP()) {
@@ -265,7 +269,7 @@ public final class ConsentOptions {
         it.remove();
       }
     }
-    
+
     if (allDefaults.isEmpty()) {
       return new Pair<>(Collections.emptyList(), Boolean.FALSE);
     }
