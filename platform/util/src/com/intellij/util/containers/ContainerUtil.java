@@ -1028,47 +1028,6 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> iterate(T @NotNull [] arrays, @NotNull Condition<? super T> condition) {
-    return iterate(Arrays.asList(arrays), condition);
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> iterate(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
-    if (collection.isEmpty()) return Collections.emptyList();
-    return () -> new Iterator<T>() {
-      private final Iterator<? extends T> impl = collection.iterator();
-      private T next = findNext();
-
-      @Override
-      public boolean hasNext() {
-        return next != null;
-      }
-
-      @Override
-      public T next() {
-        T result = next;
-        next = findNext();
-        return result;
-      }
-
-      private @Nullable T findNext() {
-        while (impl.hasNext()) {
-          T each = impl.next();
-          if (condition.value(each)) {
-            return each;
-          }
-        }
-        return null;
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
-  }
-
-  @Contract(pure = true)
   public static @NotNull <T> Iterable<T> iterateBackward(@NotNull List<? extends T> list) {
     return () -> new Iterator<T>() {
       private final ListIterator<? extends T> it = list.listIterator(list.size());
