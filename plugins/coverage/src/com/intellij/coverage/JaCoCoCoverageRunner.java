@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -129,13 +130,16 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
           lineData.setHits(methodLineStatus == ICounter.FULLY_COVERED || methodLineStatus == ICounter.PARTLY_COVERED ? 1 : 0);
           ICounter branchCounter = methodLine.getBranchCounter();
-          int coveredCount = branchCounter.getCoveredCount();
-          for (int b = 0; b < branchCounter.getTotalCount(); b++) {
-            JumpData jump = lineData.addJump(b);
-            if (coveredCount-- > 0) {
-              jump.setTrueHits(1);
-              jump.setFalseHits(1);
+          if (branchCounter.getTotalCount() > 0) {
+            final int[] keys = new int[branchCounter.getTotalCount()];
+            for (int key = 0; key < keys.length; key++) {
+              keys[key] = key;
             }
+            final SwitchData switchData = lineData.addSwitch(0, keys);
+            final int[] hits = switchData.getHits();
+            Arrays.fill(hits, 0, branchCounter.getCoveredCount(), 1);
+            switchData.setKeysAndHits(keys, hits);
+            switchData.setDefaultHits(1);
           }
 
           classData.registerMethodSignature(lineData);
