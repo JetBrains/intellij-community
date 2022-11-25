@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -51,9 +52,12 @@ object GHPRReviewThreadComponent {
     val panel = JPanel(VerticalLayout(12)).apply {
       isOpaque = false
     }
-    panel.add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, thread, ghostUser,
-                                                                                              reviewDataProvider, avatarIconsProvider,
-                                                                                              suggestedChangeHelper)))
+    val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
+                                                                     reviewDataProvider,
+                                                                     avatarIconsProvider,
+                                                                     suggestedChangeHelper)
+    val commentsPanel = TimelineThreadCommentsPanel(thread, commentComponentFactory)
+    panel.add(commentsPanel)
 
     if (reviewDataProvider.canComment()) {
       panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
@@ -82,11 +86,11 @@ object GHPRReviewThreadComponent {
 
     val commentsPanel = JPanel(VerticalLayout(12)).apply {
       isOpaque = false
-      val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
-                                                                      reviewDataProvider, avatarIconsProvider,
-                                                                      suggestedChangeHelper,
-                                                                      false)
-      add(GHPRReviewThreadCommentsPanel.create(thread, reviewCommentComponent))
+      val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
+                                                                       reviewDataProvider, avatarIconsProvider,
+                                                                       suggestedChangeHelper,
+                                                                       false)
+      add(TimelineThreadCommentsPanel(thread, commentComponentFactory))
 
       if (reviewDataProvider.canComment()) {
         add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
