@@ -51,18 +51,17 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
     exclude.setActionHint(JavaCoverageBundle.message("do.not.show.coverage.data.in.specified.classes.and.packages"));
     fragments.add(exclude);
 
-    JavaCoverageEnabledConfiguration configuration = getConfiguration();
     fragments.add(createRunnerFragment());
     SettingsEditorFragment<T, ?> tracing =
       SettingsEditorFragment.createTag("coverage.tracing", JavaCoverageBundle.message("coverage.settings.tracing"), null,
-                                       t -> configuration.isTracingEnabled(),
-                                       (t, value) -> configuration.setTracingEnabled(value));
+                                       t -> getConfiguration(t).isTracingEnabled(),
+                                       (t, value) -> getConfiguration(t).setTracingEnabled(value));
     tracing.setActionHint(JavaCoverageBundle.message("enables.accurate.collection"));
     fragments.add(tracing);
     SettingsEditorFragment<T, ?> tests =
       SettingsEditorFragment.createTag("coverage.test.folders", JavaCoverageBundle.message("coverage.settings.test.folders"), null,
-                                       t -> configuration.isTrackTestFolders(),
-                                       (t, value) -> configuration.setTrackTestFolders(value));
+                                       t -> getConfiguration(t).isTrackTestFolders(),
+                                       (t, value) -> getConfiguration(t).setTrackTestFolders(value));
     tests.setActionHint(JavaCoverageBundle.message("collect.code.coverage.statistics.for.tests"));
     fragments.add(tests);
     return fragments;
@@ -72,19 +71,18 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
   private SettingsEditorFragment<T, CoverageClassFilterEditor> createFilterEditor(String id,
                                                                                   @NotNull @Nls String message,
                                                                                   boolean included, @NotNull @Nls String optionName) {
-    JavaCoverageEnabledConfiguration configuration = getConfiguration();
     CoverageClassFilterEditor filterEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
     filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBInsets.emptyInsets()));
     filterEditor.setupEasyFocusTraversing();
     return new SettingsEditorFragment<>(id, optionName, null, filterEditor,
-                                        (p, editor) -> editor.setFilters(CoverageConfigurable.getCoveragePatterns(configuration, included)),
-                                        (p, editor) -> setCoveragePatterns(configuration, isSelected() && filterEditor.isVisible() ? editor.getFilters() : ClassFilter.EMPTY_ARRAY, included),
-                                        p -> CoverageConfigurable.getCoveragePatterns(configuration, included).length > 0);
+                                        (p, editor) -> editor.setFilters(CoverageConfigurable.getCoveragePatterns(getConfiguration(p), included)),
+                                        (p, editor) -> setCoveragePatterns(getConfiguration(p), isSelected() && filterEditor.isVisible() ? editor.getFilters() : ClassFilter.EMPTY_ARRAY, included),
+                                        p -> CoverageConfigurable.getCoveragePatterns(getConfiguration(p), included).length > 0);
   }
 
   @NotNull
-  private JavaCoverageEnabledConfiguration getConfiguration() {
-    return (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(myConfiguration);
+  private static JavaCoverageEnabledConfiguration getConfiguration(RunConfigurationBase<?> configuration) {
+    return (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(configuration);
   }
 
   private static void setCoveragePatterns(JavaCoverageEnabledConfiguration configuration, ClassFilter[] filters, boolean included) {
@@ -99,7 +97,6 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
     final DefaultComboBoxModel<CoverageRunner> model = new DefaultComboBoxModel<>();
     ComboBox<CoverageRunner> comboBox = new ComboBox<>(model);
 
-    final JavaCoverageEnabledConfiguration configuration = getConfiguration();
     final JavaCoverageEngine provider = JavaCoverageEngine.getInstance();
     for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
       if (runner.acceptsCoverageEngine(provider)) {
@@ -112,10 +109,10 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
     LabeledComponent<?> component = LabeledComponent.create(panel, JavaCoverageBundle.message("run.configuration.choose.coverage.runner"), BorderLayout.WEST);
     SettingsEditorFragment<T, ? extends LabeledComponent<?>> fragment =
       new SettingsEditorFragment<>("coverage.runner", JavaCoverageBundle.message("coverage.settings.runner"), null, component,
-                                   (t, c) -> comboBox.setItem(configuration.getCoverageRunner()),
-                                   (t, c) -> configuration
+                                   (t, c) -> comboBox.setItem(getConfiguration(t).getCoverageRunner()),
+                                   (t, c) -> getConfiguration(t)
                                      .setCoverageRunner(isSelected() && component.isVisible() ? comboBox.getItem() : model.getElementAt(0)),
-                                   t -> !(configuration.getCoverageRunner() instanceof IDEACoverageRunner));
+                                   t -> !(getConfiguration(t).getCoverageRunner() instanceof IDEACoverageRunner));
     fragment.setEditorGetter(c -> comboBox);
     fragment.setActionHint(JavaCoverageBundle.message("select.to.use.a.code.coverage.runner.other.than.the.built.in.one"));
     return fragment;
