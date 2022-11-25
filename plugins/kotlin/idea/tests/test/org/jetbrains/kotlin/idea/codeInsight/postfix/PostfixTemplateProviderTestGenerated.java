@@ -86,6 +86,11 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
             runTest("testData/codeInsight/postfix/forOnString.kt");
         }
 
+        @TestMetadata("forReversed.kt")
+        public void testForReversed() throws Exception {
+            runTest("testData/codeInsight/postfix/forReversed.kt");
+        }
+
         @TestMetadata("if.kt")
         public void testIf() throws Exception {
             runTest("testData/codeInsight/postfix/if.kt");
