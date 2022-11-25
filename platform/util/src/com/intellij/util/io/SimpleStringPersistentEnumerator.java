@@ -53,7 +53,8 @@ public final class SimpleStringPersistentEnumerator implements DataEnumerator<St
       throw new RuntimeException("SimpleStringPersistentEnumerator doesn't support multi-line strings");
     }
 
-    int n = myInvertedState.size() + 1;
+    // do not use myInvertedState.size because enumeration file may have duplicates on different lines
+    int n = myForwardState.size() + 1;
     myInvertedState.put(value, n);
     myForwardState.put(n, value);
     writeStorageToDisk(myForwardState, myFile);
