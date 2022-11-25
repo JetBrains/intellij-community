@@ -41,6 +41,7 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
             KtIntroduceVariablePostfixTemplate("var", this),
             KtForEachPostfixTemplate("for", this),
             KtForEachPostfixTemplate("iter", this),
+            KtForReversedPostfixTemplate("forr", this),
             KtForWithIndexPostfixTemplate("fori", this),
             KtAssertPostfixTemplate(this),
             KtParenthesizedPostfixTemplate(this),

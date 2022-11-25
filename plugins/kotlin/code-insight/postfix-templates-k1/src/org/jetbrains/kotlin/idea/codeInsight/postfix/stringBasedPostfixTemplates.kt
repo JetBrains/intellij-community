@@ -49,13 +49,15 @@ internal class KtWrapWithSetOfPostfixTemplate(provider: PostfixTemplateProvider)
 internal class KtWrapWithArrayOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("arrayOf", provider)
 internal class KtWrapWithSequenceOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("sequenceOf", provider)
 
-internal class KtForEachPostfixTemplate(
+internal abstract class AbstractKtForEachPostfixTemplate(
     name: String,
+    desc: String,
+    template: String,
     provider: PostfixTemplateProvider
 ) : ConstantStringBasedPostfixTemplate(
     name,
-    "for (item in expr)",
-    "for (\$name$ in \$expr$) {\n    \$END$\n}",
+    desc,
+    template,
     createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = KtExpression::hasIterableType),
     provider
 ) {
@@ -64,6 +66,25 @@ internal class KtForEachPostfixTemplate(
         template.addVariable("name", name, ConstantNode("item"), true)
     }
 }
+internal class KtForEachPostfixTemplate(
+    name: String,
+    provider: PostfixTemplateProvider
+) : AbstractKtForEachPostfixTemplate(
+    name,
+    "for (item in expr)",
+    "for (\$name$ in \$expr$) {\n    \$END$\n}",
+    provider
+)
+
+internal class KtForReversedPostfixTemplate(
+    name: String,
+    provider: PostfixTemplateProvider
+) : AbstractKtForEachPostfixTemplate(
+    name,
+    "for (item in expr.reversed())",
+    "for (\$name$ in \$expr$.reversed()) {\n    \$END$\n}",
+    provider
+)
 
 internal class KtForWithIndexPostfixTemplate(
     name: String,
