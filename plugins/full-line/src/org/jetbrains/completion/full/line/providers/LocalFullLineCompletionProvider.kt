@@ -42,7 +42,6 @@ class LocalFullLineCompletionProvider private constructor(
           numBeams = modelState.beamSize,
           lenNormBase = modelState.lenBase,
           lenNormPow = modelState.lenPow,
-          maxContextLen = modelState.contextLength(),
           filename = query.filename,
           oneTokenMode = query.mode == FullLineCompletionMode.ONE_TOKEN,
           numSuggestions = config.proposalsLimit,
