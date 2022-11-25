@@ -11,6 +11,7 @@ import com.intellij.psi.PsiWhiteSpace
 abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : PsiElement, ExpressionType, TypeComputationContext> : InlayHintsProvider {
 
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
+    if (!isAvailable(file, editor)) return null
     return Collector(file)
   }
 
@@ -75,6 +76,10 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
     context: TypeComputationContext,
     treeBuilder: PresentationTreeBuilder
   )
+
+  protected open fun isAvailable(file: PsiFile, editor: Editor): Boolean {
+    return true
+  }
 
   protected abstract fun PsiElement.getType(context: TypeComputationContext): ExpressionType?
 
