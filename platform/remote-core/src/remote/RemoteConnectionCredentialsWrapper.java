@@ -10,6 +10,7 @@ import com.intellij.remote.ext.RemoteCredentialsHandler;
 import com.intellij.remote.ext.UnknownCredentialsHolder;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 // TODO: (next) rename to 'RemoteSdkDataDelegate' ?
 public class RemoteConnectionCredentialsWrapper {
@@ -59,8 +60,8 @@ public class RemoteConnectionCredentialsWrapper {
   }
 
   private Pair<Object, CredentialsType> getCredentialsAndType() {
-    for (CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
-      Object credentials = type.getCredentials(myCredentialsTypeHolder);
+    for (CredentialsType<?> type : CredentialsManager.getInstance().getAllTypes()) {
+      Object credentials = getCredentials(type);
       if (credentials != null) {
         return Pair.create(credentials, type);
       }
@@ -68,6 +69,10 @@ public class RemoteConnectionCredentialsWrapper {
     final UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.getCredentials(myCredentialsTypeHolder);
     if (credentials != null) return Pair.create(credentials, CredentialsType.UNKNOWN);
     throw unknownConnectionType();
+  }
+
+  public <T> @Nullable T getCredentials(@NotNull CredentialsType<T> credentialsType) {
+    return credentialsType.getCredentials(myCredentialsTypeHolder);
   }
 
   public void switchType(CredentialsCase... cases) {
