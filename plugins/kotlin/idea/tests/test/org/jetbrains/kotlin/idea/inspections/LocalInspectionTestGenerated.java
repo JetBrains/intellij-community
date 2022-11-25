@@ -16487,6 +16487,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 public void test4() throws Exception {
                     runTest("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments/4.kt");
                 }
+
+                @TestMetadata("5.kt")
+                public void test5() throws Exception {
+                    runTest("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments/5.kt");
+                }
+
+                @TestMetadata("6.kt")
+                public void test6() throws Exception {
+                    runTest("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments/6.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)

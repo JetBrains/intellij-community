@@ -1373,6 +1373,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/annotatedExprInParentheses.kt");
         }
 
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/comment.kt");
+        }
+
+        @TestMetadata("comment2.kt")
+        public void testComment2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/comment2.kt");
+        }
+
+        @TestMetadata("comment3.kt")
+        public void testComment3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/comment3.kt");
+        }
+
+        @TestMetadata("comment4.kt")
+        public void testComment4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/comment4.kt");
+        }
+
         @TestMetadata("explicitlyNonUnitFun.kt")
         public void testExplicitlyNonUnitFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/explicitlyNonUnitFun.kt");
@@ -1421,6 +1441,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("getterTypeInferred.kt")
         public void testGetterTypeInferred() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/getterTypeInferred.kt");
+        }
+
+        @TestMetadata("getterWithComment.kt")
+        public void testGetterWithComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/getterWithComment.kt");
+        }
+
+        @TestMetadata("getterWithComment2.kt")
+        public void testGetterWithComment2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/getterWithComment2.kt");
+        }
+
+        @TestMetadata("getterWithComment3.kt")
+        public void testGetterWithComment3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/getterWithComment3.kt");
+        }
+
+        @TestMetadata("getterWithComment4.kt")
+        public void testGetterWithComment4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/getterWithComment4.kt");
         }
 
         @TestMetadata("getterWithThrow.kt")
