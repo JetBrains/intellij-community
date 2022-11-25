@@ -18,6 +18,7 @@ import org.junit.runners.Parameterized.Parameter;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 @RunWith(Parameterized.class)
 public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
@@ -130,6 +131,26 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
     TestCase.assertTrue("Write null, should change previous value", key.setPersistentValue(file, null));
     TestCase.assertFalse("Second set should not change existing value", key.setPersistentValue(file, null));
     TestCase.assertNull("We still can read null", key.getPersistentValue(file));
+  }
+
+  @Test
+  public void testStringNotModifiedWhenPersisted(){
+    Assume.assumeTrue(key == STRING_KEY);
+    VirtualFile file = createVirtualFile("Foo.java", "");
+
+    List<String> values = Arrays.asList("value", "s p a c e s", "," ,"", " ", "\t", "null", null);
+    for (String value : values) {
+      STRING_KEY.setPersistentValue(file, value);
+      assertEquals("Should read exactly the same string (read from memory)", value, STRING_KEY.getPersistentValue(file));
+
+      memKey.set(file, null); // clear memory data
+      assertFalse("Should not update to the same string: '" + value + "'", STRING_KEY.setPersistentValue(file, value));
+      assertEquals("Should read exactly the same string (read from memory)", value, STRING_KEY.getPersistentValue(file));
+
+      if (!FilePropertyKeyImpl.getREAD_PERSISTENT_VALUE()) continue;
+      memKey.set(file, null); // clear memory data
+      assertEquals("Should read exactly the same string (read from file)", value, STRING_KEY.getPersistentValue(file));
+    }
   }
 
   @Parameterized.Parameters(name = "{0}")

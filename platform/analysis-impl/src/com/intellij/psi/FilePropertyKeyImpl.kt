@@ -160,9 +160,7 @@ internal class FilePropertyStringKey<T>(name: String, persistentAttribute: FileA
   override fun readValue(stream: AttributeInputStream): String? = stream.readEnumeratedString()
 
   @Throws(IOException::class)
-  override fun writeValue(stream: AttributeOutputStream, newValue: String?) {
-    StringUtil.nullize(newValue).let { stream.writeEnumeratedString(it) }
-  }
+  override fun writeValue(stream: AttributeOutputStream, newValue: String?) = stream.writeEnumeratedString(newValue)
 }
 
 internal class FilePropertyEnumKey<T : Enum<T>>(name: String,
