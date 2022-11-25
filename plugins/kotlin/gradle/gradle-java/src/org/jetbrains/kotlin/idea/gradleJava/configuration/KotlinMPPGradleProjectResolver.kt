@@ -135,7 +135,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 val projectManager = ProjectManager.getInstance()
                 val project = projectManager.openProjects.firstOrNull { it.basePath == resolverCtx.projectPath }
                 if (project != null) {
-                    KotlinPluginLayout.standaloneCompilerVersion.let { version ->
+                    KotlinPluginLayout.instance.standaloneCompilerVersion.let { version ->
                         showDeprecatedKotlinJsCompilerWarning(
                             project,
                             version,
