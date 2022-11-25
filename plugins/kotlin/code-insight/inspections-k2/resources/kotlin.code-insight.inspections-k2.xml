@@ -1,4 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections">
+  <dependencies>
+    <module name="kotlin.code-insight.intentions-k2"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RedundantUnitReturnTypeInspection"
@@ -207,7 +210,7 @@
                      language="kotlin"
                      key="inspection.when.with.only.else.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertToStringTemplateInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertToStringTemplateInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"

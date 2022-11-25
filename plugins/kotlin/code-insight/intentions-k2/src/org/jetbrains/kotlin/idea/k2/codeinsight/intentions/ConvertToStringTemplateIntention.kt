@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.isToString
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -24,12 +23,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.ConstantValueKind
 
 private const val TRIPLE_DOUBLE_QUOTE = "\"\"\""
-
-class ConvertToStringTemplateInspection : IntentionBasedInspection<KtBinaryExpression>(
-    ConvertToStringTemplateIntention::class,
-    ::canConvertToStringTemplate,
-    problemText = KotlinBundle.message("convert.concatenation.to.template.before.text")
-)
 
 /**
  * A class for convert-to-string-template intention.
@@ -194,7 +187,7 @@ private fun buildStringTemplateForBinaryExpression(expression: KtBinaryExpressio
     return foldOperandsOfBinaryExpression(expression.left, rightText, KtPsiFactory(expression))
 }
 
-private fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
+internal fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
     if (expression.textContains('\n')) return false
 
     val entries = buildStringTemplateForBinaryExpression(expression).entries
