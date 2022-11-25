@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.platform.IdePlatformKind
 
 class KotlinVersionInfoProviderByModuleDependencies : KotlinVersionInfoProvider {
-    override fun getCompilerVersion(module: Module) = KotlinPluginLayout.instance.standaloneCompilerVersion
+    override fun getCompilerVersion(module: Module) = KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
 
     override fun getLibraryVersions(
         module: Module,

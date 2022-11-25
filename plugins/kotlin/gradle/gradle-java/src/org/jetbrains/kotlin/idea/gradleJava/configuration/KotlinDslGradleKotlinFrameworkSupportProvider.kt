@@ -52,7 +52,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
     ) {
         var kotlinVersion = kotlinCompilerVersionShort()
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
-        if (isSnapshot(KotlinPluginLayout.instance.standaloneCompilerVersion)) {
+        if (isSnapshot(KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion)) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
         }
 
@@ -131,12 +131,12 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
         buildScriptData: BuildScriptDataBuilder
     ) {
         super.addSupport(projectId, module, rootModel, modifiableModelsProvider, buildScriptData)
-        val jvmTarget = getDefaultJvmTarget(rootModel.sdk, KotlinPluginLayout.instance.standaloneCompilerVersion)
+        val jvmTarget = getDefaultJvmTarget(rootModel.sdk, KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion)
         if (jvmTarget != null) {
             addJvmTargetTask(buildScriptData)
         }
 
-        val artifactId = getStdlibArtifactId(rootModel.sdk, KotlinPluginLayout.instance.standaloneCompilerVersion)
+        val artifactId = getStdlibArtifactId(rootModel.sdk, KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion)
         buildScriptData.addDependencyNotation(composeDependency(buildScriptData, artifactId))
     }
 

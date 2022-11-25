@@ -39,7 +39,7 @@ open class MakeModuleExperimentalFix(
     // `-Xuse-experimental` (before Kotlin 1.3.70), a fallback if `RequireOptIn` annotation does not exist
 
     private val kotlinCompilerVersion =
-        KotlinVersion.fromString(KotlinPluginLayout.instance.standaloneCompilerVersion) ?: KotlinVersion.CURRENT
+        KotlinVersion.fromString(KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion) ?: KotlinVersion.CURRENT
 
     private val experimentalPrefix = when {
         module.toDescriptor()?.fqNameIsExisting(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == false -> "-Xuse-experimental"
