@@ -79,7 +79,7 @@ class SmartUpdateAction: DumbAwareAction(SmartUpdateBundle.message("action.smart
 
   override fun update(e: AnActionEvent) {
     if (!Registry.`is`("ide.smart.update", false)) {
-      e.presentation.isVisible = false
+      e.presentation.isEnabledAndVisible = false
       return
     }
     CommonUpdateProjectAction().update(e)
