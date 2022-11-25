@@ -127,7 +127,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
               )
               UIBundle.message("label.project.wizard.new.project.path.description", context.isCreatingNewProjectInt, shortPath)
             }
-            textField.bindCommentText(commentProperty)
+            comment.bind(commentProperty)
           }
       }
 
