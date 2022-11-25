@@ -23,35 +23,35 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 class KotlinFirStructureViewElement(
-  override val element: NavigatablePsiElement,
-  ktElement : KtElement,
-  private val isInherited: Boolean = false
+    override val element: NavigatablePsiElement,
+    ktElement: KtElement,
+    private val isInherited: Boolean = false
 ) : PsiTreeElementBase<NavigatablePsiElement>(element), AbstractKotlinStructureViewElement, Queryable {
 
-    private var kotlinPresentation
-            by AssignableLazyProperty {
-                KotlinFirStructureElementPresentation(isInherited, element, ktElement, createSymbolAndThen { it.createPointer() })
-            }
+    private var kotlinPresentation by AssignableLazyProperty {
+        KotlinFirStructureElementPresentation(isInherited, element, ktElement, createSymbolAndThen { it.createPointer() })
+    }
 
-    private var visibility
-            by AssignableLazyProperty {
-                analyze(ktElement) {
-                    Visibility(createSymbolAndThen { it })
-                }
-            }
+    private var visibility by AssignableLazyProperty {
+        createSymbolAndThen { Visibility(it) } ?: Visibility(null)
+    }
 
     /**
      * @param element        represents node element, can be in current file or from super class (e.g. java)
      * @param inheritElement represents element in the current kotlin file
      */
-    constructor(element: NavigatablePsiElement, inheritElement: KtElement, descriptor: KtSymbolPointer<*>, isInherited: Boolean) : this(element, inheritElement, isInherited) {
+    constructor(
+        element: NavigatablePsiElement,
+        inheritElement: KtElement,
+        descriptor: KtSymbolPointer<*>,
+        isInherited: Boolean,
+    ) : this(element = element, ktElement = inheritElement, isInherited = isInherited) {
         if (element !is KtElement) {
             // Avoid storing descriptor in fields
             kotlinPresentation = KotlinFirStructureElementPresentation(isInherited, element, inheritElement, descriptor)
             analyze(inheritElement) {
                 visibility = Visibility(descriptor.restoreSymbol())
             }
-
         }
     }
 
@@ -103,19 +103,20 @@ class KotlinFirStructureViewElement(
         return result
     }
 
-    private fun <T> createSymbolAndThen(modifier : KtAnalysisSession.(KtSymbol) -> T): T? {
+    private fun <T> createSymbolAndThen(modifier: KtAnalysisSession.(KtSymbol) -> T): T? {
         val element = element
         return when {
             !element.isValid -> null
             element !is KtDeclaration -> null
             element is KtAnonymousInitializer -> null
             else -> runReadAction {
-              if (!DumbService.isDumb(element.getProject())) {
-                analyze(element) {
-                  modifier.invoke(this, element.getSymbol())
-                } 
-              }
-              else null
+                if (!DumbService.isDumb(element.getProject())) {
+                    analyze(element) {
+                        modifier.invoke(this, element.getSymbol())
+                    }
+                } else {
+                    null
+                }
             }
         }
     }
@@ -136,6 +137,7 @@ class KotlinFirStructureViewElement(
             }
     }
 }
+
 private class AssignableLazyProperty<in R, T : Any>(val init: () -> T) : ReadWriteProperty<R, T> {
     private var _value: T? = null
 
