@@ -5,7 +5,7 @@ kotlin:
       name: a
       subModules:
         - type:
-            targetJvmVersion: "9"
+            targetJvmVersion: "11"
             name: jvmTarget
             testFramework: JUNIT4
           name: jvm
