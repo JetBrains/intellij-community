@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
@@ -15,14 +14,17 @@ fun IdeaKotlinProjectArtifactDependency.Resolver.Companion.from(
 ): IdeaKotlinProjectArtifactDependency.Resolver {
     val sourceSetMap = project.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS).orEmpty()
     val artifactsMap = project.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
+    val modulesOutputsMap = project.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
 
     return byName { dependency ->
-        val id = artifactsMap[dependency.coordinates.artifactFile.normalize().canonicalPath] ?: return@byName null
+        val canonicalArtifactFilePath = dependency.coordinates.artifactFile.normalize().canonicalPath
+        val id = artifactsMap[canonicalArtifactFilePath] ?: modulesOutputsMap[canonicalArtifactFilePath]?.first ?: return@byName null
         val sourceSet: ExternalSourceSet = sourceSetMap[id]?.second ?: return@byName null
         sourceSet.name
     }
 }
 
+@JvmName("fromSourceSetDataNode")
 fun IdeaKotlinProjectArtifactDependency.Resolver.Companion.from(
     sourceSet: DataNode<*>
 ): IdeaKotlinProjectArtifactDependency.Resolver {
