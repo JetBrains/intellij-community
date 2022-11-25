@@ -276,4 +276,5 @@ private fun compressFile(file: Path, output: BufferedSink, bufferPool: DirectFix
 @Serializable
 private data class CheckFilesResponse(
   val found: List<String> = emptyList(),
+  val missing: List<String> = emptyList(),
 )
