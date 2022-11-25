@@ -125,7 +125,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
       if (declaration instanceof PsiClass) {
         PsiClass aClass = (PsiClass)declaration;
         if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||
-            place.getParent() != null && selector.findClass(((PsiClass)declaration).getQualifiedName()) != null) {
+            place != null && place.getParent() != null && selector.findClass(((PsiClass)declaration).getQualifiedName()) != null) {
           return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
         }
       }
