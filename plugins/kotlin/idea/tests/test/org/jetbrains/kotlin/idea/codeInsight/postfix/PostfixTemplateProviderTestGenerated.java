@@ -66,6 +66,16 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
             runTest("testData/codeInsight/postfix/for.kt");
         }
 
+        @TestMetadata("forIndexed.kt")
+        public void testForIndexed() throws Exception {
+            runTest("testData/codeInsight/postfix/forIndexed.kt");
+        }
+
+        @TestMetadata("forIndexed2.kt")
+        public void testForIndexed2() throws Exception {
+            runTest("testData/codeInsight/postfix/forIndexed2.kt");
+        }
+
         @TestMetadata("forOnMap.kt")
         public void testForOnMap() throws Exception {
             runTest("testData/codeInsight/postfix/forOnMap.kt");

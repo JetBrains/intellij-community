@@ -65,6 +65,24 @@ internal class KtForEachPostfixTemplate(
     }
 }
 
+internal class KtForWithIndexPostfixTemplate(
+    name: String,
+    provider: PostfixTemplateProvider
+) : ConstantStringBasedPostfixTemplate(
+    name,
+    "for ((index, name) in expr.withIndex())",
+    "for ((\$index$, \$name$) in \$expr$.withIndex()) {\n    \$END$\n}",
+    createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = KtExpression::hasIterableType),
+    provider
+) {
+    override fun setVariables(template: Template, element: PsiElement) {
+        val indexName = MacroCallNode(Fe10SuggestVariableNameMacro("index"))
+        template.addVariable("index", indexName, ConstantNode("index"), false)
+        val itemName = MacroCallNode(Fe10SuggestVariableNameMacro())
+        template.addVariable("name", itemName, ConstantNode("item"), true)
+    }
+}
+
 private fun KtExpression.hasIterableType(bindingContext: BindingContext): Boolean {
     val resolutionFacade = getResolutionFacade()
     val type = getType(bindingContext) ?: return false
