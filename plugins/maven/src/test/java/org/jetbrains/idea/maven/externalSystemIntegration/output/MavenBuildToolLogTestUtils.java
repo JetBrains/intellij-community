@@ -80,7 +80,7 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
     private boolean mySkipOutput = false;
 
     public TestCaseBuilder withLines(String... lines) {
-      List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
+      List<String> joinedAndSplitted = List.of(StringUtil.join(lines, "\n").split("\n"));
       myLines.addAll(joinedAndSplitted);
       return this;
     }

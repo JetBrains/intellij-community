@@ -207,8 +207,8 @@ public class ArrangementSettingsSerializationTest {
   @Test
   public void testSectionSerialize() {
     final List<ArrangementSectionRule> sections =
-      ContainerUtil.newArrayList(section("start section", "end section", rule(true, METHOD, PRIVATE), rule(false, METHOD, PUBLIC)),
-                                 section("start section", "end section", rule(true, FIELD)));
+      List.of(section("start section", "end section", rule(true, METHOD, PRIVATE), rule(false, METHOD, PUBLIC)),
+              section("start section", "end section", rule(true, FIELD)));
     final StdArrangementSettings settings =
       settings(List.of(group(OVERRIDDEN_METHODS)), sections);
 

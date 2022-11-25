@@ -5,12 +5,12 @@ import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -142,7 +142,7 @@ public class FileUtilLightTest {
   public void testLoadProperties() throws IOException {
     String data = "key2=value2\nkey1=value1\nkey3=value3";
     Map<String, String> map = PropertiesUtil.loadProperties(new StringReader(data));
-    assertEquals(ContainerUtil.newArrayList("key2", "key1", "key3"), new ArrayList<>(map.keySet()));
+    assertEquals(List.of("key2", "key1", "key3"), new ArrayList<>(map.keySet()));
   }
 
   @Test

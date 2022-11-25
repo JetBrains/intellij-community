@@ -195,8 +195,8 @@ public class TreeTraverserTest extends TestCase {
   public void testCursorTransform() {
     JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
 
-    List<Integer> expected = ContainerUtil.newArrayList(1, 2, 3, 4, 5);
-    List<Integer> expectedOdd = ContainerUtil.newArrayList(1, 3, 5);
+    List<Integer> expected = List.of(1, 2, 3, 4, 5);
+    List<Integer> expectedOdd = List.of(1, 3, 5);
     assertEquals(expected, JBIterator.cursor(JBIterator.from(orig.iterator())).transform(o -> o.current()).toList());
     assertEquals(expected.size(), JBIterator.cursor(JBIterator.from(orig.iterator())).last().current().intValue());
     assertEquals(expectedOdd, JBIterator.cursor(JBIterator.from(orig.iterator())).transform(o -> o.current()).filter(IS_ODD).toList());

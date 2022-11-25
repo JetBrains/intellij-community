@@ -69,7 +69,7 @@ public class ChunkGraphTest extends GraphTestCase {
 
   private static void checkArcs(Map<Chunk<String>, Set<Chunk<String>>> expectedArcs, Graph<Chunk<String>> graph) {
     for (Chunk<String> chunk : graph.getNodes()) {
-      List<Chunk<String>> ins = ContainerUtil.newArrayList(() -> graph.getIn(chunk));
+      List<Chunk<String>> ins = ContainerUtil.collect(graph.getIn(chunk));
       Set<Chunk<String>> expectedIns = expectedArcs.get(chunk);
       assertEquals(expectedIns.size(), ins.size());
       assertEquals(expectedIns, new HashSet<>(ins));

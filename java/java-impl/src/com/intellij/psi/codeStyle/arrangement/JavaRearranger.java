@@ -55,10 +55,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     ContainerUtil.newLinkedHashSet(
       PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE, STATIC, FINAL, ABSTRACT, SYNCHRONIZED, TRANSIENT, VOLATILE
     );
-  @NotNull private static final List<ArrangementSettingsToken> SUPPORTED_ORDERS =
-    ContainerUtil.newArrayList(KEEP, BY_NAME);
+  @NotNull private static final List<ArrangementSettingsToken> SUPPORTED_ORDERS = List.of(KEEP, BY_NAME);
   @NotNull private static final ArrangementSettingsToken NO_TYPE = new ArrangementSettingsToken("NO_TYPE", "NO_TYPE");
-    //NON-NLS not visible in settings
+  //NON-NLS not visible in settings
   @NotNull
   private static final Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE =
     new HashMap<>();
@@ -266,8 +265,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   }
 
   private static void setupFieldInitializationDependencies(@NotNull List<? extends ArrangementEntryDependencyInfo> fieldDependencyRoots,
-                                                          @NotNull ArrangementSettings settings,
-                                                          @NotNull JavaArrangementParseInfo parseInfo) {
+                                                           @NotNull ArrangementSettings settings,
+                                                           @NotNull JavaArrangementParseInfo parseInfo) {
     Collection<JavaElementArrangementEntry> fields = parseInfo.getFields();
     List<JavaElementArrangementEntry> arrangedFields =
       ArrangementEngine.arrange(fields, settings.getSections(), settings.getRulesSortedByPriority(), null);
@@ -343,7 +342,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   @Nullable
   @Override
   public List<CompositeArrangementSettingsToken> getSupportedGroupingTokens() {
-    return ContainerUtil.newArrayList(
+    return List.of(
       new CompositeArrangementSettingsToken(GETTERS_AND_SETTERS),
       new CompositeArrangementSettingsToken(OVERRIDDEN_METHODS, BY_NAME, KEEP),
       new CompositeArrangementSettingsToken(DEPENDENT_METHODS, BREADTH_FIRST, DEPTH_FIRST)
@@ -353,7 +352,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   @Nullable
   @Override
   public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
-    return ContainerUtil.newArrayList(
+    return List.of(
       new CompositeArrangementSettingsToken(TYPE, SUPPORTED_TYPES),
       new CompositeArrangementSettingsToken(MODIFIER, SUPPORTED_MODIFIERS),
       new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.NAME),

@@ -9,7 +9,6 @@ import com.intellij.task.ProjectTaskListener;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -119,9 +118,9 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildMainProject() {
     compileModules("project.main");
 
-    List<String> expected = ContainerUtil.newArrayList(mainRoot,
-                                                       apiMainRoot, apiJar,
-                                                       implMainRoot);
+    List<String> expected = new ArrayList<>(List.of(mainRoot,
+                                    apiMainRoot, apiJar,
+                                    implMainRoot));
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
@@ -156,11 +155,11 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildTestProject() {
     compileModules("project.test");
 
-    List<String> expected = ContainerUtil.newArrayList(mainRoot,
-                                                       testRoot,
-                                                       apiMainRoot,
-                                                       apiJar,
-                                                       implMainRoot);
+    List<String> expected = new ArrayList<>(List.of(mainRoot,
+                                                    testRoot,
+                                                    apiMainRoot,
+                                                    apiJar,
+                                                    implMainRoot));
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);

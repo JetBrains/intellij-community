@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.hamcrest.core.IsCollectionContaining;
 import org.jetbrains.annotations.NotNull;
@@ -208,19 +207,19 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
 
   public void testSeveralServiceMessagesInOneLine() {
     mySplitter.process("##teamcity[name1]##teamcity[name2]##teamcity[name3]##teamcit", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("##teamcity[name1]", "##teamcity[name2]"),
+    Assert.assertEquals(List.of("##teamcity[name1]", "##teamcity[name2]"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
     mySplitter.process("y[name4]\n", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("##teamcity[name1]", "##teamcity[name2]", "##teamcity[name3]", "##teamcity[name4]\n"),
+    Assert.assertEquals(List.of("##teamcity[name1]", "##teamcity[name2]", "##teamcity[name3]", "##teamcity[name4]\n"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
   }
 
   public void testEmittingServiceMessagesPromptly() {
     mySplitter.process("Foo ##teamcity[name1]\n##team", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n"),
+    Assert.assertEquals(List.of("Foo ", "##teamcity[name1]\n"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
     mySplitter.process("city[name2]\n", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n", "##teamcity[name2]\n"),
+    Assert.assertEquals(List.of("Foo ", "##teamcity[name1]\n", "##teamcity[name2]\n"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
   }
 
@@ -230,7 +229,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
     Assert.assertEquals(List.of("Some stderr"),
                         myOutput.get(ProcessOutputTypes.STDERR).toList());
     mySplitter.process("output\nFoo ##team", ProcessOutputTypes.STDERR);
-    Assert.assertEquals(ContainerUtil.newArrayList("Some stderr", "output\n", "Foo ##team"),
+    Assert.assertEquals(List.of("Some stderr", "output\n", "Foo ##team"),
                         myOutput.get(ProcessOutputTypes.STDERR).toList());
   }
 
