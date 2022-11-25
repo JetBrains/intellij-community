@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -18,7 +20,9 @@ import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
 import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
 import org.jetbrains.kotlin.idea.codeinsight.utils.isSetterParameter
@@ -27,21 +31,28 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class RemoveExplicitTypeIntention : AbstractKotlinApplicatorBasedIntention<KtDeclaration, KotlinApplicatorInput.Empty>(
-    KtDeclaration::class
-) {
-    override fun getApplicator(): KotlinApplicator<KtDeclaration, KotlinApplicatorInput.Empty> = applicator {
-        familyAndActionName(KotlinBundle.lazyMessage("remove.explicit.type.specification"))
-        isApplicableByPsi { declaration ->
-            when {
-                declaration.typeReference == null || declaration.typeReference?.isAnnotatedDeep() == true -> false
-                declaration is KtParameter -> declaration.isLoopParameter || declaration.isSetterParameter
-                declaration is KtNamedFunction -> true
-                declaration is KtProperty || declaration is KtPropertyAccessor -> declaration.getInitializerOrGetterInitializer() != null
-                else -> false
-            }
-        }
-        applyTo { declaration, _ -> declaration.removeTypeReference() }
+internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<KtDeclaration>(KtDeclaration::class) {
+    override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.specification")
+    override fun getActionName(element: KtDeclaration): String = familyName
+
+    override fun isApplicableByPsi(element: KtDeclaration): Boolean = when {
+        element.typeReference == null || element.typeReference?.isAnnotatedDeep() == true -> false
+        element is KtParameter -> element.isLoopParameter || element.isSetterParameter
+        element is KtNamedFunction -> true
+        element is KtProperty || element is KtPropertyAccessor -> element.getInitializerOrGetterInitializer() != null
+        else -> false
+    }
+
+    context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtDeclaration): Boolean = when {
+        element is KtParameter -> true
+        element is KtNamedFunction && element.hasBlockBody() -> element.getReturnKtType().isUnit
+        element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
+        else -> !explicitTypeMightBeNeededForCorrectTypeInference(element)
+    }
+
+    override fun apply(element: KtDeclaration, project: Project, editor: Editor?) {
+        element.removeTypeReference()
     }
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclaration> =
@@ -54,20 +65,6 @@ class RemoveExplicitTypeIntention : AbstractKotlinApplicatorBasedIntention<KtDec
 
             val typeReferenceRelativeEndOffset = typeReference.endOffset - declaration.startOffset
             listOf(TextRange(0, typeReferenceRelativeEndOffset))
-        }
-
-    override fun getInputProvider(): KotlinApplicatorInputProvider<KtDeclaration, KotlinApplicatorInput.Empty> =
-        inputProvider { declaration ->
-            when {
-                declaration is KtParameter -> KotlinApplicatorInput.Empty
-
-                declaration is KtNamedFunction && declaration.hasBlockBody() ->
-                    if (declaration.getReturnKtType().isUnit) KotlinApplicatorInput.Empty else null
-
-                declaration is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(declaration) -> null
-                explicitTypeMightBeNeededForCorrectTypeInference(declaration) -> null
-                else -> KotlinApplicatorInput.Empty
-            }
         }
 
     private val KtDeclaration.typeReference: KtTypeReference?
