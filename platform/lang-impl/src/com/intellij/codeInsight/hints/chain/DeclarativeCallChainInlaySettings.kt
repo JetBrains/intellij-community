@@ -15,9 +15,14 @@ internal class DeclarativeCallChainInlaySettings : SimplePersistentStateComponen
   }
 
   private val lock = Any()
-  fun setLanguageCallChainLength(language: Language, length: Int) {
+
+  fun setLanguageCallChainLength(language: Language, length: Int, defaultLength: Int) {
     synchronized(lock) {
-      state.languageToLength[language.id] = length
+      if (defaultLength == length) {
+        state.languageToLength.remove(language.id)
+      } else {
+        state.languageToLength[language.id] = length
+      }
     }
   }
 
