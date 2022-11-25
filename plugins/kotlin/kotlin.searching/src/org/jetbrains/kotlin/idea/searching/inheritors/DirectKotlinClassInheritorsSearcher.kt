@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.model.search.Searcher
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -41,35 +42,46 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                 .forEach(::searchForTypeAliasesRecursively)
         }
 
-        searchForTypeAliasesRecursively(baseClassName)
+        runReadAction { searchForTypeAliasesRecursively(baseClassName) }
 
-        analyze(baseClass) {
-            val baseSymbol = baseClass.getSymbol() as? KtClassOrObjectSymbol ?: return null
-            val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
-            return object : AbstractQuery<PsiElement>() {
-                override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                    names.forEach { name ->
-                        ProgressManager.checkCanceled()
-                        KotlinSuperClassIndex
-                            .get(name, project, noLibrarySourceScope)
-                            .asSequence()
-                            .map { ktClassOrObject ->
-                                ProgressManager.checkCanceled()
-                                analyze(ktClassOrObject) {
-                                    val ktSymbol = ktClassOrObject.getSymbol() as? KtClassOrObjectSymbol ?: return@map null
-                                    if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) return@map null
-                                    return@map if (ktSymbol.isSubClassOf(baseSymbol)) ktClassOrObject else null
-                                }
-                            }
-                            .forEach { candidate ->
-                                ProgressManager.checkCanceled()
-                                if (candidate != null && !consumer.process(candidate)) {
-                                    return false
-                                }
-                            }
-                    }
-                    return true
+        val basePointer = runReadAction {
+            analyze(baseClass) {
+                val baseSymbol = baseClass.getSymbol() as? KtClassOrObjectSymbol ?: return@runReadAction null
+                baseSymbol.createPointer()
+            }
+        } ?: return null
+        val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
+        return object : AbstractQuery<PsiElement>() {
+            override fun processResults(consumer: Processor<in PsiElement>): Boolean {
+                names.forEach { name ->
+                    if (!runReadAction {
+                            processBaseName(name, consumer)
+                        }) return false
                 }
+                return true
+            }
+
+            private fun processBaseName(name: String, consumer: Processor<in PsiElement>): Boolean {
+                ProgressManager.checkCanceled()
+                KotlinSuperClassIndex
+                    .get(name, project, noLibrarySourceScope)
+                    .asSequence()
+                    .map { ktClassOrObject ->
+                        ProgressManager.checkCanceled()
+                        analyze(ktClassOrObject) {
+                            val baseSymbol = basePointer.restoreSymbol() ?: return@map null
+                            val ktSymbol = ktClassOrObject.getSymbol() as? KtClassOrObjectSymbol ?: return@map null
+                            if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) return@map null
+                            return@map if (ktSymbol.isSubClassOf(baseSymbol)) ktClassOrObject else null
+                        }
+                    }
+                    .forEach { candidate ->
+                        ProgressManager.checkCanceled()
+                        if (candidate != null && !consumer.process(candidate)) {
+                            return false
+                        }
+                    }
+                return true
             }
         }
     }
