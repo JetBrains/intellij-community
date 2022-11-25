@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
@@ -32,10 +33,12 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class MavenLegacyModuleImporter {
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
@@ -144,6 +147,19 @@ public final class MavenLegacyModuleImporter {
       }
 
       if (suitableImporters.isEmpty()) return null;
+
+      // this is an option to turn off importing some facets for better performance
+      var ignoredImportersString = Registry.stringValue("maven.import.to.workspace.model.ignored.facet.importers");
+      if (!Strings.isNullOrEmpty(ignoredImportersString)) {
+        var ignoredImporters = Arrays
+          .stream(ignoredImportersString.split(","))
+          .map(s -> s.trim().toLowerCase())
+          .collect(Collectors.toSet());
+        suitableImporters = suitableImporters.stream()
+          .filter(importer -> !ignoredImporters.contains(importer.getClass().getSimpleName().toLowerCase()))
+          .toList();
+        if (suitableImporters.isEmpty()) return null;
+      }
 
       return new ExtensionImporter(module, mavenTree, mavenProject, changes, mavenProjectToModuleName, suitableImporters);
     }
