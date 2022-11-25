@@ -350,7 +350,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       WriteAction.runAndWait<Throwable> {
         try {
-          AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+          AssetsProcessor.generateSources(generatorContext, getTemplateProperties())
         }
         catch (e: IOException) {
           logger<StarterModuleBuilder>().error("Unable to create module by template", e)
@@ -388,7 +388,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
     else {
       // test mode, open files immediately, do not import module
-      AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+      AssetsProcessor.generateSources(generatorContext, getTemplateProperties())
       ReformatCodeProcessor(module.project, module, false).run()
       openSampleFiles(module, getFilePathsToOpen())
     }

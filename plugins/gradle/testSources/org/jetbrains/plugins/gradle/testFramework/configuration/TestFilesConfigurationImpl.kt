@@ -35,7 +35,7 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
   override fun areContentsEqual(root: VirtualFile): Boolean {
     for ((path, expectedContent) in files) {
       val file = root.findFile(path) ?: return false
-      val content = file.loadText()
+      val content = file.getTextContent()
       if (expectedContent != content) {
         return false
       }

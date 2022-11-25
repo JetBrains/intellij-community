@@ -87,9 +87,9 @@ fun VirtualFileSystem.deleteFileOrDirectory(path: Path) =
 fun VirtualFileSystem.deleteChildren(path: Path, predicate: (VirtualFile) -> Boolean = { true }) =
   deleteChildren(path.systemIndependentPath, predicate)
 
-fun VirtualFile.loadText(): String = VfsUtil.loadText(this)
+fun VirtualFile.getTextContent(): String = VfsUtil.loadText(this)
 
-fun VirtualFile.saveText(text: String) = VfsUtil.saveText(this, text)
+fun VirtualFile.setTextContent(text: String) = VfsUtil.saveText(this, text)
 
 fun VirtualFileSystem.findFileOrDirectory(path: String): VirtualFile? {
   return refreshAndFindFileByPath(path)

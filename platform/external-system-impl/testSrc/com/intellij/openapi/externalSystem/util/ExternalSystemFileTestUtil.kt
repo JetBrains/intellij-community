@@ -4,9 +4,9 @@ package com.intellij.openapi.externalSystem.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.loadText
+import com.intellij.openapi.vfs.getTextContent
 import com.intellij.openapi.vfs.reloadFromDisk
-import com.intellij.openapi.vfs.saveText
+import com.intellij.openapi.vfs.setTextContent
 import com.intellij.util.ThrowableRunnable
 import com.intellij.testFramework.runInEdtAndGet as runInEdtAndGetImpl
 import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitImpl
@@ -14,12 +14,12 @@ import com.intellij.util.ui.UIUtil
 
 var VirtualFile.text: String
   get() = runReadAction {
-    loadText()
+    getTextContent()
   }
   set(text) {
     runWriteActionAndWait {
       reloadFromDisk()
-      saveText(text)
+      setTextContent(text)
     }
   }
 

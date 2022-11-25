@@ -23,7 +23,7 @@ fun generateWrapper(root: VirtualFile, configuration: WrapperConfiguration) {
     val wrapperProperties = root.createFile(StandardAssetsProvider().gradleWrapperPropertiesLocation)
     wrapperProperties.text = getWrapperPropertiesContent(configuration)
     val assets = StandardAssetsProvider().getGradlewAssets()
-    AssetsProcessor().generateSources(root, assets, emptyMap())
+    AssetsProcessor.generateSources(root, assets, emptyMap())
   }
 }
 
