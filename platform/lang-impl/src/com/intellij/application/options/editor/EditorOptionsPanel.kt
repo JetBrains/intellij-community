@@ -46,7 +46,6 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.PropertyBinding
-import com.intellij.ui.layout.asRange
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls

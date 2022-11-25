@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.UINumericRange
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -94,3 +95,5 @@ fun interface HyperlinkEventAction {
   fun hyperlinkExited(e: HyperlinkEvent) {
   }
 }
+
+fun UINumericRange.asRange(): IntRange = min..max

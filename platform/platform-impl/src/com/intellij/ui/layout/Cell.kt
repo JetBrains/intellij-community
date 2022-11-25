@@ -4,7 +4,6 @@ package com.intellij.ui.layout
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.ide.ui.UINumericRange
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -717,5 +716,3 @@ fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.()
 fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
   return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)
 }
-
-fun UINumericRange.asRange(): IntRange = min..max
