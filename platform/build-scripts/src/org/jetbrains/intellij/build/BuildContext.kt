@@ -101,7 +101,7 @@ interface BuildContext : CompilationContext {
 
 suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend () -> Unit) {
   if (isStepSkipped(stepId)) {
-    spanBuilder.startSpan().addEvent("skip").end()
+    spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
   }
   else {
     spanBuilder.useWithScope2 { step() }

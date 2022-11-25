@@ -25,13 +25,16 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.UUID
+import java.util.*
 import java.util.zip.Deflater
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.hours
 
 internal val BuildContext.publishSitArchive: Boolean
   get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIT_PUBLICATION_STEP)
+
+internal val BuildContext.signMacOsBinaries: Boolean
+  get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
 
 internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
                                      builtinModule: BuiltinModulesFileData?,
@@ -71,7 +74,7 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
                 zipRoot = zipRoot,
                 compress = context.options.compressZipFiles)
 
-  val sign = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
+  val sign = context.signMacOsBinaries
   if (!sign) {
     Span.current().addEvent("build step '${BuildOptions.MAC_SIGN_STEP}' is disabled")
   }
@@ -82,8 +85,8 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
            macHostProperties.userName == null ||
            macHostProperties.password == null ||
            macHostProperties.codesignString == null) {
-    throw IllegalStateException("Build step '${BuildOptions.MAC_SIGN_STEP}' is enabled, but macHostProperties were not provided. " +
-                                "Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
+    error("Build step '${BuildOptions.MAC_SIGN_STEP}' is enabled, but macHostProperties were not provided. " +
+          "Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
   }
   else {
     buildAndSignWithMacBuilderHost(sitFile, macHostProperties, notarize, customizer, context)

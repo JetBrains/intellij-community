@@ -344,6 +344,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
 
   return supervisorScope {
     setLastModifiedTime(context.paths.distAllDir, context)
+    recursivelySignMacBinaries(context.paths.distAllDir, context)
     SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch) ->
       if (!context.shouldBuildDistributionForOS(os, arch)) {
         return@mapNotNull null

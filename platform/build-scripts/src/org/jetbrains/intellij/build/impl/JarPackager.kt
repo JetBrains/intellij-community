@@ -510,7 +510,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
   val packagePrefix = getCommonPath(paths)
-  val libName = sourceFile.fileName.toString().substringBefore('-')
+  val libName = sourceFile.name.substringBefore('-')
   HashMapZipFile.load(sourceFile).use { zipFile ->
     val jnaOutDir = Files.createDirectories(context.paths.tempDir.resolve(libName))
     Files.createDirectories(jnaOutDir)
@@ -577,7 +577,9 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
     val versionOption = mapOf(SignTool.LIB_VERSION_OPTION_NAME to libVersion)
     coroutineScope {
       launch {
-        unsignedFiles.get(OsFamily.MACOS)?.let { context.signFiles(it, MAC_CODE_SIGN_OPTIONS + versionOption) }
+        unsignedFiles.get(OsFamily.MACOS)?.let {
+          signMacBinaries(context, it, additionalOptions = versionOption)
+        }
       }
       launch {
         unsignedFiles.get(OsFamily.WINDOWS)?.let {
