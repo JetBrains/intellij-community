@@ -246,7 +246,7 @@ public class GroovyBlockGenerator {
       ArrayList<Block> blocks = new ArrayList<>();
 
       PsiElement lbrace = closableBlock.getLBrace();
-      if (lbrace != null) {
+      {
         ASTNode node = lbrace.getNode();
         blocks.add(myContext.createBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false)));
       }

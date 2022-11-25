@@ -111,10 +111,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     if (projectBasePath != null && WslPath.isWslUncPath(projectBasePath)) {
       WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(projectBasePath);
       if (wslDistribution != null) {
-        String windowsPath = wslDistribution.getWindowsPath(sourceFilePath);
-        if (windowsPath != null) {
-          sourceFilePath = windowsPath;
-        }
+        sourceFilePath = wslDistribution.getWindowsPath(sourceFilePath);
       }
     }
     return sourceFilePath;
