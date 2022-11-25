@@ -341,7 +341,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     final PsiClass scriptClass = getScriptClass();
     if (scriptClass != null) {
       final PsiElement originalElement = scriptClass.getOriginalElement();
-      if (originalElement != scriptClass && originalElement != null) {
+      if (originalElement != scriptClass) {
         return originalElement.getContainingFile();
       }
     }

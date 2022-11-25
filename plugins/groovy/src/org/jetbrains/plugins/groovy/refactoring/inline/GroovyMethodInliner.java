@@ -159,10 +159,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       GrVariableDeclaration qualifierDeclaration = null;
       GrReferenceExpression innerQualifier = null;
       GrExpression qualifier = null;
-      if (call instanceof GrMethodCallExpression && ((GrMethodCallExpression) call).getInvokedExpression() != null) {
-        GrExpression invoked = ((GrMethodCallExpression) call).getInvokedExpression();
-        if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression) invoked).getQualifierExpression() != null) {
-          qualifier = ((GrReferenceExpression) invoked).getQualifierExpression();
+      if (call instanceof GrMethodCallExpression methodCall) {
+        GrExpression invoked = methodCall.getInvokedExpression();
+        if (invoked instanceof GrReferenceExpression ref && ref.getQualifierExpression() != null) {
+          qualifier = ref.getQualifierExpression();
           if (PsiUtil.isSuperReference(qualifier)) {
             qualifier = null;
           }
@@ -170,9 +170,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
             String qualName = generateQualifierName(call, method, project, qualifier);
             qualifier = (GrExpression)PsiUtil.skipParentheses(qualifier, false);
             qualifierDeclaration = factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, qualifier, null, qualName);
-            innerQualifier = (GrReferenceExpression) factory.createExpressionFromText(qualName);
-          } else {
-            innerQualifier = (GrReferenceExpression) qualifier;
+            innerQualifier = (GrReferenceExpression)factory.createExpressionFromText(qualName);
+          }
+          else {
+            innerQualifier = (GrReferenceExpression)qualifier;
           }
         }
       }

@@ -440,9 +440,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         for (final PsiReference reference : references) {
           ApplicationManager.getApplication().runReadAction(() -> {
             final PsiElement element = reference.getElement();
-            if (element != null) {
-              occurrences.add(element);
-            }
+            occurrences.add(element);
           });
         }
       }

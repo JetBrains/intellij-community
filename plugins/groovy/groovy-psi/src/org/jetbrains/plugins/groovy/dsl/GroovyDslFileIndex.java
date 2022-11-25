@@ -441,7 +441,7 @@ public final class GroovyDslFileIndex {
       for (VFileEvent event : events) {
         if (event instanceof VFileContentChangeEvent && !event.isFromRefresh()) {
           VirtualFile file = event.getFile();
-          if (file == null || !GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
+          if (!GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
             continue;
           }
 

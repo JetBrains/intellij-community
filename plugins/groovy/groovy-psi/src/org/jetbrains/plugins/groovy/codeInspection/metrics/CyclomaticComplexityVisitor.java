@@ -64,7 +64,7 @@ class CyclomaticComplexityVisitor extends GroovyRecursiveElementVisitor {
     final GrCaseSection[] caseClauses = statement.getCaseSections();
     for (GrCaseSection clause : caseClauses) {
       final GrStatement[] statements = clause.getStatements();
-      if (statements != null && statements.length != 0) {
+      if (statements.length != 0) {
         complexity++;
       }
     }
