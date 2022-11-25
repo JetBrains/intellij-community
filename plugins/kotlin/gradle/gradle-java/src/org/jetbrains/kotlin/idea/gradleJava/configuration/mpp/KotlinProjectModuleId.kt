@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceCoordinates
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectCoordinates
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.tooling.core.UnsafeApi
@@ -27,7 +27,7 @@ value class KotlinProjectModuleId @UnsafeApi constructor(private val id: String)
 fun KotlinProjectModuleId(resolverContext: ProjectResolverContext, gradleIdeaModule: GradleIdeaModule) =
     KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(resolverContext, gradleIdeaModule))
 
-fun KotlinProjectModuleId(coordinates: IdeaKotlinSourceCoordinates): KotlinProjectModuleId {
+fun KotlinProjectModuleId(coordinates: IdeaKotlinProjectCoordinates): KotlinProjectModuleId {
     return KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(coordinates.projectPath, coordinates.projectName))
 }
 
