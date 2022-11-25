@@ -3,7 +3,6 @@ package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
@@ -14,8 +13,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListSpeedSearch;
@@ -153,11 +150,6 @@ public final class FileTypeChooser extends DialogWrapper {
    */
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
-    if (project != null && !(file instanceof FakeVirtualFile)) {
-      // autodetect text file if needed
-      FileManager fileManager = PsiManagerEx.getInstanceEx(project).getFileManager();
-      ReadAction.nonBlocking(() -> fileManager.findFile(file)).executeSynchronously();
-    }
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
       type = getKnownFileTypeOrAssociate(file.getName());

@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.ConflictingFileTypeMappingTracker.ResolveConflictResult;
 import com.intellij.openapi.util.*;
@@ -298,6 +299,14 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     PsiFile psiFile = PsiManagerEx.getInstanceEx(getProject()).getFileManager().findFile(vFile); // autodetect text file if needed
     assertNotNull(psiFile);
     assertEquals(PlainTextFileType.INSTANCE, psiFile.getFileType());
+  }
+
+  public void testFileTypeChooser() throws IOException {
+    File dir = createTempDirectory();
+    File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
+    FileUtil.writeToFile(file, "xxx xxx xxx xxx");
+    VirtualFile virtualFile = getVirtualFile(file);
+    assertEquals(PlainTextFileType.INSTANCE, FileTypeChooser.getKnownFileTypeOrAssociate(virtualFile, myProject));
   }
 
   public void testAutoDetectTextFileEvenOutsideTheProject() throws IOException {
