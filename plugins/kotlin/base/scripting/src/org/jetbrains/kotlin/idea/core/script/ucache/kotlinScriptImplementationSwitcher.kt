@@ -23,14 +23,12 @@ val scriptsAsEntities: Boolean
  */
 
 fun getScriptDependenciesClassFilesScope(project: Project, ktFile: KtFile): GlobalSearchScope {
-    require(ktFile.isScript()) { "argument must be a script: ${ktFile.virtualFilePath}" }
-
     val vFile = ktFile.virtualFile ?: ktFile.viewProvider.virtualFile
+    require(ktFile.isScript()) { "argument must be a script: ${ vFile.path }" }
 
     return if (scriptsAsEntities) {
-        val vFilePath = (ktFile.virtualFilePath as String?) ?: vFile.path
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
-        val scriptEntity = entityStorage.resolve(ScriptId(vFilePath))
+        val scriptEntity = entityStorage.resolve(ScriptId(vFile.path))
 
         if (scriptEntity == null) {
             // WorkspaceModel doesn't know about the file yet. But once the latest sync is over it will.
