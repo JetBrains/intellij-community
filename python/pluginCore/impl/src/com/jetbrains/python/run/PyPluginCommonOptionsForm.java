@@ -211,7 +211,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
       sdkList.add(sdk);
       selection = sdk;
     }
-    myModuleComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
+    myInterpreterComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
   }
 
   @Override
