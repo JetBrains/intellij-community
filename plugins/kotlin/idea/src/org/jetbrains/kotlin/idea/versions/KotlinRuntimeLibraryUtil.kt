@@ -84,7 +84,7 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
         "org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout"
     )
 )
-fun bundledRuntimeVersion(): String = KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
+fun bundledRuntimeVersion(): String = KotlinPluginLayout.instance.standaloneCompilerVersion
 
 private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-release".toRegex()
 
@@ -93,7 +93,7 @@ private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-release".toRegex()
  * `kotlinCompilerVersionShort` would return `1.5.0` in such case
  */
 fun kotlinCompilerVersionShort(): String {
-    val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion)
+    val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(KotlinPluginLayout.instance.standaloneCompilerVersion)
     return parts.first()
 }
 

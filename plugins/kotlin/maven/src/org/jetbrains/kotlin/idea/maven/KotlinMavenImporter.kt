@@ -317,7 +317,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             configureJSOutputPaths(mavenProject, modifiableModelsProvider.getModifiableRootModel(module), facetSettings, mavenPlugin)
             deprecatedKotlinJsCompiler(
                 module.project,
-                (IdeKotlinVersion.opt(compilerVersion) ?: KotlinPluginLayout.instance.standaloneCompilerVersion).kotlinVersion
+                (IdeKotlinVersion.opt(compilerVersion)
+                    ?: IdeKotlinVersion.get(KotlinPluginLayout.instance.standaloneCompilerVersion)).kotlinVersion
             )
         }
         MavenProjectImportHandler.getInstances(module.project).forEach { it(kotlinFacet, mavenProject) }

@@ -51,7 +51,7 @@ fun checkExternalKotlinCompilerVersion(project: Project) {
 private fun Project.findExternalCompilerVersion(): KotlinVersion? = runReadAction { findAnyExternalKotlinCompilerVersion() }?.plainVersion
 
 private fun bundledCompilerVersionIfReleased(): KotlinVersion? {
-    val kotlinCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
+    val kotlinCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
     val kotlinVersionVerbose = KotlinVersionVerbose.parse(kotlinCompilerVersion)?.takeIf {
         it.milestone == KotlinVersionVerbose.KotlinVersionMilestone.release
     } ?: return null

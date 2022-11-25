@@ -85,7 +85,7 @@ class ExperimentalFeaturesPanel : JPanel(VerticalLayout(5)) {
 
     companion object {
         fun shouldBeShown(): Boolean {
-            val version = KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
+            val version = KotlinPluginLayout.instance.standaloneCompilerVersion
             return isEap(version) || isDev(version) || isSnapshot(version)
         }
     }
