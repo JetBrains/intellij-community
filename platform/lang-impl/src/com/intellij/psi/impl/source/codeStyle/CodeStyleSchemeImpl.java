@@ -77,15 +77,16 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
 
     synchronized (lock) {
       SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
-      if (dataHolder == null) {
-        return myCodeStyleSettings;
+      Element element= null;
+      if (dataHolder != null) {
+        element = dataHolder.read();
+        // nullize only after element is successfully read, otherwise our state will be undefined - both myDataHolder and myCodeStyleSettings are null
+        myDataHolder = null;
       }
-
-      Element element = dataHolder.read();
-      // nullize only after element is successfully read, otherwise our state will be undefined - both myDataHolder and myCodeStyleSettings are null
-      myDataHolder = null;
       settings = init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), element);
-      dataHolder.updateDigest(this);
+      if (dataHolder != null) {
+        dataHolder.updateDigest(this);
+      }
       myParentSchemeName = null;
     }
     return settings;
