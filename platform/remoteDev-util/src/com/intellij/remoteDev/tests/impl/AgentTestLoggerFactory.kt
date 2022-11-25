@@ -4,6 +4,7 @@ import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.remoteDev.tests.isDistributedTestMode
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -25,6 +26,7 @@ internal class AgentTestLoggerFactory(private val loggerFactory: Logger.Factory)
     return AgentTestLogger(loggerFactory.getLoggerInstance(category), this)
   }
 
+  @InternalIgnoreDependencyViolation
   internal class MyApplicationListener: ApplicationLoadListener {
     override fun beforeApplicationLoaded(application: Application, configPath: Path) {
       if (!application.isDistributedTestMode) {
