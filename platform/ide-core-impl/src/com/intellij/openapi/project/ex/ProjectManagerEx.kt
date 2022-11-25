@@ -53,7 +53,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     }
 
     @Experimental
-    fun isChildProcessPath(path: Path): Boolean = path.fileName.toString().startsWith("perProject_")
+    fun isChildProcessPath(path: Path): Boolean = path.toString().contains(PER_PROJECT_SUFFIX)
   }
 
   @Suppress("UNUSED_PARAMETER")
