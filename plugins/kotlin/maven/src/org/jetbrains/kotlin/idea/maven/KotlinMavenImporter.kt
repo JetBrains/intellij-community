@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.PathUtil
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
@@ -313,7 +315,10 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }
         if (facetSettings.compilerArguments is K2JSCompilerArguments) {
             configureJSOutputPaths(mavenProject, modifiableModelsProvider.getModifiableRootModel(module), facetSettings, mavenPlugin)
-            deprecatedKotlinJsCompiler(module.project, compilerVersion.kotlinVersion)
+            deprecatedKotlinJsCompiler(
+                module.project,
+                (IdeKotlinVersion.opt(compilerVersion) ?: KotlinPluginLayout.instance.standaloneCompilerVersion).kotlinVersion
+            )
         }
         MavenProjectImportHandler.getInstances(module.project).forEach { it(kotlinFacet, mavenProject) }
         setImplementedModuleName(kotlinFacet, mavenProject, module)
