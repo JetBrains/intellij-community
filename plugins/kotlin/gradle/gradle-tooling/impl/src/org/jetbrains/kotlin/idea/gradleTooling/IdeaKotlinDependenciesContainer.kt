@@ -57,6 +57,7 @@ class IdeaKotlinSerializedDependenciesContainer(
             sourceSetName to deserializedDependencies.toSet()
         }.toMap()
 
+        this.serializedDependencies = null
         this.deserializedDependencies = IdeaKotlinDeserializedDependenciesContainer(deserialized)
     }
 

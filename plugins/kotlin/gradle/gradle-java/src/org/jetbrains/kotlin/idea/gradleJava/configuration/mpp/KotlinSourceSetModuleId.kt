@@ -17,7 +17,9 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 internal typealias GradleIdeaModule = IdeaModule
 
 @JvmInline
-value class KotlinSourceSetModuleId @UnsafeApi constructor(private val id: String)
+value class KotlinSourceSetModuleId @UnsafeApi constructor(private val id: String) {
+    override fun toString(): String = id
+}
 
 fun KotlinSourceSetModuleId(
     resolverContext: ProjectResolverContext,
@@ -26,7 +28,7 @@ fun KotlinSourceSetModuleId(
 ) = KotlinProjectModuleId(resolverContext, gradleIdeaModule) + kotlinComponent
 
 fun KotlinSourceSetModuleId(coordinates: IdeaKotlinSourceCoordinates): KotlinSourceSetModuleId {
-    return KotlinProjectModuleId(coordinates) + coordinates.sourceSetName
+    return KotlinProjectModuleId(coordinates.project) + coordinates.sourceSetName
 }
 
 @OptIn(UnsafeApi::class)

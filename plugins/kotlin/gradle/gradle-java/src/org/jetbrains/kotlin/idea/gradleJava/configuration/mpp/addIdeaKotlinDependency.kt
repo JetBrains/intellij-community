@@ -13,6 +13,9 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency
     return when (dependency) {
         is IdeaKotlinBinaryDependency -> addDependency(dependency)
         is IdeaKotlinSourceDependency -> addDependency(dependency)
+        is IdeaKotlinProjectArtifactDependency -> {
+            addDependency(resolve(dependency) ?: return null)
+        }
     }
 }
 

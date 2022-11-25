@@ -46,8 +46,8 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtil
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getGradleModuleQualifiedName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
-import org.jetbrains.kotlin.idea.gradleJava.notification.KOTLIN_JS_COMPILER_SHOULD_BE_NOTIFIED
 import org.jetbrains.kotlin.idea.gradleJava.notification.IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION
+import org.jetbrains.kotlin.idea.gradleJava.notification.KOTLIN_JS_COMPILER_SHOULD_BE_NOTIFIED
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
