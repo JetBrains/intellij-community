@@ -480,22 +480,20 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    return getWindowsPath(wslPath, getMsId(), this::getMntRoot);
+    return getWindowsPath(wslPath, this::getMntRoot);
   }
 
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
-  public static @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath,
-                                                        @NotNull String wslMsId,
-                                                        @NotNull Supplier<String> mntRootSupplier) {
+  public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath, @NotNull Supplier<String> mntRootSupplier) {
     if (containsDriveLetter(wslPath)) {
       String windowsPath = WSLUtil.getWindowsPath(wslPath, mntRootSupplier.get());
       if (windowsPath != null) {
         return windowsPath;
       }
     }
-    return WslConstants.UNC_PREFIX + wslMsId + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
+    return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
   private static boolean containsDriveLetter(@NotNull String linuxPath) {
