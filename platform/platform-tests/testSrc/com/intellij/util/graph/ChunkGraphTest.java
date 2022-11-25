@@ -76,8 +76,8 @@ public class ChunkGraphTest extends GraphTestCase {
     }
   }
 
-  private static void checkVertices(List<Chunk<String>> expected, Iterable<Chunk<String>> nodes) {
-    List<Chunk<String>> realNodes = ContainerUtil.newArrayList(nodes);
+  private static void checkVertices(List<Chunk<String>> expected, Collection<Chunk<String>> nodes) {
+    List<Chunk<String>> realNodes = new ArrayList<>(nodes);
     assertEquals(expected.size(), realNodes.size());
     assertEquals(new HashSet<>(expected), new HashSet<>(realNodes));
   }

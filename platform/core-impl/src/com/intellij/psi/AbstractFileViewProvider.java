@@ -36,7 +36,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
@@ -45,10 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance(AbstractFileViewProvider.class);
@@ -358,14 +354,12 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       int nodeLength = fileElement.getTextLength();
       if (!isDocumentConsistentWithPsi(fileLength, fileElement, nodeLength)) {
         PsiUtilCore.ensureValid(fileElement.getPsi());
-        List<Attachment> attachments = ContainerUtil.newArrayList(new Attachment(myVirtualFile.getName(), myContent.getText().toString()),
-                                                                  new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText()));
-        if (document != null) {
-          attachments.add(new Attachment(myVirtualFile.getNameWithoutExtension() + ".document.txt", document.getText()));
-        }
+        Attachment vfContent = new Attachment(myVirtualFile.getName(), myContent.getText().toString());
+        Attachment astContent = new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText());
+        Attachment[] attachments = document == null ? new Attachment[]{vfContent, astContent} :
+          new Attachment[]{vfContent, astContent, new Attachment(myVirtualFile.getNameWithoutExtension() + ".document.txt", document.getText())};
         // exceptions here should be assigned to peter
-        LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength,
-                  attachments.toArray(Attachment.EMPTY_ARRAY));
+        LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength, attachments);
       }
     }
   }

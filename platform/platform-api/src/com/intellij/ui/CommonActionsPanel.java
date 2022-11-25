@@ -10,7 +10,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -140,16 +139,16 @@ public final class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    ArrayList<AnAction> toolbarActions = ContainerUtil.newArrayList(myActions);
-    for (int i = 0; i < toolbarActions.size(); i++) {
-        if (toolbarActions.get(i) instanceof AnActionButton.CheckedAnActionButton) {
-          toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());
-        }
+    AnAction[] toolbarActions = actions.clone();
+    for (int i = 0; i < toolbarActions.length; i++) {
+      if (toolbarActions[i] instanceof AnActionButton.CheckedAnActionButton) {
+        toolbarActions[i] = ((AnActionButton.CheckedAnActionButton)toolbarActions[i]).getDelegate();
+      }
     }
 
     ActionManager actionManager = ActionManager.getInstance();
     myToolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR,
-                                                  new DefaultActionGroup(toolbarActions.toArray(AnAction.EMPTY_ARRAY)),
+                                                  new DefaultActionGroup(toolbarActions),
                                                   position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP);
     myToolbar.setTargetComponent(contextComponent);
     myToolbar.getComponent().setBorder(null);

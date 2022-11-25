@@ -12,7 +12,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -110,7 +109,7 @@ public final class FormatterTestUtils {
     ACTIONS.put(Action.REFORMAT_WITH_CONTEXT, new TestFormatAction() {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        List<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(startOffset, endOffset));
+        List<TextRange> ranges = List.of(new TextRange(startOffset, endOffset));
         Project project = psiFile.getProject();
         CodeStyleManager.getInstance(project).reformatTextWithContext(psiFile, ranges);
       }
@@ -119,7 +118,7 @@ public final class FormatterTestUtils {
     ACTIONS.put(Action.REFORMAT_WITH_INSERTED_LINE_CONTEXT, new TestFormatAction() {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        List<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(startOffset, endOffset));
+        List<TextRange> ranges = List.of(new TextRange(startOffset, endOffset));
         Project project = psiFile.getProject();
         CodeStyleManager.getInstance(project).reformatTextWithContext(psiFile, new ChangedRangesInfo(ranges, ranges));
       }

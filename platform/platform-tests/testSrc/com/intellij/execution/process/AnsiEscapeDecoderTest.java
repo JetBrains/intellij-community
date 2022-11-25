@@ -106,25 +106,19 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
   }
 
   public void testMalformedSequence5() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("\u001BHello,", ProcessOutputTypes.STDOUT)
-        .addExpected("\u001BHello,", STDOUT_KEY)
-    ));
+    check(false, List.of(new ColoredText("\u001BHello,", ProcessOutputTypes.STDOUT)
+      .addExpected("\u001BHello,", STDOUT_KEY)));
   }
 
   public void testMalformedSequence6() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("\u001B[Hello,", ProcessOutputTypes.STDOUT)
-        .addExpected("ello,", STDOUT_KEY)
-    ));
+    check(false, List.of(new ColoredText("\u001B[Hello,", ProcessOutputTypes.STDOUT)
+      .addExpected("ello,", STDOUT_KEY)));
   }
 
   public void testMalformedSequence7() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT)
-        .addExpected("something[", STDOUT_KEY)
-        .addExpected("\u001B]asdf[", STDOUT_KEY)
-    ));
+    check(false, List.of(new ColoredText("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT)
+      .addExpected("something[", STDOUT_KEY)
+      .addExpected("\u001B]asdf[", STDOUT_KEY)));
   }
 
   public void testIncompleteEscapeSequence1() {
@@ -193,37 +187,27 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
   }
 
   public void testReset() {
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("Hello \u001B[33m Colored \u001B[0m Normal", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello ", STDOUT_KEY)
-        .addExpected(" Colored ", "38;5;3m")
-        .addExpected(" Normal", STDOUT_KEY)
-    ));
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("Hello \u001B[33;41m Colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello ", STDOUT_KEY)
-        .addExpected(" Colored ", "48;5;1;38;5;3m")
-        .addExpected(" Normal", STDOUT_KEY)
-    ));
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("Hello \u001B[33;41;m Not colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello ", STDOUT_KEY)
-        .addExpected(" Not colored ", STDOUT_KEY)
-        .addExpected(" Normal", STDOUT_KEY)
-    ));
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("Hello \u001B[33;41m Colored \u001B[;m Normal", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello ", STDOUT_KEY)
-        .addExpected(" Colored ", "48;5;1;38;5;3m")
-        .addExpected(" Normal", STDOUT_KEY)
-    ));
+    check(true, List.of(new ColoredText("Hello \u001B[33m Colored \u001B[0m Normal", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello ", STDOUT_KEY)
+      .addExpected(" Colored ", "38;5;3m")
+      .addExpected(" Normal", STDOUT_KEY)));
+    check(true, List.of(new ColoredText("Hello \u001B[33;41m Colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello ", STDOUT_KEY)
+      .addExpected(" Colored ", "48;5;1;38;5;3m")
+      .addExpected(" Normal", STDOUT_KEY)));
+    check(true, List.of(new ColoredText("Hello \u001B[33;41;m Not colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello ", STDOUT_KEY)
+      .addExpected(" Not colored ", STDOUT_KEY)
+      .addExpected(" Normal", STDOUT_KEY)));
+    check(true, List.of(new ColoredText("Hello \u001B[33;41m Colored \u001B[;m Normal", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello ", STDOUT_KEY)
+      .addExpected(" Colored ", "48;5;1;38;5;3m")
+      .addExpected(" Normal", STDOUT_KEY)));
   }
 
   public void testDECKPAM() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("\u001B=Hello", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello", STDOUT_KEY)
-    ));
+    check(false, List.of(new ColoredText("\u001B=Hello", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello", STDOUT_KEY)));
   }
 
   private static void check(@NotNull ColoredText text) {

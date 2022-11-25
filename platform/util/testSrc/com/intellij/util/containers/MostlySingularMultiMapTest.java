@@ -19,6 +19,7 @@ import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 /**
@@ -141,7 +142,7 @@ public class MostlySingularMultiMapTest extends TestCase {
                  map1.get("k0a"));
     assertEquals(ContainerUtil.newArrayList("x", "y"),
                  map1.get("k0b"));
-    assertEquals(ContainerUtil.newArrayList("x"),
+    assertEquals(List.of("x"),
                  map1.get("k0c"));
 
     assertEquals(ContainerUtil.newArrayList("x", "y", "z", "w"),
@@ -150,7 +151,7 @@ public class MostlySingularMultiMapTest extends TestCase {
                  map1.get("k1b"));
     assertEquals(ContainerUtil.newArrayList("x", "y"),
                  map1.get("k1c"));
-    assertEquals(ContainerUtil.newArrayList("x"),
+    assertEquals(List.of("x"),
                  map1.get("k1d"));
 
     assertEquals(ContainerUtil.newArrayList("x", "y", "a", "b", "c"),

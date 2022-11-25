@@ -8,6 +8,7 @@ import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskListener;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.lang.annotations.Language;
@@ -201,9 +202,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = ContainerUtil.newArrayList(mainRoot);
+    List<String> expected;
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileJava/previous-compilation-data.bin");
+      expected = List.of(mainRoot, "build/tmp/compileJava/previous-compilation-data.bin");
+    }
+    else {
+      expected = List.of(mainRoot);
     }
 
     assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
@@ -259,7 +263,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = ContainerUtil.newArrayList(implMainRoot);
+    List<String> expected = new SmartList<>(implMainRoot);
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
@@ -284,9 +288,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.test");
 
-    List<String> expected = ContainerUtil.newArrayList(testRoot);
+    List<String> expected;
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileTestJava/previous-compilation-data.bin");
+      expected = List.of(testRoot, "build/tmp/compileTestJava/previous-compilation-data.bin");
+    }
+    else {
+      expected = List.of(testRoot);
     }
     assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles).as("Generated files").containsOnly(
@@ -318,9 +325,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = ContainerUtil.newArrayList(mainRoot);
+    List<String> expected;
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileJava/previous-compilation-data.bin");
+      expected = List.of(mainRoot, "build/tmp/compileJava/previous-compilation-data.bin");
+    }
+    else {
+      expected = List.of(mainRoot);
     }
 
     assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);

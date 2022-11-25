@@ -23,7 +23,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -366,7 +366,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   public void fillCorrectedActionGroups(@NotNull DefaultMutableTreeNode root) {
     ActionManager actionManager = ActionManager.getInstance();
-    List<String> path = ContainerUtil.newArrayList("root");
+    List<String> path = new SmartList<>("root");
 
     synchronized (lock) {
       for (Map.Entry<String, @Nls String> entry : idToName.entrySet()) {

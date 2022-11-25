@@ -227,7 +227,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
   public void testStderrNotBufferingServiceMessage() {
     mySplitter = createEventSplitter(false, false);
     mySplitter.process("Some stderr", ProcessOutputTypes.STDERR);
-    Assert.assertEquals(ContainerUtil.newArrayList("Some stderr"),
+    Assert.assertEquals(List.of("Some stderr"),
                         myOutput.get(ProcessOutputTypes.STDERR).toList());
     mySplitter.process("output\nFoo ##team", ProcessOutputTypes.STDERR);
     Assert.assertEquals(ContainerUtil.newArrayList("Some stderr", "output\n", "Foo ##team"),

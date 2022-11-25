@@ -658,10 +658,10 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     MockTestLocator locator = new MockTestLocator(testFileLocation);
     mySimpleTest.setLocator(locator);
     assertEquals(testFileLocation, mySimpleTest.getLocation(project, allScope));
-    assertEquals(ContainerUtil.newArrayList(allScope), locator.myCalledSearchScopes);
+    assertEquals(List.of(allScope), locator.myCalledSearchScopes);
 
     assertEquals(testFileLocation, mySimpleTest.getLocation(project, allScope));
-    assertEquals(ContainerUtil.newArrayList(allScope), locator.myCalledSearchScopes);
+    assertEquals(List.of(allScope), locator.myCalledSearchScopes);
 
     GlobalSearchScope notAllScope = GlobalSearchScope.notScope(allScope);
     assertEquals(testFileLocation, mySimpleTest.getLocation(project, notAllScope));

@@ -89,7 +89,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     List<PsiFile> files = createTestFiles(srcDir, classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
-    performReformatActionOnModule(module, ContainerUtil.newArrayList(srcDir));
+    performReformatActionOnModule(module, List.of(srcDir));
 
     checkFormationAndImportsOptimizationFor(files);
   }

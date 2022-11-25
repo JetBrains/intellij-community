@@ -6,10 +6,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Functions;
-import com.intellij.util.PairFunction;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
@@ -85,9 +82,9 @@ public class TreeTraverserTest extends TestCase {
     return integer -> s <= integer && integer <= e;
   }
 
-  public static final Function<Integer, List<Integer>> WRAP_TO_LIST = integer -> ContainerUtil.newArrayList(integer);
+  private static final Function<Integer, List<Integer>> WRAP_TO_LIST = integer -> new SmartList<>(integer);
 
-  public static final Function<Integer, Integer> DIV_2 = k -> k / 2;
+  private static final Function<Integer, Integer> DIV_2 = k -> k / 2;
 
   private static final Function<Integer, Integer> INCREMENT = k -> k + 1;
 
@@ -755,8 +752,8 @@ public class TreeTraverserTest extends TestCase {
   @NotNull
   public List<Integer> simpleTraverseExpand(TreeTraversal traversal) {
     List<Integer> result = new ArrayList<>();
-    JBIterable<List<Integer>> iter = traversal.traversal((Function<List<Integer>, Iterable<List<Integer>>>)integers ->
-      JBIterable.from(integers).skip(1).transform(WRAP_TO_LIST)).fun(ContainerUtil.newArrayList(1));
+    Function<List<Integer>, Iterable<List<Integer>>> function = integers -> JBIterable.from(integers).skip(1).transform(WRAP_TO_LIST);
+    JBIterable<List<Integer>> iter = traversal.traversal(function).fun(new SmartList<>(1));
     for (List<Integer> integers : iter) {
       Integer cur = integers.get(0);
       result.add(cur);
@@ -770,7 +767,7 @@ public class TreeTraverserTest extends TestCase {
   public void testTracingBfsLaziness() {
     List<Integer> result = new ArrayList<>();
     TreeTraversal.TracingIt<List<Integer>> it = TreeTraversal.TRACING_BFS.traversal((Function<List<Integer>, Iterable<List<Integer>>>)integers ->
-        JBIterable.from(integers).skip(1).transform(WRAP_TO_LIST)).fun(ContainerUtil.newArrayList(1)).typedIterator();
+        JBIterable.from(integers).skip(1).transform(WRAP_TO_LIST)).fun(new SmartList<>(1)).typedIterator();
     while (it.advance()) {
       Integer cur = it.current().get(0);
       result.add(cur);

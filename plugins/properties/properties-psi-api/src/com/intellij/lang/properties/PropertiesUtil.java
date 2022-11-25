@@ -33,15 +33,13 @@ public class PropertiesUtil {
     final HashSet<String> locales =
       new HashSet<>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
                                                             locale -> {
-                                                              final ArrayList<String> languages =
-                                                                ContainerUtil.newArrayList(locale.getLanguage());
                                                               try {
-                                                                languages.add(locale.getISO3Language());
+                                                                return List.of(locale.getLanguage(), locale.getISO3Language());
                                                               }
                                                               catch (MissingResourceException ignored) {
                                                                 // if ISO3 language is not found for existed locale then exception is thrown anyway
+                                                                return List.of(locale.getLanguage());
                                                               }
-                                                              return languages;
                                                             })));
     locales.addAll(ContainerUtil.newArrayList(Locale.getISOLanguages()));
     return locales;

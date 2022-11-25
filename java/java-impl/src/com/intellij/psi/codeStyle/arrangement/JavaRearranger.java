@@ -106,7 +106,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static final StdArrangementExtendableSettings DEFAULT_SETTINGS;
 
   static {
-    List<ArrangementGroupingRule> groupingRules = ContainerUtil.newArrayList(new ArrangementGroupingRule(GETTERS_AND_SETTERS));
+    List<ArrangementGroupingRule> groupingRules = List.of(new ArrangementGroupingRule(GETTERS_AND_SETTERS));
     List<StdArrangementMatchRule> matchRules = new ArrayList<>();
     ArrangementSettingsToken[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
     for (ArrangementSettingsToken modifier : visibility) {

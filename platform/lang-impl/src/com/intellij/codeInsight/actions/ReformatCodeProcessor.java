@@ -29,7 +29,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -276,8 +275,8 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }
-    
-    return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
+
+    return !myRanges.isEmpty() ? myRanges : List.of(file.getTextRange());
   }
 
   private static @NlsContexts.ProgressText String getProgressText() {

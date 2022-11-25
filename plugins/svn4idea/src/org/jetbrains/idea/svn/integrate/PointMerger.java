@@ -26,13 +26,13 @@ public class PointMerger extends Merger {
   @NotNull private final List<Change> mySelectedChanges;
 
   public PointMerger(final SvnVcs vcs,
-                     CommittedChangeList selectedChangeList,
+                     @NotNull CommittedChangeList selectedChangeList,
                      final File target,
                      final UpdateEventHandler handler,
                      final Url currentBranchUrl,
                      @NotNull List<Change> selectedChanges,
                      String branchName) {
-    super(vcs, ContainerUtil.newArrayList(selectedChangeList), target, handler, currentBranchUrl, branchName);
+    super(vcs, List.of(selectedChangeList), target, handler, currentBranchUrl, branchName);
 
     mySelectedChanges = ContainerUtil.sorted(selectedChanges, ChangesComparator.getInstance());
   }
