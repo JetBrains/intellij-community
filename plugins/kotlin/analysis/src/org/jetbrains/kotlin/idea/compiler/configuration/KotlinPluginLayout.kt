@@ -37,8 +37,7 @@ sealed interface KotlinPluginLayout {
      * Version of the stand-alone compiler (artifacts in the 'kotlinc/' directory of the Kotlin plugin).
      * Stand-alone compiler is always stable in 'master' and release branches. It is used for compilation with JPS.
      */
-    val standaloneCompilerVersion: String
-        @NlsSafe get() = kotlinc.resolve("build.txt").readText().trim()
+    val standaloneCompilerVersion: IdeKotlinVersion
 
     val lastStableKnownCompilerVersion: String
         @NlsSafe get() = "1.6.10-release-952"
@@ -81,6 +80,11 @@ private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot
         check(kotlinPluginRoot.exists()) { "$kotlinPluginRoot doesn't exist" }
     }
 
+    override val standaloneCompilerVersion: IdeKotlinVersion by lazy {
+        val rawVersion = kotlinc.resolve("build.txt").readText().trim()
+        IdeKotlinVersion.get(rawVersion)
+    }
+
     override val kotlinc: File by lazy { resolve("kotlinc") }
     override val jpsPluginJar: File by lazy { resolve("lib/jps/kotlin-jps-plugin.jar") }
 
@@ -88,6 +92,11 @@ private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot
 }
 
 private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Path) : KotlinPluginLayout {
+    override val standaloneCompilerVersion: IdeKotlinVersion by lazy {
+        val rawVersion = kotlinc.resolve("build.txt").readText().trim()
+        IdeKotlinVersion.get(rawVersion)
+    }
+
     private val bundledJpsVersion by lazy {
         val distLibraryFile = ideaDirectory.resolve("libraries/kotlinc_kotlin_dist.xml")
         require(distLibraryFile.isFile()) { "${distLibraryFile.nameWithoutExtension} library is not found in $ideaDirectory" }

@@ -48,7 +48,7 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
         private const val KOTLIN_COMPILER_VERSION_TAG = "kotlin.compiler.version"
 
         private fun getKotlinVersionFromCompiler() =
-            KotlinPluginLayout.instance.standaloneCompilerVersion
+            KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
                 .takeUnless { it.contains(SNAPSHOT_TAG, ignoreCase = true) }
                 ?.let { Version.fromString(it.substringBefore("-release")) }
     }

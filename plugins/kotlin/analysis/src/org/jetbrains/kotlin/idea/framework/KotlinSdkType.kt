@@ -56,7 +56,7 @@ class KotlinSdkType : SdkType("KotlinSDK") {
 
     override fun sdkHasValidPath(sdk: Sdk) = true
 
-    override fun getVersionString(sdk: Sdk): String = KotlinPluginLayout.instance.standaloneCompilerVersion
+    override fun getVersionString(sdk: Sdk): String = KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
 
     override fun supportsCustomCreateUI() = true
 
