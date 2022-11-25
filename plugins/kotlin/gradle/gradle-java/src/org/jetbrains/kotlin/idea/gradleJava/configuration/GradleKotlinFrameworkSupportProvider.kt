@@ -176,7 +176,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
     override fun getPluginId() = KotlinGradleModuleConfigurator.KOTLIN
     override fun getPluginExpression() = "id 'org.jetbrains.kotlin.jvm'"
 
-    override fun getDependencies(sdk: Sdk?) = listOf(getStdlibArtifactId(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion))
+    override fun getDependencies(sdk: Sdk?) = listOf(getStdlibArtifactId(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion))
 
     override fun addSupport(
         buildScriptData: BuildScriptDataBuilder,
@@ -186,7 +186,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
         explicitPluginVersion: String?
     ) {
         super.addSupport(buildScriptData, module, sdk, specifyPluginVersionIfNeeded, explicitPluginVersion)
-        val jvmTarget = getDefaultJvmTarget(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion)
+        val jvmTarget = getDefaultJvmTarget(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion)
         if (jvmTarget != null) {
             val description = jvmTarget.description
             buildScriptData.addOther("compileKotlin {\n    kotlinOptions.jvmTarget = \"$description\"\n}\n\n")
