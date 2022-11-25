@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.util.merge
 import java.util.*
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 
 private typealias LanguageFeatureMap = Map<LanguageFeature, LanguageFeature.State>
 private typealias AnalysisFlagMap = Map<AnalysisFlag<*>, Any>
@@ -107,6 +108,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
                 computeModuleLanguageVersionSettings(module),
                 KotlinCompilerSettingsTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project),
+                KotlinFacetModificationTracker.getInstance(project),
             )
         }
     }
