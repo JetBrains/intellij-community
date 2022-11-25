@@ -14,6 +14,9 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
     return Collector(file)
   }
 
+  protected data class ExpressionWithType<ExpressionType>(val expression: PsiElement, val type: ExpressionType)
+
+
   inner class Collector(private val file: PsiFile) : SharedBypassCollector {
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
       val topmostDotQualifiedExpression = element.safeCastUsing(dotQualifiedClass)
@@ -22,7 +25,6 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
                                             ?.takeIf { it.getParentDotQualifiedExpression() == null }
                                           ?: return
 
-      data class ExpressionWithType(val expression: PsiElement, val type: ExpressionType)
 
       val context = getTypeComputationContext(topmostDotQualifiedExpression)
 
@@ -50,6 +52,7 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
           .map { it.first }
           .toList()
       if (someTypeIsUnknown) return
+      if (isChainUnacceptable(reversedChain)) return
 
       if (reversedChain.asSequence().distinctBy { it.type }.count() < uniqueTypeCount) return
 
@@ -76,6 +79,10 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
   protected abstract fun PsiElement.getType(context: TypeComputationContext): ExpressionType?
 
   protected abstract val dotQualifiedClass: Class<DotQualifiedExpression>
+
+  protected open fun isChainUnacceptable(chain: List<ExpressionWithType<ExpressionType & Any>>) : Boolean {
+    return false
+  }
 
   /**
    * Implementation must NOT skip parentheses and postfix operators
