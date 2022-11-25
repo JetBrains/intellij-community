@@ -122,39 +122,37 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       for (Tools inspection : inspections) {
         states.add(inspection.getTools());
       }
-      ReadAction.run(() -> {
-        getRefManager().iterate(new RefVisitor() {
-          @Override
-          public void visitElement(@NotNull RefEntity refEntity) {
-            for (int i = 0; i < states.size(); i++) {
-              for (ScopeToolState state : states.get(i)) {
-                try {
-                  InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
-                  BufferedWriter writer = writers[i];
-                  if (writer != null &&
-                      (myGlobalReportedProblemFilter == null ||
-                       myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
-                    getPresentation(toolWrapper).exportResults(e -> {
-                      try {
-                        JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
-                        writer.flush();
-                      }
-                      catch (IOException e1) {
-                        throw new RuntimeException(e1);
-                      }
-                    }, refEntity, d -> false);
-                  }
-                  else {
-                    return;
-                  }
+      getRefManager().iterate(new RefVisitor() {
+        @Override
+        public void visitElement(@NotNull RefEntity refEntity) {
+          for (int i = 0; i < states.size(); i++) {
+            for (ScopeToolState state : states.get(i)) {
+              try {
+                InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
+                BufferedWriter writer = writers[i];
+                if (writer != null &&
+                    (myGlobalReportedProblemFilter == null ||
+                     myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
+                  getPresentation(toolWrapper).exportResults(e -> {
+                    try {
+                      JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
+                      writer.flush();
+                    }
+                    catch (IOException e1) {
+                      throw new RuntimeException(e1);
+                    }
+                  }, refEntity, d -> false);
                 }
-                catch (Throwable e) {
-                  LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
+                else {
+                  return;
                 }
+              }
+              catch (Throwable e) {
+                LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
               }
             }
           }
-        });
+        }
       });
 
       for (XMLStreamWriter xmlWriter : xmlWriters) {
