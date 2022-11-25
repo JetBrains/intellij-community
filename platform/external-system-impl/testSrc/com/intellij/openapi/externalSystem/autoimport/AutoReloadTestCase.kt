@@ -24,8 +24,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.use
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager

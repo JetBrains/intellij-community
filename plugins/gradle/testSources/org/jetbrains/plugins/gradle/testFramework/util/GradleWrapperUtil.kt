@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.generator.AssetsProcessor
-import com.intellij.openapi.externalSystem.util.createFile
+import com.intellij.openapi.vfs.createFile
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.util.text
 import com.intellij.openapi.vfs.VirtualFile

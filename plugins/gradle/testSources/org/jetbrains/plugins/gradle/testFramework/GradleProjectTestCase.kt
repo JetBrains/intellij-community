@@ -5,6 +5,8 @@ import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.getFile
 import com.intellij.psi.PsiDocumentManager
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast

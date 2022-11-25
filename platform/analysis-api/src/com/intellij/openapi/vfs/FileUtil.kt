@@ -2,14 +2,10 @@
 @file:Suppress("unused")
 @file:ApiStatus.Experimental
 
-package com.intellij.openapi.externalSystem.util
+package com.intellij.openapi.vfs
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.util.PathUtil
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.nullize

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.openapi.externalSystem.util.findOrCreateFile
+import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.findReferenceByText
