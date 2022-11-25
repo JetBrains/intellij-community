@@ -168,6 +168,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/emptyRange/inspectionData/inspections.test");
         }
 
+        @TestMetadata("enumValuesSoftDeprecateInJava/inspectionData/inspections.test")
+        public void testEnumValuesSoftDeprecateInJava_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/enumValuesSoftDeprecateInJava/inspectionData/inspections.test");
+        }
+
         @TestMetadata("enumValuesSoftDeprecateMigration/inspectionData/inspections.test")
         public void testEnumValuesSoftDeprecateMigration_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/enumValuesSoftDeprecateMigration/inspectionData/inspections.test");

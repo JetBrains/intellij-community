@@ -175,5 +175,15 @@
             language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
             key="redundant.constructor.keyword" bundle="messages.KotlinBundle"/>
 
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.inspections.EnumValuesSoftDeprecateInJavaInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+            enabledByDefault="false"
+            cleanupTool="false"
+            level="WARNING"
+            language="JAVA"
+            key="inspection.enum.values.method.soft.deprecate.in.java.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
