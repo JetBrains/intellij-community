@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
@@ -123,7 +124,7 @@ internal class FileTestFixtureImpl(
 
   private fun dumpFixtureState() {
     val errors = errors.map { it.message ?: it.toString() }
-    val snapshots = snapshots.entries.associate { (k, v) -> root.getRelativePath(k) to v.orElse(null) }
+    val snapshots = snapshots.entries.associate { (k, v) -> getRelativePath(k) to v.orElse(null) }
     writeFixtureState(State(isInitialized, isSuppressedErrors, errors, snapshots))
   }
 
@@ -216,8 +217,9 @@ internal class FileTestFixtureImpl(
     }
   }
 
-  private fun loadText(relativePath: String): String? {
-    return loadText(root.getAbsoluteNioPath(relativePath))
+  private fun getRelativePath(path: Path): String {
+    return root.path.getRelativePath(path.systemIndependentPath)
+           ?: path.systemIndependentPath
   }
 
   private fun loadText(path: Path): String? {
