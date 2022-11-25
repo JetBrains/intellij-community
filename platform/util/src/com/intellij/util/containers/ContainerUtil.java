@@ -131,11 +131,10 @@ public final class ContainerUtil {
    * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead
    *
    * DO NOT REMOVE this method until {@link ContainerUtil#newArrayList(Iterable)} is removed.
-   * The former is here to highlight incorrect usages of the latter.
+   * The former method is here to highlight incorrect usages of the latter.
    */
   @Deprecated
   @Contract(pure = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Collection<? extends E> iterable) {
     Logger.getInstance(ContainerUtil.class).error("Use `new ArrayList(Collection)` instead. "+iterable.getClass());
     return new ArrayList<>(iterable);
@@ -246,10 +245,24 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> iterable) {
-    Iterator<? extends T> iterator = iterable.iterator();
     HashSet<T> set = new HashSet<>();
-    while (iterator.hasNext()) set.add(iterator.next());
+    for (T t : iterable) {
+      set.add(t);
+    }
     return set;
+  }
+
+  /**
+   * @deprecated use {@link HashSet#HashSet(Collection)}
+   *
+   * DO NOT remove this method until {@link #newHashSet(Iterable)} is removed
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static @NotNull <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("use HashSet#HashSet(Collection) instead");
+    return new HashSet<>(iterable);
   }
 
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
@@ -284,6 +297,19 @@ public final class ContainerUtil {
       collection.add(element);
     }
     return collection;
+  }
+
+  /**
+   * @deprecated use {@link LinkedHashSet#LinkedHashSet(Collection)}
+   *
+   * DO NOT remove this method until {@link #newLinkedHashSet(Iterable)} is removed
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Collection<? extends T> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("use LinkedHashSet#LinkedHashSet(Collection) instead");
+    return new LinkedHashSet<>(iterable);
   }
 
   @SafeVarargs
@@ -1489,6 +1515,18 @@ public final class ContainerUtil {
 
     return res;
   }
+  /**
+   * @deprecated use {@link #getLastItem(List)}
+   *
+   * DO NOT remove this method until {@link #iterateAndGetLastItem(Iterable)} is removed
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static <T> T iterateAndGetLastItem(@NotNull List<? extends T> items) {
+    Logger.getInstance(ContainerUtil.class).error("use getLastItem(List) instead");
+    return getLastItem(items);
+  }
 
   @Contract(pure = true)
   public static @NotNull <T, U> Iterator<U> mapIterator(@NotNull Iterator<? extends T> iterator, @NotNull Function<? super T, ? extends U> mapper) {
@@ -2554,6 +2592,20 @@ public final class ContainerUtil {
   public static @NotNull <T> Collection<T> toCollection(@NotNull Iterable<? extends T> iterable) {
     //noinspection unchecked
     return iterable instanceof Collection ? (Collection<T>)iterable : newArrayList(iterable);
+  }
+
+  /**
+   * @deprecated use the argument instead
+   *
+   * DO NOT remove this method until {@link #toCollection(Iterable)} is removed
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static @NotNull <T> Collection<T> toCollection(@NotNull Collection<? extends T> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("use the argument, Luke");
+    //noinspection unchecked
+    return (Collection<T>)iterable;
   }
 
   public static @NotNull <T> List<T> toList(@NotNull Enumeration<? extends T> enumeration) {
