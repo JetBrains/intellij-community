@@ -412,10 +412,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
   }
 
-  fun isLastOpened(path: String): Boolean {
-    return lastOpenedProjects.any { e -> e.key == path }
-  }
-
   override fun willReopenProjectOnStart(): Boolean {
     if (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects()) {
       return false
@@ -427,6 +423,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   }
 
   override suspend fun reopenLastProjectsOnStart(): Boolean {
+    // Do not reopen, because previously opened projects will open in new instances
+    // TODO alternative behaviour?
+    if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
+      return false
+    }
+
     val openPaths = lastOpenedProjects
     if (openPaths.isEmpty()) {
       return false

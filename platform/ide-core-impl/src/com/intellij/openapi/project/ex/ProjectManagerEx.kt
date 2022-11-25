@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -26,7 +25,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     @JvmField
     @Experimental
     val IS_PER_PROJECT_INSTANCE_READY: Boolean = System.getProperty(perProjectOptionName)?.let {
-      SystemInfoRt.isMac && PerProjectState.valueOf(it) != PerProjectState.DISABLED
+      (SystemInfoRt.isMac || SystemInfoRt.isLinux) && PerProjectState.valueOf(it) != PerProjectState.DISABLED
     } ?: false
 
     @JvmField

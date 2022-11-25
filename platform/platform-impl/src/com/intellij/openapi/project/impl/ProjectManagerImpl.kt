@@ -550,9 +550,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
-    val shouldOpenInChildProcess = IS_PER_PROJECT_INSTANCE_ENABLED && openProjects.isNotEmpty() &&
-                                   // Do not reopen previously opened projects in new instances
-                                   !RecentProjectsManagerBase.getInstanceEx().isLastOpened(projectStoreBaseDir.toString())
+    val shouldOpenInChildProcess = IS_PER_PROJECT_INSTANCE_ENABLED && openProjects.isNotEmpty()
+
     if (shouldOpenInChildProcess) {
       openInChildProcess(projectStoreBaseDir)
       return null
@@ -1422,27 +1421,20 @@ private fun removePerProjectSuffix(path: Path, currentProjectBaseDir: Path): Pat
   return canonicalPath(path.toString().removeSuffix(suffix))
 }
 
-private fun openProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
-  return listOf(
-  "open",
-  "-n",
-  Restarter.getIdeStarter().toString(),
-  "--args",
+private fun openProjectInstanceArgs(projectStoreBaseDir: Path): Array<String> {
+  return mapOf(
+    PathManager.PROPERTY_SYSTEM_PATH to PathManager.getSystemDir(),
+    PathManager.PROPERTY_CONFIG_PATH to PathManager.getConfigDir(),
+    PathManager.PROPERTY_LOG_PATH to PathManager.getLogDir(),
+    PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
+  ).mapValuesTo(mutableMapOf()) { (key, value) ->
+    val currentProjectBaseDir = Paths.get(ProjectManagerEx.getOpenProjects().first().basePath ?: "")
+    val baseDir = if (IS_CHILD_PROCESS) removePerProjectSuffix(value, currentProjectBaseDir) else value
 
-  *(mapOf(
-      PathManager.PROPERTY_SYSTEM_PATH to PathManager.getSystemDir(),
-      PathManager.PROPERTY_CONFIG_PATH to PathManager.getConfigDir(),
-      PathManager.PROPERTY_LOG_PATH to PathManager.getLogDir(),
-      PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
-    ).mapValuesTo(mutableMapOf()) { (key, value) ->
-      val currentProjectBaseDir = Paths.get(ProjectManagerEx.getOpenProjects().first().basePath ?: "")
-      val baseDir = if (IS_CHILD_PROCESS) removePerProjectSuffix(value, currentProjectBaseDir) else value
-
-      "-D$key=${toPerProjectDir(baseDir, projectStoreBaseDir)}"
-    }.values.toTypedArray()
-   ),
-
-  //for (vmOption in VMOptions.readOptions("", true)) {
+    "-D$key=${toPerProjectDir(baseDir, projectStoreBaseDir)}"
+  }.values.toTypedArray()
+  // TODO add vm options
+  // for (vmOption in VMOptions.readOptions("", true)) {
   //  command += vmOption.asPatchedAgentLibOption()
   //             ?: vmOption.asPatchedVMOption("splash", "false")
   //             ?: vmOption.asPatchedVMOption("nosplash", "true")
@@ -1450,7 +1442,34 @@ private fun openProjectInstanceCommand(projectStoreBaseDir: Path): List<String> 
   //             ?: customProperties.keys.firstOrNull { vmOption.isVMOption(it) }?.let { customProperties.remove(it) }
   //             ?: vmOption
   //}
+}
 
-  projectStoreBaseDir.toString(),
+private fun macOpenProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
+  return listOf(
+    "open",
+    "-n",
+    Restarter.getIdeStarter().toString(),
+    "--args",
+    *openProjectInstanceArgs(projectStoreBaseDir),
+    projectStoreBaseDir.toString(),
   )
+}
+
+private fun linuxOpenProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
+  return listOf(
+    Restarter.getIdeStarter().toString(),
+    *openProjectInstanceArgs(projectStoreBaseDir),
+    projectStoreBaseDir.toString(),
+  )
+}
+
+private fun openProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
+  if (SystemInfo.isMac) {
+    return macOpenProjectInstanceCommand(projectStoreBaseDir)
+  }
+  if (SystemInfo.isLinux) {
+    return linuxOpenProjectInstanceCommand(projectStoreBaseDir)
+  }
+
+  return emptyList()
 }
