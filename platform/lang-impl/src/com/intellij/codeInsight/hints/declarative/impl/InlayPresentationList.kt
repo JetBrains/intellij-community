@@ -57,9 +57,9 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     return computed
   }
 
-  fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage) {
+  fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage, controlDown: Boolean) {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return
-    entry.handleClick(e.editor, this)
+    entry.handleClick(e.editor, this, controlDown)
   }
 
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {

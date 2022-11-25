@@ -29,7 +29,7 @@ sealed class InlayPresentationEntry(
 
   abstract fun computeHeight(fontMetricsStorage: InlayTextMetricsStorage): Int
 
-  abstract fun handleClick(editor: Editor, list: InlayPresentationList)
+  abstract fun handleClick(editor: Editor, list: InlayPresentationList, controlDown: Boolean)
 
   var isHovered: Boolean = false
 }
@@ -41,12 +41,14 @@ class TextInlayPresentationEntry(
   clickArea: InlayMouseArea?
 ) : InlayPresentationEntry(clickArea) {
 
-  override fun handleClick(editor: Editor, list: InlayPresentationList) {
+  override fun handleClick(editor: Editor, list: InlayPresentationList, controlDown: Boolean) {
     val project = editor.project
     if (clickArea != null && project != null) {
       val actionData = clickArea.actionData
-      InlayActionHandler.getActionHandler(actionData.handlerId)
-        ?.handleClick(editor, actionData.payload)
+      if (controlDown) {
+        InlayActionHandler.getActionHandler(actionData.handlerId)
+          ?.handleClick(editor, actionData.payload)
+      }
     }
     if (parentIndexToSwitch != (-1).toByte()) {
       list.toggleTreeState(parentIndexToSwitch)

@@ -44,8 +44,8 @@ class DeclarativeInlayRenderer(
     presentationList.paint(inlay, g, targetRegion, textAttributes)
   }
 
-  fun handleLeftClick(e: EditorMouseEvent, pointInsideInlay: Point) {
-    presentationList.handleClick(e, pointInsideInlay, fontMetricsStorage)
+  fun handleLeftClick(e: EditorMouseEvent, pointInsideInlay: Point, controlDown: Boolean) {
+    presentationList.handleClick(e, pointInsideInlay, fontMetricsStorage, controlDown)
   }
 
   fun handleRightClick(e: EditorMouseEvent) {
