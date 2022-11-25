@@ -661,7 +661,7 @@ internal object BranchesDashboardActions {
       val project = e.project
       val visible = project != null && uiController != null
       if (!visible) {
-        e.presentation.isEnabledAndVisible = visible
+        e.presentation.isEnabledAndVisible = false
         return
       }
       val enabled = branchFilters != null && branchFilters.size == 1

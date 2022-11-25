@@ -56,13 +56,7 @@ data class BPERule(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
-
     other as BPERule
-
-    if (x != other.x) return false
-    if (y != other.y) return false
-    if (z != other.z) return false
-
     return x == other.x && y == other.y && z == other.z
   }
 

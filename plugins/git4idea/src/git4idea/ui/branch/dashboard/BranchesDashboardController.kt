@@ -129,7 +129,7 @@ internal class BranchesDashboardController(private val project: Project,
     else {
       ui.refreshTreeModel()
     }
-    return changed
+    return true
   }
 
   private fun reloadBranches(force: Boolean): Boolean {
