@@ -43,6 +43,8 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
             KtForEachPostfixTemplate("iter", this),
             KtForReversedPostfixTemplate("forr", this),
             KtForWithIndexPostfixTemplate("fori", this),
+            KtForLoopNumbersPostfixTemplate("fori", this),
+            KtForLoopReverseNumbersPostfixTemplate("forr", this),
             KtAssertPostfixTemplate(this),
             KtParenthesizedPostfixTemplate(this),
             KtSoutPostfixTemplate(this),
