@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.configurationStore.JbXmlOutputter;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -121,37 +122,39 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       for (Tools inspection : inspections) {
         states.add(inspection.getTools());
       }
-      getRefManager().iterate(new RefVisitor() {
-        @Override
-        public void visitElement(@NotNull RefEntity refEntity) {
-          for (int i = 0; i < states.size(); i++) {
-            for (ScopeToolState state : states.get(i)) {
-              try {
-                InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
-                BufferedWriter writer = writers[i];
-                if (writer != null &&
-                    (myGlobalReportedProblemFilter == null ||
-                     myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
-                  getPresentation(toolWrapper).exportResults(e -> {
-                    try {
-                      JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
-                      writer.flush();
-                    }
-                    catch (IOException e1) {
-                      throw new RuntimeException(e1);
-                    }
-                  }, refEntity, d -> false);
+      ReadAction.run(() -> {
+        getRefManager().iterate(new RefVisitor() {
+          @Override
+          public void visitElement(@NotNull RefEntity refEntity) {
+            for (int i = 0; i < states.size(); i++) {
+              for (ScopeToolState state : states.get(i)) {
+                try {
+                  InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
+                  BufferedWriter writer = writers[i];
+                  if (writer != null &&
+                      (myGlobalReportedProblemFilter == null ||
+                       myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
+                    getPresentation(toolWrapper).exportResults(e -> {
+                      try {
+                        JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
+                        writer.flush();
+                      }
+                      catch (IOException e1) {
+                        throw new RuntimeException(e1);
+                      }
+                    }, refEntity, d -> false);
+                  }
+                  else {
+                    return;
+                  }
                 }
-                else {
-                  return;
+                catch (Throwable e) {
+                  LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
                 }
-              }
-              catch (Throwable e) {
-                LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
               }
             }
           }
-        }
+        });
       });
 
       for (XMLStreamWriter xmlWriter : xmlWriters) {
@@ -193,7 +196,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
           InspectionToolResultExporter presentation = getPresentation(toolWrapper);
           try {
             if (presentation instanceof AggregateResultsExporter) {
-              presentation.updateContent();
+              ReadAction.run(() -> presentation.updateContent());
               if (presentation.hasReportedProblems().toBoolean()) {
                 toolsWithResultsToAggregate.add(sameTools);
                 break;
@@ -203,7 +206,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
               hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultPath(outputDir, toolWrapper.getShortName()));
             }
             else {
-              presentation.updateContent();
+              ReadAction.run(() -> presentation.updateContent());
               if (presentation.hasReportedProblems().toBoolean()) {
                 globalToolsWithProblems.add(sameTools);
                 LOG.assertTrue(!hasProblems, toolName);
