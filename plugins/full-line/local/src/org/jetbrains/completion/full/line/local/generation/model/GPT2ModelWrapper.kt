@@ -9,8 +9,11 @@ import io.kinference.core.model.KIModel
 import io.kinference.model.ExecutionContext
 import io.kinference.ndarray.arrays.*
 import org.jetbrains.completion.full.line.local.CompletionConfig
+import org.jetbrains.completion.full.line.local.TooShortAllowedContextLength
+import org.jetbrains.completion.full.line.local.generation.generation.FullLineGenerationConfig
 import org.jetbrains.completion.full.line.local.loader.CompletionModelLoader
 import java.io.File
+import kotlin.math.min
 
 class GPT2ModelWrapper(
   var model: KIModel,
@@ -97,6 +100,14 @@ class GPT2ModelWrapper(
     // (2, 1, 4, 4, 64)
 
     return process(input, batchSize, seqLen, execContext)
+  }
+
+  override fun composeInputIds(metaInfoIds: IntArray, contextIds: IntArray, config: FullLineGenerationConfig): IntArray {
+    val desiredLength = maxSeqLen - metaInfoIds.size - config.maxLen
+    if (desiredLength <= 0) throw TooShortAllowedContextLength("Desired context length is less than 0 with settings: " +
+                                                                      "metainfo size: ${metaInfoIds.size}, " +
+                                                                      "num iters: ${config.maxLen}")
+    return metaInfoIds + contextIds.takeLast(min(desiredLength, contextIds.size))
   }
 
   private fun process(

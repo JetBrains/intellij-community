@@ -4,7 +4,6 @@ import org.jetbrains.completion.full.line.local.ModelsFiles
 import org.jetbrains.completion.full.line.local.TestExecutionContext
 import org.jetbrains.completion.full.line.local.tokenizer.FullLineTokenizer
 import org.apache.commons.math3.stat.correlation.SpearmansCorrelation
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
@@ -38,15 +37,6 @@ internal class HiddenStateCachingModelWrapperTest {
     assertTrue(meanDiff <= expectedMeanDiff, "Expected mean diff: $expectedMeanDiff, got: $meanDiff")
   }
 
-  @ParameterizedTest
-  @MethodSource("cacheHit source")
-  fun cacheHit(inputIds: Array<IntArray>, cacheWarmupInputIds: Array<IntArray>, expectedCacheHit: Boolean) {
-    cachingGpt2.initLastLogProbs(cacheWarmupInputIds, TestExecutionContext.default.toInference())
-    isCacheHit = false
-    cachingGpt2.initLastLogProbs(inputIds, TestExecutionContext.default.toInference()).logProbs
-    assertEquals(expectedCacheHit, isCacheHit)
-  }
-
   private fun getOriginalAndCachingOutputs(
     inputIds: Array<IntArray>, cacheWarmupInputIds: Array<IntArray>
   ): Pair<DoubleArray, DoubleArray> {
@@ -62,7 +52,7 @@ internal class HiddenStateCachingModelWrapperTest {
   }
 
   companion object {
-    private val modelFiles = ModelsFiles.gpt2_py_4L_512_83_q_local
+    private val modelFiles = ModelsFiles.gpt2_py_4L_512_793_v3_q_local
     private var gpt2 = GPT2ModelWrapper(modelFiles.model, modelFiles.config)
     private val bpe = FullLineTokenizer(modelFiles.tokenizer)
     private var isCacheHit = false
@@ -112,8 +102,8 @@ internal class HiddenStateCachingModelWrapperTest {
         ),
         Arguments.of(
           "Hidden state crop, partial match",
-          arrayOf(intArrayOf(5, 1, 3, 4, 5, 2)),
-          arrayOf(intArrayOf(5, 1, 3, 7, 8, 9))
+          arrayOf(bpe.encode("def hello_world(args:")),
+          arrayOf(bpe.encode("def hello_world(argv:"))
         ),
         Arguments.of(
           "Same context", arrayOf(intArrayOf(5, 2, 2, 3, 5)), arrayOf(intArrayOf(5, 2, 2, 3, 5))
@@ -121,19 +111,6 @@ internal class HiddenStateCachingModelWrapperTest {
         Arguments.of(
           "No cache hit", arrayOf(intArrayOf(5, 2, 2)), arrayOf(intArrayOf(1, 2, 3, 4, 5))
         ),
-      )
-    }
-
-    @JvmStatic
-    fun `cacheHit source`(): Stream<Arguments> {
-      return Stream.of(
-        Arguments.of(arrayOf(intArrayOf(5, 1, 3, 4, 5, 2)), arrayOf(intArrayOf(5, 1, 3, 7, 8, 9)), false), // check
-        Arguments.of(arrayOf(intArrayOf(5, 1, 3)), arrayOf(intArrayOf(5, 1, 3, 7, 8, 9)), false), // check
-        Arguments.of(arrayOf(intArrayOf(2, 4, 3, 7)), arrayOf(intArrayOf(2, 4)), false), // check
-        Arguments.of(arrayOf(intArrayOf(5, 2)), arrayOf(intArrayOf(5, 1, 3, 7, 8, 9)), false), // check
-        Arguments.of(arrayOf(intArrayOf(5)), arrayOf(intArrayOf(5, 1, 3, 7, 8, 9)), false),
-        Arguments.of(arrayOf(intArrayOf(5, 1, 3, 7, 8, 9)), arrayOf(intArrayOf(5)), false), // check
-        Arguments.of(arrayOf(intArrayOf(2, 1, 3, 7, 8, 9)), arrayOf(intArrayOf(3, 7, 8, 9)), false),
       )
     }
   }

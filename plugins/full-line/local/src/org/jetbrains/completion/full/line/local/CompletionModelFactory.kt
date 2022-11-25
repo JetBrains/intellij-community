@@ -3,7 +3,6 @@ package org.jetbrains.completion.full.line.local
 import org.jetbrains.completion.full.line.local.generation.model.GPT2ModelWrapper
 import org.jetbrains.completion.full.line.local.generation.model.HiddenStateCache
 import org.jetbrains.completion.full.line.local.generation.model.HiddenStateCachingModelWrapper
-import org.jetbrains.completion.full.line.local.generation.model.ModelWrapper
 import org.jetbrains.completion.full.line.local.pipeline.FullLineCompletionPipeline
 import org.jetbrains.completion.full.line.local.suggest.collector.FullLineCompletionsGenerator
 import org.jetbrains.completion.full.line.local.suggest.ranking.RawTotalProbRankingModel
@@ -24,10 +23,8 @@ object CompletionModelFactory {
   ): FullLineCompletionPipeline {
     val tokenizer = FullLineTokenizer(tokenizerPath)
 
-    var model: ModelWrapper = GPT2ModelWrapper(modelPath, configPath)
-    if (modelCache != null) {
-      model = HiddenStateCachingModelWrapper(model, modelCache)
-    }
+    val model = if (modelCache == null) GPT2ModelWrapper(modelPath, configPath)
+                else HiddenStateCachingModelWrapper(GPT2ModelWrapper(modelPath, configPath), modelCache)
 
     val generator = FullLineCompletionsGenerator(model, tokenizer, loggingCallback)
     val ranking = RawTotalProbRankingModel()

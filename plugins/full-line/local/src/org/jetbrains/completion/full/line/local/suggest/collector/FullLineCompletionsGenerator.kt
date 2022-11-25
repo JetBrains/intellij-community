@@ -7,6 +7,7 @@ import org.jetbrains.completion.full.line.local.generation.generation.FullLineGe
 import org.jetbrains.completion.full.line.local.generation.model.ModelWrapper
 import org.jetbrains.completion.full.line.local.tokenizer.Tokenizer
 import org.jetbrains.completion.full.line.local.tokenizer.TokenizerTrie
+import java.io.File
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -72,19 +73,22 @@ internal class FullLineCompletionsGenerator(
     context: String,
     config: FullLineGenerationConfig
   ): Pair<IntArray, String> {
-    var (newContext, newPrefix) = resolveIncompleteContext(context)
-    newContext = extendContextWithMetaInfo(newContext, config)
-    val contextIds = makeContextIds(newContext, config, listOf(tokenizer.encode("\n").last()))
-    return Pair(contextIds, newPrefix)
+    val (contextRolledBack, suffix) = resolveIncompleteContext(context)
+    val contextIds = if (contextRolledBack.isNotEmpty()) tokenizer.encode(contextRolledBack) else intArrayOf(4)
+    val metaInfo = composeMetaInfo(config)
+    val metaInfoIds = tokenizer.encode(metaInfo)
+    val combinedIds = model.composeInputIds(metaInfoIds, contextIds, config)
+    return Pair(combinedIds, suffix)
   }
 
-  internal fun extendContextWithMetaInfo(context: String, config: FullLineGenerationConfig): String {
-    val metaInfo = if (config.addLang) "${config.language}\n${config.metaInfoSplitSymbol}\n" else ""
-    return "${config.bosString}\n${metaInfo}${config.filename}\n${config.filenameSplitSymbol}\n${context}"
+  private fun composeMetaInfo(config: FullLineGenerationConfig): String {
+    val file = File(config.filename)
+    return ".${file.extension}${config.languageSplitSymbol}${file.nameWithoutExtension}${config.metaInfoSplitSymbol}"
   }
 
   internal fun resolveIncompleteContext(context: String): Pair<String, String> {
-    val lastLine = context.split("\n").last()
+    // TODO: implement auto-detection of split tokens in vocab, use them here
+    val lastLine = context.split("\n", "⇥", "⇤").last()
     val prefix: String = findLongestSuffix(lastLine)
     val prepContext = if (prefix.isNotEmpty()) context.substring(
       0, context.length - prefix.length

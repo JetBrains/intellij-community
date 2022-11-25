@@ -12,10 +12,8 @@ val IncompleteWordTransformer = ProposalTransformer { proposal ->
 }
 
 val TrimTransformer = ProposalTransformer { proposal ->
-  if (proposal.suggestion.isNotEmpty()
-      && (proposal.suggestion.last().isWhitespace() || proposal.suggestion.first().isWhitespace())
-  ) {
-    proposal.withSuggestion(proposal.suggestion.trim())
+  if (proposal.suggestion.isNotEmpty()) {
+    proposal.withSuggestion(proposal.suggestion.trim { it.isWhitespace() || it == '⇥' || it == '⇤' })
   }
   else {
     proposal

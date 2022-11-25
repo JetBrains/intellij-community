@@ -80,8 +80,7 @@ class CompletionConfig(
     val repetitionPenalty: Double,
     override val prefixErrLimit: Int,
     override val spellProb: Double,
-    override val maxContextLen: Int? = null,
-  ) : BaseGenerationConfig(minLen, maxLen, prefixErrLimit, spellProb, maxContextLen) {
+  ) : BaseGenerationConfig(minLen, maxLen, prefixErrLimit, spellProb) {
 
     companion object {
       /** Default generation setup that can be used for common scenarios */
@@ -92,7 +91,6 @@ class CompletionConfig(
         repetitionPenalty = 1.0,
         prefixErrLimit = 0,
         spellProb = 0.0001,
-        maxContextLen = null
       )
     }
   }

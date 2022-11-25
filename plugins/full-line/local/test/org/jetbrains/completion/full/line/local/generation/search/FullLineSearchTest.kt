@@ -11,7 +11,7 @@ class FullLineSearchTest {
   private fun makeOneStep() {
     val fakeLogProbs = arrayOf(doubleArrayOf(0.13, 0.4, 0.17, 0.1, 0.2))
     logSoftmax(fakeLogProbs)
-    search.step(fakeLogProbs, IntArray(0))
+    search.step(fakeLogProbs, IntArray(0), null)
   }
 
   private fun makeFiveSteps() {
@@ -20,7 +20,7 @@ class FullLineSearchTest {
     var fakeLogProbsRepeat = 1
 
     for (i in 0..4) {
-      val stepResult = search.step(Array(fakeLogProbsRepeat) { fakeLogProbs[0] }, IntArray(0))
+      val stepResult = search.step(Array(fakeLogProbsRepeat) { fakeLogProbs[0] }, IntArray(0), null)
       fakeLogProbsRepeat = stepResult.sortMask.size
     }
   }

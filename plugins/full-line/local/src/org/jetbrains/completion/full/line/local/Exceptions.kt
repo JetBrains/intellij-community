@@ -4,7 +4,7 @@ open class CompletionException(message: String?) : RuntimeException(message)
 
 abstract class LocalModelsException(msg: String) : Exception(msg)
 
-class LongLastLineException : CompletionException("Last line is too long")
+class TooShortAllowedContextLength(message: String?) : CompletionException(message)
 
 class MissingPartOfLocalModel : LocalModelsException("Local model must contains `.model|bin|onnx`, `.json` and `.bpe` files")
 

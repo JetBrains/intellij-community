@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class FullLineTest : UsefulTestCase() {
   companion object {
-    private val modelFiles = ModelsFiles.gpt2_py_4L_512_83_q_local
+    private val modelFiles = ModelsFiles.gpt2_py_4L_512_793_v3_q_local
     val context = """
             def hello_
         """.trimIndent()
@@ -60,20 +60,18 @@ class FullLineTest : UsefulTestCase() {
       modelFiles.model,
       modelFiles.config
     )
-    val content = """
-from src.some_classes import SomeClass
+    val content = """from src.some_classes import SomeClass
 def modify_state(obj: SomeClass):
     obj.super_long_counter_name_1 += 1
     obj.super_long_counter_name_2 += 1
     obj.super_long_counter_name_3 += 1
     obj.super_long_counter_name_4 += 1
-    obj.
-    """
+    obj."""
     val prefix = ""
 
     val completions = completionModel.generateCompletions(
       content, prefix,
-      FullLineCompletionPipelineConfig(maxLen = 8, filename = "main.py"),
+      FullLineCompletionPipelineConfig(maxLen = 2, filename = "main.py"),
       TestExecutionContext.default
     )
 

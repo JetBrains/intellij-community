@@ -31,10 +31,9 @@ data class ModelDir(
 }
 
 object ModelsFiles {
-  val gpt2_py_4L_512_83_q_local = ModelDir("gpt2-py-4L-512-83-q-local", "local-model-python/0.0.4/")
-
   val gpt2_py_4L_512_793_v3_q_local = ModelDir("gpt2-py-4L-512-793-v3-q-local", "local-model-python-v2/0.0.8/")
 
+  //val gpt2_py_4L_512_83_q_local = ModelDir("gpt2-py-4L-512-83-q-local", "local-model-python/0.0.4/")
   //val gpt2_py_4L_256_78 = ModelDir("gpt2-py-4L-256-78", "local-model-python/0.0.7/")
   //val gpt2_py_6L_82_old_data = ModelDir("gpt2-py-6L-82-old-data", "local-model-python/0.0.6/")
   //val gpt2_py_4L_512_83_local = ModelDir("gpt2-py-4L-512-83-local")

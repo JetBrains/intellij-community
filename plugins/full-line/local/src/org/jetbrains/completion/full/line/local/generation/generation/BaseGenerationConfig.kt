@@ -5,6 +5,4 @@ abstract class BaseGenerationConfig(
   open val maxLen: Int = 3,
   open val prefixErrLimit: Int,
   open val spellProb: Double,
-  open val maxContextLen: Int? = null,
-  open val minContextLen: Int? = null
 )

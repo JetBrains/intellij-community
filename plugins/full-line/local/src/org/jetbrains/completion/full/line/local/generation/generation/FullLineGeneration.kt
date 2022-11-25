@@ -49,8 +49,7 @@ class FullLineGeneration(
     for (i in 0 until config.maxLen) {
       execContext.checkCancelled.invoke()
       loggingCallback?.invoke("Performing step $i")
-      search.step(nextLogProbs!!, context)
-      timer?.lap("$i: step")
+      search.step(nextLogProbs!!, context, timer)
 
       updateState(search.sortMask, search.lastPredictions)
       timer?.lap("$i: updateState after step")

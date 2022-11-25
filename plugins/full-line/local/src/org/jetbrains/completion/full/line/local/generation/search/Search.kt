@@ -1,5 +1,6 @@
 package org.jetbrains.completion.full.line.local.generation.search
 
+import org.jetbrains.completion.full.line.local.generation.LapTimer
 import kotlin.math.exp
 
 interface Search {
@@ -16,7 +17,7 @@ interface Search {
       return hypothesesScores.size
     }
 
-  fun step(stepLogProbs: Array<DoubleArray>, context: IntArray?): StepResult
+  fun step(stepLogProbs: Array<DoubleArray>, context: IntArray?, timer: LapTimer?): StepResult
 
   data class StepResult(val sortMask: IntArray, val newTokens: IntArray)
 

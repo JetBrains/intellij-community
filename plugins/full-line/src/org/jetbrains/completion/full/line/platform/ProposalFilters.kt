@@ -50,7 +50,7 @@ object ScoreFilter : ProposalsFilter.Adapter("low score") {
 
 object ASCIIFilter : ProposalsFilter.Adapter("non-ACII symbols") {
   override fun checkRawFullLine(proposal: RawFullLineProposal): Boolean {
-    return proposal.suggestion.toCharArray().none { it < ' ' || it > '~' }
+    return proposal.suggestion.toCharArray().all { it in ' '..'~' || it == '⇥' || it == '⇤' }
   }
 }
 

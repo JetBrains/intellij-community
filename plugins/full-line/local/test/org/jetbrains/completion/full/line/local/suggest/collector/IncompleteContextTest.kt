@@ -23,14 +23,14 @@ class IncompleteContextTest {
   }
 
   @ParameterizedTest
-  @CsvSource("cur_node = TrieNo,cur_node = Trie", "value_sou,value_", "df.app,df.", "adfasb.app,adfasb")
+  @CsvSource("cur_node = TrieNo,cur_node = Trie", "value_sou,value", "df.app,df.", "adfasb.app,adfasb")
   fun `incomplete context - markers`(context: String, expected: String) {
     val (prepContext, _) = mockedCompletionsGenerator.resolveIncompleteContext(context)
     Assertions.assertEquals(expected, prepContext)
   }
 
   companion object {
-    private val tokenizer = FullLineTokenizer(ModelsFiles.gpt2_py_4L_512_83_q_local.tokenizer)
+    private val tokenizer = FullLineTokenizer(ModelsFiles.gpt2_py_4L_512_793_v3_q_local.tokenizer)
     private val mockModel = Mockito.mock(GPT2ModelWrapper::class.java)
     private val mockedCompletionsGenerator: FullLineCompletionsGenerator
     private val specialTokenIds = setOf(0, 1, 2, 3)

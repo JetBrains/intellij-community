@@ -5,7 +5,6 @@ import org.jetbrains.completion.full.line.local.TestExecutionContext
 import org.jetbrains.completion.full.line.local.generation.model.GPT2ModelWrapper
 import org.jetbrains.completion.full.line.local.tokenizer.FullLineTokenizer
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -15,37 +14,18 @@ import kotlin.system.measureTimeMillis
 
 class FullLineGenerationTest {
   companion object {
-    private val modelFiles = ModelsFiles.gpt2_py_4L_512_83_q_local
+    private val modelFiles = ModelsFiles.gpt2_py_4L_512_793_v3_q_local
     private val gpt2 = GPT2ModelWrapper(modelFiles.model, modelFiles.config)
     private val bpe = FullLineTokenizer(modelFiles.tokenizer)
     private val generation = FullLineGeneration(gpt2, bpe)
   }
 
   @Test
-  fun genTest() {
-    val context = """
-            hello_world.py
-            ₣
-            def hello_
-        """.trimIndent()
-    val prefix = "_"
-    val contextIds = bpe.encode(context)
-    val config = FullLineGenerationConfig(maxLen = 10)
-    val result = generation.generate(contextIds, prefix, config, TestExecutionContext.default.toInference())
-    val variants = result.map { it.map { info -> bpe.decode(info.ids) } }.last()
-    val expected = "_world():\n"
-    assertTrue(variants.contains(expected), "Variants are expected to contain: \"$expected\"")
-  }
-
-  @Test
   fun badTokens() {
     val context = """
-            hello_world.py
-            ₣
-            def hello_world():
-            
+            def hello_world():⇥p
         """.trimIndent()
-    val prefix = "\tp"
+    val prefix = "p"
     val contextIds = bpe.encode(context)
     val config = FullLineGenerationConfig(maxLen = 8, filename = "hello_world.py")
     val result = generation.generate(contextIds, prefix, config, TestExecutionContext.default.toInference())

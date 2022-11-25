@@ -1,6 +1,7 @@
 package org.jetbrains.completion.full.line.local.generation.model
 
 import io.kinference.model.ExecutionContext
+import org.jetbrains.completion.full.line.local.generation.generation.FullLineGenerationConfig
 
 class HiddenStateCachingModelWrapper(
   private val delegate: ModelWrapper, private val cache: HiddenStateCache
@@ -14,6 +15,9 @@ class HiddenStateCachingModelWrapper(
     }
     return modelOutput
   }
+
+  override fun composeInputIds(metaInfoIds: IntArray, contextIds: IntArray, config: FullLineGenerationConfig): IntArray =
+    cache.composeInputIds(metaInfoIds, contextIds, maxSeqLen, config)
 
   private fun getModelOutput(
     inputIds: IntArray, cacheQueryResult: HiddenStateCache.QueryResult, execContext: ExecutionContext
