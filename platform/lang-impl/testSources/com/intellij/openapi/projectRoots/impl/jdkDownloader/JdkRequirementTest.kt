@@ -33,10 +33,13 @@ class JdkRequirementTest : LightPlatformTestCase() {
   @Test
   fun test_corretto_jdk_11_0_4() = doTestJdkItems("corretto-11.0.4",
                                                   matches = listOf(
+                                                    jdkItem(Corretto, "11.0.4"),
                                                     jdkItem(Corretto, "11.0.5"),
                                                     jdkItem(Corretto, "11.0.6")
                                                   ),
                                                   fails = listOf(
+                                                    jdkItem(Corretto, "11.0.3"),
+                                                    jdkItem(Corretto, "11.1.0"),
                                                     jdkItem(Corretto, "12.0.5"),
                                                     jdkItem(Zulu, "11.0.4")
                                                   ))
