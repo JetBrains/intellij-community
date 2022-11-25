@@ -8,73 +8,82 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.ComboBoxGroupedEntry;
-import com.intellij.ui.ComboBoxWithSeparators;
+import com.intellij.ui.GroupedComboBoxRenderer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.Arrays;
 
 /**
  * @author ven
  */
-public abstract class LanguageLevelCombo extends ComboBoxWithSeparators<Object> {
+public abstract class LanguageLevelCombo extends ComboBox<Object> {
   private final static LanguageLevel[] LTS = {LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8};
 
   public LanguageLevelCombo(@Nls String defaultItem) {
-    addValue(defaultItem);
+    addItem(defaultItem);
 
-    addSeparator(JavaUiBundle.message("language.level.combo.lts.versions"));
+    addItem(new ListSeparator(JavaUiBundle.message("language.level.combo.lts.versions")));
 
     for (LanguageLevel level : LTS) {
-      addValue(level);
+      addItem(level);
     }
 
-    addSeparator(JavaUiBundle.message("language.level.combo.other.versions"));
+    addItem(new ListSeparator(JavaUiBundle.message("language.level.combo.other.versions")));
 
     LanguageLevel highestPreviewLevel = LanguageLevel.HIGHEST.getPreviewLevel();
     LanguageLevel highestWithPreview = highestPreviewLevel != null ? highestPreviewLevel : LanguageLevel.HIGHEST;
     Arrays.stream(LanguageLevel.values())
       .sorted((l1, l2) -> l2.toJavaVersion().feature - l1.toJavaVersion().feature)
       .filter(level -> level.compareTo(highestWithPreview) <= 0 && (level.isPreview() || !ArrayUtil.contains(level, LTS)))
-      .forEach(level -> addValue(level));
+      .forEach(level -> addItem(level));
 
-    addSeparator(JavaUiBundle.message("language.level.combo.experimental.versions"));
+    addItem(new ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions")));
     for (LanguageLevel level : LanguageLevel.values()) {
       if (level.compareTo(highestWithPreview) > 0) {
-        addValue(level);
+        addItem(level);
       }
     }
-  }
 
-  @NotNull
-  @Override
-  public @NlsContexts.ListItem String getPresentableText(Object value) {
-    if (value instanceof LanguageLevel level) {
-      return level.getPresentableText();
-    }
-    else if (value instanceof @NlsContexts.ListItem String s) {
-      return s;
-    }
-    return "";
-  }
+    setSwingPopup(false);
+    setRenderer(new GroupedComboBoxRenderer<>(this) {
+      @Override
+      public @NotNull String getText(Object value) {
+        if (value instanceof LanguageLevel level) {
+          return level.getPresentableText();
+        } else if (value instanceof @NlsContexts.ListItem String s) {
+          return s;
+        }
+        return "";
+      }
 
-  @NotNull
-  @Override
-  public @NlsContexts.ListItem String getSecondaryText(Object value) {
-    if (value instanceof String s) {
-      final LanguageLevel defaultLevel = getDefaultLevel();
-      return defaultLevel != null ? MessageFormat.format("({0})", defaultLevel.getPresentableText())
-                                  : "";
-    }
-    return "";
+      @Nullable
+      @Override
+      public String getSecondaryText(Object value) {
+        if (value instanceof String) {
+          final LanguageLevel defaultLevel = getDefaultLevel();
+          return defaultLevel != null ? MessageFormat.format("({0})", defaultLevel.getPresentableText())
+                                      : "";
+        }
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon(Object value) {
+        return null;
+      }
+    });
   }
 
   private void checkAcceptedLevel(LanguageLevel selectedLevel) {
@@ -127,40 +136,29 @@ public abstract class LanguageLevelCombo extends ComboBoxWithSeparators<Object> 
 
   @Nullable
   public LanguageLevel getSelectedLevel() {
-    final Object selectedItem = getSelectedValue();
+    final Object selectedItem = getSelectedItem();
     if (selectedItem instanceof LanguageLevel level) return level;
     if (selectedItem instanceof String) return getDefaultLevel();
     return null;
   }
 
   public boolean isDefault() {
-    return getSelectedValue() instanceof String;
+    return getSelectedItem() instanceof String;
   }
 
   @Override
   public void setSelectedItem(Object anObject) {
     final @NonNls Object levelToSelect = anObject == null ? "default" : anObject;
-    final ComboBoxGroupedEntry<Object> entryForLevel = getEntryForLevel(levelToSelect);
+    final Object entryForLevel = getEntryForLevel(levelToSelect);
     if (entryForLevel != null) super.setSelectedItem(entryForLevel);
     checkAcceptedLevel(getSelectedLevel());
   }
 
-  private ComboBoxGroupedEntry<Object> getEntryForLevel(Object levelToSelect) {
+  private Object getEntryForLevel(Object levelToSelect) {
     for (int i = 0; i < getItemCount(); i++) {
-      final ComboBoxGroupedEntry<Object> entry = getItemAt(i);
+      final Object entry = getItemAt(i);
       if (levelToSelect == entry) return entry;
-
-      if (entry.getMyItem() instanceof LanguageLevel entryLevel
-          && levelToSelect instanceof LanguageLevel level
-          && level.equals(entryLevel)) {
-        return entry;
-      }
-      else if (levelToSelect instanceof String && entry.getMyItem() instanceof String) {
-        return entry;
-      }
-      else if (levelToSelect instanceof ComboBoxGroupedEntry<?> entryToSelect
-               && entry.getMyItem() instanceof String
-               && entryToSelect.getMyItem() instanceof String) {
+      if (levelToSelect instanceof String && entry instanceof String) {
         return entry;
       }
     }

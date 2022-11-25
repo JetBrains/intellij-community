@@ -7,12 +7,13 @@ import com.intellij.openapi.ui.ComboBoxPopupState;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.ui.popup.util.GroupedValue;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ComboBoxPopup<T> extends ListPopupImpl {
+  public static final @NotNull JBEmptyBorder COMBO_ITEM_BORDER = JBUI.Borders.empty(2, 8);
   private final Context<T> myContext;
 
   public ComboBoxPopup(@NotNull Context<T> context,
@@ -165,7 +167,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       Component component = myContext.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
       if (component instanceof JComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
         JComponent jComponent = (JComponent)component;
-        jComponent.setBorder(JBUI.Borders.empty(2, 8));
+        if (!(component instanceof GroupedElementsRenderer.MyComponent)) {
+          jComponent.setBorder(COMBO_ITEM_BORDER);
+        }
         myContext.customizeListRendererComponent(jComponent);
       }
       return component;
@@ -229,7 +233,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       return component instanceof TitledSeparator || component instanceof JSeparator ? "" :
              component instanceof JLabel label ? label.getText() :
              component instanceof SimpleColoredComponent c ? c.getCharSequence(false).toString() :
-             cellRenderer instanceof Accessible accessible ? accessible.getAccessibleContext().getAccessibleName() :
+             component instanceof Accessible accessible ? accessible.getAccessibleContext().getAccessibleName() :
              String.valueOf(value);
     }
 
@@ -241,10 +245,18 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
     @Override
     public @Nullable ListSeparator getSeparatorAbove(T value) {
-      return value instanceof GroupedValue v && v.getSeparatorText() != null
-             ? new ListSeparator(v.getSeparatorText())
-             : null;
+      final int index = getValues().indexOf(value);
+      if (index > 0 && getValues().get(index - 1) instanceof ListSeparator separator) {
+        return separator;
+      }
+      return null;
     }
+  }
+
+  @Override
+  public boolean shouldBeShowing(Object value) {
+    if (value instanceof ListSeparator) return false;
+    return super.shouldBeShowing(value);
   }
 
   @NotNull
