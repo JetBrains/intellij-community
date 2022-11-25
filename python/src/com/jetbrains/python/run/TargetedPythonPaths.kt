@@ -41,7 +41,7 @@ fun initPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                    pythonPathList: MutableCollection<TargetEnvironmentFunction<String>>,
                    targetEnvironmentRequest: TargetEnvironmentRequest) {
   // TODO [Targets API] Passing parent envs logic should be moved somewhere else
-  if (passParentEnvs && targetEnvironmentRequest is LocalTargetEnvironmentRequest && !envs.containsKey(PythonEnvUtil.PYTHONPATH)) {
+  if (passParentEnvs && targetEnvironmentRequest is LocalTargetEnvironmentRequest) {
     appendSystemPythonPath(pythonPathList)
   }
   appendToPythonPath(envs, pythonPathList, targetEnvironmentRequest.targetPlatform)
