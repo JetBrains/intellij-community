@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -395,25 +396,12 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
     private fun findDeepestOverriddenDeclaration(declaration: KtCallableDeclaration): KtCallableDeclaration? {
         if (declaration.modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
-            val bindingContext = declaration.analyze()
-            var descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration]
-            if (descriptor is ValueParameterDescriptor) {
-                descriptor = bindingContext[BindingContext.VALUE_PARAMETER_AS_PROPERTY, descriptor]
-                    ?: return declaration
-            }
+            val deepestSuperDeclarations = KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(declaration)
 
-            if (descriptor != null) {
-                assert(descriptor is PropertyDescriptor) { "Property descriptor is expected" }
-
-                val supers = (descriptor as PropertyDescriptor).getDeepestSuperDeclarations()
-
-                // Take one of supers for now - API doesn't support substitute to several elements (IDEA-48796)
-                val deepest = supers.first()
-                if (deepest != descriptor) {
-                    val superPsiElement = DescriptorToSourceUtils.descriptorToDeclaration(deepest)
-                    return superPsiElement as? KtCallableDeclaration
-                }
-            }
+            // Take one of supers for now - API doesn't support substitute to several elements (IDEA-48796)
+            return deepestSuperDeclarations
+                .filterIsInstance<KtCallableDeclaration>()
+                .firstOrNull()
         }
 
         return null
