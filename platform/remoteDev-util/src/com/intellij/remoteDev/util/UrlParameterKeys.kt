@@ -27,5 +27,6 @@ class UrlParameterKeys {
     const val runFromIdeTokenEnvVar = "GTW_FROM_IDE_TOKEN"
     const val cloudWorkstationId = "cloudWorkstationId"
     const val gitpodHost = "gitpodHost"
+    const val awsEnvId = "aws.codecatalyst.env.id"
   }
 }
