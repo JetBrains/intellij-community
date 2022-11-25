@@ -323,7 +323,7 @@ class BaseEncoder(modelFile: File) {
     // flat_hash_map<uint32_t, string> unrecognized_tokens;
     val unrecognizedTokens = HashMap<Int, String>()
 
-    val text: List<Int> = sentence.map { it.toInt() }
+    val text: List<Int> = sentence.codePoints().toList()
 
     // TODO: why do we need to assert in each encoding
     assert(bpeState.char2id.keys.any { it == SPACE_TOKEN })
