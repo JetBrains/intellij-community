@@ -510,6 +510,10 @@
       "description": "GotIt tooltip shortcuts foreground color if different from ToolTip.shortcutForeground"
     },
     {
+      "key": "GotItTooltip.shortcutBackground",
+      "description": "GotIt tooltip shortcuts rounded background color if different from GotItTooltip.background"
+    },
+    {
       "key": "GotItTooltip.borderColor",
       "description": "GotIt tooltip border color if different from ToolTip.borderColor"
     },

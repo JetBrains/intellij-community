@@ -467,7 +467,8 @@
       "foreground": "Grey10",
       "stepForeground": "Grey8",
       "Header.foreground": "Grey14",
-      "shortcutForeground": "Grey9",
+      "shortcutForeground": "Grey14",
+      "shortcutBackground": "Grey5",
       "linkForeground": "Blue9",
       "Button": {
         "foreground": "Grey14",

@@ -1252,8 +1252,13 @@ public final class JBUI {
         if (useContrastColors) {
           return JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5);
         } else {
-          return JBColor.namedColor("GotItTooltip.shortcutForeground", Tooltip.shortcutForeground());
+          return JBColor.namedColor("GotItTooltip.shortcutForeground", foreground(false));
         }
+      }
+
+      public static @NotNull Color shortcutBackground() {
+        return JBColor.namedColor("GotItTooltip.shortcutBackground",
+                                  JBColor.namedColor("Lesson.shortcutBackground", 0xE6EEF7, 0x333638));
       }
 
       public static @NotNull Color linkForeground() {

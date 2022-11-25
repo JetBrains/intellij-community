@@ -303,7 +303,7 @@
       "borderColor": "grey05",
       "foreground": "foreground",
       "linkForeground": "linkForeground",
-      "shortcutForeground": "infoPanelForeground"
+      "shortcutForeground": "foreground"
     },
 
     "Group.disabledSeparatorColor": "border",

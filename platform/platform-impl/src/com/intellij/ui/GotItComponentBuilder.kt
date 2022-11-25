@@ -3,8 +3,10 @@ package com.intellij.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.keymap.KeymapUtil
@@ -12,9 +14,11 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.BalloonBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -22,21 +26,23 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import java.awt.event.ActionListener
+import java.awt.geom.RoundRectangle2D
+import java.io.StringReader
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.plaf.TextUI
-import javax.swing.text.View
+import javax.swing.text.*
 import javax.swing.text.View.X_AXIS
 import javax.swing.text.View.Y_AXIS
+import javax.swing.text.html.*
 import kotlin.math.min
 
 @ApiStatus.Internal
-class GotItComponentBuilder(@Nls private val text: String) {
+class GotItComponentBuilder(text: @Nls String) {
+  @Nls
+  private val text: String
   private var image: Icon? = null
 
   @Nls
@@ -50,6 +56,7 @@ class GotItComponentBuilder(@Nls private val text: String) {
   private var linkAction: () -> Unit = {}
 
   private var showButton: Boolean = true
+
   @Nls
   private var buttonLabel: String = IdeBundle.message("got.it.button.name")
   private var buttonAction: () -> Unit = {}
@@ -57,6 +64,10 @@ class GotItComponentBuilder(@Nls private val text: String) {
 
   private var maxWidth = MAX_WIDTH
   private var useContrastColors = false
+
+  init {
+    this.text = ShortcutExtension.patchShortcutTags(text)
+  }
 
   /**
    * Add optional image above the header or description
@@ -258,8 +269,7 @@ class GotItComponentBuilder(@Nls private val text: String) {
     }
 
     val builder = HtmlBuilder()
-    builder.append(HtmlChunk.raw(text).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(
-      JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)))))
+    builder.append(HtmlChunk.raw(text))
     shortcut?.let {
       builder.append(HtmlChunk.nbsp())
         .append(HtmlChunk.nbsp())
@@ -347,14 +357,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder, maxWidth: Int, us
     foreground = JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
 
-    val iconsExtension = ExtendableHTMLViewFactory.Extensions.icons { iconKey ->
-      IconLoader.findIcon(iconKey, GotItTooltip::class.java, true, false)?.let { icon ->
-        GotItComponentBuilder.adjustIcon(icon, useContrastColors)
-      }
-    }
-    editorKit = HTMLEditorKitBuilder()
-      .withViewFactoryExtensions(iconsExtension)
-      .build()
+    editorKit = createEditorKit(useContrastColors)
 
     setTextAndUpdateLayout(htmlBuilder)
     if (getRootView().getPreferredSpan(X_AXIS) > maxWidth) {
@@ -365,6 +368,24 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder, maxWidth: Int, us
 
     val root = getRootView()
     preferredSize = Dimension(root.getPreferredSpan(X_AXIS).toInt(), root.getPreferredSpan(Y_AXIS).toInt())
+  }
+
+  private fun createEditorKit(useContrastColors: Boolean): HTMLEditorKit {
+    val styleSheet = StyleSheet()
+    val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
+                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBackground())
+    StringReader(shortcutStyles).use { styleSheet.loadRules(it, null) }
+
+    val iconsExtension = ExtendableHTMLViewFactory.Extensions.icons { iconKey ->
+      IconLoader.findIcon(iconKey, GotItTooltip::class.java, true, false)?.let { icon ->
+        GotItComponentBuilder.adjustIcon(icon, useContrastColors)
+      }
+    }
+
+    return HTMLEditorKitBuilder()
+      .withStyleSheet(styleSheet)
+      .withViewFactoryExtensions(iconsExtension, ShortcutExtension())
+      .build()
   }
 
   private fun setTextAndUpdateLayout(builder: HtmlBuilder, width: Int? = null) {
@@ -397,5 +418,165 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder, maxWidth: Int, us
     isFocusable = false
     isEditable = false
     border = null
+  }
+}
+
+/**
+ * Render each part of the shortcut in the separate rounded rectangle
+ *
+ * Syntax is `<span class="shortcut">SHORTCUT_TEXT_HERE</span>`.
+ * For example: `<span class="shortcut">Ctrl   Shift   A</span>`.
+ *
+ * Also, you can use higher level syntax like `<shortcut actionId="SOME_ACTION_ID"/>` or `<shortcut raw="KEYSTROKE_TEXT"/>`
+ * if you patch input HTML text using [patchShortcutTags].
+ *
+ * To install this extension you need to add styles returned from [getStyles] to your [StyleSheet].
+ */
+private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
+  override fun invoke(elem: Element, defaultView: View): View? {
+    val tagAttributes = elem.attributes.getAttribute(HTML.Tag.SPAN) as? AttributeSet
+    return if (tagAttributes?.getAttribute(HTML.Attribute.CLASS) == "shortcut") {
+      return ShortcutView(elem)
+    }
+    else null
+  }
+
+  companion object {
+    fun getStyles(foreground: Color, background: Color): String {
+      return ".shortcut { font-weight: bold;" +
+             " color: ${ColorUtil.toHtmlColor(foreground)};" +
+             " background-color: ${ColorUtil.toHtmlColor(background)} }"
+    }
+
+    fun patchShortcutTags(htmlText: @Nls String): @Nls String {
+      val shortcuts: Sequence<MatchResult> = SHORTCUT_REGEX.findAll(htmlText)
+      if (!shortcuts.any()) return htmlText
+
+      val builder = StringBuilder()
+      var ind = 0
+      for (shortcut in shortcuts) {
+        builder.append(htmlText.substring(ind..shortcut.range.first))
+        val text = getShortcutText(shortcut.groups["type"]!!.value, shortcut.groups["value"]!!.value)
+        val span = shortcutSpan(text)
+        builder.append("${StringUtil.NON_BREAK_SPACE}$span${StringUtil.NON_BREAK_SPACE}")
+        ind = shortcut.range.last + 1
+      }
+      builder.append(htmlText.substring(ind))
+
+      @Suppress("HardCodedStringLiteral")
+      return builder.toString()
+    }
+
+    private fun getShortcutText(type: String, value: String): String {
+      return when (type) {
+        "actionId" -> {
+          val shortcut = ShortcutsRenderingUtil.getShortcutByActionId(value)
+          if (shortcut != null) {
+            ShortcutsRenderingUtil.getKeyboardShortcutData(shortcut).first
+          }
+          else ShortcutsRenderingUtil.getGotoActionData(value).first
+        }
+        "raw" -> {
+          val keyStroke = KeyStroke.getKeyStroke(value)
+          if (keyStroke != null) {
+            ShortcutsRenderingUtil.getKeyStrokeData(keyStroke).first
+          }
+          else {
+            thisLogger().error("Invalid key stroke: $value")
+            value
+          }
+        }
+        else -> {
+          thisLogger().error("Unknown shortcut type: $type, use 'actionId' or 'raw'")
+          value
+        }
+      }
+    }
+
+    private fun shortcutSpan(shortcutText: @NlsSafe String) = HtmlChunk.span().attr("class", "shortcut").addText(shortcutText).toString()
+
+    private val SHORTCUT_REGEX: Regex = Regex("""<shortcut (?<type>actionId|raw)="(?<value>\w+)"/>""")
+  }
+
+  private class ShortcutView(elem: Element) : InlineView(elem) {
+    private val horizontalIndent: Float
+      get() = getFloatAttribute(CSS.Attribute.MARGIN_LEFT, DEFAULT_HORIZONTAL_INDENT)
+    private val verticalIndent: Float
+      get() = getFloatAttribute(CSS.Attribute.MARGIN_TOP, DEFAULT_VERTICAL_INDENT)
+    private val arcSize: Float
+      get() = JBUIScale.scale(DEFAULT_ARC)
+
+    private var rectangles: List<RoundRectangle2D>? = null
+
+    override fun paint(g: Graphics, a: Shape) {
+      if (rectangles == null) {
+        rectangles = calculateRectangles(a)
+      }
+
+      foreground
+      val backgroundColor = background
+      val g2d = g.create() as Graphics2D
+      try {
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2d.color = backgroundColor
+        for (rect in rectangles ?: emptyList()) {
+          g2d.fill(rect)
+        }
+      }
+      finally {
+        g2d.dispose()
+      }
+
+      // It is a hack to not paint background in the super.paint()
+      // because it is already painted in the shape we need
+      try {
+        background = null
+        super.paint(g, a)
+      }
+      finally {
+        background = backgroundColor
+      }
+    }
+
+    override fun preferenceChanged(child: View?, width: Boolean, height: Boolean) {
+      super.preferenceChanged(child, width, height)
+      rectangles = null
+    }
+
+    private fun calculateRectangles(allocation: Shape): List<RoundRectangle2D>? {
+      val startOffset = element.startOffset
+      return try {
+        val text = element.document.getText(startOffset, element.endOffset - startOffset)
+        val horIndent = horizontalIndent
+        val vertIndent = verticalIndent
+        return SHORTCUT_PART_REGEX.findAll(text)
+          .map {
+            val range = it.range
+            val textRect = modelToView(startOffset + range.first, Position.Bias.Forward,
+                                       startOffset + range.last + 1, Position.Bias.Backward, allocation).bounds2D
+            RoundRectangle2D.Double(textRect.x - horIndent, textRect.y - vertIndent,
+                                    textRect.width + 2 * horIndent, textRect.height + 2 * vertIndent,
+                                    arcSize.toDouble(), arcSize.toDouble())
+          }
+          .toList()
+      }
+      catch (ex: BadLocationException) {
+        // ignore
+        null
+      }
+    }
+
+    private fun getFloatAttribute(key: Any, defaultValue: Float): Float {
+      val value = attributes.getAttribute(key)?.toString()?.toFloatOrNull() ?: defaultValue
+      return JBUIScale.scale(value)
+    }
+
+    companion object {
+      private const val DEFAULT_HORIZONTAL_INDENT: Float = 3f
+      private const val DEFAULT_VERTICAL_INDENT: Float = -0.5f
+      private const val DEFAULT_ARC: Float = 8.0f
+
+      private val SHORTCUT_PART_REGEX = Regex("""[^ ${StringUtil.NON_BREAK_SPACE}]+""")
+    }
   }
 }
