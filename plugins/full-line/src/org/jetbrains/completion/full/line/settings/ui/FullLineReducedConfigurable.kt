@@ -52,6 +52,8 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
 
   private val biggestLang = languages.map { it.displayName }.maxByOrNull { it.length }
 
+  private val supportedLanguages = listOf("Python", "JavaScript", "TypeScript")
+
   override fun createPanel(): DialogPanel {
     return panel {
       group(message("fl.server.completion.settings.group")) {
@@ -94,24 +96,26 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
 
   private fun Panel.notAvailable(cause: String?) = row {
     logger.info("Settings are not available" + (cause?.let { ", cause: $cause." } ?: ""))
-    comment("Currently, Full Line is available only for Python language, please install its plugin and restart or use PyCharm")
+    comment(
+      "Currently, Full Line is available only for Python, JavaScript and TypeScript languages, " +
+      "please install one of their plugins and restart or use PyCharm or WebStorm")
   }
 
   private fun Panel.community() {
     logger.info("Using community settings")
-    val lang = Language.findLanguageByID("Python")
-    if (lang == null) {
-      notAvailable("Python plugin is missing")
+    val langs = supportedLanguages.map {
+      val lang = Language.findLanguageByID(it)
+      lang?.let {
+        if (FullLineLanguageSupporter.getInstance(lang) == null) null else lang
+      }
+    }.filterNotNull()
+    if (langs.isEmpty()) {
+      notAvailable("No supported languages installed")
       return
     }
-    if (FullLineLanguageSupporter.getInstance(lang) == null) {
-      notAvailable("Python supporter is missing")
-      return
-    }
-    val langState = settings.getLangState(lang)
 
     buttonsGroup(message("fl.server.completion.enable.languages")) {
-      localModels(listOf(lang))
+      localModels(langs)
     }
     buttonsGroup(message("fl.server.completion.settings.language")) {
       lateinit var useBox: Cell<JBCheckBox>
@@ -119,34 +123,36 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
         useBox = checkBox(message("fl.server.completion.top.n.use")).bindSelected(generalState::useTopN)
       }
       indent {
-        row { intTextField(IntRange(0, 20), 1)
-          .bindIntText(generalState::topN)
-          .enabledIf(useBox.selected) }
+        row {
+          intTextField(IntRange(0, 20), 1)
+            .bindIntText(generalState::topN)
+            .enabledIf(useBox.selected)
+        }
       }
       row(message("fl.server.completion.ref.check")) {
         comboBox(
           RedCodePolicy.values().toList(),
           RedCodePolicyRenderer()
-        ).bindItem(langState::redCodePolicy.toNullableProperty())
+        ).bindItem(langStates.toMutableProperty(LangState::redCodePolicy).toNullableProperty())
       }
       row {
         checkBox(message("fl.server.completion.enable.strings.walking"))
-          .bindSelected(langState::stringsWalking)
+          .bindSelected(langStates.toMutableProperty(LangState::stringsWalking))
           .gap(RightGap.SMALL)
         contextHelp(message("fl.server.completion.enable.strings.walking.help"))
       }
       extended {
         row {
           checkBox(message("fl.server.completion.only.full"))
-            .bindSelected(langState::onlyFullLines)
+            .bindSelected(langStates.toMutableProperty(LangState::onlyFullLines))
         }
         row {
           checkBox(message("fl.server.completion.group.answers"))
-            .bindSelected(langState::groupAnswers)
+            .bindSelected(langStates.toMutableProperty(LangState::groupAnswers))
         }
         row {
           checkBox(message("fl.server.completion.score"))
-            .bindSelected(langState::showScore)
+            .bindSelected(langStates.toMutableProperty(LangState::showScore))
         }
       }
     }
@@ -191,7 +197,7 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
       }
       row(message("fl.server.completion.ref.check")) {
         comboBox(RedCodePolicy.values().toList(),
-          RedCodePolicyRenderer()
+                 RedCodePolicyRenderer()
         ).bindItem(langStates.toMutableProperty(LangState::redCodePolicy).toNullableProperty())
       }.layout(RowLayout.INDEPENDENT)
       row {
@@ -397,6 +403,6 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
  * Setting value for all states at ones
  */
 private fun <T, V> List<T>.toMutableProperty(field: KMutableProperty1<T, V>): MutableProperty<V> {
-  val bindings = map { MutableProperty({ field.getter(it) }, { value ->  field.setter(it, value) }) }
+  val bindings = map { MutableProperty({ field.getter(it) }, { value -> field.setter(it, value) }) }
   return MutableProperty({ bindings.first().get() }, { v -> bindings.forEach { it.set(v) } })
 }
