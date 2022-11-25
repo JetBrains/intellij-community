@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
@@ -84,18 +85,23 @@ object GHPRReviewThreadComponent {
       border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
 
-    val commentsPanel = JPanel(VerticalLayout(12)).apply {
-      isOpaque = false
-      val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
-                                                                       reviewDataProvider, avatarIconsProvider,
-                                                                       suggestedChangeHelper,
-                                                                       false)
-      add(TimelineThreadCommentsPanel(thread, commentComponentFactory))
+    val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
+                                                                     reviewDataProvider, avatarIconsProvider,
+                                                                     suggestedChangeHelper,
+                                                                     false)
 
-      if (reviewDataProvider.canComment()) {
+    val commentsListPanel = ComponentListPanelFactory.createVertical(thread, commentComponentFactory, 8)
+
+    val commentsPanel = if (reviewDataProvider.canComment()) {
+      JPanel(VerticalLayout(12)).apply {
+        isOpaque = false
+        add(commentsListPanel)
         add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
       }
+    } else {
+      commentsListPanel
     }
+
 
     CollapseController(thread, diffComponent, commentsPanel, collapseButton, expandButton)
 
