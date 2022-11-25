@@ -24,18 +24,18 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
   @Contract("null -> null")
   override fun getPersistentValue(virtualFile: VirtualFile?): T? {
     if (virtualFile == null) return null
-    val raw = getRaw(virtualFile)
+    val raw = getRaw(virtualFile, false)
     return raw?.let { fromRaw(it) }
   }
 
-  private fun getRaw(virtualFile: VirtualFile): RAW? {
+  private fun getRaw(virtualFile: VirtualFile, forceReadPersistence: Boolean): RAW? {
     @Suppress("UNCHECKED_CAST")
     val memValue = userDataKey[virtualFile] as RAW?
     if (memValue != null) {
       return if (memValue === NULL_MARKER) null else memValue
     }
 
-    if (READ_PERSISTENT_VALUE) {
+    if (forceReadPersistence || READ_PERSISTENT_VALUE) {
       val persisted = readValue(virtualFile)
       userDataKey[virtualFile] = persisted ?: NULL_MARKER
       return persisted
@@ -47,7 +47,7 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
 
   override fun setPersistentValue(virtualFile: VirtualFile?, newValue: T?): Boolean {
     if (virtualFile == null) return false
-    val oldValue = getRaw(virtualFile)
+    val oldValue = getRaw(virtualFile, true)
     val rawNewValue = newValue?.let { toRaw(it) }
     if (keysEqual(oldValue, rawNewValue)) {
       return false

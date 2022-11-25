@@ -7,8 +7,10 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.TemporaryDirectory;
 import junit.framework.TestCase;
 import org.junit.Assume;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -19,6 +21,9 @@ import java.util.Collection;
 
 @RunWith(Parameterized.class)
 public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
+  @Rule
+  public TemporaryDirectory tempDir = new TemporaryDirectory();
+
   private enum TestEnum {
     ONE, TWO
   }
@@ -43,6 +48,16 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
     memKey = ((FilePropertyKeyImpl<T, ?>)key).getUserDataKey();
   }
 
+  private VirtualFile createVirtualFile(String name, String content) {
+    VirtualFile file = tempDir.createVirtualFile(name, content);
+
+    // this should be new physical file with no any data associated with it
+    assertTrue(file.getClass().getName(), file instanceof VirtualFileWithId);
+    assertNull(file.toString(), memKey.get(file));
+    assertNull(file.toString(), key.getPersistentValue(file));
+    return file;
+  }
+
   @Test
   public void testLightVirtualFile() {
     LightVirtualFile file = new LightVirtualFile();
@@ -55,14 +70,30 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
   }
 
   @Test
-  public void testReadFromFile() {
+  public void testReadFromFile_PersistenceDisabled() {
+    Assume.assumeFalse(FilePropertyKeyImpl.getREAD_PERSISTENT_VALUE());
+    VirtualFile file = createVirtualFile("Foo.java", "");
+    TestCase.assertTrue("Write sample1 to file", key.setPersistentValue(file, sample1));
+    TestCase.assertEquals(sample1, key.getPersistentValue(file));
+
+    memKey.set(file, null); // clear memory data
+
+    TestCase.assertNull("Should read null from memory (before write)", key.getPersistentValue(file));
+    TestCase.assertFalse("Should not update sample1>sample1 value in file", key.setPersistentValue(file, sample1));
+    TestCase.assertEquals("Should read sample1 from memory (after write)", sample1, key.getPersistentValue(file));
+  }
+
+  @Test
+  public void testReadFromFile_PersistenceEnabled() {
     Assume.assumeTrue(FilePropertyKeyImpl.getREAD_PERSISTENT_VALUE());
-    VirtualFile file = createFile("Foo.java", "").getVirtualFile();
+    VirtualFile file = createVirtualFile("Foo.java", "");
     TestCase.assertTrue("Write sample1 to file", key.setPersistentValue(file, sample1));
     TestCase.assertEquals(sample1, key.getPersistentValue(file));
 
     memKey.set(file, null); // clear memory data
     TestCase.assertEquals("Should read previous value from file", sample1, key.getPersistentValue(file));
+    TestCase.assertFalse("Should not update sample1>sample1 value in file", key.setPersistentValue(file, sample1));
+    TestCase.assertEquals("Should read sample1 from memory (after write)", sample1, key.getPersistentValue(file));
 
     TestCase.assertTrue("Write null to file", key.setPersistentValue(file, null));
     TestCase.assertNull(key.getPersistentValue(file));
@@ -72,14 +103,14 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
 
   @Test
   public void testGetFromEmpty() {
-    VirtualFile file = createFile("Foo.java", "").getVirtualFile();
+    VirtualFile file = createVirtualFile("Foo.java", "");
     TestCase.assertNull("No previous value in vfs, should read null", key.getPersistentValue(file));
     TestCase.assertNull("Second read should also return null", key.getPersistentValue(file));
   }
 
   @Test
   public void testSetGetTwoSamples() {
-    VirtualFile file = createFile("Foo.java", "").getVirtualFile();
+    VirtualFile file = createVirtualFile("Foo.java", "");
     TestCase.assertTrue("First set should change null to sample1", key.setPersistentValue(file, sample1));
     TestCase.assertFalse("Second set should not change existing value", key.setPersistentValue(file, sample1));
     TestCase.assertEquals(sample1, key.getPersistentValue(file));
@@ -91,7 +122,7 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
 
   @Test
   public void testSetGetNulls() {
-    VirtualFile file = createFile("Foo.java", "").getVirtualFile();
+    VirtualFile file = createVirtualFile("Foo.java", "");
     TestCase.assertNull("Initial value is null", key.getPersistentValue(file));
     TestCase.assertTrue("Write something not-null", key.setPersistentValue(file, sample1));
     TestCase.assertEquals(sample1, key.getPersistentValue(file));
