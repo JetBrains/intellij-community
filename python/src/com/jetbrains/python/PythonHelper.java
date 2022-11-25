@@ -27,7 +27,8 @@ public enum PythonHelper implements HelperPackage {
 
   // Packaging tools
   PACKAGING_TOOL("packaging_tool.py"),
-  VIRTUALENV_ZIPAPP("virtualenv.pyz"),
+  VIRTUALENV_ZIPAPP("virtualenv-20.16.7.pyz"),
+  PY2_VIRTUALENV_ZIPAPP("virtualenv-20.13.0.pyz"),
 
   COVERAGEPY("coveragepy", ""),
   COVERAGE("coverage_runner", "run_coverage"),

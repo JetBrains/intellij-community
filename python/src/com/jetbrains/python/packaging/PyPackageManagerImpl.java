@@ -37,7 +37,8 @@ import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
  */
 @Deprecated
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv.pyz";
+  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.16.7.pyz";
+  private static final String PY2_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz";
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
@@ -188,7 +189,9 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     args.add(destinationDir);
 
     try {
-      getPythonProcessResult(Objects.requireNonNull(getHelperPath(VIRTUALENV_ZIPAPP_NAME)), args, false, true, null, List.of("-S"));
+      getPythonProcessResult(
+        Objects.requireNonNull(getHelperPath(languageLevel.isPython2() ? PY2_VIRTUALENV_ZIPAPP_NAME : VIRTUALENV_ZIPAPP_NAME)),
+        args, false, true, null, List.of("-S"));
     }
     catch (ExecutionException e) {
       showSdkExecutionException(sdk, e, PySdkBundle.message("python.creating.venv.failed.title"));
