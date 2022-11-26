@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.*;
-
 public final class SpellcheckerConfigCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("spellchecker.settings.project", 2);
   private static final EventId1<Boolean> ALL_BUNDLED_ENABLED = GROUP.registerEvent("all.bundled.enabled",

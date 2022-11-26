@@ -2,10 +2,7 @@
 package com.intellij.spellchecker.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.openapi.project.Project
 
 class SpellcheckerActionStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
