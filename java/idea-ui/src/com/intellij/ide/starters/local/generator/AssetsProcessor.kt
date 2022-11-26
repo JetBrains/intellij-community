@@ -4,8 +4,10 @@ package com.intellij.ide.starters.local.generator
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.GeneratorContext
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.file.NioFileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.file.VirtualFileUtil
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
@@ -70,11 +72,17 @@ object AssetsProcessor {
 
   private fun findOrCreateFile(outputDirectory: VirtualFile, relativePath: String): VirtualFile {
     logger<AssetsProcessor>().info("Creating file $relativePath in ${outputDirectory.path}")
+    if (outputDirectory.fileSystem is LocalFileSystemImpl) {
+      NioFileUtil.findOrCreateFile(outputDirectory.toNioPath(), relativePath)
+    }
     return VirtualFileUtil.findOrCreateFile(outputDirectory, relativePath)
   }
 
   private fun findOrCreateDirectory(outputDirectory: VirtualFile, relativePath: String): VirtualFile {
     logger<AssetsProcessor>().info("Creating directory $relativePath in ${outputDirectory.path}")
+    if (outputDirectory.fileSystem is LocalFileSystemImpl) {
+      NioFileUtil.findOrCreateDirectory(outputDirectory.toNioPath(), relativePath)
+    }
     return VirtualFileUtil.findOrCreateDirectory(outputDirectory, relativePath)
   }
 
