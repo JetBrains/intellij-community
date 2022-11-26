@@ -104,7 +104,7 @@ public class IdentifierSplitter extends BaseSplitter {
           ch >= '\uFF00' && ch <= '\uFFEF' //Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
       ) {
         if (s >= 0) {
-          add(text, result, i, s);
+          add(result, i, s);
           s = -1;
         }
         prevType = Character.MATH_SYMBOL;
@@ -128,18 +128,18 @@ public class IdentifierSplitter extends BaseSplitter {
         }
         else if (type == Character.UPPERCASE_LETTER && prevType == Character.LOWERCASE_LETTER) {
           //a|Camel
-          add(text, result, i, s);
+          add(result, i, s);
           s = i;
         }
         else if (i - s >= 1 && type == Character.LOWERCASE_LETTER && prevType == Character.UPPERCASE_LETTER) {
           //CAPITALN|ext
-          add(text, result, i - 1, s);
+          add(result, i - 1, s);
           s = i - 1;
         }
       }
       else if (s >= 0) {
         //non-letter
-        add(text, result, i, s);
+        add(result, i, s);
         s = -1;
       }
       prevType = type;
@@ -147,12 +147,12 @@ public class IdentifierSplitter extends BaseSplitter {
     }
     //remainder
     if (s >= 0) {
-      add(text, result, i, s);
+      add(result, i, s);
     }
     return result;
   }
 
-  private static void add(String text, List<TextRange> result, int i, int s) {
+  private static void add(List<TextRange> result, int i, int s) {
     if (i - s > 3) {
       final TextRange textRange = new TextRange(s, i);
       //System.out.println("textRange = " + textRange + " = "+ textRange.substring(text));
