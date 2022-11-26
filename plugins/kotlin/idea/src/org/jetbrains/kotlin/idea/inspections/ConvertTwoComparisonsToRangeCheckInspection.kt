@@ -54,10 +54,10 @@ class ConvertTwoComparisonsToRangeCheckInspection :
 
     private data class RangeExpressionData(val value: KtExpression, val min: String, val max: String) {
         fun createExpression(): KtBinaryExpression {
-            val factory = KtPsiFactory(value)
-            return factory.createExpressionByPattern(
-                "$0 in $1..$2", value, factory.createExpression(min), factory.createExpression(max)
-            ) as KtBinaryExpression
+            val psiFactory = KtPsiFactory(value.project)
+            val minExpression = psiFactory.createExpression(min)
+            val maxExpression = psiFactory.createExpression(max)
+            return psiFactory.createExpressionByPattern("$0 in $1..$2", value, minExpression, maxExpression) as KtBinaryExpression
         }
     }
 
@@ -175,9 +175,9 @@ class ConvertTwoComparisonsToRangeCheckInspection :
 
                 if (valType.isFloatingPoint()) {
                     if (minType.isInteger())
-                        minVal = KtPsiFactory(minVal).createExpression(getDoubleConstant(min, minType, context) ?: return null)
+                        minVal = KtPsiFactory(minVal.project).createExpression(getDoubleConstant(min, minType, context) ?: return null)
                     if (maxType.isInteger())
-                        maxVal = KtPsiFactory(maxVal).createExpression(getDoubleConstant(max, maxType, context) ?: return null)
+                        maxVal = KtPsiFactory(maxVal.project).createExpression(getDoubleConstant(max, maxType, context) ?: return null)
                 }
             } else {
                 return null

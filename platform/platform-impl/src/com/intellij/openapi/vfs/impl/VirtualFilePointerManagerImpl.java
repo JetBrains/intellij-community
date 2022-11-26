@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -90,6 +91,25 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     @Override
     public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
       return ((VirtualFilePointerManagerImpl)getInstance()).prepareChange(events);
+    }
+  }
+
+  static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
+
+    @Override
+    public void connectionOpen() {
+      final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
+      if (service != null) {
+        ((VirtualFilePointerManagerImpl)service).resolveUrlBasedPointers();
+      }
+    }
+
+    @Override
+    public void beforeConnectionClosed() {
+      final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
+      if (service != null) {
+        ((VirtualFilePointerManagerImpl)service).switchToUrlBasedPointers();
+      }
     }
   }
 
@@ -417,7 +437,54 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
   }
 
-  public synchronized void assertAllPointersDisposed() {
+  synchronized void resolveUrlBasedPointers() {
+    resolveUrlBasedPointers(myLocalRoot);
+    resolveUrlBasedPointers(myTempRoot);
+  }
+
+  private static void resolveUrlBasedPointers(@NotNull FilePartNodeRoot root) {
+    for (FilePartNode child : root.children) {
+      if (child.isUrlBased()) {
+        final var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.myUrl(child.myFileOrUrl));
+        if (resolvedChild != null) {
+          child = child.replaceWithFPPN(resolvedChild, root);
+        }
+      }
+
+      resolveUrlBasedPointers(child, root, root);
+    }
+  }
+
+  private static void resolveUrlBasedPointers(@NotNull FilePartNode node, @NotNull FilePartNode parent, @NotNull FilePartNodeRoot root) {
+    node.update(parent, root, "VFPMI invalidated VFP during FS connection", null);
+
+    for (FilePartNode child : node.children) {
+      resolveUrlBasedPointers(child, node, root);
+    }
+  }
+
+  synchronized void switchToUrlBasedPointers() {
+    myLocalRoot.replaceChildrenWithUPN();
+    myTempRoot.replaceChildrenWithUPN();
+  }
+
+  public synchronized void assertUrlBasedPointers() {
+    assertUrlBasedPointers(myLocalRoot);
+    assertUrlBasedPointers(myTempRoot);
+  }
+
+  private static void assertUrlBasedPointers(@NotNull FilePartNode node) {
+    if (node.isUrlBased()) {
+      for (FilePartNode child : node.children) {
+        assertUrlBasedPointers(child);
+      }
+    }
+    else {
+      throw new IllegalStateException("Node for " + node.myFileOrUrl + " is not a url-based");
+    }
+  }
+
+  private synchronized void assertAllPointersDisposed() {
     List<VirtualFilePointer> leaked = new ArrayList<>(dumpAllPointers());
     leaked.sort(Comparator.comparing(VirtualFilePointer::getUrl));
     for (VirtualFilePointer pointer : leaked) {
@@ -472,24 +539,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return container;
   }
 
-  private static class CollectedEvents {
-    private final @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers;
-    private final List<? extends NodeToUpdate> toUpdateNodes;
-    private final List<? extends EventDescriptor> eventList;
-    private final long startModCount;
-    private final long prepareElapsedMs;
-
-    CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
-                    @NotNull List<? extends NodeToUpdate> toUpdateNodes,
-                    @NotNull List<? extends EventDescriptor> eventList,
-                    long startModCount,
-                    long prepareElapsedMs) {
-      this.toFirePointers = toFirePointers;
-      this.toUpdateNodes = toUpdateNodes;
-      this.eventList = eventList;
-      this.startModCount = startModCount;
-      this.prepareElapsedMs = prepareElapsedMs;
-    }
+  private record CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
+                                 @NotNull List<? extends NodeToUpdate> toUpdateNodes,
+                                 @NotNull List<? extends EventDescriptor> eventList,
+                                 long startModCount,
+                                 long prepareElapsedMs) {
   }
 
   static class NodeToUpdate {

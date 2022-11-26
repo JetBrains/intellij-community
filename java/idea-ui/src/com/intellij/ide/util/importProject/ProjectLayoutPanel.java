@@ -366,6 +366,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() > 1);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class SplitAction extends AnAction {
@@ -403,6 +407,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       e.getPresentation().setEnabled(elements.size() == 1 && getContent(elements.get(0)).size() > 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class RenameAction extends AnAction {
@@ -433,6 +442,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     @Override
     public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

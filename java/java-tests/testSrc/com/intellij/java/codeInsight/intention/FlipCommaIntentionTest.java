@@ -19,57 +19,69 @@ public class FlipCommaIntentionTest extends IPPTestCase {
   }
 
   public void testMultipleFieldsSingleDeclaration() {
-    doTest("class C {\n" +
-           "    int a,/*_Flip ','*/ b;\n" +
-           "}",
+    doTest("""
+             class C {
+                 int a,/*_Flip ','*/ b;
+             }""",
 
-           "class C {\n" +
-           "    int b, a;\n" +
-           "}");
+           """
+             class C {
+                 int b, a;
+             }""");
   }
 
   public void testMultipleFieldsSingleDeclaration2() {
-    doTest("class C {\n" +
-           "  int a, b,/*_Flip ','*/ c;\n" +
-           "}",
+    doTest("""
+             class C {
+               int a, b,/*_Flip ','*/ c;
+             }""",
 
-           "class C {\n" +
-           "  int a, c, b;\n" +
-           "}");
+           """
+             class C {
+               int a, c, b;
+             }""");
   }
 
   public void testMultipleFieldsSingleDeclaration3() {
-     doTest("class C {\n" +
-            "  String one = \"one\",/*_Flip ','*/ two =\"two\", three;\n" +
-            "}",
+     doTest("""
+              class C {
+                String one = "one",/*_Flip ','*/ two ="two", three;
+              }""",
 
-            "class C {\n" +
-            "  String two =\"two\", one = \"one\", three;\n" +
-            "}");
+            """
+              class C {
+                String two ="two", one = "one", three;
+              }""");
   }
 
   public void testIncomplete() {
-    doTest("class C {\n" +
-           "  int a,/*_Flip ','*/ b =;\n" +
-           "}",
+    doTest("""
+             class C {
+               int a,/*_Flip ','*/ b =;
+             }""",
 
-           "class C {\n" +
-           "  int b =, a;\n" +
-           "}");
+           """
+             class C {
+               int b =, a;
+             }""");
   }
 
   public void testFlippingBrokenEnumConstantDoesNotCrashWithStubTextMismatch() {
-    doTest("enum E {\n" +
-           "  A(1)/*_Flip ','*/,\n" +
-           "  B(C(2), \n" +
-           "  D(5);\n" +
-           "}\n",
+    doTest("""
+             enum E {
+               A(1)/*_Flip ','*/,
+               B(C(2),\s
+               D(5);
+             }
+             """,
 
-           "enum E {\n" +
-           "  B(C(2), \n" +
-           "  D(5),\n" +
-           "  A(1);\n" +
-           "}\n");
+           """
+             enum E {
+               B(C(2),\s
+               D(5),
+               A(1);
+             }
+             """);
   }
 
   public void testUnavailableForDangling() {

@@ -43,11 +43,13 @@ fun <T : Any> ComponentManager.registerOrReplaceServiceInstance(serviceInterface
   val previous = this.getService(serviceInterface)
   if (previous != null) {
     replaceService(serviceInterface, instance, parentDisposable)
-  } else {
+  }
+  else {
     (this as ComponentManagerImpl).registerServiceInstance(serviceInterface, instance, testDescriptor)
     if (instance is Disposable) {
       Disposer.register(parentDisposable, instance)
-    } else {
+    }
+    else {
       Disposer.register(parentDisposable) {
         this.unregisterComponent(serviceInterface)
       }

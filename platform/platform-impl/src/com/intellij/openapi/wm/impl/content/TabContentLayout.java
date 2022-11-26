@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
@@ -39,7 +40,8 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   static final int MORE_ICON_BORDER = 6;
   public static final int TAB_LAYOUT_START = 4;
 
-  private JLabel dropOverPlaceholder;
+  protected boolean isSingleContentView = false;
+  protected JLabel dropOverPlaceholder;
   private LayoutData lastLayout;
 
   final List<ContentTabLabel> tabs = new ArrayList<>();
@@ -144,6 +146,9 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       idLabel.setBounds(data.eachX, data.eachY, idLabel.getPreferredSize().width, bounds.height);
       data.eachX += idLabel.getPreferredSize().width;
     }
+    else {
+      idLabel.setBounds(data.eachX, data.eachY, 0, 0);
+    }
     int tabsStart = data.eachX;
 
     if (manager.getContentCount() == 0) return;
@@ -173,9 +178,10 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         data.toLayout.add(eachTab);
       }
 
-      if (ui.dropOverIndex != -1) {
+      if (ui.dropOverIndex != -1 && !isSingleContentView) {
         data.requiredWidth += ui.dropOverWidth;
-        data.toLayout.add(Math.max(0, ui.dropOverIndex - 1), dropOverPlaceholder);
+        int index = Math.min(data.toLayout.size(), Math.max(0, ui.dropOverIndex - 1));
+        data.toLayout.add(index, dropOverPlaceholder);
       }
 
       data.toFitWidth = bounds.getSize().width - data.eachX;
@@ -264,10 +270,12 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       selected = contentManager.getContents()[0];
     }
 
-    if (selected != null) {
-      ContentTabLabel label = contentToTabs.get(selected);
-      if (label != null) {
-        result += label.getMinimumSize().width;
+    if (!ExperimentalUI.isNewUI()) {
+      if (selected != null) {
+        ContentTabLabel label = contentToTabs.get(selected);
+        if (label != null) {
+          result += label.getMinimumSize().width;
+        }
       }
     }
     return result;
@@ -374,8 +382,10 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       ui.getTabComponent().add(each);
       ToolWindowContentUi.initMouseListeners(each, ui, false);
     }
-    if (ui.dropOverIndex >= 0 && !tabs.isEmpty()) {
-      ui.getTabComponent().add(dropOverPlaceholder, ui.dropOverIndex);
+    if ((!isSingleContentView || !Registry.is("debugger.new.tool.window.layout.dnd", false))
+        && ui.dropOverIndex >= 0 && !tabs.isEmpty()) {
+      int index = Math.min(ui.dropOverIndex, ui.getTabComponent().getComponentCount());
+      ui.getTabComponent().add(dropOverPlaceholder, index);
     }
   }
 
@@ -389,7 +399,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     else {
       tab = new ContentTabLabel(content, this);
     }
-    tabs.add(event.getIndex(), tab);
+    tabs.add(Math.min(event.getIndex(), tabs.size()), tab);
     contentToTabs.put(content, tab);
 
     DnDTarget target = getDnDTarget(content);

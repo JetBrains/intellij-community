@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
 import com.intellij.util.system.CpuArch
@@ -76,6 +77,7 @@ internal object UpdateInstaller {
   }
 
   @JvmStatic
+  @RequiresBackgroundThread
   fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
     indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
@@ -101,6 +103,7 @@ internal object UpdateInstaller {
   }
 
   @JvmStatic
+  @RequiresBackgroundThread
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
     val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
     if (downloadedPluginUpdates.isEmpty()) {
@@ -194,7 +197,7 @@ internal object UpdateInstaller {
 
   private fun getRuntimeSuffix(): String = when {
     SystemInfo.isUnix && !SystemInfo.isMac && !Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-no-jbr"
-    (SystemInfo.isMac || SystemInfo.isLinux) && CpuArch.isArm64() -> "-aarch64"
+    (SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows) && CpuArch.isArm64() -> "-aarch64"
     else -> ""
   }
 }

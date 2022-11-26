@@ -14,7 +14,6 @@ internal class InterfaceExtensionPoint<T : Any>(
   clazz: Class<T>?,
   dynamic: Boolean,
 ) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, clazz, dynamic) {
-
   public override fun createAdapter(descriptor: ExtensionDescriptor,
                                     pluginDescriptor: PluginDescriptor,
                                     componentManager: ComponentManager): ExtensionComponentAdapter {
@@ -31,10 +30,10 @@ internal class InterfaceExtensionPoint<T : Any>(
                                              InterfaceExtensionImplementationClassResolver.INSTANCE)
   }
 
-  public override fun unregisterExtensions(componentManager: ComponentManager,
-                                           pluginDescriptor: PluginDescriptor,
-                                           priorityListenerCallbacks: MutableList<in Runnable>,
-                                           listenerCallbacks: MutableList<in Runnable>) {
+  override fun unregisterExtensions(componentManager: ComponentManager,
+                                    pluginDescriptor: PluginDescriptor,
+                                    priorityListenerCallbacks: MutableList<in Runnable>,
+                                    listenerCallbacks: MutableList<in Runnable>) {
     unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
   }
 }

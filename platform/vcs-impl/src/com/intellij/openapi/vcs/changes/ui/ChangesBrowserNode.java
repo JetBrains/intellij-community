@@ -14,16 +14,14 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -59,16 +57,33 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   protected static final int DEFAULT_SORT_WEIGHT = 10;
   protected static final int IGNORED_SORT_WEIGHT = 11;
 
+  private static final Color UNKNOWN_COLOR = JBColor.marker("ChangesBrowserNode::UNKNOWN_COLOR");
+
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
     path -> ((ChangesBrowserNode<?>)path.getLastPathComponent()).getTextPresentation();
 
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
+  private Color myBackgroundColor = UNKNOWN_COLOR;
   @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
+  }
+
+  /**
+   * see {@link TreeModelBuilder#precalculateFileColors(Project, ChangesBrowserNode)}
+   */
+  @ApiStatus.Internal
+  final Color getBackgroundColorCached(@NotNull Project project) {
+    Color backgroundColor = myBackgroundColor;
+    if (backgroundColor == UNKNOWN_COLOR) {
+      backgroundColor = getBackgroundColor(project);
+      myBackgroundColor = backgroundColor;
+    }
+
+    return backgroundColor;
   }
 
   @NotNull
@@ -189,7 +204,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     myDirectoryCount = -1;
   }
 
-  private int sumForChildren(@NotNull ToIntFunction<ChangesBrowserNode<?>> counter) {
+  private int sumForChildren(@NotNull ToIntFunction<? super ChangesBrowserNode<?>> counter) {
     int sum = 0;
     for (int i = 0; i < getChildCount(); i++) {
       ChangesBrowserNode<?> child = (ChangesBrowserNode<?>)getChildAt(i);

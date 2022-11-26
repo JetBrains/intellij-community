@@ -124,17 +124,8 @@ final class LibraryDependentToolWindowManager implements StartupActivity {
     }
   }
 
-  private static class LibraryWindowsState {
-    final @NotNull Project project;
-    final List<LibraryDependentToolWindow> extensions;
-    final Set<LibraryDependentToolWindow> existing;
-
-    private LibraryWindowsState(@NotNull Project project,
-                                List<LibraryDependentToolWindow> extensions,
-                                Set<LibraryDependentToolWindow> existing) {
-      this.project = project;
-      this.extensions = extensions;
-      this.existing = existing;
-    }
+  private record LibraryWindowsState(@NotNull Project project,
+                                     @NotNull List<LibraryDependentToolWindow> extensions,
+                                     @NotNull Set<LibraryDependentToolWindow> existing) {
   }
 }

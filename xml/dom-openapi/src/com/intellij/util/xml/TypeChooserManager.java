@@ -22,9 +22,6 @@ import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public class TypeChooserManager {
   private final Map<Type, TypeChooser> myClassChoosers = new ConcurrentHashMap<>();
 

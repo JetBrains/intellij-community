@@ -55,7 +55,9 @@ internal class AnnotationsPreloader(private val project: Project) {
 
           runInEdt {
             refreshCodeAuthorInlayHints(project, file)
-            CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProvider(CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
+            if (project.isDisposed) return@runInEdt
+            CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProvider(
+              CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
           }
         }
         catch (e: VcsException) {

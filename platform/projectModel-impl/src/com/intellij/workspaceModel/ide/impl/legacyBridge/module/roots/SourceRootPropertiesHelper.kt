@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -21,7 +21,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 object SourceRootPropertiesHelper {
   @Suppress("UNCHECKED_CAST")
@@ -149,7 +149,7 @@ object SourceRootPropertiesHelper {
     JpsElementFactory.getInstance().createModuleSourceRoot(url, rootType as JpsModuleSourceRootType<JpsElement>, rootProperties))
   }
 
-  internal fun loadCustomRootProperties(entity: SourceRootEntity, rootType: JpsModuleSourceRootType<out JpsElement>): JpsElement {
+  private fun loadCustomRootProperties(entity: SourceRootEntity, rootType: JpsModuleSourceRootType<out JpsElement>): JpsElement {
     val elementFactory = JpsElementFactory.getInstance()
 
     val customSourceRoot = entity.customSourceRootProperties

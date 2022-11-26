@@ -54,7 +54,10 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -114,7 +117,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     final RowSorter.SortKey sortKey = new RowSorter.SortKey(stateBean.mySortingColumn, stateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
     rowSorter.setSortKeys(Collections.singletonList(sortKey));
-    setWidth();
+    AppExecutorUtil.getAppExecutorService().execute(() -> setWidth());
     addToCenter(myTable);
 
     attachFileStatusListener();
@@ -127,7 +130,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       }
     }.installOn(myTable.getTree());
 
-    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(myTable.getTree(), (path) -> path.getLastPathComponent().toString());
+    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(myTable.getTree(), false, path -> path.getLastPathComponent().toString());
     speedSearch.setCanExpand(true);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
@@ -389,18 +392,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   public void resetView() {
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       ((CoverageListRootNode)myTreeStructure.getRootElement()).reset();
-      resetModel();
+      myModel.reset(true);
     });
-  }
-
-  private void resetModel() {
-    myModel.reset();
   }
 
   private final class FlattenPackagesAction extends ToggleAction {
 
     private FlattenPackagesAction() {
-      super(IdeBundle.messagePointer("action.flatten.packages"), IdeBundle.messagePointer("action.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
+      super(IdeBundle.messagePointer("action.flatten.packages"), CoverageBundle.messagePointer("coverage.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
     }
 
     @Override
@@ -411,7 +410,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.myFlattenPackages = state;
-      resetModel();
+      myModel.reset(false);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

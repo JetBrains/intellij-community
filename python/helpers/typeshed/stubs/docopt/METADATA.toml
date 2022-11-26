@@ -1,3 +1,2 @@
 # Prior to v0.6, docopt() had only 3 optional args
 version = "0.6.*"
-python2 = true

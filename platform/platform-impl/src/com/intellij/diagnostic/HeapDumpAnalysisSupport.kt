@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -11,8 +11,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.util.io.exists
 import java.awt.Component
 import java.io.File
@@ -68,12 +69,14 @@ open class HeapDumpAnalysisSupport {
   }
 }
 
-internal class AnalyzePendingSnapshotActivity: StartupActivity.DumbAware {
-  override fun runActivity(project: Project) {
+internal class AnalyzePendingSnapshotActivity: ProjectPostStartupActivity {
+  init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      return
+      throw ExtensionNotApplicableException.create()
     }
+  }
 
+  override suspend fun execute(project: Project) {
     val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
     if (!Files.isRegularFile(jsonPath)) {
       return

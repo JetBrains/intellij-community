@@ -20,7 +20,7 @@ public class LibClass {
     public val nested: Nested = Nested()
 }
 
-public interface LibTrait {
+public interface LibInterface {
     public fun foo() {
     }
 }

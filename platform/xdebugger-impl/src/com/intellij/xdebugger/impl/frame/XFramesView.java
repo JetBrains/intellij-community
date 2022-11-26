@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -32,6 +33,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -82,6 +84,7 @@ public final class XFramesView extends XDebugView {
       @Override
       protected boolean needToCheckFocus() { return false; }
 
+      @RequiresEdt
       @Override
       protected void scrollToSource(@NotNull Component list) {
         if (myListenersEnabled) {
@@ -151,6 +154,7 @@ public final class XFramesView extends XDebugView {
             if (session != null) {
               myRefresh = false;
               updateFrames((XExecutionStack)item, session, null, false);
+              XDebuggerActionsCollector.threadSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
             }
           }
         }
@@ -216,7 +220,7 @@ public final class XFramesView extends XDebugView {
     }
   }
 
-  public void onFrameSelectionKeyPressed(@NotNull Consumer<XStackFrame> handler) {
+  public void onFrameSelectionKeyPressed(@NotNull Consumer<? super XStackFrame> handler) {
     myFramesList.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -478,6 +482,9 @@ public final class XFramesView extends XDebugView {
       if (session != null) {
         if (force || (!myRefresh && session.getCurrentStackFrame() != selected)) {
           session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
+          if (force) {
+            XDebuggerActionsCollector.frameSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
+          }
         }
       }
     }

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.tabs.*;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,23 +82,14 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public void setTabPlacement(int tabPlacement) {
-    final JBTabsPresentation presentation = myTabs.getPresentation();
-    switch (tabPlacement) {
-      case SwingConstants.TOP:
-        presentation.setTabsPosition(JBTabsPosition.top);
-        break;
-      case SwingConstants.BOTTOM:
-        presentation.setTabsPosition(JBTabsPosition.bottom);
-        break;
-      case SwingConstants.LEFT:
-        presentation.setTabsPosition(JBTabsPosition.left);
-        break;
-      case SwingConstants.RIGHT:
-        presentation.setTabsPosition(JBTabsPosition.right);
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid tab placement code=" + tabPlacement);
-    }
+    JBTabsPosition position = switch (tabPlacement) {
+      case SwingConstants.TOP -> JBTabsPosition.top;
+      case SwingConstants.BOTTOM -> JBTabsPosition.bottom;
+      case SwingConstants.LEFT -> JBTabsPosition.left;
+      case SwingConstants.RIGHT -> JBTabsPosition.right;
+      default -> throw new IllegalArgumentException("Invalid tab placement code=" + tabPlacement);
+    };
+    myTabs.getPresentation().setTabsPosition(position);
   }
 
   @Override
@@ -195,16 +187,12 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public void setTabLayoutPolicy(int policy) {
-    switch (policy) {
-      case JTabbedPane.SCROLL_TAB_LAYOUT:
-        myTabs.getPresentation().setSingleRow(true);
-        break;
-      case JTabbedPane.WRAP_TAB_LAYOUT:
-        myTabs.getPresentation().setSingleRow(false);
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
-    }
+    boolean singleRow = switch (policy) {
+      case JTabbedPane.SCROLL_TAB_LAYOUT -> true;
+      case JTabbedPane.WRAP_TAB_LAYOUT -> false;
+      default -> throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
+    };
+    myTabs.getPresentation().setSingleRow(singleRow);
   }
 
   @Override
@@ -212,7 +200,7 @@ public class JBTabsPaneImpl implements TabbedPane {
   }
 
   @Override
-  public String getTitleAt(int i) {
+  public @Nls String getTitleAt(int i) {
     return getTabAt(i).getText();
   }
 

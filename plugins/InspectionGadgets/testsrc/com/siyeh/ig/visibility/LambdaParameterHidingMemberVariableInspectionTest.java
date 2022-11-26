@@ -29,40 +29,44 @@ public class LambdaParameterHidingMemberVariableInspectionTest extends LightJava
 
   @Override
   protected String[] getEnvironmentClasses() {
-    return new String[] {"package java.util.function;" +
-                         "public interface Function<T, R> {" +
-                         "    R apply(T t);" +
-                         "}"};
+    return new String[] {"""
+        package java.util.function;
+        public interface Function<T, R> {
+            R apply(T t);
+        }"""};
   }
 
   public void testSimple() {
-    doTest("import java.util.function.Function;" +
-           "class X {" +
-           "  private String s;" +
-           "" +
-           "  void m() {" +
-           "    Function<String, String> f = (/*Lambda parameter 's' hides field in class 'X'*/s/**/) -> null;" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.util.function.Function;
+             class X {
+               private String s;
+
+               void m() {
+                 Function<String, String> f = (/*Lambda parameter 's' hides field in class 'X'*/s/**/) -> null;
+               }
+             }""");
   }
 
   public void testStatic() {
-    doTest("import java.util.function.Function;" +
-           "class X {" +
-           "  private String s;" +
-           "  static Function<String, String> m() {" +
-           "    return s -> null; " +
-           "  }" +
-           "}");
+    doTest("""
+             import java.util.function.Function;
+             class X {
+               private String s;
+               static Function<String, String> m() {
+                 return s -> null;
+               }
+             }""");
   }
 
   public void testStaticStatic() {
-    doTest("import java.util.function.Function;" +
-           "class X {" +
-           "  private static String s;" +
-           "  static Function<String, String> m() {" +
-           "    return /*Lambda parameter 's' hides field in class 'X'*/s/**/ -> null; " +
-           "  }" +
-           "}");
+    doTest("""
+             import java.util.function.Function;
+             class X {
+               private static String s;
+               static Function<String, String> m() {
+                 return /*Lambda parameter 's' hides field in class 'X'*/s/**/ -> null;
+               }
+             }""");
   }
 }

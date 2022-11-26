@@ -9,9 +9,9 @@ import java.util.Collection;
 
 @ApiStatus.Internal
 public final class IntersectionFileEnumeration implements VirtualFileEnumeration {
-  private final @NotNull Collection<VirtualFileEnumeration> myHints;
+  private final @NotNull Collection<? extends VirtualFileEnumeration> myHints;
 
-  public IntersectionFileEnumeration(@NotNull Collection<VirtualFileEnumeration> hints) {
+  public IntersectionFileEnumeration(@NotNull Collection<? extends VirtualFileEnumeration> hints) {
     myHints = hints;
   }
 

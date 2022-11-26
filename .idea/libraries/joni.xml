@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="joni" type="repository">
-    <properties maven-id="org.jruby.joni:joni:2.1.43" />
+    <properties maven-id="org.jruby.joni:joni:2.1.44" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.43/joni-2.1.43.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.57/jcodings-1.0.57.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.44/joni-2.1.44.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.43/joni-2.1.43-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.57/jcodings-1.0.57-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.44/joni-2.1.44-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
@@ -31,7 +30,7 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
 
   private fun actuallyExecute(editor: Editor, caret: Caret?, dataContext: DataContext?): Boolean {
     val project = editor.project ?: return false
-    if (!Registry.`is`("markdown.tables.editing.support.enable") || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+    if (!TableUtils.isTableSupportEnabled() || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
       return false
     }
     val document = editor.document

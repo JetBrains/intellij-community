@@ -11,7 +11,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.vcs.DiffVcsFacade;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -22,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,6 +35,8 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.LightVirtualFileBase;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
@@ -188,6 +190,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return createContentFromFile(project, file);
   }
 
+  @NotNull
+  @Override
+  public DiffContent create(@Nullable Project project, @NotNull VirtualFile file, @Nullable VirtualFile highlightFile) {
+    return createContentFromFile(project, file, highlightFile);
+  }
+
   @Nullable
   @Override
   public DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
@@ -304,20 +312,18 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                  byte @NotNull [] content,
                                                  @NotNull FileType fileType,
                                                  @NotNull String fileName) {
-    Charset charset = guessCharset(project, content, fileType);
     return readOnlyDocumentContent(project)
       .contextByFileType(fileType)
       .withFileName(fileName)
-      .buildFromBytes(content, charset);
+      .buildFromBytes(content);
   }
 
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
-    Charset charset = guessCharset(project, content, filePath);
     return readOnlyDocumentContent(project)
       .contextByFilePath(filePath)
-      .buildFromBytes(content, charset);
+      .buildFromBytes(content);
   }
 
   @NotNull
@@ -325,19 +331,18 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                   byte @NotNull [] content,
                                                   @NotNull FilePath filePath,
                                                   @Nullable Charset defaultCharset) {
-    Charset charset = guessCharset(project, content, filePath, defaultCharset);
     return readOnlyDocumentContent(project)
       .contextByFilePath(filePath)
-      .buildFromBytes(content, charset);
+      .withDefaultCharset(defaultCharset)
+      .buildFromBytes(content);
   }
 
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
-    Charset charset = guessCharset(project, content, highlightFile);
     return readOnlyDocumentContent(project)
       .contextByHighlightFile(highlightFile)
-      .buildFromBytes(content, charset);
+      .buildFromBytes(content);
   }
 
   @NotNull
@@ -465,65 +470,56 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
-    return guessCharset(project, content, filePath, null);
+    return guessCharset(project, content, filePath.getFileType(), filePath, filePath.getVirtualFile(), null);
   }
 
   @NotNull
   private static Charset guessCharset(@Nullable Project project,
                                       byte @NotNull [] content,
+                                      @Nullable FileType fileType,
                                       @NotNull FilePath filePath,
+                                      @Nullable VirtualFile highlightFile,
                                       @Nullable Charset defaultCharset) {
-    FileType fileType = filePath.getFileType();
-    Charset charset = guessCharsetFromContent(content, fileType);
-    if (charset != null) return charset;
-
-    if (defaultCharset != null) return defaultCharset;
-
-    if (fileType == StdFileTypes.PROPERTIES) {
-      EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
-      Charset propertiesCharset = e.getDefaultCharsetForPropertiesFiles(null);
-      if (propertiesCharset != null) {
-        if (e.isNative2AsciiForPropertiesFiles()) {
-          return Native2AsciiCharset.wrap(propertiesCharset);
-        }
-        else {
-          return propertiesCharset;
-        }
-      }
-    }
-
-    return filePath.getCharset(project);
-  }
-
-  @NotNull
-  public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
-    Charset charset = guessCharsetFromContent(content, highlightFile.getFileType());
-    if (charset != null) return charset;
-
-    return highlightFile.getCharset();
-  }
-
-  @NotNull
-  public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull FileType fileType) {
-    Charset charset = guessCharsetFromContent(content, fileType);
-    if (charset != null) return charset;
-
-    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
-    return e.getDefaultCharset();
-  }
-
-
-  @Nullable
-  private static Charset guessCharsetFromContent(byte @NotNull [] content, @NotNull FileType fileType) {
     Charset bomCharset = CharsetToolkit.guessFromBOM(content);
     if (bomCharset != null) return bomCharset;
 
-    if (fileType.isBinary()) {
-      Charset guessedCharset = guessCharsetFromContent(content);
-      if (guessedCharset != null) return guessedCharset;
+    if (defaultCharset != null) return defaultCharset;
+
+    if (fileType != null && !fileType.isBinary()) {
+      Charset fileTypeCharset = guessFileTypeCharset(project, content, fileType, filePath);
+      if (fileTypeCharset != null) return fileTypeCharset;
     }
 
-    return null;
+    if (highlightFile != null) {
+      Charset fileCharset = highlightFile.getCharset();
+      return takeCharsetOrGuessUTF(fileCharset, content);
+    }
+    else {
+      EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
+      Charset globalCharset = e.getDefaultCharset();
+      return takeCharsetOrGuessUTF(globalCharset, content);
+    }
+  }
+
+  @NotNull
+  private static Charset takeCharsetOrGuessUTF(@NotNull Charset charset, byte @NotNull [] content) {
+    if (StandardCharsets.UTF_8.equals(charset)) {
+      // GuessedEncoding can't detect UTF8-incompatible charsets, verification can be skipped
+      return charset;
+    }
+
+    if (CharsetToolkit.tryDecodeString(content, charset) != null) {
+      // charset is OK
+      return charset;
+    }
+
+    Charset charsetFromContent = guessCharsetFromContent(content);
+    if (charsetFromContent != null) {
+      return charsetFromContent;
+    }
+
+    // charset is NOT OK, but we don't know better
+    return charset;
   }
 
   @Nullable
@@ -536,13 +532,27 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (fromBOM != null) return fromBOM;
 
     CharsetToolkit.GuessedEncoding guessedEncoding = toolkit.guessFromContent(content.length);
-    switch (guessedEncoding) {
-      case SEVEN_BIT:
-        return StandardCharsets.US_ASCII;
-      case VALID_UTF8:
-        return StandardCharsets.UTF_8;
-      default:
-        return null;
+    return switch (guessedEncoding) {
+      case SEVEN_BIT -> StandardCharsets.US_ASCII;
+      case VALID_UTF8 -> StandardCharsets.UTF_8;
+      default -> null;
+    };
+  }
+
+  @Nullable
+  private static Charset guessFileTypeCharset(@Nullable Project project,
+                                              byte @NotNull [] content,
+                                              @NotNull FileType fileType,
+                                              @NotNull FilePath filePath) {
+    LightVirtualFileBase file = new MyBinaryLightVirtualFile(filePath, fileType, content);
+    if (project != null) {
+      // pass Project to the EncodingManagerImpl to delegate to the EncodingProjectManagerImpl when needed
+      return ProjectLocator.computeWithPreferredProject(file, project, () -> {
+        return CharsetToolkit.forName(fileType.getCharset(file, content));
+      });
+    }
+    else {
+      return CharsetToolkit.forName(fileType.getCharset(file, content));
     }
   }
 
@@ -564,6 +574,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     private @Nullable Context context;
     private @Nullable FilePath originalFilePath;
     private @Nullable @NonNls String fileName;
+    private @Nullable @NonNls Charset defaultCharset;
 
     DocumentContentBuilderImpl(@Nullable Project project) {
       this.project = project;
@@ -579,6 +590,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @NotNull
     public DocumentContentBuilder withFileName(@Nullable String fileName) {
       this.fileName = fileName;
+      return this;
+    }
+
+    @Override
+    public @NotNull DocumentContentBuilder withDefaultCharset(@Nullable Charset charset) {
+      this.defaultCharset = charset;
       return this;
     }
 
@@ -630,34 +647,36 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @Override
     @NotNull
     public DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators) {
-      return build(TextContent.fromText(text, respectLineSeparators));
+      FileType fileType = constructFileType();
+      FilePath filePath = constructFilePath();
+
+      TextContent textContent = TextContent.fromText(text, respectLineSeparators);
+
+      Document document = createDocument(project, textContent.text, fileType, filePath, readOnly);
+      return build(document, textContent);
     }
 
     @Override
     @NotNull
-    public DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset) {
-      return build(TextContent.fromBytes(content, charset));
+    public DocumentContent buildFromBytes(byte @NotNull [] content) {
+      FileType fileType = constructFileType();
+      FilePath filePath = constructFilePath();
+      VirtualFile highlightFile = constructHighlightFile();
+      Charset charset = guessCharset(project, content, fileType, filePath, highlightFile, defaultCharset);
+
+      // decode bytes ourselves to detect incorrect charsets
+      TextContent textContent = TextContent.fromBytes(content, charset);
+
+      Document document = createDocument(project, textContent.text, fileType, filePath, readOnly);
+      return build(document, textContent);
     }
 
     @NotNull
-    private DocumentContent build(@NotNull TextContent textContent) {
-      FileType fileType = context != null ? context.getContentType() : null;
-
-      FilePath filePath = originalFilePath;
-      if (filePath == null) {
-        String name = fileName;
-        if (name == null) {
-          name = "diff." + StringUtil.defaultIfEmpty(fileType != null ? fileType.getDefaultExtension() : null, "txt");
-        }
-        filePath = DiffVcsFacade.getInstance().getFilePath(name);
-      }
-
-      Document document = createDocument(project, textContent.text, fileType, filePath, readOnly);
-
+    private DocumentContent build(@NotNull Document document, @NotNull TextContent textContent) {
       DocumentContent documentContent = new ContextReferentDocumentContent(project, document, textContent, context);
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (file instanceof LightVirtualFile) {
+      if (file != null && !file.isInLocalFileSystem()) {
         OutsidersPsiFileSupport.markFile(file, originalFilePath != null ? originalFilePath.getPath() : null);
       }
 
@@ -670,6 +689,30 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       }
 
       return documentContent;
+    }
+
+    @Nullable
+    private FileType constructFileType() {
+      return context != null ? context.getContentType() : null;
+    }
+
+    @NotNull
+    private FilePath constructFilePath() {
+      if (originalFilePath != null) {
+        return originalFilePath;
+      }
+
+      String name = fileName;
+      if (name == null) {
+        FileType fileType = constructFileType();
+        name = "diff." + StringUtil.defaultIfEmpty(fileType != null ? fileType.getDefaultExtension() : null, "txt");
+      }
+      return DiffVcsFacade.getInstance().getFilePath(name);
+    }
+
+    @Nullable
+    private VirtualFile constructHighlightFile() {
+      return context != null ? context.getHighlightFile() : null;
     }
   }
 
@@ -826,7 +869,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       textContent.isBom = isBom;
       if (malformedContent) {
         String notificationText = DiffBundle.message("error.content.decoded.with.wrong.charset", charset.name());
-        textContent.notification = DiffNotifications.createNotificationProvider(notificationText, LightColors.RED);
+        textContent.notification =
+          DiffNotifications.createNotificationProvider(notificationText, LightColors.RED, EditorNotificationPanel.Status.Error);
       }
       return textContent;
     }

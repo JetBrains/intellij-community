@@ -1,18 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing;
 
-import com.intellij.ide.DataManager;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -20,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -308,8 +308,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-                     "");
+                     "<packaging>pom</packaging>");
     scheduleProjectImportAndWait();
 
     assertEquals(2, getProjectsTree().getRootProjects().size());
@@ -1101,7 +1100,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
   }
 
   @Test 
-  public void testIgnoringProjectsForDeletedModules() {
+  public void testNotIgnoringProjectsForDeletedInBackgroundModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1122,6 +1121,71 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
 
     ModuleManager.getInstance(myProject).disposeModule(module);
+    myProjectsManager.performScheduledImportInTests();
+
+    assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
+    assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+  }
+
+  @Test
+  public void testIgnoringProjectsForRemovedInUiModules() {
+    configConfirmationForYesAnswer();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+    importProject();
+
+    Module module = getModule("m");
+    assertNotNull(module);
+    assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+
+    var moduleManager = ModuleManager.getInstance(myProject);
+    ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
+    ModuleDeleteProvider.removeModule(module, List.of(), moduleModel);
+    myProjectsManager.performScheduledImportInTests();
+
+    assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
+    assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+  }
+
+  @Test
+  public void testIgnoringProjectsForDetachedInUiModules() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+    importProject();
+
+    Module module = getModule("m");
+    assertNotNull(module);
+    assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      final Runnable action = () -> {
+        ModuleDeleteProvider.detachModules(myProject, new Module[]{module});
+      };
+      ApplicationManager.getApplication().runWriteAction(action);
+    }, ProjectBundle.message("module.remove.command"), null);
     myProjectsManager.performScheduledImportInTests();
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
@@ -1163,7 +1227,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1173,7 +1237,6 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                   "  <maven.compiler.release>8</maven.compiler.release>" +
                   "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
                   "</properties>" +
-                  "" +
                   " <build>\n" +
                   "  <plugins>" +
                   "    <plugin>" +
@@ -1227,32 +1290,31 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test 
   public void testShouldRemoveMavenProjectsAndNotAddThemToIgnore() throws Exception {
-    VirtualFile mavenParentPom = createProjectSubFile("maven-parent/pom.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                              "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                                                                              "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                                                                              "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                                                                              "    <modelVersion>4.0.0</modelVersion>\n" +
-                                                                              "    <groupId>test</groupId>\n" +
-                                                                              "    <artifactId>parent-maven</artifactId>\n" +
-                                                                              "    <packaging>pom</packaging>\n" +
-                                                                              "    <version>1.0-SNAPSHOT</version>\n" +
-                                                                              "    <modules>\n" +
-                                                                              "        <module>child1</module>\n" +
-                                                                              "    </modules>" +
-                                                                              "</project>");
+    VirtualFile mavenParentPom = createProjectSubFile("maven-parent/pom.xml", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project xmlns="http://maven.apache.org/POM/4.0.0"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>test</groupId>
+          <artifactId>parent-maven</artifactId>
+          <packaging>pom</packaging>
+          <version>1.0-SNAPSHOT</version>
+          <modules>
+              <module>child1</module>
+          </modules></project>""");
 
-    createProjectSubFile("maven-parent/child1/pom.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                        "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                                                        "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                                                        "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                                                        "    <parent>\n" +
-                                                        "        <artifactId>parent-maven</artifactId>\n" +
-                                                        "        <groupId>test</groupId>\n" +
-                                                        "        <version>1.0-SNAPSHOT</version>\n" +
-                                                        "    </parent>\n" +
-                                                        "    <modelVersion>4.0.0</modelVersion>" +
-                                                        "    <artifactId>child1</artifactId>" +
-                                                        "</project>");
+    createProjectSubFile("maven-parent/child1/pom.xml", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project xmlns="http://maven.apache.org/POM/4.0.0"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+          <parent>
+              <artifactId>parent-maven</artifactId>
+              <groupId>test</groupId>
+              <version>1.0-SNAPSHOT</version>
+          </parent>
+          <modelVersion>4.0.0</modelVersion>    <artifactId>child1</artifactId></project>""");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModuleManager.getInstance(myProject).newModule("non-maven", ModuleTypeId.JAVA_MODULE);
@@ -1263,7 +1325,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     configConfirmationForYesAnswer();
 
     RemoveManagedFilesAction action = new RemoveManagedFilesAction();
-    action.actionPerformed(new TestActionEvent(createTestDataContext(mavenParentPom), action));
+    action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)));
     assertEquals(1, ModuleManager.getInstance(myProject).getModules().length);
     assertEquals("non-maven", ModuleManager.getInstance(myProject).getModules()[0].getName());
     assertEmpty(myProjectsManager.getIgnoredFilesPaths());
@@ -1274,19 +1336,18 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertEmpty(myProjectsManager.getIgnoredFilesPaths());
   }
 
+  @Test
+  public void shouldUnsetMavenizedIfManagedFilesWasRemoved(){
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
 
+    assertModules("project");
+    assertSize(1, myProjectsManager.getRootProjects());
 
-  private DataContext createTestDataContext(VirtualFile mavenParentPom) {
-    final DataContext defaultContext = DataManager.getInstance().getDataContext();
-    return dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return new VirtualFile[]{mavenParentPom};
-      }
-      return defaultContext.getData(dataId);
-    };
+    myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
+    waitForImportCompletion();
+    assertSize(0, myProjectsManager.getRootProjects());
   }
 
   @Override

@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -33,7 +33,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
     myProject = PlatformTestUtil.loadAndOpenProject(Path.of(projectPath), getTestRootDisposable());
-    ServiceContainerUtil.registerComponentImplementation(myProject, FileEditorManager.class, FileEditorManagerExImpl.class);
+    ServiceContainerUtil.registerServiceInstance(myProject, FileEditorManager.class, new FileEditorManagerImpl(myProject));
   }
 
   @Override

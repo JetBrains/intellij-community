@@ -120,7 +120,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceExpression expression =
         (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiMember member = (PsiMember)expression.resolve();

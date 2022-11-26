@@ -165,7 +165,7 @@ var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
 
 
 class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() {
-    val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
+    private val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
     private val cacheManager = KotlinCompilerArgumentsCacheMergeManager
 
 

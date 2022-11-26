@@ -95,7 +95,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
 
     if (ExperimentalUI.isNewUI()) {
       SelectablePanel result = SelectablePanel.wrap(middleItemComponent);
-      PopupUtil.configSelectablePanel(result);
+      PopupUtil.configListRendererFlexibleHeight(result);
       result.add(myNextStepLabel, BorderLayout.EAST);
       return result;
     }

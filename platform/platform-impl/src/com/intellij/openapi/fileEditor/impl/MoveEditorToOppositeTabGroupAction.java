@@ -9,10 +9,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
   private final boolean myCloseSource;
 
-  public MoveEditorToOppositeTabGroupAction() {
+  @SuppressWarnings("unused")
+  MoveEditorToOppositeTabGroupAction() {
     this(true);
   }
 
@@ -28,19 +31,22 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     if (vFile == null || project == null) {
       return;
     }
-    final EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
-    if (window != null) {
-      final EditorWindow[] siblings = window.findSiblings();
-      if (siblings.length == 1) {
-        final EditorComposite editorComposite = window.getSelectedComposite();
-        final HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
-        vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
-        if (myCloseSource) {
-          window.closeFile(vFile, true, false);
-        }
-        ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3(siblings[0], vFile, true, entry);
-        vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
+
+    EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
+    if (window == null) {
+      return;
+    }
+
+    List<EditorWindow> siblings = window.getSiblings();
+    if (siblings.size() == 1) {
+      EditorComposite editorComposite = window.getSelectedComposite();
+      HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
+      vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
+      if (myCloseSource) {
+        window.closeFile(vFile, true, false);
       }
+      ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3$intellij_platform_ide_impl(siblings.get(0), vFile, true, entry);
+      vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
     }
   }
 
@@ -70,6 +76,6 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     if (!myCloseSource && FileEditorManagerImpl.forbidSplitFor(vFile)) {
       return false;
     }
-    return window.findSiblings().length == 1;
+    return window.getSiblings().size() == 1;
   }
 }

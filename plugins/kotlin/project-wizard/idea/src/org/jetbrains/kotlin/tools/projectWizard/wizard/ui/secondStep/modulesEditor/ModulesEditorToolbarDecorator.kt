@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
-import com.intellij.openapi.ui.Messages
 import com.intellij.ui.ToolbarDecorator
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
@@ -71,6 +69,7 @@ class ModulesEditorToolbarDecorator(
                     ModuleKind.singlePlatformJsNode -> KotlinNewProjectWizardBundle.message("module.kind.js.node.module")
                     ModuleKind.singlePlatformAndroid -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
                     ModuleKind.target -> ""
+                    ModuleKind.ios -> KotlinNewProjectWizardBundle.message("module.kind.ios.module")
                     null -> ""
                 }
 
@@ -125,4 +124,5 @@ private val Module.kindText
         ModuleKind.singlePlatformJsNode -> KotlinNewProjectWizardBundle.message("module.kind.module")
         ModuleKind.singlePlatformAndroid -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
         ModuleKind.target -> KotlinNewProjectWizardBundle.message("module.kind.target")
+        ModuleKind.ios -> KotlinNewProjectWizardBundle.message("module.kind.ios.module")
     }

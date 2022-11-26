@@ -7,9 +7,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author peter
-*/
 public class TemplateDataHighlighterWrapper implements SyntaxHighlighter {
   private final SyntaxHighlighter myHighlighter;
 

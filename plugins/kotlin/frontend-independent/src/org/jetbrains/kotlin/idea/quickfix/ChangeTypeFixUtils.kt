@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
@@ -9,6 +11,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 
 object ChangeTypeFixUtils {
+    @IntentionFamilyName
     fun familyName(): String = KotlinBundle.message("fix.change.return.type.family")
 
     fun functionOrConstructorParameterPresentation(element: KtCallableDeclaration, containerName: String?): String? {
@@ -32,6 +35,7 @@ object ChangeTypeFixUtils {
         return baseFunctionOrConstructorParameterPresentation(presentation)
     }
 
+    @IntentionName
     fun getTextForQuickFix(
         element: KtCallableDeclaration,
         presentation: String?,

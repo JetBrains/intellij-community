@@ -83,8 +83,7 @@ class KotlinFunctionCallInstruction(
                 if (dfaValue != null) {
                     val dfReferenceType = (dfaValue as? DfaTypeValue)?.dfType as? DfReferenceType
                     if (dfReferenceType != null) {
-                        val newType = dfReferenceType.dropTypeConstraint()
-                            .meet(dfReferenceType.constraint.convert(KtClassDef.typeConstraintFactory(call)).asDfType())
+                        val newType = dfReferenceType.convert(KtClassDef.typeConstraintFactory(call))
                         dfaValue = factory.fromDfType(newType)
                     }
                     return MethodEffect(dfaValue, pure)

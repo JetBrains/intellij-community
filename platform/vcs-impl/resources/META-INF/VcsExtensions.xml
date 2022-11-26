@@ -12,7 +12,7 @@
                         serviceImplementation="com.intellij.impl.ConversionServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangeListManager"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl" preload="notHeadless"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
@@ -53,6 +53,9 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"
                     overrides="true"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ElementStatusTrackerImpl"
+                    overrides="true"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsDirtyScopeManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
@@ -61,7 +64,6 @@
     <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
                     headlessImplementation=""/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$PostStartupActivity"/>
 
     <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
     <editorFactoryDocumentListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
@@ -109,6 +111,12 @@
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction" order="last"/>
     <openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
         implementation="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction$ShowDiffBeforeWithLocalAction" order="last"/>
+    <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.history.actions.FileHistoryGetVersionActionProvider"/>
+    <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
+      implementation="com.intellij.vcs.CompareWithLocalDialog$GetVersionActionProvider"/>
+    <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.actions.GetVersionFromRepositoryActionProvider"/>
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAfterWithLocalAction"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAction"/>
@@ -160,6 +168,7 @@
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>
+    <registryKey defaultValue="true" description="Show Version Control tool window in project without VCS" key="vcs.empty.toolwindow.show"/>
 
     <changesViewContent tabName="Repository"
                         className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
@@ -174,6 +183,12 @@
                         preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"
                         predicateClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPredicate"
                         displayNameSupplierClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier"
+                        isInCommitToolWindow="true"/>
+    <changesViewContent tabName="Shelf"
+                        className="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$ContentProvider"
+                        preloaderClassName="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$ContentPreloader"
+                        predicateClassName="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$ContentPredicate"
+                        displayNameSupplierClassName="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$DisplayNameSupplier"
                         isInCommitToolWindow="true"/>
 
     <statusBarWidgetFactory id="IncomingChanges" implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorFactory"/>
@@ -273,7 +288,6 @@
 
     <openapi.vcs.changes.vcsPreservingExecutor implementation="com.intellij.openapi.vcs.changes.DefaultPreservingExecutor" order="last" />
 
-    <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$ActivateVcsesStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyStartupActivity"/>
@@ -282,7 +296,7 @@
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.roots.VcsRootScanner$DetectRootsStartupActivity"/>
     <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyFileDocumentManagerListener"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage"/>
     <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.messages"/>
     <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.common.messages"/>
     <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.important.messages"/>
@@ -300,6 +314,9 @@
     <projectService serviceInterface="com.intellij.ide.todo.TodoViewChangesSupport"
                     serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupportImpl"
                     overrides="true"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyStartUpActivity"/>
 
     <searchScopesProvider implementation="com.intellij.vcs.changes.ChangeListsSearchScopeProvider"/>
 
@@ -342,7 +359,7 @@
     <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
     <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$TrustListener"
               topic="com.intellij.ide.impl.TrustStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
@@ -370,6 +387,8 @@
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
     <listener class="com.intellij.vcs.commit.CommitSessionCollector$MyToolWindowManagerListener"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$MyShelfManagerListener"
+              topic="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener"/>
   </projectListeners>
 </idea-plugin>
 

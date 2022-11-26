@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.project.structure.KtBinaryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -32,10 +31,6 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
         is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo, this)
         is NotUnderContentRootModuleInfo -> NotUnderContentRootModuleByModuleInfo(moduleInfo, this)
         else -> NotUnderContentRootModuleByModuleInfo(moduleInfo as IdeaModuleInfo, this)
-    }
-
-    override fun getKtBinaryModules(): Collection<KtBinaryModule> {
-        TODO("This is a temporary function used for Android LINT, and should not be called in the IDE")
     }
 
     companion object {

@@ -3,6 +3,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel;
+import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel.TemplatePresentation;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.Experiments;
@@ -15,7 +16,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -23,18 +23,18 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SlowOperations;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
-/**
- * @author peter
- */
 public class CreateFileFromTemplateDialog extends DialogWrapper {
   private JTextField myNameField;
   private TemplateKindCombo myKindCombo;
@@ -241,7 +241,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
     private @NlsContexts.PopupTitle String myTitle = LangBundle.message("popup.title.default.title");
     private String myDefaultText = null;
-    private final List<Trinity<String, Icon, String>> myTemplatesList = new ArrayList<>();
+    private final List<TemplatePresentation> myTemplatesList = new ArrayList<>();
     private InputValidator myInputValidator;
     private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
     private @Nullable Component dialogOwner;
@@ -263,7 +263,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @Override
     public Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName,
                            @Nullable InputValidator extraValidator) {
-      myTemplatesList.add(Trinity.create(kind, icon, templateName));
+      myTemplatesList.add(new TemplatePresentation(kind, icon, templateName));
       if (extraValidator != null) {
         myExtraValidators.put(templateName, extraValidator);
       }
@@ -293,7 +293,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
                                             @Nullable String selectedItem,
                                             @NotNull FileCreator<T> fileCreator,
                                             Consumer<? super T> elementConsumer) {
-      CreateWithTemplatesDialogPanel contentPanel = new CreateWithTemplatesDialogPanel(myTemplatesList, selectedItem);
+      CreateWithTemplatesDialogPanel contentPanel = new CreateWithTemplatesDialogPanel(selectedItem, myTemplatesList);
       ElementCreator elementCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override

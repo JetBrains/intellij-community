@@ -7,22 +7,22 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -37,6 +37,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.ui.customization.ActionUrl.*;
@@ -94,7 +95,7 @@ public class CustomizableActionsPanel {
   }
 
   static FilterComponent setupFilterComponent(JTree tree) {
-    final TreeSpeedSearch mySpeedSearch = new TreeSpeedSearch(tree, new TreePathStringConvertor(), true) {
+    final TreeSpeedSearch mySpeedSearch = new TreeSpeedSearch(tree, true, new TreePathStringFunction()) {
       @Override
       public boolean isPopupActive() {
         return /*super.isPopupActive()*/true;
@@ -220,7 +221,7 @@ public class CustomizableActionsPanel {
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myActionsTree.getModel().getRoot();
     TreeUtil.treeNodeTraverser(root).traverse()
       .filter(node -> node instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode)node).getUserObject() instanceof Pair)
-      .forEach(node -> doSetIcon(mySelectedSchema, (DefaultMutableTreeNode)node, null, null));
+      .forEach(node -> doSetIcon(mySelectedSchema, (DefaultMutableTreeNode)node, null));
     CustomActionsSchema source = restoreLastState ? CustomActionsSchema.getInstance() : new CustomActionsSchema();
     if (mySelectedSchema == null) mySelectedSchema = new CustomActionsSchema();
     mySelectedSchema.copyFrom(source);
@@ -236,7 +237,7 @@ public class CustomizableActionsPanel {
     TreeUtil.ensureSelection(myActionsTree);
   }
 
-  private static List<String> toActionIDs(List<TreePath> paths) {
+  private static List<String> toActionIDs(List<? extends TreePath> paths) {
     return ContainerUtil.map(paths, path -> getActionId((DefaultMutableTreeNode)path.getLastPathComponent()));
   }
 
@@ -266,9 +267,9 @@ public class CustomizableActionsPanel {
     ((DefaultTreeModel)myActionsTree.getModel()).reload();
   }
 
-  private static class TreePathStringConvertor implements Convertor<TreePath, String> {
+  private static class TreePathStringFunction implements Function<TreePath, String> {
     @Override
-    public String convert(TreePath o) {
+    public String apply(TreePath o) {
       Object node = o.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {
         Object object = ((DefaultMutableTreeNode)node).getUserObject();
@@ -279,11 +280,14 @@ public class CustomizableActionsPanel {
           actionId = (String)object;
         }
         else if (object instanceof Pair) {
-          actionId = (String)((Pair<?, ?>)object).first;
+          Object obj = ((Pair<?, ?>)object).first;
+          if (obj instanceof Group group) return group.getName();
+          actionId = (String)obj;
         }
         else {
           return "";
         }
+        if (Strings.isEmpty(actionId)) return "";
         AnAction action = ActionManager.getInstance().getAction(actionId);
         if (action != null) {
           return action.getTemplatePresentation().getText();
@@ -322,29 +326,33 @@ public class CustomizableActionsPanel {
   }
 
   @Nullable
-  private static String getActionId(DefaultMutableTreeNode node) {
-    return (String)(node.getUserObject() instanceof String ? node.getUserObject() :
-                    node.getUserObject() instanceof Pair ? ((Pair<?, ?>)node.getUserObject()).first :
-                    node.getUserObject() instanceof Group ? ((Group)node.getUserObject()).getId() :
-                    null);
+  static String getActionId(DefaultMutableTreeNode node) {
+    Object obj = node.getUserObject();
+    if (obj instanceof String actionId) return actionId;
+    if (obj instanceof Group group) return group.getId();
+    if (obj instanceof Pair<?, ?> pair) {
+      Object first = pair.first;
+      return first instanceof Group group ? group.getId() : (String)first;
+    }
+    return null;
   }
 
   @NotNull
   static Pair<@Nullable String, @Nullable Icon> getActionIdAndIcon(@NotNull DefaultMutableTreeNode node) {
     Object userObj = node.getUserObject();
-    if (userObj instanceof String) {
-      AnAction action = ActionManager.getInstance().getAction((String)userObj);
+    if (userObj instanceof String actionId) {
+      AnAction action = ActionManager.getInstance().getAction(actionId);
       if (action != null) {
-        return Pair.create((String)userObj, action.getTemplatePresentation().getIcon());
+        return Pair.create(actionId, action.getTemplatePresentation().getIcon());
       }
     }
-    else if (userObj instanceof Group) {
-      Group group = (Group)userObj;
+    else if (userObj instanceof Group group) {
       return Pair.create(group.getId(), group.getIcon());
     }
-    else if (userObj instanceof Pair) {
-      //noinspection unchecked
-      return (Pair<String, Icon>)userObj;
+    else if (userObj instanceof Pair<?, ?> pair) {
+      Object first = pair.first;
+      String actionId = first instanceof Group group ? group.getId() : (String)first;
+      return Pair.create(actionId, (Icon)pair.second);
     }
     return Pair.empty();
   }
@@ -360,7 +368,7 @@ public class CustomizableActionsPanel {
       Icon selectedIcon = selectedInfo.getIcon();
       if (selectedIcon != originalIcon) {
         String iconReference = selectedIcon != null ? selectedInfo.getIconReference() : null;
-        return doSetIcon(schema, node, iconReference, component);
+        return doSetIcon(schema, node, iconReference);
       }
     }
     return false;
@@ -368,12 +376,14 @@ public class CustomizableActionsPanel {
 
   private static boolean doSetIcon(@NotNull CustomActionsSchema schema,
                                    @NotNull DefaultMutableTreeNode node,
-                                   @Nullable String path,
-                                   @Nullable Component component) {
-    String actionId = getActionId(node);
+                                   @Nullable String path) {
+    Object userObj = node.getUserObject();
+    Object value = userObj instanceof Pair<?, ?> pair ? pair.first : userObj;
+    String actionId = value instanceof Group group ? group.getId()
+                                                   : value instanceof String ? (String)value : null;
     if (actionId == null) return false;
     if (StringUtil.isEmpty(path)) {
-      node.setUserObject(Pair.create(actionId, null));
+      node.setUserObject(Pair.create(value, null));
       schema.removeIconCustomization(actionId);
       return true;
     }
@@ -383,7 +393,7 @@ public class CustomizableActionsPanel {
 
     AnAction reuseFrom = actionManager.getAction(path);
     if (reuseFrom != null) {
-      node.setUserObject(Pair.create(actionId, reuseFrom.getTemplatePresentation().getIcon()));
+      node.setUserObject(Pair.create(value, reuseFrom.getTemplatePresentation().getIcon()));
       schema.addIconCustomization(actionId, path);
     }
     else {
@@ -392,12 +402,12 @@ public class CustomizableActionsPanel {
         icon = CustomActionsSchema.loadCustomIcon(path);
       }
       catch (IOException e) {
-        Messages.showErrorDialog(component, e.getLocalizedMessage(),
-                                 IdeBundle.message("title.choose.action.icon"));
+        Logger.getInstance(CustomizableActionsPanel.class)
+          .warn(String.format("Failed to load icon with path '%s' and set it to action '%s'", path, actionId));
         return false;
       }
       if (icon != null) {
-        node.setUserObject(Pair.create(actionId, icon));
+        node.setUserObject(Pair.create(value, icon));
         schema.addIconCustomization(actionId, path);
       }
     }
@@ -469,7 +479,7 @@ public class CustomizableActionsPanel {
         return;
       }
       for (TreePath path : selectionPaths) {
-        if (path.getPath().length <= 2) {
+        if (path.getPath().length <= minSelectionPathLength()) {
           e.getPresentation().setEnabled(false);
           return;
         }
@@ -479,6 +489,10 @@ public class CustomizableActionsPanel {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+
+    protected int minSelectionPathLength() {
+      return 2;
     }
 
     protected final boolean isSingleSelection() {
@@ -501,19 +515,25 @@ public class CustomizableActionsPanel {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
         AddActionDialog dlg = new AddActionDialog(mySelectedSchema, isInsideMenu(selectionPath));
         if (dlg.showAndGet()) {
-          Object actionInfo = dlg.getAddedActionInfo();
-          if (actionInfo != null) {
-            ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath())), actionInfo, ADDED,
-                                          node.getParent().getIndex(node) + 1);
-            addCustomizedAction(url);
-            changePathInActionsTree(myActionsTree, url);
-            if (actionInfo instanceof String) {
-              DefaultMutableTreeNode current = new DefaultMutableTreeNode(url.getComponent());
-              current.setParent((DefaultMutableTreeNode)node.getParent());
+          List<Object> addedActions = dlg.getAddedActions();
+          if (!addedActions.isEmpty()) {
+            boolean isGroupSelected = CustomizationUtil.getGroupForNode(node) != null;
+            for (int ind = 0; ind < addedActions.size(); ind++) {
+              Object action = addedActions.get(ind);
+              if (action instanceof Group group) {
+                group.setForceShowAsPopup(true);
+              }
+              int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + ind + 1;
+              ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
+              addCustomizedAction(url);
+              changePathInActionsTree(myActionsTree, url);
             }
+
             ((DefaultTreeModel)myActionsTree.getModel()).reload();
             TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
-            myActionsTree.setSelectionRow(row + 1);
+            if (isGroupSelected) myActionsTree.expandPath(selectionPath);
+            int newSelectedRow = row + (isGroupSelected ? node.getChildCount() : addedActions.size());
+            myActionsTree.setSelectionRow(newSelectedRow);
           }
         }
       }
@@ -526,14 +546,19 @@ public class CustomizableActionsPanel {
         e.getPresentation().setEnabled(isSingleSelection());
       }
     }
+
+    @Override
+    protected int minSelectionPathLength() {
+      return 1;
+    }
   }
 
   private static boolean isInsideMenu(TreePath path) {
     if (path.getPathCount() < 2) return false;
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getPathComponent(1);
-    Object userObj = node.getUserObject();
-    if (userObj instanceof Group) {
-      String groupId = ((Group)userObj).getId();
+    Group group = CustomizationUtil.getGroupForNode(node);
+    if (group != null) {
+      String groupId = group.getId();
       return groupId != null && groupId.contains("Menu");
     }
     return false;
@@ -550,7 +575,7 @@ public class CustomizableActionsPanel {
       final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
       if (selectionPath != null) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-        final ActionUrl url = new ActionUrl(getGroupPath(selectionPath), Separator.getInstance(), ADDED,
+        final ActionUrl url = new ActionUrl(getGroupPath(selectionPath, false), Separator.getInstance(), ADDED,
                                             node.getParent().getIndex(node) + 1);
         changePathInActionsTree(myActionsTree, url);
         addCustomizedAction(url);
@@ -594,7 +619,7 @@ public class CustomizableActionsPanel {
     @Override
     public boolean isDropInto(JComponent component, int oldIndex, int newIndex) {
       TreePath path = myActionsTree.getPathForRow(newIndex);
-      return path.getPath().length>1 && !myActionsTree.getModel().isLeaf(path.getLastPathComponent());
+      return path.getPath().length > 1 && isGroupPath(path);
     }
 
     @Override
@@ -609,8 +634,7 @@ public class CustomizableActionsPanel {
       if (sourcePath.getParentPath().equals(target) && position == INTO) return false;
 
       return sourcePath.getPath().length > 2 &&
-             (target.getPath().length > 1 ||
-              (target.getPath().length > 1 && target.getLastPathComponent() instanceof Group)) ;
+             (target.getPath().length > 2 || target.getPath().length > 1 && isGroupPath(target));
     }
 
     @Override
@@ -649,6 +673,11 @@ public class CustomizableActionsPanel {
       TreePath pathToSelect = new TreePath(arr);
       TreeUtil.selectPath(myActionsTree, pathToSelect);
       TreeUtil.scrollToVisible(myActionsTree, path, false);
+    }
+
+    private static boolean isGroupPath(TreePath path) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      return CustomizationUtil.getGroupForNode(node) != null;
     }
   }
 

@@ -33,4 +33,11 @@ interface VcsCloneComponent : Disposable {
   @RequiresEdt
   fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
   }
+
+  /**
+   * Clone component which allows the URL of th repo to be input
+   */
+  interface WithSettableUrl {
+    fun setUrl(url: String)
+  }
 }

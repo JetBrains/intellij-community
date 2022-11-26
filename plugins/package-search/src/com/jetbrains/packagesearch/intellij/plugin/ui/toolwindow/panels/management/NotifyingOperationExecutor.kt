@@ -41,6 +41,12 @@ internal class NotifyingOperationExecutor(
         onOperationsSuccessful = project.packageSearchProjectService::notifyOperationExecuted,
         onOperationsFail = { failures ->
             onOperationsFail(project, failures)
+        },
+        executionContext = {
+            project.packageSearchProjectService.editingFilesState.value = true
+            val res = it()
+            project.packageSearchProjectService.editingFilesState.value = false
+            res
         }
     )
 

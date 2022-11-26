@@ -58,13 +58,14 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
 
   public GradleProjectImportBuilder(@NotNull ProjectDataManager dataManager) {
     super(dataManager, () -> new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
-    LOG.warn("Do not use `GradleProjectImportBuilder` directly. Use instead:\n" +
-             "Internal stable Api\n" +
-             " Use `com.intellij.ide.actions.ImportModuleAction.doImport` to import (attach) a new project.\n" +
-             " Use `com.intellij.ide.impl.ProjectUtil.openOrImport` to open (import) a new project.\n" +
-             "Internal experimental Api\n" +
-             " Use `org.jetbrains.plugins.gradle.service.project.open.openGradleProject` to open (import) a new gradle project.\n" +
-             " Use `org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject` to link a gradle project to an opened idea project.",
+    LOG.warn("""
+               Do not use `GradleProjectImportBuilder` directly. Use instead:
+               Internal stable Api
+                Use `com.intellij.ide.actions.ImportModuleAction.doImport` to import (attach) a new project.
+                Use `com.intellij.ide.impl.ProjectUtil.openOrImport` to open (import) a new project.
+               Internal experimental Api
+                Use `org.jetbrains.plugins.gradle.service.project.open.openGradleProject` to open (import) a new gradle project.
+                Use `org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject` to link a gradle project to an opened idea project.""",
              new Throwable());
   }
 
@@ -151,7 +152,7 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
         };
 
         Runnable importTask =
-          () -> ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, false);
+          () -> ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
 
         boolean showSelectiveImportDialog = GradleSettings.getInstance(project).showSelectiveImportDialogOnInitialImport();
         if (showSelectiveImportDialog && !ApplicationManager.getApplication().isHeadlessEnvironment()) {

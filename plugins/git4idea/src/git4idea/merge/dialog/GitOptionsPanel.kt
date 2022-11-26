@@ -32,6 +32,7 @@ class GitOptionsPanel<T>(private val optionRemoveHandler: (T) -> Unit,
         remove(optionButton)
       }
       else {
+        optionButton.isVisible = true
         shownOptions.add(option)
       }
     }

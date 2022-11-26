@@ -1,0 +1,247 @@
+<idea-plugin require-restart="true" package="org.jetbrains.completion.full.line">
+  <id>org.jetbrains.completion.full.line</id>
+  <name>Full Line Code Completion</name>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+           <div>
+    <h3>Full Line</h3>
+    <p>
+        The Full Line plugin enriches completion popup with multi-token proposals
+        given by an AI-based model without sending anything through the Internet,
+        working entirely locally. At the moment, <strong>it supports only Python.</strong>
+    </p>
+    <br/>
+    <p>
+        <img width="580"
+             src="https://plugins.jetbrains.com/files/14823/1214-page/30414067-a41a-4a7d-9323-e403002d762a"
+             alt="Full Line preview">
+    </p>
+    <br/>
+    <p>
+        Full Line plugin uses deep learning: a Transformer language model is trained on a massive amount of open source
+        code.
+        It works on your local machine and is available when you are offline.
+    </p>
+    <br/>
+    <p>
+        <i>This project is still under active development, focusing on performance, suggestions quality and UX.</i>
+    </p>
+    <p>
+        We greatly appreciate any of your feedback in YouTrack - <a
+            href="https://youtrack.jetbrains.com/issues/IDEA?q=Subsystem:%20%7BEditor.%20Code%20Completion.%20Full%20line%7D%20">https://youtrack.jetbrains.com/issues/IDEA?q=Subsystem:
+        {Editor. Code Completion. Full line} </a>.
+    </p>
+    <br/>
+    <h2>How to use</h2>
+    <p>
+        After installing Full Line, a model will be downloaded automatically,
+        and you will see new suggestions in the popup while calling completion.
+        Plugin`s suggestions are marked with <img width="12"
+                                                  src="https://raw.github.com/BarracudaPff/GitHub-Static/master/python.svg"
+                                                  alt="Python logo icon"/>.
+
+    </p>
+    <br/>
+    <p>
+        <i>If the model failed to download, you can do it through plugin settings or by restarting the IDE.</i>
+    </p>
+    <br/>
+    <h3>Features</h3>
+    <h4>Token-by-token completion</h4>
+    <p>
+        If you need only the beginning of a suggestion - press Tab and insert tokens one-by-one.
+    </p>
+    <br/>
+    <p>
+        <img width="580" src="https://plugins.jetbrains.com/files/14823/1214-page/1d0312d7-fafe-4bd1-94c8-3311a9c4ab4c" alt="Token-by-token completion">
+    </p>
+    <br/>
+    <h4>String jumping</h4>
+    <p>
+        While completing strings, you can jump on them and edit just like typing templates.
+    </p>
+    <br/>
+    <p>
+        <img width="580" src="https://plugins.jetbrains.com/files/14823/1214-page/4c5a7907-f77e-4cc4-88ea-7b87dceaff1b" alt="String jumping">
+    </p>
+    <br/>
+    <h4>Auto-imports</h4>
+    <p>
+        Like in usual completion, if you're using a class, a static method, or a static field that you haven't imported yet - we will suggest you import all the missing parts.
+    </p>
+    <br/>
+    <p>
+        <img width="580" src="https://plugins.jetbrains.com/files/14823/1214-page/a32728a0-ebc4-416a-95bb-0304d705adf1" alt="">
+    </p>
+    <br/>
+    <h4>Settings</h4>
+    <p>
+        You can find all plugin settings at
+        <strong>Preferences</strong>
+        -> <strong>Editor</strong>
+        -> <strong>General</strong>
+        -> <strong>Code Completion</strong>
+        -> <strong>Full Line section</strong>.
+    </p>
+    <br/>
+    <h3> Frequently asked questions </h3>
+    <br>
+    <div>
+        - <b> Do you send any of my private data or code through the Internet? </b>
+        <br>
+        - No. The Full Line plugin works on your local machine without sending anything though
+        the Internet.
+        <br><br>
+
+        - <b> When do you plan to support my favourite language? </b>
+        <br>
+        - At the moment we`re focusing on providing the best user experience for the Python
+        language. With gained knowledge, it becomes easier to support other languages.
+        <br><br>
+
+        - <b> What are the hardware requirements to use the plugin? </b>
+        <br>
+        - Our model size is less than 30 MB and can run on linux/mac/windows OS. Depending on
+        the power of your machine, the speed and quality of predictions may vary, be sure to
+        contact us if you have any problems. Currently, we are not using GPU.
+        <br><br>
+
+        - <b> I have installed the plugin but I do not see any code suggestions. What's the
+        problem? </b>
+        <br>
+        - If your hardware is not powerful enough, requests from IDE to the Full Line plugin
+        might reach the timeout and you will not see code suggestions. We try to do our best to
+        optimise plugin's performance.
+    </div>
+
+    <br>
+    <h3> Feedback </h3>
+    <br/>
+    <div>
+        If you encountered bugs, usability or performance issues, please describe them on our <a
+            href="https://youtrack.jetbrains.com/issues/IDEA?q=Subsystem:%7BEditor.%20Code%20Completion.%20Full%20line%7D%20"
+            target="_blank">bug-tracker</a>. Also, if you are impressed by the quality of some
+        suggestions (be that smart or really dumb ones), please pin a screenshot there as well.
+        All your feedback has a significant impact on the future development.
+    </div>
+</div>
+
+    ]]></description>
+
+  <content>
+    <module name="intellij.fullLine.python"/>
+    <module name="intellij.fullLine.java"/>
+    <module name="intellij.fullLine.kotlin"/>
+  </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.completion.full.line.actions.FullLineStartupActivity"/>
+    <applicationService
+      serviceImplementation="org.jetbrains.completion.full.line.settings.state.MlServerCompletionAuthState"/>
+    <applicationService
+      serviceImplementation="org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings"/>
+    <applicationService
+      serviceInterface="org.jetbrains.completion.full.line.services.TabSelectedItemStorage"
+      serviceImplementation="org.jetbrains.completion.full.line.services.TabSelectedItemStorageImpl"/>
+    <applicationService
+      serviceInterface="org.jetbrains.completion.full.line.services.managers.ConfigurableModelsManager"
+      serviceImplementation="org.jetbrains.completion.full.line.services.managers.LocalModelsManager"/>
+    <completion.contributor language="any"
+                            id="FullLineCompletionContributor"
+                            order="first, before KotlinCompletionContributor, after ml_context"
+                            implementationClass="org.jetbrains.completion.full.line.platform.FullLineContributor"/>
+    <completion.ml.contextFeatures language=""
+                                   implementationClass="org.jetbrains.completion.full.line.platform.logs.FullLineContextFeatureProvider"/>
+    <completion.ml.elementFeatures language=""
+                                   implementationClass="org.jetbrains.completion.full.line.platform.logs.FullLineElementFeatureProvider"/>
+
+    <!-- HOST CONFIG BEGIN -->
+    <registryKey key="full.line.server.host.python" defaultValue="https://python.flcc.iml.aws.intellij.net"
+                 description="Full line completion server"/>
+    <registryKey key="full.line.server.host.java" defaultValue="https://java.flcc.iml.aws.intellij.net"
+                 description="Full line completion server"/>
+    <registryKey key="full.line.server.host.kotlin" defaultValue="https://kotlin.flcc.iml.aws.intellij.net"
+                 description="Full line completion server"/>
+    <registryKey key="full.line.server.host.javascript" defaultValue="http://35.157.179.218:5005"
+                 description="Full line completion server"/>
+    <registryKey key="full.line.server.host.typescript" defaultValue="http://35.157.179.218:5005"
+                 description="Full line completion server"/>
+
+    <registryKey key="full.line.server.host.psi.java" defaultValue="http://0.0.0.0:5000/"
+                 description="Full line psi completion server"/>
+
+    <registryKey key="full.line.server.host.max.latency" defaultValue="1000"
+                 description="Maximum latency"/>
+    <!-- HOST CONFIG END -->
+
+    <registryKey key="full.line.server.emulate.model.response" defaultValue="-1"
+                 description="Adds delay before adding full lines proposals"/>
+
+    <registryKey key="full.line.expand.settings" defaultValue="false"
+                 description="Show expanded settings panel for ML server completion"/>
+
+    <registryKey key="full.line.local.models.beta" defaultValue="false"
+                 description="Use Beta local models"/>
+
+    <registryKey key="full.line.use.all.providers" defaultValue="false"
+                 description="Show proposals from all available providers"/>
+
+    <registryKey key="full.line.only.proposals" defaultValue="false"
+                 description="Keep only full line proposals in lookup"/>
+
+    <registryKey key="full.line.enable.diagnostics" defaultValue="false"
+                 description="Enable diagnostics tool window" restartRequired="true"/>
+
+    <registryKey key="full.line.diagnostics.file" defaultValue=""
+                 description="Path to diagnostic log"/>
+
+    <registryKey key="full.line.multi.token.everywhere" defaultValue="false"
+                 description="Provide multi-token suggestions in all locations"/>
+
+    <registryKey key="full.line.enable.caching" defaultValue="true"
+                 description="Enable caching requests for full line suggestions"/>
+
+    <toolWindow id="Full Line Diagnostics"
+                factoryClass="org.jetbrains.completion.full.line.platform.diagnostics.FullLineDiagnosticsToolWindowFactory"
+                icon="AllIcons.Nodes.Console"
+                doNotActivateOnStart="false"
+                anchor="bottom"
+                order="last, after Terminal"
+    />
+
+    <codeCompletionConfigurable
+      id="full.line.completion"
+      bundle="messages.MLServerCompletionBundle"
+      instance="org.jetbrains.completion.full.line.settings.ui.FullLineReducedConfigurable"/>
+
+    <lookup.charFilter implementation="org.jetbrains.completion.full.line.platform.filter.FullLineCharFilter"/>
+
+    <notificationGroup
+      id="Full Line Completion Plugin"
+      displayType="STICKY_BALLOON"
+      isLogByDefault="true"
+      bundle="messages.MLServerCompletionBundle"
+      key="full.line.plugin.title"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+      name="fullLineLanguageSupport"
+      interface="org.jetbrains.completion.full.line.language.FullLineLanguageSupporter"
+      dynamic="true"/>
+  </extensionPoints>
+
+  <actions>
+    <group id="FullLineGroup" popup="true">
+      <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="CodeCompletionGroup"/>
+      <action id="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
+              class="org.jetbrains.completion.full.line.actions.ShowSettingsAction">
+      </action>
+      <action id="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
+              class="org.jetbrains.completion.full.line.actions.VerifyCloudAction">
+      </action>
+    </group>
+  </actions>
+  <resource-bundle>messages.MLServerCompletionBundle</resource-bundle>
+</idea-plugin>

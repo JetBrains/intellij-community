@@ -66,7 +66,7 @@ private class LimitedSummary(val limit: Int, private val delegate: Summary = Sum
     result["total"] = total
 
     if (counters.size > limit) {
-      val count = counters.entries.sortedByDescending { it.value }.take(limit).sumBy { it.value }
+      val count = counters.entries.sortedByDescending { it.value }.take(limit).sumOf { it.value }
 
       result["WARNING"] = "only the most frequent $limit of ${counters.size} " +
                           "(cover ${toPercents(count, total)}% of all usages) are listed below"

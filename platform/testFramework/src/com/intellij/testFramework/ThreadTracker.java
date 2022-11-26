@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -27,22 +26,6 @@ public final class ThreadTracker {
   public ThreadTracker() {
     before = ThreadLeakTracker.getThreads();
     myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
-  }
-
-  /**
-   * @deprecated moved to {@link ThreadLeakTracker#getThreads()}
-   */
-  @Deprecated
-  public static @NotNull Map<String, Thread> getThreads() {
-    return ThreadLeakTracker.getThreads();
-  }
-
-  /**
-   * @deprecated moved to {@link ThreadLeakTracker}
-   */
-  @Deprecated
-  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, final String @NotNull ... threadNamePrefixes) {
-    ThreadLeakTracker.longRunningThreadCreated(parentDisposable, threadNamePrefixes);
   }
 
   @TestOnly

@@ -32,14 +32,14 @@ sealed class BoundType {
 }
 
 class BoundTypeImpl(
-  override val label: BoundTypeLabel,
-  override val typeParameters: List<TypeParameter>
+    override val label: BoundTypeLabel,
+    override val typeParameters: List<TypeParameter>
 ) : BoundType()
 
 
 class WithForcedStateBoundType(
-  val original: BoundType,
-  val forcedState: State
+    val original: BoundType,
+    val forcedState: State
 ) : BoundType() {
     override val label: BoundTypeLabel
         get() = original.label

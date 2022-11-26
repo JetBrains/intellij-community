@@ -8,7 +8,6 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.ChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -118,9 +116,7 @@ public final class VcsShelveUtils {
                                                 boolean rollback,
                                                 boolean markToBeDeleted) throws VcsException {
     try {
-      ShelvedChangeList shelve = ShelveChangesManager.getInstance(project).shelveChanges(changes, description, rollback, markToBeDeleted);
-      BackgroundTaskUtil.syncPublisher(project, ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(VcsShelveUtils.class));
-      return shelve;
+      return ShelveChangesManager.getInstance(project).shelveChanges(changes, description, rollback, markToBeDeleted);
     }
     catch (IOException e) {
       throw new VcsException(VcsBundle.message("changes.error.shelving.changes.failed", description), e);

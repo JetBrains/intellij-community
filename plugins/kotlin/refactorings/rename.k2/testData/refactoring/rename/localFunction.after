@@ -1,0 +1,17 @@
+// NEW_NAME: bar
+
+package test
+
+fun function(): Int {
+    foo()
+
+    fun bar(): Int {}
+
+    bar() + (::bar).invoke()
+
+    run {
+        fun foo(s: String): Int {}
+
+        foo("") + bar()
+    }
+}

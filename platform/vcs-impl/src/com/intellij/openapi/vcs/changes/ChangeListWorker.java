@@ -31,8 +31,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * should work under _external_ lock
- * just logic here: do modifications to group of change lists
+ * Should work under lock of {@link ChangeListManagerImpl#myDataLock}.
  */
 public final class ChangeListWorker {
   private final static Logger LOG = Logger.getInstance(ChangeListWorker.class);

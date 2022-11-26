@@ -1,8 +1,9 @@
 import threading
+from collections.abc import Callable, Iterable, Mapping
 from contextlib import AbstractContextManager
 from logging import Logger
 from types import TracebackType
-from typing import Any, Callable, Iterable, Mapping, NamedTuple
+from typing import Any, NamedTuple
 
 LOG_FORMAT: str
 

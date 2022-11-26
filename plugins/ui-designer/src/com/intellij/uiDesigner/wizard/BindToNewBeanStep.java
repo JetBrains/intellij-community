@@ -13,10 +13,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class BindToNewBeanStep extends StepAdapter{
   private static final Logger LOG = Logger.getInstance(BindToNewBeanStep.class);
 

@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class DynamicGenericInfo extends DomGenericInfoEx {
   private static final Key<SoftReference<Interner<ChildrenDescriptionsHolder<?>>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
   private final StaticGenericInfo myStaticGenericInfo;

@@ -5,6 +5,8 @@ import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
@@ -38,7 +40,16 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
 
     if (getVirtualFile(item.data) in allRoots) return null
 
-    val parent = fromOldExtensions { ext -> ext.getParent(item.data) }
+    val parent = fromOldExtensions { ext ->
+      try {
+        ext.getParent(item.data)
+      }
+      catch (pce: ProcessCanceledException) {
+        // implementations may throw PCE manually, try to replace it with expected exception
+        ProgressManager.checkCanceled()
+        null
+      }
+    }
     if (parent == null || !parent.isValid) return null
 
     val containingFile = parent.containingFile

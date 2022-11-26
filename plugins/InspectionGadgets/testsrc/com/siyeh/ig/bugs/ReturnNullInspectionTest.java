@@ -43,11 +43,12 @@ public class ReturnNullInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package com.siyeh.igtest.bugs;\n" +
-      "import java.lang.annotation.*;\n" +
-      "@Retention(RetentionPolicy.SOURCE)\n" +
-      "@Target({ElementType.TYPE_USE, ElementType.METHOD})\n" +
-      "public @interface Nullable {}"
+      """
+package com.siyeh.igtest.bugs;
+import java.lang.annotation.*;
+@Retention(RetentionPolicy.SOURCE)
+@Target({ElementType.TYPE_USE, ElementType.METHOD})
+public @interface Nullable {}"""
     };
   }
 }

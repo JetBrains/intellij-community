@@ -13,4 +13,6 @@ class GHUser(id: String,
              @NlsSafe override val name: String?)
   : GHNode(id), GHActor, GHPullRequestRequestedReviewer {
   override val shortName: String = login
+
+  override fun getPresentableName(): @NlsSafe String = name ?: login
 }

@@ -40,9 +40,8 @@ public class InstalledPluginsTableModel {
     }
     view.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
-    ProjectPluginTracker pluginTracker = myProject != null ? DynamicPluginEnabler.findPluginTracker(myProject) : null;
     for (IdeaPluginDescriptor descriptor : view) {
-      setEnabled(descriptor, pluginTracker);
+      setEnabled(descriptor);
     }
   }
 
@@ -54,15 +53,10 @@ public class InstalledPluginsTableModel {
     return isLoaded(pluginId, getEnabledMap());
   }
 
-  private void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor,
-                          @Nullable ProjectPluginTracker pluginTracker) {
+  private void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
 
-    PluginEnabledState enabled = pluginTracker != null && pluginTracker.isEnabled(pluginId) ?
-                                 PluginEnabledState.ENABLED_FOR_PROJECT :
-                                 pluginTracker != null && pluginTracker.isDisabled(pluginId) ?
-                                 PluginEnabledState.DISABLED_FOR_PROJECT :
-                                 PluginManagerCore.isDisabled(pluginId) ?
+    PluginEnabledState enabled = PluginManagerCore.isDisabled(pluginId) ?
                                  PluginEnabledState.DISABLED :
                                  ideaPluginDescriptor.isEnabled() ?
                                  PluginEnabledState.ENABLED :
@@ -126,7 +120,7 @@ public class InstalledPluginsTableModel {
   private static void setNewEnabled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                     @NotNull Map<PluginId, PluginEnabledState> enabledMap,
                                     @NotNull PluginEnableDisableAction action,
-                                    @NotNull BiConsumer<? super IdeaPluginDescriptor, @NotNull Pair<PluginEnableDisableAction, PluginEnabledState>> beforeHandler) {
+                                    @NotNull BiConsumer<? super IdeaPluginDescriptor, ? super @NotNull Pair<PluginEnableDisableAction, PluginEnabledState>> beforeHandler) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       PluginId pluginId = descriptor.getPluginId();
       PluginEnabledState oldState = enabledMap.get(pluginId);
@@ -205,41 +199,11 @@ public class InstalledPluginsTableModel {
     }
     boolean hasOnlyOneDependency = size == 1;
 
-    String key;
-    switch (action) {
-      case ENABLE_GLOBALLY:
-        key = hasOnlyOneDependency ?
-              "dialog.message.enable.required.plugin" :
-              "dialog.message.enable.required.plugins";
-        break;
-      case ENABLE_FOR_PROJECT:
-        key = hasOnlyOneDependency ?
-              "dialog.message.enable.required.plugin.for.current.project" :
-              "dialog.message.enable.required.plugins.for.current.project";
-        break;
-      case ENABLE_FOR_PROJECT_DISABLE_GLOBALLY:
-        key = hasOnlyOneDependency ?
-              "dialog.message.enable.dependent.plugin.for.current.project.only" :
-              "dialog.message.enable.dependent.plugins.for.current.project.only";
-        break;
-      case DISABLE_GLOBALLY:
-        key = hasOnlyOneDependency ?
-              "dialog.message.disable.dependent.plugin" :
-              "dialog.message.disable.dependent.plugins";
-        break;
-      case DISABLE_FOR_PROJECT:
-        key = hasOnlyOneDependency ?
-              "dialog.message.disable.dependent.plugin.for.current.project" :
-              "dialog.message.disable.dependent.plugins.for.current.project";
-        break;
-      case DISABLE_FOR_PROJECT_ENABLE_GLOBALLY:
-        key = hasOnlyOneDependency ?
-              "dialog.message.disable.required.plugin.for.current.project.only" :
-              "dialog.message.disable.required.plugins.for.current.project.only";
-        break;
-      default:
-        throw new IllegalStateException("Unexpected value: " + action);
-    }
+    String key = switch (action) {
+      case ENABLE_GLOBALLY -> hasOnlyOneDependency ? "dialog.message.enable.required.plugin" : "dialog.message.enable.required.plugins";
+      case DISABLE_GLOBALLY ->
+        hasOnlyOneDependency ? "dialog.message.disable.dependent.plugin" : "dialog.message.disable.dependent.plugins";
+    };
 
     String dependenciesText = hasOnlyOneDependency ?
                               dependencies.iterator().next() :

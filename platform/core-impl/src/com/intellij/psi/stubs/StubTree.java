@@ -28,11 +28,11 @@ import java.util.List;
 public class StubTree extends ObjectStubTree<StubElement<?>> {
   private final StubSpine mySpine = new StubSpine(this);
 
-  public StubTree(@NotNull final PsiFileStub root) {
+  public StubTree(@NotNull PsiFileStub root) {
     this(root, true);
   }
 
-  public StubTree(@NotNull final PsiFileStub root, final boolean withBackReference) {
+  public StubTree(@NotNull PsiFileStub root, boolean withBackReference) {
     super((ObjectStubBase)root, withBackReference);
   }
 

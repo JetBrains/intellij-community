@@ -116,6 +116,6 @@ public final class VcsRootErrorsFinder {
 
     VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
     VirtualFile directory = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
-    return directory != null && rootChecker.isRoot(directory);
+    return directory != null && rootChecker.validateRoot(directory);
   }
 }

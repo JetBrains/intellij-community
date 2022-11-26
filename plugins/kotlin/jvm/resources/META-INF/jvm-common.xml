@@ -49,7 +49,7 @@
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector"
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector"
                             serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionDetector"/>
 
         <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
@@ -79,10 +79,6 @@
         <projectService serviceInterface="org.jetbrains.uast.kotlin.KotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
 
-        <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrar"
-            serviceImplementation="org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrarImpl"/>
-
       <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
                          bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
 
@@ -110,6 +106,7 @@
     <extensions defaultExtensionNs="org.jetbrains.uast">
         <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin"/>
         <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin"/>
+        <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -119,6 +116,9 @@
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
 
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
+
+        <assignResolutionAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.IdeAssignPluginResolutionAltererExtension"/>
+        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.IdeAssignmentContainerContributor"/>
 
         <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
@@ -131,8 +131,6 @@
         <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
         <quickFixContributor implementation="org.jetbrains.kotlin.idea.quickfix.JvmQuickFixRegistrar"/>
         <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.facet.KotlinLibraryValidatorCreator"/>
-
-        <kotlinTestFramework id="delegateTestFramework"  order="last" implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinDelegatingTestFramework"/>
     </extensions>
 
     <resource-bundle>messages.KotlinBundle</resource-bundle>

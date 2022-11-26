@@ -1,0 +1,558 @@
+MODULES
+    project
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+    project.androidApp
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+    project.androidApp.androidTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.androidApp.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        project.multiplatformJvmLibrary.jvmMain (scope: TEST, exported: false)
+        project.multiplatformJvmLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        project.jvmLibrary.main (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: androidx.annotation:annotation:1.3.0 (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-common:2.3.1 (scope: TEST, exported: false)
+        Gradle: androidx.arch.core:core-common:2.1.0 (scope: TEST, exported: false)
+        Gradle: androidx.collection:collection:1.1.0 (scope: TEST, exported: false)
+        Gradle: androidx.appcompat:appcompat:1.4.2@aar (scope: TEST, exported: false)
+        Gradle: androidx.core:core:1.7.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.annotation:annotation-experimental:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-runtime:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.versionedparcelable:versionedparcelable:1.1.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.cursoradapter:cursoradapter:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.activity:activity:1.2.4@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.savedstate:savedstate:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata-core:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.fragment:fragment:1.3.6@aar (scope: TEST, exported: false)
+        Gradle: androidx.viewpager:viewpager:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.customview:customview:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.loader:loader:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata:2.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.arch.core:core-runtime:2.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.appcompat:appcompat-resources:1.4.2@aar (scope: TEST, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable-animated:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.interpolator:interpolator:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.drawerlayout:drawerlayout:1.0.0@aar (scope: TEST, exported: false)
+    project.androidApp.main
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.main (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        project.multiplatformJvmLibrary.jvmMain (scope: COMPILE, exported: false)
+        project.multiplatformJvmLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: COMPILE, exported: false)
+        project.jvmLibrary.main (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: androidx.annotation:annotation:1.3.0 (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-common:2.4.0 (scope: COMPILE, exported: false)
+        Gradle: androidx.arch.core:core-common:2.1.0 (scope: COMPILE, exported: false)
+        Gradle: androidx.collection:collection:1.1.0 (scope: COMPILE, exported: false)
+        Gradle: androidx.appcompat:appcompat:1.4.2@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.core:core:1.7.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.annotation:annotation-experimental:1.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-runtime:2.4.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.versionedparcelable:versionedparcelable:1.1.1@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.cursoradapter:cursoradapter:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.activity:activity:1.2.4@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel:2.3.1@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.savedstate:savedstate:1.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.1@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata-core:2.3.1@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.fragment:fragment:1.3.6@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.viewpager:viewpager:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.customview:customview:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.loader:loader:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata:2.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.arch.core:core-runtime:2.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.appcompat:appcompat-resources:1.4.2@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable:1.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable-animated:1.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.interpolator:interpolator:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.drawerlayout:drawerlayout:1.0.0@aar (scope: COMPILE, exported: false)
+    project.androidApp.unitTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.androidApp.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        project.multiplatformJvmLibrary.jvmMain (scope: TEST, exported: false)
+        project.multiplatformJvmLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        project.jvmLibrary.main (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: androidx.annotation:annotation:1.3.0 (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-common:2.4.0 (scope: TEST, exported: false)
+        Gradle: androidx.arch.core:core-common:2.1.0 (scope: TEST, exported: false)
+        Gradle: androidx.collection:collection:1.1.0 (scope: TEST, exported: false)
+        Gradle: androidx.appcompat:appcompat:1.4.2@aar (scope: TEST, exported: false)
+        Gradle: androidx.core:core:1.7.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.annotation:annotation-experimental:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-runtime:2.4.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.versionedparcelable:versionedparcelable:1.1.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.cursoradapter:cursoradapter:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.activity:activity:1.2.4@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.savedstate:savedstate:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata-core:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.fragment:fragment:1.3.6@aar (scope: TEST, exported: false)
+        Gradle: androidx.viewpager:viewpager:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.customview:customview:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.loader:loader:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata:2.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.arch.core:core-runtime:2.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.appcompat:appcompat-resources:1.4.2@aar (scope: TEST, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable-animated:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.interpolator:interpolator:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.drawerlayout:drawerlayout:1.0.0@aar (scope: TEST, exported: false)
+    project.jvmLibrary
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+    project.jvmLibrary.main
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.jvmMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        project.multiplatformJvmLibrary.jvmMain (scope: COMPILE, exported: false)
+        project.multiplatformJvmLibrary.commonMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: RUNTIME, exported: false)
+    project.jvmLibrary.test
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.jvmLibrary.main (scope: COMPILE, exported: false)
+        project.jvmLibrary.main (scope: RUNTIME, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.jvmMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        project.multiplatformJvmLibrary.jvmMain (scope: COMPILE, exported: false)
+        project.multiplatformJvmLibrary.commonMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: RUNTIME, exported: false)
+    project.multiplatformAndroidApp
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+    project.multiplatformAndroidApp.androidTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        project.multiplatformJvmLibrary.jvmMain (scope: TEST, exported: false)
+        project.multiplatformJvmLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        project.jvmLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidApp.main (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: androidx.annotation:annotation:1.3.0 (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-common:2.3.1 (scope: TEST, exported: false)
+        Gradle: androidx.arch.core:core-common:2.1.0 (scope: TEST, exported: false)
+        Gradle: androidx.collection:collection:1.1.0 (scope: TEST, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+        Gradle: androidx.appcompat:appcompat:1.4.2@aar (scope: TEST, exported: false)
+        Gradle: androidx.core:core:1.7.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.annotation:annotation-experimental:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-runtime:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.versionedparcelable:versionedparcelable:1.1.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.cursoradapter:cursoradapter:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.activity:activity:1.2.4@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.savedstate:savedstate:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata-core:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.fragment:fragment:1.3.6@aar (scope: TEST, exported: false)
+        Gradle: androidx.viewpager:viewpager:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.customview:customview:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.loader:loader:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata:2.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.arch.core:core-runtime:2.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.appcompat:appcompat-resources:1.4.2@aar (scope: TEST, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable-animated:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.interpolator:interpolator:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.drawerlayout:drawerlayout:1.0.0@aar (scope: TEST, exported: false)
+    project.multiplatformAndroidApp.main
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.main (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        project.multiplatformJvmLibrary.jvmMain (scope: COMPILE, exported: false)
+        project.multiplatformJvmLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: COMPILE, exported: false)
+        project.jvmLibrary.main (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: androidx.annotation:annotation:1.3.0 (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-common:2.4.0 (scope: COMPILE, exported: false)
+        Gradle: androidx.arch.core:core-common:2.1.0 (scope: COMPILE, exported: false)
+        Gradle: androidx.collection:collection:1.1.0 (scope: COMPILE, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: COMPILE, exported: false)
+        Gradle: androidx.appcompat:appcompat:1.4.2@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.core:core:1.7.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.annotation:annotation-experimental:1.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-runtime:2.4.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.versionedparcelable:versionedparcelable:1.1.1@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.cursoradapter:cursoradapter:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.activity:activity:1.2.4@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel:2.3.1@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.savedstate:savedstate:1.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.1@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata-core:2.3.1@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.fragment:fragment:1.3.6@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.viewpager:viewpager:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.customview:customview:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.loader:loader:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata:2.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.arch.core:core-runtime:2.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.appcompat:appcompat-resources:1.4.2@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable:1.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable-animated:1.1.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.interpolator:interpolator:1.0.0@aar (scope: COMPILE, exported: false)
+        Gradle: androidx.drawerlayout:drawerlayout:1.0.0@aar (scope: COMPILE, exported: false)
+    project.multiplatformAndroidApp.unitTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        project.multiplatformJvmLibrary.jvmMain (scope: TEST, exported: false)
+        project.multiplatformJvmLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        project.jvmLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidApp.main (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: androidx.annotation:annotation:1.3.0 (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-common:2.4.0 (scope: TEST, exported: false)
+        Gradle: androidx.arch.core:core-common:2.1.0 (scope: TEST, exported: false)
+        Gradle: androidx.collection:collection:1.1.0 (scope: TEST, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+        Gradle: androidx.appcompat:appcompat:1.4.2@aar (scope: TEST, exported: false)
+        Gradle: androidx.core:core:1.7.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.annotation:annotation-experimental:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-runtime:2.4.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.versionedparcelable:versionedparcelable:1.1.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.cursoradapter:cursoradapter:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.activity:activity:1.2.4@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.savedstate:savedstate:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata-core:2.3.1@aar (scope: TEST, exported: false)
+        Gradle: androidx.fragment:fragment:1.3.6@aar (scope: TEST, exported: false)
+        Gradle: androidx.viewpager:viewpager:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.customview:customview:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.loader:loader:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.lifecycle:lifecycle-livedata:2.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.arch.core:core-runtime:2.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.appcompat:appcompat-resources:1.4.2@aar (scope: TEST, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.vectordrawable:vectordrawable-animated:1.1.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.interpolator:interpolator:1.0.0@aar (scope: TEST, exported: false)
+        Gradle: androidx.drawerlayout:drawerlayout:1.0.0@aar (scope: TEST, exported: false)
+    project.multiplatformAndroidJvmIosLibrary
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+    project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+    project.multiplatformAndroidJvmIosLibrary.androidTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.commonTest (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+    project.multiplatformAndroidJvmIosLibrary.commonMain
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+    project.multiplatformAndroidJvmIosLibrary.commonTest
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+    project.multiplatformAndroidJvmIosLibrary.jvmMain
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+    project.multiplatformAndroidJvmIosLibrary.jvmTest
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.commonTest (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+    project.multiplatformAndroidJvmIosLibrary.linuxX64Main
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+    project.multiplatformAndroidJvmIosLibrary.linuxX64Test
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.commonTest (scope: TEST, exported: false)
+    project.multiplatformAndroidJvmIosLibrary.main
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+    project.multiplatformAndroidJvmIosLibrary.unitTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.commonTest (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+    project.multiplatformAndroidJvmIosLibrary2
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+    project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary2.commonMain (scope: COMPILE, exported: false)
+    project.multiplatformAndroidJvmIosLibrary2.androidTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary2.commonTest (scope: TEST, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+    project.multiplatformAndroidJvmIosLibrary2.commonMain
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+    project.multiplatformAndroidJvmIosLibrary2.commonTest
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+    project.multiplatformAndroidJvmIosLibrary2.jvmMain
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary2.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+    project.multiplatformAndroidJvmIosLibrary2.jvmTest
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary2.commonTest (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+    project.multiplatformAndroidJvmIosLibrary2.linuxX64Main
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary2.commonMain (scope: COMPILE, exported: false)
+    project.multiplatformAndroidJvmIosLibrary2.linuxX64Test
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary2.commonTest (scope: TEST, exported: false)
+    project.multiplatformAndroidJvmIosLibrary2.main
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.main (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+    project.multiplatformAndroidJvmIosLibrary2.unitTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary2.commonTest (scope: TEST, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+    project.multiplatformAndroidLibrary
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+    project.multiplatformAndroidLibrary.androidTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+    project.multiplatformAndroidLibrary.main
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.main (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: COMPILE, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: COMPILE, exported: false)
+    project.multiplatformAndroidLibrary.unitTest
+    Order entries:
+        < Android API 31 Platform >
+        <Module source>
+        project.multiplatformAndroidJvmIosLibrary.main (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.commonMain (scope: TEST, exported: false)
+        project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain (scope: TEST, exported: false)
+        project.multiplatformAndroidLibrary.main (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+    project.multiplatformJvmLibrary
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+    project.multiplatformJvmLibrary.commonMain
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        Gradle: com.squareup.okio:okio:commonMain:3.2.0 (scope: COMPILE, exported: false)
+    project.multiplatformJvmLibrary.commonTest
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+    project.multiplatformJvmLibrary.jvmMain
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformJvmLibrary.commonMain (scope: COMPILE, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+    project.multiplatformJvmLibrary.jvmTest
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        project.multiplatformJvmLibrary.commonTest (scope: TEST, exported: false)
+        Gradle: com.squareup.okio:okio-jvm:3.2.0 (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+

@@ -69,7 +69,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
 
   @Override
   public PsiElement getParent() {
-    final CompositeElement parentNode = getTreeParent();
+    CompositeElement parentNode = getTreeParent();
     return parentNode != null ? parentNode.getPsi() : null;
   }
 
@@ -280,7 +280,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
     if (project != null) {
       return project;
     }
-    final PsiManager manager = getManager();
+    PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 
     return manager.getProject();
@@ -298,7 +298,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
     return this;
   }
 
-  private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+  private PsiElement addInnerBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
     TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
@@ -307,7 +307,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return this == another;
   }
 }

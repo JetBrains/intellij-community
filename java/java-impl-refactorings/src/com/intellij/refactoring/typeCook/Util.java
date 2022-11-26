@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook;
 
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -16,14 +16,6 @@ import java.util.Set;
 
 public final class Util {
   private static final Logger LOG = Logger.getInstance(Util.class);
-
-  public static PsiType createArrayType(PsiType theType, int level) {
-    while (level-- > 0) {
-      theType = theType.createArrayType();
-    }
-
-    return theType;
-  }
 
   public static @NotNull PsiClassType.ClassResolveResult resolveType(PsiType type) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);

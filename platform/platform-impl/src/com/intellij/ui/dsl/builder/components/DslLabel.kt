@@ -7,8 +7,11 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -19,6 +22,7 @@ import java.awt.Dimension
 import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
+import kotlin.math.min
 
 /**
  * Denied content and reasons
@@ -50,12 +54,16 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
       updateEditorPaneText()
     }
 
+  var limitPreferredSize = false
+
   @Nls
   private var userText: String? = null
 
   init {
     contentType = UIUtil.HTML_MIME
-    editorKit = HTMLEditorKitBuilder().build()
+    editorKit = HTMLEditorKitBuilder()
+      .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP)
+      .build()
 
     // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
     (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
@@ -84,6 +92,7 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     border = null
     background = UIUtil.TRANSPARENT_COLOR
     isOpaque = false
+    disabledTextColor = JBUI.CurrentTheme.Label.disabledForeground()
     patchFont()
     updateEditorPaneText()
   }
@@ -92,6 +101,20 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     // JEditorPane doesn't support baseline, calculate it manually from font
     val fontMetrics = getFontMetrics(font)
     return fontMetrics.ascent
+  }
+
+  override fun getMinimumSize(): Dimension {
+    val result = super.getMinimumSize()
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && limitPreferredSize)
+      Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH / 2), result.width), result.height)
+    else result
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val result = super.getPreferredSize()
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && limitPreferredSize)
+      Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH), result.width), result.height)
+    else result
   }
 
   override fun setText(@Nls t: String?) {
@@ -117,11 +140,10 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     processedText = appendExternalLinkIcons(processedText)
     var body = HtmlChunk.body()
     if (maxLineLength > 0 && maxLineLength != MAX_LINE_LENGTH_NO_WRAP && text.length > maxLineLength) {
-      val width = getFontMetrics(font).stringWidth(text.substring(0, maxLineLength))
-      body = body.attr("width", width)
+      body = body.attr("width", getSupposedWidth(maxLineLength))
     }
 
-    @NonNls val css = createCss(maxLineLength != MAX_LINE_LENGTH_NO_WRAP)
+    @NonNls val css = createCss()
     super.setText(HtmlBuilder()
                     .append(HtmlChunk.raw(css))
                     .append(HtmlChunk.raw(processedText).wrapWith(body))
@@ -162,7 +184,7 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     }
   }
 
-  private fun createCss(wordWrap: Boolean): String {
+  private fun createCss(): String {
     val styles = mutableListOf(
       "a, a:link {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED)};}",
       "a:visited {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.VISITED)};}",
@@ -170,10 +192,14 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
       "a:active {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED)};}"
     )
 
-    if (!wordWrap) {
-      styles.add("body, p {white-space:nowrap;}")
+    when (maxLineLength) {
+      MAX_LINE_LENGTH_NO_WRAP -> styles.add("body, p {white-space:nowrap;}")
     }
 
     return styles.joinToString(" ", "<head><style type='text/css'>", "</style></head>")
+  }
+
+  private fun getSupposedWidth(charCount: Int): Int {
+    return getFontMetrics(font).charWidth('0') * charCount
   }
 }

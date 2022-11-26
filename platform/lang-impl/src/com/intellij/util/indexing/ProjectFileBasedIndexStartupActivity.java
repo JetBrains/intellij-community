@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.startup.StartupActivity;
@@ -16,10 +13,8 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
-  private static final Logger LOG = Logger.getInstance(ProjectFileBasedIndexStartupActivity.class);
-
   ProjectFileBasedIndexStartupActivity() {
-    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         removeProjectIndexableSet(project);
@@ -29,16 +24,6 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isInternal()) {
-      project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        @Override
-        public void exitDumbMode() {
-          LOG.info("Has changed files: " + FileBasedIndexProjectHandler.mightHaveManyChangedFilesInProject(project) +
-                   "; project=" + project);
-        }
-      });
-    }
-
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
     if (propertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
@@ -49,7 +34,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     // schedule dumb mode start after the read action we're currently in
     if (fileBasedIndex instanceof FileBasedIndexImpl) {
       boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
-      UnindexedFilesUpdater.scanAndIndexProjectAfterOpen(project, suspended, "On project open");
+      UnindexedFilesScanner.scanAndIndexProjectAfterOpen(project, suspended, "On project open");
     }
 
     // done mostly for tests. In real life this is no-op, because the set was removed on project closing

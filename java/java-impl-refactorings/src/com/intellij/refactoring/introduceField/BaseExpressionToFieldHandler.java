@@ -8,6 +8,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -68,7 +69,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   private final boolean myIsConstant;
-  private PsiClass myParentClass;
+  private @Nullable PsiClass myParentClass;
 
   protected BaseExpressionToFieldHandler(boolean isConstant) {
     myIsConstant = isConstant;
@@ -116,7 +117,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
     final boolean shouldSuggestDialog = activeIntroducer instanceof InplaceIntroduceConstantPopup &&
                                         activeIntroducer.startsOnTheSameElement(selectedExpr, null);
-    if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
+    if (classes.size() == 1 || editor == null || IntentionPreviewUtils.isPreviewElement(myParentClass) || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
     else if (!classes.isEmpty()){
@@ -214,7 +215,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                  anchorStatementIfAll, tempAnchorElement, editor,
                                  myParentClass);
 
-    WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(() -> runnable.run());
+    if (IntentionPreviewUtils.isPreviewElement(myParentClass)) {
+      runnable.run();
+    }
+    else {
+      WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(runnable::run);
+    }
     return false;
   }
 
@@ -254,7 +260,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   protected abstract OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass);
 
-  protected final PsiClass getParentClass() {
+  protected final @Nullable PsiClass getParentClass() {
     return myParentClass;
   }
 
@@ -291,7 +297,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(expr);
   }
 
-  public PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
+  public @Nullable PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
     PsiElement element = initializerExpression.getUserData(ElementToWorkOn.PARENT);
     if (element == null) element = initializerExpression.getParent();
     PsiElement parent = element;

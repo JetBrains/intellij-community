@@ -53,6 +53,7 @@
                     interface="org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser"
                     dynamic="true"/>
     <extensionPoint name="versionAwareMavenSupport" interface="org.jetbrains.idea.maven.MavenVersionAwareSupportExtension" dynamic="true"/>
+
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -92,10 +93,12 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenProjectIndicesManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenTasksManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
+                        serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>
 
     <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.project.MavenResourceConfigurationGeneratorCompileTask"/>
     <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenBeforeCompileTask"/>
@@ -288,9 +291,17 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector"/>
+
+
+    <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
+                 description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
+
+    <registryKey key="maven.dedicated.indexer" defaultValue="true"
+                 description="Dedicated maven indexer" restartRequired="true"/>
 
     <registryKey key="maven.linear.import" defaultValue="false"
-                 description="linear maven import process"/>
+                 description="Linear maven import process"/>
 
     <registryKey key="maven.import.separate.main.and.test.modules.when.needed" defaultValue="true"
                  description="In order to support different 'testSource' and 'testTarget' compiler options, IntelliJ IDEA will create separate modules for such projects (IDEA-85478).\nAvailable only when Import using IntelliJ Workspace API is enabled."/>
@@ -312,26 +323,23 @@
 
     <registryKey key="maven.always.remove.bad.entries" defaultValue="true" description="Delete invalid maven Entries"/>
 
-    <registryKey key="maven.new.project.model" defaultValue="false" description="Use workspace project model to import maven project"
-                 restartRequired="true"/>
-
     <registryKey key="maven.spy.events.debug" defaultValue="false"
                  description="Enable Maven spy events to be printed in Build Tool Window console"/>
 
     <registryKey key="maven.server.debug" defaultValue="false"
                  description="Debug maven server"/>
 
-    <registryKey key="maven.server.debug.default" defaultValue="false"
-                 description="Debug maven server for default project"/>
-
     <registryKey key="maven.server.vm.remove.javaagent" defaultValue="true"
                  description="Maven server remove -javaagent vm parameter"/>
 
-    <registryKey key="maven.modules.do.not.ignore.on.delete" defaultValue="false"
-                 description="Deleted maven modules will not be marked as ignored"/>
-
     <registryKey key="maven.consumer.pom.support" defaultValue="false"
                  description="Enable Maven consumer pom support"/>
+
+    <registryKey key="maven.import.to.workspace.model.fast.facet.creation" defaultValue="false"
+                 description="Create facets in a background thread instead of EDT"/>
+
+    <registryKey key="maven.import.to.workspace.model.ignored.facet.importers" defaultValue=""
+                 description="Comma-separated list of facet importer class names that should be ignored during import for better performance. E.g., JpaFacetImporter"/>
 
     <intentionAction>
       <language>XML</language>
@@ -346,6 +354,7 @@
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsLanguageLevelQuickFix"/>
 
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
+    <openapi.externalSystem.projectSetupExtension implementation="org.jetbrains.idea.maven.starters.MavenStarterProjectConfigurator"/>
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
     <dependencyCollector kind="maven-packaging" implementation="org.jetbrains.idea.maven.project.MavenPackagingDependencyCollector"/>
@@ -356,6 +365,8 @@
 
     <externalSystem.dependencyModifier implementation="org.jetbrains.idea.maven.dsl.MavenDependencyModificator"/>
     <iconMapper mappingFile="MavenIconMappings.json"/>
+
+    <referencesSearch implementation="org.jetbrains.idea.maven.search.MavenModuleReferenceSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">

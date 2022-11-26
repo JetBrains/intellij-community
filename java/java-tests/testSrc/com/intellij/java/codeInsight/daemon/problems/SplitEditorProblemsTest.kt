@@ -7,7 +7,6 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -16,7 +15,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.testFramework.registerComponentInstance
+import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ArrayUtilRt
 import javax.swing.SwingConstants
@@ -27,8 +26,8 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   override fun setUp() {
     super.setUp()
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
-    manager = FileEditorManagerExImpl(project).also { it.initDockableContentFactory() }
-    project.registerComponentInstance(FileEditorManager::class.java, manager!!, testRootDisposable)
+    manager = FileEditorManagerImpl(project).also { it.initDockableContentFactory() }
+    project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
   }
 
@@ -45,34 +44,37 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   }
 
   fun testClassRenameInTwoDetachedWindows() {
-    val parentClass = myFixture.addClass("""
-      package bar;
-      
-      public class Parent1 {
+    try {
+      val parentClass = myFixture.addClass("""
+        package bar;
+        
+        public class Parent1 {
+        }
+      """.trimIndent())
+      val childClass = myFixture.addClass("""
+        package foo;
+        
+        import bar.Parent1;
+  
+        public final class Child extends Parent1 {
+        }
+      """.trimIndent())
+
+      val editorManager = manager!!
+      editorManager.openFileInNewWindow(childClass.containingFile.virtualFile).first[0]
+      val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditorImpl).editor
+      rehighlight(parentEditor)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        parentClass.nameIdentifier?.replace(factory.createIdentifier("Parent"))
       }
-    """.trimIndent())
-    val childClass = myFixture.addClass("""
-      package foo;
-      
-      import bar.Parent1;
-
-      public final class Child extends Parent1 {
-      }
-    """.trimIndent())
-
-    val editorManager = manager!!
-    editorManager.openFileInNewWindow(childClass.containingFile.virtualFile).first[0]
-    val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditorImpl).editor
-    rehighlight(parentEditor)
-
-    WriteCommandAction.runWriteCommandAction(project) {
-      val factory = JavaPsiFacade.getInstance(project).elementFactory
-      parentClass.nameIdentifier?.replace(factory.createIdentifier("Parent"))
+      rehighlight(parentEditor)
+      assertSize(2, getProblems(parentEditor))
     }
-    rehighlight(parentEditor)
-    assertSize(2, getProblems(parentEditor))
-
-    DockManager.getInstance(project).containers.forEach { it.closeAll() }
+    finally {
+      DockManager.getInstance(project).containers.forEach { it.closeAll() }
+    }
   }
 
   fun testRenameClassChangeUsageAndUndoAllInSplitEditor() {
@@ -99,9 +101,9 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     assertEmpty(getProblems(parentEditor))
 
     // open child class in horizontal split, focus stays in parent editor
-    val currentWindow = editorManager.currentWindow
+    val currentWindow = editorManager.currentWindow!!
     editorManager.createSplitter(SwingConstants.HORIZONTAL, currentWindow)
-    val nextWindow = editorManager.getNextWindow(currentWindow)
+    val nextWindow = editorManager.getNextWindow(currentWindow)!!
     val childEditor = editorManager.openFileWithProviders(childClass.containingFile.virtualFile, false, nextWindow).first[0]
 
     // rename parent, check for errors

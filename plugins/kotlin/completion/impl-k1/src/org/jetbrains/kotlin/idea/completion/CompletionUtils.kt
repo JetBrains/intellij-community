@@ -146,7 +146,7 @@ fun thisExpressionItems(
 ): Collection<ThisItemLookupObject> {
     val scope = position.getResolutionScope(bindingContext, resolutionFacade)
 
-    val psiFactory = KtPsiFactory(position)
+    val psiFactory = KtPsiFactory(resolutionFacade.project)
 
     val result = ArrayList<ThisItemLookupObject>()
     for ((receiver, expressionFactory) in scope.getImplicitReceiversWithInstanceToExpression()) {
@@ -159,6 +159,9 @@ fun thisExpressionItems(
     return result
 }
 
+/**
+ * Implementation in K2: [org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler]
+ */
 fun returnExpressionItems(bindingContext: BindingContext, position: KtElement): Collection<LookupElement> {
     val result = mutableListOf<LookupElement>()
 

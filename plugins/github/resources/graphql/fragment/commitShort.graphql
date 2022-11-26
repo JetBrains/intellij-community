@@ -3,12 +3,6 @@ fragment commitShort on Commit {
     url
     messageHeadlineHTML
     author {
-        name
-        email
-        avatarUrl
-        date
-        user {
-            url
-        }
+        ...gitActorInfo
     }
 }

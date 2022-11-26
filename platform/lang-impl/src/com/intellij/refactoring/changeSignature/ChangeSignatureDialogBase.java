@@ -509,7 +509,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
       @Override
       protected boolean isRowEmpty(int row) {
-        return ChangeSignatureDialogBase.this.isEmptyRow(getRowItem(row));
+        return false;
       }
     };
   }
@@ -521,14 +521,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   @Nullable
   protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<ParamInfo> item) {
     return null;
-  }
-
-  /**
-   * @deprecated override {@link #createParametersListTable} instead.
-   */
-  @Deprecated(forRemoval = true)
-  protected boolean isEmptyRow(ParameterTableModelItemBase<ParamInfo> row) {
-    return false;
   }
 
   /**

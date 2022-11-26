@@ -37,8 +37,10 @@ import java.util.List;
 public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
-  public static final List<@NlsSafe String> COMM_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,state,user,comm");
-  public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,state,user,command");
+  public static final List<@NlsSafe String> COMM_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,comm");
+  public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,command");
+
+  private static final String PARENT_PID_PREFIX = "PPid:";
 
   public static ProcessInfo @NotNull [] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
@@ -145,10 +147,29 @@ public final class ProcessListUtil {
         // couldn't resolve symlink
       }
 
+      int parentPid = -1;
+      try (FileInputStream stream = new FileInputStream(new File(each, "status"))) {
+        String statusString = new String(FileUtil.loadBytes(stream), StandardCharsets.UTF_8);
+        for (String line : StringUtil.splitByLines(statusString)) {
+          if (line.startsWith(PARENT_PID_PREFIX)) {
+            try {
+              parentPid = Integer.parseInt(line.substring(PARENT_PID_PREFIX.length()).trim());
+            }
+            catch (NumberFormatException numberFormatException) {
+              LOG.error("Failed to parse parent pid from line " + line);
+            }
+            break;
+          }
+        }
+      }
+      catch (IOException ignored) {
+      }
+
       result.add(new ProcessInfo(pid, StringUtil.join(cmdline, " "),
                                  PathUtil.getFileName(cmdline.get(0)),
                                  StringUtil.join(cmdline.subList(1, cmdline.size()), " "),
-                                 executablePath
+                                 executablePath,
+                                 parentPid
       ));
     }
     return result;
@@ -185,7 +206,7 @@ public final class ProcessListUtil {
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.substring(command.length()).trim();
 
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command));
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid));
     }
     return result;
   }
@@ -217,7 +238,7 @@ public final class ProcessListUtil {
       String args = each.commandLine.startsWith(command) ? each.commandLine.substring(command.length()).trim()
                                                          : each.commandLine;
 
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command));
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid));
     }
     return result;
   }
@@ -228,10 +249,17 @@ public final class ProcessListUtil {
     if (lines.length == 0) return null;
 
     @NlsSafe String header = lines[0];
-    int pidStart = header.indexOf("PID");
+    String pidString = "PID";
+    int pidStart = header.indexOf(pidString);
     if (pidStart == -1) return null;
 
-    int statStart = header.indexOf("S", pidStart);
+    String parentPidString = "PPID";
+    int parentPidStart = header.indexOf(parentPidString, pidStart);
+    if (parentPidStart == -1) return null;
+
+    int parentPidSectionStart = pidStart + pidString.length();
+
+    int statStart = header.indexOf("S", parentPidStart);
     if (statStart == -1) return null;
 
     int userStart = header.indexOf("USER", statStart);
@@ -244,8 +272,10 @@ public final class ProcessListUtil {
       String line = lines[i];
 
       try {
-        int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
+        int pid = StringUtil.parseInt(line.substring(0, parentPidSectionStart).trim(), -1);
         if (pid == -1) continue;
+
+        int parentPid = StringUtil.parseInt(line.substring(parentPidSectionStart, statStart).trim(), -1);
 
         @NlsSafe String state = line.substring(statStart, userStart).trim();
         if (state.contains("Z")) continue; // zombie
@@ -253,7 +283,7 @@ public final class ProcessListUtil {
         String user = line.substring(userStart, commandStart).trim();
         String commandLine = line.substring(commandStart).trim();
 
-        result.add(new MacProcessInfo(pid, commandLine, user, state));
+        result.add(new MacProcessInfo(pid, commandLine, user, state, parentPid));
       }
       catch (Exception e) {
         LOG.error("Can't parse line '" + line + "'", e);
@@ -262,18 +292,7 @@ public final class ProcessListUtil {
     return result;
   }
 
-  private static class MacProcessInfo {
-    final int pid;
-    final String commandLine;
-    final String user;
-    final String state;
-
-    MacProcessInfo(int pid, String commandLine, String user, String state) {
-      this.pid = pid;
-      this.commandLine = commandLine;
-      this.user = user;
-      this.state = state;
-    }
+  private record MacProcessInfo(int pid, String commandLine, String user, String state, int parentPid) {
   }
 
   private static @Nullable List<ProcessInfo> getProcessListUsingWinProcessListHelper() {
@@ -304,19 +323,10 @@ public final class ProcessListUtil {
           return null;
         }
         switch (str.charAt(index + 1)) {
-          case '\\': {
-            builder.append('\\');
-            break;
-          }
-          case 'n': {
-            builder.append('\n');
-            break;
-          }
-          case 'r': {
-            builder.append('\r');
-            break;
-          }
-          default: {
+          case '\\' -> builder.append('\\');
+          case 'n' -> builder.append('\n');
+          case 'r' -> builder.append('\r');
+          default -> {
             logErrorTestSafe("Invalid character after an escape symbol: " + str.charAt(index + 1));
             LOG.debug(str);
             return null;
@@ -342,14 +352,14 @@ public final class ProcessListUtil {
   static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
-    if (lines.length % 3 != 0) {
-      logErrorTestSafe("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
+    if (lines.length % 4 != 0) {
+      logErrorTestSafe("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 4");
       LOG.debug(output);
       return null;
     }
-    int processCount = lines.length / 3;
+    int processCount = lines.length / 4;
     for (int i = 0; i < processCount; i++) {
-      int offset = i * 3;
+      int offset = i * 4;
       String idString = removePrefix(lines[offset], "pid:");
       int id = StringUtil.parseInt(idString, -1);
       if (id == -1) {
@@ -359,17 +369,25 @@ public final class ProcessListUtil {
       }
       if (id == 0) continue;
 
-      String name = unescapeString(removePrefix(lines[offset + 1], "name:"));
+      String parentIdString = removePrefix(lines[offset + 1], "parentPid:");
+      int parentId = StringUtil.parseInt(parentIdString, -1);
+      if (parentId == -1) {
+        logErrorTestSafe("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": parent process ID is not a number: " + lines[offset + 1]);
+        LOG.debug(output);
+        return null;
+      }
+
+      String name = unescapeString(removePrefix(lines[offset + 2], "name:"));
       if (name == null) {
-        logErrorTestSafe("Failed to read a process name: " + lines[offset + 1]);
+        logErrorTestSafe("Failed to read a process name: " + lines[offset + 2]);
         LOG.debug(output);
         return null;
       }
       if (name.isEmpty()) continue;
 
-      String commandLine = unescapeString(removePrefix(lines[offset + 2], "cmd:"));
+      String commandLine = unescapeString(removePrefix(lines[offset + 3], "cmd:"));
       if (commandLine == null) {
-        logErrorTestSafe("Failed to read a process command line: " + lines[offset + 2]);
+        logErrorTestSafe("Failed to read a process command line: " + lines[offset + 3]);
         LOG.debug(output);
         return null;
       }
@@ -381,7 +399,7 @@ public final class ProcessListUtil {
       else {
         args = extractCommandLineArgs(commandLine, name);
       }
-      result.add(new ProcessInfo(id, commandLine, name, args));
+      result.add(new ProcessInfo(id, commandLine, name, args, null, parentId));
     }
     return result;
   }
@@ -409,7 +427,7 @@ public final class ProcessListUtil {
   }
 
   static @Nullable List<ProcessInfo> getProcessListUsingWindowsWMIC() {
-    return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline,ExecutablePath"),
+    return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,ParentProcessId,Commandline,ExecutablePath"),
                               ProcessListUtil::parseWMICOutput);
   }
 
@@ -425,6 +443,9 @@ public final class ProcessListUtil {
     int pidStart = header.indexOf("ProcessId");
     if (pidStart == -1) return null;
 
+    int parentPidStart = header.indexOf("ParentProcessId");
+    if (parentPidStart == -1) return null;
+
     int executablePathStart = header.indexOf("ExecutablePath");
     if (executablePathStart == -1) return null;
 
@@ -435,7 +456,9 @@ public final class ProcessListUtil {
       int pid = StringUtil.parseInt(line.substring(pidStart).trim(), -1);
       if (pid == -1 || pid == 0) continue;
 
-      String executablePath = line.substring(executablePathStart, pidStart).trim();
+      int parentPid = StringUtil.parseInt(line.substring(parentPidStart, pidStart).trim(), -1);
+
+      String executablePath = line.substring(executablePathStart, parentPidStart).trim();
 
       String name = line.substring(0, commandLineStart).trim();
       if (name.isEmpty()) continue;
@@ -450,7 +473,7 @@ public final class ProcessListUtil {
         args = extractCommandLineArgs(commandLine, name);
       }
 
-      result.add(new ProcessInfo(pid, commandLine, name, args, executablePath));
+      result.add(new ProcessInfo(pid, commandLine, name, args, executablePath, parentPid));
     }
     return result;
   }

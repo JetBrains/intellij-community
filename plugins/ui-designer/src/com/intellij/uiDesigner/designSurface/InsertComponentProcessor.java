@@ -45,10 +45,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class InsertComponentProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance(InsertComponentProcessor.class);
 

@@ -84,11 +84,10 @@ public final class Scopes {
     return null;
   }
 
-  @Nullable
-  public static SearchScope findScopeByName(@NotNull Project project, @NotNull String scopeName) {
+  public static @Nullable SearchScope findScopeByName(@NotNull Project project, @NotNull String scopeName) {
     // can't use ScopeChooserUtils.findScopeByName() because it returns intersection scopes that can't be presented the user
     // and doesn't return all predefined scopes
-    final List<SearchScope> predefinedScopes =
+    final List<? extends SearchScope> predefinedScopes =
       PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(project, null, true, false, true, true, true);
     for (SearchScope predefinedScope : predefinedScopes) {
       if (predefinedScope.getDisplayName().equals(scopeName)) {

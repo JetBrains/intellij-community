@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -23,7 +22,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, WorkspaceEntityBase() {
+open class VFUWithTwoPropertiesEntityImpl(val dataSource: VFUWithTwoPropertiesEntityData) : VFUWithTwoPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,26 +32,24 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _fileProperty: VirtualFileUrl? = null
   override val fileProperty: VirtualFileUrl
-    get() = _fileProperty!!
+    get() = dataSource.fileProperty
 
-  @JvmField
-  var _secondFileProperty: VirtualFileUrl? = null
   override val secondFileProperty: VirtualFileUrl
-    get() = _secondFileProperty!!
+    get() = dataSource.secondFileProperty
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: VFUWithTwoPropertiesEntityData?) : ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity>(), VFUWithTwoPropertiesEntity.Builder {
+  class Builder(result: VFUWithTwoPropertiesEntityData?) : ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity, VFUWithTwoPropertiesEntityData>(
+    result), VFUWithTwoPropertiesEntity.Builder {
     constructor() : this(VFUWithTwoPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,6 +67,9 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       index(this, "fileProperty", this.fileProperty)
       index(this, "secondFileProperty", this.secondFileProperty)
@@ -101,10 +101,10 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as VFUWithTwoPropertiesEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.fileProperty = dataSource.fileProperty
-      this.secondFileProperty = dataSource.secondFileProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
+      if (this.secondFileProperty != dataSource.secondFileProperty) this.secondFileProperty = dataSource.secondFileProperty
       if (parents != null) {
       }
     }
@@ -114,7 +114,7 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -123,7 +123,7 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -131,7 +131,7 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
       get() = getEntityData().fileProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
+        getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
         val _diff = diff
         if (_diff != null) index(this, "fileProperty", value)
@@ -141,13 +141,12 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
       get() = getEntityData().secondFileProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().secondFileProperty = value
+        getEntityData(true).secondFileProperty = value
         changedProperty.add("secondFileProperty")
         val _diff = diff
         if (_diff != null) index(this, "secondFileProperty", value)
       }
 
-    override fun getEntityData(): VFUWithTwoPropertiesEntityData = result ?: super.getEntityData() as VFUWithTwoPropertiesEntityData
     override fun getEntityClass(): Class<VFUWithTwoPropertiesEntity> = VFUWithTwoPropertiesEntity::class.java
   }
 }
@@ -161,27 +160,21 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
   fun isSecondFilePropertyInitialized(): Boolean = ::secondFileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<VFUWithTwoPropertiesEntity> {
     val modifiable = VFUWithTwoPropertiesEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): VFUWithTwoPropertiesEntity {
-    val entity = VFUWithTwoPropertiesEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty
-    entity._secondFileProperty = secondFileProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = VFUWithTwoPropertiesEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -206,7 +199,7 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as VFUWithTwoPropertiesEntityData
 
@@ -219,7 +212,7 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as VFUWithTwoPropertiesEntityData
 

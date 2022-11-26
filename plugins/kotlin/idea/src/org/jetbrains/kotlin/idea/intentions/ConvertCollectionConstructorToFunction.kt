@@ -39,7 +39,7 @@ class ConvertCollectionConstructorToFunction : SelfTargetingIntention<KtCallExpr
         val fq = element.resolveToCall()?.resultingDescriptor?.fqNameSafe?.asString() ?: return
         val toCall = functionMap[fq] ?: return
         val callee = element.calleeExpression ?: return
-        callee.replace(KtPsiFactory(element).createExpression(toCall))
+        callee.replace(KtPsiFactory(element.project).createExpression(toCall))
         element.getQualifiedExpressionForSelector()?.replace(element)
     }
 }

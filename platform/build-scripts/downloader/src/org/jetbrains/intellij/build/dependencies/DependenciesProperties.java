@@ -23,9 +23,14 @@ public final class DependenciesProperties {
       .resolve("build")
       .resolve("dependencies")
       .resolve("dependencies.properties");
+    var ultimatePropertiesFile = communityRoot.getCommunityRoot()
+      .getParent()
+      .resolve("build")
+      .resolve("dependencies.properties");
     //noinspection SimplifyStreamApiCallChains
     var propertyFiles = Stream.concat(
-      Stream.of(customPropertyFiles), Stream.of(communityPropertiesFile)
+      Stream.of(customPropertyFiles),
+      Stream.of(communityPropertiesFile, ultimatePropertiesFile).filter(Files::exists)
     ).distinct().collect(Collectors.toList());
     for (Path propertyFile : propertyFiles) {
       try (var file = Files.newInputStream(propertyFile)) {

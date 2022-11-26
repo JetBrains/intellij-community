@@ -160,8 +160,6 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
   }
 
-  override val suitableTips = listOf("SearchEverywhere", "GoToClass", "search_everywhere_general")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.search.everywhere"),
          LessonUtil.getHelpLink("searching-everywhere.html")),

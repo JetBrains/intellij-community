@@ -144,7 +144,7 @@ public class EditorConfigGenerateLanguagePropertiesAction extends CodeInsightAct
 
     private static List<Language> getSupportedLanguages() {
       return
-        LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()
+        LanguageCodeStyleSettingsProvider.getAllProviders()
                                                  .stream()
                                                  .filter(provider -> provider.supportsExternalFormats())
                                                  .map(provider -> provider.getLanguage())

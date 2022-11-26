@@ -2,12 +2,15 @@
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nUtil;
+import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +90,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (isInternal(extension, "isInternal")) {
         return;
       }
-      GenericAttributeValue implementationClass = getAttribute(extension, "implementationClass");
+      GenericAttributeValue<?> implementationClass = getAttribute(extension, "implementationClass");
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
@@ -108,6 +111,14 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
     else if (InheritanceUtil.isInheritor(beanClass, SchemeConvertorEPBase.class.getName())) {
       checkNonLocalizableAttribute(holder, extension, "name", null);
+    } else if (NotificationGroupEP.class.getName().equals(beanClass.getQualifiedName())){
+      if (hasMissingAttribute(extension, "key")) {
+        GenericAttributeValue<?> value = getAttribute(extension, "hideFromSettings");
+        if (value == null || !Boolean.parseBoolean(value.getStringValue())) {
+          holder.createProblem(extension, DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
+                               new NotificationGroupI18NQuickFix());
+        }
+      }
     }
   }
 
@@ -126,7 +137,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
-                                                     GenericDomValue valueElement,
+                                                     GenericDomValue<?> valueElement,
                                                      @NonNls String valueElementName,
                                                      @Nullable LocalQuickFix fix) {
     if (valueElement != null && valueElement.getStringValue() != null) {
@@ -178,7 +189,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static boolean isInternal(@NotNull DomElement action, String internalAttributeName) {
-    final GenericAttributeValue internalAttribute = getAttribute(action, internalAttributeName);
+    final GenericAttributeValue<?> internalAttribute = getAttribute(action, internalAttributeName);
     if (internalAttribute != null && "true".equals(internalAttribute.getStringValue())) return true;
     return false;
   }
@@ -256,6 +267,63 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       return PropertiesImplUtil.getPropertiesFile(PsiManager.getInstance(project).findFile(propertiesVFile));
     }
     return null;
+  }
+
+  private static class NotificationGroupI18NQuickFix implements LocalQuickFix {
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "key");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement psiElement = descriptor.getPsiElement();
+      if (!(psiElement instanceof XmlTag)) return;
+      XmlTag xmlTag = (XmlTag)psiElement;
+
+
+      choosePropertiesFileAndExtract(project, Collections.singletonList(xmlTag), selection -> {
+        PropertiesFile propertiesFile = findPropertiesFile(project, selection);
+        if (propertiesFile != null) {
+          WriteCommandAction.runWriteCommandAction(
+            project, DevKitI18nBundle.message("inspections.plugin.xml.i18n.key.command.name"), null, () -> {
+              XmlAttribute bundleAttribute = xmlTag.getAttribute("bundle");
+              String bundleQName = getBundleQName(project, propertiesFile);
+              if (bundleAttribute == null || !bundleQName.equals(bundleAttribute.getValue())) {
+                xmlTag.setAttribute("bundle", bundleQName);
+              }
+
+              String escapedId = StringUtil.defaultIfEmpty(StringUtil.toLowerCase(xmlTag.getAttributeValue("id")), "notification.id").replace(' ', '.');
+              String messageKey = "notification.group." + escapedId;
+              xmlTag.setAttribute("key", messageKey);
+
+              JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
+                                                                            Collections.singletonList(propertiesFile),
+                                                                            messageKey,
+                                                                            "",
+                                                                            new UExpression[0]);
+
+              IProperty createdProperty = propertiesFile.findPropertyByKey(messageKey);
+              if (createdProperty != null) {
+                createdProperty.navigate(true);
+              }
+            }, psiElement.getContainingFile(), propertiesFile.getContainingFile());
+        }
+      });
+    }
   }
 
   private static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix {
@@ -343,6 +411,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                                     key,
                                                                     StringUtil.unescapeXmlEntities(displayName),
                                                                     new UExpression[0]);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
     }
   }
 
@@ -492,6 +565,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         }, tag.getFirstChild());
       }
     }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
   }
 
 
@@ -561,6 +639,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                                     new UExpression[0]);
       separator.getText().undefine();
       separator.getKey().setValue(key);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
     }
   }
 }

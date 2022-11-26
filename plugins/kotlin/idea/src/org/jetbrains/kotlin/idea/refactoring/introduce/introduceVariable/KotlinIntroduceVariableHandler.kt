@@ -105,7 +105,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         private val bindingContext: BindingContext,
         private val resolutionFacade: ResolutionFacade
     ) {
-        private val psiFactory = KtPsiFactory(expression)
+        private val psiFactory = KtPsiFactory(expression.project)
 
         var propertyRef: KtDeclaration? = null
         var reference: SmartPsiElementPointer<KtExpression>? = null

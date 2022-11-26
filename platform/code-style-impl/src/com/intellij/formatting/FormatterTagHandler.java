@@ -79,14 +79,10 @@ public class FormatterTagHandler {
           FormatterTag formatterTag = extractFormatterTag(chars, lineStart, currPos);
           //noinspection EnumSwitchStatementWhichMissesCases
           switch (formatterTag) {
-            case OFF:
-              myTagInfoList.add(
-                new FormatterTagInfo(lineStart, FormatterTag.OFF));
-              break;
-            case ON:
-              myTagInfoList.add(
-                new FormatterTagInfo(lineStart, FormatterTag.ON));
-              break;
+            case OFF -> myTagInfoList.add(
+              new FormatterTagInfo(lineStart, FormatterTag.OFF));
+            case ON -> myTagInfoList.add(
+              new FormatterTagInfo(lineStart, FormatterTag.ON));
           }
           lineStart = currPos + 1;
         }

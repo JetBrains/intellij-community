@@ -36,6 +36,13 @@ inline fun AtomicBoolean.lockOrSkip(action: () -> Unit) {
   }
 }
 
+fun <T> ObservableMutableProperty<T>.bind(property: ObservableProperty<T>) {
+  set(property.get())
+  property.afterChange {
+    set(it)
+  }
+}
+
 /**
  * Binds two observable properties.
  * All changes will be transferred from current property to [property] and back.
@@ -55,8 +62,18 @@ fun <T> ObservableMutableProperty<T>.bind(property: ObservableMutableProperty<T>
   }
 }
 
+fun <P : ObservableMutableProperty<Int>> P.bindIntStorage(propertyName: String): P = apply {
+  toStringIntProperty()
+    .bindStorage(propertyName)
+}
+
 fun <P : ObservableMutableProperty<Boolean>> P.bindBooleanStorage(propertyName: String): P = apply {
-  transform({ it.toString() }, { it.toBoolean() })
+  toStringBooleanProperty()
+    .bindStorage(propertyName)
+}
+
+inline fun <reified T : Enum<T>, P : ObservableMutableProperty<T>> P.bindEnumStorage(propertyName: String): P = apply {
+  toStringEnumProperty()
     .bindStorage(propertyName)
 }
 
@@ -91,6 +108,13 @@ fun <C : TextFieldWithBrowseButton> C.bindEmptyText(property: ObservableProperty
   emptyText.bind(property)
 }
 
+fun <T, C : JComboBox<T>> C.bind(property: ObservableProperty<T>): C = apply {
+  selectedItem = property.get()
+  property.afterChange {
+    selectedItem = it
+  }
+}
+
 /**
  * Binds selected item of [this] combobox and [property] value.
  * Note: Ignores proportion of selected item for deselected event.
@@ -111,6 +135,13 @@ fun <T, C : JComboBox<T>> C.bind(property: ObservableMutableProperty<T>): C = ap
   }
 }
 
+fun <T, C : DropDownLink<T>> C.bind(property: ObservableProperty<T>): C = apply {
+  selectedItem = property.get()
+  property.afterChange {
+    selectedItem = it
+  }
+}
+
 fun <T, C : DropDownLink<T>> C.bind(property: ObservableMutableProperty<T>): C = apply {
   selectedItem = property.get()
   val mutex = AtomicBoolean()
@@ -123,6 +154,13 @@ fun <T, C : DropDownLink<T>> C.bind(property: ObservableMutableProperty<T>): C =
     mutex.lockOrSkip {
       property.set(it)
     }
+  }
+}
+
+fun <T, C : JList<T>> C.bind(property: ObservableProperty<T?>): C = apply {
+  setSelectedValue(property.get(), true)
+  property.afterChange {
+    setSelectedValue(it, true)
   }
 }
 
@@ -140,6 +178,13 @@ fun <T, C : JList<T>> C.bind(property: ObservableMutableProperty<T?>): C = apply
         property.set(selectedValue)
       }
     }
+  }
+}
+
+fun <T, C : JTree> C.bind(property: ObservableProperty<T?>) = apply {
+  selectionPath = model.getTreePath(property.get())
+  property.afterChange {
+    selectionPath = model.getTreePath(it)
   }
 }
 
@@ -174,7 +219,15 @@ fun <C : JLabel> C.bind(property: ObservableProperty<@NlsContexts.Label String>)
   }
 }
 
-fun <C : JCheckBox> C.bind(property: ObservableMutableProperty<Boolean>): C = apply {
+fun <C : JToggleButton> C.bind(property: ObservableProperty<Boolean>): C = apply {
+  isSelected = property.get()
+  property.afterChange {
+    isSelected = it
+  }
+}
+
+
+fun <C : JToggleButton> C.bind(property: ObservableMutableProperty<Boolean>): C = apply {
   isSelected = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
@@ -186,6 +239,13 @@ fun <C : JCheckBox> C.bind(property: ObservableMutableProperty<Boolean>): C = ap
     mutex.lockOrSkip {
       property.set(isSelected)
     }
+  }
+}
+
+fun <C : ThreeStateCheckBox> C.bind(property: ObservableProperty<ThreeStateCheckBox.State>): C = apply {
+  state = property.get()
+  property.afterChange {
+    state = it
   }
 }
 
@@ -204,8 +264,19 @@ fun <C : ThreeStateCheckBox> C.bind(property: ObservableMutableProperty<ThreeSta
   }
 }
 
+fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableProperty<String>): C = apply {
+  textField.bind(property)
+}
+
 fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableMutableProperty<String>): C = apply {
   textField.bind(property)
+}
+
+fun <C : JTextComponent> C.bind(property: ObservableProperty<String>): C = apply {
+  text = property.get()
+  property.afterChange {
+    text = it
+  }
 }
 
 fun <C : JTextComponent> C.bind(property: ObservableMutableProperty<String>): C = apply {

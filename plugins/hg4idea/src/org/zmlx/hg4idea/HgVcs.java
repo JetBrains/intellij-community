@@ -16,6 +16,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
-import org.zmlx.hg4idea.provider.commit.HgCloseBranchExecutor;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.commit.HgMQNewExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
@@ -62,7 +63,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
 public class HgVcs extends AbstractVcs {
@@ -88,16 +88,15 @@ public class HgVcs extends AbstractVcs {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
-  private final ProjectLevelVcsManager myVcsManager;
 
-  private HgVFSListener myVFSListener;
+  private Disposable myDisposable;
+
   private final HgMergeProvider myMergeProvider;
   private HgExecutableValidator myExecutableValidator;
   private final Object myExecutableValidatorLock = new Object();
   private File myPromptHooksExtensionFile;
   private final CommitExecutor myCommitAndPushExecutor;
   private final CommitExecutor myMqNewExecutor;
-  private final HgCloseBranchExecutor myCloseBranchExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
@@ -105,7 +104,6 @@ public class HgVcs extends AbstractVcs {
   public HgVcs(@NotNull Project project) {
     super(project, VCS_NAME);
 
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
@@ -117,7 +115,6 @@ public class HgVcs extends AbstractVcs {
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor();
     myMqNewExecutor = new HgMQNewExecutor();
-    myCloseBranchExecutor = new HgCloseBranchExecutor();
   }
 
   @Override
@@ -235,12 +232,19 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void activate() {
+    Disposable disposable = Disposer.newDisposable();
+    myDisposable = disposable;
+
     // validate hg executable on start and update hg version
     checkExecutableAndVersion();
 
     // updaters and listeners
-    myHgRemoteStatusUpdater = new HgRemoteStatusUpdater(this);
-    myVFSListener = HgVFSListener.createInstance(this);
+    HgRemoteStatusUpdater remoteStatusUpdater = new HgRemoteStatusUpdater(this);
+    Disposer.register(disposable, remoteStatusUpdater);
+    myHgRemoteStatusUpdater = remoteStatusUpdater;
+
+    HgVFSListener VFSListener = HgVFSListener.createInstance(this);
+    Disposer.register(disposable, VFSListener);
 
     // ignore temporary files
     final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();
@@ -258,17 +262,10 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    if (myHgRemoteStatusUpdater != null) {
-      Disposer.dispose(myHgRemoteStatusUpdater);
-      myHgRemoteStatusUpdater = null;
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
     }
-
-    if (myVFSListener != null) {
-      Disposer.dispose(myVFSListener);
-      myVFSListener = null;
-    }
-
-    super.deactivate();
   }
 
   @Nullable
@@ -287,7 +284,7 @@ public class HgVcs extends AbstractVcs {
     if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
       message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
     }
-    myVcsManager.addMessageToConsoleWindow(message, contentType);
+    ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(message, contentType);
   }
 
   public HgExecutableValidator getExecutableValidator() {
@@ -301,16 +298,11 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public List<CommitExecutor> getCommitExecutors() {
-    ArrayList<CommitExecutor> commitExecutors = newArrayList(myCommitAndPushExecutor);
+    ArrayList<CommitExecutor> commitExecutors = ContainerUtil.newArrayList(myCommitAndPushExecutor);
     if (exists(HgUtil.getRepositoryManager(myProject).getRepositories(), r -> r.getRepositoryConfig().isMqUsed())) {
       commitExecutors.add(myMqNewExecutor);
     }
     return commitExecutors;
-  }
-
-  @NotNull
-  public HgCloseBranchExecutor getCloseBranchExecutor() {
-    return myCloseBranchExecutor;
   }
 
   @Nullable

@@ -19,9 +19,9 @@ import java.util.Set;
 public class LocalQuickFixesWrapper extends QuickFixAction {
   private final List<@NotNull LocalQuickFixWrapper> myFixActions = new ArrayList<>();
 
-  public LocalQuickFixesWrapper(@NlsActions.ActionText String name,
-                                @NotNull List<QuickFix<?>> fixes,
-                                @NotNull InspectionToolWrapper toolWrapper) {
+  LocalQuickFixesWrapper(@NlsActions.ActionText String name,
+                         @NotNull List<? extends QuickFix<?>> fixes,
+                         @NotNull InspectionToolWrapper toolWrapper) {
     super(StringUtil.escapeMnemonics(name),
           fixes.get(0) instanceof Iconable ? ((Iconable)fixes.get(0)).getIcon(0) : null, null, toolWrapper);
     fixes.forEach(f -> addFixAction(f, toolWrapper));

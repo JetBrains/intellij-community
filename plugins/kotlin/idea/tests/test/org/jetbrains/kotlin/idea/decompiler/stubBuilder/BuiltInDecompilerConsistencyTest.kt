@@ -101,7 +101,7 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
         )
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 }
 
 internal fun findDir(packageFqName: String, project: Project): VirtualFile {

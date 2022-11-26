@@ -2,10 +2,12 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -17,7 +19,7 @@ interface ReferredEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ReferredEntity, ModifiableWorkspaceEntity<ReferredEntity>, ObjBuilder<ReferredEntity> {
+  interface Builder : ReferredEntity, WorkspaceEntity.Builder<ReferredEntity>, ObjBuilder<ReferredEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var name: String
@@ -25,6 +27,9 @@ interface ReferredEntity : WorkspaceEntity {
   }
 
   companion object : Type<ReferredEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(version: Int, name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ReferredEntity {
       val builder = builder()
       builder.version = version

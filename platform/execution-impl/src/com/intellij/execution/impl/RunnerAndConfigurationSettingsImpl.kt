@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
@@ -23,7 +25,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
-import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -200,7 +201,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
     folderName = element.getAttributeValue(FOLDER_NAME)
-    val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
+    val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate)
 
     val configuration = factory.createTemplateConfiguration(manager.project, manager)
     if (!isTemplate) {
@@ -290,7 +291,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     if (configuration.type.isManaged) {
-      manager.writeBeforeRunTasks(configuration)?.let {
+      manager.writeBeforeRunTasks(configuration).let {
         element.addContent(it)
       }
     }
@@ -494,7 +495,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
-      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.iterable.filter { runnerId == it.runnerId }
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.lazySequence().filter { runnerId == it.runnerId }.toList()
       return when {
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()

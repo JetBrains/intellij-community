@@ -128,7 +128,7 @@ internal class GridImpl : Grid {
     return result
   }
 
-  fun collectPreCalculationData(preCalculationDataMap: MutableMap<JComponent, PreCalculationData>) {
+  private fun collectPreCalculationData(preCalculationDataMap: MutableMap<JComponent, PreCalculationData>) {
     for (cell in cells) {
       when (cell) {
         is ComponentCell -> {
@@ -164,7 +164,7 @@ internal class GridImpl : Grid {
   /**
    * Step 1 of [layoutData] calculations
    */
-  fun calculateLayoutDataStep1(preCalculationDataMap: Map<JComponent, PreCalculationData>) {
+  private fun calculateLayoutDataStep1(preCalculationDataMap: Map<JComponent, PreCalculationData>) {
     layoutData.columnsSizeCalculator.reset()
     val visibleCellsData = mutableListOf<LayoutCellData>()
     var columnsCount = 0
@@ -221,7 +221,7 @@ internal class GridImpl : Grid {
   /**
    * Step 2 of [layoutData] calculations
    */
-  fun calculateLayoutDataStep2(width: Int) {
+  private fun calculateLayoutDataStep2(width: Int) {
     layoutData.columnsCoord = layoutData.columnsSizeCalculator.calculateCoords(width, resizableColumns)
 
     for (layoutCellData in layoutData.visibleCellsData) {
@@ -235,7 +235,7 @@ internal class GridImpl : Grid {
   /**
    * Step 3 of [layoutData] calculations
    */
-  fun calculateLayoutDataStep3() {
+  private fun calculateLayoutDataStep3() {
     layoutData.rowsSizeCalculator.reset()
     layoutData.baselineData.reset()
 
@@ -314,7 +314,7 @@ internal class GridImpl : Grid {
   /**
    * Step 4 of [layoutData] calculations
    */
-  fun calculateLayoutDataStep4(height: Int) {
+  private fun calculateLayoutDataStep4(height: Int) {
     layoutData.rowsCoord = layoutData.rowsSizeCalculator.calculateCoords(height, resizableRows)
 
     for (layoutCellData in layoutData.visibleCellsData) {
@@ -327,7 +327,7 @@ internal class GridImpl : Grid {
     }
   }
 
-  fun calculateOutsideGaps(width: Int, height: Int) {
+  private fun calculateOutsideGaps(width: Int, height: Int) {
     var left = 0
     var right = 0
     var top = 0

@@ -23,10 +23,6 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CreateClassToBindFix extends QuickFix{
   private static final Logger LOG = Logger.getInstance(CreateClassToBindFix.class);
 

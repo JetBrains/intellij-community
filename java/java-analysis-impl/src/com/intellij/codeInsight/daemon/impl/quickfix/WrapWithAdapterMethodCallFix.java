@@ -305,10 +305,10 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
 
   private static class MyMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
 
-    protected MyMethodArgumentFix(@NotNull PsiExpressionList list,
-                                  int i,
-                                  @NotNull PsiType toType,
-                                  @NotNull AbstractWrapper fixerActionFactory) {
+    MyMethodArgumentFix(@NotNull PsiExpressionList list,
+                        int i,
+                        @NotNull PsiType toType,
+                        @NotNull AbstractWrapper fixerActionFactory) {
       super(list, i, toType, fixerActionFactory);
     }
 
@@ -338,7 +338,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
 
   public static void registerCastActions(CandidateInfo @NotNull [] candidates,
                                          @NotNull PsiCall call,
-                                         HighlightInfo highlightInfo,
+                                         @NotNull HighlightInfo.Builder highlightInfo,
                                          final TextRange fixRange) {
     for (AbstractWrapper wrapper : WRAPPERS) {
       wrapper.registerCastActions(candidates, call, highlightInfo, fixRange);

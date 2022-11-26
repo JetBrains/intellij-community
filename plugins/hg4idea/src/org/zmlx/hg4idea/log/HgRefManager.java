@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,6 +17,7 @@ import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.branch.HgBranchManager;
 import org.zmlx.hg4idea.branch.HgBranchType;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.*;
 import java.io.DataInput;
@@ -93,12 +93,10 @@ public class HgRefManager implements VcsLogRefManager {
     return VcsLogUtil.compareRoots(ref1.getRoot(), ref2.getRoot());
   };
 
-  @NotNull private final HgBranchManager myBranchManager;
-  @NotNull private final RepositoryManager<HgRepository> myRepositoryManager;
+  @NotNull private final Project myProject;
 
-  public HgRefManager(@NotNull Project project, @NotNull RepositoryManager<HgRepository> repositoryManager) {
-    myRepositoryManager = repositoryManager;
-    myBranchManager = project.getService(HgBranchManager.class);
+  public HgRefManager(@NotNull Project project) {
+    myProject = project;
   }
 
   @NotNull
@@ -186,20 +184,22 @@ public class HgRefManager implements VcsLogRefManager {
   @Nullable
   @CalledInAny
   private HgRepository getRepository(@NotNull VcsRef reference) {
-    return myRepositoryManager.getRepositoryForRootQuick(reference.getRoot());
+    return HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(reference.getRoot());
   }
 
   @Override
   public boolean isFavorite(@NotNull VcsRef reference) {
     if (reference.getType().equals(HEAD) || reference.getType().equals(TIP)) return true;
     if (!reference.getType().isBranch()) return false;
-    return myBranchManager.isFavorite(getBranchType(reference), getRepository(reference), reference.getName());
+    return myProject.getService(HgBranchManager.class)
+      .isFavorite(getBranchType(reference), getRepository(reference), reference.getName());
   }
 
   @Override
   public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
     if (!reference.getType().isBranch() || reference.getType().equals(HEAD) || reference.getType().equals(TIP)) return;
-    myBranchManager.setFavorite(getBranchType(reference), getRepository(reference), reference.getName(), favorite);
+    myProject.getService(HgBranchManager.class)
+      .setFavorite(getBranchType(reference), getRepository(reference), reference.getName(), favorite);
   }
 
   @NotNull

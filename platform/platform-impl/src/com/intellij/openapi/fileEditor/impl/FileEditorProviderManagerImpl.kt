@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
@@ -20,10 +21,6 @@ import com.intellij.util.SlowOperations.allowSlowOperations
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.TestOnly
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @State(name = "FileEditorProviderManager",
        storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
 class FileEditorProviderManagerImpl : FileEditorProviderManager,
@@ -68,7 +65,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
       sharedProviders.removeIf { it.policy != FileEditorPolicy.HIDE_OTHER_EDITORS }
     }
 
-    // Sort editors according policies
+    // sort editors according policies
     sharedProviders.sortWith(MyComparator)
     return sharedProviders
   }
@@ -108,7 +105,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   }
 
   override fun getProvider(editorTypeId: String): FileEditorProvider? {
-    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList.firstOrNull { it.editorTypeId == editorTypeId }
+    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findByIdOrFromInstance(editorTypeId) { it.editorTypeId }
   }
 
   fun providerSelected(composite: EditorComposite) {

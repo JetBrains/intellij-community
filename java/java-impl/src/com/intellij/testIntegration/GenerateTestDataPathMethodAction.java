@@ -11,12 +11,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
-import javax.lang.model.element.Modifier;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -68,8 +68,13 @@ public class GenerateTestDataPathMethodAction extends GenerateTestDataPathCommon
                 var scrollPane = new JBScrollPane(suggestedFileList);
                 scrollPane.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                final var choices = new String[]{JavaBundle.message("generate.select.default.modifier.text"), Modifier.PUBLIC.toString(), Modifier.PROTECTED.toString(), Modifier.PRIVATE.toString()};
-                selectModifierBox = new ComboBox<String>(choices);
+                final var choices = new String[]{
+                  JavaBundle.message("generate.select.default.modifier.text"),
+                  PsiModifier.PUBLIC,
+                  PsiModifier.PROTECTED,
+                  PsiModifier.PRIVATE
+                };
+                selectModifierBox = new ComboBox<>(choices);
                 selectModifierBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
                 return List.of(scrollPane, selectModifierBox);

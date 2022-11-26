@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -60,9 +61,7 @@ abstract class AbstractViewOfflineInspectionTest: KotlinLightCodeInsightFixtureT
             view.globalInspectionContext.uiOptions.SHOW_STRUCTURE = true
             val tree = updateTree(view)
 
-            val expandedPaths = TreeUtil.collectExpandedPaths(tree)
-            tree.setSelectionRow(expandedPaths.size)
-            val problemDescriptionNode = tree.selectionModel.selectionPath.lastPathComponent.cast<ProblemDescriptionNode>()
+            val problemDescriptionNode = expandAll(tree)
             assertEquals(offlineReportText, problemDescriptionNode.presentableText)
             HeadlessDataManager.fallbackToProductionDataManager(view)
             val navigatable = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(view))!!
@@ -73,6 +72,17 @@ abstract class AbstractViewOfflineInspectionTest: KotlinLightCodeInsightFixtureT
         } finally {
             Disposer.dispose(view)
             InspectionProfileImpl.INIT_INSPECTIONS = false
+        }
+    }
+
+    private fun expandAll(tree: InspectionTree): ProblemDescriptionNode {
+        while (true) {
+            UIUtil.dispatchAllInvocationEvents()
+            val expandedPaths = TreeUtil.collectExpandedPaths(tree)
+            tree.setSelectionRow(expandedPaths.size)
+            val selectionPath = tree.selectionModel.selectionPath
+            if (selectionPath == null) continue
+            return selectionPath.lastPathComponent.cast<ProblemDescriptionNode>()
         }
     }
 
@@ -89,8 +99,10 @@ abstract class AbstractViewOfflineInspectionTest: KotlinLightCodeInsightFixtureT
 
     private fun updateTree(view: InspectionResultsView): InspectionTree {
         view.update()
+        view.dispatchTreeUpdate()
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         val tree: InspectionTree = view.tree
-        TreeUtil.expandAll(tree)
+        PlatformTestUtil.expandAll(tree)
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         return tree
     }

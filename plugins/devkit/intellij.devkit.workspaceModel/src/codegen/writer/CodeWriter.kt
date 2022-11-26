@@ -25,6 +25,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.engine.GeneratedCode
+import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.impl.CodeGeneratorImpl
 import com.intellij.workspaceModel.codegen.javaFullName
 import com.intellij.workspaceModel.codegen.utils.Imports
@@ -51,12 +52,17 @@ object CodeWriter {
       }
       return@processFilesRecursively true
     }
+    if (ktClasses.isEmpty()) return
 
     val objModules = loadObjModules(ktClasses, module)
     
     val codeGenerator = CodeGeneratorImpl()
-    val generated = objModules.flatMap { codeGenerator.generate(it) }
-    if (generated.isNotEmpty()) {
+    val results = objModules.map { codeGenerator.generate(it) }
+    val generatedCode = results.flatMap { it.generatedCode }
+    val problems = results.flatMap { it.problems }
+    WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
+    
+    if (generatedCode.isNotEmpty() && problems.none { it.level == GenerationProblem.Level.ERROR }) {
       val genFolder = targetFolderGenerator.invoke()
       if (genFolder == null) {
         LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
@@ -76,8 +82,8 @@ object CodeWriter {
           val generatedFiles = ArrayList<KtFile>()
           indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
           indicator.isIndeterminate = false
-          generated.forEachIndexed { i, code ->
-            indicator.fraction = 0.2 * i / generated.size
+          generatedCode.forEachIndexed { i, code ->
+            indicator.fraction = 0.2 * i / generatedCode.size
             if (code.target.name in SKIPPED_TYPES) return@forEachIndexed
 
             val apiInterfaceName = code.target.javaFullName.decoded

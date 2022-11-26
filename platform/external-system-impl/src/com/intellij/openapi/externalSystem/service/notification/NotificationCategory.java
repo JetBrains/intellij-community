@@ -44,49 +44,29 @@ public enum NotificationCategory {
   }
 
   public static NotificationType convert(NotificationCategory notificationCategory) {
-    switch (notificationCategory) {
-      case ERROR:
-        return NotificationType.ERROR;
-      case INFO:
-        return NotificationType.INFORMATION;
-      case SIMPLE:
-        return NotificationType.INFORMATION;
-      case WARNING:
-        return NotificationType.WARNING;
-      default:
-        return NotificationType.INFORMATION;
-    }
+    return switch (notificationCategory) {
+      case ERROR -> NotificationType.ERROR;
+      case INFO, SIMPLE -> NotificationType.INFORMATION;
+      case WARNING -> NotificationType.WARNING;
+    };
   }
 
   public static NotificationCategory convert(NotificationType notificationType) {
-    switch (notificationType) {
-      case INFORMATION:
-        return INFO;
-      case WARNING:
-        return WARNING;
-      case ERROR:
-        return ERROR;
-      default:
-        return SIMPLE;
-    }
+    return switch (notificationType) {
+      case INFORMATION -> INFO;
+      case WARNING -> WARNING;
+      case ERROR -> ERROR;
+      default -> SIMPLE;
+    };
   }
 
   public static NotificationCategory convert(int type) {
-    switch (type) {
-      case MessageCategory.ERROR:
-        return ERROR;
-      case MessageCategory.WARNING:
-        return WARNING;
-      case MessageCategory.INFORMATION:
-        return INFO;
-      case MessageCategory.STATISTICS:
-        return INFO;
-      case MessageCategory.SIMPLE:
-        return SIMPLE;
-      case MessageCategory.NOTE:
-        return INFO;
-      default:
-        return SIMPLE;
-    }
+    return switch (type) {
+      case MessageCategory.ERROR -> ERROR;
+      case MessageCategory.WARNING -> WARNING;
+      case MessageCategory.INFORMATION, MessageCategory.STATISTICS, MessageCategory.NOTE -> INFO;
+      case MessageCategory.SIMPLE -> SIMPLE;
+      default -> SIMPLE;
+    };
   }
 }

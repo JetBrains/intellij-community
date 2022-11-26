@@ -12,7 +12,7 @@ abstract class SubProgressIndicatorBase(parent: ProgressIndicator) : DelegatingP
 }
 
 @ApiStatus.Experimental
-class SubProgressIndicator(parent: ProgressIndicator, val parentFraction: Double) : SubProgressIndicatorBase(parent) {
+class SubProgressIndicator(parent: ProgressIndicator, private val parentFraction: Double) : SubProgressIndicatorBase(parent) {
 
   private val parentBaseFraction = parent.fraction
   private var subFraction = 0.0

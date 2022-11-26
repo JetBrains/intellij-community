@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryJar;
 
+import com.intellij.internal.statistic.LibraryNameValidationRule;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -16,7 +17,6 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,11 +26,11 @@ import static com.intellij.internal.statistic.libraryJar.LibraryJarUtilKt.findJa
  * @author Andrey Cheptsov
  */
 public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("javaLibraryJars", 3);
-  private static final EventId2<String, String>
-    USED_LIBRARY = GROUP.registerEvent("used.library",
-                                       EventFields.Version,
-                                       EventFields.String("library", Collections.emptyList())); // TODO: workaround. Fix after IDEA-279202
+  private static final EventLogGroup GROUP = new EventLogGroup("javaLibraryJars", 4);
+  private static final EventId2<String, String> USED_LIBRARY =
+    GROUP.registerEvent("used.library",
+                        EventFields.Version,
+                        EventFields.StringValidatedByCustomRule("library", LibraryNameValidationRule.class));
 
   @Override
   public EventLogGroup getGroup() {

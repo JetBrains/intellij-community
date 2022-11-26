@@ -11,7 +11,7 @@ import kotlin.math.min
 
 object MaterialTableUtils {
 
-  fun getColumnHeaderWidth(table: JTable, column: Int): Int {
+  private fun getColumnHeaderWidth(table: JTable, column: Int): Int {
 
     if (table.tableHeader == null || table.columnModel.columnCount <= column) {
       return 0
@@ -29,7 +29,7 @@ object MaterialTableUtils {
     return c.preferredSize.width
   }
 
-  fun getColumnWidth(table: JTable, column: Int, maxRows: Int? = null): Int {
+  private fun getColumnWidth(table: JTable, column: Int, maxRows: Int? = null): Int {
     var width = max(JBUI.scale(65), getColumnHeaderWidth(table, column)) // Min width
 
     // We should not cycle through all
@@ -42,7 +42,7 @@ object MaterialTableUtils {
     return width
   }
 
-  fun fitColumnWidth(column: Int, table: JTable, maxWidth: Int = 350, maxRows: Int? = null) {
+  private fun fitColumnWidth(column: Int, table: JTable, maxWidth: Int = 350, maxRows: Int? = null) {
     var width = getColumnWidth(table, column, maxRows)
 
     if (maxWidth in 1 until width) {

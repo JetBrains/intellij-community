@@ -5,19 +5,20 @@ import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 
-internal open class GotoBookmarkTypeAction(private val type: BookmarkType, private val isEnabled: (AnActionEvent) -> Boolean)
+internal open class GotoBookmarkTypeAction(private val type: BookmarkType, private val checkSpeedSearch: Boolean = false)
   : DumbAwareAction(messagePointer("goto.bookmark.type.action.text", type.mnemonic)/*, type.icon*/) {
-
-  constructor(type: BookmarkType) : this(type, { true })
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun canNavigate(event: AnActionEvent) = event.bookmarksManager?.getBookmark(type)?.canNavigate() ?: false
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabledAndVisible = isEnabled(event) && canNavigate(event)
+    event.presentation.isEnabledAndVisible =
+      (!checkSpeedSearch || event.getData(PlatformDataKeys.SPEED_SEARCH_TEXT) == null) &&
+      canNavigate(event)
   }
 
   override fun actionPerformed(event: AnActionEvent) {

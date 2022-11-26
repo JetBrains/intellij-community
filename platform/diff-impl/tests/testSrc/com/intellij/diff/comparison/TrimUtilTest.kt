@@ -53,7 +53,7 @@ class TrimUtilTest : DiffTestCase() {
   }
 
   private fun assertIsPunctuation(c: Char, actual: Boolean) {
-    assertEquals(StringUtil.containsChar(PUNCTUATION, c), actual, "'" + c + "' - " + c.toInt())
+    assertEquals(StringUtil.containsChar(PUNCTUATION, c), actual, "'" + c + "' - " + c.code)
   }
 
   private fun assertIsAlpha(text: String, expected: Boolean) {

@@ -129,10 +129,10 @@ final class LineMarkerInfoHelper {
         //noinspection unchecked
         return getDomElementName((T)domElement, namer);
       })
-      .setCellRenderer(new Computable<PsiElementListCellRenderer<?>>() {
+      .setCellRenderer(new Computable<>() {
         @Override
         public PsiElementListCellRenderer<?> compute() {
-          return new PsiElementListCellRenderer<PsiElement>() {
+          return new PsiElementListCellRenderer<>() {
 
             @Override
             protected Icon getIcon(PsiElement element) {

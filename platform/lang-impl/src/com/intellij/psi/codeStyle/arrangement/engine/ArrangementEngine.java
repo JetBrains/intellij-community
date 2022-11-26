@@ -70,7 +70,7 @@ public final class ArrangementEngine {
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */
-  public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<TextRange> ranges) {
+  public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<? extends TextRange> ranges) {
     arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
   }
 
@@ -81,7 +81,7 @@ public final class ArrangementEngine {
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) {
     arrange(file, ranges, null);
   }
 
@@ -91,7 +91,7 @@ public final class ArrangementEngine {
    * @param file    target PSI root
    * @param ranges  target ranges to use within the given root
    */
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable final ArrangementCallback callback) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, @Nullable final ArrangementCallback callback) {
     myCodeChanged = false;
 
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
@@ -539,7 +539,7 @@ public final class ArrangementEngine {
     public static <T extends ArrangementEntry> Context<T> from(@NotNull Rearranger<T> rearranger,
                                                                @NotNull Document document,
                                                                @NotNull PsiElement root,
-                                                               @NotNull Collection<TextRange> ranges,
+                                                               @NotNull Collection<? extends TextRange> ranges,
                                                                @NotNull ArrangementSettings arrangementSettings,
                                                                @NotNull CodeStyleSettings codeStyleSettings)
     {

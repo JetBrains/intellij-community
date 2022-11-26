@@ -32,13 +32,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
 
-/**
- * @author peter
- */
 public class LiveTemplateCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Key<Boolean> ourShowTemplatesInTests = Key.create("ShowTemplatesInTests");
 
@@ -147,7 +143,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
 
   private static void ensureTemplatesShown(AtomicBoolean templatesShown,
                                            Map<TemplateImpl, String> templates,
-                                           List<TemplateImpl> availableTemplates,
+                                           List<? extends TemplateImpl> availableTemplates,
                                            CompletionResultSet result,
                                            boolean isAutopopup) {
     if (!templatesShown.getAndSet(true)) {

@@ -10,6 +10,8 @@ import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import com.intellij.util.ProcessingContext
 
 internal class JUnitPropertiesCompletionContributor : CompletionContributor() {
@@ -31,7 +33,7 @@ internal class JUnitPropertiesCompletionContributor : CompletionContributor() {
           result.addAllElements(variants.map {
             val builder = LookupElementBuilder.create(it.key)
               .withPsiElement(it.declaration.retrieve())
-              .withIcon(AllIcons.Nodes.Property)
+              .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Property))
 
             TailTypeDecorator.withTail(builder, defaultDelimiterType)
           })

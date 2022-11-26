@@ -42,7 +42,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       }
 
       @Override
-      public void visitXmlToken(final XmlToken token) {
+      public void visitXmlToken(final @NotNull XmlToken token) {
         if (isXmlFile(token) && token.getTokenType() == XmlTokenType.XML_NAME) {
           PsiElement element = token.getPrevSibling();
           while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
@@ -59,7 +59,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       }
 
       @Override
-      public void visitXmlAttribute(final XmlAttribute attribute) {
+      public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
         if (!isXmlFile(attribute)) {
           return;
         }
@@ -83,7 +83,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       }
 
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         PsiReference[] references = value.getReferences();
         for (PsiReference reference : references) {
           if (reference instanceof SchemaPrefixReference) {

@@ -1,0 +1,5 @@
+<profile version="1.0">
+  <option name="myName" value="Custom name" />
+  <inspection_tool class="SpellCheckingInspection" enabled="true" level="ERROR" enabled_by_default="true" />
+  <inspection_tool class="TodoComment" enabled="true" level="ERROR" enabled_by_default="false" />
+</profile>

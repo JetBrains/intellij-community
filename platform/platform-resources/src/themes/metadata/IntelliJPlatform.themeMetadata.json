@@ -3,6 +3,11 @@
   "fixed": false,
   "ui": [
     {
+      "key": "ActionButton.separatorColor",
+      "description": "ActionButton separator line color",
+      "since": "2023.1"
+    },
+    {
       "key": "Banner.infoBackground"
     },
     {
@@ -190,8 +195,9 @@
     },
     {
       "key": "ContextHelp.fontSizeOffset",
-      "description": "Font size offset for comments (usually gray description text under components)",
-      "since": "2022.1"
+      "description": "Font size offset for comments (usually gray description text under components), used only in legacy UI",
+      "since": "2022.1",
+      "deprecated": true
     },
     {
       "key": "Counter.background",
@@ -893,6 +899,9 @@
       "key": "Plugins.tagForeground"
     },
     {
+      "key": "Plugins.ScreenshotPagination.CurrentImage.fillColor"
+    },
+    {
       "key": "ComplexPopup.Header.background",
       "description": "Complex popup (like Find in Files) header background (experimental UI only)",
       "since": "2022.1"
@@ -1187,6 +1196,11 @@
       "description": "A color for inline buttons separator"
     },
     {
+      "key": "List.Button.separatorInset",
+      "since": "2022.3",
+      "description": "A top an bottom insets for inline buttons separator"
+    },
+    {
       "key": "List.Button.hoverBackground",
       "since": "2022.3",
       "description": "Hover background for inline buttons in list popups"
@@ -1195,6 +1209,16 @@
       "key": "List.Line.hoverBackground",
       "since": "2022.3",
       "description": "Hover background for list item in list popups (when inline buttons are shown)"
+    },
+    {
+      "key": "List.Tag.background",
+      "since": "2022.3",
+      "description": "Background for tags in list items"
+    },
+    {
+      "key": "List.Tag.foreground",
+      "since": "2022.3",
+      "description": "Foreground for tags in list items"
     },
     {
       "key": "TabbedPane.tabSelectionArc",
@@ -1312,6 +1336,11 @@
       "key": "ToolBar.horizontalToolbarInsets",
       "description": "Default insets for horizontal action toolbars",
       "since": "2022.1"
+    },
+    {
+      "key": "ToolBar.separatorColor",
+      "description": "ToolBar separator line color",
+      "since": "2023.1"
     },
     {
       "key": "ToolBar.verticalToolbarInsets",
@@ -1586,6 +1615,11 @@
       "since": "2022.2"
     },
     {
+      "key": "VersionControl.MarkerPopup.Toolbar.background",
+      "description": "Color of toolbar background in the Vcs Marker Popup",
+      "since": "2022.3"
+    },
+    {
       "key": "WelcomeScreen.background"
     },
     {
@@ -1749,6 +1783,41 @@
     },
     {
       "key": "Tag.background"
+    },
+    {
+      "key": "MainToolbar.separatorColor",
+      "description": "Color of the Main Toolbar separators",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.foreground",
+      "description": "Foreground for run widget components and stroke icons",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.background",
+      "description": "Background for run widget in non-running state",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.runningBackground",
+      "description": "Background for run widget in running state",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.hoverBackground",
+      "description": "Background for hover state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.pressedBackground",
+      "description": "Background for pressed state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.separatorColor",
+      "description": "The color for separator in run widget",
+      "since": "2022.3"
     }
   ]
 }

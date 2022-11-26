@@ -12,6 +12,9 @@ public final class InspectionsConfigTreeComparator {
       .thenComparing(n -> getDisplayTextToSort(n.getText()), NaturalComparator.INSTANCE);
 
   public static String getDisplayTextToSort(String s) {
+    if (s.equals("User Defined")) {
+      return " User Defined";
+    }
     if (s.isEmpty()) {
       return s;
     }

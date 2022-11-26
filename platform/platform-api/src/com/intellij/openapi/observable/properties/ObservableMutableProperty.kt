@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.observable.properties
 
 import kotlin.properties.ReadWriteProperty
@@ -20,9 +20,7 @@ interface ObservableMutableProperty<T> : ReadWriteProperty<Any?, T>, ObservableP
    * ```
    * See Also: https://kotlinlang.org/docs/delegated-properties.html
    */
-  @JvmDefault
   override fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
 
-  @JvmDefault
   override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) = set(value)
 }

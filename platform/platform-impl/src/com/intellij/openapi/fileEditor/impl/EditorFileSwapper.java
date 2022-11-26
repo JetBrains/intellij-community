@@ -8,35 +8,34 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class EditorFileSwapper {
-  public static final ExtensionPointName<EditorFileSwapper> EP_NAME = ExtensionPointName.create("com.intellij.editorFileSwapper");
+  public static final ExtensionPointName<EditorFileSwapper> EP_NAME = new ExtensionPointName<>("com.intellij.editorFileSwapper");
 
   /**
    * @deprecated Use {@link #getFileToSwapTo(Project, EditorComposite)}
    */
   @Deprecated
-  @Nullable
-  public Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorWithProviderComposite editorWithProviderComposite) {
+  public @Nullable Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorWithProviderComposite editorWithProviderComposite) {
     PluginException.reportDeprecatedUsage("EditorFileSwapper#getFileToSwapTo(Project, EditorWithProviderComposite)",
                                           "Use overload that accepts EditorComposite");
     return null;
   }
 
-  @Nullable
-  public Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorComposite composite) {
+  public @Nullable Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorComposite composite) {
     return getFileToSwapTo(project, (EditorWithProviderComposite) composite);
   }
 
-  @Nullable
-  public static TextEditorImpl findSinglePsiAwareEditor(FileEditor[] fileEditors) {
-    TextEditorImpl res = null;
-
+  public static @Nullable TextEditorImpl findSinglePsiAwareEditor(@NotNull List<? extends FileEditor> fileEditors) {
+    TextEditorImpl result = null;
     for (FileEditor fileEditor : fileEditors) {
       if (fileEditor instanceof TextEditorImpl) {
-        if (res == null) {
-          res = (TextEditorImpl)fileEditor;
+        if (result == null) {
+          result = (TextEditorImpl)fileEditor;
         }
         else {
           return null;
@@ -44,6 +43,6 @@ public abstract class EditorFileSwapper {
       }
     }
 
-    return res;
+    return result;
   }
 }

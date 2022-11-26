@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -21,7 +22,7 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (IdeaPopupMenuUI.isUnderPopup(c)) {
+    if (IdeaPopupMenuUI.isUnderPopup(c) && (!SystemInfoRt.isWindows || IdeaPopupMenuUI.isRoundBorder())) {
       return;
     }
 

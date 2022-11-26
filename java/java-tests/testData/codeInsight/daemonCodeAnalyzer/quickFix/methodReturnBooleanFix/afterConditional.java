@@ -1,4 +1,4 @@
-// "Make 'foo' return 'boolean'" "true-preview"
+// "Make 'foo()' return 'boolean'" "true-preview"
 class Test {
     void bar() {
         System.out.println(foo() ? "x" : "y");

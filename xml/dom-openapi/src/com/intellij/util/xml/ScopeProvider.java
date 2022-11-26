@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Should be stateless, since its instances are cached.
- * @author peter
  * @see Scope
  */
 public abstract class ScopeProvider {

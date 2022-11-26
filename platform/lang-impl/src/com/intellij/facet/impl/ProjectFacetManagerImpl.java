@@ -46,7 +46,7 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
     }, project);
     project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
-      public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+      public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
         myIndex = null;
       }
 

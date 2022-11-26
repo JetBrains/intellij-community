@@ -23,9 +23,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import java.util.*
 
-/**
- * @author peter
- */
 object CompletionMemory {
   private val LAST_CHOSEN_METHODS = Key.create<LinkedList<RangeMarker>>("COMPLETED_METHODS")
   private val CHOSEN_METHODS = Key.create<SmartPsiElementPointer<PsiMethod>>("CHOSEN_METHODS")

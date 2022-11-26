@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
@@ -27,7 +26,7 @@ internal class MarkdownTableEnterHandler: EnterHandlerDelegateAdapter() {
     dataContext: DataContext,
     originalHandler: EditorActionHandler?
   ): EnterHandlerDelegate.Result {
-    if (!Registry.`is`("markdown.tables.editing.support.enable") || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
+    if (!TableUtils.isTableSupportEnabled() || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
       return super.preprocessEnter(file, editor, caretOffset, caretAdvance, dataContext, originalHandler)
     }
     val enterPosition = firstEnterPosition

@@ -451,7 +451,6 @@ def create_execl(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
-            path = args[0]
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, *args)
     return new_execl
@@ -466,7 +465,6 @@ def create_execv(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
-            path = args[0]
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, args)
     return new_execv
@@ -481,7 +479,6 @@ def create_execve(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
-            path = args[0]
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, args, env)
     return new_execve

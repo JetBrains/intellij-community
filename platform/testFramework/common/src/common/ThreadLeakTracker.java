@@ -64,6 +64,7 @@ public final class ThreadLeakTracker {
       "AWT-Windows",
       "BatchSpanProcessor_WorkerThread", // io.opentelemetry.sdk.trace.export.BatchSpanProcessor.WORKER_THREAD_NAME
       "Batik CleanerThread",
+      "BC Entropy Daemon",
       "Cidr Symbol Building Thread", // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
       "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
       "CompilerThread0",
@@ -78,6 +79,7 @@ public final class ThreadLeakTracker {
       "Image Fetcher ",
       "InnocuousThreadGroup",
       "Java2D Disposer",
+      "JNA Cleaner",
       "JobScheduler FJ pool ",
       "JPS thread pool",
       "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
@@ -97,7 +99,7 @@ public final class ThreadLeakTracker {
       "Signal Dispatcher",
       "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
       "timer-int", //serverIm,
-      "timer-sys", //clientim,
+      "timer-sys", //clientIm,
       "TimerQueue",
       "UserActivityMonitor thread",
       "VM Periodic Task Thread",

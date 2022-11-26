@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,71 +23,77 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 
 /**
  * @author Sergey Zhulin
  * Date: Mar 30, 2006
  * Time: 4:14:38 PM
  */
-public class ExeReader extends Bin.Structure{
-  private ArrayOfBins mySectionHeaders;
-  private SectionReader[] mySections;
-  private PeHeaderReader myPeHeader;
-  private ImageOptionalHeader myImageOptionalHeader;
-  private Bin.Bytes myBytes;
-  private Bin.Bytes myMsDosStub;
-  private MsDosHeader myMsDosHeader;
+public class ExeReader extends Bin.Structure {
+  private final ArrayOfBins<ImageSectionHeader> mySectionHeaders;
+  private final ArrayList<Section> mySections = new ArrayList<>();
+  private final PeHeaderReader myPeHeader;
+  private final ImageOptionalHeader myImageOptionalHeader;
+  private final Bin.Bytes myPadding;
+  private final Bin.Bytes myMsDosStub;
+  private final MsDosHeader myMsDosHeader;
 
-  public ExeReader(String name, ExeFormat exeFormat) {
+  public ExeReader(String name) {
     super(name);
-    myMsDosHeader = new MsDosHeader();
-    addMember( myMsDosHeader );
-    Bin.Value member = myMsDosHeader.getValueMember("lfanew");
-    ValuesAdd size = new ValuesAdd( member, new DWord("").setValue( myMsDosHeader.sizeInBytes() ) );
-    myMsDosStub = new Bytes( "MsDos stub program", size );
-    addMember( myMsDosStub );
-    myPeHeader = new PeHeaderReader(member, exeFormat);
-    addMember( myPeHeader );
-    if (exeFormat == ExeFormat.UNKNOWN) {
-      return;
-    }
-    myImageOptionalHeader = (ImageOptionalHeader) myPeHeader.getMember("Image Optional Header");
-    mySectionHeaders = (ArrayOfBins)myPeHeader.getMember( "ImageSectionHeaders" );
-    addSizeHolder( myImageOptionalHeader.getValueMember( "SizeOfImage" ) );  //b164
+    myMsDosHeader = addMember(new MsDosHeader());
+    ValuesAdd msDosStubSize = new ValuesAdd(myMsDosHeader.getPEHeaderOffset(), new DWord("").setValue(myMsDosHeader.sizeInBytes()));
+    myMsDosStub = addMember(new Bytes("MsDos stub program", msDosStubSize));
+    myPeHeader = addMember(new PeHeaderReader(myMsDosHeader.getPEHeaderOffset()));
+    myPadding = new Bytes("Padding between headers and first segment",
+                          new ValuesAdd(myPeHeader.getImageOptionalHeader().getSizeOfHeaders(), new ReadOnlyValue("") {
+                            @Override
+                            public long getValue() {
+                              return myPeHeader.sizeInBytes() + myMsDosStub.sizeInBytes() + myMsDosHeader.sizeInBytes();
+                            }
+                          }));
+    addMember(myPadding);
+    myImageOptionalHeader = myPeHeader.getImageOptionalHeader();
+    mySectionHeaders = myPeHeader.getImageSectionHeaders();
   }
 
-  public long sizeOfHeaders(){
-    return myPeHeader.sizeInBytes() + myMsDosStub.sizeInBytes() + myMsDosHeader.sizeInBytes();
-  }
-
+  @Override
   public long sizeInBytes() {
-    long result = 0;
-    long va = 0;
-    for ( int i = 0; i < mySectionHeaders.size(); ++i){
-      ImageSectionHeader header = (ImageSectionHeader)mySectionHeaders.get(i);
-      Value virtualAddress = header.getValueMember("VirtualAddress");
-      if ( va < virtualAddress.getValue() ){
-        result = mySections[i].sizeInBytes() + virtualAddress.getValue();
-      }
+    long result = myPeHeader.sizeInBytes() + myMsDosStub.sizeInBytes() + myMsDosHeader.sizeInBytes() + myPadding.sizeInBytes();
+    for (Section section : mySections) {
+      result += section.sizeInBytes();
     }
-    long div = result / 0x1000;
-    long r = result % 0x1000;
-    if ( r != 0 ){
-      div++;
-    }
-    result = div * 0x1000;
     return result;
   }
 
-  public SectionReader[] getSections(){
-    return mySections;
+  public long virtualSizeInBytes() {
+    // AKA VirtualAddress + VirtualSize of the latest section, must be dividable by SectionAlignment
+
+    long sectionAlignment = myImageOptionalHeader.getSectionAlignment().getValue();
+    long result = 0;
+    long lastVA = 0;
+    for (ImageSectionHeader header : mySectionHeaders) {
+      long va = ((Value)header.getVirtualAddress()).getValue();
+      if (lastVA < va) {
+        result = header.getVirtualSize().getValue() + va;
+      }
+    }
+    if (result % sectionAlignment != 0) {
+      result += sectionAlignment - result % sectionAlignment;
+    }
+    return result;
   }
-  public ArrayOfBins getSectionHeaders(){
+
+  public ArrayOfBins<ImageSectionHeader> getSectionHeaders() {
     return mySectionHeaders;
   }
 
-  public SectionReader getSectionReader( String sectionName ){
-    for (SectionReader section : mySections) {
+  public PeHeaderReader getPeHeader() {
+    return myPeHeader;
+  }
+
+  public Section getSectionReader(String sectionName) {
+    for (Section section : mySections) {
       if (sectionName.equals(section.getSectionName())) {
         return section;
       }
@@ -95,48 +101,40 @@ public class ExeReader extends Bin.Structure{
     return null;
   }
 
+  @Override
   public void read(DataInput stream) throws IOException {
     super.read(stream);
     if (mySectionHeaders == null) {
       return;
     }
 
-    long filePointer = getOffset() + sizeOfHeaders();
+    DWord sizeOfHeaders = myPeHeader.getImageOptionalHeader().getSizeOfHeaders();
+    assert sizeOfHeaders.getValue() == mySectionHeaders.get(0).getPointerToRawData().getValue();
 
-    Bin.Value mainSectionsOffset;
-    mySections = new SectionReader[mySectionHeaders.size()];
-    for ( int i = 0; i < mySectionHeaders.size(); ++i ){
-      ImageSectionHeader sectionHeader = (ImageSectionHeader)mySectionHeaders.get(i);
-      Bin.Value startOffset = sectionHeader.getValueMember( "PointerToRawData" );
-      Bin.Value rva = sectionHeader.getValueMember( "VirtualAddress" );
-
-      if ( i == 0 ){
-        long size = startOffset.getValue() - filePointer;
-        if ( myBytes == null ){
-          myBytes = new Bytes( "Aligment", size );
-          addMemberToMapOnly( myBytes );
-        } else {
-          myBytes = (Bytes)getMember( "Aligment" );
-          myBytes.reset( (int)filePointer, (int)size );
-        }
-        myBytes.read( stream );
-      }
-
-      mainSectionsOffset = new ValuesAdd( rva, startOffset );
-      mySections[i] = new SectionReader( sectionHeader, startOffset, mainSectionsOffset, myImageOptionalHeader );
-      mySections[i].read( stream );
+    mySections.clear();
+    for (ImageSectionHeader sectionHeader : mySectionHeaders) {
+      Section section = Section.newSection(sectionHeader, myImageOptionalHeader);
+      mySections.add(section);
+      section.read(stream);
     }
-    resetOffsets( 0 );
+    resetOffsets(0);
   }
 
+  @Override
   public void resetOffsets(long newOffset) {
     super.resetOffsets(newOffset);
-    long mainOffset = myPeHeader.getOffset() + myPeHeader.sizeInBytes() + myBytes.sizeInBytes();
+    long mainOffset = myPeHeader.getOffset() + myPeHeader.sizeInBytes() + myPadding.sizeInBytes();
+    long mainOffset2 = myPeHeader.sizeInBytes() + myMsDosStub.sizeInBytes() + myMsDosHeader.sizeInBytes() + myPadding.sizeInBytes();
+    assert mainOffset == myPeHeader.getImageOptionalHeader().getSizeOfHeaders().getValue();
+    assert mainOffset == mainOffset2;
     long offset = 0;
-    for (SectionReader section : mySections) {
+    for (Section section : mySections) {
       section.resetOffsets(mainOffset + offset);
       offset += section.sizeInBytes();
     }
+
+    // Update SizeOfImage with not real bytes size, but with virtual size
+    myImageOptionalHeader.getSizeOfImage().setValue(virtualSizeInBytes());
   }
 
   /**
@@ -144,48 +142,60 @@ public class ExeReader extends Bin.Structure{
    * afterwards.
    */
   public void sectionVirtualAddressFixup() {
-    long virtualAddress = ((ImageSectionHeader)mySectionHeaders.get(0)).getValueMember("VirtualAddress").getValue();
+    long virtualAddress = mySectionHeaders.get(0).getVirtualAddress().getValue();
 
-    for (Bin sectionHeader : mySectionHeaders.getArray()) {
-      Value virtualAddressMember = ((ImageSectionHeader)sectionHeader).getValueMember("VirtualAddress");
+    long sectionAlignment = myImageOptionalHeader.getSectionAlignment().getValue();
+    for (ImageSectionHeader header : mySectionHeaders) {
 
-      // Section always starts from an address divisible by 0x1000
-      if (virtualAddress % 0x1000 != 0)
-        virtualAddress += 0x1000 - virtualAddress % 0x1000;
+      // Section always starts from an address aligned to IMAGE_OPTIONAL_HEADER::SectionAlignment, which is 0x1000 by default
+      if (virtualAddress % sectionAlignment != 0) {
+        virtualAddress += sectionAlignment - virtualAddress % sectionAlignment;
+      }
 
-      virtualAddressMember.setValue(virtualAddress);
-      virtualAddress += ((ImageSectionHeader)sectionHeader).getValueMember("VirtualSize").getValue();
+      header.getVirtualAddress().setValue(virtualAddress);
+      virtualAddress += header.getVirtualSize().getValue();
     }
 
-    // The binary size has been changed as the result, update it in the size holders:
-    updateSizeOffsetHolders();
+    // Update the relative virtual address of the Base Relocation Table, if any.
+    updateDataDirectoryFromSectionHeader(Section.RESOURCES_SECTION_NAME, ImageDataDirectory.IMAGE_DIRECTORY_ENTRY_RESOURCE);
+    updateDataDirectoryFromSectionHeader(Section.RELOCATIONS_SECTION_NAME, ImageDataDirectory.IMAGE_DIRECTORY_ENTRY_BASERELOC);
+
+    // Resources section may have changed virtual offset, re-shake of all nested structures required to have correct addresses,
+    // also the binary size may have been changed as the result
+    resetOffsets(0);
   }
 
+  private void updateDataDirectoryFromSectionHeader(String name, int index) {
+    ImageSectionHeader header = getSection(name);
+    ImageDataDirectory directory = myImageOptionalHeader.getImageDataDirectories().get(index);
+    directory.getVirtualAddress().setValue(header.getVirtualAddress().getValue());
+    directory.getSize().setValue(header.getVirtualSize().getValue());
+  }
+
+  @Override
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
-    myBytes.write(stream);
-    for (SectionReader section : mySections) {
+    for (Section section : mySections) {
       section.write(stream);
     }
   }
 
+  @Override
   public void report(OutputStreamWriter writer) throws IOException {
     super.report(writer);
-    myBytes.report( writer );
+    myPadding.report(writer);
     mySectionHeaders.report(writer);
-    for (SectionReader section : mySections) {
+    for (Section section : mySections) {
       section.report(writer);
     }
   }
 
-  public ExeFormat getExeFormat() {
-    long machine = myPeHeader.getImageFileHeader().getMachine();
-    if (machine == 0x14c) {
-      return ExeFormat.X86;
+  private ImageSectionHeader getSection(String name) {
+    for (ImageSectionHeader header : mySectionHeaders) {
+      if (name.equals(header.getSectionName())) {
+        return header;
+      }
     }
-    if (machine == 0x8664) {
-      return ExeFormat.X64;
-    }
-    throw new UnsupportedOperationException("Unsupported machine code " + machine);
+    throw new IllegalStateException("Cannot find section with name " + name);
   }
 }

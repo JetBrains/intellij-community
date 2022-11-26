@@ -164,7 +164,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @ApiStatus.Internal
-  public final void addFiles(@NotNull List<Path> files) {
+  public final void addFiles(@NotNull List<? extends Path> files) {
     classPath.addFiles(files);
     this.files.addAll(files);
   }
@@ -559,9 +559,9 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     List<Path> files = Collections.emptyList();
     ClassLoader parent;
     boolean lockJars = true;
-    boolean useCache;
+    boolean useCache = true;
     boolean isSystemClassLoader;
-    boolean isClassPathIndexEnabled;
+    boolean isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
     boolean isBootstrapResourcesAllowed;
     @Nullable CachePoolImpl cachePool;
     Predicate<? super Path> cachingCondition;
@@ -625,6 +625,11 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * N.b. IDEA's build process does not ensure deletion of cached information upon deletion of some file under a local root,
      * but false positives are not a logical error, since code is prepared for that and disk access is performed upon class/resource loading.
      */
+    public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories(boolean value) {
+      this.isClassPathIndexEnabled = value;
+      return this;
+    }
+
     public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories() {
       this.isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
       return this;

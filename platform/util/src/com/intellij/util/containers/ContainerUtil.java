@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.THashSet;
@@ -124,6 +125,20 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <E> ArrayList<E> newArrayList(E @NotNull ... array) {
     return new ArrayList<>(Arrays.asList(array));
+  }
+
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead
+   *
+   * DO NOT REMOVE this method until {@link ContainerUtil#newArrayList(Iterable)} is removed.
+   * The former is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Collection<? extends E> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("Use `new ArrayList(Collection)` instead. "+iterable.getClass());
+    return new ArrayList<>(iterable);
   }
 
   @Contract(pure = true)
@@ -425,6 +440,10 @@ public final class ContainerUtil {
 
     public @NotNull ImmutableMapBuilder<K, V> put(K key, V value) {
       myMap.put(key, value);
+      return this;
+    }
+    public @NotNull ImmutableMapBuilder<K, V> putAll(@NotNull Map<? extends K, ? extends V> fromMap) {
+      myMap.putAll(fromMap);
       return this;
     }
 
@@ -841,6 +860,10 @@ public final class ContainerUtil {
   public static <T, V> V @NotNull [] map2Array(@NotNull Collection<? extends T> collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
     return map2List(collection, mapper).toArray(to);
   }
+  @Contract(mutates = "param2")
+  public static <T, V> V @NotNull [] map2Array(T @NotNull [] collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
+    return map2List(collection, mapper).toArray(to);
+  }
 
   @Contract(pure = true)
   public static @NotNull <T> List<T> filter(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
@@ -951,8 +974,8 @@ public final class ContainerUtil {
     return result;
   }
 
-  public static <T> boolean all(T[] array, @NotNull Condition<? super T> condition) {
-    return all(Arrays.asList(array), condition);
+  public static <T> boolean all(T @NotNull [] array, @NotNull Condition<? super T> condition) {
+    return and(array, condition);
   }
 
   public static <T> boolean all(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
@@ -2184,43 +2207,26 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from all collections in order
-   */
-  @Contract(pure = true)
-  public static @NotNull <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<? extends E>> collections) {
-    int totalSize = 0;
-    for (Iterable<? extends E> list : collections) {
-      totalSize += list instanceof Collection ? ((Collection<?>)list).size() : 10;
-    }
-    List<E> result = new ArrayList<>(totalSize);
-    for (Iterable<? extends E> list : collections) {
-      for (E e : list) {
-        result.add(e);
-      }
-    }
-    return result.isEmpty() ? emptyList() : result;
-  }
-
-  /**
    * @return read-only list consisting of the elements from all collections returned by the mapping function,
    * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
    */
-  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<V>> mapping) {
+  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<? extends V>> mapping) {
     // GC optimization for critical clients
     List<V> result = null;
     boolean isOriginal = true;
 
     for (T each : iterable) {
-      List<V> toAdd = mapping.fun(each);
+      List<? extends V> toAdd = mapping.fun(each);
       if (toAdd.isEmpty()) continue;
 
       if (result == null) {
-        result = toAdd;
+        //noinspection unchecked
+        result = (List<V>)toAdd;
         continue;
       }
 
       if (isOriginal) {
-        List<V> original = result;
+        List<? extends V> original = result;
         result = new ArrayList<>(Math.max(10, result.size() + toAdd.size()));
         result.addAll(original);
         isOriginal = false;

@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.model.ModelBranchImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -19,6 +20,7 @@ import com.intellij.psi.search.impl.VirtualFileEnumeration
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.FileBasedIndex
@@ -30,35 +32,36 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
-import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.Future
+import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-internal object FilesScanExecutor {
+@Internal
+object FilesScanExecutor {
   private val LOG = Logger.getInstance(FilesScanExecutor::class.java)
-  private val THREAD_COUNT = UnindexedFilesUpdater.getNumberOfScanningThreads().coerceAtLeast(1)
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val dispatcher = Dispatchers.IO.limitedParallelism(THREAD_COUNT)
+  private val THREAD_COUNT = (UnindexedFilesUpdater.getNumberOfScanningThreads() - 1).coerceAtLeast(1)
+  private val ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Scanning", THREAD_COUNT)
 
   @JvmStatic
   fun runOnAllThreads(runnable: Runnable) {
     val progress = ProgressIndicatorProvider.getGlobalProgressIndicator()
-    val results = ArrayList<Job>()
-    val coroutineScope = ApplicationManager.getApplication().coroutineScope
-    ProgressIndicatorUtils.awaitWithCheckCanceled(
-      coroutineScope.launch(dispatcher) {
-        coroutineScope {
-          for (i in 0 until THREAD_COUNT) {
-            results.add(launch {
-              ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress))
-            })
-          }
-        }
-      }.asCompletableFuture()
-    )
+    val results = ArrayList<Future<*>>()
+    for (i in 0 until THREAD_COUNT) {
+      results.add(ourExecutor.submit { ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress)) })
+    }
+
+    // put the current thread to work too so the total thread count is `getNumberOfScanningThreads`
+    // and avoid thread starvation due to a recursive `runOnAllThreads` invocation
+    runnable.run()
+    for (result in results) {
+      // complete the future to avoid waiting for it forever if `ourExecutor` is fully booked
+      (result as FutureTask<*>).run()
+      ProgressIndicatorUtils.awaitWithCheckCanceled(result)
+    }
   }
 
   @JvmStatic
@@ -177,7 +180,7 @@ internal object FilesScanExecutor {
     }
     val skippedCount = AtomicInteger()
     val processedCount = AtomicInteger()
-    val visitedFiles = ConcurrentBitSet.create()
+    val visitedFiles = ConcurrentBitSet.create(deque.size)
     val fileFilter = VirtualFileFilter { file: VirtualFile ->
       val fileId = FileBasedIndex.getFileId(file)
       if (visitedFiles.set(fileId)) return@VirtualFileFilter false

@@ -3,34 +3,96 @@
     "fixed": false,
     "ui": [
         {
-            "key": "PackageSearch.SearchResult.background",
-            "description": "Search results row background color",
-            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI",
-            "since": "2022.1"
-        },
-        {
             "key": "PackageSearch.PackageTag.background",
             "description": "Dependency tag (e.g., 'multiplatform') background color",
-            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
+            "source": "",
             "since": "2022.1"
         },
         {
             "key": "PackageSearch.PackageTag.foreground",
             "description": "Dependency tag (e.g., 'multiplatform') foreground color",
-            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
+            "source": "",
             "since": "2022.1"
         },
         {
-            "key": "PackageSearch.PackageTagSelected.background",
+            "key": "PackageSearch.PackagesList.rowHeight",
+            "description": "Height (in pixels) of the rows of the packages list",
+            "source": "",
+            "since": "2022.3"
+        },
+        {
+            "key": "PackageSearch.PackageTag.selectedBackground",
             "description": "Dependency tag (e.g., 'multiplatform') selected background color",
-            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
-            "since": "2022.1"
+            "source": "",
+            "since": "2022.3"
+        },
+        {
+            "key": "PackageSearch.PackageTag.selectedForeground",
+            "description": "Dependency tag (e.g., 'multiplatform') selected foreground color",
+            "source": "",
+            "since": "2022.3"
+        },
+        {
+            "key": "PackageSearch.PackageTag.hoverBackground",
+            "description": "Dependency tag (e.g., 'multiplatform') hover background color",
+            "source": "",
+            "since": "2022.3"
         },
         {
             "key": "PackageSearch.PackageTagSelected.foreground",
-            "description": "Dependency tag (e.g., 'multiplatform') selected foreground color",
-            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
+            "description": "[DEPRECATED: use PackageTag.selectedForeground] Dependency tag (e.g., 'multiplatform') selected foreground color",
+            "source": "",
+            "since": "2022.1",
+            "deprecated": true
+        },
+        {
+            "key": "PackageSearch.PackageTagSelected.background",
+            "description": "[DEPRECATED: use PackageTag.selectedBackground] Dependency tag (e.g., 'multiplatform') selected background color",
+            "source": "",
+            "since": "2022.1",
+            "deprecated": true
+        },
+        {
+            "key": "PackageSearch.SearchResult.background",
+            "description": "Search results row background color",
+            "source": "",
             "since": "2022.1"
+        },
+        {
+            "key": "PackageSearch.SearchResult.hoverBackground",
+            "description": "Search results row hover background color",
+            "source": "",
+            "since": "2022.3"
+        },
+        {
+            "key": "PackageSearch.SearchResult.PackageTag.background",
+            "description": "Search result dependency tag (e.g., 'multiplatform') background color",
+            "source": "",
+            "since": "2022.3"
+        },
+        {
+            "key": "PackageSearch.SearchResult.PackageTag.foreground",
+            "description": "Search result dependency tag (e.g., 'multiplatform') foreground color",
+            "source": "",
+            "since": "2022.3"
+        },
+        {
+            "key": "PackageSearch.SearchResult.PackageTag.selectedBackground",
+            "description": "Search result dependency tag (e.g., 'multiplatform') selected background color",
+            "source": "",
+            "since": "2022.3"
+        },
+        {
+            "key": "PackageSearch.SearchResult.PackageTag.selectedForeground",
+            "description": "Search result dependency tag (e.g., 'multiplatform') selected foreground color",
+            "source": "",
+            "since": "2022.3"
+        },
+        {
+            "key": "PackageSearch.SearchResult.PackageTag.hoverBackground",
+            "description": "Search result dependency tag (e.g., 'multiplatform') hover background color",
+            "source": "",
+            "since": "2022.3"
         }
     ]
 }

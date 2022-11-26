@@ -563,6 +563,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testTernaryBranch() { doTest(); }
   public void testTernaryBranchCollapsible() { doTest(); }
 
+  public void testNewWithSideEffect() { doTest(); }
+  
+  public void testSplitIfAndCollapseBack() { doTest(); }
+
   @Override
   protected Sdk getProjectJDK() {
     return getTestName(false).contains("Src") ? IdeaTestUtil.getMockJdk17() : super.getProjectJDK();

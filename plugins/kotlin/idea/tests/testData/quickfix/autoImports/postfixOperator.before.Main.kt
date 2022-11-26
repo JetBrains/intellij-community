@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'H.inc'" "true"
 // ERROR: Unresolved reference: ++
 
 package h

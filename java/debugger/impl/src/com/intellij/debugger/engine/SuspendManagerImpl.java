@@ -55,20 +55,18 @@ public class SuspendManagerImpl implements SuspendManager {
         LOG.debug("Start resuming...");
         myDebugProcess.logThreads();
         switch (getSuspendPolicy()) {
-          case EventRequest.SUSPEND_ALL:
+          case EventRequest.SUSPEND_ALL -> {
             myDebugProcess.getVirtualMachineProxy().resume();
             LOG.debug("VM resumed ");
-            break;
-          case EventRequest.SUSPEND_EVENT_THREAD:
+          }
+          case EventRequest.SUSPEND_EVENT_THREAD -> {
             myFrozenThreads.remove(getThread());
             getThread().resume();
             if (LOG.isDebugEnabled()) {
               LOG.debug("Thread resumed : " + getThread().toString());
             }
-            break;
-          case EventRequest.SUSPEND_NONE:
-            LOG.debug("None resumed");
-            break;
+          }
+          case EventRequest.SUSPEND_NONE -> LOG.debug("None resumed");
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Suspends = " + suspends);

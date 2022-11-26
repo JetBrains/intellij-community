@@ -17,23 +17,15 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     private val whitelist : Set<String> = setOf(
-        // TODO: multiResolve, getArgumentForParameter
-        "MultiResolve",
-        // TODO: multiResolve, getArgumentForParameter
-        "MultiResolveJava",
-        // TODO: multiResolve, getArgumentForParameter, return type for ambiguous call
+        // TODO: return type for ambiguous call
         "MultiResolveJavaAmbiguous",
-        // TODO: multiResolve
-        "MultiResolveInClass",
-        // TODO: multiResolve, return type for ambiguous call
+        // TODO: return type for ambiguous call
         "MultiConstructorResolve",
         // TODO: multiResolve
         "MultiInvokableObjectResolve",
-        // TODO: multiResolve
-        "MultiResolveJvmOverloads",
         // TODO: resolve annotation param to annotation ctor ??
         "ResolveCompiledAnnotation",
     )
@@ -96,7 +88,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ResolveToFacade", ::checkResolveToFacade)
     }
 
-
     fun testMultiConstructorResolve() {
         doCheck("MultiConstructorResolve", ::checkMultiConstructorResolve)
     }
@@ -137,10 +128,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ResolveSyntheticMethod", ::checkResolveSyntheticMethod)
     }
 
-    fun testAssigningArrayElementType() {
-        doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
-    }
-
     fun testMapFunctions() {
         doCheck("MapFunctions", ::checkMapFunctions)
     }
@@ -149,8 +136,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ListIterator", ::checkListIterator)
     }
 
-    fun testDivByZero() {
-        doCheck("DivByZero", ::checkDivByZero)
+    fun testStringJVM() {
+        doCheck("StringJVM", ::checkStringJVM)
     }
 
     fun testArgumentMappingDefaultValue() {
@@ -169,24 +156,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ArgumentMappingOOBE", ::checkArgumentMappingOOBE)
     }
 
-    fun testDetailsOfDeprecatedHidden() {
-        doCheck("DetailsOfDeprecatedHidden", ::checkDetailsOfDeprecatedHidden)
-    }
-
     fun testSyntheticEnumMethods() {
         doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
-    }
-
-    fun testImplicitReceiverType() {
-        doCheck("ImplicitReceiverType", ::checkImplicitReceiverType)
-    }
-
-    fun testSubstitutedReceiverType() {
-        doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
-    }
-
-    fun testCallKindOfSamConstructor() {
-        doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
     }
 
     fun testArrayAccessOverloads() {
@@ -203,6 +174,18 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveKotlinPropertyAccessor() {
         doCheck("ResolveKotlinPropertyAccessor", ::checkResolveKotlinPropertyAccessor)
+    }
+
+    fun testResolveToSubstituteOverride() {
+        doCheck("ResolveToSubstituteOverride", ::checkResolveToSubstituteOverride)
+    }
+
+    fun testResolveEnumEntrySuperType() {
+        doCheck("TypeReferenceFromEnumEntry", ::checkResolveEnumEntrySuperType)
+    }
+
+    fun testResolveLambdaInvoke() {
+        doCheck("LambdaInvoke", ::checkLambdaInvoke)
     }
 
 }

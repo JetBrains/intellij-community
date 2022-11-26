@@ -18,7 +18,7 @@ else:
 
 __all__ = ['display']
 
-HOST = "http://127.0.0.1"
+HOST = os.getenv("PYCHARM_DISPLAY_HOST", "http://127.0.0.1")
 PORT_ENV = int(os.getenv("PYCHARM_DISPLAY_PORT", "-1"))
 PORT = PORT_ENV
 if PORT == -1:

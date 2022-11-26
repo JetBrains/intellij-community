@@ -5,5 +5,5 @@ package com.intellij.ide.plugins.newui;
  * @author Alexander Lobas
  */
 public enum Tags {
-  EAP, Trial, Purchased, Paid, Freemium
+  EAP, Trial, Purchased, Paid, Freemium, Ultimate
 }

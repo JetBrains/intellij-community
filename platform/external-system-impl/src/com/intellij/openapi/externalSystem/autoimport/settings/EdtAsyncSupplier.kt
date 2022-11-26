@@ -9,7 +9,8 @@ class EdtAsyncSupplier<R>(
   private val supplier: () -> R,
   private val shouldKeepTasksAsynchronous: () -> Boolean
 ) : AsyncSupplier<R> {
-  override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
+
+  override fun supply(parentDisposable: Disposable, consumer: (R) -> Unit) {
     val application = ApplicationManager.getApplication()
     if (shouldKeepTasksAsynchronous()) {
       application.invokeLater({ consumer(supplier()) }) {
@@ -22,9 +23,10 @@ class EdtAsyncSupplier<R>(
   }
 
   companion object {
-    fun invokeOnEdt(shouldKeepTasksAsynchronous: () -> Boolean, action: () -> Unit, parentDisposable: Disposable) {
+
+    fun invokeOnEdt(shouldKeepTasksAsynchronous: () -> Boolean, parentDisposable: Disposable, action: () -> Unit) {
       EdtAsyncSupplier(action, shouldKeepTasksAsynchronous)
-        .supply({}, parentDisposable)
+        .supply(parentDisposable) {}
     }
   }
 }

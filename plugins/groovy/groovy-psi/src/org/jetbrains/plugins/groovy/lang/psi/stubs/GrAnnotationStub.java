@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
-/**
- * @author peter
- */
 public class GrAnnotationStub extends StubBase<GrAnnotation> {
   private static final Logger LOG = Logger.getInstance(GrAnnotationStub.class);
 

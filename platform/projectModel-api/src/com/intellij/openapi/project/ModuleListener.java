@@ -24,7 +24,7 @@ public interface ModuleListener extends EventListener {
   default void moduleAdded(@NotNull Project project, @NotNull Module module) {
   }
 
-  default void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+  default void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
     for (Module module : modules) {
       moduleAdded(project, module);
     }

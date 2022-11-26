@@ -52,7 +52,7 @@ public class UnusedElementInspection extends XsltInspection {
         }
 
         @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
             if (!XsltSupport.isVariableOrParamName(attribute)) {
                 return;
             }

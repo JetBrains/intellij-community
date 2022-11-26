@@ -32,9 +32,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomSimpleValuesTest extends DomTestCase {
 
   private MyElement createElement(final String xml) throws IncorrectOperationException {
@@ -339,15 +336,16 @@ public class DomSimpleValuesTest extends DomTestCase {
 
   public void testConvertAnnotationOnType() {
     final MyElement element =
-      createElement("<a>" + "<my-generic-value>abc</my-generic-value>" + "<my-foo-generic-value>abc</my-foo-generic-value>" + "");
+      createElement("<a>" + "<my-generic-value>abc</my-generic-value>" + "<my-foo-generic-value>abc</my-foo-generic-value>");
     assertEquals("bar", element.getMyGenericValue().getValue());
     assertEquals("foo", element.getMyFooGenericValue().getValue());
   }
   
   public void testEntities() {
-    final MyElement element = createElement("<!DOCTYPE a SYSTEM \"aaa\"\n" +
-                                            "[<!ENTITY idgenerator    \"identity\">]>\n" +
-                                            "<a attra=\"a&lt;b\" some-attribute=\"&idgenerator;\">&xxx;+&idgenerator;+&amp;</a>");
+    final MyElement element = createElement("""
+                                              <!DOCTYPE a SYSTEM "aaa"
+                                              [<!ENTITY idgenerator    "identity">]>
+                                              <a attra="a&lt;b" some-attribute="&idgenerator;">&xxx;+&idgenerator;+&amp;</a>""");
     assertEquals("a<b", element.getAttributeValue().getValue());
     assertEquals("identity", element.getSomeAttribute().getValue());
 //    assertEquals("&xxx;+identity+&", element.getValue());
@@ -468,11 +466,12 @@ public class DomSimpleValuesTest extends DomTestCase {
   }
 
   public void testFuhrer() {
-    final FieldGroup group = createElement("<field-group>\n" +
-                                           "<group-name>myGroup</load-group-name>\n" +
-                                           "<field-name>myField1</field-name>\n" +
-                                           "<field-name>myField2</field-name>\n" +
-                                           "</field-group>",
+    final FieldGroup group = createElement("""
+                                             <field-group>
+                                             <group-name>myGroup</load-group-name>
+                                             <field-name>myField1</field-name>
+                                             <field-name>myField2</field-name>
+                                             </field-group>""",
                                            FieldGroup.class);
     assertEquals(2, group.getFieldNames().size());
     assertEquals("myField1", group.getFieldNames().get(0).getValue().getName().getValue());

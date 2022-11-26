@@ -414,6 +414,17 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     fail("Should not be able to perform refactoring");
   }
 
+  public void testPatternUsedInSubsequentConditionCannotExtract() {
+    try {
+      doTest("input", false, false, false, "Object", false);
+    }
+    catch (Exception e) {
+      assertEquals("Error message:Cannot perform refactoring.\nThe expression refers to the pattern variable 's' declared outside", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
   public void testOneLineLambdaVoidCompatible() {UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Runnable: () -> {...}"))); doTest("c", false, false, false, JAVA_LANG_STRING); }
   public void testOneLineLambdaValueCompatible() { doTest("c", false, false, false, "int"); }
 

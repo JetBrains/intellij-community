@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.JBColor;
@@ -16,15 +15,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class ToolbarComboWidgetUI extends ComponentUI {
 
   private static final int ELEMENTS_GAP = 5;
-  private static final int ICONS_GAP = 5;
-  private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
   private static final int MIN_TEXT_LENGTH = 5;
   private static final int SEPARATOR_WIDTH = 1;
 
@@ -75,7 +71,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     int maxTextWidth = calcMaxTextWidth(combo, paintRect);
     try {
       if (!leftIcons.isEmpty()) {
-        Rectangle iconsRect = paintIcons(leftIcons, combo, g2, paintRect);
+        Rectangle iconsRect = paintIcons(leftIcons, combo, g2, paintRect, combo.getLeftIconsGap());
         doClip(paintRect, iconsRect.width + ELEMENTS_GAP);
       }
 
@@ -88,7 +84,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
       }
 
       if (!rightIcons.isEmpty()) {
-        Rectangle iconsRect = paintIcons(rightIcons, combo, g2, paintRect);
+        Rectangle iconsRect = paintIcons(rightIcons, combo, g2, paintRect, combo.getRightIconsGap());
         doClip(paintRect, iconsRect.width + ELEMENTS_GAP);
       }
 
@@ -97,8 +93,6 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         g2.fillRect(paintRect.x, paintRect.y, SEPARATOR_WIDTH, paintRect.height);
         doClip(paintRect, SEPARATOR_WIDTH + ELEMENTS_GAP);
       }
-
-      paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect);
     }
     finally {
       g2.dispose();
@@ -137,7 +131,6 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     finally {
       g2.dispose();
     }
-
   }
 
   private static void drawText(JComponent c, @NotNull String fullText, Graphics2D g, Rectangle textBounds) {
@@ -162,22 +155,22 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static int calcMaxTextWidth(ToolbarComboWidget c, Rectangle paintRect) {
-    int left = calcIconsWidth(c.getLeftIcons());
+    int left = calcIconsWidth(c.getLeftIcons(), c.getLeftIconsGap());
     if (left > 0) left += ELEMENTS_GAP;
 
-    int right = calcIconsWidth(c.getRightIcons());
+    int right = calcIconsWidth(c.getRightIcons(), c.getRightIconsGap());
     if (right > 0) right += ELEMENTS_GAP;
 
     int separator = isSeparatorShown(c) ? ELEMENTS_GAP + SEPARATOR_WIDTH : 0;
 
-    int otherElementsWidth = left + right + separator + ELEMENTS_GAP + EXPAND_ICON.getIconWidth();
+    int otherElementsWidth = left + right + separator + ELEMENTS_GAP;
     return paintRect.width - otherElementsWidth;
   }
 
-  private static int calcIconsWidth(List<Icon> icons) {
+  private static int calcIconsWidth(List<? extends Icon> icons, int gapBetweenIcons) {
     int res = 0;
     for (Icon icon : icons) {
-      if (res > 0) res += ICONS_GAP;
+      if (res > 0) res += gapBetweenIcons;
       res += icon.getIconWidth();
     }
     return res;
@@ -187,13 +180,13 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     bounds.setBounds(bounds.x + shift, bounds.y, bounds.width - shift, bounds.height);
   }
 
-  private static Rectangle paintIcons(List<Icon> icons, JComponent c, Graphics g, Rectangle bounds) {
+  private static Rectangle paintIcons(List<? extends Icon> icons, JComponent c, Graphics g, Rectangle bounds, int gapBetweenIcons) {
     if (icons.isEmpty()) return new Rectangle();
 
     int maxHeight = 0;
     int shift = 0;
     for (Icon icon : icons) {
-      if (shift != 0) shift += ICONS_GAP;
+      if (shift != 0) shift += gapBetweenIcons;
 
       int x = bounds.x + shift;
       int y = bounds.y + bounds.height / 2 - icon.getIconHeight() / 2;
@@ -213,7 +206,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
     List<Icon> icons = combo.getLeftIcons();
     if (!icons.isEmpty()) {
-      res.width += calcIconsWidth(icons);
+      res.width += calcIconsWidth(icons, combo.getLeftIconsGap());
       res.height = icons.stream().mapToInt(Icon::getIconHeight).max().orElse(0);
     }
 
@@ -227,7 +220,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     icons = combo.getRightIcons();
     if (!icons.isEmpty()) {
       if (res.width > 0) res.width += ELEMENTS_GAP;
-      res.width += calcIconsWidth(icons);
+      res.width += calcIconsWidth(icons, combo.getRightIconsGap());
       res.height = Math.max(res.height, icons.stream().mapToInt(Icon::getIconHeight).max().orElse(0));
     }
 
@@ -237,8 +230,6 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     }
 
     if (res.width > 0) res.width += ELEMENTS_GAP;
-    res.width += EXPAND_ICON.getIconWidth();
-    res.height = Math.max(res.height, EXPAND_ICON.getIconHeight());
 
     Insets insets = c.getInsets();
     res.height += insets.top + insets.bottom;
@@ -300,7 +291,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         return;
       }
 
-      int rightPart = SEPARATOR_WIDTH + ELEMENTS_GAP + EXPAND_ICON.getIconWidth() + comp.getInsets().right;
+      int rightPart = SEPARATOR_WIDTH + ELEMENTS_GAP + comp.getInsets().right;
+
       Rectangle right = new Rectangle((int)(compBounds.getMaxX() - rightPart), compBounds.y, rightPart, compBounds.height);
       Rectangle left = new Rectangle(compBounds.x, compBounds.y, compBounds.width - rightPart + SEPARATOR_WIDTH, compBounds.height);
 
@@ -317,15 +309,19 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   private static class ClickListener extends MyMouseTracker {
 
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mouseClicked(MouseEvent e) {
       if (!isSeparatorShown(comp)) {
         comp.doExpand(e);
         return;
       }
 
-      int leftPartWidth = comp.getWidth() - (ELEMENTS_GAP + EXPAND_ICON.getIconWidth() + comp.getInsets().right);
-      if (e.getPoint().x <= leftPartWidth) notifyPressListeners(e);
-      else comp.doExpand(e);
+      int leftPartWidth = comp.getWidth() - (ELEMENTS_GAP + comp.getInsets().right);
+      if (e.getPoint().x <= leftPartWidth) {
+        notifyPressListeners(e);
+      }
+      else {
+        comp.doExpand(e);
+      }
     }
 
     private void notifyPressListeners(MouseEvent e) {

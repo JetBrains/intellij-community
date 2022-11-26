@@ -139,3 +139,9 @@ internal val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?
         is KotlinChangeInfoWrapper -> delegate
         else -> null
     }
+
+fun KotlinTypeInfo.getReceiverTypeText(): String {
+    // For a DNN type `KotlinTypeInfo.render()` can return it both parenthesized and not,
+    // depending on the case: from text or from type. We make sure not to parenthesize it twice.
+    return if (type is DefinitelyNotNullType) "(${render().removeSurrounding("(", ")")})" else render()
+}

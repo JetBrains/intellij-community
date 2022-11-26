@@ -24,8 +24,10 @@ import java.awt.image.BufferedImage;
 
 /**
  * It supposed to cover whole area of JLayeredPane and process "FadeIn&Out" effects with its inner components
+ *
+ * @deprecated unused
  */
-
+@Deprecated(forRemoval = true)
 public class FadeInFadeOut extends JComponent {
   public static final Integer LAYER = Integer.valueOf(JLayeredPane.POPUP_LAYER + 1);
   public static final int TOTAL_FRAMES = 10;

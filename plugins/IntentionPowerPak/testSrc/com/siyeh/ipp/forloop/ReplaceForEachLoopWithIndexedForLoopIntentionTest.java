@@ -17,6 +17,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntentionTest extends IPPTestCa
   public void testFQList() { doTest(); }
   public void testBlockNeeded() { doTest(); }
   public void testBlockNeededLabeled() { doTest(); }
+  public void testVar() { doTest(); }
 
   @Override
   protected String getIntentionName() {

@@ -4,6 +4,7 @@ package com.intellij.toolWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.FloatingDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
@@ -21,7 +22,7 @@ internal interface StripeButtonManager {
 
   fun updateIcon(icon: Icon?)
 
-  fun remove()
+  fun remove(anchor: ToolWindowAnchor, split: Boolean)
 
   fun getComponent(): JComponent
 }
@@ -56,9 +57,13 @@ internal class ToolWindowEntry(stripeButton: StripeButtonManager?,
     get() = toolWindow.windowInfo
 
   fun removeStripeButton() {
+    removeStripeButton(toolWindow.anchor, toolWindow.isSplitMode)
+  }
+
+  fun removeStripeButton(anchor: ToolWindowAnchor, split: Boolean) {
     val stripeButton = stripeButton ?: return
     this.stripeButton = null
-    stripeButton.remove()
+    stripeButton.remove(anchor, split)
   }
 
   fun applyWindowInfo(newInfo: WindowInfo) {

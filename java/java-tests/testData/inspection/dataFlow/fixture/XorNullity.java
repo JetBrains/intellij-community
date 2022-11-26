@@ -20,7 +20,7 @@ public class XorNullity {
     }
 
     if(createForm.getOpenIdIdentity() != null) {
-      findByOpenIdIdentity(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">createForm.getOpenIdProvider()</warning>); // nullable
+      findByOpenIdIdentity(<warning descr="Passing 'null' argument to parameter annotated as @NotNull"><warning descr="Result of 'createForm.getOpenIdProvider()' is always 'null'">createForm.getOpenIdProvider()</warning></warning>); // nullable
     }
   }
 

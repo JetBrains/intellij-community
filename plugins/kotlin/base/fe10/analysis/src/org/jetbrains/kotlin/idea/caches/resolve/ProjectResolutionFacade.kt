@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtElement
@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import org.jetbrains.kotlin.storage.CancellableSimpleLock
 import org.jetbrains.kotlin.storage.guarded
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
 internal class ProjectResolutionFacade(
@@ -51,7 +52,12 @@ internal class ProjectResolutionFacade(
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
             val resolverProvider = computeModuleResolverProvider()
-            CachedValueProvider.Result.create(resolverProvider, resolverForProjectDependencies)
+            val allDependencies = if (invalidateOnOOCB) {
+                resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+            } else {
+                resolverForProjectDependencies
+            }
+            CachedValueProvider.Result.create(resolverProvider, allDependencies)
         },
         /* trackValue = */ false
     )
@@ -105,21 +111,26 @@ internal class ProjectResolutionFacade(
                 }
             }
 
-            CachedValueProvider.Result.create(results, resolverForProjectDependencies)
+            // TODO: why do we need OCB tracker for libs ?
+            val allDependencies = resolverForProjectDependencies +
+                    KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+            CachedValueProvider.Result.create(results, allDependencies)
         }, false
     )
 
-    private val resolverForProjectDependencies = dependencies + listOf(
-        KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker,
-        globalContext.exceptionTracker
-    )
+    private val resolverForProjectDependencies = dependencies + globalContext.exceptionTracker
 
     private fun computeModuleResolverProvider(): ResolverForProject<IdeaModuleInfo> {
         val delegateResolverForProject: ResolverForProject<IdeaModuleInfo> =
             reuseDataFrom?.cachedResolverForProject ?: EmptyResolverForProject()
 
         val allModuleInfos = (allModules ?: getModuleInfosFromIdeaModel(project, (settings as? PlatformAnalysisSettingsImpl)?.platform))
-            .toMutableSet()
+            .toMutableSet().also {
+                it.checkValidity {
+                    ("allModules".takeIf { allModules != null }
+                        ?: "getModuleInfosFromIdeaModel(${(settings as? PlatformAnalysisSettingsImpl)?.platform})") + toString()
+                }
+            }
 
         val syntheticFilesByModule = syntheticFiles.groupBy { it.moduleInfo }
         val syntheticFilesModules = syntheticFilesByModule.keys
@@ -135,7 +146,7 @@ internal class ProjectResolutionFacade(
             resolvedModulesWithDependencies,
             syntheticFilesByModule,
             delegateResolverForProject,
-            if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else null,
+            if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else LibraryModificationTracker.getInstance(project),
             settings
         )
     }
@@ -209,6 +220,15 @@ internal class ProjectResolutionFacade(
         return AnalysisResult.success(bindingContext, findModuleDescriptor(element.moduleInfo))
     }
 
+    internal fun fetchAnalysisResultsForElement(element: KtElement): AnalysisResult? {
+        val cache: SLRUCache<KtFile, PerFileAnalysisCache>? =
+            analysisResultsLock.tryGuarded {
+                analysisResults.upToDateOrNull?.get()
+            }
+        val perFileCache = cache?.getIfCached(element.containingKtFile)
+        return perFileCache?.fetchAnalysisResults(element)
+    }
+
     private fun analysisResultForElement(
         element: KtElement,
         cache: SLRUCache<KtFile, PerFileAnalysisCache>,
@@ -237,6 +257,7 @@ internal class ProjectResolutionFacade(
     }
 
     companion object {
+
         /*
          * Concurrent access to Errors may lead to the class loading dead lock because of non-trivial initialization in Errors.
          * As a work-around, all Error classes are initialized beforehand.
@@ -254,3 +275,15 @@ internal class ProjectResolutionFacade(
         }
     }
 }
+
+const val CHECK_CANCELLATION_PERIOD_MS: Long = 50
+inline fun <T> ReentrantLock.tryGuarded(crossinline computable: () -> T): T? =
+    if (tryLock(CHECK_CANCELLATION_PERIOD_MS, TimeUnit.MILLISECONDS)) {
+        try {
+            computable()
+        } finally {
+            unlock()
+        }
+    } else {
+        null
+    }

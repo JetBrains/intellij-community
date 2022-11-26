@@ -19,13 +19,17 @@ class SingularCollectionHandler extends AbstractSingularHandler {
   }
 
   @Override
-  protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+  protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
+                                       @NotNull PsiType psiFieldType,
+                                       @NotNull String singularName) {
     final PsiType oneElementType = PsiTypeUtil.extractOneElementType(psiFieldType, methodBuilder.getManager());
     methodBuilder.withParameter(singularName, oneElementType);
   }
 
   @Override
-  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
+                                       @NotNull PsiType psiFieldType,
+                                       @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
     final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
     final PsiType collectionType = PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_COLLECTION, elementType);
@@ -34,36 +38,46 @@ class SingularCollectionHandler extends AbstractSingularHandler {
 
   @Override
   protected String getClearMethodBody(@NotNull BuilderInfo info) {
-    final String codeBlockFormat = "if (this.{0} != null) \n this.{0}.clear();\n" +
-      "return {1};";
+    final String codeBlockFormat = """
+      if (this.{0} != null)\s
+       this.{0}.clear();
+      return {1};""";
     return MessageFormat.format(codeBlockFormat, info.getFieldName(), info.getBuilderChainResult());
   }
 
   @Override
   protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<{3}>(); \n" +
-      "this.{0}.add({1});\n" +
-      "return {2};";
+    final String codeBlockTemplate = """
+      if (this.{0} == null) this.{0} = new java.util.ArrayList<{3}>();\s
+      this.{0}.add({1});
+      return {2};""";
     final PsiType oneElementType = PsiTypeUtil.extractOneElementType(info.getFieldType(), info.getManager());
 
     return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, info.getBuilderChainResult(),
-      oneElementType.getCanonicalText(false));
+                                oneElementType.getCanonicalText(false));
   }
 
   @Override
   protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<{2}>(); \n"
-      + "this.{0}.addAll({0});\n" +
-      "return {1};";
+    final String codeBlockTemplate = """
+      if({0}==null)'{'throw new NullPointerException("{0} cannot be null");'}'
+      if (this.{0} == null) this.{0} = new java.util.ArrayList<{2}>();\s
+      this.{0}.addAll({0});
+      return {1};""";
     final PsiType oneElementType = PsiTypeUtil.extractOneElementType(info.getFieldType(), info.getManager());
 
     return MessageFormat.format(codeBlockTemplate, singularName, info.getBuilderChainResult(),
-      oneElementType.getCanonicalText(false));
+                                oneElementType.getCanonicalText(false));
   }
 
   @Override
   public String renderBuildPrepare(@NotNull BuilderInfo info) {
     return renderBuildCode(info.getVariable(), info.getFieldName(), "this");
+  }
+
+  @Override
+  public String renderBuildCall(@NotNull BuilderInfo info) {
+    return info.renderFieldName();
   }
 
   @Override
@@ -76,49 +90,63 @@ class SingularCollectionHandler extends AbstractSingularHandler {
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiVariable.getType(), psiManager);
     String result;
     if (SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_SET.equals(collectionQualifiedName)) {
-      result = "{2}<{1}> {0} = new java.util.TreeSet<{1}>();\n" +
-        "if ({3}.{0} != null) {0}.addAll({3}.{0});\n" +
-        "{0} = java.util.Collections.unmodifiableNavigableSet({0});\n";
-    } else if (SingularCollectionClassNames.JAVA_UTIL_SORTED_SET.equals(collectionQualifiedName)) {
-      result = "{2}<{1}> {0} = new java.util.TreeSet<{1}>();\n" +
-        "if ({3}.{0} != null) {0}.addAll({3}.{0});\n" +
-        "{0} = java.util.Collections.unmodifiableSortedSet({0});\n";
-    } else if (SingularCollectionClassNames.JAVA_UTIL_SET.equals(collectionQualifiedName)) {
-      result = "{2}<{1}> {0};\n" +
-        "switch ({3}.{0} == null ? 0 : {3}.{0}.size()) '{'\n" +
-        " case 0: \n" +
-        "   {0} = java.util.Collections.emptySet();\n" +
-        "   break;\n" +
-        " case 1: \n" +
-        "   {0} = java.util.Collections.singleton({3}.{0}.get(0));\n" +
-        "   break;\n" +
-        " default: \n" +
-        "   {0} = new java.util.LinkedHashSet<{1}>({3}.{0}.size() < 1073741824 ? 1 + {3}.{0}.size() + ({3}.{0}.size() - 3) / 3 : java.lang.Integer.MAX_VALUE);\n" +
-        "   {0}.addAll({3}.{0});\n" +
-        "   {0} = java.util.Collections.unmodifiableSet({0});\n" +
-        "'}'\n";
-    } else {
-      result = "{2}<{1}> {0};\n" +
-        "switch ({3}.{0} == null ? 0 : {3}.{0}.size()) '{'\n" +
-        "case 0: \n" +
-        " {0} = java.util.Collections.emptyList();\n" +
-        " break;\n" +
-        "case 1: \n" +
-        " {0} = java.util.Collections.singletonList({3}.{0}.get(0));\n" +
-        " break;\n" +
-        "default: \n" +
-        " {0} = java.util.Collections.unmodifiableList(new java.util.ArrayList<{1}>({3}.{0}));\n" +
-        "'}'\n";
+      result = """
+        {2}<{1}> {0} = new java.util.TreeSet<{1}>();
+        if ({3}.{0} != null) {0}.addAll({3}.{0});
+        {0} = java.util.Collections.unmodifiableNavigableSet({0});
+        """;
+    }
+    else if (SingularCollectionClassNames.JAVA_UTIL_SORTED_SET.equals(collectionQualifiedName)) {
+      result = """
+        {2}<{1}> {0} = new java.util.TreeSet<{1}>();
+        if ({3}.{0} != null) {0}.addAll({3}.{0});
+        {0} = java.util.Collections.unmodifiableSortedSet({0});
+        """;
+    }
+    else if (SingularCollectionClassNames.JAVA_UTIL_SET.equals(collectionQualifiedName)) {
+      result = """
+        {2}<{1}> {0};
+        switch ({3}.{0} == null ? 0 : {3}.{0}.size()) '{'
+         case 0:\s
+           {0} = java.util.Collections.emptySet();
+           break;
+         case 1:\s
+           {0} = java.util.Collections.singleton({3}.{0}.get(0));
+           break;
+         default:\s
+           {0} = new java.util.LinkedHashSet<{1}>({3}.{0}.size() < 1073741824 ? 1 + {3}.{0}.size() + ({3}.{0}.size() - 3) / 3 : java.lang.Integer.MAX_VALUE);
+           {0}.addAll({3}.{0});
+           {0} = java.util.Collections.unmodifiableSet({0});
+        '}'
+        """;
+    }
+    else {
+      result = """
+        {2}<{1}> {0};
+        switch ({3}.{0} == null ? 0 : {3}.{0}.size()) '{'
+        case 0:\s
+         {0} = java.util.Collections.emptyList();
+         break;
+        case 1:\s
+         {0} = java.util.Collections.singletonList({3}.{0}.get(0));
+         break;
+        default:\s
+         {0} = java.util.Collections.unmodifiableList(new java.util.ArrayList<{1}>({3}.{0}));
+        '}'
+        """;
     }
     return MessageFormat.format(result, fieldName, elementType.getCanonicalText(false), collectionQualifiedName, builderVariable);
   }
 
   @Override
-  protected String getEmptyCollectionCall() {
+  protected String getEmptyCollectionCall(@NotNull BuilderInfo info) {
+    final PsiType elementType = PsiTypeUtil.extractOneElementType(info.getVariable().getType(), info.getManager());
+    final String typeName = elementType.getCanonicalText(false);
     if (ContainerUtil.exists(SingularCollectionClassNames.JAVA_SETS, collectionQualifiedName::equals)) {
-      return "java.util.Collections.emptySet()";
-    } else {
-      return "java.util.Collections.emptyList()";
+      return "java.util.Collections.<"+typeName+">emptySet()";
+    }
+    else {
+      return "java.util.Collections.<"+typeName+">emptyList()";
     }
   }
 }

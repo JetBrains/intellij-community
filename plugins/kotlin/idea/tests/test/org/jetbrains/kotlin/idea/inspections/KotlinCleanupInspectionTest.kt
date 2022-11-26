@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/inspections/cleanup")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinCleanupInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     private fun doTest(dir: String, result: String, vararg files: String) {
         myFixture.enableInspections(KotlinCleanupInspection::class.java)

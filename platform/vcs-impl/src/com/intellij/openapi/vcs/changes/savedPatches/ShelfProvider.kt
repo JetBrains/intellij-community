@@ -23,7 +23,6 @@ import one.util.streamex.StreamEx
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
-import javax.swing.event.ChangeListener
 
 class ShelfProvider(private val project: Project, parent: Disposable) : SavedPatchesProvider<ShelvedChangeList>, Disposable {
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Shelved Changes Loader", 1)
@@ -35,7 +34,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   init {
     Disposer.register(parent, this)
-    project.messageBus.connect(this).subscribe(ShelveChangesManager.SHELF_TOPIC, ChangeListener {
+    project.messageBus.connect(this).subscribe(ShelveChangesManager.SHELF_TOPIC, ShelveChangesManagerListener {
       preloadChanges()
     })
     preloadChanges()
@@ -53,7 +52,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   override fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit) {
     val disposableFlag = Disposer.newCheckedDisposable()
     Disposer.register(disposable, disposableFlag)
-    project.messageBus.connect(disposable).subscribe(ShelveChangesManager.SHELF_TOPIC, ChangeListener {
+    project.messageBus.connect(disposable).subscribe(ShelveChangesManager.SHELF_TOPIC, ShelveChangesManagerListener {
       if (ApplicationManager.getApplication().isDispatchThread) {
         listener()
       }

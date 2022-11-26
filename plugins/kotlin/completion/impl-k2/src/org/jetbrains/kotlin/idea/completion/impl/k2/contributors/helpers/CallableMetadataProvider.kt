@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtStarProjectionTypeArgument
+import org.jetbrains.kotlin.analysis.api.KtTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -14,6 +13,8 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
+import org.jetbrains.kotlin.types.Variance
 
 internal object CallableMetadataProvider {
 
@@ -151,10 +152,8 @@ internal object CallableMetadataProvider {
         }
         if (symbol !is KtClassLikeSymbol) return null
         return buildClassType(symbol) {
-            if (symbol is KtSymbolWithTypeParameters) {
-                repeat(symbol.typeParameters.size) {
-                    argument(KtStarProjectionTypeArgument(token))
-                }
+            repeat(symbol.typeParameters.size) {
+                argument(KtStarTypeProjection(token))
             }
         }
     }
@@ -184,7 +183,7 @@ internal object CallableMetadataProvider {
         //  some common interface. So that logic is left out here for now. We can add it back in future if needed.
         if (bestMatchWeightKind == null) {
             return if (returnCastRequiredOnReceiverTypeMismatch)
-                CallableMetadata(CallableKind.ReceiverCastRequired(expectedReceiverType.render()), null)
+                CallableMetadata(CallableKind.ReceiverCastRequired(expectedReceiverType.render(position = Variance.INVARIANT)), null)
             else null
         }
         return CallableMetadata(bestMatchWeightKind, bestMatchIndex)

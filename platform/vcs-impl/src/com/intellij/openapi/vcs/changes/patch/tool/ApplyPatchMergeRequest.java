@@ -113,22 +113,12 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    final CharSequence applyContent;
-    switch (result) {
-      case CANCEL:
-        applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
-        break;
-      case LEFT:
-        applyContent = myLocalContent;
-        break;
-      case RIGHT:
-        throw new UnsupportedOperationException();
-      case RESOLVED:
-        applyContent = null;
-        break;
-      default:
-        throw new IllegalArgumentException(result.name());
-    }
+    final CharSequence applyContent = switch (result) {
+      case CANCEL -> MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
+      case LEFT -> myLocalContent;
+      case RIGHT -> throw new UnsupportedOperationException();
+      case RESOLVED -> null;
+    };
 
     if (applyContent != null) {
       WriteCommandAction.writeCommandAction(myProject).run(() -> myResultContent.getDocument().setText(applyContent));

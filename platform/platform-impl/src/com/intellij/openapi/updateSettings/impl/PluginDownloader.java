@@ -20,8 +20,10 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.Urls;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,6 +176,7 @@ public final class PluginDownloader {
    * and {@link PluginDownloader#getDescriptor()} to get the actual descriptor instance.
    */
   @Deprecated
+  @RequiresBackgroundThread
   public @Nullable IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator,
                                                                               boolean showMessageOnError) throws IOException {
     PluginDownloader downloader = showMessageOnError ?
@@ -186,6 +189,7 @@ public final class PluginDownloader {
            null;
   }
 
+  @RequiresBackgroundThread
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
     myShownErrors = false;
 
@@ -264,6 +268,7 @@ public final class PluginDownloader {
     return true;
   }
 
+  @RequiresBackgroundThread
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
     return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), myBuildNumber);
   }
@@ -342,14 +347,15 @@ public final class PluginDownloader {
     return appliedWithoutRestart;
   }
 
+  @RequiresBackgroundThread
   private @NotNull File tryDownloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
     MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();
-      return myOldFile != null ?
-             downloader.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
-             downloader.downloadPlugin(myPluginUrl, indicator);
+    return myOldFile != null ?
+           downloader.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
+           downloader.downloadPlugin(myPluginUrl, indicator);
   }
 
   private static boolean unloadDescriptorById(@NotNull PluginId pluginId) {
@@ -435,5 +441,17 @@ public final class PluginDownloader {
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
       .addParameters(Collections.unmodifiableMap(parameters))
       .toExternalForm();
+  }
+
+  @ApiStatus.Internal
+  public static void runSynchronouslyInBackground(@NotNull Runnable runnable) {
+    try {
+      Thread thread = new Thread(runnable, "Plugin downloader");
+      thread.start();
+      thread.join();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

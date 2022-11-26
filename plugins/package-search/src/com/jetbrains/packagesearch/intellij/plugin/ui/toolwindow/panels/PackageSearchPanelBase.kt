@@ -32,11 +32,11 @@ internal abstract class PackageSearchPanelBase(@Nls val title: String) : DataPro
 
     internal val gearActions: ActionGroup? by lazy { buildGearActions() }
 
-    internal val titleActions: Array<AnAction>? by lazy { buildTitleActions() }
+    internal val titleActions: List<AnAction> by lazy(::buildTitleActions)
 
     protected abstract fun build(): JComponent
     protected open fun buildToolbar(): JComponent? = null
     protected open fun buildTopToolbar(): JComponent? = null
     protected open fun buildGearActions(): ActionGroup? = null
-    protected open fun buildTitleActions(): Array<AnAction>? = null
+    protected open fun buildTitleActions(): List<AnAction> = emptyList()
 }

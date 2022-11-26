@@ -76,8 +76,6 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     ButtonGroup bg = new ButtonGroup();
     bg.add(myUseCustomShelfDirectory);
     bg.add(myUseDefaultShelfDirectory);
-    myUseCustomShelfDirectory.setMnemonic('U');
-    myMoveShelvesCheckBox.setMnemonic('M');
     myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
     myMoveShelvesCheckBox.setSelected(myVcsConfiguration.MOVE_SHELVES);
     myShelfDirectoryPath

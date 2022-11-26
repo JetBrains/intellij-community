@@ -4,14 +4,13 @@ package com.intellij.workspaceModel.codegen.writer
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
-import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
 
 val ObjClass<*>.isStandardInterface: Boolean
-  get() = name in setOf(WorkspaceEntity::class.java.simpleName, WorkspaceEntityWithPersistentId::class.java.simpleName)
+  get() = name in setOf(WorkspaceEntity::class.java.simpleName, WorkspaceEntityWithSymbolicId::class.java.simpleName)
 
-private val ObjClass<*>.allSuperClasses: List<ObjClass<*>>
+val ObjClass<*>.allSuperClasses: List<ObjClass<*>>
   get() = superTypes.filterIsInstance<ObjClass<*>>().flatMapTo(LinkedHashSet()) { it.allSuperClasses + listOf(it) }.toList() 
 
 val ObjClass<*>.allFields: List<OwnProperty<*, *>>

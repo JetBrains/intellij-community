@@ -255,6 +255,7 @@ data class PyDataclassParameters(val init: Boolean,
   }
 }
 
+@JvmDefaultWithCompatibility
 interface PyDataclassParametersProvider {
 
   companion object {

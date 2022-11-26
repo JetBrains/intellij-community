@@ -152,6 +152,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       }
 
       // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
+      @Suppress("DEPRECATION")
       ApplicationManager.getApplication().coroutineScope.launch {
         ActionManager.getInstance()
         if (SystemInfoRt.isMac) {
@@ -194,6 +195,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       }
 
       val show = prepareToShow() ?: return
+      @Suppress("DEPRECATION")
       app.coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
         val windowManager = WindowManager.getInstance() as WindowManagerImpl
         windowManager.disposeRootFrame()

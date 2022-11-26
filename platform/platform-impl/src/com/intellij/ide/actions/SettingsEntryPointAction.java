@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
@@ -42,6 +41,8 @@ import java.util.List;
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
+  private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   public SettingsEntryPointAction() {
@@ -113,7 +114,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
       else {
         String text = child.getTemplateText();
-        if (text != null && !(text.endsWith("...") || text.endsWith("…") )) {
+        if (text != null && !(text.endsWith("...") || text.endsWith("…")) && !(child instanceof NoDots)) {
           AnActionButton button = new AnActionButton.AnActionButtonWrapper(child.getTemplatePresentation(), child) {
             @Override
             public void updateButton(@NotNull AnActionEvent e) {
@@ -189,14 +190,45 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     if (ourShowPlatformUpdateIcon) {
       return ExperimentalUI.isNewUI()
              ? GEAR_ICON.getWarningIcon()
-             : AllIcons.Ide.Notification.IdeUpdate;
+             : getCustomizedIcon(IDE_UPDATE_ICON);
     }
     if (ourShowPluginsUpdateIcon) {
       return ExperimentalUI.isNewUI()
              ? GEAR_ICON.getInfoIcon()
-             : AllIcons.Ide.Notification.PluginUpdate;
+             : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
-    return GEAR_ICON.getOriginalIcon();
+    return getCustomizedIcon(GEAR_ICON);
+  }
+
+  private static @NotNull Icon getCustomizedIcon(@NotNull BadgeIconSupplier supplier) {
+    for (IconCustomizer customizer : IconCustomizer.EP_NAME.getExtensionList()) {
+      Icon icon = customizer.getCustomIcon(supplier);
+      if (icon != null) return icon;
+    }
+    return supplier.getOriginalIcon();
+  }
+
+  /**
+   * Allows to modify a base icon provided by {@link BadgeIconSupplier}. The icon of the first extension which returns a non-null value
+   * will be used.
+   */
+  public interface IconCustomizer {
+    ExtensionPointName<IconCustomizer> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointIconCustomizer");
+
+    /**
+     * Returns a customized icon optionally based on the given {@link BadgeIconSupplier}. For example, {@code supplier.getInfoIcon()}.
+     *
+     * @param supplier The supplier to use for a base icon.
+     *
+     * @return A customized icon using {@link BadgeIconSupplier} or an alternative (custom) icon.
+     */
+    @Nullable Icon getCustomIcon(@NotNull BadgeIconSupplier supplier);
+  }
+
+  /**
+   * Marker interface to suppress automatic dots "..." addition after action name.
+   */
+  public interface NoDots {
   }
 
   private static UISettingsListener mySettingsListener;
@@ -240,7 +272,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @Nls @NotNull String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return IdeBundle.message("settings.entry.point.widget.name");
     }
 
@@ -255,17 +287,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public void disposeWidget(@NotNull StatusBarWidget widget) {
-      Disposer.dispose(widget);
-    }
-
-    @Override
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return isAvailableInStatusBar();
     }
   }
 
-  private static class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+  private static final class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
     private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private StatusBar myStatusBar;
 
@@ -280,17 +307,17 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @Nullable WidgetPresentation getPresentation() {
+    public @NotNull WidgetPresentation getPresentation() {
       return this;
     }
 
     @Override
-    public @Nullable @NlsContexts.Tooltip String getTooltipText() {
+    public @NlsContexts.Tooltip @NotNull String getTooltipText() {
       return getActionTooltip();
     }
 
     @Override
-    public @Nullable Consumer<MouseEvent> getClickConsumer() {
+    public @NotNull Consumer<MouseEvent> getClickConsumer() {
       return event -> {
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
@@ -315,7 +342,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return getActionIcon();
     }
 

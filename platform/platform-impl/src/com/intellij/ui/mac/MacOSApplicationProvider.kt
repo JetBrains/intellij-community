@@ -6,6 +6,7 @@ import com.intellij.ide.CommandLineProcessor
 import com.intellij.ide.CommandLineProcessor.scheduleProcessProtocolCommand
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.AboutAction
+import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.actions.ShowSettingsAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.idea.IdeStarter.Companion.openFilesOnLoading
@@ -58,13 +59,18 @@ internal object MacOSApplicationProvider {
       val desktop = Desktop.getDesktop()
       desktop.setAboutHandler {
         if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-          AboutAction.perform(getProject(false))
+          val project = getProject(false)
+          AboutAction.perform(project)
+          ActionsCollector.getInstance().record(project, ActionManager.getInstance().getAction("About"), null, null)
         }
       }
       desktop.setPreferencesHandler {
         if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           val project = getProject(true)!!
-          submit("Preferences") { ShowSettingsAction.perform(project) }
+          submit("Settings") {
+            ShowSettingsAction.perform(project)
+            ActionsCollector.getInstance().record(project, ActionManager.getInstance().getAction("ShowSettings"), null, null)
+          }
         }
       }
       desktop.setQuitHandler { _: QuitEvent?, response: QuitResponse ->

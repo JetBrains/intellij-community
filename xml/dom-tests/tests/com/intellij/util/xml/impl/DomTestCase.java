@@ -27,9 +27,6 @@ import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class DomTestCase extends LightIdeaTestCase {
   protected CallRegistry<DomEvent> myCallRegistry;
   private final DomEventListener myListener = new DomEventListener() {

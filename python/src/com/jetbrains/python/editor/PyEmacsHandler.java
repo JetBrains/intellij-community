@@ -277,9 +277,11 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       switch (c) {
-        case ' ': result++; break;
-        case '\t': result += context.getIndentOptions().TAB_SIZE; break;
-        default: return result;
+        case ' ' -> result++;
+        case '\t' -> result += context.getIndentOptions().TAB_SIZE;
+        default -> {
+          return result;
+        }
       }
     }
     return result;

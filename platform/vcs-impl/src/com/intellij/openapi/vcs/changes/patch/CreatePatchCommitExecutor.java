@@ -13,7 +13,10 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -100,7 +103,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
 
     @Override
-    public JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+    public JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
       String patchPath = StringUtil.nullize(PropertiesComponent.getInstance(myProject).getValue(VCS_PATCH_PATH_KEY));
       if (patchPath == null) {
         patchPath = VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION;
@@ -122,12 +125,12 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
 
     @Override
-    public boolean canExecute(Collection<Change> changes, String commitMessage) {
+    public boolean canExecute(Collection<? extends Change> changes, String commitMessage) {
       return myPanel.isOkToExecute();
     }
 
     @Override
-    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+    public void execute(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
       PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_TO_CLIPBOARD, myPanel.isToClipboard());
       try {
         Path baseDir = Paths.get(myPanel.getBaseDirName());
@@ -136,10 +139,11 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
         Charset encoding = myPanel.getEncoding();
 
         if (myPanel.isToClipboard()) {
-          writePatchToClipboard(myProject, baseDir, changes, isReverse, true, myPatchBuilder, myCommitContext);
+          writePatchToClipboard(myProject, baseDir, changes, commitMessage, isReverse, true, myPatchBuilder, myCommitContext);
         }
         else {
-          validateAndWritePatchToFile(myProject, baseDir, changes, isReverse, Paths.get(fileName), encoding, myPatchBuilder, myCommitContext);
+          validateAndWritePatchToFile(myProject, baseDir, changes, commitMessage, isReverse, Paths.get(fileName), encoding, myPatchBuilder,
+                                      myCommitContext);
         }
       }
       catch (IOException | VcsException ex) {
@@ -153,6 +157,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     public static void validateAndWritePatchToFile(@NotNull Project project,
                                                    @NotNull Path baseDir,
                                                    @NotNull Collection<? extends Change> changes,
+                                                   @Nullable String commitMessage,
                                                    boolean reversePatch,
                                                    @NotNull Path file,
                                                    @NotNull Charset encoding,
@@ -170,7 +175,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = valueToStore;
 
       List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, true);
-      PatchWriter.writePatches(project, file, baseDir, patches, commitContext, encoding, true);
+      PatchWriter.writePatches(project, file, baseDir, patches, commitMessage, commitContext, encoding);
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         final VcsConfiguration configuration = VcsConfiguration.getInstance(project);
@@ -196,7 +201,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   }
 
   public interface PatchBuilder {
-    default boolean isReverseSupported() {return true;}
+    default boolean isReverseSupported() { return true; }
 
     List<FilePatch> buildPatches(@NotNull Path baseDir,
                                  @NotNull Collection<? extends Change> changes,
@@ -253,7 +258,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
           return mySelectedPaths.contains(ObjectUtils.chooseNotNull(binary.AFTER_PATH, binary.BEFORE_PATH));
         });
       }
-      result.addAll(IdeaTextPatchBuilder.buildPatch(myProject, ContainerUtil.map(binaries, b -> b.createChange(myProject)), baseDir, reversePatch, false));
+      result.addAll(IdeaTextPatchBuilder.buildPatch(myProject, ContainerUtil.map(binaries, b -> b.createChange(myProject)), baseDir,
+                                                    reversePatch, false));
       return result;
     }
   }
@@ -341,12 +347,13 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   public static void writePatchToClipboard(@NotNull Project project,
                                            @NotNull Path baseDir,
                                            @NotNull Collection<? extends Change> changes,
+                                           @Nullable String commitMessage,
                                            boolean reversePatch,
                                            boolean honorExcludedFromCommit,
                                            @NotNull PatchBuilder patchBuilder,
                                            @NotNull CommitContext commitContext) throws VcsException, IOException {
     List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, honorExcludedFromCommit);
-    PatchWriter.writeAsPatchToClipboard(project, patches, baseDir, commitContext);
+    PatchWriter.writeAsPatchToClipboard(project, patches, commitMessage, baseDir, commitContext);
     VcsNotifier.getInstance(project).notifySuccess(PATCH_COPIED_TO_CLIPBOARD, "",
                                                    VcsBundle.message("patch.copied.to.clipboard"));
   }

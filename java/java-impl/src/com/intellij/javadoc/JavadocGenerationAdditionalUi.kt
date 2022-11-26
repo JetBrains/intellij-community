@@ -8,9 +8,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiKeyword
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.selected
 import javax.swing.*
 
@@ -51,7 +48,7 @@ class JavadocGenerationAdditionalUi {
         myTfOutputDir = textFieldWithBrowseButton(JavaBundle.message("javadoc.generate.output.directory.browse"),
           null,
           FileChooserDescriptorFactory.createSingleFolderDescriptor())
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .component
         bottomGap(BottomGap.MEDIUM)
       }
@@ -81,7 +78,7 @@ class JavadocGenerationAdditionalUi {
           }
         }
           .gap(RightGap.COLUMNS)
-          .verticalAlign(VerticalAlign.TOP)
+          .align(AlignY.TOP)
         panel {
           row {
             myTagUse = checkBox("@use").component
@@ -103,17 +100,17 @@ class JavadocGenerationAdditionalUi {
             }
           }
         }
-          .verticalAlign(VerticalAlign.TOP)
+          .align(AlignY.TOP)
         bottomGap(BottomGap.MEDIUM)
       }
       row(JavaBundle.message("javadoc.generate.locale")) {
         myLocaleTextField = textField()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .component
       }
       row(JavaBundle.message("javadoc.generate.arguments")) {
         myOtherOptionsField = textField()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .component
       }
       row(JavaBundle.message("javadoc.generate.heap.size")) {

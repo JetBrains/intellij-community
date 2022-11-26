@@ -29,4 +29,8 @@ public final class BuildDependenciesManualRunOnly {
 
     throw new IllegalStateException("IDEA Community root was not found from current working directory " + workingDirectory);
   }
+
+  public static DependenciesProperties getDependenciesPropertiesFromWorkingDirectory() {
+    return BuildDependenciesDownloader.getDependenciesProperties(getCommunityRootFromWorkingDirectory());
+  }
 }

@@ -24,9 +24,6 @@ import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class BetterPrefixMatcher extends PrefixMatcher {
   private final PrefixMatcher myOriginal;
   @Nullable private final CamelHumpMatcher myHumpMatcher;

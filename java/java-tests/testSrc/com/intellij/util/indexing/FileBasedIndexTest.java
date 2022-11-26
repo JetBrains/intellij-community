@@ -22,7 +22,7 @@ public class FileBasedIndexTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByText("Foo.java", "class Foo { String bar; }");
     myFixture.testHighlighting();
     Disposable disposable = Disposer.newDisposable();
-    FileType foo = FileTypeIndexTest.registerFakeFileType(getTestName(false), disposable);
+    FileType foo = FileTypeIndexTest.registerFakeFileType(getTestName(false), "test", disposable);
     String fooName = foo.getName();
     Disposer.dispose(disposable);
     assertNull(FileTypeManager.getInstance().findFileTypeByName(fooName));

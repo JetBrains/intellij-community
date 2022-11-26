@@ -40,6 +40,9 @@ data class MppFile(
         }
     }.trim()
 
+    fun containsDeclarationForType(moduleSubType: ModuleSubType): Boolean =
+        declarations.any { it.actuals.actuals.containsKey(moduleSubType) }
+
     private fun StringBuilder.printImports(imports: List<String>) {
         if (imports.isEmpty()) return
         imports.distinct().joinTo(this, separator = "\n", prefix = "\n", postfix = "\n\n") { import ->
@@ -65,7 +68,7 @@ data class MppFile(
 
 
 @ExpectFileDSL
-class MppSources(val mppFiles: List<MppFile>, val simpleFiles: List<SimpleFiles>) {
+class MppSources(val mppFiles: List<MppFile>, private val simpleFiles: List<SimpleFiles>) {
 
     fun getFilesFor(moduleSubType: ModuleSubType): List<SimpleFile> =
         simpleFiles.filter { moduleSubType in it.moduleSubTypes }.flatMap { it.files }
@@ -88,7 +91,7 @@ class MppSources(val mppFiles: List<MppFile>, val simpleFiles: List<SimpleFiles>
 
 
 data class SimpleFiles(val moduleSubTypes: List<ModuleSubType>, val files: List<SimpleFile>) {
-    class Builder(private val moduleSubTypes: List<ModuleSubType>, val filesPackage: JavaPackage?) {
+    class Builder(private val moduleSubTypes: List<ModuleSubType>, private val filesPackage: JavaPackage?) {
         private val files = mutableListOf<SimpleFile>()
 
         fun file(fileDescriptor: FileDescriptor, filename: String, type: SourcesetType, init: SimpleFile.Builder.() -> Unit = {}) {
@@ -274,12 +277,17 @@ private fun Writer.createMppFiles(
         module.subModules.mapSequenceIgnore mapTargets@{ target ->
             val moduleSubType = //TODO handle for non-simple target configurator
                 target.configurator.safeAs<SimpleTargetConfigurator>()?.moduleSubType ?: return@mapTargets UNIT_SUCCESS
-            val path = pathForFileInTarget(modulePath, module, file.javaPackage, file.filename, target, SourcesetType.main)
-            val fileTemplate = FileTemplate(
-                FileTextDescriptor(file.printForModuleSubType(moduleSubType), path),
-                projectPath,
-            )
-            TemplatesPlugin.fileTemplatesToRender.addValues(fileTemplate)
+
+            if (moduleSubType == ModuleSubType.common || file.containsDeclarationForType(moduleSubType)) {
+                val path = pathForFileInTarget(modulePath, module, file.javaPackage, file.filename, target, SourcesetType.main)
+                val fileTemplate = FileTemplate(
+                    FileTextDescriptor(file.printForModuleSubType(moduleSubType), path),
+                    projectPath,
+                )
+                TemplatesPlugin.fileTemplatesToRender.addValues(fileTemplate)
+            } else {
+                Success(Unit)//skip file
+            }
         }
     }
 }

@@ -5,13 +5,11 @@ import com.intellij.codeInsight.template.LiveTemplateContext;
 import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@ApiStatus.Internal
 public final class TemplateContextTypes {
   public static @NotNull List<TemplateContextType> getAllContextTypes() {
     return ContainerUtil.map(LiveTemplateContextService.getInstance().getLiveTemplateContexts(), LiveTemplateContext::getTemplateContextType);

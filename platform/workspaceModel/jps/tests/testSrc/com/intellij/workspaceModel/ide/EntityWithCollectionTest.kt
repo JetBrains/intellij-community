@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.entities.test.api.CollectionFieldEntity
@@ -23,7 +24,7 @@ class EntityWithCollectionTest {
 
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(forceEnableWorkspaceModel = true)
+  val projectModel = ProjectModelRule()
 
   @Test
   fun `check events about collection modification are correct`() {
@@ -33,12 +34,11 @@ class EntityWithCollectionTest {
     val collectionEntity = CollectionFieldEntity(setOf(3, 4, 3), listOf(foo, bar), MySource)
 
     var events: List<EntityChange<CollectionFieldEntity>> = emptyList()
-    WorkspaceModelTopics.getInstance(projectModel.project)
-      .subscribeImmediately(projectModel.project.messageBus.connect(), object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          events = event.getChanges(CollectionFieldEntity::class.java)
-        }
-      })
+    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun beforeChanged(event: VersionedStorageChange) {
+        events = event.getChanges(CollectionFieldEntity::class.java)
+      }
+    })
 
     val model = WorkspaceModel.getInstance(projectModel.project)
 
@@ -54,7 +54,7 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity) {
+        it.modifyEntity(collectionEntity.createReference<CollectionFieldEntity>().resolve(it)!!) {
           names.add(baz)
         }
       }
@@ -68,7 +68,7 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity) {
+        it.modifyEntity(collectionEntity.createReference<CollectionFieldEntity>().resolve(it)!!) {
           names = mutableListOf(baz)
         }
       }

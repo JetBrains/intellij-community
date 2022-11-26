@@ -37,7 +37,7 @@ public class LombokReferenceSearcher extends QueryExecutorBase<PsiReference, Ref
     }
   }
 
-  private void processPsiField(final PsiField refPsiField, final SearchRequestCollector collector) {
+  private static void processPsiField(final PsiField refPsiField, final SearchRequestCollector collector) {
     final PsiClass containingClass = refPsiField.getContainingClass();
     if (null != containingClass) {
       processClassMethods(refPsiField, collector, containingClass);
@@ -51,7 +51,7 @@ public class LombokReferenceSearcher extends QueryExecutorBase<PsiReference, Ref
     }
   }
 
-  private void processClassMethods(PsiField refPsiField, SearchRequestCollector collector, PsiClass containingClass) {
+  private static void processClassMethods(PsiField refPsiField, SearchRequestCollector collector, PsiClass containingClass) {
     Arrays.stream(containingClass.getMethods())
       .filter(LombokLightMethodBuilder.class::isInstance)
       .filter(psiMethod -> psiMethod.getNavigationElement() == refPsiField)
@@ -60,7 +60,7 @@ public class LombokReferenceSearcher extends QueryExecutorBase<PsiReference, Ref
       });
   }
 
-  private void processClassFields(PsiField refPsiField, SearchRequestCollector collector, PsiClass containingClass) {
+  private static void processClassFields(PsiField refPsiField, SearchRequestCollector collector, PsiClass containingClass) {
     Arrays.stream(containingClass.getFields())
       .filter(LombokLightFieldBuilder.class::isInstance)
       .filter(psiField -> psiField.getNavigationElement() == refPsiField)

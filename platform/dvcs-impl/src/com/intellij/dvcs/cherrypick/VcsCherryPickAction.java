@@ -78,13 +78,13 @@ public class VcsCherryPickAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static VcsCherryPicker getActiveCherryPicker(@NotNull List<VcsCherryPicker> cherryPickers,
-                                                       @NotNull Collection<VirtualFile> roots) {
+  private static VcsCherryPicker getActiveCherryPicker(@NotNull List<? extends VcsCherryPicker> cherryPickers,
+                                                       @NotNull Collection<? extends VirtualFile> roots) {
     return ContainerUtil.find(cherryPickers, picker -> picker.canHandleForRoots(roots));
   }
 
   @NotNull
-  private static Map<VirtualFile, List<Hash>> groupByRoot(@NotNull List<CommitId> details) {
+  private static Map<VirtualFile, List<Hash>> groupByRoot(@NotNull List<? extends CommitId> details) {
     Map<VirtualFile, List<Hash>> result = new HashMap<>();
     for (CommitId commit : details) {
       List<Hash> hashes = result.get(commit.getRoot());
@@ -99,7 +99,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
 
   @Nls
   @NotNull
-  private static String concatActionNamesForAllAvailable(@NotNull final List<VcsCherryPicker> pickers) {
+  private static String concatActionNamesForAllAvailable(final @NotNull List<? extends VcsCherryPicker> pickers) {
     return StringUtil.join(pickers, VcsCherryPicker::getActionTitle, "/");
   }
 

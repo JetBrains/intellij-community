@@ -72,29 +72,46 @@ public class XmlEnterActionTest extends AbstractEnterActionTestCase {
   }
 
   public void testBeginOfTag() {
-    doTextTest("xml", "<a>\n" + "    <b/><caret>\n" + "    <b/>\n" + "</a>",
-               "<a>\n" + "    <b/>\n" + "    <caret>\n" + "    <b/>\n" + "</a>");
+    doTextTest("xml", """
+                 <a>
+                     <b/><caret>
+                     <b/>
+                 </a>""",
+               """
+                 <a>
+                     <b/>
+                     <caret>
+                     <b/>
+                 </a>""");
   }
 
   public void testAssertionInXml() {
-    doTextTest("xml", "<!--\n" + "TODO<caret>-->", "<!--\n" + "TODO\n" + "<caret>-->");
+    doTextTest("xml", "<!--\n" + "TODO<caret>-->", """
+      <!--
+      TODO
+      <caret>-->""");
   }
 
   public void testEnterAtTheEndOfFile() {
-    doTextTest("xml", "<a>\n" + "    <b><caret>", "<a>\n" + "    <b>\n" + "        <caret>");
+    doTextTest("xml", "<a>\n" + "    <b><caret>", """
+      <a>
+          <b>
+              <caret>""");
   }
 
   public void testEnterAfterEmptyTag() {
     doTextTest("html",
-               "<form action=\"dsd\">\n" +
-               "        <input type=\"text\">\n" +
-               "        <input type=\"password\">\n" +
-               "        <input type=\"submit\"><caret></form>",
-               "<form action=\"dsd\">\n" +
-               "        <input type=\"text\">\n" +
-               "        <input type=\"password\">\n" +
-               "        <input type=\"submit\">\n" +
-               "</form>");
+               """
+                 <form action="dsd">
+                         <input type="text">
+                         <input type="password">
+                         <input type="submit"><caret></form>""",
+               """
+                 <form action="dsd">
+                         <input type="text">
+                         <input type="password">
+                         <input type="submit">
+                 </form>""");
   }
 
   public void testWeb6656() {

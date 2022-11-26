@@ -241,12 +241,12 @@ final class ImmutableElement extends Element {
   }
 
   @Override
-  public String getAttributeValue(String name, Namespace ns, String def) {
+  public String getAttributeValue(String name, Namespace ns, String defaultValue) {
     if (myAttributes instanceof ImmutableSameTypeAttributeList) {
-      return ((ImmutableSameTypeAttributeList)myAttributes).getValue(name, ns, def);
+      return ((ImmutableSameTypeAttributeList)myAttributes).getValue(name, ns, defaultValue);
     }
     Attribute attribute = getAttribute(name, ns);
-    return attribute == null ? def : attribute.getValue();
+    return attribute == null ? defaultValue : attribute.getValue();
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
@@ -329,11 +329,6 @@ final class ImmutableElement extends Element {
 
   @Override
   public void addNamespaceDeclaration(Namespace additionalNamespace) {
-    throw immutableError(this);
-  }
-
-  @Override
-  public void removeNamespaceDeclaration(Namespace additionalNamespace) {
     throw immutableError(this);
   }
 

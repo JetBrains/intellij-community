@@ -263,12 +263,12 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   @NonNls
   public String toString() {
-    StringBuilder sb = new StringBuilder("Content name=").append(myDisplayName);
-    if (myIsPinned)
-      sb.append(", pinned");
-    if (myExecutionId != 0)
-      sb.append(", executionId=").append(myExecutionId);
-    return sb.toString();
+    return "Content name="+getDisplayName()
+           + (getDescription() == null ? "" : "; description='"+getDescription()+"'")
+           + (getTabName() == null ? "" : "; tab name='"+getTabName()+"'")
+           + (getToolwindowTitle() == null ? "" : "; toolwindow='"+getToolwindowTitle()+"'")
+           + (isPinned() ? ", pinned" : "")
+           + (getExecutionId() == 0 ? "" : ", executionId=" + getExecutionId());
   }
 
   @Override

@@ -20,7 +20,7 @@ abstract class SerializablePersistentStateComponent<T : Any> protected construct
       try {
         val lookup = MethodHandles.privateLookupIn(
           /* targetClass = */ SerializablePersistentStateComponent::class.java,
-          /* lookup = */ MethodHandles.lookup(),
+          /* caller = */ MethodHandles.lookup(),
         )
         STATE_HANDLE = lookup.findVarHandle(
           /* recv = */ SerializablePersistentStateComponent::class.java,

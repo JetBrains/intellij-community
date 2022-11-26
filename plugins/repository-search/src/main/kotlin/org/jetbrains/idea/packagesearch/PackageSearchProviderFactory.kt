@@ -16,8 +16,10 @@
 
 package org.jetbrains.idea.packagesearch
 
-import com.intellij.application.options.RegistryManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.RegistryManager
+import org.jetbrains.idea.packagesearch.api.LifecycleScope
 import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.DependencySearchProvidersFactory
@@ -28,7 +30,7 @@ internal class PackageSearchProviderFactory : DependencySearchProvidersFactory {
       emptyList()
     }
     else {
-      setOf<DependencySearchProvider>(PackageSearchProvider())
+      setOf<DependencySearchProvider>(PackageSearchProvider(project))
     }
   }
 }

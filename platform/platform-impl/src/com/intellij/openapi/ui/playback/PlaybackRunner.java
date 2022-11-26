@@ -19,6 +19,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -97,46 +99,42 @@ public class PlaybackRunner {
       onStop();
     });
 
-    try {
-      myActionCallback = new ActionCallback();
-      myActionCallback.doWhenProcessed(() -> {
-        Disposer.dispose(myOnStop);
+    myActionCallback = new ActionCallback();
+    myActionCallback.doWhenProcessed(() -> {
+      Disposer.dispose(myOnStop);
 
-        SwingUtilities.invokeLater(() -> {
-          activityMonitor.setActive(false);
-          restoreRegistryValues();
-        });
+      SwingUtilities.invokeLater(() -> {
+        activityMonitor.setActive(false);
+        restoreRegistryValues();
       });
+    });
 
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        myRobot = new Robot();
-      }
-
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       try {
-        myCommands.addAll(includeScript(myScript, getScriptDir()));
+        myRobot = new Robot();
+      } catch (AWTException e){
+        LOG.info(e);
       }
-      catch (Exception e) {
-        String message = "Failed to parse script commands: " + myScript;
-        LOG.error(message, e);
-        myActionCallback.reject(message + ": " + e.getMessage());
-        return myActionCallback;
-      }
+    }
 
-      new Thread("playback runner") {
-        @Override
-        public void run() {
-          if (myUseDirectActionCall) {
-            executeFrom(0, getScriptDir());
-          }
-          else {
-            IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
-          }
-        }
-      }.start();
+    try {
+      myCommands.addAll(includeScript(myScript, getScriptDir()));
     }
-    catch (AWTException e) {
-      LOG.error(e);
+    catch (Exception e) {
+      String message = "Failed to parse script commands: " + myScript;
+      LOG.error(message, e);
+      myActionCallback.reject(message + ": " + e.getMessage());
+      return myActionCallback;
     }
+
+    new Thread(null, Context.current().wrap(() -> {
+      if (myUseDirectActionCall) {
+        executeFrom(0, getScriptDir());
+      }
+      else {
+        IdeEventQueue.getInstance().doWhenReady(Context.current().wrap(() -> executeFrom(0, getScriptDir())));
+      }
+    }), "playback runner").start();
 
     return myActionCallback;
   }
@@ -216,27 +214,31 @@ public class PlaybackRunner {
           }
         };
       final Promise<Object> cmdCallback = cmd.execute(context);
+      Context initialContext = Context.current();
       cmdCallback
         .onSuccess(it -> {
-          if (cmd.canGoFurther()) {
-            int delay = getDelay(cmd);
-            if (delay > 0) {
-              if (SwingUtilities.isEventDispatchThread()) {
-                new SingleAlarm(() -> {
+          try(Scope ignored = initialContext.makeCurrent()) {
+            if (cmd.canGoFurther()) {
+              int delay = getDelay(cmd);
+              if (delay > 0) {
+                if (SwingUtilities.isEventDispatchThread()) {
+                  new SingleAlarm(Context.current().wrap(() -> {
+                    executeFrom(cmdIndex + 1, context.getBaseDir());
+                  }), delay, myOnStop, Alarm.ThreadToUse.SWING_THREAD).request();
+                }
+                else {
+                  LockSupport.parkUntil(System.currentTimeMillis() + delay);
                   executeFrom(cmdIndex + 1, context.getBaseDir());
-                }, delay, myOnStop, Alarm.ThreadToUse.SWING_THREAD).request();
+                }
               }
               else {
-                LockSupport.parkUntil(System.currentTimeMillis() + delay);
                 executeFrom(cmdIndex + 1, context.getBaseDir());
               }
-            } else {
-              executeFrom(cmdIndex + 1, context.getBaseDir());
             }
-          }
-          else {
-            myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
-            myActionCallback.setDone();
+            else {
+              myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
+              myActionCallback.setDone();
+            }
           }
         })
         .onError(error -> {
@@ -316,20 +318,11 @@ public class PlaybackRunner {
   }
 
   /**
-   * This data class aggregates parameters of a command to be called.
-   * We do not create instances of commands beforehand because
-   * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
-   */
-  private static class CommandDescriptor {
-    public final String fullLine;
-    public final int line;
-    public final File scriptDir;
-
-    private CommandDescriptor(String fullLine, int line, File scriptDir) {
-      this.fullLine = fullLine;
-      this.line = line;
-      this.scriptDir = scriptDir;
-    }
+     * This data class aggregates parameters of a command to be called.
+     * We do not create instances of commands beforehand because
+     * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
+     */
+    private record CommandDescriptor(String fullLine, int line, File scriptDir) {
   }
 
   @Nullable

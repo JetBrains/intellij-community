@@ -64,6 +64,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls public static final String DUPLICATED_CODE = "DuplicatedCode";
   @NonNls public static final String DUPLICATED_CODE_AGGREGATE = DUPLICATED_CODE + InspectionsResultUtil.AGGREGATE;
   @NonNls public static final String PHP_VULNERABLE_PATHS_AGGREGATE = "PhpVulnerablePathsInspection" + InspectionsResultUtil.AGGREGATE;
+  @NonNls private static final String FRAMEWORK = "framework";
 
   @Override
   public String getFormatName() {
@@ -355,6 +356,11 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     Element hints = problem.getChild(HINTS);
     if (hints != null) {
       convertHints(writer, hints);
+    }
+
+    Element framework = problem.getChild(FRAMEWORK);
+    if (framework != null) {
+      writer.name(FRAMEWORK).value(framework.getText());
     }
 
     writer.name(HIGHLIGHTED_ELEMENT).value(problem.getChildText(HIGHLIGHTED_ELEMENT));

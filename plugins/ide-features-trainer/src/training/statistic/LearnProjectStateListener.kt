@@ -25,8 +25,8 @@ import training.util.*
 
 private class LearnProjectStateListener : ProjectManagerListener {
   override fun projectOpened(project: Project) {
-    val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    if (isLearningProject(project, langSupport)) {
+    val languageId = LangManager.getInstance().getLanguageId() ?: return
+    if (isLearningProject(project, languageId)) {
       CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
       removeFromRecentProjects(project)
     }
@@ -42,15 +42,15 @@ private class LearnProjectStateListener : ProjectManagerListener {
   }
 
   override fun projectClosingBeforeSave(project: Project) {
-    val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    if (isLearningProject(project, langSupport) && !StatisticBase.isLearnProjectCloseLogged) {
+    val languageId = LangManager.getInstance().getLanguageId() ?: return
+    if (isLearningProject(project, languageId) && !StatisticBase.isLearnProjectCloseLogged) {
       StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_PROJECT)
     }
   }
 
   override fun projectClosed(project: Project) {
-    val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    if (isLearningProject(project, langSupport)) {
+    val languageId = LangManager.getInstance().getLanguageId() ?: return
+    if (isLearningProject(project, languageId)) {
       StatisticBase.isLearnProjectCloseLogged = false
       removeFromRecentProjects(project)
     }
@@ -87,7 +87,7 @@ private fun considerNotifyAboutNewLessons(project: Project) {
   if (!PropertiesComponent.getInstance().getBoolean(SHOW_NEW_LESSONS_NOTIFICATION, true)) {
     return
   }
-  if (learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing || showingNotificationIsConsidered) {
+  if (!enableLessonsAndPromoters || learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing || showingNotificationIsConsidered) {
     return
   }
   showingNotificationIsConsidered = true

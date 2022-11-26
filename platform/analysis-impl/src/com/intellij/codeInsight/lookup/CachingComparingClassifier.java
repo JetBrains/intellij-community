@@ -14,9 +14,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-* @author peter
-*/
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
   private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<>();
   private final LookupElementWeigher myWeigher;

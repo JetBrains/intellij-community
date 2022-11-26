@@ -4,6 +4,7 @@ package com.intellij.ui.layout
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.DialogPanel
+import com.intellij.util.ui.UIUtil
 
 /**
  * See [docs](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
@@ -23,12 +24,14 @@ inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: St
   builder.init()
 
   val panel = DialogPanel(title, layout = null)
+  UIUtil.applyDeprecatedBackground(panel)
   builder.builder.build(panel, constraints)
   initPanel(builder, panel)
   return panel
 }
 
 @PublishedApi
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks

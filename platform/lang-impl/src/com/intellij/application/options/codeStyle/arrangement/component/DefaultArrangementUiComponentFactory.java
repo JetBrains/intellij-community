@@ -39,35 +39,40 @@ public class DefaultArrangementUiComponentFactory implements ArrangementUiCompon
                                       @NotNull ArrangementStandardSettingsManager settingsManager)
   {
     switch (role) {
-      case CHECKBOX:
+      case CHECKBOX -> {
         if (tokens.size() != 1) {
           throw new IllegalArgumentException("Can't build a checkbox token for elements " + tokens);
         }
         else {
           return new ArrangementCheckBoxUiComponent(tokens.get(0));
         }
-      case COMBO_BOX:
+      }
+      case COMBO_BOX -> {
         if (tokens.isEmpty()) {
           throw new IllegalArgumentException("Can't build a combo box token with empty content");
         }
         return new ArrangementComboBoxUiComponent(tokens);
-      case LABEL:
+      }
+      case LABEL -> {
         if (tokens.size() != 1) {
           throw new IllegalArgumentException("Can't build a label token for elements " + tokens);
         }
         return new ArrangementLabelUiComponent(tokens.get(0));
-      case TEXT_FIELD:
+      }
+      case TEXT_FIELD -> {
         if (tokens.size() != 1) {
           throw new IllegalArgumentException("Can't build a text field token for elements " + tokens);
         }
         return new ArrangementTextFieldUiComponent(tokens.get(0));
-      case BULB:
+      }
+      case BULB -> {
         if (tokens.size() != 1) {
           throw new IllegalArgumentException("Can't build a bulb token for elements " + tokens);
         }
         return new ArrangementAtomMatchConditionComponent(
           settingsManager, colorsProvider, new ArrangementAtomMatchCondition(tokens.get(0)), null
         );
+      }
     }
     return null;
   }

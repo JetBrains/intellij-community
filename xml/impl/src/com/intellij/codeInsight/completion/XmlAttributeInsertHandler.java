@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-/**
-* @author peter
-*/
 public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
   private static final Logger LOG = Logger.getInstance(XmlAttributeInsertHandler.class);
 

@@ -78,7 +78,7 @@ public abstract class ASTFactory {
     return customLeaf != null ? customLeaf : DefaultFactoryHolder.DEFAULT.createLeaf(type, text);
   }
 
-  private static ASTFactory factory(IElementType type) {
+  private static ASTFactory factory(@NotNull IElementType type) {
     return LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
   }
 

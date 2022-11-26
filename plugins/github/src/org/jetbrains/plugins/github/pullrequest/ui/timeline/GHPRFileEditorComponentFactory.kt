@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.timeline.TimelineComponentFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
@@ -110,17 +111,27 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                                            editor.repositoryDataService.remoteCoordinates.repository,
                                                            editor.reviewData,
                                                            editor.detailsData)
-    val timeline = GHPRTimelineComponent(detailsModel,
-                                         timelineModel,
-                                         createItemComponentFactory(
-                                           project,
-                                           editor.detailsData, editor.commentsData, editor.reviewData,
-                                           reviewThreadsModelsProvider, editor.avatarIconsProvider,
-                                           suggestedChangesHelper,
-                                           editor.securityService.currentUser
-                                         )).apply {
-      border = JBUI.Borders.empty(16, 0)
+
+    val itemComponentFactory = createItemComponentFactory(
+      project,
+      editor.detailsData, editor.commentsData, editor.reviewData,
+      reviewThreadsModelsProvider, editor.avatarIconsProvider,
+      suggestedChangesHelper,
+      editor.securityService.ghostUser,
+      editor.securityService.currentUser
+    )
+    val descriptionWrapper = Wrapper().apply {
+      isOpaque = false
+      border = JBUI.Borders.empty(16, 0, 20, 0)
     }
+    detailsModel.addListener {
+      descriptionWrapper.setContent(itemComponentFactory.createComponent(detailsModel.value))
+    }
+
+    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, JBUIScale.scale(8)).apply {
+      border = JBUI.Borders.emptyBottom(16)
+    }
+
     val errorPanel = GHHtmlErrorPanel.create(errorModel)
 
     val timelineLoader = editor.timelineLoader
@@ -145,9 +156,10 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                          AC().grow().gap("push"))
 
       add(header, CC().growX().maxWidth("$maxWidth"))
+      add(descriptionWrapper, CC().growX())
       add(timeline, CC().growX().minWidth(""))
 
-      val fullTimelineWidth = JBUIScale.scale(GHUIUtil.AVATAR_SIZE) + maxWidth
+      val fullTimelineWidth = GHPRTimelineItemUIUtil.maxTimelineItemWidth
 
       add(errorPanel, CC().hideMode(2).width("$fullTimelineWidth"))
       add(loadingIcon, CC().hideMode(2).width("$fullTimelineWidth"))
@@ -212,18 +224,25 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
                                          suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                                         ghostUser: GHUser,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
 
     val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value)
     val diffFactory = GHPRReviewThreadDiffComponentFactory(project, EditorFactory.getInstance())
-    val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
     return GHPRTimelineItemComponentFactory(
       project,
-      detailsDataProvider, commentsDataProvider, reviewDataProvider, avatarIconsProvider, reviewThreadsModelsProvider,
+      detailsDataProvider,
+      commentsDataProvider,
+      reviewDataProvider,
+      avatarIconsProvider,
+      reviewThreadsModelsProvider,
       diffFactory,
-      eventsFactory, selectInToolWindowHelper,
-      suggestedChangeHelper, currentUser
+      selectInToolWindowHelper,
+      suggestedChangeHelper,
+      ghostUser,
+      detailsModel.value.author,
+      currentUser
     )
   }
 }

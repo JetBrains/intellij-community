@@ -268,7 +268,7 @@ public abstract class InplaceRefactoring {
     return new PsiElement[] { myElementToRename.getContainingFile() };
   }
 
-  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {}
+  protected void collectAdditionalElementsToRename(@NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {}
 
   protected abstract boolean shouldSelectAll();
 
@@ -649,7 +649,7 @@ public abstract class InplaceRefactoring {
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
   }
 
-  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+  protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
     PsiFile myEditorFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     // Note, that myEditorFile can be different from myElement.getContainingFile() e.g. in injections: myElement declaration in one
     // file / usage in another !
@@ -855,7 +855,7 @@ public abstract class InplaceRefactoring {
     return checkRangeContainsOffset(offset, textRange, element, element.getTextRange().getStartOffset());
   }
 
-  private boolean checkRangeContainsOffset(int offset, final TextRange textRange, PsiElement element, int shiftOffset) {
+  protected boolean checkRangeContainsOffset(int offset, final TextRange textRange, PsiElement element, int shiftOffset) {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     final PsiLanguageInjectionHost injectionHost = injectedLanguageManager.getInjectionHost(element);
     if (injectionHost != null) {

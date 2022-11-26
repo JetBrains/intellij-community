@@ -1,0 +1,16 @@
+from typing import Any
+
+def encode(claims, key, algorithm=..., headers: Any | None = ..., access_token: Any | None = ...): ...
+def decode(
+    token,
+    key,
+    algorithms: Any | None = ...,
+    options: Any | None = ...,
+    audience: Any | None = ...,
+    issuer: Any | None = ...,
+    subject: Any | None = ...,
+    access_token: Any | None = ...,
+): ...
+def get_unverified_header(token): ...
+def get_unverified_headers(token): ...
+def get_unverified_claims(token): ...

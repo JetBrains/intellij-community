@@ -10,7 +10,9 @@ import com.intellij.execution.runToolbar.data.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.ActivityTracker
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -21,7 +23,8 @@ import com.intellij.util.messages.Topic
 import java.util.*
 import javax.swing.SwingUtilities
 
-class RunToolbarSlotManager(val project: Project) {
+@Service(Service.Level.PROJECT)
+class RunToolbarSlotManager(private val project: Project) {
   companion object {
     private val LOG = Logger.getInstance(RunToolbarSlotManager::class.java)
     fun getInstance(project: Project): RunToolbarSlotManager = project.service()
@@ -48,6 +51,16 @@ class RunToolbarSlotManager(val project: Project) {
   private var activeDisposable: CheckedDisposable? = null
 
   private val processController = RWProcessController(project)
+
+  internal var initialized: Boolean = false
+    set(value) {
+      if (field == value) return
+      field = value
+      if(value) {
+        activeListener.initialize()
+      }
+    }
+
 
   internal var active: Boolean = false
     set(value) {
@@ -149,6 +162,7 @@ class RunToolbarSlotManager(val project: Project) {
 
   private fun clear() {
     dataIds.clear()
+    mainSlotData.clear()
 
     slotsData.clear()
     slotsData[mainSlotData.id] = mainSlotData
@@ -233,7 +247,6 @@ class RunToolbarSlotManager(val project: Project) {
     val sortedSlots = mutableListOf<SlotDate>()
     sortedSlots.add(mainSlotData)
     sortedSlots.addAll(dataIds.mapNotNull { slotsData[it] }.toList())
-
     return sortedSlots.filter { it.configuration == env.runnerAndConfigurationSettings }
   }
 
@@ -473,8 +486,8 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private fun saveSlotsConfiguration() {
-    if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
-      val runManager = RunManager.getInstance(project)
+    val runManager = project.serviceIfCreated<RunManager>()
+    if (runManager != null) {
       mainSlotData.configuration?.let {
         if (runManager.hasSettings(it) &&
             it != runManager.selectedConfiguration &&
@@ -488,7 +501,9 @@ class RunToolbarSlotManager(val project: Project) {
 
     val slotOrder = getSlotOrder()
     val configurations = getConfigurationMap(slotOrder)
-    if (RunToolbarProcess.logNeeded) LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
+    if (RunToolbarProcess.logNeeded) {
+      LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
+    }
 
     runToolbarSettings.setConfigurations(configurations, slotOrder)
     publishConfigurations(configurations)

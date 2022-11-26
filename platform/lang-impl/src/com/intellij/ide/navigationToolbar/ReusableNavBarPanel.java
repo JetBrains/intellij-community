@@ -8,7 +8,10 @@ import org.jetbrains.annotations.NotNull;
  * NavBarPanel inheritor which could be reused in different view structures.
  * To save resources the original NavBarPanel disposes them in removeNotify().
  * ReusableNavBarPanel doesn't dispose resources on removal. That allows adding/ing the panel to/from the panes structure multiple times.
+ * 
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class ReusableNavBarPanel extends NavBarPanel {
   public ReusableNavBarPanel(@NotNull Project project, boolean docked) {
     super(project, docked);

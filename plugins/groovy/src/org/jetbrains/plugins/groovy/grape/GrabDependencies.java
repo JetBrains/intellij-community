@@ -63,9 +63,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class GrabDependencies implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(GrabDependencies.class);
 

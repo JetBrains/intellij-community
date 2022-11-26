@@ -11,10 +11,10 @@ class CompletionPopupSuggester : AbstractFeatureSuggester() {
 
   override val message = FeatureSuggesterBundle.message("completion.popup.message")
   override val suggestingActionId = "CodeCompletion"
-  override val suggestingTipFileName = "CodeCompletion.html"
+  override val suggestingTipId = suggestingActionId
   override val minSuggestingIntervalDays = 14
 
-  override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
   private object State {
     var dotOffset: Int = -1

@@ -26,7 +26,6 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="library" name="icu4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />

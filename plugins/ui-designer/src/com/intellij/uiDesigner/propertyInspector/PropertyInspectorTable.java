@@ -62,10 +62,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class PropertyInspectorTable extends JBTable implements DataProvider {
   private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
 

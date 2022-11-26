@@ -9,23 +9,25 @@ import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.PathManager
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.function.Supplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 fun main(rawArgs: Array<String>) {
   val startupTimings = LinkedHashMap<String, Long>(6)
   startupTimings.put("startup begin", System.nanoTime())
 
-  val args: List<String> = if (rawArgs.size == 1 && rawArgs[0] == "%f") emptyList() else Arrays.asList(*rawArgs)
+  val args: List<String> = preProcessRawArgs(rawArgs)
   AppMode.setFlags(args)
   try {
     bootstrap(startupTimings)
@@ -49,10 +51,9 @@ fun main(rawArgs: Array<String>) {
 
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
-        val mainScope = this@runBlocking
         startApplication(args = args,
                          appStarterDeferred = appStarterDeferred,
-                         mainScope = mainScope,
+                         mainScope = this@runBlocking,
                          busyThread = busyThread)
       }
 
@@ -70,7 +71,16 @@ private fun initProjectorIfNeeded(args: List<String>) {
     return
   }
 
+  if (!JBR.isProjectorUtilsSupported()) {
+    error("JBR version 17.0.5b653.12 or later is required to run a remote-dev server")
+  }
+
   runActivity("cwm host init") {
+    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider( Supplier {
+      val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
+      projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+    })
+
     val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
     MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
       projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
@@ -99,6 +109,20 @@ private fun bootstrap(startupTimings: LinkedHashMap<String, Long>) {
 
   startupTimings.put("classloader init", System.nanoTime())
   BootstrapClassLoaderUtil.initClassLoader(AppMode.isIsRemoteDevHost())
+}
+
+private fun preProcessRawArgs(rawArgs: Array<String>): List<String> {
+  if (rawArgs.size == 1 && rawArgs[0] == "%f") return emptyList()
+
+  // Parse java properties from arguments and activate them
+  val (propArgs, other) = rawArgs.partition { it.startsWith("-D") && it.contains("=") }
+  propArgs.forEach { arg ->
+    val (option, value) = arg.removePrefix("-D").split("=")
+
+    System.setProperty(option, value)
+  }
+
+  return other
 }
 
 @Suppress("HardCodedStringLiteral")

@@ -14,7 +14,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.junit.Test
 import java.util.function.Consumer
 
@@ -40,7 +40,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     assertNotNull(moduleEntity)
     val iterators = createIterators(moduleEntity, listOf(fileA), storage)
     UnindexedFilesUpdater(myFixture.project, ArrayList(iterators), null,
-                          "Partial reindex of one of two indexable files").queue(myFixture.project)
+                          "Partial reindex of one of two indexable files").queue()
   }
 
   @Test
@@ -87,7 +87,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
                  fileBasedIndex.getFileData(countingIndex.name, fileA, myFixture.project))
     assertEquals("File was not reindexed after indexing on creation", 0, countingIndex.counter.get())
 
-    UnindexedFilesUpdater(myFixture.project).queue(myFixture.project)
+    UnindexedFilesUpdater(myFixture.project).queue()
     assertEquals("File was not reindexed after full project reindex request", 0, countingIndex.counter.get())
 
     fileBasedIndex.requestRebuild(countingIndex.name)

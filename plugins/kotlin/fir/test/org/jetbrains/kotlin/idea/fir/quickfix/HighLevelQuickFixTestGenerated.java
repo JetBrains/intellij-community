@@ -899,9 +899,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/modifiers/cannotMakeClassAnnotation.kt");
         }
 
-        @TestMetadata("finalTrait.kt")
-        public void testFinalTrait() throws Exception {
-            runTest("../idea/tests/testData/quickfix/modifiers/finalTrait.kt");
+        @TestMetadata("finalInterface.kt")
+        public void testFinalInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/finalInterface.kt");
         }
 
         @TestMetadata("illegalEnumAnnotation1.kt")
@@ -1104,9 +1104,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/modifiers/removeIncompatibleModifier.kt");
         }
 
-        @TestMetadata("removeInnerForClassInTrait.kt")
-        public void testRemoveInnerForClassInTrait() throws Exception {
-            runTest("../idea/tests/testData/quickfix/modifiers/removeInnerForClassInTrait.kt");
+        @TestMetadata("removeInnerForClassInInterface.kt")
+        public void testRemoveInnerForClassInInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/removeInnerForClassInInterface.kt");
         }
 
         @TestMetadata("removeModifierFromForbiddenOperatorMod.kt")
@@ -2637,6 +2637,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch4.kt");
         }
 
+        @TestMetadata("typeMismatch5.kt")
+        public void testTypeMismatch5() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch5.kt");
+        }
+
         @TestMetadata("typeMismatchLongNameRuntime.kt")
         public void testTypeMismatchLongNameRuntime() throws Exception {
             runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatchLongNameRuntime.kt");
@@ -2837,6 +2842,31 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("returnedExpressionTypeMismatchFunctionParameterType.kt")
             public void testReturnedExpressionTypeMismatchFunctionParameterType() throws Exception {
                 runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/returnedExpressionTypeMismatchFunctionParameterType.kt");
+            }
+
+            @TestMetadata("twoDimensionalArray.kt")
+            public void testTwoDimensionalArray() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray.kt");
+            }
+
+            @TestMetadata("twoDimensionalArray2.kt")
+            public void testTwoDimensionalArray2() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray2.kt");
+            }
+
+            @TestMetadata("twoDimensionalArray3.kt")
+            public void testTwoDimensionalArray3() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray3.kt");
+            }
+
+            @TestMetadata("twoDimensionalList.kt")
+            public void testTwoDimensionalList() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalList.kt");
+            }
+
+            @TestMetadata("twoDimensionalList2.kt")
+            public void testTwoDimensionalList2() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalList2.kt");
             }
 
             @TestMetadata("typeMismatchInIfStatementReturnedByFunction.kt")

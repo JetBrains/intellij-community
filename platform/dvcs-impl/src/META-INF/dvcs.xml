@@ -22,6 +22,10 @@
     <extensionPoint name="pushDialogCustomizer"
                     interface="com.intellij.dvcs.push.PushDialogCustomizer"
                     dynamic="true"/>
+
+    <extensionPoint name="commitNodeUiRenderExtension"
+                    interface="com.intellij.dvcs.push.ui.CommitNodeUiRenderExtension"
+                    dynamic="true"/>
   </extensionPoints>
   <actions>
     <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
@@ -83,6 +87,12 @@
 
     <editorNotificationProvider implementation="com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider"/>
     <statistics.notificationIdsHolder implementation="com.intellij.dvcs.DvcsNotificationIdsHolder"/>
+
+    <productivityFeaturesProvider implementation="com.intellij.dvcs.featureStatistics.VcsProductivityFeaturesProvider"/>
+    <featureStatisticsBundle qualifiedName="messages.VcsProductivityFeatures"/>
+
+    <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
+      implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
   </extensions>
 </idea-plugin>
 

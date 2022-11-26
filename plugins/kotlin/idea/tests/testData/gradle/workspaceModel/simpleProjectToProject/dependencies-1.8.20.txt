@@ -1,0 +1,122 @@
+MODULES
+    SimpleProjectToProject
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+    SimpleProjectToProject.a
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+    SimpleProjectToProject.a.commonMain
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        SimpleProjectToProject.b.commonMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+    SimpleProjectToProject.a.commonTest
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        SimpleProjectToProject.a.commonMain (scope: TEST, exported: false)
+        SimpleProjectToProject.b.commonMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: TEST, exported: false)
+    SimpleProjectToProject.a.jvmMain
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        SimpleProjectToProject.a.commonMain (scope: COMPILE, exported: false)
+        SimpleProjectToProject.b.jvmMain (scope: COMPILE, exported: false)
+        SimpleProjectToProject.b.commonMain (scope: COMPILE, exported: false)
+        SimpleProjectToProject.b.commonMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+    SimpleProjectToProject.a.jvmTest
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        SimpleProjectToProject.a.commonMain (scope: TEST, exported: false)
+        SimpleProjectToProject.a.commonTest (scope: TEST, exported: false)
+        SimpleProjectToProject.a.jvmMain (scope: TEST, exported: false)
+        SimpleProjectToProject.a.jvmMain (scope: RUNTIME, exported: false)
+        SimpleProjectToProject.b.commonMain (scope: TEST, exported: false)
+        SimpleProjectToProject.b.jvmMain (scope: TEST, exported: false)
+        SimpleProjectToProject.b.commonMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+    SimpleProjectToProject.a.macosX64Main
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        SimpleProjectToProject.a.commonMain (scope: COMPILE, exported: false)
+#MACOS
+        SimpleProjectToProject.b.macosX64Main (scope: COMPILE, exported: false)
+#END
+        SimpleProjectToProject.b.commonMain (scope: COMPILE, exported: false)
+        <Kotlin/Native Distribution Libraries Test Stub>
+    SimpleProjectToProject.a.macosX64Test
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        SimpleProjectToProject.a.commonMain (scope: TEST, exported: false)
+        SimpleProjectToProject.a.commonTest (scope: TEST, exported: false)
+        SimpleProjectToProject.a.macosX64Main (scope: TEST, exported: false)
+#MACOS
+        SimpleProjectToProject.b.macosX64Main (scope: TEST, exported: false)
+#END
+        SimpleProjectToProject.b.commonMain (scope: TEST, exported: false)
+        <Kotlin/Native Distribution Libraries Test Stub>
+    SimpleProjectToProject.b
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+    SimpleProjectToProject.b.commonMain
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+    SimpleProjectToProject.b.commonTest
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        SimpleProjectToProject.b.commonMain (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: TEST, exported: false)
+    SimpleProjectToProject.b.jvmMain
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        SimpleProjectToProject.b.commonMain (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: COMPILE, exported: false)
+    SimpleProjectToProject.b.jvmTest
+    Order entries:
+        < Gradle JDK >
+        <Module source>
+        SimpleProjectToProject.b.commonMain (scope: TEST, exported: false)
+        SimpleProjectToProject.b.commonTest (scope: TEST, exported: false)
+        SimpleProjectToProject.b.jvmMain (scope: TEST, exported: false)
+        SimpleProjectToProject.b.jvmMain (scope: RUNTIME, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (scope: TEST, exported: false)
+        Gradle: org.jetbrains:annotations:13.0 (scope: TEST, exported: false)
+    SimpleProjectToProject.b.macosX64Main
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        SimpleProjectToProject.b.commonMain (scope: COMPILE, exported: false)
+        <Kotlin/Native Distribution Libraries Test Stub>
+    SimpleProjectToProject.b.macosX64Test
+    Order entries:
+        < Kotlin SDK >
+        <Module source>
+        SimpleProjectToProject.b.commonMain (scope: TEST, exported: false)
+        SimpleProjectToProject.b.commonTest (scope: TEST, exported: false)
+        SimpleProjectToProject.b.macosX64Main (scope: TEST, exported: false)
+        <Kotlin/Native Distribution Libraries Test Stub>
+

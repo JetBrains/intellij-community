@@ -1,10 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation
-import com.intellij.codeInsight.hints.presentation.InlayPresentation
-import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
-import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
+import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
@@ -12,8 +9,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -284,8 +283,28 @@ object InlayHintsUtils {
 
   @JvmStatic
   fun isFirstInLine(element: PsiElement): Boolean {
-    val prevLeaf = PsiTreeUtil.prevLeaf(element, true)
-    return prevLeaf == null ||
-           prevLeaf is PsiWhiteSpace && (prevLeaf.textContains('\n') || prevLeaf.textRange.startOffset == 0)
+    var prevLeaf = PsiTreeUtil.prevLeaf(element, true)
+    if (prevLeaf == null) {
+      return true
+    }
+    while (prevLeaf is PsiWhiteSpace) {
+      if (prevLeaf.textContains('\n') || prevLeaf.textRange.startOffset == 0) {
+        return true
+      }
+      prevLeaf = PsiTreeUtil.prevLeaf(prevLeaf, true)
+    }
+    return false
+  }
+
+  private val TEXT_METRICS_STORAGE = Key.create<InlayTextMetricsStorage>("InlayTextMetricsStorage")
+
+  internal fun getTextMetricStorage(editor: EditorImpl): InlayTextMetricsStorage {
+    val storage = editor.getUserData(TEXT_METRICS_STORAGE)
+    if (storage == null) {
+      val newStorage = InlayTextMetricsStorage(editor)
+      editor.putUserData(TEXT_METRICS_STORAGE, newStorage)
+      return newStorage
+    }
+    return storage
   }
 }

@@ -56,8 +56,10 @@ class AtomicCondition(val expression: KtExpression, private val isNegated: Boole
 
 class CompositeCondition private constructor(val conditions: List<AtomicCondition>) : Condition {
     override fun asExpression(reformat: Boolean): KtExpression {
-        val factory = KtPsiFactory(conditions.first().expression)
-        return factory.buildExpression(reformat = reformat) {
+        val project = conditions.first().expression.project
+        val psiFactory = KtPsiFactory(project)
+
+        return psiFactory.buildExpression(reformat = reformat) {
             for ((index, condition) in conditions.withIndex()) {
                 if (index > 0) {
                     appendFixedText("&&")

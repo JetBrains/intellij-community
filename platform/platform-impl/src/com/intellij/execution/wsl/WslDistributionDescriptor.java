@@ -208,7 +208,7 @@ final class WslDistributionDescriptor {
     return output.getStdoutLines();
   }
 
-  private static <T> T executeOrRunTask(@NotNull Function<@Nullable ProgressIndicator, ? extends T> commandRunner) {
+  private static <T> T executeOrRunTask(@NotNull Function<? super @Nullable ProgressIndicator, ? extends T> commandRunner) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       return commandRunner.apply(null);
     }

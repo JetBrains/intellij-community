@@ -7,9 +7,6 @@ import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class CompositeContextFilter implements ContextFilter {
   private final List<? extends ContextFilter> myFilters;
   private final boolean myAnd;

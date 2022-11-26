@@ -18,7 +18,7 @@ module ${context.rootPackage} {
     requires com.dlsc.formsfx;
     #end
     #if ($context.hasLibrary("validatorfx"))
-    requires validatorfx;
+    requires net.synedra.validatorfx;
     #end
     #if ($context.hasLibrary("ikonli"))
     requires org.kordamp.ikonli.javafx;

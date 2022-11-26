@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author peter
-*/
 public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<T,Loc>>, ForceableComparable {
   private static final Comparable NULL = new Comparable() {
     @Override

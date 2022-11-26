@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
@@ -19,6 +20,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -29,15 +31,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PydevConsoleRunnerFactory;
@@ -68,7 +74,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
+import static com.jetbrains.python.debugger.PyDebugSupportUtils.ASYNCIO_ENV;
+import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
@@ -83,13 +90,13 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   public static final @NonNls String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
   public static final @NonNls String LIBRARY_ROOTS = "LIBRARY_ROOTS";
   public static final @NonNls String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
-  @SuppressWarnings("SpellCheckingInspection")
   public static final @NonNls String GEVENT_SUPPORT = "GEVENT_SUPPORT";
   public static final @NonNls String PYDEVD_FILTERS = "PYDEVD_FILTERS";
   public static final @NonNls String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
   public static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
   public static final @NonNls String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
 
   private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
@@ -200,7 +207,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   private @NotNull XDebugSession createXDebugSession(@NotNull ExecutionEnvironment environment,
                                                      PythonCommandLineState pyState,
                                                      ServerSocket serverSocket, ExecutionResult result) throws ExecutionException {
-    return XDebuggerManager.getInstance(environment.getProject()).
+    XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
         @Override
         @NotNull
@@ -211,6 +218,13 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           return pyDebugProcess;
         }
       });
+
+    if (ExperimentalUI.isNewUI()) {
+      session.getUI().getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                          XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                          new LayoutAttractionPolicy.FocusOnce());
+    }
+    return session;
   }
 
   /**
@@ -477,7 +491,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         @SuppressWarnings("ConstantConditions") @NotNull
         ParamsGroup exeParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
 
-        final PythonSdkFlavor flavor = pyState.getSdkFlavor();
+        final PythonSdkFlavor<?> flavor = pyState.getSdkFlavor();
         if (flavor != null) {
           assert exeParams != null;
           for (String option : flavor.getExtraDebugOptions()) {
@@ -608,6 +622,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, CYTHON_EXTENSIONS_DIR);
     }
 
+    if (RegistryManager.getInstance().is("python.debug.asyncio.repl")) {
+      environmentController.putFixedValue(ASYNCIO_ENV, "True");
+    }
+
     final AbstractPythonRunConfiguration runConfiguration = runProfile instanceof AbstractPythonRunConfiguration ?
                                                             (AbstractPythonRunConfiguration)runProfile : null;
     final Module module = runConfiguration != null ? runConfiguration.getModule() : null;
@@ -644,7 +662,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                           @NotNull PythonCommandLineState pyState,
                                           @NotNull GeneralCommandLine cmd) {
     if (pyState.isMultiprocessDebug()) {
-      //noinspection SpellCheckingInspection
       debugParams.addParameter(getMultiprocessDebugParameter());
     }
 
@@ -660,7 +677,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
 
     if (pyState.isMultiprocessDebug() && !debuggerScriptInServerMode) {
-      //noinspection SpellCheckingInspection
       debuggerScript.addParameter(getMultiprocessDebugParameter());
     }
 
@@ -688,7 +704,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    */
   public static void configureCommonDebugParameters(@NotNull Project project,
                                                     @NotNull ParamsGroup debugParams) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !isForceDisableDebuggerTracing()) {
       debugParams.addParameter("--DEBUG");
     }
 
@@ -704,7 +720,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
   public static void configureCommonDebugParameters(@NotNull Project project,
                                                     @NotNull PythonExecution debuggerScript) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !isForceDisableDebuggerTracing()) {
       debuggerScript.addParameter("--DEBUG");
     }
 
@@ -716,6 +732,15 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       String pyQtBackend = StringUtil.toLowerCase(PyDebuggerOptionsProvider.getInstance(project).getPyQtBackend());
       debuggerScript.addParameter(String.format("--qt-support=%s", pyQtBackend));
     }
+  }
+
+  /**
+   * A hack for disabling the debugging tracing in the unit-test mode.
+   */
+  public static final Key<Boolean> FORCE_DISABLE_DEBUGGER_TRACING = Key.create("FORCE_DISABLE_DEBUGGER_TRACING");
+
+  private static boolean isForceDisableDebuggerTracing() {
+    return Boolean.TRUE.equals(ApplicationManager.getApplication().getUserData(FORCE_DISABLE_DEBUGGER_TRACING));
   }
 
   /**

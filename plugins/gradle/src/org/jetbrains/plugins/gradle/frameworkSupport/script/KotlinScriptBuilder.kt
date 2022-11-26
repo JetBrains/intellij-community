@@ -25,9 +25,4 @@ class KotlinScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
       }
     }
   }
-
-  companion object {
-    fun kotlin(configure: ScriptTreeBuilder.() -> Unit) =
-      ScriptTreeBuilder.script(KotlinScriptBuilder(), configure)
-  }
 }

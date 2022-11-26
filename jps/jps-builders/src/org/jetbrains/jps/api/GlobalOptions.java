@@ -52,7 +52,9 @@ public interface GlobalOptions {
   String LANGUAGE_BUNDLE = "jps.language.bundle";
 
   /**
-   * See https://reproducible-builds.org/specs/source-date-epoch/
+   * Environment variable set to UNIX timestamp, defined as the number of seconds, excluding leap seconds, since 01 Jan 1970 00:00:00 UTC.
+   * Should be used instead of a current time for build process to have deterministic timestamps in artifacts like installer distributions.
+   * See <a href="https://reproducible-builds.org/specs/source-date-epoch/">specification</a>
    */
   String BUILD_DATE_IN_SECONDS = "SOURCE_DATE_EPOCH";
 }

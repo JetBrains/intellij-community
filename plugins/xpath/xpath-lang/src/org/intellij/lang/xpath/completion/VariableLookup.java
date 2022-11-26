@@ -17,7 +17,7 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,7 +42,7 @@ class VariableLookup extends AbstractLookup implements ElementProvider {
   public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
     presentation.setTypeText(myType);
-    presentation.setIcon(myIcon != null ? myIcon : PlatformIcons.VARIABLE_ICON);
+    presentation.setIcon(myIcon != null ? myIcon : IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable));
   }
 
   @Override

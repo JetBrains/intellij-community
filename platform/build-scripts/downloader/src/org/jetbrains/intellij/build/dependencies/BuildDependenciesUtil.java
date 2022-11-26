@@ -114,7 +114,7 @@ public final class BuildDependenciesUtil {
     return result.get(0);
   }
 
-  static String getLibraryMavenId(Path libraryXml) {
+  public static String getLibraryMavenId(Path libraryXml) {
     try {
       DocumentBuilder documentBuilder = createDocumentBuilder();
       Document document = documentBuilder.parse(libraryXml.toFile());
@@ -205,7 +205,7 @@ public final class BuildDependenciesUtil {
     });
   }
 
-  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<InputStream, InputStream> unpacker)
+  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<? super InputStream, ? extends InputStream> unpacker)
     throws Exception {
     try (TarArchiveInputStream archive = new TarArchiveInputStream(
       unpacker.apply(new BufferedInputStream(Files.newInputStream(archiveFile))))) {
@@ -440,17 +440,19 @@ public final class BuildDependenciesUtil {
     return s.substring(start, end);
   }
 
+  public static void deleteFileOrFolder(Path file) {
+    try {
+      MoreFiles.deleteRecursively(file, RecursiveDeleteOption.ALLOW_INSECURE);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static void cleanDirectory(Path directory) throws IOException {
     Files.createDirectories(directory);
     try (Stream<Path> stream = Files.list(directory)) {
-      stream.forEach(path -> {
-        try {
-          MoreFiles.deleteRecursively(path, RecursiveDeleteOption.ALLOW_INSECURE);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      stream.forEach(BuildDependenciesUtil::deleteFileOrFolder);
     }
   }
 

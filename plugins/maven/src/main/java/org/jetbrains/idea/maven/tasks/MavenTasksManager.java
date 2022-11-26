@@ -11,6 +11,7 @@ import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -127,10 +128,16 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
         tasks = Sets.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
       }
 
-      MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(myProject);
+      var mavenProjectsManager = MavenProjectsManager.getInstance(myProject);
+      var affectedModules = ReadAction.compute(() -> Set.of(context.getCompileScope().getAffectedModules()));
       for (MavenCompilerTask each : tasks) {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each.getProjectPath());
         if (file == null) continue;
+        var mavenProject = mavenProjectsManager.findProject(file);
+        if (null == mavenProject) continue;
+        var module = ReadAction.compute(() -> mavenProjectsManager.findModule(mavenProject));
+        if (null == module) continue;
+        if (!affectedModules.contains(module)) continue;
         MavenExplicitProfiles explicitProfiles = mavenProjectsManager.getExplicitProfiles();
         parametersList.add(new MavenRunnerParameters(true,
                                                      file.getParent().getPath(),

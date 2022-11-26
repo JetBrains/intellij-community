@@ -517,7 +517,7 @@ class InternalDecoratorImpl internal constructor(
     val toolbar = headerToolbar
     if (toolbar is AlphaAnimated) {
       val alpha = toolbar as AlphaAnimated
-      alpha.alphaAnimator.setVisible(narrow
+      alpha.alphaContext.isVisible = (narrow
                                      || !toolWindow.toolWindowManager.isNewUi
                                      || isWindowHovered
                                      || header.isPopupShowing

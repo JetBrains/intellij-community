@@ -2,70 +2,49 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.classes.KotlinLightClassFactory
+import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
+import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.classes.KtDescriptorBasedFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.idea.base.facet.JvmOnlyProjectChecker
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
+import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
-import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.stubindex.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
-import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
-class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
-    override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
-        val facadeFilesInPackage = project.runReadActionInSmartMode {
-            KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)
-        }
-
-        return facadeFilesInPackage.map { it.javaFileFacadeFqName.shortName().asString() }.toSet()
-    }
-
-    override fun getFacadeClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
-        val facadeFilesInPackage = runReadAction {
-            KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope).platformSourcesFirst()
-        }
-        val groupedByFqNameAndModuleInfo = facadeFilesInPackage.groupBy {
-            Pair(it.javaFileFacadeFqName, it.getModuleInfoPreferringJvmPlatform())
-        }
-
-        return groupedByFqNameAndModuleInfo.flatMap {
-            val (key, files) = it
-            val (fqName, moduleInfo) = key
-            createLightClassForFileFacade(fqName, files, moduleInfo)
-        }
-    }
-
+class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaModuleInfo>(project) {
     override fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject> {
         return project.runReadActionInSmartMode {
             KotlinFullClassNameIndex.get(
@@ -76,10 +55,10 @@ class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport
         }
     }
 
-    override fun findFilesForPackage(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> {
+    override fun findFilesForPackage(packageFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> {
         return project.runReadActionInSmartMode {
             KotlinPackageIndexUtils.findFilesWithExactPackage(
-                fqName,
+                packageFqName,
                 KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
                     searchScope,
                     project
@@ -89,96 +68,76 @@ class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport
         }
     }
 
+    override fun findFilesForFacadeByPackage(packageFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> = runReadAction {
+        KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, searchScope).platformSourcesFirst()
+    }
+
     override fun findClassOrObjectDeclarationsInPackage(
         packageFqName: FqName,
         searchScope: GlobalSearchScope
-    ): Collection<KtClassOrObject> {
-        return KotlinTopLevelClassByPackageIndex.get(
-            packageFqName.asString(), project,
-            KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project)
-        )
+    ): Collection<KtClassOrObject> = KotlinTopLevelClassByPackageIndex[
+        packageFqName.asString(),
+        project,
+        KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project),
+    ]
+
+    override fun packageExists(fqName: FqName, scope: GlobalSearchScope): Boolean = KotlinPackageIndexUtils.packageExists(
+        fqName,
+        KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
+            scope,
+            project,
+        ),
+    )
+
+    override fun KtFile.findModule(): IdeaModuleInfo = getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform) ?: moduleInfo
+
+    override fun facadeIsApplicable(module: IdeaModuleInfo, file: KtFile): Boolean = when (module) {
+        is ModuleSourceInfo, is PlatformModuleInfo -> true
+        is LibrarySourceInfo -> file.isCompiled
+        else -> false
     }
 
-    override fun packageExists(fqName: FqName, scope: GlobalSearchScope): Boolean {
-        return KotlinPackageIndexUtils.packageExists(
-            fqName,
-            KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
-                scope,
-                project
-            )
-        )
+    override fun projectWideOutOfBlockModificationTracker(): ModificationTracker {
+        return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
     }
 
-    override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> {
-        return KotlinPackageIndexUtils.getSubPackageFqNames(
-            fqn,
-            KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
-                scope,
-                project
-            ),
-            MemberScope.ALL_NAME_FILTER,
-        )
+    override fun outOfBlockModificationTracker(element: PsiElement): ModificationTracker {
+        return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
     }
 
-    private val recursiveGuard = ThreadLocal<Boolean>()
+    override fun librariesTracker(element: PsiElement): ModificationTracker {
+        return LibraryModificationTracker.getInstance(project)
+    }
 
-    private inline fun <T> guardedRun(body: () -> T): T? {
-        if (recursiveGuard.get() == true) return null
-        return try {
-            recursiveGuard.set(true)
-            body()
-        } finally {
-            recursiveGuard.set(false)
+    override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> = KotlinPackageIndexUtils.getSubPackageFqNames(
+        fqn,
+        KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
+            scope,
+            project,
+        ),
+        MemberScope.ALL_NAME_FILTER,
+    )
+
+    override fun createInstanceOfLightClass(classOrObject: KtClassOrObject): KtLightClass? {
+        return LightClassGenerationSupport.getInstance(project).createUltraLightClass(classOrObject)
+    }
+
+    override fun createInstanceOfDecompiledLightClass(classOrObject: KtClassOrObject): KtLightClass? {
+        return getLightClassForDecompiledClassOrObject(classOrObject, project)
+    }
+
+    override fun declarationLocation(file: KtFile): DeclarationLocation? {
+        val virtualFile = file.virtualFile ?: return null
+        return when {
+            RootKindFilter.projectSources.matches(project, virtualFile) -> DeclarationLocation.ProjectSources
+            RootKindFilter.libraryClasses.matches(project, virtualFile) -> DeclarationLocation.LibraryClasses
+            RootKindFilter.librarySources.matches(project, virtualFile) -> DeclarationLocation.LibrarySources
+            else -> null
         }
     }
 
-    override fun getLightClass(classOrObject: KtClassOrObject): KtLightClass? {
-        if (!classOrObject.isValid) {
-            return null
-        }
-
-        val virtualFile = classOrObject.containingFile.virtualFile
-        if (virtualFile != null) {
-            when {
-                RootKindFilter.projectSources.matches(project, virtualFile) -> {
-                    return KotlinLightClassFactory.createClass(classOrObject)
-                }
-
-                RootKindFilter.libraryClasses.matches(project, virtualFile) -> {
-                    return getLightClassForDecompiledClassOrObject(classOrObject, project)
-                }
-
-                RootKindFilter.librarySources.matches(project, virtualFile) -> {
-                    return guardedRun {
-                        SourceNavigationHelper.getOriginalClass(classOrObject) as? KtLightClass
-                    }
-                }
-            }
-        }
-
-        if ((classOrObject.containingFile as? KtFile)?.analysisContext != null ||
-            classOrObject.containingFile.originalFile.virtualFile != null
-        ) {
-            return KotlinLightClassFactory.createClass(classOrObject)
-        }
-
-        return null
-    }
-
-    override fun getLightClassForScript(script: KtScript): KtLightClass? {
-        if (!script.isValid) {
-            return null
-        }
-
-        return KotlinLightClassFactory.createScript(script)
-    }
-
-    override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
-        val filesByModule = findFilesForFacade(facadeFqName, scope).groupBy { it.getModuleInfoPreferringJvmPlatform() }
-
-        return filesByModule.flatMap {
-            createLightClassForFileFacade(facadeFqName, it.value, it.key)
-        }
+    override fun createInstanceOfLightScript(script: KtScript): KtLightClass? {
+        return LightClassGenerationSupport.getInstance(project).createUltraLightClassForScript(script)
     }
 
     override fun getScriptClasses(scriptFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
@@ -214,45 +173,24 @@ class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport
         }
     }
 
-    private fun findPlatformWrapper(fqName: FqName, scope: GlobalSearchScope): PsiClass? {
-        return platformMutabilityWrapper(fqName) {
-            JavaPsiFacade.getInstance(
-                project
-            ).findClass(it, scope)
-        }
+    private fun findPlatformWrapper(fqName: FqName, scope: GlobalSearchScope): PsiClass? = platformMutabilityWrapper(fqName) {
+        JavaPsiFacade.getInstance(project).findClass(it, scope)
     }
 
-    private fun createLightClassForFileFacade(
-        facadeFqName: FqName,
-        facadeFiles: List<KtFile>,
-        moduleInfo: IdeaModuleInfo
-    ): List<PsiClass> = SmartList<PsiClass>().apply {
-
-        tryCreateFacadesForSourceFiles(moduleInfo, facadeFqName)?.let { sourcesFacade ->
-            add(sourcesFacade)
-        }
-
-        facadeFiles.filterIsInstance<KtClsFile>().mapNotNullTo(this) {
-            DecompiledLightClassesFactory.createLightClassForDecompiledKotlinFile(it, project)
-        }
+    override fun findFilesForFacade(facadeFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> = runReadAction {
+        KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, searchScope].platformSourcesFirst()
     }
 
-    private fun tryCreateFacadesForSourceFiles(moduleInfo: IdeaModuleInfo, facadeFqName: FqName): PsiClass? {
-        if (moduleInfo !is ModuleSourceInfo && moduleInfo !is PlatformModuleInfo) return null
-        return KotlinLightClassFactory.createFacade(project, facadeFqName, moduleInfo.contentScope)
+    override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)
+    override val IdeaModuleInfo.contentSearchScope: GlobalSearchScope get() = this.contentScope
+
+    override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>): KtLightClassForFacade {
+        return LightClassGenerationSupport.getInstance(project).createUltraLightClassForFacade(facadeFqName, files)
     }
 
-    override fun findFilesForFacade(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtFile> {
-        return runReadAction {
-            KotlinFileFacadeFqNameIndex.get(facadeFqName.asString(), project, scope).platformSourcesFirst()
-        }
+    override fun createInstanceOfDecompiledLightFacade(facadeFqName: FqName, files: List<KtFile>): KtLightClassForFacade? {
+        return DecompiledLightClassesFactory.createLightFacadeForDecompiledKotlinFile(project, facadeFqName, files)
     }
-
-    override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass =
-        KtDescriptorBasedFakeLightClass(classOrObject)
-
-    override fun createFacadeForSyntheticFile(facadeClassFqName: FqName, file: KtFile): PsiClass =
-        KotlinLightClassFactory.createFacadeForSyntheticFile(facadeClassFqName, file)
 
     // NOTE: this is a hacky solution to the following problem:
     // when building this light class resolver will be built by the first file in the list
@@ -260,9 +198,7 @@ class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport
     // thus we need to ensure that resolver will be built by the file from platform part of the module
     // (resolver built by a file from the common part will have no knowledge of the platform part)
     // the actual of order of files that resolver receives is controlled by *findFilesForFacade* method
-    private fun Collection<KtFile>.platformSourcesFirst() =
-        sortedByDescending { it.platform.isJvm() }
-
-    private fun PsiElement.getModuleInfoPreferringJvmPlatform(): IdeaModuleInfo =
-        getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform) ?: this.moduleInfo
+    private fun Collection<KtFile>.platformSourcesFirst(): Collection<KtFile> {
+        return if (JvmOnlyProjectChecker.getInstance(project).value()) this else sortedByDescending { it.platform.isJvm() }
+    }
 }

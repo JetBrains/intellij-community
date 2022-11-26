@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -21,6 +22,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -88,6 +91,12 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myBrowseButton.getAccessibleContext().setAccessibleName(UIBundle.message("component.with.browse.button.accessible.name"));
     }
     new LazyDisposable(this);
+
+    Insets insets = myComponent.getInsets();
+    Gaps visualPaddings = new Gaps(insets.top, insets.left, insets.bottom, inlineBrowseButton ? insets.right : myBrowseButton.getInsets().right);
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
   }
 
   @NotNull
@@ -310,13 +319,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (e.isConsumed()) return true;
     return super.processKeyBinding(ks, e, condition, pressed);
   }
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
-    addActionListener(actionListener);
-  }
 
   private static final class LazyDisposable implements Activatable {
     private final WeakReference<ComponentWithBrowseButton<?>> reference;
@@ -330,10 +332,16 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     public void showNotify() {
       ComponentWithBrowseButton<?> component = reference.get();
       if (component == null) return; // component is collected
-      Disposable disposable = ApplicationManager.getApplication() == null ? null :
-                              UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
-      if (disposable == null) return; // parent disposable not found
-      Disposer.register(disposable, component);
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        DataManager dataManager = app.getServiceIfCreated(DataManager.class);
+        if (dataManager != null) {
+          Disposable disposable = UI_DISPOSABLE.getData(dataManager.getDataContext(component));
+          if (disposable != null) {
+            Disposer.register(disposable, component);
+          }
+        }
+      }
     }
   }
 }

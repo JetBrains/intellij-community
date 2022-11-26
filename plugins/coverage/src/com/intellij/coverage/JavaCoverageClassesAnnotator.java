@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -25,6 +26,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator {
+  private static final Logger LOG = Logger.getInstance(JavaCoverageClassesAnnotator.class);
+
   private final PackageAnnotator.Annotator myAnnotator;
   private final ProjectData myProjectData;
   private Map<String, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenPackages;
@@ -98,9 +101,15 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
                              final GlobalSearchScope scope,
                              final String rootPackageVMName,
                              final boolean isTestSource,
-                             final Set<VirtualFile> productionRootsSet) {
+                             final Set<VirtualFile> seenRoots) {
     myFlattenDirectories = new ConcurrentHashMap<>();
-    super.visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, productionRootsSet);
+    super.visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
+
+    if (module.isDisposed()) {
+      LOG.warn("Module is already disposed: " + module);
+      myFlattenDirectories = null;
+      return;
+    }
 
     final List<VirtualFile> sourceRoots = ContainerUtil.filter(prepareRoots(module, rootPackageVMName, isTestSource), Objects::nonNull);
     final Map<VirtualFile, PackageAnnotator.DirCoverageInfo> directories = new HashMap<>();

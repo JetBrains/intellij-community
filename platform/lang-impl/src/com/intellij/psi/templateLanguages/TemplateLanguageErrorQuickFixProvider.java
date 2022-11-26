@@ -17,7 +17,6 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
@@ -26,27 +25,26 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
+import java.util.List;
+
 public class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvider{
 
   @Override
-  public void registerErrorQuickFix(@NotNull final PsiErrorElement errorElement, @NotNull final HighlightInfo highlightInfo) {
+  public void registerErrorQuickFix(@NotNull final PsiErrorElement errorElement, @NotNull final HighlightInfo.Builder highlightInfo) {
     final PsiFile psiFile = errorElement.getContainingFile();
     final FileViewProvider provider = psiFile.getViewProvider();
     if (!(provider instanceof TemplateLanguageFileViewProvider)) return;
-    if (psiFile.getLanguage() != ((TemplateLanguageFileViewProvider) provider).getTemplateDataLanguage()) return;
+    if (psiFile.getLanguage() != ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage()) return;
 
-    QuickFixAction.registerQuickFixAction(highlightInfo, createChangeTemplateDataLanguageFix(errorElement));
-
+    IntentionAction action = createChangeTemplateDataLanguageFix(errorElement);
+    highlightInfo.registerFix(action, null, null, null, null);
   }
 
   public static IntentionAction createChangeTemplateDataLanguageFix(final PsiElement errorElement) {

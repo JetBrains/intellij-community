@@ -71,70 +71,48 @@ public class AssertJInliner implements CallInliner {
     // Note that `new ContractFailureProblem(call)` cannot be extracted to a variable here, as its identity is necessary
     // for analysis (see DataFlowInstructionVisitor#myFailingCalls)
     switch (Objects.requireNonNull(call.getMethodExpression().getReferenceName())) {
-      case "isNotNull":
-      case "have":
-      case "haveAtLeast":
-      case "haveAtLeastOne":
-      case "haveAtMost":
-      case "haveExactly":
-      case "hasOnlyElementsOfType":
-      case "hasOnlyElementsOfTypes":
-          builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
-        break;
-      case "isNull":
-        builder.ensure(RelationType.EQ, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
-        break;
-      case "isPresent":
-      case "isNotEmpty":
-      case "isNotBlank":
+      case "isNotNull", "have", "haveAtLeast", "haveAtLeastOne", "haveAtMost",
+        "haveExactly", "hasOnlyElementsOfType", "hasOnlyElementsOfTypes" ->
+        builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
+      case "isNull" -> builder.ensure(RelationType.EQ, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
+      case "isPresent", "isNotEmpty", "isNotBlank" -> {
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         if (field != null) {
           builder.unwrap(field);
           builder.ensure(RelationType.NE, field == SpecialField.OPTIONAL_VALUE ? DfTypes.NULL : DfTypes.intValue(0),
                          new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
-        break;
-      case "isNotPresent":
-      case "isEmpty":
+      }
+      case "isNotPresent", "isEmpty" -> {
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         if (field != null) {
           builder.unwrap(field);
           builder.ensure(RelationType.EQ, field == SpecialField.OPTIONAL_VALUE ? DfTypes.NULL : DfTypes.intValue(0),
                          new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
-        break;
-      case "isTrue":
+      }
+      case "isTrue" -> {
         if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
           builder.ensure(RelationType.EQ, DfTypes.TRUE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
         else if (type instanceof PsiClassType) {
           builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
-        break;
-      case "isFalse":
+      }
+      case "isFalse" -> {
         if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
           builder.ensure(RelationType.EQ, DfTypes.FALSE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
         else if (type instanceof PsiClassType) {
           builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
-        break;
-      case "hasSize":
-        sizeLimit(builder, call, field, RelationType.EQ);
-        break;
-      case "hasSizeGreaterThan":
-        sizeLimit(builder, call, field, RelationType.GT);
-        break;
-      case "hasSizeLessThan":
-        sizeLimit(builder, call, field, RelationType.LT);
-        break;
-      case "hasSizeGreaterThanOrEqualTo":
-        sizeLimit(builder, call, field, RelationType.GE);
-        break;
-      case "hasSizeLessThanOrEqualTo":
-        sizeLimit(builder, call, field, RelationType.LE);
-        break;
-      case "hasSizeBetween":
+      }
+      case "hasSize" -> sizeLimit(builder, call, field, RelationType.EQ);
+      case "hasSizeGreaterThan" -> sizeLimit(builder, call, field, RelationType.GT);
+      case "hasSizeLessThan" -> sizeLimit(builder, call, field, RelationType.LT);
+      case "hasSizeGreaterThanOrEqualTo" -> sizeLimit(builder, call, field, RelationType.GE);
+      case "hasSizeLessThanOrEqualTo" -> sizeLimit(builder, call, field, RelationType.LE);
+      case "hasSizeBetween" -> {
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         if ((field == SpecialField.COLLECTION_SIZE || field == SpecialField.ARRAY_LENGTH) && args.length == 2) {
           Integer min = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(args[0]), Integer.class);
@@ -147,6 +125,7 @@ public class AssertJInliner implements CallInliner {
             builder.ensure(RelationType.LE, DfTypes.intValue(max), new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
           }
         }
+      }
     }
     builder.pop().pushUnknown();
     return true;

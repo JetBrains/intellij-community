@@ -897,11 +897,12 @@ public class GeneratedParserUtilBase {
       parser = parser_;
     }
 
+    @NotNull
     public Lexer getLexer() {
       return ((PsiBuilderImpl)myDelegate).getLexer();
     }
 
-    @Nullable
+    @NotNull
     public List<PsiBuilderImpl.ProductionMarker> getProductions() {
       return ((PsiBuilderImpl)myDelegate).getProductions();
     }
@@ -1092,19 +1093,7 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  private static class Hooks<T> {
-    final Hook<T> hook;
-    final T param;
-    final int level;
-    final Hooks<?> next;
-
-    Hooks(Hook<T> hook, T param, int level, Hooks next) {
-      this.hook = hook;
-      this.param = param;
-      this.level = level;
-      this.next = next;
-    }
-
+  private record Hooks<T>(Hook<T> hook, T param, int level, Hooks next) {
     static <E> Hooks<E> concat(Hook<E> hook, E param, int level, Hooks<?> hooks) {
       return new Hooks<>(hook, param, level, hooks);
     }

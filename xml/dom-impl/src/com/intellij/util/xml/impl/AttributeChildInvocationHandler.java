@@ -33,9 +33,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class AttributeChildInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance(AttributeChildInvocationHandler.class);
 

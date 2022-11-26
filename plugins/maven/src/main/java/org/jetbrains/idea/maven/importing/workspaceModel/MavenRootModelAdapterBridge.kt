@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterInterface
@@ -128,14 +128,14 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
   override fun isAlreadyExcluded(f: File): Boolean {
     val url = toUrl(f.path).url
     return moduleEntity.contentRoots.filter { cre ->
-      VfsUtilCore.isUnder(url, cre.excludedUrls.map { it.url })
+      VfsUtilCore.isUnder(url, cre.excludedUrls.map { it.url.url })
     }.any()
   }
 
   override fun addExcludedFolder(path: String) {
     getContentRootFor(toUrl(path))?.let {
-      builder.modifyEntity(it) {
-        this.excludedUrls.add(virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)))
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)), this.entitySource) {
+        this.contentRoot = it
       }
     }
 

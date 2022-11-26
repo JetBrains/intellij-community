@@ -432,7 +432,7 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
                               // we assume that user forgot to add separator, so we consider error element as separator
                               ((myState == State.Element || myState == State.BetweenElementAndSeparator) && mySortable.isError(next));
         switch (myState) {
-          case Element:
+          case Element -> {
             myEntryElement = myCurrent;
             myLineLayout.addElementOnLine();
             if (isSeparator) {
@@ -442,8 +442,8 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
               addIntermediateEntryElement(next, myBeforeSeparator);
               advance(next, State.BetweenElementAndSeparator);
             }
-            break;
-          case BetweenElementAndSeparator:
+          }
+          case BetweenElementAndSeparator -> {
             if (isSeparator) {
               advance(next, State.Separator);
             }
@@ -451,9 +451,8 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
               addIntermediateEntryElement(next, myBeforeSeparator);
               advance(next, State.BetweenElementAndSeparator);
             }
-            break;
-          case Separator:
-          case AfterSeparator:
+          }
+          case Separator, AfterSeparator -> {
             if (myStrategy.isSuitableEntryElement(next)) {
               finishEntry();
               advance(next, State.Element);
@@ -462,7 +461,7 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
               addIntermediateEntryElement(next, myAfterSeparator);
               advance(next, State.AfterSeparator);
             }
-            break;
+          }
         }
         return true;
       }

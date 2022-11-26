@@ -82,7 +82,7 @@ interface SuperSimpleEntity : WorkspaceEntity {
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(1000000)
-  interface Builder: SuperSimpleEntity, ModifiableWorkspaceEntity<SuperSimpleEntity>, ObjBuilder<SuperSimpleEntity> {
+  interface Builder: SuperSimpleEntity, WorkspaceEntity.Builder<SuperSimpleEntity>, ObjBuilder<SuperSimpleEntity> {
   }
 
   companion object: Type<SuperSimpleEntity, Builder>() {
@@ -106,7 +106,7 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
 
 
-  class Builder(val result: SuperSimpleEntityData?): ModifiableWorkspaceEntityBase<SuperSimpleEntity>(), SuperSimpleEntity.Builder {
+  class Builder(result: SuperSimpleEntityData?): ModifiableWorkspaceEntityBase<SuperSimpleEntity, SuperSimpleEntityData>(result), SuperSimpleEntity.Builder {
     constructor(): this(SuperSimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -134,12 +134,12 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
         }
         if (entity is List<*>) {
           for (item in entity) {
-            if (item is ModifiableWorkspaceEntityBase<*>) {
+            if (item is ModifiableWorkspaceEntityBase<*, *>) {
               builder.addEntity(item)
             }
           }
           entity as List<WorkspaceEntity>
-          val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+          val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*, *> && it.diff != null }
           applyRef(key.getConnectionId(), withBuilder_entity)
           keysToRemove.add(key)
         }
@@ -186,12 +186,14 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
 
 
-    override fun getEntityData(): SuperSimpleEntityData = result ?: super.getEntityData() as SuperSimpleEntityData
     override fun connectionIdList(): List<ConnectionId> {
       TODO("Not yet implemented")
     }
 
     override fun getEntityClass(): Class<SuperSimpleEntity> = SuperSimpleEntity::class.java
+    override var entitySource: EntitySource
+      get() = TODO("Not yet implemented")
+      set(value) {}
   }
 
   // TODO: Fill with the data from the current entity
@@ -199,12 +201,15 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
   override fun connectionIdList(): List<ConnectionId> {
     TODO("Not yet implemented")
   }
+
+  override val entitySource: EntitySource
+    get() = TODO("Not yet implemented")
 }
 
 class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SuperSimpleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SuperSimpleEntity> {
     val modifiable = SuperSimpleEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -221,7 +226,6 @@ class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): SuperSimpleEntity {
     val entity = SuperSimpleEntityImpl()
-    entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity

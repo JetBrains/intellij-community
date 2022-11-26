@@ -89,14 +89,11 @@ public final class SuperMethodWarningUtil {
       parentInterface,
       method.getContainingClass().isInterface(),
       ArrayUtilRt.toStringArray(superClasses));
-    switch (shouldIncludeBase) {
-      case Messages.YES:
-        return methodTargetCandidates;
-      case Messages.NO:
-        return new PsiMethod[] {method};
-      default:
-        return PsiMethod.EMPTY_ARRAY;
-    }
+    return switch (shouldIncludeBase) {
+      case Messages.YES -> methodTargetCandidates;
+      case Messages.NO -> new PsiMethod[]{method};
+      default -> PsiMethod.EMPTY_ARRAY;
+    };
   }
 
   @NotNull
@@ -146,11 +143,11 @@ public final class SuperMethodWarningUtil {
       aClass.isInterface(),
       containingClass.getQualifiedName()
     );
-    switch (useSuperMethod) {
-      case Messages.YES: return superMethod;
-      case Messages.NO: return method;
-      default: return null;
-    }
+    return switch (useSuperMethod) {
+      case Messages.YES -> superMethod;
+      case Messages.NO -> method;
+      default -> null;
+    };
   }
 
   public static void checkSuperMethod(@NotNull PsiMethod method,

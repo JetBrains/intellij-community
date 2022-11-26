@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.diagnostic.opentelemetry.TraceManager
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.runWithSpan
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
@@ -85,7 +85,9 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    TraceManager.getTracer("vcs").spanBuilder("loading details").setAttribute("rootName", root.name).useWithScope {
+    runWithSpan(TraceManager.getTracer("vcs"), "loading details") { span ->
+      span.setAttribute("rootName", root.name)
+
       val handlerListener = GitLogOutputSplitter(handler, parser, converter)
       Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
       handlerListener.reportErrors()

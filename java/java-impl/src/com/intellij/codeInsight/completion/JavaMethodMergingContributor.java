@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class JavaMethodMergingContributor extends CompletionContributor implements DumbAware {
   static final Key<Boolean> MERGED_ELEMENT = Key.create("merged.element");
 

@@ -8,24 +8,43 @@ import com.intellij.openapi.project.Project
 
 /**
  * Executes given action for each client connected to all projects opened in IDE
- * @param includeLocal pass true to execute the action for [com.intellij.codeWithMe.ClientId.localId]
  */
-fun broadcastAllClients(includeLocal: Boolean = false, action: () -> Unit) {
-  for (session in ClientSessionsManager.getInstance().getSessions(includeLocal)) {
+fun forEachClient(kind: ClientKind, action: (ClientAppSession) -> Unit) {
+  for (session in ClientSessionsManager.getAppSessions(kind)) {
     withClientId(session.clientId) {
-      logger<ClientSessionsManager<*>>().runAndLogException(action)
+      logger<ClientSessionsManager<*>>().runAndLogException {
+        action(session)
+      }
     }
   }
 }
 
 /**
- * Executes given action for each client connected to this [project]
- * @param includeLocal pass true to execute the action for [com.intellij.codeWithMe.ClientId.localId]
+ * Executes given action for each client connected to this [Project]
  */
-fun broadcastAllClients(project: Project, includeLocal: Boolean = false, action: () -> Unit) {
-  for (session in ClientSessionsManager.getInstance(project).getSessions(includeLocal)) {
+fun Project.forEachClient(kind: ClientKind, action: (ClientProjectSession) -> Unit) {
+  for (session in ClientSessionsManager.getProjectSessions(this, kind)) {
     withClientId(session.clientId) {
-      logger<ClientSessionsManager<*>>().runAndLogException(action)
+      logger<ClientSessionsManager<*>>().runAndLogException {
+        action(session)
+      }
     }
   }
 }
+
+val currentSession: ClientAppSession get() = ClientSessionsManager.getAppSession()!!
+
+val Project.currentSession: ClientProjectSession get() = ClientSessionsManager.getProjectSession(this)!!
+
+// region Deprecated
+@Deprecated("Use forEachClient")
+fun broadcastAllClients(includeLocal: Boolean = false, action: () -> Unit) {
+  forEachClient(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE) { action() }
+}
+
+@Deprecated("Use project.forEachClient")
+fun broadcastAllClients(project: Project, includeLocal: Boolean = false, action: () -> Unit) {
+  project.forEachClient(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE) { action() }
+}
+
+// endregion

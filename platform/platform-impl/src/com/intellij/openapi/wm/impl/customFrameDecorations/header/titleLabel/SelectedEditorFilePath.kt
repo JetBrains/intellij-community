@@ -34,9 +34,9 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
+import java.awt.event.*
 import javax.swing.JComponent
+import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.AncestorEvent
@@ -45,7 +45,7 @@ import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
-internal open class SelectedEditorFilePath {
+internal open class SelectedEditorFilePath(frame: JFrame) {
   var onBoundsChanged: (() -> Unit)? = null
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClassTitlePane()
@@ -61,15 +61,16 @@ internal open class SelectedEditorFilePath {
     get() = true
 
   init {
+    @Suppress("DEPRECATION")
     val scope = ApplicationManager.getApplication().coroutineScope
-    scope.launch {
+    val updatePathJob = scope.launch {
       updatePathRequests
         .debounce(100.milliseconds)
         .collectLatest {
           updatePath()
         }
     }
-    scope.launch {
+    val updateJob = scope.launch {
       updateViewRequests
         .debounce(70.milliseconds)
         .collectLatest {
@@ -78,6 +79,12 @@ internal open class SelectedEditorFilePath {
           }
         }
     }
+    frame.addWindowListener(object : WindowAdapter() {
+      override fun windowClosed(p0: WindowEvent?) {
+        updatePathJob.cancel()
+        updateJob.cancel()
+      }
+    })
   }
 
   protected fun updateProjectPath() {
@@ -374,9 +381,10 @@ internal open class SelectedEditorFilePath {
     label.text = titleString
     HelpTooltip.dispose(label)
 
-    (if (isClipped || basePaths.firstOrNull{!it.active} != null) {
+    (if (isClipped || basePaths.firstOrNull { !it.active } != null) {
       components.filter { it.active || basePaths.contains(it) }.joinToString(separator = "", transform = { it.toolTipPart })
-    } else null)?.let {
+    }
+    else null)?.let {
       HelpTooltip().setTitle(it).installOn(label)
     }
 

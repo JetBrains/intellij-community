@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -9,6 +10,7 @@ import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
   private final DumbServiceMergingTaskQueue myQueue = new DumbServiceMergingTaskQueue();
@@ -17,6 +19,27 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
   @NotNull
   private DumbServiceSyncTaskQueue service() {
     return myService;
+  }
+
+  public void testCanceledTasksDoesNotTerminateFollowingTasks() {
+    final AtomicBoolean secondTaskCompleted = new AtomicBoolean(false);
+
+    // Run two tasks one after another. Then terminate the first (parent) task and check that the second (child) task complete successfully
+    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("child") {
+          @Override
+          public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+            secondTaskCompleted.set(true);
+          }
+        });
+
+        // cancel parent task now. The child task should complete successfully
+        throw new ProcessCanceledException();
+      }
+    });
+    Assert.assertTrue("Cancellation of the first task should not terminate execution of the second task", secondTaskCompleted.get());
   }
 
   public void testRecursionIsBlocked() {

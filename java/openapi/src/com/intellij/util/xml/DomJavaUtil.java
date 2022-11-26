@@ -12,9 +12,6 @@ import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class DomJavaUtil {
   private DomJavaUtil() {
   }

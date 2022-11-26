@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
-import org.jetbrains.kotlin.idea.PluginUpdateStatus
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinLanguageConfigurationForm
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle

@@ -426,7 +426,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       // smart psi pointer lost correct catch section when multiple catch sections were collapsed in batch mode,
       // so we need to re-calculate everything based on what exists at this point
       final PsiCatchSection catchSection = (PsiCatchSection)descriptor.getPsiElement();

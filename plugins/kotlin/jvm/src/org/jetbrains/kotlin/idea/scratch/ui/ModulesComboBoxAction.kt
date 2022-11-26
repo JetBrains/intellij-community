@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.scratch.ui
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
@@ -22,7 +20,7 @@ import javax.swing.JComponent
 
 class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
     LabeledComboBoxAction(KotlinJvmBundle.message("scratch.module.combobox")) {
-    override fun createPopupActionGroup(button: JComponent): DefaultActionGroup {
+    override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val actionGroup = DefaultActionGroup()
         actionGroup.add(ModuleIsNotSelectedAction(KotlinJvmBundle.message("list.item.no.module")))
 
@@ -56,6 +54,8 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
 
         e.presentation.isVisible = isModuleSelectorVisible()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     @TestOnly
     fun isModuleSelectorVisible(): Boolean {

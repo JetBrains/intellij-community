@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
-import com.intellij.ProjectTopics
 import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -15,6 +14,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
@@ -44,8 +44,11 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.Future
 
-@State(name = "sourceFolderManager",  storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class SourceFolderManagerImpl(private val project: Project) : SourceFolderManager, Disposable, PersistentStateComponent<SourceFolderManagerState> {
+@State(name = "sourceFolderManager", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+class SourceFolderManagerImpl(private val project: Project) : SourceFolderManager,
+                                                              PersistentStateComponent<SourceFolderManagerState>,
+                                                              Disposable {
+
   private val moduleNamesToSourceFolderState: MultiMap<String, SourceFolderModelState> = MultiMap.create()
   private var isDisposed = false
   private val mutex = Any()
@@ -124,51 +127,69 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     val sourceFolders: MutableSet<String> = CollectionFactory.createFilePathSet()
   )
 
-  init {
-    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        val sourceFoldersToChange = HashMap<Module, ArrayList<Pair<VirtualFile, SourceFolderModel>>>()
-        val virtualFileManager = VirtualFileManager.getInstance()
+  @Suppress("unused") // todo fix warning
+  private class BulkFileListenerImpl : BulkFileListener {
 
-        for (event in events) {
-          if (event !is VFileCreateEvent) {
-            continue
-          }
-          val allDescendantValues = synchronized(mutex) { sourceFolders.getAllDescendantValues(VfsUtilCore.pathToUrl(event.path)) }
-          for (sourceFolder in allDescendantValues) {
-            val sourceFolderFile = virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
-            if (sourceFolderFile != null && sourceFolderFile.isValid) {
-              sourceFoldersToChange.computeIfAbsent(sourceFolder.module) { ArrayList() }.add(Pair(event.file!!, sourceFolder))
-              removeSourceFolder(sourceFolder.url)
-            }
-          }
-        }
+    override fun after(events: List<VFileEvent>) {
+      val fileCreateEvents = events.filterIsInstance<VFileCreateEvent>()
+      if (fileCreateEvents.isEmpty()) return
 
-        val application = ApplicationManager.getApplication()
-        val future = project.coroutineScope.async { updateSourceFolders(sourceFoldersToChange) }.asCompletableFuture()
-        if (application.isUnitTestMode) {
-          ApplicationManager.getApplication().assertIsDispatchThread()
-          operationsStates.removeIf { it.isDone }
-          operationsStates.add(future)
-        }
+      for (project in ProjectManager.getInstance().openProjects) {
+        (SourceFolderManager.getInstance(project) as SourceFolderManagerImpl).filesCreated(fileCreateEvents)
       }
-    })
-
-    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
-      override fun modulesAdded(project: Project, modules: List<Module>) {
-        synchronized(mutex) {
-          for (module in modules) {
-            moduleNamesToSourceFolderState[module.name].forEach {
-              loadSourceFolderState(it, module)
-            }
-            moduleNamesToSourceFolderState.remove(module.name)
-          }
-        }
-      }
-    })
+    }
   }
 
-  fun rescanAndUpdateSourceFolders() {
+
+  @Suppress("unused") // todo fix warning
+  private class ModuleListenerImpl : ModuleListener {
+
+    override fun modulesAdded(project: Project, modules: List<Module>) {
+      (SourceFolderManager.getInstance(project) as SourceFolderManagerImpl).modulesAdded(modules)
+    }
+  }
+
+  private fun filesCreated(fileCreateEvents: List<VFileCreateEvent>) {
+    val sourceFoldersToChange = mutableMapOf<Module, ArrayList<Pair<VirtualFile, SourceFolderModel>>>()
+    val virtualFileManager = VirtualFileManager.getInstance()
+
+    for (event in fileCreateEvents) {
+      val allDescendantValues = synchronized(mutex) {
+        sourceFolders.getAllDescendantValues(VfsUtilCore.pathToUrl(event.path))
+      }
+
+      for (sourceFolder in allDescendantValues) {
+        val sourceFolderFile = virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
+        if (sourceFolderFile != null && sourceFolderFile.isValid) {
+          sourceFoldersToChange.computeIfAbsent(sourceFolder.module) { ArrayList() }.add(Pair(event.file!!, sourceFolder))
+          removeSourceFolder(sourceFolder.url)
+        }
+      }
+    }
+
+    val application = ApplicationManager.getApplication()
+    val future = project.coroutineScope.async {
+      updateSourceFolders(sourceFoldersToChange)
+    }.asCompletableFuture()
+
+    if (application.isUnitTestMode) {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      operationsStates.removeIf { it.isDone }
+      operationsStates.add(future)
+    }
+  }
+
+  private fun modulesAdded(modules: List<Module>) {
+    synchronized(mutex) {
+      for (module in modules) {
+        moduleNamesToSourceFolderState.remove(module.name)!!.forEach {
+          loadSourceFolderState(it, module)
+        }
+      }
+    }
+  }
+
+  override fun rescanAndUpdateSourceFolders() {
     val sourceFoldersToChange = HashMap<Module, ArrayList<Pair<VirtualFile, SourceFolderModel>>>()
     val virtualFileManager = VirtualFileManager.getInstance()
 
@@ -190,8 +211,8 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
         for ((eventFile, sourceFolders) in p) {
           val (_, url, type, packagePrefix, generated) = sourceFolders
           val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
-                             ?: model.addContentEntry(url)
-          val sourceFolder = contentEntry.addSourceFolder(url, type)
+                             ?: model.addContentEntry(url, true)
+          val sourceFolder = contentEntry.addSourceFolder(url, type, true)
           if (!packagePrefix.isNullOrEmpty()) {
             sourceFolder.packagePrefix = packagePrefix
           }
@@ -216,7 +237,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     ApplicationManager.getApplication().invokeAndWait {
       WriteAction.run<RuntimeException> {
         if (project.isDisposed) return@run
-        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+        WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
           updater.addDiff(diffBuilder)
         }
         modifiableRootModels.forEach { it.postCommit() }
@@ -253,6 +274,10 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       }
       sourceFolders = PathPrefixTreeMap()
       sourceFoldersByModule = HashMap()
+
+      if (state.sourceFolders.isEmpty()) {
+        return
+      }
 
       val moduleManager = ModuleManager.getInstance(project)
 

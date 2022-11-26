@@ -15,22 +15,10 @@
  */
 package org.jetbrains.jps.service;
 
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 public abstract class SharedThreadPool implements ExecutorService {
   public static SharedThreadPool getInstance() {
     return JpsServiceManager.getInstance().getService(SharedThreadPool.class);
   }
-
-  /**
-   * @deprecated Use {@link #submit(Runnable)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @NotNull
-  public abstract Future<?> executeOnPooledThread(@NotNull Runnable action);
 }

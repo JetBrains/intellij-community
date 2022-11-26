@@ -35,8 +35,8 @@ public class BackgroundHighlightingUtil {
    */
   static <T> void lookForInjectedFileInOtherThread(@NotNull Project project,
                                                    @NotNull Editor editor,
-                                                   @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends T> backgroundProcessor,
-                                                   @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super T> edtProcessor) {
+                                                   @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends @NotNull T> backgroundProcessor,
+                                                   @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super @NotNull T> edtProcessor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
 
@@ -63,11 +63,10 @@ public class BackgroundHighlightingUtil {
       .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), t -> {
         if (t == null) return;
         PsiFile foundFile = t.getFirst();
-        Editor newEditor = t.getSecond();
-        T result = t.getThird();
         if (foundFile == null) return;
-
         if (foundFile.isValid() && offsetBefore == editor.getCaretModel().getOffset()) {
+          Editor newEditor = t.getSecond();
+          T result = t.getThird();
           edtProcessor.accept(foundFile, newEditor, result);
         }
         else {

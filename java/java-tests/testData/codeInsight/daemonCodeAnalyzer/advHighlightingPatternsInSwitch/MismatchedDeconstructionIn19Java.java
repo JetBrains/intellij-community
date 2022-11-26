@@ -1,3 +1,5 @@
+import java.util.List;
+
 record LongRecord(String s1, String s2, String s3) {}
 record PrimitiveRecord(int x){}
 record IntegerRecord(Integer x){}
@@ -38,6 +40,17 @@ public class Incompatible {
     }
     switch (typedRecord){
       case TypedRecord<I>(I x) s-> {}
+      default -> {}
+    }
+    switch (typedRecord){
+      case <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(C x) s-> {}
+      case <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(I x) s-> {}
+      case TypedRecord<I>(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer t</error>) -> {}
+      case TypedRecord<?>(<error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Number>'">List<Number> nums</error>) -> {}
+      case TypedRecord<?>(List<?> list) -> {}
+      case TypedRecord<?>(<error descr="'java.lang.Object' cannot be safely cast to 'T'">T t</error>) -> {}
+      case TypedRecord<?>(String s) -> {}
+      case TypedRecord<?>(var x) -> {}
       default -> {}
     }
     switch (object){

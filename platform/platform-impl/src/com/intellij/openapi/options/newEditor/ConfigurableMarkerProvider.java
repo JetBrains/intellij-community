@@ -10,4 +10,6 @@ import org.jetbrains.annotations.Nullable;
 public interface ConfigurableMarkerProvider {
 
   @Nls @Nullable String getMarkerText();
+
+  void setMarkerText(@Nls @Nullable String text);
 }

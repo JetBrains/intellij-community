@@ -32,12 +32,9 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     PsiFile file = element.getContainingFile();
     if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
-    if (element instanceof GrLightVariable) {
-      PsiElement navigationElement = element.getNavigationElement();
-      if (navigationElement != null) {
-        String doc = navigationElement.getUserData(NonCodeMembersHolder.DOCUMENTATION);
-        if (doc != null) return doc;
-      }
+    if (element instanceof GrLightVariable var) {
+      PsiElement navigationElement = var.getNavigationElement();
+      return navigationElement.getUserData(NonCodeMembersHolder.DOCUMENTATION);
     }
     return null;
   }

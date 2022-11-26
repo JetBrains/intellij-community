@@ -639,21 +639,14 @@ public final class PyNames {
 
   @Nullable
   private static String leftToRightComparisonOperatorName(@NotNull String name) {
-    switch (name) {
-      case "__lt__":
-        return "__gt__";
-      case "__gt__":
-        return "__lt__";
-      case "__ge__":
-      return "__le__";
-      case "__le__":
-        return "__ge__";
-      case "__eq__":
-      case "__ne__":
-        return name;
-      default:
-        return null;
-    }
+    return switch (name) {
+      case "__lt__" -> "__gt__";
+      case "__gt__" -> "__lt__";
+      case "__ge__" -> "__le__";
+      case "__le__" -> "__ge__";
+      case "__eq__", "__ne__" -> name;
+      default -> null;
+    };
   }
 
   /**

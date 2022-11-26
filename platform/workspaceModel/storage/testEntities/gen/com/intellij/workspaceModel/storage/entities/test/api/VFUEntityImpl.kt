@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -23,7 +22,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class VFUEntityImpl : VFUEntity, WorkspaceEntityBase() {
+open class VFUEntityImpl(val dataSource: VFUEntityData) : VFUEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,21 +32,20 @@ open class VFUEntityImpl : VFUEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _fileProperty: VirtualFileUrl? = null
   override val fileProperty: VirtualFileUrl
-    get() = _fileProperty!!
+    get() = dataSource.fileProperty
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: VFUEntityData?) : ModifiableWorkspaceEntityBase<VFUEntity>(), VFUEntity.Builder {
+  class Builder(result: VFUEntityData?) : ModifiableWorkspaceEntityBase<VFUEntity, VFUEntityData>(result), VFUEntity.Builder {
     constructor() : this(VFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,6 +63,9 @@ open class VFUEntityImpl : VFUEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder
@@ -92,9 +93,9 @@ open class VFUEntityImpl : VFUEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as VFUEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.fileProperty = dataSource.fileProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
       if (parents != null) {
       }
     }
@@ -104,7 +105,7 @@ open class VFUEntityImpl : VFUEntity, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -113,7 +114,7 @@ open class VFUEntityImpl : VFUEntity, WorkspaceEntityBase() {
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -121,13 +122,12 @@ open class VFUEntityImpl : VFUEntity, WorkspaceEntityBase() {
       get() = getEntityData().fileProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
+        getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
         val _diff = diff
         if (_diff != null) index(this, "fileProperty", value)
       }
 
-    override fun getEntityData(): VFUEntityData = result ?: super.getEntityData() as VFUEntityData
     override fun getEntityClass(): Class<VFUEntity> = VFUEntity::class.java
   }
 }
@@ -139,26 +139,21 @@ class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
   fun isDataInitialized(): Boolean = ::data.isInitialized
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<VFUEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<VFUEntity> {
     val modifiable = VFUEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): VFUEntity {
-    val entity = VFUEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = VFUEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -183,7 +178,7 @@ class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as VFUEntityData
 
@@ -195,7 +190,7 @@ class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as VFUEntityData
 

@@ -21,18 +21,16 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridg
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.AssertionFailedError
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 
 class FacetModelBridgeTest {
   companion object {
@@ -184,5 +182,24 @@ class FacetModelBridgeTest {
     modifiableModuleModel.renameModule(module, "newModuleName")
     existingFacet = assertOneElement(modifiableFacetModel.allFacets)
     assertEquals(facet.name, existingFacet.name)
+  }
+
+  @Test
+  fun `initialize internal facet`() {
+    val module = projectModel.createModule()
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
+        val moduleEntity = builder.entities(ModuleEntity::class.java).first()
+        builder addEntity FacetEntity("myName", "MockFacetId", moduleEntity.symbolicId, moduleEntity.entitySource) {
+          this.module = moduleEntity
+          underlyingFacet = FacetEntity("anotherName", "MockFacetId", moduleEntity.symbolicId, moduleEntity.entitySource) {
+            this.module = moduleEntity
+          }
+        }
+      }
+    }
+    assertDoesNotThrow {
+      FacetManager.getInstance(module).findFacet(MockFacetType.ID, "anotherName")
+    }
   }
 }

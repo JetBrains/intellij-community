@@ -13,10 +13,6 @@ stubs/mysqlclient/MySQLdb/__init__.pyi
 stubs/mysqlclient/MySQLdb/connections.pyi
 stubs/mysqlclient/MySQLdb/cursors.pyi
 
-# third_party stubs with constructs that pytype doesn't yet support:
-stubs/paramiko/paramiko/_winapi.pyi
-stubs/paramiko/paramiko/win_pageant.pyi
-
 # _pb2.pyi have some constructs that break pytype
 # Eg
 # pytype.pyi.parser.ParseError:   File: "/Users/nipunn/src/typeshed/third_party/2and3/google/protobuf/descriptor_pb2.pyi", line 195

@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.jetbrains.python.documentation.docstrings.SectionBasedDocString.FieldType.OPTIONAL_TYPE;
+
 /**
  * Common base class for docstring styles supported by Napoleon Sphinx extension.
  *
@@ -54,29 +56,29 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   protected static final Map<String, String> SECTION_ALIASES =
     ImmutableMap.<String, String>builder()
-                .put("arguments", PARAMETERS_SECTION)
-                .put("args", PARAMETERS_SECTION)
-                .put("parameters", PARAMETERS_SECTION)
-                .put("keyword args", KEYWORD_ARGUMENTS_SECTION)
-                .put("keyword arguments", KEYWORD_ARGUMENTS_SECTION)
-                .put("other parameters", OTHER_PARAMETERS_SECTION)
-                .put("attributes", ATTRIBUTES_SECTION)
-                .put("methods", METHODS_SECTION)
-                .put("note", "notes")
-                .put("notes", "notes")
-                .put("example", "examples")
-                .put("examples", "examples")
-                .put("return", RETURNS_SECTION)
-                .put("returns", RETURNS_SECTION)
-                .put("yield", YIELDS_SECTION)
-                .put("yields", "yields")
-                .put("raises", RAISES_SECTION)
-                .put("references", "references")
-                .put("see also", "see also")
-                .put("warning", "warnings")
-                .put("warns", "warnings")
-                .put("warnings", "warnings")
-                .build();
+      .put("arguments", PARAMETERS_SECTION)
+      .put("args", PARAMETERS_SECTION)
+      .put("parameters", PARAMETERS_SECTION)
+      .put("keyword args", KEYWORD_ARGUMENTS_SECTION)
+      .put("keyword arguments", KEYWORD_ARGUMENTS_SECTION)
+      .put("other parameters", OTHER_PARAMETERS_SECTION)
+      .put("attributes", ATTRIBUTES_SECTION)
+      .put("methods", METHODS_SECTION)
+      .put("note", "notes")
+      .put("notes", "notes")
+      .put("example", "examples")
+      .put("examples", "examples")
+      .put("return", RETURNS_SECTION)
+      .put("returns", RETURNS_SECTION)
+      .put("yield", YIELDS_SECTION)
+      .put("yields", "yields")
+      .put("raises", RAISES_SECTION)
+      .put("references", "references")
+      .put("see also", "see also")
+      .put("warning", "warnings")
+      .put("warns", "warnings")
+      .put("warnings", "warnings")
+      .build();
   private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)");
 
   public static final Set<String> SECTION_NAMES = SECTION_ALIASES.keySet();
@@ -219,6 +221,13 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
            // note that field may have the same indent as its containing section
            (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= getSectionIndentationThreshold(curSectionIndent)) ||
            isSectionStart(lineNum);
+  }
+
+  @NotNull
+  protected Pair<List<Substring>, Integer> parseFieldContinuation(int lineNum, @NotNull FieldType fieldType) {
+    int indent = getLineIndentSize(lineNum);
+    // we don't need additional indentation for Yields and Returns sections
+    return parseIndentedBlock(lineNum + 1, fieldType == OPTIONAL_TYPE ? indent - 1 : indent);
   }
 
   /**
@@ -365,7 +374,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<Section> getParameterSections() {
-    return getSectionsWithNormalizedTitle(PARAMETERS_SECTION);
+    final List<Section> parameters = new ArrayList<>();
+    parameters.addAll(getSectionsWithNormalizedTitle(PARAMETERS_SECTION));
+    parameters.addAll(getSectionsWithNormalizedTitle(OTHER_PARAMETERS_SECTION));
+    return parameters;
   }
 
   @NotNull
@@ -506,6 +518,39 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Override
   public String getAttributeDescription() {
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getAttributeDescription(@Nullable String name) {
+    if (name != null) {
+      final SectionField field = getFirstFieldForAttribute(name);
+      if (field != null) {
+        return field.getDescription();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public SectionField getFirstFieldForAttribute(@NotNull String name) {
+    return ContainerUtil.find(getAttributeFields(), field -> field.getNames().contains(name));
+  }
+
+  @NotNull
+  @Override
+  public List<String> getAttributes() {
+    return ContainerUtil.map(getAttributeSubstrings(), substring -> substring.toString());
+  }
+
+  @NotNull
+  @Override
+  public List<Substring> getAttributeSubstrings() {
+    final List<Substring> result = new ArrayList<>();
+    for (SectionField field : getAttributeFields()) {
+      ContainerUtil.addAllNotNull(result, field.getNamesAsSubstrings());
+    }
+    return result;
   }
 
   @NotNull

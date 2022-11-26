@@ -34,14 +34,15 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       ArrayUtil.toIntArray(
         ContainerUtil.map(JsonCodeStyleSettings.PropertyAlignment.values(), alignment -> alignment.getId()));
 
-    private static final String SAMPLE = "{\n" +
-                                         "    \"json literals are\": {\n" +
-                                         "        \"strings\": [\"foo\", \"bar\", \"\\u0062\\u0061\\u0072\"],\n" +
-                                         "        \"numbers\": [42, 6.62606975e-34],\n" +
-                                         "        \"boolean values\": [true, false,],\n" +
-                                         "        \"objects\": {\"null\": null,\"another\": null,}\n" +
-                                         "    }\n" +
-                                         "}";
+    private static final String SAMPLE = """
+      {
+          "json literals are": {
+              "strings": ["foo", "bar", "\\u0062\\u0061\\u0072"],
+              "numbers": [42, 6.62606975e-34],
+              "boolean values": [true, false,],
+              "objects": {"null": null,"another": null,}
+          }
+      }""";
   }
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {

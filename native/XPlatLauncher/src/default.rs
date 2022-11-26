@@ -1,11 +1,13 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use log::{debug, warn};
-use crate::{canonical_non_unc, err_from_string, LaunchConfiguration, LauncherError, ProductInfo};
-use crate::errors::Result;
-use crate::utils::{get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
+use anyhow::{bail, Context, Result};
+use utils::{canonical_non_unc, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
+
+use crate::{get_config_home, LaunchConfiguration, ProductInfo};
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
@@ -22,23 +24,33 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_intellij_vm_options(&self) -> Result<Vec<String>> {
-        self.get_merged_vm_options()
+        let vm_options_from_files = self.get_merged_vm_options_from_files()?;
+        let additional_jvm_arguments = &self.product_info.get_current_platform_launch_field()?.additionalJvmArguments;
+
+        let mut result = Vec::with_capacity(vm_options_from_files.capacity() + additional_jvm_arguments.capacity());
+        result.extend_from_slice(&vm_options_from_files);
+        result.extend_from_slice(additional_jvm_arguments);
+
+        for i in 0..result.len() {
+            result[i] = self.expand_vars(&result[i])?;
+        }
+
+        Ok(result)
     }
 
-    fn get_properties_file(&self) -> Result<PathBuf> {
+    fn get_properties_file(&self) -> Result<Option<PathBuf>> {
         let env_var_name = self.product_info.productCode.to_string() + "_PROPERTIES";
         let properties_path_from_env_var = get_path_from_env_var(&env_var_name);
 
-        match &properties_path_from_env_var {
-            Ok(x) => {
-                debug!("IDE properties env var env_var_name is set to {x:?}")
-            }
-            Err(e) => {
-                debug!("IDE properties env var {env_var_name} doesn't seem to be set, details: {e:?}");
+        let properties_file = match properties_path_from_env_var {
+            Ok(x) => Some(x),
+            Err(_) => {
+                debug!("Properties env var {env_var_name} is not set, skipping reading properties file from it");
+                None
             }
         };
 
-        properties_path_from_env_var
+        Ok(properties_file)
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
@@ -56,20 +68,20 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
             let item_canonical_path = match canonical_non_unc(&item_path) {
                 Ok(x) => { x }
                 Err(e) => {
-                    match e {
-                        LauncherError::IoError(e) => {
+                    match e.is::<std::io::Error>() {
+                        true => {
+                            // this handles non-existent file probably
                             warn!("{item_path:?}: IoError {e:?} when trying to get canonical path");
                             continue
                         }
-                        e => {
-                            let message = format!("Failed to get canonical non-UNC path for {item_path:?} {e:?}");
-                            return err_from_string(message);
-                        }
+                        false => bail!("Failed to get canonical non-UNC path for {item_path:?} {e:?}"),
                     }
                 }
             };
 
-            canonical_class_path.push(item_canonical_path);
+            let expanded = self.expand_vars(&item_canonical_path)?;
+
+            canonical_class_path.push(expanded);
         }
 
         Ok(canonical_class_path)
@@ -87,28 +99,26 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
 impl DefaultLaunchConfiguration {
     pub fn new(args: Vec<String>) -> Result<Self> {
-        // TODO: in real launchers -> let current_exe = env::current_exe().unwrap();
-        let current_exe = match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
+        let current_exe = &match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
             Ok(x) => {
                 debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
                 x
             }
-            Err(_) => { env::current_dir()?.join("xplat-launcher.exe") }
+            Err(_) => { env::current_exe()? }
         };
 
         debug!("Resolved current executable path as '{current_exe:?}'");
 
-        let ide_bin = current_exe.parent_or_err()?;
-        debug!("Resolved ide bin dir as '{ide_bin:?}'");
-
-        let ide_home = ide_bin.parent_or_err()?;
+        let ide_home = get_ide_home(current_exe).context("Failed to resolve IDE home")?;
         debug!("Resolved ide home dir as '{ide_home:?}'");
 
-        let config_home = get_config_home();
+        let ide_bin = ide_home.join("bin");
+        debug!("Resolved ide bin dir as '{ide_bin:?}'");
+
+        let config_home = get_config_home()?;
         debug!("Resolved config home as '{config_home:?}'");
 
-        // TODO: this is a behaviour change (as we're not patching the binary the same way we are patching the executable template)
-        let product_info = get_product_info(&ide_home).expect("Failed to read product info file");
+        let product_info = get_product_info(&ide_home)?;
         assert!(!product_info.launch.is_empty());
 
         let vm_options_file_path = product_info.launch[0].vmOptionsFilePath.as_str();
@@ -167,25 +177,25 @@ impl DefaultLaunchConfiguration {
         debug!("Trying to resolve runtime from product code env var {product_code_env_var}");
         match self.get_java_executable_from_java_root_env_var(product_code_env_var) {
             Ok(p) => { return Ok(p); }
-            Err(e) => { debug!("Didn't find runtime from env var: {product_code_env_var}, error: {e:?}") }
+            Err(e) => { debug!("Didn't find runtime from env var: {product_code_env_var}, error: {e}") }
         }
 
         debug!("Trying to resolve runtime from custom user file");
         match self.get_user_jre() {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from custom user file, error: {e:?}") }
+            Err(e) => { debug!("Didn't find runtime from custom user file, error: {e}") }
         }
 
         debug!("Resolving runtime jbr dir in ide home");
         match self.get_from_jbr_dir() {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e:?}") }
+            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e}") }
         }
 
         debug!("Resolving runtime from default env vars");
         match self.get_from_java_env_vars() {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e:?}") }
+            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e}") }
         }
 
         // TODO: timeout?
@@ -208,8 +218,7 @@ impl DefaultLaunchConfiguration {
         };
 
         if !default_java_output.status.success() {
-            let message = format!("'command -v java' didn't succeed, exit code: {exit_code}, stdout: {stdout}, stderr: {stderr}");
-            return err_from_string(message)
+            bail!("'command -v java' didn't succeed, exit code: {exit_code}, stdout: {stdout}, stderr: {stderr}");
         }
 
         // TODO: check if it's executable? (will be a behaviour change)
@@ -228,7 +237,7 @@ impl DefaultLaunchConfiguration {
     fn get_from_java_env_vars(&self) -> Result<PathBuf> {
         match self.get_java_executable_from_java_root_env_var("JDK_HOME") {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find a valid runtime from JDK_HOME env var, error: {e:?}") }
+            Err(e) => { debug!("Didn't find a valid runtime from JDK_HOME env var, error: {e}") }
         }
 
         return self.get_java_executable_from_java_root_env_var("JAVA_HOME");
@@ -246,16 +255,16 @@ impl DefaultLaunchConfiguration {
 
         let jbr_dir = self.ide_home.join("jbr");
         if !jbr_dir.is_dir() {
-            return err_from_string(format!("{jbr_dir:?} is not a directory"))
+            bail!("{jbr_dir:?} is not a directory");
         };
 
         // TODO: non-mac
         let java_executable = get_bin_java_path(&jbr_dir);
 
         match is_executable::is_executable(&java_executable) {
-            true => { Ok(java_executable) }
+            true => Ok(java_executable),
             // TODO: check if exists, separate method
-            false => { err_from_string(format!("{java_executable:?} is not an executable")) }
+            false => bail!("{java_executable:?} is not an executable")
         }
     }
 
@@ -283,22 +292,18 @@ impl DefaultLaunchConfiguration {
 
         let metadata = jre_path_file.metadata()?;
         if metadata.len() == 0 {
-            let message = format!("vmoptions file by path {jre_path_file:?} has zero length, will not try to resolve runtime from it");
-            return err_from_string(message);
+            bail!("vmoptions file by path {jre_path_file:?} has zero length, will not try to resolve runtime from it");
         }
 
         let content = read_file_to_end(jre_path_file.as_path())?;
         let user_jre_path = Path::new(content.as_str());
 
-        let java_executable = user_jre_path
-            .join("bin")
-            .join("java");
+        let java_executable = get_bin_java_path(&user_jre_path);
 
         match is_executable::is_executable(&java_executable) {
             true => { Ok(java_executable) }
             false => {
-                let message = format!("{java_executable:?} specified in {jre_path_file:?} is not a valid executable");
-                err_from_string(message)
+                bail!("{java_executable:?} specified in {jre_path_file:?} is not a valid executable");
             }
         }
     }
@@ -309,23 +314,20 @@ impl DefaultLaunchConfiguration {
     fn get_java_executable_from_java_root_env_var(&self, env_var_name: &str) -> Result<PathBuf> {
         let env_var_value = env::var(env_var_name)?;
 
-        if !env_var_value.is_empty() {
-            let message = format!("Env var {env_var_value} is not set, skipping JDK detection from it");
-            return err_from_string(message);
+        if env_var_value.is_empty() {
+            bail!("Env var {env_var_value} is not set, skipping JDK detection from it");
         }
 
         let product_jdk_dir = Path::new(env_var_value.as_str());
-        let java_executable = product_jdk_dir.join("bin").join("java");
+        let java_executable = get_bin_java_path(product_jdk_dir);
 
         if !java_executable.exists() {
-            let message = format!("Java executable from JDK {java_executable:?} does not exist");
-            return err_from_string(message);
+            bail!("Java executable from JDK {java_executable:?} does not exist");
         }
 
         // TODO: write the same code ourselves instead of using is_executable crate?
         if !is_executable::is_executable(&java_executable) {
-            let message = format!("{java_executable:?} is not an executable file");
-            return err_from_string(message);
+            bail!("{java_executable:?} is not an executable file");
         }
 
         return Ok(java_executable);
@@ -345,7 +347,7 @@ impl DefaultLaunchConfiguration {
     // else
     //   message "Cannot find a VM options file"
     // fi
-    pub fn get_merged_vm_options(&self) -> Result<Vec<String>> {
+    pub fn get_merged_vm_options_from_files(&self) -> Result<Vec<String>> {
         let vm_options_file = self.get_vm_options_file();
         let user_vm_options_file = self.get_user_vm_options_file();
 
@@ -378,9 +380,7 @@ impl DefaultLaunchConfiguration {
             let user_vm_options_error = &errors[0];
             let vm_options_error = &errors[1];
 
-            let message = format!(
-                "Failed to resolve any vmoptions files, user_vm_options: {user_vm_options_error:?}, vm_options: {vm_options_error:?}");
-            return err_from_string(message);
+            bail!("Failed to resolve any vmoptions files, user_vm_options: {user_vm_options_error:?}, vm_options: {vm_options_error:?}");
         }
 
         return Ok([vm_options, user_vm_options].concat());
@@ -391,14 +391,11 @@ impl DefaultLaunchConfiguration {
         // TODO: there is a relative path in product-info json (launch), maybe use that?
         let vm_options_file_name = vm_options_base_file_name +
             match env::consts::OS {
-                "linux" => { "64.vmoptions" }
-                "macos" => { ".vmoptions" }
+                "linux" => "64.vmoptions",
+                "macos" => ".vmoptions",
                 //TODO: check if that's actual for Windows
-                "windows" => { "64.exe.vmoptions" }
-                unsupported_os => {
-                    let message = format!("Unsupported OS: {unsupported_os}");
-                    return err_from_string(message);
-                }
+                "windows" => "64.exe.vmoptions",
+                unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
             };
 
         Ok(vm_options_file_name)
@@ -415,7 +412,7 @@ impl DefaultLaunchConfiguration {
         match is_readable(options_from_toolbox) {
             Ok(f) => { return Ok(f) }
             Err(e) => {
-                debug!("Didn't resolve vmoptions from {options_from_toolbox:?}, details: {e:?}")
+                debug!("Didn't resolve vmoptions from {options_from_toolbox:?}, details: {e}")
             }
         }
 
@@ -449,29 +446,37 @@ impl DefaultLaunchConfiguration {
 
         match get_readable_file_from_env_var(env_var_name.as_str()) {
             Ok(f) => { return Ok(f) }
-            Err(e) => { debug!("Didn't resolve vm options file from {env_var_name} env var, details: {e:?}") }
+            Err(e) => { debug!("Didn't resolve vm options file from {env_var_name} env var, details: {e}") }
         };
 
         let vm_options_file_name = self.get_vm_options_file_name()?;
         let vm_options_from_ide_bin = &self.ide_bin.join(vm_options_file_name.as_str());
         match is_readable(vm_options_from_ide_bin) {
             Ok(f) => { return Ok(f); }
-            Err(e) => { debug!("Didn't resolve vm options file from base bin dir {vm_options_from_ide_bin:?}, details: {e:?}") }
+            Err(e) => { debug!("Didn't resolve vm options file from base bin dir {vm_options_from_ide_bin:?}, details: {e}") }
         }
 
         let os_specific_dir = match env::consts::OS {
-            "linux" => { "linux" }
-            "macos" => { "mac" }
+            "linux" => "linux",
+            "macos" => "mac",
             //TODO: check if that's actual for Windows
-            "windows" => { "windows" }
-            unsupported_os => {
-                let message = format!("Unsupported OS: {unsupported_os}");
-                return err_from_string(message);
-            }
+            "windows" => "windows",
+            unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
         };
 
         let os_specific_vm_options = self.ide_bin.join(os_specific_dir).join(vm_options_file_name);
         is_readable(os_specific_vm_options)
+    }
+
+    fn expand_vars(&self, value: &str) -> Result<String> {
+        let (from, to) = match env::consts::OS {
+            "macos"   => ("$APP_PACKAGE/Contents", self.ide_home.to_string_lossy()),
+            "windows" => ("%IDE_HOME%", self.ide_home.to_string_lossy()),
+            "linux"   => return Ok(value.to_string()),
+            unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
+        };
+
+        Ok(value.replace(from, &to))
     }
 }
 
@@ -529,14 +534,11 @@ fn get_lib_path(ide_home: &Path) -> PathBuf {
 
 fn get_product_info_home(ide_home: &Path) -> Result<PathBuf> {
     let parent = match env::consts::OS {
-        "linux" => { ide_home.to_path_buf() }
-        "macos" => { ide_home.join("Resources") }
+        "linux" => ide_home.to_path_buf(),
+        "macos" => ide_home.join("Resources"),
         //TODO: check if that's actual for Windows
-        "windows" => { ide_home.to_path_buf() }
-        unsupported_os => {
-            let message = format!("Unsupported OS: {unsupported_os}");
-            return err_from_string(message);
-        }
+        "windows" => ide_home.to_path_buf(),
+        unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
     };
 
     Ok(parent)
@@ -555,68 +557,19 @@ fn get_product_info(ide_home: &Path) -> Result<ProductInfo> {
     return Ok(product_info);
 }
 
-#[cfg(target_os = "windows")]
-pub fn get_config_home() -> PathBuf {
-    // TODO: see LoadVMOptions
-    PathBuf::from("C:\\tmp")
-}
+fn get_ide_home(current_exe: &Path) -> Result<PathBuf> {
+    let max_lookup_count = 5;
+    let mut ide_home = current_exe.parent_or_err()?;
+    for _ in 0..max_lookup_count {
+        debug!("Resolving ide_home, candidate: {ide_home:?}");
 
-#[cfg(target_os = "macos")]
-pub fn get_config_home() -> PathBuf {
-    get_user_home().join(".config")
-}
-
-// CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
-#[cfg(target_os = "linux")]
-pub fn get_config_home() -> PathBuf {
-    let xdg_config_home = get_xdg_config_home();
-
-    match xdg_config_home {
-        Some(p) => { p }
-        None => { get_user_home().join(".config") }
-    }
-}
-
-#[cfg(target_os = "linux")]
-fn get_xdg_config_home() -> Option<PathBuf> {
-    let xdg_config_home = env::var("XDG_CONFIG_HOME").unwrap_or(String::from(""));
-    debug!("XDG_CONFIG_HOME={xdg_config_home}");
-
-    if xdg_config_home.is_empty() {
-        return None
-    }
-
-    let path = PathBuf::from(xdg_config_home);
-    if !path.is_absolute() {
-        // TODO: consider change
-        warn!("XDG_CONFIG_HOME is not set to an absolute path, this may be a misconfiguration");
-    }
-
-    Some(path)
-}
-
-
-// used in ${HOME}/.config
-// TODO: is this the same as env:
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn get_user_home() -> PathBuf {
-    // TODO: dirs::home_dir seems better then just simply using $HOME as it checks `getpwuid_r`
-
-    match env::var("HOME") {
-        Ok(s) => {
-            debug!("User home directory resolved as '{s}'");
-            let path = PathBuf::from(s);
-            if !path.is_absolute() {
-                warn!("User home directory is not absolute, this may be a misconfiguration");
-            }
-
-            path
+        let product_info_path = get_product_info_home(&ide_home)?.join("product-info.json");
+        if product_info_path.exists() {
+            return Ok(ide_home)
         }
-        Err(e) => {
-            // TODO: this seems wrong
-            warn!("Failed to get $HOME env var value: {e:?}, using / as home dir");
 
-            PathBuf::from("/")
-        }
+        ide_home = ide_home.parent_or_err()?;
     }
+
+    bail!("Failed to resolve ide_home in {max_lookup_count} attempts")
 }

@@ -10,6 +10,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -28,6 +29,22 @@ import java.util.Set;
  */
 // TODO clear fields (lengths, tables) on low memory, requires fsync somehow
 public class CompressedAppendableFile {
+  private static final String INCOMPLETE_CHUNK_FILE_EXTENSION = ".at";
+  private static final String CHUNK_LENGTH_FILE_EXTENSION = ".s";
+
+  private static final boolean DO_DEBUG_SELF_CHECKS = SystemProperties.getBooleanProperty("idea.compressed.file.self.check", false);
+
+  @VisibleForTesting
+  //TODO RC: this field is used ONLY in test -- should it be this class's field even?
+  static final int PAGE_LENGTH = SystemProperties.getIntProperty("idea.compressed.file.page.length", 32768);
+
+  private static final int MAX_PAGE_LENGTH = 0xFFFF;
+
+  private static final int MIN_APPEND_BUFFER_LENGTH = 1024;
+
+  private static final int CHUNKS_PER_SINGLE_OFFSET = 32;
+
+
   private final Path myBaseFile;
 
   // force will clear the buffer and reset the position
@@ -37,21 +54,16 @@ public class CompressedAppendableFile {
 
   private short[] myChunkLengthTable;
   private int myChunkTableLength;
-  private static final int FACTOR = 32;
-  private long [] myChunkOffsetTable; // one long offset per FACTOR compressed chunks
-  private static final boolean doDebug = SystemProperties.getBooleanProperty("idea.compressed.file.self.check", false);
-  private final LongArrayList myCompressedChunksFileOffsets = doDebug ? new LongArrayList() : null;
 
-  public static final int PAGE_LENGTH = SystemProperties.getIntProperty("idea.compressed.file.page.length", 32768);
-  private static final int MAX_PAGE_LENGTH = 0xFFFF;
+  private long [] myChunkOffsetTable; // one long offset per CHUNKS_PER_SINGLE_OFFSET compressed chunks
+
+  private final LongArrayList myCompressedChunksFileOffsets = DO_DEBUG_SELF_CHECKS ? new LongArrayList() : null;
 
   private long myFileLength;
   private long myUncompressedFileLength = -1;
 
   private final int myAppendBufferLength;
-  private static final int myMinAppendBufferLength = 1024;
 
-  private static final String INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION = ".s";
 
   private static int ourFilesCount;
   private final int myCount = ourFilesCount++;
@@ -88,7 +100,7 @@ public class CompressedAppendableFile {
 
   @NotNull
   protected Path getChunkLengthFile() {
-    return myBaseFile.resolveSibling(myBaseFile.getFileName() + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION);
+    return myBaseFile.resolveSibling(myBaseFile.getFileName() + CHUNK_LENGTH_FILE_EXTENSION);
   }
 
   private synchronized void initChunkLengthTable() throws IOException {
@@ -114,25 +126,25 @@ public class CompressedAppendableFile {
             chunkLengthTable = reallocShortTable(chunkLengthTable);
           }
           chunkLengthTable[chunkLengthTableLength++] = (short)chunkLength;
-          if (doDebug) {
+          if (DO_DEBUG_SELF_CHECKS) {
             myCompressedChunksFileOffsets.add(o);
           }
         }
         myChunkLengthTable = chunkLengthTable;
         myChunkTableLength = chunkLengthTableLength;
 
-        if (myChunkTableLength >= FACTOR) {
-          long[] chunkOffsetTable = new long[myChunkTableLength / FACTOR];
+        if (myChunkTableLength >= CHUNKS_PER_SINGLE_OFFSET) {
+          long[] chunkOffsetTable = new long[myChunkTableLength / CHUNKS_PER_SINGLE_OFFSET];
           long offset = 0;
           for (int i = 0; i < chunkOffsetTable.length; ++i) {
-            int start = i * FACTOR;
-            for (int j = 0; j < FACTOR; ++j) {
+            int start = i * CHUNKS_PER_SINGLE_OFFSET;
+            for (int j = 0; j < CHUNKS_PER_SINGLE_OFFSET; ++j) {
               offset += chunkLengthTable[start + j] & MAX_PAGE_LENGTH;
             }
             chunkOffsetTable[i] = offset;
           }
           myChunkOffsetTable = chunkOffsetTable;
-          if (doDebug) { // check all offsets
+          if (DO_DEBUG_SELF_CHECKS) { // check all offsets
             for (int i = 0; i < chunkLengthTableLength; ++i) {
               calcOffsetOfPage(i);
             }
@@ -205,13 +217,13 @@ public class CompressedAppendableFile {
   }
 
   private long calcOffsetOfPage(int pageNumber) {
-    final int calculatedOffset = (pageNumber + 1) / FACTOR;
+    final int calculatedOffset = (pageNumber + 1) / CHUNKS_PER_SINGLE_OFFSET;
     long offset = calculatedOffset > 0 ? myChunkOffsetTable[calculatedOffset - 1]:0;
-    final int baseOffset = calculatedOffset * FACTOR;
-    for(int index = 0, len = (pageNumber + 1) % FACTOR; index < len; ++index) {
+    final int baseOffset = calculatedOffset * CHUNKS_PER_SINGLE_OFFSET;
+    for(int index = 0, len = (pageNumber + 1) % CHUNKS_PER_SINGLE_OFFSET; index < len; ++index) {
       offset += myChunkLengthTable[baseOffset + index] & MAX_PAGE_LENGTH;
     }
-    if (doDebug) {
+    if (DO_DEBUG_SELF_CHECKS) {
       assert myCompressedChunksFileOffsets.get(pageNumber) == offset;
     }
     return offset;
@@ -296,14 +308,14 @@ public class CompressedAppendableFile {
     }
     else {
       myBufferPosition = 0;
-      myNextChunkBuffer = new byte[myMinAppendBufferLength];
+      myNextChunkBuffer = new byte[MIN_APPEND_BUFFER_LENGTH];
     }
   }
 
   private int calcBufferSize(int position) {
     return Math.min(
       myAppendBufferLength,
-      Integer.highestOneBit(Math.max(myMinAppendBufferLength - 1, position)) << 1
+      Integer.highestOneBit(Math.max(MIN_APPEND_BUFFER_LENGTH - 1, position)) << 1
     );
   }
 
@@ -321,14 +333,14 @@ public class CompressedAppendableFile {
       initChunkLengthTable();
 
       myFileLength += compressedOut.size();
-      if (doDebug) myCompressedChunksFileOffsets.add(myFileLength);
+      if (DO_DEBUG_SELF_CHECKS) myCompressedChunksFileOffsets.add(myFileLength);
 
       if (myChunkLengthTable.length == myChunkTableLength) {
         myChunkLengthTable = reallocShortTable(myChunkLengthTable);
       }
 
       myChunkLengthTable[myChunkTableLength++] = (short)compressedOut.size();
-      if (myChunkTableLength / FACTOR > myChunkOffsetTable.length) {
+      if (myChunkTableLength / CHUNKS_PER_SINGLE_OFFSET > myChunkOffsetTable.length) {
         long[] newChunkOffsetTable = new long[myChunkOffsetTable.length + 1];
         System.arraycopy(myChunkOffsetTable, 0, newChunkOffsetTable, 0, myChunkOffsetTable.length);
         newChunkOffsetTable[myChunkOffsetTable.length] = myFileLength;
@@ -414,7 +426,7 @@ public class CompressedAppendableFile {
 
   @NotNull
   private Path getIncompleteChunkFile() {
-    return myBaseFile.resolveSibling(myBaseFile.getFileName() + ".at");
+    return myBaseFile.resolveSibling(myBaseFile.getFileName() + INCOMPLETE_CHUNK_FILE_EXTENSION);
   }
 
   public synchronized void force() {

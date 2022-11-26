@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -9,18 +9,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author ven
- */
 public abstract class LightVariableBase extends LightElement implements PsiVariable, OriginInfoAwareElement {
   protected PsiElement myScope;
   protected PsiIdentifier myNameIdentifier;
@@ -55,8 +52,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return new LightModifierList(getManager());
   }
 
-  @NotNull
-  public PsiElement getDeclarationScope() {
+  public @NotNull PsiElement getDeclarationScope() {
     return myScope;
   }
 
@@ -71,8 +67,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   }
 
   @Override
-  @NotNull
-  public @NlsSafe String getName() {
+  public @NotNull @NlsSafe String getName() {
     return StringUtil.notNullize(getNameIdentifier().getText());
   }
 
@@ -83,8 +78,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     PsiType type = myType;
     if (type == null) {
       myType = type = computeType();
@@ -92,14 +86,12 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return type;
   }
 
-  @NotNull
-  protected PsiType computeType() {
+  protected @NotNull PsiType computeType() {
     return PsiType.VOID;
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement getTypeElement() {
+  public @NotNull PsiTypeElement getTypeElement() {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeElement(myType);
   }
 
@@ -148,14 +140,14 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
 
   @Override
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Variable),
+                                                     ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  @Nullable
   @Override
-  public String getOriginInfo() {
+  public @Nullable String getOriginInfo() {
     return myOriginInfo;
   }
 

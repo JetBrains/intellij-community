@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.nodes.ToDoRootNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
@@ -25,36 +23,21 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
  * @author irengrig
  */
 public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
-  private final PsiTodoSearchHelper mySearchHelper;
+  private final PsiTodoSearchHelper myCustomSearchHelper;
 
-  public CustomChangelistTodoTreeStructure(Project project, PsiTodoSearchHelper searchHelper) {
+  public CustomChangelistTodoTreeStructure(Project project, PsiTodoSearchHelper customSearchHelper) {
     super(project);
-    mySearchHelper = searchHelper;
+    myCustomSearchHelper = customSearchHelper;
   }
 
   @Override
   public boolean accept(final PsiFile psiFile) {
-    if (! psiFile.isValid()) return false;
-    return mySearchHelper.getTodoItemsCount(psiFile) > 0;
-  }
-
-  @Override
-  public boolean getIsPackagesShown() {
-    return myArePackagesShown;
-  }
-
-  @Override
-  Object getFirstSelectableElement() {
-    return ((ToDoRootNode)myRootElement).getSummaryNode();
-  }
-
-  @Override
-  protected AbstractTreeNode createRootElement() {
-    return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
+    if (!psiFile.isValid()) return false;
+    return getSearchHelper().getTodoItemsCount(psiFile) > 0;
   }
 
   @Override
   public PsiTodoSearchHelper getSearchHelper() {
-    return mySearchHelper;
+    return myCustomSearchHelper;
   }
 }

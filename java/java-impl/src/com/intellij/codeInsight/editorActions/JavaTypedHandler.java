@@ -188,6 +188,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     int lineStart = doc.getLineStartOffset(doc.getLineNumber(offsetBefore));
     do {
       it.retreat();
+      if (it.atEnd()) return false;
       curToken = it.getTokenType();
     }
     while (curToken == TokenType.WHITE_SPACE || curToken == JavaTokenType.C_STYLE_COMMENT || curToken == JavaTokenType.END_OF_LINE_COMMENT);

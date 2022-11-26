@@ -83,8 +83,7 @@ class BuildScriptDataBuilder(
 
   override fun addGroup(group: String) = apply { backend.addGroup(group) }
   override fun addVersion(version: String) = apply { backend.addVersion(version) }
-  override fun configureTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = apply { backend.configureTask(name, configure) }
-  override fun configureTask(name: String, configure: Consumer<ScriptTreeBuilder>) = apply { backend.configureTask(name, configure) }
+  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) = apply { backend.configureTestTask(configure) }
   override fun addDependency(scope: String, dependency: String, sourceSet: String?) = apply { backend.addDependency(scope, dependency, sourceSet) }
   override fun addDependency(scope: String, dependency: ScriptElement.Statement.Expression, sourceSet: String?) = apply { backend.addDependency(scope, dependency, sourceSet) }
   override fun addApiDependency(dependency: String, sourceSet: String?) = apply { backend.addApiDependency(dependency, sourceSet) }
@@ -104,6 +103,8 @@ class BuildScriptDataBuilder(
   override fun addBuildScriptClasspath(vararg dependencies: File) = apply { backend.addBuildScriptClasspath() }
   override fun withMavenCentral() = apply { backend.withMavenCentral() }
   override fun withBuildScriptMavenCentral() = apply { backend.withBuildScriptMavenCentral() }
+  override fun applyPlugin(plugin: String) = apply { backend.applyPlugin(plugin) }
+  override fun applyPluginFrom(path: String) = apply { backend.applyPluginFrom(path) }
   override fun withPlugin(id: String, version: String?) = apply { backend.withPlugin(id, version) }
   override fun withJavaPlugin() = apply { backend.withJavaPlugin() }
   override fun withJavaLibraryPlugin() = apply { backend.withJavaLibraryPlugin() }

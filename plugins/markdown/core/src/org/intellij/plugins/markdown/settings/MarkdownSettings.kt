@@ -60,6 +60,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.customStylesheetText
     set(value) { state.customStylesheetText = value }
 
+  var isFileGroupingEnabled
+    get() = state.isFileGroupingEnabled
+    set(value) { state.isFileGroupingEnabled = value }
+
   var fontSize
     get() = state.fontSize
     set(value) { state.fontSize = value }

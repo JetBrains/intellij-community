@@ -75,6 +75,16 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   @NotNull
   @Override
+  public LayeredIcon replaceBy(@NotNull IconReplacer replacer) {
+    LayeredIcon result = new LayeredIcon(this);
+    for (int i = 0; i < result.myIcons.length; i++) {
+      result.myIcons[i] = replacer.replaceIcon(result.myIcons[i]);
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
   public LayeredIcon copy() {
     return new LayeredIcon(this);
   }
@@ -172,45 +182,44 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     int x;
     int y;
     switch (constraint) {
-      case SwingConstants.CENTER:
+      case SwingConstants.CENTER -> {
         x = (width - w) / 2;
-        y = (height - h) /2;
-        break;
-      case SwingConstants.NORTH:
+        y = (height - h) / 2;
+      }
+      case SwingConstants.NORTH -> {
         x = (width - w) / 2;
         y = 0;
-        break;
-      case SwingConstants.NORTH_EAST:
+      }
+      case SwingConstants.NORTH_EAST -> {
         x = width - w;
         y = 0;
-        break;
-      case SwingConstants.EAST:
+      }
+      case SwingConstants.EAST -> {
         x = width - w;
         y = (height - h) / 2;
-        break;
-      case SwingConstants.SOUTH_EAST:
+      }
+      case SwingConstants.SOUTH_EAST -> {
         x = width - w;
         y = height - h;
-        break;
-      case SwingConstants.SOUTH:
+      }
+      case SwingConstants.SOUTH -> {
         x = (width - w) / 2;
         y = height - h;
-        break;
-      case SwingConstants.SOUTH_WEST:
+      }
+      case SwingConstants.SOUTH_WEST -> {
         x = 0;
         y = height - h;
-        break;
-      case SwingConstants.WEST:
+      }
+      case SwingConstants.WEST -> {
         x = 0;
         y = (height - h) / 2;
-        break;
-      case SwingConstants.NORTH_WEST:
+      }
+      case SwingConstants.NORTH_WEST -> {
         x = 0;
         y = 0;
-        break;
-      default:
-        throw new IllegalArgumentException(
-          "The constraint should be one of SwingConstants' compass-directions [1..8] or CENTER [0], actual value is " + constraint);
+      }
+      default -> throw new IllegalArgumentException(
+        "The constraint should be one of SwingConstants' compass-directions [1..8] or CENTER [0], actual value is " + constraint);
     }
     setIcon(icon, layer, x, y);
   }

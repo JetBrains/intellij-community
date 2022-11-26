@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils
 import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Companion.invertSelectorFunction
-import org.jetbrains.kotlin.idea.inspections.SimplifyNegatedBinaryExpressionInspection
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -71,7 +71,7 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
         val returnExpression = lastStatement.safeAs<KtReturnExpression>()
         val predicate = returnExpression?.returnedExpression ?: lastStatement
         if (negatePredicate) negate(predicate)
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         if (returnExpression?.getLabelName() == element.calleeExpression?.text) {
             returnExpression?.labelQualifier?.replace(psiFactory.createLabelQualifier(toFunctionName))
         }
@@ -97,7 +97,8 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
             return
         }
 
-        val replaced = predicate.replaced(KtPsiFactory(predicate).createExpressionByPattern("!($0)", predicate)) as KtPrefixExpression
+        val psiFactory = KtPsiFactory(predicate.project)
+        val replaced = predicate.replaced(psiFactory.createExpressionByPattern("!($0)", predicate)) as KtPrefixExpression
         replaced.baseExpression.removeUnnecessaryParentheses()
         when (val baseExpression = replaced.baseExpression?.deparenthesize()) {
             is KtBinaryExpression -> {
@@ -105,7 +106,7 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
                 if (operationToken == KtTokens.ANDAND || operationToken == KtTokens.OROR) {
                     ConvertBinaryExpressionWithDemorgansLawIntention.convertIfPossible(baseExpression)
                 } else {
-                    SimplifyNegatedBinaryExpressionInspection.simplifyNegatedBinaryExpressionIfNeeded(replaced)
+                    NegatedBinaryExpressionSimplificationUtils.simplifyNegatedBinaryExpressionIfNeeded(replaced)
                 }
             }
 

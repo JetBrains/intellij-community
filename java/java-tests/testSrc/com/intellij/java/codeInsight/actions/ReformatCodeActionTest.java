@@ -30,34 +30,36 @@ import java.util.List;
 public class ReformatCodeActionTest extends JavaPsiTestCase {
   private static final String[] classNames = {"Vasya", "Main", "Oiie", "Ololo"};
   private static final String[] IMPORTS_LIST = new String[]{"import java.util.List;", "import java.util.Set;", "import java.util.Map"};
-  private static final String TEST_SOURCE = "%s" +
-                                            "public class %s {\n" +
-                                            "\n" +
-                                            "public void start(String str) {\n" +
-                                            "}\n" +
-                                            "\n" +
-                                            "public static void staticComesSecond(String[] args) {\n" +
-                                            "}\n" +
-                                            "\n" +
-                                            "int firstInt;\n" +
-                                            "static int notFirstStatic;\n" +
-                                            "final static String t = \"T\";\n" +
-                                            "\n" +
-                                            "}\n";
-  private static final String FORMATTED_SOURCE = "%s" +
-                                                 "public class %s {\n" +
-                                                 "\n" +
-                                                 "    public void start(String str) {\n" +
-                                                 "    }\n" +
-                                                 "\n" +
-                                                 "    public static void staticComesSecond(String[] args) {\n" +
-                                                 "    }\n" +
-                                                 "\n" +
-                                                 "    int firstInt;\n" +
-                                                 "    static int notFirstStatic;\n" +
-                                                 "    final static String t = \"T\";\n" +
-                                                 "\n" +
-                                                 "}\n";
+  private static final String TEST_SOURCE = """
+    %spublic class %s {
+
+    public void start(String str) {
+    }
+
+    public static void staticComesSecond(String[] args) {
+    }
+
+    int firstInt;
+    static int notFirstStatic;
+    final static String t = "T";
+
+    }
+    """;
+  private static final String FORMATTED_SOURCE = """
+    %spublic class %s {
+
+        public void start(String str) {
+        }
+
+        public static void staticComesSecond(String[] args) {
+        }
+
+        int firstInt;
+        static int notFirstStatic;
+        final static String t = "T";
+
+    }
+    """;
   private static final String TEMP_DIR_NAME = "dir";
   private PsiDirectory myWorkingDirectory;
 

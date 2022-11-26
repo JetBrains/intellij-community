@@ -58,8 +58,10 @@ public class HgConfigTest extends HgPlatformTest {
 
   public void testPushPathInClonedRepoWithDebugOption() throws IOException {
     cd(myChildRepo);
-    appendToHgrc(myChildRepo, "\n[ui]\n" +
-                              "debug=True");
+    appendToHgrc(myChildRepo, """
+
+      [ui]
+      debug=True""");
     checkDefaultPushPath();
   }
 
@@ -103,8 +105,10 @@ public class HgConfigTest extends HgPlatformTest {
 
   public void testLargeExtensionInClonedRepo() throws IOException {
     cd(myChildRepo);
-    appendToHgrc(myChildRepo, "\n[extensions]\n" +
-                              "largefiles =");
+    appendToHgrc(myChildRepo, """
+
+      [extensions]
+      largefiles =""");
     updateRepoConfig(myProject, myChildRepo);
     assertNotNull(HgUtil.getConfig(myProject, myChildRepo, "extensions", "largefiles"));
   }

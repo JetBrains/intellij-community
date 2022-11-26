@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -23,6 +23,8 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
@@ -40,10 +42,7 @@ import java.util.List;
 import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
-/**
- * @author Irina.Chernushina on 3/31/2016.
- */
-public class JsonPointerReferenceProvider extends PsiReferenceProvider {
+public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
   private final boolean myIsSchemaProperty;
 
   public JsonPointerReferenceProvider(boolean isSchemaProperty) {
@@ -155,8 +154,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
     }.getAllReferences());
   }
 
-  @Nullable
-  static PsiElement resolveForPath(PsiElement element, String text, boolean alwaysRoot) {
+  static @Nullable PsiElement resolveForPath(PsiElement element, String text, boolean alwaysRoot) {
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(text);
     VirtualFile schemaFile = CompletionUtil.getOriginalOrSelf(element.getContainingFile()).getVirtualFile();
@@ -189,15 +187,13 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
       myText = text;
     }
 
-    @NotNull
-    private static TextRange getRange(JsonValue element) {
+    private static @NotNull TextRange getRange(JsonValue element) {
       final TextRange range = element.getTextRange().shiftLeft(element.getTextOffset());
       return new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolveInner() {
+    public @Nullable PsiElement resolveInner() {
       final String id = JsonCachedValues.resolveId(myElement.getContainingFile(), myText);
       if (id == null) return null;
       return resolveForPath(myElement, "#" + id, false);
@@ -217,15 +213,13 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
       myFullPath = curPath;
     }
 
-    @NotNull
     @Override
-    public String getCanonicalText() {
+    public @NotNull String getCanonicalText() {
       return myFullPath;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolveInner() {
+    public @Nullable PsiElement resolveInner() {
       return resolveForPath(myElement, getCanonicalText(), false);
     }
 
@@ -277,12 +271,11 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
       else if (value instanceof JsonArray) {
         return AllIcons.Json.Array;
       }
-      return AllIcons.Nodes.Property;
+      return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
     }
   }
 
-  @NotNull
-  private static String prepare(String part) {
+  private static @NotNull String prepare(String part) {
     return part.endsWith("#/") ? part : StringUtil.trimEnd(part, '/');
   }
 }

@@ -1,4 +1,4 @@
-// "Make 'foo' static" "true-preview"
+// "Make 'foo()' static" "true-preview"
 interface I {
   void f<caret>oo() {
     System.out.println();

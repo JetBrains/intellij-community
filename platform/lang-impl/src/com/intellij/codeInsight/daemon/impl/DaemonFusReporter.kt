@@ -11,11 +11,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import kotlin.math.log10
 import kotlin.math.pow
 
 class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
-  var daemonStartTime = -1L
+  private var daemonStartTime = -1L
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
     daemonStartTime = System.currentTimeMillis()
@@ -23,6 +24,17 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
     val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()?.editor
+    val document = editor?.document
+
+    if (document != null) {
+      // Don't report 'finished' event in case of no changes in the document
+      val lastReportedTimestamp = document.getUserData(lastReportedDaemonFinishedTimestamp)
+      if (lastReportedTimestamp == document.modificationStamp) {
+        return
+      }
+      document.putUserData(lastReportedDaemonFinishedTimestamp, document.modificationStamp)
+    }
+
     val analyzer = (editor?.markupModel as? EditorMarkupModel)?.errorStripeRenderer as? TrafficLightRenderer
     val errorCounts = analyzer?.errorCounts
     val registrar = SeverityRegistrar.getSeverityRegistrar(project)
@@ -30,9 +42,9 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
     val errorCount = errorCounts?.getOrNull(errorIndex) ?: -1
     val warningCount = errorCounts?.getOrNull(warningIndex) ?: -1
-    val lines = editor?.document?.lineCount?.roundToOneSignificantDigit() ?: -1
+    val lines = document?.lineCount?.roundToOneSignificantDigit() ?: -1
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
-    val fileType = editor?.let { FileDocumentManager.getInstance().getFile(it.document)?.fileType }
+    val fileType = document?.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
 
     DaemonFusCollector.FINISHED.log(
       project,
@@ -49,6 +61,10 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val l = log10(toDouble()).toInt()          // 623 -> 2
     val p = 10.0.pow(l.toDouble()).toInt()     // 623 -> 100
     return (this - this % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
+  }
+
+  companion object {
+    val lastReportedDaemonFinishedTimestamp = Key<Long>("lastReportedDaemonFinishedTimestamp")
   }
 }
 

@@ -61,7 +61,7 @@ public class CompletionVariant {
 
   private boolean isScopeClassFinal(Class<?> scopeClass){
     for (final Scope myScopeClass : myScopeClasses) {
-      if (ReflectionUtil.isAssignable(myScopeClass.myClass, scopeClass) && myScopeClass.myIsFinalScope) {
+      if (ReflectionUtil.isAssignable(myScopeClass.aClass(), scopeClass) && myScopeClass.isFinalScope()) {
         return true;
       }
     }
@@ -72,7 +72,7 @@ public class CompletionVariant {
     boolean ret = false;
 
     for (final Scope myScopeClass : myScopeClasses) {
-      final Class<?> aClass = myScopeClass.myClass;
+      final Class<?> aClass = myScopeClass.aClass();
       if (ReflectionUtil.isAssignable(aClass, scopeClass)) {
         ret = true;
         break;
@@ -117,22 +117,22 @@ public class CompletionVariant {
   void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
                                final CompletionData completionData){
     for (final CompletionVariantItem ce : myCompletionsList) {
-      if(ce.myCompletion instanceof ElementFilter){
-        final ElementFilter filter = (ElementFilter)ce.myCompletion;
-        completionData.completeReference(reference, position, set, ce.myTailType, filter, this);
+      if(ce.completion() instanceof ElementFilter){
+        final ElementFilter filter = (ElementFilter)ce.completion();
+        completionData.completeReference(reference, position, set, ce.tailtype(), filter, this);
       }
     }
   }
 
   void addKeywords(Set<LookupElement> set, final CompletionData completionData) {
     for (final CompletionVariantItem ce : myCompletionsList) {
-      completionData.addKeywords(set, this, ce.myCompletion, ce.myTailType);
+      completionData.addKeywords(set, this, ce.completion(), ce.tailtype());
     }
   }
 
   boolean hasReferenceFilter(){
     for (final CompletionVariantItem item: myCompletionsList) {
-      if (item.myCompletion instanceof ElementFilter) {
+      if (item.completion() instanceof ElementFilter) {
         return true;
       }
     }
@@ -141,7 +141,7 @@ public class CompletionVariant {
 
   boolean hasKeywordCompletions(){
     for (final CompletionVariantItem item : myCompletionsList) {
-      if (!(item.myCompletion instanceof ElementFilter)) {
+      if (!(item.completion() instanceof ElementFilter)) {
         return true;
       }
     }
@@ -149,28 +149,10 @@ public class CompletionVariant {
   }
 
 
-  private static class Scope{
-    Class<?> myClass;
-    boolean myIsFinalScope;
-
-    Scope(Class<?> aClass, boolean isFinalScope){
-      myClass = aClass;
-      myIsFinalScope = isFinalScope;
-    }
+  private record Scope(Class<?> aClass, boolean isFinalScope) {
   }
 
-  private static class CompletionVariantItem{
-    public Object myCompletion;
-    public TailType myTailType;
-
-    CompletionVariantItem(Object completion, TailType tailtype){
-      myCompletion = completion;
-      myTailType = tailtype;
-    }
-
-    public String toString(){
-      return myCompletion.toString();
-    }
+  private record CompletionVariantItem(Object completion, TailType tailtype){
   }
 
   public String toString(){

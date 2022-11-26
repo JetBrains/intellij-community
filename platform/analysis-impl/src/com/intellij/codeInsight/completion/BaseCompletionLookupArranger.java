@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 
 public class BaseCompletionLookupArranger extends LookupArranger implements CompletionLookupArranger {
   private static final Logger LOG = Logger.getInstance(BaseCompletionLookupArranger.class);
@@ -344,21 +347,24 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   @NotNull
-  private synchronized Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup, boolean onExplicitAction) {
-    List<LookupElement> items = getMatchingItems();
-    Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(items));
+  private synchronized Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup,
+                                                                         boolean onExplicitAction) {
+    return computeWithSpan(TraceManager.INSTANCE.getTracer("codeCompletion"), "arrangeItems", span -> {
+      List<LookupElement> items = getMatchingItems();
+      Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(items));
 
-    sortedByRelevance = applyFinalSorter(sortedByRelevance);
+      sortedByRelevance = applyFinalSorter(sortedByRelevance);
 
-    LookupElement relevantSelection = findMostRelevantItem(sortedByRelevance);
-    List<LookupElement> listModel = isAlphaSorted() ?
-                                    sortByPresentation(items) :
-                                    fillModelByRelevance(lookup, new ReferenceOpenHashSet<>(items), sortedByRelevance, relevantSelection);
+      LookupElement relevantSelection = findMostRelevantItem(sortedByRelevance);
+      List<LookupElement> listModel = isAlphaSorted() ?
+                                      sortByPresentation(items) :
+                                      fillModelByRelevance(lookup, new ReferenceOpenHashSet<>(items), sortedByRelevance, relevantSelection);
 
-    int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
-    LOG.assertTrue(toSelect >= 0);
+      int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
+      LOG.assertTrue(toSelect >= 0);
 
-    return new Pair<>(listModel, toSelect);
+      return new Pair<>(listModel, toSelect);
+    });
   }
 
   // visible for plugins, see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008625980-Sorting-completions-in-provider

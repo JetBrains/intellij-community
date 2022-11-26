@@ -13,7 +13,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
-import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -27,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.SmartHashSet;
@@ -279,9 +279,9 @@ public final class InspectionEngine {
         };
         LocalInspectionTool tool = toolWrapper.getTool();
 
-        long inspectionStartTime = System.currentTimeMillis();
+        long inspectionStartTime = System.nanoTime();
         boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
-        long inspectionDuration = System.currentTimeMillis() - inspectionStartTime;
+        long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
         boolean needToReportStatsToQodana = (inspectionWasRun && !isOnTheFly);
         if (needToReportStatsToQodana) {
@@ -409,7 +409,7 @@ public final class InspectionEngine {
     Map<String, Boolean> resultsNoDialects = new HashMap<>();
     return ContainerUtil.filter(tools, tool -> {
       String language = tool.getLanguage();
-      if (language == null) return true;
+      if (language == null || language.isBlank() || "any".equals(language)) return true;
 
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
@@ -419,41 +419,7 @@ public final class InspectionEngine {
   }
 
   private static @NotNull Set<String> getDialectIdsSpecifiedForTool(@NotNull String langId, boolean applyToDialects) {
-    Language language = Language.findLanguageByID(langId);
-    Set<String> result;
-    if (language == null) {
-      // unknown language in plugin.xml, ignore
-      result = Collections.singleton(langId);
-    }
-    else if (language instanceof MetaLanguage) {
-      Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
-      result = new HashSet<>();
-      for (Language matchingLanguage : matchingLanguages) {
-        result.addAll(getLanguageWithDialects(matchingLanguage, applyToDialects));
-      }
-    }
-    else {
-      result = getLanguageWithDialects(language, applyToDialects);
-    }
-    return result;
-  }
-
-  public static @NotNull Set<String> getLanguageWithDialects(@NotNull Language language, boolean applyToDialects) {
-    List<Language> dialects = language.getDialects();
-    if (!applyToDialects || dialects.isEmpty()) return Collections.singleton(language.getID());
-
-    Set<String> result = new HashSet<>(1 + dialects.size());
-    result.add(language.getID());
-    addDialects(language, result);
-    return result;
-  }
-
-  private static void addDialects(@NotNull Language language, @NotNull Set<? super String> result) {
-    for (Language dialect : language.getDialects()) {
-      if (result.add(dialect.getID())) {
-        addDialects(dialect, result);
-      }
-    }
+    return ToolLanguageUtil.getAllMatchingLanguages(langId, applyToDialects);
   }
 
   public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {

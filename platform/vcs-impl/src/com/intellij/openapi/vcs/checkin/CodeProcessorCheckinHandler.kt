@@ -2,63 +2,66 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
-import com.intellij.ide.util.DelegatingProgressIndicator
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
 
-/**
- * [CheckinMetaHandler] is only implemented for correct execution order of [CheckinHandler]-s.
- * To allow running handlers provided by [CheckinHandlerFactory] before the ones provided by [VcsCheckinHandlerFactory].
- *
- * Should only be used in Commit Tool Window. Commit Dialog is not supported.
- *
- * @see com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl.getRegisteredCheckinHandlerFactories
- * @see com.intellij.vcs.commit.NonModalCommitWorkflowHandler.runAllHandlers
- */
 abstract class CodeProcessorCheckinHandler(
-  val commitPanel: CheckinProjectPanel
+  val project: Project
 ) : CheckinHandler(),
-    CheckinMetaHandler,
-    CommitCheck<CommitProblem> {
+    CommitCheck {
 
-  val project: Project get() = commitPanel.project
   val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
-  abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
+  protected open fun getProgressMessage(): @NlsContexts.ProgressText String? = null
+  protected abstract fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor
 
-  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
-    val processor = createCodeProcessor()
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
-    withContext(Dispatchers.Default) {
-      val noTextIndicator = NoTextIndicator(indicator)
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    val sink = coroutineContext.progressSink
+    getProgressMessage()?.let {
+      sink?.text(it)
+    }
 
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        { processor.processFilesUnderProgress(noTextIndicator) },
-        noTextIndicator
-      )
+    val affectedFiles = commitInfo.committedVirtualFiles
+
+    withContext(Dispatchers.Default + noTextSinkContext(sink)) {
+      // TODO suspending code processor
+      val processor = readAction { createCodeProcessor(affectedFiles) }
+      coroutineToIndicator {
+        processor.processFilesUnderProgress(ProgressManager.getGlobalProgressIndicator())
+      }
     }
     FileDocumentManager.getInstance().saveAllDocuments()
 
     return null
   }
-
-  /**
-   * Does nothing as no problem is reported in [runCheck].
-   */
-  override fun showDetails(problem: CommitProblem) = Unit
-
-  /**
-   * Do nothing - interface is implemented to override execution order.
-   */
-  override fun runCheckinHandlers(runnable: Runnable) = runnable.run()
 }
 
-internal class NoTextIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
-  override fun setText(text: String?) = Unit
+internal fun noTextSinkContext(sink: ProgressSink?): CoroutineContext {
+  if (sink == null) {
+    return EmptyCoroutineContext
+  }
+  else {
+    return NoTextProgressSink(sink).asContextElement()
+  }
+}
+
+internal class NoTextProgressSink(private val sink: ProgressSink) : ProgressSink {
+
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    sink.update(text = null, details, fraction)
+  }
 }

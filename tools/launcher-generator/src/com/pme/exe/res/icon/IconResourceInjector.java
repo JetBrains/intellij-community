@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package com.pme.exe.res.icon;
 
 import com.pme.exe.Bin;
 import com.pme.exe.res.*;
+import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Sergey Zhulin
@@ -30,70 +32,109 @@ import java.util.ArrayList;
  */
 public class IconResourceInjector {
 
-  public void injectIcon(File file, DirectoryEntry root, String iconId) throws IOException {
-    IconFile iconFile = new IconFile(file);
-    iconFile.read();
+  public static void injectIcon(InputStream stream, DirectoryEntry root, int iconId) throws IOException {
+    IconFile iconFile = new IconFile();
+    iconFile.read(new OffsetTrackingInputStream(new DataInputStream(stream)));
 
-    //updateGroupIcon(root, iconId, iconFile);
+    long languageId = getLanguage(root);
 
-    DirectoryEntry iconsDir = root.findSubDir("IRD3");
-    Level iconFileLevel = (Level) iconFile.getMember("Level");
-    ArrayList icons = iconFileLevel.getMembers();
-    if (icons.size() == iconsDir.getSubDirs().size()) {
-      for (int i = 0; i < icons.size(); i++) {
-        DirectoryEntry subDirIcon = iconsDir.findSubDir("IRD" + (i+1));
-        IconDirectory iconDirectory = (IconDirectory) iconFileLevel.getMembers().get(i);
-        RawResource rawResource = subDirIcon.getRawResource(0);
-        rawResource.setBytes(iconDirectory.getRawBytes());
+    DirectoryEntry iconsDir = root.findSubDir(DirectoryEntry.RT_ICON);
+    Bin.ArrayOfBins<IconDirectory> sourceIcons = iconFile.getIcons();
+    if (sourceIcons.size() < iconsDir.getSubDirs().size()) {
+      throw new IOException(
+        String.format("Number of icons in template file '%d' is larger than in provided icon file '%d'",
+                      iconsDir.getSubDirs().size(), sourceIcons.size()));
+    }
+
+    updateGroupIcon(root, iconId, iconFile);
+
+    for (int i = 0; i < sourceIcons.size(); i++) {
+      IconDirectory iconDirectory = sourceIcons.get(i);
+      DirectoryEntry subDirIcon = iconsDir.findSubDir(i + 1);
+      if (subDirIcon == null) {
+        subDirIcon = insertIcon(iconsDir, i+1, languageId);
+      }
+      subDirIcon.getRawResource().setBytes(iconDirectory.getBytes().getBytes());
+    }
+  }
+
+  private static long getLanguage(DirectoryEntry root) {
+    // Language ID is Name of third level entries
+    Set<Long> languages = new HashSet<>();
+
+    // First search across icons only
+    {
+      DirectoryEntry first = root.findSubDir(DirectoryEntry.RT_ICON);
+      for (DirectoryEntry second : first.getSubDirs()) {
+        for (DataEntry third : second.getData()) {
+          languages.add(third.getLanguage().getValue());
+        }
       }
     }
-    else {
-      throw new IOException("Count of icons in template file doesn't match the count of icons in provided icon file");
+    if (languages.size() == 1) {
+      return languages.iterator().next();
     }
+
+    // Then across whole file
+    for (DirectoryEntry first : root.getSubDirs()) {
+      for (DirectoryEntry second : first.getSubDirs()) {
+        for (DataEntry third : second.getData()) {
+          languages.add(third.getLanguage().getValue());
+        }
+      }
+    }
+    if (languages.size() != 1) {
+      throw new IllegalStateException("There should be only one language in resources, but found: " + languages);
+    }
+    return languages.iterator().next();
   }
 
-  private void updateGroupIcon(DirectoryEntry root, String iconId, IconFile iconFile) throws IOException {
-    DirectoryEntry subDirGroupIcon = root.findSubDir("IRD14").findSubDir(iconId);
-    RawResource groupIcon = subDirGroupIcon.getRawResource(0);
+  private static void updateGroupIcon(DirectoryEntry root, int iconId, IconFile iconFile) throws IOException {
+    DirectoryEntry subDirGroupIcon = root.findSubDir(DirectoryEntry.RT_GROUP_ICON).findSubDir(iconId);
+    RawResource groupIcon = subDirGroupIcon.getRawResource();
 
-    Bin.Value idCount = iconFile.getStructureMember("Header").getValueMember("idCount");
-
-    GroupIconResource groupIconResource = new GroupIconResource(idCount);
-    groupIconResource.copyFrom(iconFile);
-    Level level = (Level) groupIconResource.getMember("Level");
-    ArrayList directories = level.getMembers();
-    for (int i = 0; i < directories.size(); ++i) {
-      GroupIconResourceDirectory grpDir = (GroupIconResourceDirectory) directories.get(i);
-      grpDir.getValueMember("dwId").setValue(i + 1);
+    GroupIconResource gir = new GroupIconResource();
+    gir.getHeader().copyFrom(iconFile.getHeader());
+    Bin.ArrayOfBins<IconDirectory> sourceIcons = iconFile.getIcons();
+    for (int i = 0; i < sourceIcons.size(); i++) {
+      IconDirectory icon = sourceIcons.get(i);
+      GroupIconResourceDirectory bin = new GroupIconResourceDirectory();
+      bin.copyFrom(icon);
+      bin.getDwId().setValue(i + 1);
+      gir.getIcons().addBin(bin);
     }
-    long size = groupIconResource.sizeInBytes();
-    ByteArrayOutputStream bytesStream = new ByteArrayOutputStream((int) size);
+
+    long size = gir.sizeInBytes();
+    ByteArrayOutputStream bytesStream = new ByteArrayOutputStream((int)size);
     DataOutputStream stream = new DataOutputStream(bytesStream);
-    groupIconResource.write(stream);
-    groupIcon.getBytes().setBytes(bytesStream.toByteArray());
+    gir.write(stream);
+    groupIcon.setBytes(bytesStream.toByteArray());
   }
 
-  private void insertIcon(DirectoryEntry iconsDir, IconDirectory iconDirectory, int index) {
-    EntryDescription entryDescription = new EntryDescription();
-    Bin.Value name = entryDescription.getValueMember("Name");
-    name.setValue(index + 1);
+  private static DirectoryEntry insertIcon(DirectoryEntry level1, int index, long languageId) {
+    // We should construct and correctly add second and third level entries to a resource
+    // Second level contains ID of icon
+    // Third level contains languageId and raw data
 
-    DirectoryEntry entryDirIcon2 = new DirectoryEntry(iconsDir.getSection(), entryDescription, name.getValue());
-    iconsDir.insertDirectoryEntry(index, entryDirIcon2);
-    iconsDir.addIdEntry(entryDescription);
+    ResourceSectionReader section = level1.getSection();
 
-    EntryDescription entry409 = new EntryDescription();
-    Bin.Value name409 = entry409.getValueMember("Name");
-    name409.setValue(0x409);
+    EntryDescription description2 = new EntryDescription();
+    description2.getNameW().setValue(index);
+    DirectoryEntry level2 = new DirectoryEntry(section, description2, index);
 
-    entryDirIcon2.addIdEntry(entry409);
+    level1.addDirectoryEntry(level2);
+    level1.addIdEntry(description2);
 
-    Bin.Value offset = entry409.getValueMember("OffsetToData");
-    DataEntry dataEntry = new DataEntry(entryDirIcon2.getSection(), offset);
+    EntryDescription description3 = new EntryDescription();
+    description3.getNameW().setValue(languageId);
+    Bin.DWord offset = description3.getOffsetToData();
+    DataEntry level3 = new DataEntry(section, offset, description3.getNameW());
 
-    entryDirIcon2.insertDataEntry(index, dataEntry);
-    dataEntry.insertRawData(index);
-    RawResource rawRes = dataEntry.getRawResource();
-    rawRes.setBytes(iconDirectory.getRawBytes());
+    level2.addIdEntry(description3);
+    level2.addDataEntry(level3);
+
+    level3.initRawData();
+
+    return level2;
   }
 }

@@ -21,9 +21,6 @@ import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-/**
- * @author peter
- */
 public class PsiAnchorTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testSingleTokenAnchor() {

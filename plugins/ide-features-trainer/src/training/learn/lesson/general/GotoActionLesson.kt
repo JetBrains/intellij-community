@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general
 
 import com.intellij.ide.IdeBundle
@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ui.UIUtil
 import training.dsl.*
 import training.learn.LearnBundle
@@ -33,7 +33,7 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
         text(LessonsBundle.message("goto.action.use.find.action.1",
                                    LessonUtil.actionName(it), action(it)))
 
-        if (SystemInfo.isMacOSMojave) {
+        if (SystemInfoRt.isMac) {
           text(LessonsBundle.message("goto.action.mac.workaround", LessonUtil.actionName(it), FIND_ACTION_WORKAROUND))
         }
 
@@ -127,8 +127,6 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
   }
 
   private fun isLineNumbersShown() = EditorSettingsExternalizable.getInstance().isLineNumbersShown
-
-  override val suitableTips = listOf("find_action", "GoToAction")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.search.everywhere"),

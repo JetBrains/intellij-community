@@ -39,6 +39,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testYieldLambda() { doParserTest("yield () -> {};"); }
   public void testYieldAssignment() { doParserTest("yield = 10;"); }
   public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
+  public void testYieldWithTextBlock() { doParserTest("yield \"\"\"foo\"\"\""); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
   public void testContinueNormal1() { doParserTest("continue LABEL;"); }
@@ -149,6 +150,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchRulesWithPattern6() { doParserTest("case Integer i when true -> { }"); }
   public void testSwitchRulesWithPattern7() { doParserTest("case R(int i) when true -> {}"); }
   public void testSwitchRulesWithPattern8() { doParserTest("case R(int i) when a < b -> {}"); }
+  public void testSwitchRulesWithPattern9() { doParserTest("case A when when when.foo() -> {}"); }
   public void testSwitchRulesWithPatternIncomplete0() { doParserTest("case Integer i &&  -> { }"); }
   public void testSwitchRulesWithPatternIncomplete1() { doParserTest("case (Integer i  -> { }"); }
   public void testSwitchRulesWithPatternIncomplete2() { doParserTest("case Integer i, -> { }"); }

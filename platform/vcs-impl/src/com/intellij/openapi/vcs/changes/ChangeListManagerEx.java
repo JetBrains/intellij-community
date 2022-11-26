@@ -39,7 +39,9 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes);
 
   @NotNull
-  public abstract LocalChangeList addChangeList(@NotNull @NonNls String name, @Nullable @NonNls String comment, @Nullable ChangeListData data);
+  public abstract LocalChangeList addChangeList(@NotNull @NonNls String name,
+                                                @Nullable @NonNls String comment,
+                                                @Nullable ChangeListData data);
 
   public abstract boolean editChangeListData(@NotNull @NonNls String name, @Nullable ChangeListData newData);
 
@@ -49,6 +51,11 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   public abstract void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic);
 
+  /**
+   * Add unversioned files into VCS under modal progress dialog
+   *
+   * @see com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+   */
   public abstract void addUnversionedFiles(@Nullable LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
 
   /**
@@ -57,20 +64,25 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   @RequiresEdt
   public abstract void blockModalNotifications();
+
   @RequiresEdt
   public abstract void unblockModalNotifications();
 
   /**
-   * Temporarily disable CLM update
+   * Temporarily disable CLM update.
    * For example, to preserve FilePath->ChangeList mapping during "stash-do_smth-unstash" routine.
    */
   public abstract void freeze(@NotNull @Nls String reason);
+
   public abstract void unfreeze();
 
   /**
-   * Simulate synchronous task execution.
-   * Do not execute such methods from EDT - cause CLM update can trigger synchronous VFS refresh,
-   * that is waiting for EDT.
+   * Wait until all current pending tasks are finished.
+   * <p>
+   * Do not execute this method while holding the read lock - it might be a long operation,
+   * and CLM update can trigger synchronous VFS refresh that needs an EDT callback (causing a deadlock).
+   *
+   * @see #invokeAfterUpdate(boolean, Runnable)
    */
   @RequiresBackgroundThread
   public abstract void waitForUpdate();

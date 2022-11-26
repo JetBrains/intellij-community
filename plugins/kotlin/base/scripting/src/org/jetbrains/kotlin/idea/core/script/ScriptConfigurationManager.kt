@@ -12,7 +12,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.isDirectory
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.psi.KtFile
@@ -22,7 +24,7 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.isDirectory
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
@@ -53,6 +55,9 @@ internal class IdeScriptDependenciesProvider(project: Project) : ScriptDependenc
 }
 
 /**
+ * **Please, note** that [ScriptConfigurationManager] should not be used directly.
+ * Instead, consider using [org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptImplementationSwitcher].
+ *
  * Facade for loading and caching Kotlin script files configuration.
  *
  * This service also starts indexing of new dependency roots and runs highlighting
@@ -102,6 +107,12 @@ interface ScriptConfigurationManager {
 
     fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope
 
+    fun getScriptDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile>
+    fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
+
+    fun getScriptSdkDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile>
+    fun getScriptSdkDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
+
     fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope
     fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope
     fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile>
@@ -127,14 +138,6 @@ interface ScriptConfigurationManager {
 
         fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> = roots.mapNotNull { classpathEntryToVfs(it.toPath()) }
 
-        // TODO: report this somewhere, but do not throw: assert(res != null, { "Invalid classpath entry '$this': exists: ${exists()}, is directory: $isDirectory, is file: $isFile" })
-        fun classpathEntryToVfs(path: Path): VirtualFile? = when {
-            path.notExists() -> null
-            path.isDirectory() -> StandardFileSystems.local()?.findFileByPath(path.pathString)
-            path.isRegularFile() -> StandardFileSystems.jar()?.findFileByPath(path.pathString + URLUtil.JAR_SEPARATOR)
-            else -> null
-        }
-
         @TestOnly
         fun updateScriptDependenciesSynchronously(file: PsiFile) {
             // TODO: review the usages of this method
@@ -146,7 +149,54 @@ interface ScriptConfigurationManager {
 
         @TestOnly
         fun clearCaches(project: Project) {
+            ClasspathToVfsConverter.clearCaches()
             defaultScriptingSupport(project).updateScriptDefinitionsReferences()
+        }
+    }
+}
+
+object ClasspathToVfsConverter {
+
+    private enum class FileType {
+        NOT_EXISTS, DIRECTORY, REGULAR_FILE, UNKNOWN
+    }
+
+    private val cache = ConcurrentHashMap<String, Pair<FileType, VirtualFile?>>()
+
+    private val Path.fileType: FileType get(){
+        return when {
+            notExists() -> FileType.NOT_EXISTS
+            isDirectory() -> FileType.DIRECTORY
+            isRegularFile() -> FileType.REGULAR_FILE
+            else -> FileType.UNKNOWN
+        }
+    }
+
+    fun clearCaches() = cache.clear()
+
+    // TODO: report this somewhere, but do not throw: assert(res != null, { "Invalid classpath entry '$this': exists: ${exists()}, is directory: $isDirectory, is file: $isFile" })
+    fun classpathEntryToVfs(path: Path): VirtualFile? {
+        val key = path.pathString
+        val newType = path.fileType
+
+        fun compute(filePath: String): Pair<FileType, VirtualFile?> {
+            return newType to when(newType) {
+                FileType.NOT_EXISTS -> null
+                FileType.DIRECTORY -> StandardFileSystems.local()?.refreshAndFindFileByPath(filePath)
+                FileType.REGULAR_FILE -> StandardFileSystems.jar()?.refreshAndFindFileByPath(filePath + URLUtil.JAR_SEPARATOR)
+                FileType.UNKNOWN -> null
+            }
+        }
+
+        val (oldType, oldVFile) = cache.computeIfAbsent(key, ::compute)
+
+        if (oldType != newType
+            || oldVFile?.isValid == false
+            || oldVFile == null && (oldType == FileType.DIRECTORY || oldType == FileType.REGULAR_FILE)
+        ) {
+            return cache.compute(key) { k, _ -> compute(k) }?.second
+        } else {
+            return oldVFile
         }
     }
 }

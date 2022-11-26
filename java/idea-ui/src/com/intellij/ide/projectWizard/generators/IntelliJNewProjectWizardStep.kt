@@ -9,11 +9,15 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logM
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
-import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.AbstractNewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardBaseData
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.observable.util.bindBooleanStorage
+import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -21,12 +25,14 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
   AbstractNewProjectWizardStep(parent), IntelliJNewProjectWizardData
@@ -38,7 +44,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
   final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
   final override val addSampleCodeProperty = propertyGraph.property(true)
-    .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+    .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
   final override var sdk by sdkProperty
   final override var moduleName by moduleNameProperty
@@ -92,7 +98,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         row(UIBundle.message("label.project.wizard.new.project.module.name")) {
           textField()
             .bindText(moduleNameProperty)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .validationOnInput { validateModuleName() }
             .validationOnApply { validateModuleName() }
             .whenTextChangedFromUi { logModuleNameChanged() }
@@ -100,9 +106,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         row(UIBundle.message("label.project.wizard.new.project.content.root")) {
           val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.content.root.title")
           val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor) { getPresentablePath(it.path) }
+            .withPathToTextConvertor(::getPresentablePath)
+            .withTextToPathConvertor(::getCanonicalPath)
+          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
             .bindText(contentRootProperty.toUiPathProperty())
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .validationOnApply { validateContentRoot() }
             .whenTextChangedFromUi { userDefinedContentRoot = true }
             .whenTextChangedFromUi { logContentRootChanged() }
@@ -110,9 +118,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
           val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.module.file.location.title")
           val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor) { getPresentablePath(it.path) }
+            .withPathToTextConvertor(::getPresentablePath)
+            .withTextToPathConvertor(::getCanonicalPath)
+          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
             .bindText(moduleFileLocationProperty.toUiPathProperty())
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .validationOnApply { validateModuleFileLocation() }
             .whenTextChangedFromUi { userDefinedModuleFileLocation = true }
             .whenTextChangedFromUi { logModuleFileLocationChanged() }

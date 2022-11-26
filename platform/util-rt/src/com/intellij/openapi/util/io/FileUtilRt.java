@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -10,14 +9,12 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -84,138 +81,6 @@ public class FileUtilRt {
     @NotNull
     String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash);
     boolean isSymlink(@NotNull CharSequence path);
-  }
-
-  /* NIO-reflection initialization placed in a separate class for lazy loading */
-  @ReviseWhenPortedToJDK("7")
-  private static final class NIOReflect {
-    static final boolean IS_AVAILABLE;
-
-    static Object toPath(File file) throws InvocationTargetException, IllegalAccessException {
-      return ourFileToPathMethod.invoke(file);
-    }
-
-    static void deleteRecursively(Object path, @Nullable Consumer<Object> callback) throws InvocationTargetException, IllegalAccessException {
-      try {
-        ourCallback.set(callback);
-        ourFilesWalkMethod.invoke(null, path, ourDeletionVisitor);
-      }
-      catch (InvocationTargetException e) {
-        if (!ourNoSuchFileExceptionClass.isInstance(e.getCause())) {
-          throw e;
-        }
-      }
-      finally {
-        ourCallback.remove();
-      }
-    }
-
-    private static Method ourFilesDeleteIfExistsMethod;
-    private static Method ourFilesWalkMethod;
-    private static Method ourFileToPathMethod;
-    private static Method ourPathToFileMethod;
-    private static Method ourAttributesIsOtherMethod;
-    private static Object ourDeletionVisitor;
-    private static Class<?> ourNoSuchFileExceptionClass;
-    private static Class<?> ourAccessDeniedExceptionClass;
-    private static final ThreadLocal<Consumer<Object>> ourCallback = new ThreadLocal<Consumer<Object>>();
-
-    static {
-      boolean initSuccess = false;
-      try {
-        Class<?> pathClass = Class.forName("java.nio.file.Path");
-        Class<?> visitorClass = Class.forName("java.nio.file.FileVisitor");
-        Class<?> filesClass = Class.forName("java.nio.file.Files");
-        ourNoSuchFileExceptionClass = Class.forName("java.nio.file.NoSuchFileException");
-        ourAccessDeniedExceptionClass = Class.forName("java.nio.file.AccessDeniedException");
-        ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
-        ourPathToFileMethod = pathClass.getMethod("toFile");
-        ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
-        ourAttributesIsOtherMethod = Class.forName("java.nio.file.attribute.BasicFileAttributes").getDeclaredMethod("isOther");
-        ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
-
-        final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
-        final Object Result_Skip = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("SKIP_SUBTREE").get(null);
-
-        ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
-          @Override
-          public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (args.length == 2) {
-              String methodName = method.getName();
-              Object second = args[1];
-              if (second instanceof Throwable) {
-                if (SystemInfoRt.isWindows && "visitFileFailed".equals(methodName) && ourNoSuchFileExceptionClass.isInstance(second)) {
-                  performDelete(args[0]);  // could be an aimless junction
-                }
-                else {
-                  throw (Throwable)second;
-                }
-              }
-              else if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
-                Consumer<Object> consumer = ourCallback.get();
-                if (consumer != null) consumer.consume(args[0]);
-                performDelete(args[0]);
-              }
-              else if (SystemInfoRt.isWindows && "preVisitDirectory".equals(methodName)) {
-                boolean notDirectory = false;
-                try {
-                  notDirectory = Boolean.TRUE.equals(ourAttributesIsOtherMethod.invoke(second));
-                }
-                catch (Throwable ignored) { }
-                if (notDirectory) {  // probably an NTFS reparse point
-                  performDelete(args[0]);
-                  return Result_Skip;
-                }
-              }
-            }
-            return Result_Continue;
-          }
-
-          private void performDelete(Object fileObject) throws IOException {
-            for (int attempt = MAX_FILE_IO_ATTEMPTS; attempt > 0; attempt--) {
-              try {
-                //Files.deleteIfExists(file);
-                ourFilesDeleteIfExistsMethod.invoke(null, fileObject);
-                break;
-              }
-              catch (InvocationTargetException e) {
-                Throwable cause = e.getCause();
-                if (!(cause instanceof IOException)) {
-                  throw new IllegalStateException(e);
-                }
-
-                if (!SystemInfoRt.isWindows || attempt == 1) {
-                  throw (IOException)cause;
-                }
-
-                if (ourAccessDeniedExceptionClass.isInstance(cause)) {
-                  // a file could be read-only, then fallback to legacy java.io API helps
-                  try {
-                    File file = (File)ourPathToFileMethod.invoke(fileObject);
-                    if (file.delete() || !file.exists()) {
-                      break;
-                    }
-                  }
-                  catch (Throwable ignored) { }
-                }
-              }
-              catch (IllegalAccessException e) {
-                throw new IllegalStateException(e);
-              }
-
-              try { Thread.sleep(10); }
-              catch (InterruptedException ignored) { }
-            }
-          }
-        });
-        initSuccess = true;
-      }
-      catch (Throwable ignored) {
-        logger().info("Was not able to detect NIO API");
-      }
-
-      IS_AVAILABLE = initSuccess;
-    }
   }
 
   /**
@@ -896,54 +761,103 @@ public class FileUtilRt {
   }
 
   /**
-   * <b>IMPORTANT</b>: the method is not symlinks- or junction-aware when invoked on Java 6 or earlier.
-   *
    * @param file file or directory to delete
    * @return {@code true} if the file did not exist or was successfully deleted
    */
   public static boolean delete(@NotNull File file) {
-    if (NIOReflect.IS_AVAILABLE) {
+    try {
+      deleteRecursively(file.toPath());
+      return true;
+    }
+    catch (IOException e) {
+      return false;
+    }
+    catch (Exception e) {
+      logger().info(e);
+      return false;
+    }
+  }
+
+  public static void deleteRecursively(@NotNull Path path) throws IOException {
+    deleteRecursively(path, null);
+  }
+
+  static void deleteRecursively(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final Consumer<Path> callback) throws IOException {
+    if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+      return;
+    }
+
+    try {
+      Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          if (SystemInfoRt.isWindows && attrs.isOther()) {
+            // probably an NTFS reparse point
+            doDelete(dir);
+            return FileVisitResult.SKIP_SUBTREE;
+          }
+          else {
+            return FileVisitResult.CONTINUE;
+          }
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          if (callback != null) callback.consume(file);
+          doDelete(file);
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+          if (callback != null) callback.consume(dir);
+          doDelete(dir);
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+          if (SystemInfoRt.isWindows && exc instanceof NoSuchFileException) {
+            // could be an aimless junction
+            doDelete(file);
+            return FileVisitResult.CONTINUE;
+          }
+          else {
+            throw exc;
+          }
+        }
+      });
+    }
+    catch (NoSuchFileException ignored) { }
+  }
+
+  private static void doDelete(Path path) throws IOException {
+    for (int attempt = MAX_FILE_IO_ATTEMPTS; attempt > 0; attempt--) {
       try {
-        deleteRecursivelyNIO(NIOReflect.toPath(file), null);
-        return true;
+        Files.deleteIfExists(path);
+        return;
       }
       catch (IOException e) {
-        return false;
-      }
-      catch (Exception e) {
-        logger().info(e);
-        return false;
-      }
-    }
-    else {
-      return deleteRecursively(file);
-    }
-  }
+        if (!SystemInfoRt.isWindows || attempt == 1) {
+          throw e;
+        }
 
-  static void deleteRecursivelyNIO(@NotNull Object path, @Nullable Consumer<Object> callback) throws IOException {
-    try {
-      NIOReflect.deleteRecursively(path, callback);
-    }
-    catch (InvocationTargetException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof IOException) throw (IOException)cause;
-      if (cause instanceof RuntimeException) throw (RuntimeException)cause;
-      throw new IllegalStateException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  private static boolean deleteRecursively(@NotNull File file) {
-    File[] files = file.listFiles();
-    if (files != null) {
-      for (File child : files) {
-        if (!deleteRecursively(child)) return false;
+        //noinspection InstanceofCatchParameter
+        if (e instanceof AccessDeniedException) {
+          // a file could be read-only, then fallback to legacy java.io API helps
+          try {
+            File file = path.toFile();
+            if (file.delete() || !file.exists()) {
+              break;
+            }
+          }
+          catch (Throwable ignored) { }
+        }
       }
-    }
 
-    return deleteFile(file);
+      try { Thread.sleep(10); }
+      catch (InterruptedException ignored) { }
+    }
   }
 
   public interface RepeatableIOOperation<T, E extends Throwable> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -64,7 +64,7 @@ object RestrictedRetentionForExpressionAnnotationFactory : KotlinIntentionAction
 
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val element = element ?: return
-            val added = element.addAnnotationEntry(KtPsiFactory(element).createAnnotationEntry(sourceRetentionAnnotation))
+            val added = element.addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry(sourceRetentionAnnotation))
             ShortenReferences.DEFAULT.process(added)
         }
     }
@@ -78,7 +78,7 @@ object RestrictedRetentionForExpressionAnnotationFactory : KotlinIntentionAction
 
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val retentionAnnotation = element ?: return
-            val psiFactory = KtPsiFactory(retentionAnnotation)
+            val psiFactory = KtPsiFactory(project)
             val added = if (retentionAnnotation.valueArgumentList == null) {
                 retentionAnnotation.add(psiFactory.createCallArguments("($sourceRetention)")) as KtValueArgumentList
             } else {

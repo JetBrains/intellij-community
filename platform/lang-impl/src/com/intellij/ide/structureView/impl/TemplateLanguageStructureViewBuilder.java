@@ -32,9 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStructureViewBuilder {
 
   @NotNull

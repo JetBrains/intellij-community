@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions.onSave;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -15,6 +15,11 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
   protected static final ExtensionPointName<DefaultsProvider>
     EP_NAME = ExtensionPointName.create("com.intellij.formatOnSaveOptions.defaultsProvider");
 
+  /**
+   * By default, the 'Reformat code' and 'Optimize imports' check boxes are unchecked on the 'Actions on Save' page, unless implementations
+   * of this interface specify a different behavior. In other words, this extension point allows having 'Reformat code' and/or
+   * 'Optimize imports' enabled out-of-the-box for the specified file types.
+   */
   public interface DefaultsProvider {
     default @NotNull Collection<@NotNull FileType> getFileTypesFormattedOnSaveByDefault() {
       return Collections.emptyList();
@@ -132,7 +137,7 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
     myState.mySelectedFileTypes.clear();
   }
 
-  void setRunForSelectedFileTypes(@NotNull Collection<@NotNull FileType> fileTypes) {
+  void setRunForSelectedFileTypes(@NotNull Collection<? extends @NotNull FileType> fileTypes) {
     myState.myAllFileTypesSelected = false;
     myState.mySelectedFileTypes.clear();
     for (FileType fileType : fileTypes) {

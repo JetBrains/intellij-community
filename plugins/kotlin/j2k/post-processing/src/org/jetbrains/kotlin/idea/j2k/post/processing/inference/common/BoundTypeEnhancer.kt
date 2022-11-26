@@ -7,30 +7,30 @@ import org.jetbrains.kotlin.types.KotlinType
 
 abstract class BoundTypeEnhancer {
     abstract fun enhance(
-      expression: KtExpression,
-      boundType: BoundType,
-      inferenceContext: InferenceContext
+        expression: KtExpression,
+        boundType: BoundType,
+        inferenceContext: InferenceContext
     ): BoundType
 
     abstract fun enhanceKotlinType(
-      type: KotlinType,
-      boundType: BoundType,
-      allowLowerEnhancement: Boolean,
-      inferenceContext: InferenceContext
+        type: KotlinType,
+        boundType: BoundType,
+        allowLowerEnhancement: Boolean,
+        inferenceContext: InferenceContext
     ): BoundType
 
     object ID : BoundTypeEnhancer() {
         override fun enhance(
-          expression: KtExpression,
-          boundType: BoundType,
-          inferenceContext: InferenceContext
+            expression: KtExpression,
+            boundType: BoundType,
+            inferenceContext: InferenceContext
         ): BoundType = boundType
 
         override fun enhanceKotlinType(
-          type: KotlinType,
-          boundType: BoundType,
-          allowLowerEnhancement: Boolean,
-          inferenceContext: InferenceContext
+            type: KotlinType,
+            boundType: BoundType,
+            allowLowerEnhancement: Boolean,
+            inferenceContext: InferenceContext
         ): BoundType = boundType
     }
 }

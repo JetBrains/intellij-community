@@ -10,10 +10,6 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntEnumEditor extends PropertyEditor<Integer> {
   private JComboBox myCbx;
   private final Pair[] myPairs;

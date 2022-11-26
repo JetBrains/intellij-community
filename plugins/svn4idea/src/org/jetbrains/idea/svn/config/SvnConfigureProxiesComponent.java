@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -176,29 +173,35 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     result.add(new DumbAwareAction(SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.text.copy"),
                                    SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.description.copy"),
-      PlatformIcons.COPY_ICON) {
-        {
-            registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
-        }
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent event) {
-          // apply - for update of editable object
-          try {
-            getSelectedConfigurable().apply();
-          } catch (ConfigurationException e) {
-            // suppress & wait for OK
-          }
-          final ProxyGroup selectedGroup = (ProxyGroup) getSelectedObject();
-          if (selectedGroup != null) {
-            addGroup(selectedGroup);
-          }
-        }
+                                   PlatformIcons.COPY_ICON) {
+      {
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
+      }
 
-        @Override
-        public void update(@NotNull AnActionEvent event) {
-            super.update(event);
-            event.getPresentation().setEnabled(getSelectedObject() != null);
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        // apply - for update of editable object
+        try {
+          getSelectedConfigurable().apply();
         }
+        catch (ConfigurationException e) {
+          // suppress & wait for OK
+        }
+        final ProxyGroup selectedGroup = (ProxyGroup)getSelectedObject();
+        if (selectedGroup != null) {
+          addGroup(selectedGroup);
+        }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent event) {
+        event.getPresentation().setEnabled(getSelectedObject() != null);
+      }
     });
     return result;
   }

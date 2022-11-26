@@ -149,8 +149,13 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
     }
 
     BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor) -> {
+      int textLength = foundFile.getTextLength();
+      if (textLength == -1) {
+        // sometime some crazy stuff is returned (EA-248725)
+        return Pair.<IdentifierHighlighterPass, Pair<TextRange, TextRange>>create(null, null);
+      }
       IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
-        createHighlightingPass(foundFile, newEditor, TextRange.from(0, foundFile.getTextLength()));
+        createHighlightingPass(foundFile, newEditor, TextRange.from(0, textLength));
       if (pass != null) {
         pass.doCollectInformation();
       }

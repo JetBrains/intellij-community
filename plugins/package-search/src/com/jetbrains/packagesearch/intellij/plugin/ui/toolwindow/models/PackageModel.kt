@@ -79,11 +79,7 @@ internal sealed class PackageModel(
             ) = coroutineScope {
                 val remoteVersions = async { evaluateRemoteVersions(remoteInfo, normalizer) }
                 val latestInstalledVersion = async {
-                    usageInfo.asFlow()
-                        .map { it.declaredVersion }
-                        .map { normalizer.parse(it) }
-                        .toList()
-                        .maxOrNull()
+                    usageInfo.map { it.declaredVersion }.maxOfOrNull { normalizer.parse(it) }
                         ?: error("An installed package must always have at least one usage")
                 }
                 val declaredVersions = async {

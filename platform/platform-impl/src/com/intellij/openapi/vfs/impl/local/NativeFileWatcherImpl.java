@@ -143,7 +143,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     String name = null;
-    if (SystemInfo.isWindows) {
+    if (SystemInfo.isWindows && (CpuArch.isIntel64() || CpuArch.isArm64())) {
       name = "fsnotifier.exe";
     }
     else if (SystemInfo.isMac) {
@@ -260,7 +260,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private static List<String> screenUncRoots(List<String> roots, List<String> ignored) {
+  private static List<String> screenUncRoots(List<String> roots, List<? super String> ignored) {
     List<String> filtered = null;
     for (int i = 0; i < roots.size(); i++) {
       String root = roots.get(i);
@@ -436,26 +436,11 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
 
       switch (op) {
-        case STATS:
-        case CHANGE:
-          myNotificationSink.notifyDirtyPath(path);
-          break;
-
-        case CREATE:
-        case DELETE:
-          myNotificationSink.notifyPathCreatedOrDeleted(path);
-          break;
-
-        case DIRTY:
-          myNotificationSink.notifyDirtyDirectory(path);
-          break;
-
-        case RECDIRTY:
-          myNotificationSink.notifyDirtyPathRecursive(path);
-          break;
-
-        default:
-          LOG.error("Unexpected op: " + op);
+        case STATS, CHANGE -> myNotificationSink.notifyDirtyPath(path);
+        case CREATE, DELETE -> myNotificationSink.notifyPathCreatedOrDeleted(path);
+        case DIRTY -> myNotificationSink.notifyDirtyDirectory(path);
+        case RECDIRTY -> myNotificationSink.notifyDirtyPathRecursive(path);
+        default -> LOG.error("Unexpected op: " + op);
       }
     }
   }

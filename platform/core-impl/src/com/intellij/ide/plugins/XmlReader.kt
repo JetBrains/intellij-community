@@ -3,6 +3,7 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.Logger
@@ -21,6 +22,7 @@ import org.codehaus.stax2.typed.TypedXMLStreamException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.io.InputStream
 import java.text.ParseException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -35,6 +37,24 @@ import javax.xml.stream.events.XMLEvent
 @ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE = "on-demand"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
+
+/**
+ * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
+ */
+fun readModuleDescriptor(input: InputStream,
+                         readContext: ReadModuleContext,
+                         pathResolver: PathResolver,
+                         dataLoader: DataLoader,
+                         includeBase: String?,
+                         readInto: RawPluginDescriptor?,
+                         locationSource: String?): RawPluginDescriptor {
+  return readModuleDescriptor(reader = createNonCoalescingXmlStreamReader(input, locationSource),
+                              readContext = readContext,
+                              pathResolver = pathResolver,
+                              dataLoader = dataLoader,
+                              includeBase = includeBase,
+                              readInto = readInto)
+}
 
 fun readModuleDescriptor(input: ByteArray,
                          readContext: ReadModuleContext,
@@ -536,7 +556,7 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
   var configurationSchemaKey: String? = null
   var overrides = false
   var preload = ServiceDescriptor.PreloadMode.FALSE
-  var client: ServiceDescriptor.ClientKind? = null
+  var client: ClientKind? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
       "serviceInterface" -> serviceInterface = getNullifiedAttributeValue(reader, i)
@@ -556,9 +576,12 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
       }
       "client" -> {
         when (reader.getAttributeValue(i)) {
-          "all" -> client = ServiceDescriptor.ClientKind.ALL
-          "local" -> client = ServiceDescriptor.ClientKind.LOCAL
-          "guest" -> client = ServiceDescriptor.ClientKind.GUEST
+          "local" -> client = ClientKind.LOCAL
+          "guest" -> client = ClientKind.GUEST
+          "controller" -> client = ClientKind.CONTROLLER
+          "owner" -> client = ClientKind.OWNER
+          "remote" -> client = ClientKind.REMOTE
+          "all" -> client = ClientKind.ALL
           else -> LOG.error("Unknown client value: ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }

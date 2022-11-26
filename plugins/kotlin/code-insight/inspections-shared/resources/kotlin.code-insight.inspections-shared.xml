@@ -1,5 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.inspections.shared">
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade"
+            serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinInspectionFacadeImpl"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveRedundantBackticksInspection"
                      groupPath="Kotlin"
@@ -85,5 +88,92 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.redundant.setter.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimplifyNegatedBinaryExpressionInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="WEAK WARNING"
+            language="kotlin"
+            key="inspection.simplify.negated.binary.expression.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.TrailingCommaInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.trailing.comma.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveCurlyBracesFromTemplateInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.remove.curly.braces.from.template.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveSetterParameterTypeInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.remove.setter.parameter.type.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.WrapUnaryOperatorInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.wrap.unary.operator.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.DelegationToVarPropertyInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.delegation.to.var.property.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KDocUnresolvedReferenceInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.k.doc.unresolved.reference.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantSemicolonInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.redundant.semicolon.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveEmptyParenthesesFromLambdaCallInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            cleanupTool="true"
+            level="WEAK WARNING"
+            language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            key="inspection.remove.empty.parentheses.from.lambda.call.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantConstructorKeywordInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            cleanupTool="true"
+            level="WEAK WARNING"
+            language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            key="redundant.constructor.keyword" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -15,8 +15,6 @@ import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import java.util.Date
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
@@ -39,7 +37,10 @@ open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
     return connections
   }
 
-  class Builder(val result: UnknownFieldEntityData?) : ModifiableWorkspaceEntityBase<UnknownFieldEntity>(), UnknownFieldEntity.Builder {
+  override val entitySource: EntitySource
+    get() = TODO("Not yet implemented")
+
+  class Builder(result: UnknownFieldEntityData?) : ModifiableWorkspaceEntityBase<UnknownFieldEntity, UnknownFieldEntityData>(result), UnknownFieldEntity.Builder {
     constructor() : this(UnknownFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -105,7 +106,6 @@ open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
 
       }
 
-    override fun getEntityData(): UnknownFieldEntityData = result ?: super.getEntityData() as UnknownFieldEntityData
     override fun getEntityClass(): Class<UnknownFieldEntity> = UnknownFieldEntity::class.java
   }
 }
@@ -115,7 +115,7 @@ class UnknownFieldEntityData : WorkspaceEntityData<UnknownFieldEntity>() {
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<UnknownFieldEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<UnknownFieldEntity> {
     val modifiable = UnknownFieldEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -130,7 +130,6 @@ class UnknownFieldEntityData : WorkspaceEntityData<UnknownFieldEntity>() {
   override fun createEntity(snapshot: EntityStorage): UnknownFieldEntity {
     val entity = UnknownFieldEntityImpl()
     entity._data = data
-    entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity

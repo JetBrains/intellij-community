@@ -106,19 +106,12 @@ public class MavenConsoleImpl extends MavenConsole {
   protected void doPrint(String text, OutputType type) {
     ensureAttachedToToolWindow();
 
-    ConsoleViewContentType contentType;
-    switch (type) {
-      case SYSTEM:
-        contentType = ConsoleViewContentType.SYSTEM_OUTPUT;
-        break;
-      case ERROR:
-        contentType = ConsoleViewContentType.ERROR_OUTPUT;
-        break;
-      case NORMAL:
-      default:
-        contentType = ConsoleViewContentType.NORMAL_OUTPUT;
-    }
-   myConsoleView.print(text, contentType);
+    ConsoleViewContentType contentType = switch (type) {
+      case SYSTEM -> ConsoleViewContentType.SYSTEM_OUTPUT;
+      case ERROR -> ConsoleViewContentType.ERROR_OUTPUT;
+      case NORMAL -> ConsoleViewContentType.NORMAL_OUTPUT;
+    };
+    myConsoleView.print(text, contentType);
   }
 
   private void ensureAttachedToToolWindow() {

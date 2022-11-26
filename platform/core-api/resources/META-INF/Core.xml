@@ -40,6 +40,17 @@
     <extensionPoint name="filetype.decompiler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.BinaryFileDecompiler"/>
     </extensionPoint>
+    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
+    <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
+    </extensionPoint>
+    <extensionPoint name="lang.commenter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.Commenter"/>
+    </extensionPoint>
+    <extensionPoint dynamic="true" name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.LanguageSubstitutor"/>
+    </extensionPoint>
+    <extensionPoint name="iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"

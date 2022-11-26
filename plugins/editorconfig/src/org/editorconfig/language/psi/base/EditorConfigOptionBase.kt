@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.psi.base
 
 import com.intellij.icons.AllIcons
@@ -10,6 +10,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigQualifiedKeyPart
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
@@ -17,7 +19,7 @@ import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
 
 abstract class EditorConfigOptionBase(node: ASTNode) : EditorConfigDescribableElementBase(node), EditorConfigOption {
   override fun getPresentation(): ItemPresentation? {
-    return PresentationData(name, declarationSite, AllIcons.Nodes.Property, null)
+    return PresentationData(name, declarationSite, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property), null)
   }
 
   final override fun getDescriptor(smart: Boolean): EditorConfigOptionDescriptor? =

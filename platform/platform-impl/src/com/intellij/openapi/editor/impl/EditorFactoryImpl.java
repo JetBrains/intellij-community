@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -28,13 +28,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   public EditorFactoryImpl() {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
@@ -197,10 +198,25 @@ public class EditorFactoryImpl extends EditorFactory {
     return editor;
   }
 
-  private @NotNull EditorEx createEditor(@NotNull Document document, boolean isViewer, Project project, @NotNull EditorKind kind) {
+  private @NotNull EditorImpl createEditor(@NotNull Document document, boolean isViewer, Project project, @NotNull EditorKind kind) {
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
-    EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind);
+    EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind, null);
     ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
+    postEditorCreation(editor, editorManager);
+    return editor;
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @NotNull EditorImpl createMainEditor(@NotNull Document document, @NotNull Project project, @NotNull VirtualFile file) {
+    assert !(document instanceof DocumentWindow);
+    EditorImpl editor = new EditorImpl(document, false, project, EditorKind.MAIN_EDITOR, file);
+    ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
+    postEditorCreation(editor, editorManager);
+    return editor;
+  }
+
+  private void postEditorCreation(@NotNull EditorImpl editor, @NotNull ClientEditorManager editorManager) {
     editorManager.editorCreated(editor);
     myEditorEventMulticaster.registerEditor(editor);
 
@@ -209,10 +225,8 @@ public class EditorFactoryImpl extends EditorFactory {
     EP.forEachExtensionSafe(it -> it.editorCreated(event));
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("number of Editors after create: " + editorManager.editors().count());
+      LOG.debug("number of editors after create: " + editorManager.editors().count());
     }
-
-    return editor;
   }
 
   @Override
@@ -225,7 +239,9 @@ public class EditorFactoryImpl extends EditorFactory {
     }
     finally {
       try {
-        ((EditorImpl)editor).release();
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).release();
+        }
       }
       finally {
         for (ClientEditorManager clientEditors : ClientEditorManager.getAllInstances()) {
@@ -249,9 +265,8 @@ public class EditorFactoryImpl extends EditorFactory {
       .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
   }
 
-  @NotNull
-  private static Stream<Editor> collectAllEditors() {
-    return ClientEditorManager.getAllInstances().stream().flatMap(it -> it.editors());
+  private static @NotNull Stream<Editor> collectAllEditors() {
+    return ClientEditorManager.getAllInstances().stream().flatMap(ClientEditorManager::editors);
   }
 
   @Override
@@ -267,7 +282,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable) {
-    myEditorFactoryEventDispatcher.addListener(listener,parentDisposable);
+    myEditorFactoryEventDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -281,10 +296,10 @@ public class EditorFactoryImpl extends EditorFactory {
     return myEditorEventMulticaster;
   }
 
-  public static final class MyRawTypedHandler implements TypedActionHandlerEx {
+  private static final class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
-    public MyRawTypedHandler(TypedActionHandler delegate) {
+    private MyRawTypedHandler(TypedActionHandler delegate) {
       myDelegate = delegate;
     }
 

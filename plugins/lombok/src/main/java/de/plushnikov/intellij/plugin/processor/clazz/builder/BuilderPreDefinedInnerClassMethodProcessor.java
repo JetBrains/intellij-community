@@ -33,7 +33,6 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
 
   @Override
   protected Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass) {
-    final Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<String> existedMethodNames = PsiClassUtil.collectClassMethodsIntern(psiBuilderClass).stream()
       .filter(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokClassNames.TOLERATE))
@@ -43,7 +42,7 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
     final List<BuilderInfo> builderInfos = builderHandler.createBuilderInfos(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass);
 
     //create constructor
-    result.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
+    final Collection<PsiMethod> result = new ArrayList<>(BuilderHandler.createConstructors(psiBuilderClass, psiAnnotation));
 
     // create builder methods
     builderInfos.stream()
@@ -52,7 +51,7 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
       .forEach(result::addAll);
 
     // create 'build' method
-    final String buildMethodName = builderHandler.getBuildMethodName(psiAnnotation);
+    final String buildMethodName = BuilderHandler.getBuildMethodName(psiAnnotation);
     if (!existedMethodNames.contains(buildMethodName)) {
       result.add(builderHandler.createBuildMethod(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass, buildMethodName, builderInfos));
     }

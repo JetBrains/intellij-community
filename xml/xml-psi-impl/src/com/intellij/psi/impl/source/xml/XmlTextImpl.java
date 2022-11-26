@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.XmlTextLiteralEscaper;
+import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -350,7 +351,16 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   @Override
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {
     try {
-      doSetValue(text, new DefaultXmlPsiPolicy());
+      var policy = getPolicy();
+      // CDATAOnAnyEncodedPolicy is a default policy for XML elements.
+      // We should not do any special CDATA encoding by default in `updateText`,
+      // so let's revert to DefaultXmlPsiPolicy in such case.
+      // HTML and other elements however, should use their respective policies as
+      // it affects XmlText parsing and injections can be wrongly parsed.
+      if (policy instanceof CDATAOnAnyEncodedPolicy) {
+        policy = new DefaultXmlPsiPolicy();
+      }
+      doSetValue(text, policy);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

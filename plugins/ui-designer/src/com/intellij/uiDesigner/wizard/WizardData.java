@@ -22,10 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class WizardData {
   private static final Logger LOG = Logger.getInstance(WizardData.class);
 

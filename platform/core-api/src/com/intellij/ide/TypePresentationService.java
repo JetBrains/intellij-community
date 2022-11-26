@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public abstract class TypePresentationService {
 
   public static TypePresentationService getService() {

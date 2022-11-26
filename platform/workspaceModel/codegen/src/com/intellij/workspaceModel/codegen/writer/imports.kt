@@ -16,7 +16,7 @@ fun fqn2(function: KFunction3<EntityStorage, ConnectionId, WorkspaceEntity, Sequ
 fun fqn3(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?, Unit>): QualifiedName = function.fqn
 fun fqn4(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, List<WorkspaceEntity>, Unit>): QualifiedName = function.fqn
 fun fqn5(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, Sequence<WorkspaceEntity>, Unit>): QualifiedName = function.fqn
-fun fqn6(function: KFunction2<ModifiableWorkspaceEntityBase<*>, MutableEntityStorage, Unit>): QualifiedName = function.fqn
+fun fqn6(function: KFunction2<ModifiableWorkspaceEntityBase<*, *>, MutableEntityStorage, Unit>): QualifiedName = function.fqn
 fun fqn7(function: KFunction1<Collection<*>, Collection<*>>): QualifiedName = function.fqn
 
 private val KProperty<*>.fqn: QualifiedName
@@ -78,7 +78,7 @@ val Class<*>.fqn: QualifiedName
     }
   }
 
-class Imports(val scopeFqn: String?) {
+class Imports(private val scopeFqn: String?) {
   val set = mutableSetOf<String>()
 
   fun findAndRemoveFqns(str: String): String {

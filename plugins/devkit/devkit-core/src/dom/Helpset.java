@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This interface is used only to highlight usages of the deprecated tag.
+ * @deprecated This interface is used only to highlight usages of the deprecated tag.
  */
 @Deprecated
 @ApiStatus.Internal

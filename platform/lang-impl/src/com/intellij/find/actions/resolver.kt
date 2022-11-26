@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.find.actions
@@ -63,7 +63,7 @@ internal sealed class TargetVariant {
 }
 
 internal class SearchTargetVariant(private val target: SearchTarget) : TargetVariant() {
-  override val presentation: TargetPresentation get() = target.presentation
+  override val presentation: TargetPresentation get() = target.presentation()
   override fun handle(handler: UsageVariantHandler): Unit = handler.handleTarget(target)
 }
 

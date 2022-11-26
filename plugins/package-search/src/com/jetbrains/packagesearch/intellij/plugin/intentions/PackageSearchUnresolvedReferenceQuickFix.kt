@@ -18,6 +18,8 @@ package com.jetbrains.packagesearch.intellij.plugin.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
@@ -25,23 +27,22 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
-import java.util.regex.Pattern
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider
+import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 
 class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : IntentionAction, LowPriorityAction, Iconable {
 
     private val classnamePattern =
-        Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+")
+        Regex("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+")
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        PackageSearchToolWindowFactory.activateToolWindow(project) {
-            project.uiStateModifier.setSearchQuery(ref.canonicalText)
+        DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
+            project.pkgsUiStateModifier.setSearchQuery(ref.canonicalText)
         }
     }
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = ref.element.run {
-        isValid && classnamePattern.matcher(text).matches()
+        isValid && classnamePattern.matches(text)
     }
 
     override fun getText() = PackageSearchBundle.message("packagesearch.quickfix.packagesearch.action")

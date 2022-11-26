@@ -46,20 +46,20 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
 
   private class XmlWordOptimizer extends XmlRecursiveElementWalkingVisitor implements WordOptimizer {
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
       if (!handleWord(tag.getName(), CODE, myCompilingVisitor.getContext())) return;
       super.visitXmlTag(tag);
     }
 
     @Override
-    public void visitXmlAttribute(XmlAttribute attribute) {
+    public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
       if (!handleWord(attribute.getName(), CODE, myCompilingVisitor.getContext())) return;
       handleWord(attribute.getValue(), CODE, myCompilingVisitor.getContext());
       super.visitXmlAttribute(attribute);
     }
 
     @Override
-    public void visitXmlToken(XmlToken token) {
+    public void visitXmlToken(@NotNull XmlToken token) {
       super.visitXmlToken(token);
       final IElementType tokenType = token.getTokenType();
       if (tokenType == XmlTokenType.XML_COMMENT_CHARACTERS ||
@@ -76,7 +76,7 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   }
 
   @Override
-  public void visitXmlToken(XmlToken token) {
+  public void visitXmlToken(@NotNull XmlToken token) {
     final IElementType tokenType = token.getTokenType();
     if (tokenType != XmlTokenType.XML_NAME &&
         tokenType != XmlTokenType.XML_COMMENT_CHARACTERS &&
@@ -90,7 +90,7 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   }
 
   @Override
-  public void visitXmlText(XmlText text) {
+  public void visitXmlText(@NotNull XmlText text) {
     super.visitXmlText(text);
     if (myCompilingVisitor.getContext().getPattern().isRealTypedVar(text)) {
       myCompilingVisitor.setFilterSimple(text, TagValueFilter.getInstance());
@@ -98,7 +98,7 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   }
 
   @Override
-  public void visitXmlTag(XmlTag tag) {
+  public void visitXmlTag(@NotNull XmlTag tag) {
     super.visitXmlTag(tag);
     // there are a lot of implementations of XmlTag which we should be able to match
     myCompilingVisitor.setFilterSimple(tag, element -> element instanceof XmlTag);

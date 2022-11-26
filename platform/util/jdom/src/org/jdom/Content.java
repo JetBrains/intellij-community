@@ -55,8 +55,6 @@
 package org.jdom;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Superclass for JDOM objects which can be legal child content
@@ -73,8 +71,7 @@ import java.util.List;
  * @see ProcessingInstruction
  * @see Text
  */
-public abstract class Content extends CloneBase
-  implements Serializable, NamespaceAware {
+public abstract class Content extends CloneBase implements Serializable {
   /**
    * An enumeration useful for identifying content types without
    * having to do <code>instanceof</code> type conditionals.
@@ -268,7 +265,7 @@ public abstract class Content extends CloneBase
    */
   @Override
   public final boolean equals(Object ob) {
-    return (ob == this);
+    return ob == this;
   }
 
   /**
@@ -279,20 +276,5 @@ public abstract class Content extends CloneBase
   @Override
   public final int hashCode() {
     return super.hashCode();
-  }
-
-  @Override
-  public List<Namespace> getNamespacesInScope() {
-    // Element class will override this method to do it differently.
-    Element emt = getParentElement();
-    if (emt == null) {
-      return Collections.singletonList(Namespace.XML_NAMESPACE);
-    }
-    return emt.getNamespacesInScope();
-  }
-
-  @Override
-  public List<Namespace> getNamespacesIntroduced() {
-    return Collections.emptyList();
   }
 }

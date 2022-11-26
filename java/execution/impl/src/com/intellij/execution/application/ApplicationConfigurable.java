@@ -42,6 +42,8 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   public ApplicationConfigurable(@NotNull Project project) {
     myProject = project;
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
+    JavaCodeFragment.VisibilityChecker visibilityChecker = getVisibilityChecker(myModuleSelector);
+    myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, visibilityChecker));
 
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromSourceRootsDependencies(myModule.getComponent(), getMainClassField()));
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
@@ -114,13 +116,11 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
 
   private void createUIComponents() {
     myMainClass = new LabeledComponent<>();
-    JavaCodeFragment.VisibilityChecker visibilityChecker = getVisibilityChecker(myModuleSelector);
-    myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, visibilityChecker));
     myShortenClasspathModeCombo = new LabeledComponent<>();
   }
 
   @NotNull
-  static JavaCodeFragment.VisibilityChecker getVisibilityChecker(ConfigurationModuleSelector selector) {
+  static JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
     return (declaration, place) -> {
       if (declaration instanceof PsiClass) {
         PsiClass aClass = (PsiClass)declaration;

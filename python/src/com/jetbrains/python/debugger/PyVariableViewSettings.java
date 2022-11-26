@@ -49,6 +49,11 @@ public class PyVariableViewSettings {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return mySimplifiedView;
     }
@@ -158,6 +163,11 @@ public class PyVariableViewSettings {
       myActionGroup.updatePolicyActions();
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @NotNull

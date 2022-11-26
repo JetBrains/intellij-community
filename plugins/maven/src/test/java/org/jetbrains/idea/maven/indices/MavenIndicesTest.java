@@ -27,43 +27,46 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.addFileToProject("Indices/Index0/index.properties",
-                               "#Sun Oct 31 18:51:24 MSK 2021\n" +
-                               "dataDirName=data0\n" +
-                               "kind=REMOTE\n" +
-                               "id=central\n" +
-                               "pathOrUrl=https\\://repo.maven.apache.org/maven2\n" +
-                               "version=5").getVirtualFile();
+                               """
+                                 #Sun Oct 31 18:51:24 MSK 2021
+                                 dataDirName=data0
+                                 kind=REMOTE
+                                 id=central
+                                 pathOrUrl=https\\://repo.maven.apache.org/maven2
+                                 version=5""").getVirtualFile();
 
     myFixture.addFileToProject("Indices/Index1/index.properties",
-                               "#Sun Oct 31 18:51:24 MSK 2021\n" +
-                               "dataDirName=data0\n" +
-                               "kind=REMOTE\n" +
-                               "id=snapshot\n" +
-                               "pathOrUrl=https\\://repo.maven.apache.org/snapshot\n" +
-                               "version=5").getVirtualFile();
+                               """
+                                 #Sun Oct 31 18:51:24 MSK 2021
+                                 dataDirName=data0
+                                 kind=REMOTE
+                                 id=snapshot
+                                 pathOrUrl=https\\://repo.maven.apache.org/snapshot
+                                 version=5""").getVirtualFile();
 
     myFixture.addFileToProject("Indices/Index2/index.properties",
-                               "#Sun Oct 31 18:51:26 MSK 2021\n" +
-                               "dataDirName=data2\n" +
-                               "kind=LOCAL\n" +
-                               "lastUpdate=1635507096543\n" +
-                               "id=local\n" +
-                               "pathOrUrl=/home/user/.m2/repository\n" +
-                               "version=5").getVirtualFile();
+                               """
+                                 #Sun Oct 31 18:51:26 MSK 2021
+                                 dataDirName=data2
+                                 kind=LOCAL
+                                 lastUpdate=1635507096543
+                                 id=local
+                                 pathOrUrl=/home/user/.m2/repository
+                                 version=5""").getVirtualFile();
 
     VirtualFile localM3 = myFixture
       .addFileToProject("Indices/Index3/index.properties",
-                        "#Sun Oct 31 18:51:26 MSK 2021\n" +
-                        "dataDirName=data2\n" +
-                        "kind=LOCAL\n" +
-                        "lastUpdate=1635507096543\n" +
-                        "id=local\n" +
-                        "pathOrUrl=/home/user/.m3/repository\n" +
-                        "version=5").getVirtualFile();
+                        """
+                          #Sun Oct 31 18:51:26 MSK 2021
+                          dataDirName=data2
+                          kind=LOCAL
+                          lastUpdate=1635507096543
+                          id=local
+                          pathOrUrl=/home/user/.m3/repository
+                          version=5""").getVirtualFile();
 
     myContext = new MavenIndices.RepositoryDiffContext(
       Mockito.mock(MavenIndexerWrapper.class),
-      Mockito.mock(MavenSearchIndex.IndexListener.class),
       localM3.getParent().getParent().toNioPath().toFile());
   }
 
@@ -173,12 +176,13 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
 
   public void testGetRemoteDiffWithDuplicates() {
     myFixture.addFileToProject("Indices/Index10/index.properties",
-                               "#Sun Oct 31 18:51:24 MSK 2021\n" +
-                               "dataDirName=data0\n" +
-                               "kind=REMOTE\n" +
-                               "id=central\n" +
-                               "pathOrUrl=https\\://repo.maven.apache.org/maven2\n" +
-                               "version=5").getVirtualFile();
+                               """
+                                 #Sun Oct 31 18:51:24 MSK 2021
+                                 dataDirName=data0
+                                 kind=REMOTE
+                                 id=central
+                                 pathOrUrl=https\\://repo.maven.apache.org/maven2
+                                 version=5""").getVirtualFile();
 
     MavenIndexUtils.RepositoryInfo remoteRepo = new MavenIndexUtils
       .RepositoryInfo("central", "https\\://repo.maven.apache.org/maven2");

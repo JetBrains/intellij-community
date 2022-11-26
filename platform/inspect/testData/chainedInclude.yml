@@ -1,0 +1,12 @@
+$schema: https://json.schemastore.org/idea-inspection-profile-1.0.json
+
+name: Chained profile
+
+include:
+  - "chainedInclude/parent.yml"
+
+inspections:
+  - inspection: TodoComment
+    ignore:
+      - "file:*.*"
+      - "!file:Main.*"

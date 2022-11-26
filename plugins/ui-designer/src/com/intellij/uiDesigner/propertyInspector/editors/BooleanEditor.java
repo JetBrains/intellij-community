@@ -10,10 +10,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class BooleanEditor extends PropertyEditor<Boolean> {
   private final JCheckBox myCheckBox;
   private boolean myInsideChange;

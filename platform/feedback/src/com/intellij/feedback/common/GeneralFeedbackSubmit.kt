@@ -8,16 +8,10 @@ import com.intellij.ide.feedback.ZenDeskRequests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xml.dom.readXmlAsModel
-import java.awt.Dimension
-import java.awt.GridLayout
-import javax.swing.JPanel
 
 /** Should be used inside JSON top-level keys to distinguish reports without any external information */
 const val FEEDBACK_REPORT_ID_KEY: String = "feedback_id"
@@ -26,8 +20,6 @@ const val DEFAULT_NO_EMAIL_ZENDESK_REQUESTER: String = "no_mail@jetbrains.com"
 
 private const val PATH_TO_TEST_FEEDBACK_REQUEST_FORM_XML = "forms/SimpleTestFeedbackForm.xml"
 private const val PATH_TO_PRODUCTION_FEEDBACK_REQUEST_FORM_XML = "forms/SimpleProductionFeedbackForm.xml"
-private const val PRIVACY_POLICY_URL: String = "https://www.jetbrains.com/legal/docs/privacy/privacy.html"
-private const val PRIVACY_POLICY_THIRD_PARTIES_URL = "https://www.jetbrains.com/legal/docs/privacy/third-parties.html"
 
 enum class FeedbackRequestType {
   NO_REQUEST, // can be used during feedback UI/statistics development and debug
@@ -43,7 +35,8 @@ fun submitGeneralFeedback(project: Project?,
                           email: String = DEFAULT_NO_EMAIL_ZENDESK_REQUESTER,
                           onDone: () -> Unit = {},
                           onError: () -> Unit = {},
-                          feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST
+                          feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST,
+                          showNotification: Boolean = true
 ) {
   ApplicationManager.getApplication().executeOnPooledThread {
     // Any class from this module will fit
@@ -69,60 +62,29 @@ fun submitGeneralFeedback(project: Project?,
       onError
     )
   }
-  ApplicationManager.getApplication().invokeLater {
-    ThanksForFeedbackNotification().notify(project)
+  if (showNotification) {
+    ApplicationManager.getApplication().invokeLater {
+      ThanksForFeedbackNotification().notify(project)
+    }
   }
 }
 
-fun createFeedbackAgreementComponent(project: Project?, systemInfo: () -> Unit) =
-  JPanel().apply {
-    layout = GridLayout(4, 1, 0, 0)
-
-    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.feedback.consent.1.1"),
-                            CommonFeedbackBundle.message("dialog.feedback.consent.1.2"),
-                            CommonFeedbackBundle.message("dialog.feedback.consent.1.3"), systemInfo))
-
-    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.feedback.consent.2")))
-
-    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.feedback.consent.3.1"),
-                            CommonFeedbackBundle.message("dialog.feedback.consent.3.2"),
-                            CommonFeedbackBundle.message("dialog.feedback.consent.3.3")) {
-      BrowserUtil.browse(PRIVACY_POLICY_THIRD_PARTIES_URL, project)
-    })
-
-    add(createLineOfConsent(linkText = CommonFeedbackBundle.message("dialog.feedback.consent.4.2"),
-                            postfix = CommonFeedbackBundle.message("dialog.feedback.consent.4.3")) {
-      BrowserUtil.browse(PRIVACY_POLICY_URL, project)
-    })
-  }
-
-private fun createLineOfConsent(prefixTest: String = "",
-                                linkText: String = "",
-                                postfix: String = "",
-                                action: () -> Unit = {}): HyperlinkLabel {
-  val text = HtmlBuilder()
-    .append(prefixTest) //NON-NLS
-    .append(HtmlChunk.tag("hyperlink")
-              .addText(linkText)) //NON-NLS
-    .append(postfix) //NON-NLS
-  val label = HyperlinkLabel().apply {
-    setTextWithHyperlink(text.toString())
-    addHyperlinkListener {
-      action()
+fun Row.feedbackAgreement(project: Project?, systemInfo: () -> Unit) {
+  comment(CommonFeedbackBundle.message("dialog.feedback.consent"), maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
+    when (it.description) {
+      "systemInfo" -> systemInfo()
+      else -> it.url?.let { url ->
+        BrowserUtil.browse(url.toExternalForm(), project)
+      }
     }
-    foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-    minimumSize = Dimension(preferredSize.width, minimumSize.height)
   }
-  UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, label)
-
-  return label
 }
 
 /**
  * @return product tag.
  * @see <a href="https://youtrack.jetbrains.com/issue/ZEN-1460#focus=Comments-27-5692479.0-0">ZEN-1460</a> for more information
  */
-private fun getProductTag(): String {
+internal fun getProductTag(): String {
   return when {
     PlatformUtils.isIntelliJ() -> "ij_idea"
     PlatformUtils.isPhpStorm() -> "ij_phpstorm"

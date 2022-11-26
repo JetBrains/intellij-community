@@ -69,7 +69,7 @@ import java.util.Iterator;
 import java.util.List;
 
 class JDOMCoreNavigator extends DefaultNavigator {
-  private transient IdentityHashMap<Element, NamespaceContainer[]> emtnsmap = new IdentityHashMap<Element, NamespaceContainer[]>();
+  private transient IdentityHashMap<Element, NamespaceContainer[]> emtnsmap = new IdentityHashMap<>();
 
   void reset() {
     emtnsmap.clear();
@@ -312,7 +312,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
   private void readObject(ObjectInputStream in)
     throws IOException, ClassNotFoundException {
     in.defaultReadObject();
-    emtnsmap = new IdentityHashMap<Element, NamespaceContainer[]>();
+    emtnsmap = new IdentityHashMap<>();
   }
 
   private void writeObject(ObjectOutputStream out)

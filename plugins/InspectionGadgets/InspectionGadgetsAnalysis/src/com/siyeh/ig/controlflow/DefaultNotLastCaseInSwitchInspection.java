@@ -59,7 +59,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection impleme
     }
     return new InspectionGadgetsFix() {
       @Override
-      protected void doFix(Project project, ProblemDescriptor descriptor) {
+      protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiSwitchLabelStatementBase.class);
         if (labelStatementBase == null) return;
         PsiSwitchBlock switchBlock = labelStatementBase.getEnclosingSwitchBlock();

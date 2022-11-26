@@ -319,7 +319,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
   }
 }
 
-private fun ByteBuf.writeByte(c: Char) = writeByte(c.toInt())
+private fun ByteBuf.writeByte(c: Char) = writeByte(c.code)
 
 private fun ByteBuf.writeAscii(s: CharSequence): ByteBuf {
   ByteBufUtil.writeAscii(this, s)

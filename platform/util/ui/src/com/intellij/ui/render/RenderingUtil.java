@@ -1,31 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.render;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ClientProperty;
 import com.intellij.util.ui.JBUI.CurrentTheme;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.util.IconLoader.getDarkIcon;
-import static com.intellij.util.ui.StartupUiUtil.isUnderDarcula;
-
 public final class RenderingUtil {
-  /**
-   * This key can be set to a predicate,
-   * which return "true" in case if it's necessary to paint horizontal separator in tree before the given path.
-   *
-   * @see JComponent#putClientProperty
-   */
-  public static final Key<Predicate<TreePath>> SEPARATOR_ABOVE_PREDICATE = Key.create("SEPARATOR_ABOVE_PREDICATE");
-
   /**
    * This key can be set to a list or a tree to paint unfocused selection as focused.
    *
@@ -66,7 +55,7 @@ public final class RenderingUtil {
    * @return a lighter icon if applicable, the given icon otherwise
    */
   public static @Nullable Icon getIcon(@Nullable Icon icon, boolean selected) {
-    return !selected || icon == null || isUnderDarcula() ? icon : getDarkIcon(icon, true);
+    return !selected || icon == null || StartupUiUtil.isUnderDarcula() ? icon : IconLoader.getDarkIcon(icon, true);
   }
 
 
@@ -211,21 +200,21 @@ public final class RenderingUtil {
 
   public static boolean isFocused(@NotNull JComponent component) {
     if (isFocusedImpl(component)) return true;
-    JComponent sibling = UIUtil.getClientProperty(component, FOCUSABLE_SIBLING);
+    JComponent sibling = ClientProperty.get(component, FOCUSABLE_SIBLING);
     return sibling != null && isFocusedImpl(sibling);
   }
 
   private static boolean isFocusedImpl(@NotNull JComponent component) {
-    return component.hasFocus() || UIUtil.isClientPropertyTrue(component, ALWAYS_PAINT_SELECTION_AS_FOCUSED);
+    return component.hasFocus() || ClientProperty.isTrue(component, ALWAYS_PAINT_SELECTION_AS_FOCUSED);
   }
 
   private static JTable getTableFor(@NotNull JTree tree) {
-    JComponent sibling = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
+    JComponent sibling = ClientProperty.get(tree, FOCUSABLE_SIBLING);
     return sibling instanceof JTable ? (JTable)sibling : null;
   }
 
   private static Color getCustomColor(@NotNull JComponent component, @NotNull Key<Supplier<Color>> key) {
-    Supplier<Color> supplier = UIUtil.getClientProperty(component, key);
+    Supplier<Color> supplier = ClientProperty.get(component, key);
     return supplier == null ? null : supplier.get();
   }
 }

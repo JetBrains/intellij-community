@@ -50,7 +50,7 @@ private class UrlSymbol(
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> = listOf(this)
 
-  override fun getTargetPresentation(): TargetPresentation = TODO(
+  override fun presentation(): TargetPresentation = TODO(
     "In all known cases the symbol doesn't appear in the disambiguation popup, " +
     "because this symbol is usually alone, so no popup required. Implement this method when needed."
   )

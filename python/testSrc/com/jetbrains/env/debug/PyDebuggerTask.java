@@ -52,6 +52,7 @@ public class PyDebuggerTask extends PyCustomConfigDebuggerTask {
     mySettings = RunManager.getInstance(getProject()).createConfiguration("test", factory);
     PythonRunConfiguration runConfiguration = (PythonRunConfiguration)mySettings.getConfiguration();
     runConfiguration.setSdkHome(sdkHome);
+    runConfiguration.setSdk(existingSdk);
     runConfiguration.setScriptName(getScriptName());
     runConfiguration.setWorkingDirectory(myFixture.getTempDirPath());
     runConfiguration.setScriptParameters(getScriptParameters());

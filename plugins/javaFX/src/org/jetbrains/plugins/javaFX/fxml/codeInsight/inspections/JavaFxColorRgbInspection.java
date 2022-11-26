@@ -27,7 +27,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
 
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         super.visitXmlAttribute(attribute);
 
         final String attributeValue = attribute.getValue();
@@ -44,7 +44,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
       }
 
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         super.visitXmlTag(tag);
         if (tag.getSubTags().length != 0) return;
 

@@ -215,6 +215,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/delegateExtensionSet.test");
         }
 
+        @TestMetadata("delegateGetValueFunction.before.Main.kt")
+        public void testDelegateGetValueFunction() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/delegateGetValueFunction.before.Main.kt");
+        }
+
         @TestMetadata("delegateNoOperator.test")
         public void testDelegateNoOperator() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/delegateNoOperator.test");
@@ -243,6 +248,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("extensionFunctionImportImplicitReceiver.before.Main.kt")
         public void testExtensionFunctionImportImplicitReceiver() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/extensionFunctionImportImplicitReceiver.before.Main.kt");
+        }
+
+        @TestMetadata("extensionFunctionWithGenericImport.before.Main.kt")
+        public void testExtensionFunctionWithGenericImport() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/extensionFunctionWithGenericImport.before.Main.kt");
         }
 
         @TestMetadata("extensionPreferDeprecatedSinceApplicable.test")
@@ -310,6 +320,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/importAliasPropertyAlreadyExists.before.Main.kt");
         }
 
+        @TestMetadata("importClass.before.Main.kt")
+        public void testImportClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importClass.before.Main.kt");
+        }
+
+        @TestMetadata("importDelegateFunctions.before.Main.kt")
+        public void testImportDelegateFunctions() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importDelegateFunctions.before.Main.kt");
+        }
+
         @TestMetadata("importFromRoot.before.Main.kt")
         public void testImportFromRoot() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/importFromRoot.before.Main.kt");
@@ -338,6 +358,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("importInFirstPartInUserType.test")
         public void testImportInFirstPartInUserType() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/importInFirstPartInUserType.test");
+        }
+
+        @TestMetadata("importInterface.before.Main.kt")
+        public void testImportInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importInterface.before.Main.kt");
         }
 
         @TestMetadata("importKotlinCompanionPropertyAsFieldFromJava.test")
@@ -400,19 +425,14 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/importKotlinStaticPropertyOverloadedSetterFromJava.test");
         }
 
-        @TestMetadata("importNullableTraitWithGenerics.before.Main.kt")
-        public void testImportNullableTraitWithGenerics() throws Exception {
-            runTest("../idea/tests/testData/quickfix/autoImports/importNullableTraitWithGenerics.before.Main.kt");
+        @TestMetadata("importNullableInterfaceWithGenerics.before.Main.kt")
+        public void testImportNullableInterfaceWithGenerics() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importNullableInterfaceWithGenerics.before.Main.kt");
         }
 
         @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
         public void testImportOperatorInvokeWithConvention() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/ImportOperatorInvokeWithConvention.before.Main.kt");
-        }
-
-        @TestMetadata("importTrait.before.Main.kt")
-        public void testImportTrait() throws Exception {
-            runTest("../idea/tests/testData/quickfix/autoImports/importTrait.before.Main.kt");
         }
 
         @TestMetadata("indexCallExtensionGet.test")
@@ -570,6 +590,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/multiDeclarationExtensionComponentNoOperator.test");
         }
 
+        @TestMetadata("multiFunctionCandidate.test")
+        public void testMultiFunctionCandidate() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/multiFunctionCandidate.test");
+        }
+
         @TestMetadata("nestedClass.before.Main.kt")
         public void testNestedClass() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/nestedClass.before.Main.kt");
@@ -708,6 +733,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("sameModuleImportPriority.before.Main.kt")
         public void testSameModuleImportPriority() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/sameModuleImportPriority.before.Main.kt");
+        }
+
+        @TestMetadata("sealedClass.test")
+        public void testSealedClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/sealedClass.test");
+        }
+
+        @TestMetadata("sealedClass2.test")
+        public void testSealedClass2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/sealedClass2.test");
         }
 
         @TestMetadata("timesAssign.before.Main.kt")

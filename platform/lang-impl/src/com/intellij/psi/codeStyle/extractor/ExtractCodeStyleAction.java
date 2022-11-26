@@ -119,7 +119,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
                   final List<Value> values = calculatedValues.getValues();
                   Language language = file.getLanguage();
                   CodeStyleSettingsNameProvider nameProvider = new CodeStyleSettingsNameProvider();
-                  for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+                  for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getAllProviders()) {
                     Language target = provider.getLanguage();
                     if (target.equals(language)) {
                       //this is our language

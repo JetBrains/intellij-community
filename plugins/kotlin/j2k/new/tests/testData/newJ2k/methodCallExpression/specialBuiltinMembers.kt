@@ -1,5 +1,7 @@
 internal enum class E {
-    A, B, C
+    A,
+    B,
+    C
 }
 
 internal class A {

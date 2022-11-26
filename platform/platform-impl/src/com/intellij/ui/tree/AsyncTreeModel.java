@@ -2,6 +2,7 @@
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -99,6 +100,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
     else {
       background = foreground;
+    }
+    if (background instanceof Invoker.EDT && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error(new Throwable("Background invoker shall not be EDT"));
     }
     this.model = model;
     this.model.addTreeModelListener(listener);

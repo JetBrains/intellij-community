@@ -81,7 +81,8 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent event) {
-    return getFileAndRevision(event) != null;
+    Pair<FilePath, VcsRevisionNumber> fileAndRevision = getFileAndRevision(event);
+    return fileAndRevision != null && !fileAndRevision.second.asString().isEmpty();
   }
 
   @Nullable
@@ -90,7 +91,8 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     if (changes == null || changes.length != 1) return null;
     Change change = changes[0];
     Pair<FilePath, VcsRevisionNumber> fileAndRevision = getFileAndRevision(change);
-    if (fileAndRevision == null || change.getType() != Change.Type.DELETED) return fileAndRevision;
+    if (fileAndRevision == null ||
+        (change.getType() != Change.Type.DELETED && !fileAndRevision.second.asString().isEmpty())) return fileAndRevision;
 
     Project project = event.getProject();
     if (project == null ||

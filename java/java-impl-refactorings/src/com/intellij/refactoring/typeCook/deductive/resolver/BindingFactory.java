@@ -652,153 +652,155 @@ public class BindingFactory {
     final int indicator = (x instanceof PsiTypeVariable ? 1 : 0) + (y instanceof PsiTypeVariable ? 2 : 0);
 
     switch (indicator) {
-    case 0:
-         if (x instanceof PsiWildcardType || y instanceof PsiWildcardType) {
-           final PsiType xType = x instanceof PsiWildcardType ? ((PsiWildcardType)x).getBound() : x;
-           final PsiType yType = y instanceof PsiWildcardType ? ((PsiWildcardType)y).getBound() : y;
+      case 0 -> {
+        if (x instanceof PsiWildcardType || y instanceof PsiWildcardType) {
+          final PsiType xType = x instanceof PsiWildcardType ? ((PsiWildcardType)x).getBound() : x;
+          final PsiType yType = y instanceof PsiWildcardType ? ((PsiWildcardType)y).getBound() : y;
 
-           switch ((x instanceof PsiWildcardType ? 1 : 0) + (y instanceof PsiWildcardType ? 2 : 0)) {
-           case 1:
-                if (((PsiWildcardType)x).isExtends()) {
-                  /* ? extends T1, T2 */
+          switch ((x instanceof PsiWildcardType ? 1 : 0) + (y instanceof PsiWildcardType ? 2 : 0)) {
+            case 1 -> {
+              if (((PsiWildcardType)x).isExtends()) {
+                /* ? extends T1, T2 */
+                return null;
+              }
+              else {
+                /* ? super T1, T2 */
+                if (xType != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(xType.getCanonicalText())) {
                   return null;
                 }
-                else {
-                  /* ? super T1, T2 */
-                  if (xType != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(xType.getCanonicalText())) {
-                    return null;
+                return create();
+              }
+            }
+            case 2 -> {
+              if (((PsiWildcardType)y).isExtends()) {
+                /* T1, ? extends T2 */
+                if (yType instanceof PsiTypeVariable) {
+                  final PsiTypeVariable beta = myFactory.create();
+
+                  if (constraints != null) {
+                    constraints.add(new Subtype(beta, yType));
+                    if (x != null) {
+                      constraints.add(new Subtype(x, yType));
+                    }
                   }
+
                   return create();
                 }
-
-           case 2:
-                if (((PsiWildcardType)y).isExtends()) {
-                  /* T1, ? extends T2 */
-                 if (yType instanceof PsiTypeVariable) {
-                   final PsiTypeVariable beta = myFactory.create();
-
-                   if (constraints != null) {
-                     constraints.add (new Subtype(beta, yType));
-                     if (x != null) {
-                       constraints.add (new Subtype(x, yType));
-                     }
-                   }
-
-                   return create ();
+                else {
+                  if (constraints != null && xType != null && yType != null) {
+                    constraints.add(new Subtype(xType, yType));
                   }
-                  else {
-                    if (constraints != null && xType != null && yType != null) {
-                      constraints.add(new Subtype(xType, yType));
-                    }
 
-                    return balance(xType, yType, balancer, constraints);
-                  }
+                  return balance(xType, yType, balancer, constraints);
                 }
-                else {/* T1, ? super T2 */
-                  if (yType instanceof PsiTypeVariable) {
-                    final PsiTypeVariable beta = myFactory.create();
+              }
+              else {/* T1, ? super T2 */
+                if (yType instanceof PsiTypeVariable) {
+                  final PsiTypeVariable beta = myFactory.create();
 
-                    if (constraints != null) {
-                      if (x != null) constraints.add (new Subtype(x, beta));
-                      constraints.add (new Subtype(yType, beta));
-                    }
-
-                    return create();
+                  if (constraints != null) {
+                    if (x != null) constraints.add(new Subtype(x, beta));
+                    constraints.add(new Subtype(yType, beta));
                   }
-                  else {
-                    if (constraints != null && yType != null && xType != null) {
-                      constraints.add(new Subtype(yType, xType));
-                    }
 
-                    return balance(xType, yType, balancer, constraints);
+                  return create();
+                }
+                else {
+                  if (constraints != null && yType != null && xType != null) {
+                    constraints.add(new Subtype(yType, xType));
                   }
+
+                  return balance(xType, yType, balancer, constraints);
                 }
-
-           case 3:
-                switch ((((PsiWildcardType)x).isExtends() ? 0 : 1) + (((PsiWildcardType)y).isExtends() ? 0 : 2)) {
-                case 0: /* ? super T1, ? super T2 */
-                     if (constraints != null && xType != null && yType != null) {
-                       constraints.add(new Subtype(yType, xType));
-                     }
-                     return balance(xType, yType, balancer, constraints);
-
-                case 1: /* ? extends T1, ? super T2 */
-                     if (constraints != null && xType != null && yType != null) {
-                       constraints.add(new Subtype(xType, yType));
-                     }
-                     return balance(xType, yType, balancer, constraints);
-
-                case 2: /* ? super T1, ? extends T2*/
-                     return null;
-
-                case 3: /* ? extends T1, ? extends T2*/
-                     if (constraints != null && xType != null && yType != null) {
-                       constraints.add(new Subtype(xType, yType));
-                     }
-                     return balance(xType, yType, balancer, constraints);
+              }
+            }
+            case 3 -> {
+              switch ((((PsiWildcardType)x).isExtends() ? 0 : 1) + (((PsiWildcardType)y).isExtends() ? 0 : 2)) {
+                case 0 -> { /* ? super T1, ? super T2 */
+                  if (constraints != null && xType != null && yType != null) {
+                    constraints.add(new Subtype(yType, xType));
+                  }
+                  return balance(xType, yType, balancer, constraints);
                 }
-           }
+                case 1 -> { /* ? extends T1, ? super T2 */
+                  if (constraints != null && xType != null && yType != null) {
+                    constraints.add(new Subtype(xType, yType));
+                  }
+                  return balance(xType, yType, balancer, constraints);
+                }
+                case 2 -> { /* ? super T1, ? extends T2*/
+                  return null;
+                }
+                case 3 -> { /* ? extends T1, ? extends T2*/
+                  if (constraints != null && xType != null && yType != null) {
+                    constraints.add(new Subtype(xType, yType));
+                  }
+                  return balance(xType, yType, balancer, constraints);
+                }
+              }
+            }
+          }
 
-           return create();
-         }
-         else if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
-           final PsiType xType = x instanceof PsiArrayType ? ((PsiArrayType)x).getComponentType() : x;
-           final PsiType yType = y instanceof PsiArrayType ? ((PsiArrayType)y).getComponentType() : y;
+          return create();
+        }
+        else if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
+          final PsiType xType = x instanceof PsiArrayType ? ((PsiArrayType)x).getComponentType() : x;
+          final PsiType yType = y instanceof PsiArrayType ? ((PsiArrayType)y).getComponentType() : y;
 
-           return balance(xType, yType, balancer, constraints);
-         }
-         else if (x instanceof PsiClassType && y instanceof PsiClassType) {
-           final PsiClassType.ClassResolveResult resultX = Util.resolveType(x);
-           final PsiClassType.ClassResolveResult resultY = Util.resolveType(y);
+          return balance(xType, yType, balancer, constraints);
+        }
+        else if (x instanceof PsiClassType && y instanceof PsiClassType) {
+          final PsiClassType.ClassResolveResult resultX = Util.resolveType(x);
+          final PsiClassType.ClassResolveResult resultY = Util.resolveType(y);
 
-           final PsiClass xClass = resultX.getElement();
-           final PsiClass yClass = resultY.getElement();
+          final PsiClass xClass = resultX.getElement();
+          final PsiClass yClass = resultY.getElement();
 
-           if (xClass != null && yClass != null) {
-             final PsiSubstitutor ySubst = resultY.getSubstitutor();
+          if (xClass != null && yClass != null) {
+            final PsiSubstitutor ySubst = resultY.getSubstitutor();
 
-             PsiSubstitutor xSubst = TypeConversionUtil.getClassSubstitutor(yClass, xClass, resultX.getSubstitutor());
-             if (xSubst == null) return null;
+            PsiSubstitutor xSubst = TypeConversionUtil.getClassSubstitutor(yClass, xClass, resultX.getSubstitutor());
+            if (xSubst == null) return null;
 
-             Binding b = create();
+            Binding b = create();
 
-             for (final PsiTypeParameter aParm : xSubst.getSubstitutionMap().keySet()) {
-               final PsiType xType = xSubst.substitute(aParm);
-               final PsiType yType = ySubst.substitute(aParm);
+            for (final PsiTypeParameter aParm : xSubst.getSubstitutionMap().keySet()) {
+              final PsiType xType = xSubst.substitute(aParm);
+              final PsiType yType = ySubst.substitute(aParm);
 
-               final Binding b1 = unify(xType, yType, new Unifier() {
-                 @Override
-                 public Binding unify(final PsiType x, final PsiType y) {
-                   return balance(x, y, balancer, constraints);
-                 }
-               });
+              final Binding b1 = unify(xType, yType, new Unifier() {
+                @Override
+                public Binding unify(final PsiType x, final PsiType y) {
+                  return balance(x, y, balancer, constraints);
+                }
+              });
 
-               if (b1 == null) {
-                 return null;
-               }
+              if (b1 == null) {
+                return null;
+              }
 
-               b = b.compose(b1);
-             }
+              b = b.compose(b1);
+            }
 
-             return b;
-           }
-         }
-         else if (y instanceof Bottom) {
-           return create();
-         }
-         else {
-           return null;
-         }
-    break;
-
-    case 1:
-         return balancer.varType((PsiTypeVariable)x, y);
-
-    case 2:
-         return balancer.typeVar(x, (PsiTypeVariable)y);
-
-    case 3:
-         return balancer.varVar((PsiTypeVariable)x, (PsiTypeVariable)y);
+            return b;
+          }
+        }
+        else if (y instanceof Bottom) {
+          return create();
+        }
+        else {
+          return null;
+        }
+      }
+      case 1 -> {
+        return balancer.varType((PsiTypeVariable)x, y);
+      }
+      case 2 -> {
+        return balancer.typeVar(x, (PsiTypeVariable)y);
+      }
+      case 3 -> {
+        return balancer.varVar((PsiTypeVariable)x, (PsiTypeVariable)y);
+      }
     }
 
     return null;

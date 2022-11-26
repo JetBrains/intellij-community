@@ -179,7 +179,7 @@ private fun logAndClearStats(projectName: String, perfFilePath: String?): StartU
     }
   }
 
-  val pluginCostMap = computePluginCostMap()
+  val pluginCostMap: MutableMap<String, Object2LongMap<String>> = computePluginCostMap()
 
   val w = IdeIdeaFormatWriter(activities, pluginCostMap, threadNameManager)
   val defaultActivities = activities.get(ActivityCategory.DEFAULT.jsonName)
@@ -218,11 +218,11 @@ private fun logAndClearStats(projectName: String, perfFilePath: String?): StartU
   return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
 }
 
-private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
+private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
                                                val lastReport: ByteBuffer,
                                                val lastMetrics: Object2IntMap<String>)
 
-private fun computePluginCostMap(): MutableMap<String, Object2LongOpenHashMap<String>> {
+private fun computePluginCostMap(): MutableMap<String, Object2LongMap<String>> {
   val result = HashMap(StartUpMeasurer.pluginCostMap)
   StartUpMeasurer.pluginCostMap.clear()
 

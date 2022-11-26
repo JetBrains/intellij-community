@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -54,6 +55,8 @@ class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntentio
         val delegationDescriptor = resolvedDelegationCall.candidateDescriptor
         return isReachableByDelegationFrom(delegationDescriptor, context, visited + constructor)
     }
+
+    override fun startInWriteAction(): Boolean = false
 
     override fun applicabilityRange(element: KtSecondaryConstructor): TextRange? {
         val delegationCall = element.getDelegationCall()
@@ -138,46 +141,53 @@ class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntentio
     override fun applyTo(element: KtSecondaryConstructor, editor: Editor?) {
         val klass = element.containingClassOrObject as? KtClass ?: return
         val context = klass.analyzeWithContent()
-        val factory = KtPsiFactory(klass)
+        val psiFactory = KtPsiFactory(klass.project)
         val constructorCommentSaver = CommentSaver(element)
-        val constructorInClass = klass.createPrimaryConstructorIfAbsent()
-        val constructor = factory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
+        val initializer = runWriteAction {
+            val constructorInClass = klass.createPrimaryConstructorIfAbsent()
+            val constructor = psiFactory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
 
-        val parameterToPropertyMap = mutableMapOf<ValueParameterDescriptor, PropertyDescriptor>()
-        val initializer = element.extractInitializer(parameterToPropertyMap, context, factory) ?: return
+            val parameterToPropertyMap = mutableMapOf<ValueParameterDescriptor, PropertyDescriptor>()
+            val initializer = element.extractInitializer(parameterToPropertyMap, context, psiFactory) ?: return@runWriteAction null
 
-        element.moveParametersToPrimaryConstructorAndInitializers(constructor, parameterToPropertyMap, context, factory)
+            element.moveParametersToPrimaryConstructorAndInitializers(constructor, parameterToPropertyMap, context, psiFactory)
 
-        val argumentList = element.getDelegationCall().valueArgumentList
-        for (superTypeListEntry in klass.superTypeListEntries) {
-            val typeReference = superTypeListEntry.typeReference ?: continue
-            val type = context[BindingContext.TYPE, typeReference]
-            if ((type?.constructor?.declarationDescriptor as? ClassifierDescriptorWithTypeParameters)?.kind == ClassKind.CLASS) {
-                val superTypeCallEntry = factory.createSuperTypeCallEntry(
-                    "${typeReference.text}${argumentList?.text ?: "()"}"
-                )
-                superTypeListEntry.replace(superTypeCallEntry)
-                break
+            val argumentList = element.getDelegationCall().valueArgumentList
+            for (superTypeListEntry in klass.superTypeListEntries) {
+                val typeReference = superTypeListEntry.typeReference ?: continue
+                val type = context[BindingContext.TYPE, typeReference]
+                if ((type?.constructor?.declarationDescriptor as? ClassifierDescriptorWithTypeParameters)?.kind == ClassKind.CLASS) {
+                    val superTypeCallEntry = psiFactory.createSuperTypeCallEntry(
+                        "${typeReference.text}${argumentList?.text ?: "()"}"
+                    )
+                    superTypeListEntry.replace(superTypeCallEntry)
+                    break
+                }
             }
-        }
 
-        with(constructorInClass.replace(constructor)) {
-            constructorCommentSaver.restore(this)
-        }
+            with(constructorInClass.replace(constructor)) {
+                constructorCommentSaver.restore(this)
+            }
+            initializer
+        } ?: return
 
         if ((initializer.body as? KtBlockExpression)?.statements?.isNotEmpty() == true) {
             val hasPropertyAfterInitializer = element.parent.children.takeLastWhile { it !== element }.any {
                 it is KtProperty && ReferencesSearch.search(it, initializer.useScope).findFirst() != null
             }
-            if (hasPropertyAfterInitializer) {
-                // In this case we must move init {} down, because it uses a property declared below
-                klass.addDeclaration(initializer)
-                element.delete()
-            } else {
-                element.replace(initializer)
+            runWriteAction {
+                if (hasPropertyAfterInitializer) {
+                    // In this case we must move init {} down, because it uses a property declared below
+                    klass.addDeclaration(initializer)
+                    element.delete()
+                } else {
+                    element.replace(initializer)
+                }
             }
         } else {
-            element.delete()
+            runWriteAction {
+                element.delete()
+            }
         }
     }
 

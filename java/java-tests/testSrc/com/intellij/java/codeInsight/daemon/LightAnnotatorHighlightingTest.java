@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
@@ -45,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -87,7 +88,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       psiElement.accept(new XmlElementVisitor() {
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
           XmlAttribute attribute = tag.getAttribute("aaa", "");
           if (attribute != null) {
             holder.newAnnotation(HighlightSeverity.WARNING, "MyAnnotator").range(attribute).create();
@@ -96,7 +97,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         }
 
         @Override
-        public void visitXmlToken(XmlToken token) {
+        public void visitXmlToken(@NotNull XmlToken token) {
           if (token.getTokenType() == XmlTokenType.XML_CHAR_ENTITY_REF) {
             holder.newAnnotation(HighlightSeverity.WARNING, "ENTITY").range(token).create();
             iDidIt();
@@ -122,9 +123,11 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
-    String text = "class X {\n" +
-                  "  //XXX\n" +
-                  "}\n";
+    String text = """
+      class X {
+        //XXX
+      }
+      """;
     configureFromFileText("x.java", text);
     ((EditorImpl)getEditor()).getScrollPane().getViewport().setSize(1000, 1000);
     assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
@@ -133,7 +136,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject()))
-      .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
+      .runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
   }
 
   public static class MyCrazyAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
@@ -452,8 +455,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotationBuilderMethodsAllowedToBeCalledOnlyOnce() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators()
-    );
+    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators());
   }
 
   public void testAnnotatorTryingToHighlightWarningAndErrorToTheSameElementMustFilterOutWarning() {
@@ -518,6 +520,49 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiClass) {
         holder.newAnnotation(HighlightInfoType.SYMBOL_TYPE_SEVERITY, "symbol2").range(((PsiClass)psiElement).getNameIdentifier()).create();
+        iDidIt();
+      }
+    }
+  }
+
+  /**
+   * Checks that the Platform doesn't add useless "Inspection 'Annotator' options" quick fix. see https://youtrack.jetbrains.com/issue/WEB-55217
+   */
+  public void testNoFixesOrOptionsMustBeShownWhenAnnotatorProvidedQuickFixWhichIsDisabled() {
+    enableInspectionTool(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection());
+    assertNotNull(HighlightDisplayKey.find("Annotator"));
+    configureFromFileText("foo.txt", "hello<caret>");
+    DisabledQuickFixAnnotator.FIX_ENABLED = true;
+    assertEmpty(doHighlighting());
+    assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()));
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DisabledQuickFixAnnotator.FIX_ENABLED = false;
+    DaemonRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new DisabledQuickFixAnnotator()}, ()-> {
+      assertOneElement(highlightErrors());
+      assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // nothing, not even EmptyIntentionAction
+
+      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      DisabledQuickFixAnnotator.FIX_ENABLED = true;
+      assertNotEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // maybe a lot of CleanupIntentionAction, FixAllIntention etc
+    });
+  }
+
+  private static class DisabledQuickFixAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+    private static volatile boolean FIX_ENABLED;
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element.getText().equals("hello")) {
+        holder.newAnnotation(HighlightSeverity.ERROR, "i hate it")
+          .newFix(new DeleteElementFix(element) {
+            @Override
+            public boolean isAvailable(@NotNull Project project,
+                                       @NotNull PsiFile file,
+                                       @Nullable Editor editor,
+                                       @NotNull PsiElement startElement,
+                                       @NotNull PsiElement endElement) {
+              return FIX_ENABLED;
+            }
+          }).registerFix().create();
         iDidIt();
       }
     }

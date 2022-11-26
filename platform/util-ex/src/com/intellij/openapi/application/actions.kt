@@ -21,6 +21,14 @@ inline fun <T> runReadAction(crossinline runnable: () -> T): T {
   return ApplicationManager.getApplication().runReadAction(Computable { runnable() })
 }
 
+inline fun assertReadAccessAllowed() {
+  ApplicationManager.getApplication().assertReadAccessAllowed()
+}
+
+inline fun assertWriteAccessAllowed() {
+  ApplicationManager.getApplication().assertWriteAccessAllowed()
+}
+
 /**
  * @suppress Internal use only
  */

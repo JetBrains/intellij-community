@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -34,7 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -51,6 +52,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -228,15 +230,19 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   public CoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
                                         @Nullable final String suiteToMergeWith,
                                         final CoverageRunner coverageRunner,
-                                        final boolean collectLineInfo,
+                                        final boolean coverageByTestEnabled,
                                         final boolean tracingEnabled) {
-    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, collectLineInfo, tracingEnabled);
-    if (suiteToMergeWith == null || !name.equals(suiteToMergeWith)) {
+    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, coverageByTestEnabled, tracingEnabled);
+    addCoverageSuite(suite, suiteToMergeWith);
+    return suite;
+  }
+
+  public void addCoverageSuite(final CoverageSuite suite, @Nullable final String suiteToMergeWith) {
+    if (suiteToMergeWith == null || !suite.getPresentableName().equals(suiteToMergeWith)) {
       removeCoverageSuite(suite);
     }
     myCoverageSuites.remove(suite); // remove previous instance
     myCoverageSuites.add(suite); // add new instance
-    return suite;
   }
 
   @Override
@@ -648,14 +654,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                             final String[] filters,
                                             final long lastCoverageTimeStamp,
                                             final String suiteToMergeWith,
-                                            final boolean collectLineInfo,
+                                            final boolean coverageByTestEnabled,
                                             final boolean tracingEnabled) {
 
     CoverageSuite suite = null;
     for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
       if (coverageRunner.acceptsCoverageEngine(engine)) {
         suite = engine.createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp,
-                                           suiteToMergeWith, collectLineInfo, tracingEnabled, false, myProject);
+                                           suiteToMergeWith, coverageByTestEnabled, tracingEnabled, false, myProject);
         if (suite != null) {
           break;
         }
@@ -683,12 +689,10 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
           final Document document = editor.getDocument();
           return documentManager.getPsiFile(document);
         });
-        if (psiFile != null && psiFile.isPhysical()) {
-          final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
-          if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {
-            return;
-          }
-
+        if (psiFile == null || !psiFile.isPhysical()) return;
+        final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
+        ReadAction.nonBlocking(() -> engine.coverageEditorHighlightingApplicableTo(psiFile)).finishOnUiThread(ModalityState.NON_MODAL, (isApplicable) -> {
+          if (!isApplicable) return;
           CoverageEditorAnnotator annotator = manager.getAnnotator(editor);
           if (annotator == null) {
             annotator = engine.createSrcFileAnnotator(psiFile, editor);
@@ -711,7 +715,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
           };
           myCurrentEditors.put(editor, request);
           getRequestsAlarm(manager).addRequest(request, 100);
-        }
+        }).submit(AppExecutorUtil.getAppExecutorService());
       }
     }
 
@@ -749,7 +753,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
   }
   
-  public static class CoverageProjectManagerListener implements ProjectManagerListener {
+  public static class CoverageProjectManagerListener implements ProjectCloseListener {
     @Override
     public void projectClosing(@NotNull Project project) {
       CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);

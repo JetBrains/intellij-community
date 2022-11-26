@@ -101,7 +101,7 @@ public final class ReplacementBuilder {
             @Override
             public void visitElement(@NotNull PsiElement element) {
               final String text = element.getText();
-              if (StructuralSearchUtil.isTypedVariable(text)) {
+              if (MatchUtil.isTypedVariable(text)) {
                 final Collection<ParameterInfo> infos = findParameterization(Replacer.stripTypedVariableDecoration(text));
                 for (ParameterInfo info : infos) {
                   if (info.getElement() == null) {
@@ -127,13 +127,12 @@ public final class ReplacementBuilder {
       return replacement;
     }
 
-    final StringBuilder result = new StringBuilder(replacement);
-
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);
     assert profile != null;
 
     final List<ParameterInfo> sorted = new SmartList<>(parameterizations.values());
     sorted.sort(Comparator.comparingInt(ParameterInfo::getStartIndex).reversed());
+    final StringBuilder result = new StringBuilder(replacement);
     for (ParameterInfo info : sorted) {
       final MatchResult r = replacementInfo.getNamedMatchResult(info.getName());
       if (info.isReplacementVariable()) {
@@ -183,7 +182,7 @@ public final class ReplacementBuilder {
   public ParameterInfo findParameterization(PsiElement element) {
     if (element == null) return null;
     final String text = element.getText();
-    if (!StructuralSearchUtil.isTypedVariable(text)) return null;
+    if (!MatchUtil.isTypedVariable(text)) return null;
     return ContainerUtil.find(findParameterization(Replacer.stripTypedVariableDecoration(text)), info -> info.getElement() == element);
   }
 }

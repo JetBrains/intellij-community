@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
@@ -92,7 +91,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   public Object @NotNull [] getVariants() {
     final AntDomProject project = myInvocationContextElement.getParentOfType(AntDomProject.class, true);
     if (project != null) {
-      final Collection<String> variants = PropertyResolver.resolve(project.getContextAntProject(), getCanonicalText(), myInvocationContextElement).getSecond();
+      final Collection<String> variants = PropertyResolver.resolve(project.getContextAntProject(), getCanonicalText(), myInvocationContextElement).variants();
       Object[] result = new Object[variants.size()];
       int idx = 0;
       for (String variant : variants) {
@@ -202,12 +201,12 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
       if (project != null) {
         final AntDomProject contextAntProject = project.getContextAntProject();
         final String propertyName = antDomPropertyReference.getCanonicalText();
-        final Trinity<PsiElement,Collection<String>,PropertiesProvider> resolved =
+        final PropertyResolver.@NotNull PropertyData resolved =
           PropertyResolver.resolve(contextAntProject, propertyName, antDomPropertyReference.myInvocationContextElement);
-        final PsiElement mainDeclaration = resolved.getFirst();
+        final PsiElement mainDeclaration = resolved.element();
 
         if (mainDeclaration != null) {
-          result.add(new MyResolveResult(mainDeclaration, resolved.getThird()));
+          result.add(new MyResolveResult(mainDeclaration, resolved.provider()));
         }
 
         final List<PsiElement> antCallParams = AntCallParamsFinder.resolve(project, propertyName);

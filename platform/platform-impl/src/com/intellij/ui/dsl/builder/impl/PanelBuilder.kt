@@ -14,7 +14,7 @@ import kotlin.math.min
 
 @ApiStatus.Internal
 internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConfig: DialogPanelConfig,
-                            val spacingConfiguration: SpacingConfiguration,
+                            private val spacingConfiguration: SpacingConfiguration,
                             val panel: DialogPanel, val grid: Grid) {
 
   fun build() {
@@ -97,7 +97,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
 
       row.rowComment?.let {
         val gaps = Gaps(left = row.getIndent(), bottom = spacingConfiguration.verticalComponentGap)
-        rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps)
+        val horizontalAlign = if (it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
+        rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps, horizontalAlign = horizontalAlign)
         rowsGridBuilder.row()
       }
 
@@ -126,12 +127,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
               i++
             }
 
-            if (isAllowedLabel(cell)) {
-              labelCell(it, cell)
-            }
-            else {
-              warn("Unsupported labeled component: ${cell.component.javaClass.name}")
-            }
+            labelCell(it, cell)
           }
         }
 
@@ -198,7 +194,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component, spacingConfiguration)
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                      resizableColumn = cell.resizableColumn,
-                     gaps = gaps, visualPaddings = prepareVisualPaddings(cell.viewComponent.origin),
+                     gaps = gaps, visualPaddings = prepareVisualPaddings(cell.viewComponent),
                      widthGroup = cell.widthGroup)
       }
       is PanelImpl -> {
@@ -219,7 +215,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
                                               gaps = gaps)
         cell.init(panel, constraints, spacingConfiguration)
       }
-      null -> {
+      // todo revert back to null after migrating to Kotlin 1.7.21, see KT-45474
+      else -> {
         builder.skip(1)
       }
     }
@@ -274,7 +271,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
       else {
         val left = if (index == 0) firstCellIndent else 0
-        GeneratedComponentData(label, Gaps(top = getDefaultVerticalGap(label, spacingConfiguration), left = left), index)
+        GeneratedComponentData(label, Gaps(top = spacingConfiguration.verticalComponentGap, left = left), HorizontalAlign.LEFT, index)
       }
     }
 
@@ -297,7 +294,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
       else {
         val left = getAdditionalHorizontalIndent(cell) + (if (index == 0) firstCellIndent else 0)
-        GeneratedComponentData(comment, Gaps(left = left, bottom = spacingConfiguration.verticalComponentGap), index)
+        val horizontalAlign = if (comment.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
+        GeneratedComponentData(comment, Gaps(left = left, bottom = spacingConfiguration.verticalComponentGap), horizontalAlign, index)
       }
     }
 
@@ -333,7 +331,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
 
     for ((i, data) in columnsAndComponents.withIndex()) {
       val nextColumn = if (i + 1 < columnsAndComponents.size) columnsAndComponents[i + 1].column else maxColumnsCount
-      builder.cell(data.component, nextColumn - data.column, verticalAlign = verticalAlign, baselineAlign = false, gaps = data.gaps)
+      builder.cell(data.component, nextColumn - data.column, horizontalAlign = data.horizontalAlign, verticalAlign = verticalAlign,
+                   baselineAlign = false, gaps = data.gaps)
 
     }
     builder.row()
@@ -389,4 +388,4 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
   }
 }
 
-private data class GeneratedComponentData(val component: JComponent, val gaps: Gaps, val column: Int)
+private data class GeneratedComponentData(val component: JComponent, val gaps: Gaps, val horizontalAlign: HorizontalAlign, val column: Int)

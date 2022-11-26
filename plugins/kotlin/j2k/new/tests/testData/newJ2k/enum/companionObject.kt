@@ -1,5 +1,6 @@
 enum class TestEnum {
-    A, B;
+    A,
+    B;
 
     companion object {
         fun parse(): TestEnum {

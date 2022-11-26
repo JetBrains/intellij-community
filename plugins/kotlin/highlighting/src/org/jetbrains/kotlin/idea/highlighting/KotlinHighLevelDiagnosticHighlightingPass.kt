@@ -37,7 +37,7 @@ class KotlinHighLevelDiagnosticHighlightingPass(
     document: Document,
 ) : TextEditorHighlightingPass(ktFile.project, document) {
 
-    val annotationHolder = AnnotationHolderImpl(AnnotationSession(ktFile), false)
+    private val annotationHolder = AnnotationHolderImpl(AnnotationSession(ktFile), false)
 
     override fun doCollectInformation(progress: ProgressIndicator) {
         if (IGNORE_IN_TESTS) {

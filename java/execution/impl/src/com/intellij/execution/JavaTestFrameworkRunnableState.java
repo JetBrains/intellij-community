@@ -269,6 +269,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
+    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
 
     final BaseTestsOutputConsoleView testConsole =
       UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));
@@ -359,16 +360,18 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     finally {
       getConfiguration().setProgramParameters(parameters);
     }
-    configureClasspath(javaParameters);
-    javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
-    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
+    ReadAction.run(() -> {
+      configureClasspath(javaParameters);
+      javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
+      javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
-    for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
-      patcher.patchJavaParameters(project, module, javaParameters);
-    }
+      for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
+        patcher.patchJavaParameters(project, module, javaParameters);
+      }
 
-    JavaRunConfigurationExtensionManager.getInstance()
-      .updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
+      JavaRunConfigurationExtensionManager.getInstance()
+        .updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
+    });
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
@@ -379,6 +382,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
 
     return javaParameters;
+  }
+
+  @Override
+  protected boolean isReadActionRequired() {
+    return false;
   }
 
   protected List<String> getNamedParams(String parameters) {

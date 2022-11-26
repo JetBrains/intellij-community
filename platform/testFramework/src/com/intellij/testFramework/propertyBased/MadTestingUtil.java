@@ -5,11 +5,13 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,9 +64,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-/**
- * @author peter
- */
 public final class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance(MadTestingUtil.class);
   private static final boolean USE_ROULETTE_WHEEL = true;
@@ -171,7 +170,7 @@ public final class MadTestingUtil {
    *
    * @param except short names of inspections to disable
    */
-  public static void enableAllInspections(@NotNull Project project, String... except) {
+  public static void enableAllInspections(@NotNull Project project, @NotNull Language fileLanguage, String @NotNull... except) {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
     profile.enableAllTools(project);
@@ -181,20 +180,26 @@ public final class MadTestingUtil {
     for (String shortId : except) {
       disableInspection(project, profile, shortId);
     }
-    replaceProfile(project, profile);
+    replaceProfile(project, profile, fileLanguage);
   }
 
-  public static void enableDefaultInspections(@NotNull Project project) {
+  public static void enableDefaultInspections(@NotNull Project project, @NotNull Language fileLanguage) {
     InspectionProfileImpl profile = new InspectionProfileImpl("defaultInspections");
     InspectionsKt.runInInitMode(() -> {
-      replaceProfile(project, profile);
+      replaceProfile(project, profile, fileLanguage);
       return null;
     });
   }
 
-  private static void replaceProfile(@NotNull Project project, InspectionProfileImpl profile) {
+  private static void replaceProfile(@NotNull Project project, @NotNull InspectionProfileImpl profile, @NotNull Language fileLanguage) {
     // instantiate all tools to avoid extension loading in inconvenient moment
-    profile.getAllEnabledInspectionTools(project).forEach(state -> state.getTool().getTool());
+    profile.getAllEnabledInspectionTools(project).forEach(state -> {
+      InspectionToolWrapper<?, ?> wrapper = state.getTool();
+      String inspectionLanguage = wrapper.getLanguage();
+      if (inspectionLanguage == null || fileLanguage.isKindOf(inspectionLanguage)) {
+        wrapper.getTool();
+      }
+    });
 
     ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
     manager.addProfile(profile);
@@ -297,19 +302,24 @@ public final class MadTestingUtil {
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
-    return !name.equals("gen") && // https://youtrack.jetbrains.com/issue/IDEA-175404
-           !name.equals("reports") && // no idea what this is
-           !name.equals("android") && // no 'android' repo on agents in some builds
-           !containsBinariesOnly(name) &&
-           !name.endsWith("system") && !name.endsWith("config"); // temporary stuff from tests or debug IDE
+    return !name.equals("gen") // https://youtrack.jetbrains.com/issue/IDEA-175404
+           && !name.equals("reports") // no idea what this is
+           && !name.equals("android") // no 'android' repo on agents in some builds
+           && canContainSources(name)
+           && !name.endsWith("system")
+           && !name.endsWith("config") // temporary stuff from tests or debug IDE
+           && !name.equals("build")    // the dir is too deep and has almost no sources, descending there is a waste of time
+    ;
   }
 
-  private static boolean containsBinariesOnly(@NotNull String name) {
-    return name.equals("jdk") ||
-           name.equals("jre") ||
-           name.equals("lib") ||
-           name.equals("bin") ||
-           name.equals("out");
+  private static boolean canContainSources(@NotNull String name) {
+    return !name.equals("jdk")
+           && !name.equals("jre")
+           && !name.equals("lib")
+           && !name.equals("bin")
+           && !name.equals("out")
+           && !name.startsWith(".")  // .gradle/.git/.idea have too many irrelevant files but no sources
+      ;
   }
 
   @NotNull
@@ -530,13 +540,19 @@ public final class MadTestingUtil {
     private static final File[] EMPTY_DIRECTORY = new File[0];
     private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<>() {
       @Override
-      protected File[] create(File f) {
+      protected File[] create(@NotNull File f) {
         File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));
-        return files != null && files.length == 0 ? EMPTY_DIRECTORY : files;
+        if (files == null) {
+          return null;
+        }
+        if (files.length == 0) {
+          return EMPTY_DIRECTORY;
+        }
+        return files;
       }
     };
 
-    private RouletteWheelFileGenerator(File root, FileFilter filter) {
+    private RouletteWheelFileGenerator(@NotNull File root, @NotNull FileFilter filter) {
       myRoot = root;
       myFilter = filter;
     }

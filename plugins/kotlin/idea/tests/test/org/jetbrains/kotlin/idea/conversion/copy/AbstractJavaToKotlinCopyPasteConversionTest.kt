@@ -16,7 +16,7 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractJ2kCopyPast
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("copyPaste/conversion")
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override fun setUp() {
         super.setUp()
@@ -34,29 +34,31 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractJ2kCopyPast
 
     fun doTest(unused: String) {
         val path = dataFilePath(fileName())
-        val baseName = fileName().replace(".java", "")
-        myFixture.configureByFiles("$baseName.java")
+        withCustomCompilerOptions(File(path).readText(), project, module) {
+            val baseName = fileName().replace(".java", "")
+            myFixture.configureByFiles("$baseName.java")
 
-        val fileText = myFixture.editor.document.text
-        val noConversionExpected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NO_CONVERSION_EXPECTED").isNotEmpty()
+            val fileText = myFixture.editor.document.text
+            val noConversionExpected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NO_CONVERSION_EXPECTED").isNotEmpty()
 
-        myFixture.performEditorAction(IdeActions.ACTION_COPY)
+            myFixture.performEditorAction(IdeActions.ACTION_COPY)
 
-        configureByDependencyIfExists("$baseName.dependency.kt")
-        configureByDependencyIfExists("$baseName.dependency.java")
+            configureByDependencyIfExists("$baseName.dependency.kt")
+            configureByDependencyIfExists("$baseName.dependency.java")
 
-        configureTargetFile("$baseName.to.kt")
+            configureTargetFile("$baseName.to.kt")
 
-        ConvertJavaCopyPasteProcessor.conversionPerformed = false
+            ConvertJavaCopyPasteProcessor.conversionPerformed = false
 
-        myFixture.performEditorAction(IdeActions.ACTION_PASTE)
-        UIUtil.dispatchAllInvocationEvents()
+            myFixture.performEditorAction(IdeActions.ACTION_PASTE)
+            UIUtil.dispatchAllInvocationEvents()
 
-        assertEquals(
-            noConversionExpected, !ConvertJavaCopyPasteProcessor.conversionPerformed,
-            if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
-        )
+            assertEquals(
+                noConversionExpected, !ConvertJavaCopyPasteProcessor.conversionPerformed,
+                if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
+            )
 
-        KotlinTestUtils.assertEqualsToFile(File(path.replace(".java", ".expected.kt")), myFixture.file.text)
+            KotlinTestUtils.assertEqualsToFile(File(path.replace(".java", ".expected.kt")), myFixture.file.text)
+        }
     }
 }

@@ -36,24 +36,20 @@ interface InlayElementDescriptor {
    * store inlay outputs
    * @param inlayElement `isInlayElement(inlayElement)` is true
    */
-  @JvmDefault
   fun getInlayOutputs(inlayElement: PsiElement): List<InlayOutput>? = null
 
   /**
    * the method is called when inlay output of [psi] is intentionally removed by a user.
    */
-  @JvmDefault
   fun cleanup(psi: PsiElement): Future<Void>? = null
 
   /**
    * Returns offset in the document, to which an output inlay should be appended.
    */
-  @JvmDefault
   fun getInlayOffset(psiElement: PsiElement): Int =
     // By default returns the offset to the last non-whitespace character in psiCell text.
     psiElement.textRange.endOffset - 1
 
-  @JvmDefault
   fun shouldUpdateInlays(event: DocumentEvent): Boolean =
     event.oldFragment.contains("\n") || event.newFragment.contains("\n")
 }

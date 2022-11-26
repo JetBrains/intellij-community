@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.codeVision
 
 import com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider
 import com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 
 class JavaCodeVisionProviderTest : CodeVisionTestCase() {
   fun testMethodUsages() = doTest("""
@@ -141,6 +142,19 @@ class B {
    new A();
  }
 }
+""", JavaReferencesCodeVisionProvider.ID)
+
+  fun testFieldOnFirstLineOfInterfaceHasLenses() = doTest("""
+package codeLenses;
+
+<# block [no usages] #>
+public interface Interface {
+<# block [no usages] #>
+    String s = "asd";
+<# block [no usages] #>
+    String asd = "asd";
+}
+
 """, JavaReferencesCodeVisionProvider.ID)
 
   private fun doTest(text: String, vararg enabledProviderIds: String) {

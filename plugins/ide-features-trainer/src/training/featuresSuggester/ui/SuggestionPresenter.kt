@@ -91,7 +91,7 @@ class NotificationSuggestionPresenter :
     notification: Notification,
     suggestion: TipSuggestion
   ): AnAction? {
-    val tip = getTipByFilename(suggestion.suggestingTipFilename) ?: return null
+    val tip = TipAndTrickBean.findById(suggestion.suggestingTipId) ?: return null
     return object : AnAction(FeatureSuggesterBundle.message("notification.learn.more")) {
       override fun actionPerformed(e: AnActionEvent) {
         TipAndTrickManager.getInstance().showTipDialog(project, tip)
@@ -99,9 +99,5 @@ class NotificationSuggestionPresenter :
         FeatureSuggesterStatistics.logNotificationLearnMore(suggestion.suggesterId)
       }
     }
-  }
-
-  private fun getTipByFilename(tipFilename: String): TipAndTrickBean? {
-    return TipAndTrickBean.EP_NAME.extensions.find { it.fileName == tipFilename }
   }
 }

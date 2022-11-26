@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class AstSpine implements StubbedSpine {
   static final AstSpine EMPTY_SPINE = new AstSpine(Collections.emptyList()); 
   private final List<CompositeElement> myNodes;

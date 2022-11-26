@@ -165,7 +165,8 @@ val gradlePluginProjects = listOf(
     ":kotlin-annotation-processing-gradle",
     ":kotlin-noarg",
     ":kotlin-noarg:plugin-marker",
-    ":kotlin-sam-with-receiver"
+    ":kotlin-sam-with-receiver",
+    ":kotlin-assignment"
 )
 
 fun Task.listConfigurationContents(configName: String) {
@@ -386,6 +387,7 @@ tasks {
                   ":kotlin-allopen-compiler-plugin:test",
                   ":kotlin-noarg-compiler-plugin:test",
                   ":kotlin-sam-with-receiver-compiler-plugin:test",
+                  ":kotlin-assignment-compiler-plugin:test",
                   ":plugins:uast-kotlin:test",
                   ":kotlin-annotation-processing-gradle:test",
                   ":kotlinx-serialization-ide-plugin:test")

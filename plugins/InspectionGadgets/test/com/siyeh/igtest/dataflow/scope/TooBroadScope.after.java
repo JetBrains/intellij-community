@@ -320,3 +320,11 @@ class TryWithResources {
         try (java.io.FileInputStream in = new java.io.FileInputStream(s)) {}
     }
 }
+class MyList extends ArrayList {
+
+  int boo() {
+    int size = size();
+    clear();
+    return size;
+  }
+}

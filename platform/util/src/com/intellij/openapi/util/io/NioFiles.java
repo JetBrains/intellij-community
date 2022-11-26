@@ -1,15 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.BitUtil;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinBase;
+import com.sun.jna.platform.win32.WinNT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.DosFileAttributeView;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -19,6 +24,26 @@ import static java.nio.file.attribute.PosixFilePermission.*;
  * A utility class that provides pieces missing from {@link Files java.nio.file.Files}.
  */
 public final class NioFiles {
+  /**
+   * A constant returned by {@link #readAttributes(Path)} when it is certain that the given path points to a symlink
+   * (or one of its NTFS relatives), but can't figure out any more details.
+   */
+  public static final BasicFileAttributes BROKEN_SYMLINK = new BasicFileAttributes() {
+    private final FileTime ZERO = FileTime.fromMillis(0);
+    @Override public FileTime lastModifiedTime() { return ZERO; }
+    @Override public FileTime lastAccessTime() { return ZERO; }
+    @Override public FileTime creationTime() { return ZERO; }
+    @Override public boolean isRegularFile() { return false; }
+    @Override public boolean isDirectory() { return false; }
+    @Override public boolean isSymbolicLink() { return true; }
+    @Override public boolean isOther() { return false; }
+    @Override public long size() { return 0; }
+    @Override public Object fileKey() { return null; }
+  };
+
+  private static final Logger LOG = Logger.getInstance(NioFiles.class);
+  private static final LinkOption[] NO_FOLLOW = {LinkOption.NOFOLLOW_LINKS};
+
   private NioFiles() { }
 
   /**
@@ -72,6 +97,18 @@ public final class NioFiles {
       if (!Files.isDirectory(path)) {
         throw e;
       }
+    }
+  }
+
+  /**
+   * Like {@link Files#isWritable}, but interprets {@link SecurityException} as a negative result.
+   */
+  public static boolean isWritable(@NotNull Path path) {
+    try {
+      return Files.isWritable(path);
+    }
+    catch (SecurityException e) {
+      return false;
     }
   }
 
@@ -131,10 +168,34 @@ public final class NioFiles {
   }
 
   /**
+   * A file attributes reading routine, tolerant to exceptions caused by broken symlinks (in particular, the ones exported by WSL).
+   *
+   * @see #BROKEN_SYMLINK
+   */
+  public static @NotNull BasicFileAttributes readAttributes(@NotNull Path path) throws IOException, SecurityException {
+    try {
+      return Files.readAttributes(path, BasicFileAttributes.class, NO_FOLLOW);
+    }
+    catch (NoSuchFileException | AccessDeniedException e) { throw e; }
+    catch (FileSystemException e) {
+      if (SystemInfo.isWindows && JnaLoader.isLoaded() && isNtfsReparsePoint(path)) {
+        LOG.debug(e);
+        return BROKEN_SYMLINK;
+      }
+      throw e;
+    }
+  }
+
+  private static boolean isNtfsReparsePoint(Path path) {
+    int attrs = Kernel32.INSTANCE.GetFileAttributes(path.toString());
+    return attrs != WinBase.INVALID_FILE_ATTRIBUTES && BitUtil.isSet(attrs, WinNT.FILE_ATTRIBUTE_REPARSE_POINT);
+  }
+
+  /**
    * See {@link #deleteRecursively(Path, Consumer)}.
    */
   public static void deleteRecursively(@NotNull Path fileOrDirectory) throws IOException {
-    FileUtilRt.deleteRecursivelyNIO(fileOrDirectory, null);
+    FileUtilRt.deleteRecursively(fileOrDirectory, null);
   }
 
   /**
@@ -147,6 +208,6 @@ public final class NioFiles {
    * usually it's enough to overcome intermittent file lock on Windows.</p>
    */
   public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<? super Path> callback) throws IOException {
-    FileUtilRt.deleteRecursivelyNIO(fileOrDirectory, o -> callback.accept((Path)o));
+    FileUtilRt.deleteRecursively(fileOrDirectory, callback::accept);
   }
 }

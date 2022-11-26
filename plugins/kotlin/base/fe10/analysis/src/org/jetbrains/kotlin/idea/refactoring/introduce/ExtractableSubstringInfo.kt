@@ -36,7 +36,7 @@ class ExtractableSubstringInfo(
 
         if (startEntry != endEntry || startEntry !is KtLiteralStringTemplateEntry) return stringType
 
-        val expr = KtPsiFactory(startEntry).createExpressionIfPossible(literal) ?: return stringType
+        val expr = KtPsiFactory(facade.project).createExpressionIfPossible(literal) ?: return stringType
 
         val context = facade.analyze(template, BodyResolveMode.PARTIAL)
         val scope = template.getResolutionScope(context, facade)
@@ -68,7 +68,8 @@ class ExtractableSubstringInfo(
     fun createExpression(): KtExpression {
         val quote = template.firstChild.text
         val literalValue = if (KotlinBuiltIns.isString(type)) "$quote$content$quote" else content
-        return KtPsiFactory(startEntry).createExpression(literalValue).apply { extractableSubstringInfo = this@ExtractableSubstringInfo }
+        return KtPsiFactory(template.project).createExpression(literalValue)
+            .apply { extractableSubstringInfo = this@ExtractableSubstringInfo }
     }
 
     fun copy(newTemplate: KtStringTemplateExpression): ExtractableSubstringInfo {

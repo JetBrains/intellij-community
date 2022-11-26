@@ -99,7 +99,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
                 if (targetDescriptor == functionDescriptor || targetDescriptor == functionLiteralDescriptor) it.labeledExpression?.delete()
             }
 
-            val psiFactory = KtPsiFactory(lambda)
+            val psiFactory = KtPsiFactory(lambda.project)
             val function = psiFactory.createFunction(
                 KtPsiFactory.CallableBuilder(KtPsiFactory.CallableBuilder.Target.FUNCTION).apply {
                     typeParams()

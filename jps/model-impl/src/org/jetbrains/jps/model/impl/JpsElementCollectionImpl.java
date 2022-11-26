@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.util.*;
 
-public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
+public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
   private final List<E> myElements;
   private final Map<E, E> myCopyToOriginal;
   private final JpsElementChildRole<E> myChildRole;

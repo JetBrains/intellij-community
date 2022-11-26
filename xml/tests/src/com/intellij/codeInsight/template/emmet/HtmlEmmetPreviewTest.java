@@ -24,25 +24,28 @@ public class HtmlEmmetPreviewTest extends EmmetPreviewTestBase {
   public void testAbbreviationWithNesting() {
     myFixture.configureByText("test.html", "div>di<caret>");
     myFixture.type("v");
-    assertPreview("<div>\n" +
-                  "    <div></div>\n" +
-                  "</div>");
+    assertPreview("""
+                    <div>
+                        <div></div>
+                    </div>""");
   }
 
   public void testAbbreviationWithFilter() {
     myFixture.configureByText("test.html", "div#id>div.class<caret>");
     myFixture.type("|c");
-    assertPreview("<div id=\"id\">\n" +
-                  "    <div class=\"class\"></div>\n" +
-                  "    <!-- /.class -->\n" +
-                  "</div>\n" +
-                  "<!-- /#id -->");
+    assertPreview("""
+                    <div id="id">
+                        <div class="class"></div>
+                        <!-- /.class -->
+                    </div>
+                    <!-- /#id -->""");
     myFixture.type("|s");
-    assertPreview("<div id=\"id\">\n" +
-                  "    <div class=\"class\"></div>\n" +
-                  "    <!-- /.class -->\n" +
-                  "</div>\n" +
-                  "<!-- /#id -->");
+    assertPreview("""
+                    <div id="id">
+                        <div class="class"></div>
+                        <!-- /.class -->
+                    </div>
+                    <!-- /#id -->""");
   }
   
   public void testPreviewXhtml() {

@@ -31,6 +31,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.roots.ToolbarPanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -44,10 +45,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -192,10 +191,13 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     if (model != null) {
       final ContentEntry[] contentEntries = model.getContentEntries();
       if (contentEntries.length > 0) {
-        for (final ContentEntry contentEntry : contentEntries) {
+        ContentEntry[] sortedContentRoots = ArrayUtil.newArray(ContentEntry.class, contentEntries.length);
+        System.arraycopy(contentEntries, 0, sortedContentRoots, 0, contentEntries.length);
+        Arrays.sort(sortedContentRoots, Comparator.comparing(ContentEntry::getUrl));
+        for (final ContentEntry contentEntry : sortedContentRoots) {
           addContentEntryPanel(contentEntry.getUrl());
         }
-        selectContentEntry(contentEntries[0].getUrl(), false);
+        selectContentEntry(sortedContentRoots[0].getUrl(), false);
       }
     }
 
@@ -333,12 +335,15 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   protected void addContentEntryPanels(ContentEntry[] contentEntriesArray) {
-    for (ContentEntry contentEntry : contentEntriesArray) {
+    ContentEntry[] sortedContentRoots = ArrayUtil.newArray(ContentEntry.class, contentEntriesArray.length);
+    System.arraycopy(contentEntriesArray, 0, sortedContentRoots, 0, contentEntriesArray.length);
+    Arrays.sort(sortedContentRoots, Comparator.comparing(ContentEntry::getUrl));
+    for (ContentEntry contentEntry : sortedContentRoots) {
       addContentEntryPanel(contentEntry.getUrl());
     }
     myEditorsPanel.revalidate();
     myEditorsPanel.repaint();
-    selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1].getUrl(), false);
+    selectContentEntry(sortedContentRoots[sortedContentRoots.length - 1].getUrl(), false);
   }
 
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {

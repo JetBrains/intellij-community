@@ -33,7 +33,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class FindClassTest extends JavaPsiTestCase {
   private VirtualFile myPrjDir1;
@@ -88,13 +87,10 @@ public class FindClassTest extends JavaPsiTestCase {
   }
 
   public void testClassUnderExcludedFolder() {
-    AtomicReference<PsiClass> psiClass = new AtomicReference<>();
-
     WriteAction.run(() -> {
       PsiTestUtil.addExcludedRoot(myModule, myPackDir);
 
-      psiClass.set(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
-      assertNull(psiClass.get());
+      assertNull(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
 
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
       final ContentEntry content = rootModel.getContentEntries()[0];
@@ -102,8 +98,9 @@ public class FindClassTest extends JavaPsiTestCase {
       rootModel.commit();
     });
 
-    psiClass.set(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
-    assertEquals("p.A", psiClass.get().getQualifiedName());
+    PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
+    assertNotNull(psiClass);
+    assertEquals("p.A", psiClass.getQualifiedName());
   }
 
   public void testClassUnderIgnoredFolder() {

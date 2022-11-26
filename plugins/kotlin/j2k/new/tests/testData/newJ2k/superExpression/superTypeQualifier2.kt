@@ -4,6 +4,6 @@ internal interface A {
 
 internal interface B : A {
     override fun foo() {
-        super<A>.foo()
+        super.foo()
     }
 }

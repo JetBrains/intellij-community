@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 
@@ -26,6 +27,7 @@ class ReplaceUntilWithRangeToIntention : SelfTargetingIntention<KtExpression>(
 
     override fun applyTo(element: KtExpression, editor: Editor?) {
         val args = element.getArguments() ?: return
-        element.replace(KtPsiFactory(element).createExpressionByPattern("$0..$1 - 1", args.first ?: return, args.second ?: return))
+        val psiFactory = KtPsiFactory(element.project)
+        element.replace(psiFactory.createExpressionByPattern("$0..$1 - 1", args.first ?: return, args.second ?: return))
     }
 }

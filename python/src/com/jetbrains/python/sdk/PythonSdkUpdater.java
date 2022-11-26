@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -14,10 +13,12 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -42,6 +43,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
+import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -66,9 +69,8 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   private static final Object ourLock = new Object();
   private static final Set<Sdk> ourUnderRefresh = new HashSet<>();
   private static final Map<Sdk, PyUpdateSdkRequestData> ourToBeRefreshed = new HashMap<>();
+  private static final String NOTIFICATION_GROUP_ID = "Python SDK Updater";
   private static volatile boolean ourEnabledInTests = false;
-
-  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Python SDK Updater");
 
   @ApiStatus.Internal
   @TestOnly
@@ -179,6 +181,10 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
         indicator.setText2("");
         PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
+        PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
+        if (manager != null) {
+          PythonPackageManagerExt.launchReload(manager);
+        }
       }
       catch (ExecutionException e) {
         if (LOG.isDebugEnabled()) {
@@ -216,7 +222,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         return;
       }
       if (exception instanceof UnsupportedPythonSdkTypeException) {
-        NOTIFICATION_GROUP
+        NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
           .createNotification(PyBundle.message("sdk.gen.failed.notification.title"),
                               PyBundle.message("remote.interpreter.support.is.not.available", sdk.getName()),
                               NotificationType.WARNING)
@@ -230,7 +236,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
             }
           });
         }
-        else if (!PythonSdkUtil.isInvalid(sdk)) {
+        else if (PySdkExtKt.getSdkSeemsValid(sdk)) {
           LOG.error(exception);
         }
       }
@@ -263,7 +269,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   /**
    * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
   }
@@ -407,7 +413,12 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     throws InvalidSdkException {
     updateLocalSdkVersion(sdk);
     if (!PythonSdkUtil.isRemote(sdk)) {
-      updateSdkPaths(sdk, evaluateSysPath(sdk), project);
+      try {
+        updateSdkPaths(sdk, evaluateSysPath(sdk, project != null ? project : ProjectManager.getInstance().getDefaultProject()), project);
+      }
+      catch (ExecutionException e) {
+        throw new InvalidSdkException("Can't evaluate sdk version", e);
+      }
     }
   }
 
@@ -623,18 +634,19 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   /**
-   * Evaluates sys.path by running the Python interpreter from a local SDK.
+   * Evaluates sys.path by running the Python interpreter from  SDK.
    * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
-  private static List<String> evaluateSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
-    if (PythonSdkUtil.isRemote(sdk)) {
-      throw new IllegalArgumentException("Cannot evaluate sys.path for remote Python interpreter " + sdk);
-    }
+  private static List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException {
     final long startTime = System.currentTimeMillis();
     ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.paths"));
-    final List<String> sysPath = PythonSdkType.getSysPath(sdk);
+    if (ApplicationManager.getApplication().isUnitTestMode() && PythonSdkType.isMock(sdk)) {
+      // Mock sdk in tests can't be executed
+      return PythonSdkType.getMockPath(sdk);
+    }
+    final List<String> sysPath = new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator());
     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
     return sysPath;
   }

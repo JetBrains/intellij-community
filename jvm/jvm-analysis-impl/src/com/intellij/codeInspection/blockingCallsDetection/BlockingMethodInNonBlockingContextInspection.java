@@ -3,6 +3,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -32,6 +33,14 @@ import static java.util.Collections.emptyList;
 
 public final class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUastLocalInspectionTool {
 
+  public BlockingMethodInNonBlockingContextInspection() {
+    myConsiderUnknownContextBlocking = true;
+  }
+
+  public BlockingMethodInNonBlockingContextInspection(boolean considerUnknownContextBlocking) {
+    myConsiderUnknownContextBlocking = considerUnknownContextBlocking;
+  }
+
   public static final List<String> DEFAULT_BLOCKING_ANNOTATIONS = List.of(
     "org.jetbrains.annotations.Blocking",
     "io.micronaut.core.annotation.Blocking",
@@ -45,7 +54,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
   public List<String> myBlockingAnnotations = new ArrayList<>(DEFAULT_BLOCKING_ANNOTATIONS);
   public List<String> myNonBlockingAnnotations = new ArrayList<>(DEFAULT_NONBLOCKING_ANNOTATIONS);
-  public boolean myConsiderUnknownContextBlocking = true;
+  public boolean myConsiderUnknownContextBlocking;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -167,10 +176,18 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       super.visitElement(element);
       UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
       if (callExpression == null) return;
+      PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
+      if (elementToHighLight == null) return;
 
       ContextType contextType = isContextNonBlockingFor(element, myNonBlockingContextCheckers, mySettings);
-      if (contextType instanceof ContextType.Blocking ||
-          (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking)) {
+      if (contextType instanceof ContextType.Blocking) {
+        return;
+      }
+      if (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking) {
+        myHolder.registerProblem(elementToHighLight,
+                                 JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking"),
+                                 ProblemHighlightType.INFORMATION,
+                                 new ConsiderUnknownContextBlockingFix(false));
         return;
       }
       ProgressIndicatorProvider.checkCanceled();
@@ -180,19 +197,17 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
       if (!isMethodOrSupersBlocking(referencedMethod, myBlockingMethodCheckers, mySettings)) return;
 
-      PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
-      if (elementToHighLight == null) return;
-
       ElementContext elementContext = new ElementContext(element, mySettings);
       StreamEx<LocalQuickFix> fixesStream = StreamEx.of(myBlockingMethodCheckers)
         .flatArray(checker -> checker.getQuickFixesFor(elementContext));
 
       if (contextType instanceof ContextType.Unsure && !myConsiderUnknownContextBlocking) {
-        fixesStream = fixesStream.append(new ConsiderUnknownContextBlockingFix());
+        fixesStream = fixesStream.append(new ConsiderUnknownContextBlockingFix(true));
       }
 
       String message;
-      if (contextType instanceof ContextType.NonBlocking && StringUtil.isNotEmpty(((ContextType.NonBlocking)contextType).getDescription())) {
+      if (contextType instanceof ContextType.NonBlocking &&
+          StringUtil.isNotEmpty(((ContextType.NonBlocking)contextType).getDescription())) {
         String contextDescription = ((ContextType.NonBlocking)contextType).getDescription();
         message = JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.wildcard.descriptor", contextDescription);
       }
@@ -241,15 +256,31 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   }
 
   private class ConsiderUnknownContextBlockingFix implements LocalQuickFix {
+    private final boolean considerUnknownContextBlocking;
+
+    private ConsiderUnknownContextBlockingFix(boolean considerUnknownContextBlocking) {
+      this.considerUnknownContextBlocking = considerUnknownContextBlocking;
+    }
+
     @Override
     public @NotNull String getFamilyName() {
-      return JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking");
+      if (considerUnknownContextBlocking) {
+        return JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking");
+      }
+      else {
+        return JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking");
+      }
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      BlockingMethodInNonBlockingContextInspection.this.myConsiderUnknownContextBlocking = true;
+      BlockingMethodInNonBlockingContextInspection.this.myConsiderUnknownContextBlocking = considerUnknownContextBlocking;
       DaemonCodeAnalyzer.getInstance(project).restart(descriptor.getPsiElement().getContainingFile());
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return new IntentionPreviewInfo.Html(JvmAnalysisBundle.message("jvm.inspections.blocking.method.intention.text", getFamilyName()));
     }
   }
 }

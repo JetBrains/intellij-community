@@ -846,9 +846,39 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localFunctionWithCapturedLocalVar.kt");
             }
 
+            @TestMetadata("localFunctionWithCapturedOuterParameter.kt")
+            public void testLocalFunctionWithCapturedOuterParameter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/localFunctionWithCapturedOuterParameter.kt");
+            }
+
             @TestMetadata("twoLocals.kt")
             public void testTwoLocals() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/twoLocals.kt");
+            }
+
+            @TestMetadata("variableFinderShouldNotImplementDynamicScoping.kt")
+            public void testVariableFinderShouldNotImplementDynamicScoping() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping.kt");
+            }
+
+            @TestMetadata("variableFinderShouldNotImplementDynamicScoping2.kt")
+            public void testVariableFinderShouldNotImplementDynamicScoping2() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping2.kt");
+            }
+
+            @TestMetadata("variableFinderShouldNotImplementDynamicScoping3.kt")
+            public void testVariableFinderShouldNotImplementDynamicScoping3() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping3.kt");
+            }
+
+            @TestMetadata("variableFinderShouldNotImplementDynamicScoping4.kt")
+            public void testVariableFinderShouldNotImplementDynamicScoping4() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping4.kt");
+            }
+
+            @TestMetadata("variableFinderShouldNotImplementDynamicScoping5.kt")
+            public void testVariableFinderShouldNotImplementDynamicScoping5() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping5.kt");
             }
         }
 
@@ -947,6 +977,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/callableBug.kt");
             }
 
+            @TestMetadata("capturedVariablesInSamLambda.kt")
+            public void testCapturedVariablesInSamLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/capturedVariablesInSamLambda.kt");
+            }
+
             @TestMetadata("classFromAnotherPackage.kt")
             public void testClassFromAnotherPackage() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/classFromAnotherPackage.kt");
@@ -1037,9 +1072,9 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/extractThis.kt");
             }
 
-            @TestMetadata("extractThisInTrait.kt")
-            public void testExtractThisInTrait() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/extractThisInTrait.kt");
+            @TestMetadata("extractThisInInterface.kt")
+            public void testExtractThisInInterface() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/extractThisInInterface.kt");
             }
 
             @TestMetadata("extractVariablesFromCall.kt")

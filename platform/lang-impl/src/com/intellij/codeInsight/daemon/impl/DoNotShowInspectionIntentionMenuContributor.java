@@ -20,6 +20,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -88,9 +91,13 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       return;
     }
 
+    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(project);
+
     List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (InspectionToolWrapper<?,?> toolWrapper : profile.getInspectionTools(hostFile)) {
+      if (!toolWrapper.isApplicable(projectTypes)) continue;
+
       if (toolWrapper instanceof GlobalInspectionToolWrapper) {
         toolWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
       }

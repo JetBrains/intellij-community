@@ -179,10 +179,22 @@ public final class PyResolveUtil {
              : ContainerUtil.map(resolveImportedElementQNameLocally((PyReferenceExpression)qualifier), qn -> qn.append(name));
     }
     else {
-      return fullMultiResolveLocally(expression, new HashSet<>())
+      List<QualifiedName> result = fullMultiResolveLocally(expression, new HashSet<>())
         .select(PyImportElement.class)
         .map(PyResolveUtil::getImportedElementQName)
         .nonNull()
+        .toList();
+      if (!result.isEmpty()) return result;
+      if (expression.getName() == null) return result;
+
+      PsiFile containingFile = expression.getContainingFile();
+      if (!(containingFile instanceof PyFile)) return result;
+      List<PyFromImportStatement> fromImports = ((PyFile)containingFile).getFromImports();
+      return StreamEx.of(fromImports)
+        .filter(it -> it.isStarImport())
+        .map(it -> it.getImportSourceQName())
+        .nonNull()
+        .map(it -> it.append(expression.getName()))
         .toList();
     }
   }

@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-import java.util.*
 
 abstract class ChangeCallableReturnTypeFix(
     element: KtCallableDeclaration,
@@ -184,7 +183,7 @@ abstract class ChangeCallableReturnTypeFix(
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
             val function = diagnostic.psiElement.findParentOfType<KtFunction>(strict = false) ?: return emptyList()
 
-            val actions = LinkedList<IntentionAction>()
+            val actions = mutableListOf<IntentionAction>()
 
             val descriptor = function.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? FunctionDescriptor ?: return emptyList()
 
@@ -195,7 +194,7 @@ abstract class ChangeCallableReturnTypeFix(
 
             val functionType = descriptor.returnType ?: return actions
 
-            val overriddenMismatchingFunctions = LinkedList<FunctionDescriptor>()
+            val overriddenMismatchingFunctions = mutableListOf<FunctionDescriptor>()
             for (overriddenFunction in descriptor.overriddenDescriptors) {
                 val overriddenFunctionType = overriddenFunction.returnType ?: continue
                 if (!KotlinTypeChecker.DEFAULT.isSubtypeOf(functionType, overriddenFunctionType)) {
@@ -231,7 +230,7 @@ abstract class ChangeCallableReturnTypeFix(
     companion object {
         fun getDestructuringDeclarationEntryThatTypeMismatchComponentFunction(diagnostic: Diagnostic): KtDestructuringDeclarationEntry {
             val componentName = COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH.cast(diagnostic).a
-            val componentIndex = DataClassDescriptorResolver.getComponentIndex(componentName.asString())
+            val componentIndex = DataClassResolver.getComponentIndex(componentName.asString())
             val multiDeclaration = diagnostic.psiElement.findParentOfType<KtDestructuringDeclaration>(strict = false)
                 ?: error("COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH reported on expression that is not within any multi declaration")
             return multiDeclaration.entries[componentIndex - 1]

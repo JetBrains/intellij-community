@@ -5,10 +5,10 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -37,9 +38,13 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     BuildSystemGroovyNewProjectWizardData by parent {
 
     private val addSampleCodeProperty = propertyGraph.property(true)
-      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+      .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
-    var addSampleCode by addSampleCodeProperty
+    private var addSampleCode by addSampleCodeProperty
+
+    init {
+      gradleDsl = GradleDsl.GROOVY
+    }
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
@@ -98,9 +103,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = "$path/$name"
-      if (gitData?.git == true) {
-        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
-      }
+      addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
     }
   }
 }

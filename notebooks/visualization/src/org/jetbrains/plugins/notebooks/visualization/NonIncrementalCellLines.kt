@@ -67,7 +67,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
       newAffectedIntervals = newAffectedCells,
       modificationStamp = modificationStamp,
     )
-    intervalListeners.multicaster.segmentChanged(event)
+    intervalListeners.multicaster.documentChanged(event)
   }
 
   private fun createDocumentListener() = object : DocumentListener {
@@ -75,6 +75,14 @@ class NonIncrementalCellLines private constructor(private val document: Document
 
     override fun beforeDocumentChange(event: DocumentEvent) {
       oldAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.oldLength))
+
+      intervalListeners.multicaster.beforeDocumentChange(
+        NotebookCellLinesEventBeforeChange(
+          documentEvent = event,
+          oldAffectedIntervals = oldAffectedCells,
+          modificationStamp = modificationStamp
+        )
+      )
     }
 
     override fun documentChanged(event: DocumentEvent) {

@@ -15,10 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CreateDialogAction extends AbstractCreateFormAction {
   private boolean myRecentGenerateOK;
   private boolean myRecentGenerateCancel;

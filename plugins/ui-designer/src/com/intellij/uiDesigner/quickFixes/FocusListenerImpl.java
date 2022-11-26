@@ -9,9 +9,6 @@ import java.awt.event.FocusEvent;
 /**
  * [vova] This class should be inner but due to bugs in "beta" generics compiler
  * I need to use "static" modifier.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 final class FocusListenerImpl extends FocusAdapter{
   private final QuickFixManager myManager;

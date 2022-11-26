@@ -45,7 +45,9 @@ public final class IntentionsCollector extends CounterUsagesCollector {
     final Class<?> clazz = getOriginalHandlerClass(action);
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
     eventId.log(project, clazz, info, language);
-    FeatureUsageTracker.getInstance().triggerFeatureUsedByIntention(clazz);
+    if (eventId == CALLED) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsedByIntention(clazz);
+    }
   }
 
   @NotNull

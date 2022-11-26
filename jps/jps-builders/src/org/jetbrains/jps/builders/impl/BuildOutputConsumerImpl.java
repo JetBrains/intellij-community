@@ -67,12 +67,8 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
     }
     final SourceToOutputMapping mapping = myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget);
     for (String sourcePath : sourcePaths) {
-      if (myRegisteredSources.add(FileUtil.toSystemIndependentName(sourcePath))) {
-        mapping.setOutput(sourcePath, outputPath);
-      }
-      else {
-        mapping.appendOutput(sourcePath, outputPath);
-      }
+      myRegisteredSources.add(FileUtil.toSystemIndependentName(sourcePath));
+      mapping.appendOutput(sourcePath, outputPath);
     }
   }
 

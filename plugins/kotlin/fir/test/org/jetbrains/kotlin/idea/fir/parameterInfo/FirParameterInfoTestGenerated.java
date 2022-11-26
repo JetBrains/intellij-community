@@ -207,6 +207,16 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/functionCall/lambdaArgument2.kt");
         }
 
+        @TestMetadata("lambdaArgumentForEach.kt")
+        public void testLambdaArgumentForEach() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/lambdaArgumentForEach.kt");
+        }
+
+        @TestMetadata("lambdaArgumentGroupBy.kt")
+        public void testLambdaArgumentGroupBy() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/lambdaArgumentGroupBy.kt");
+        }
+
         @TestMetadata("LocalFunctionBug.kt")
         public void testLocalFunctionBug() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/LocalFunctionBug.kt");
@@ -490,6 +500,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("Vararg.kt")
         public void testVararg() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/Vararg.kt");
+        }
+
+        @TestMetadata("VarargBeforeArgs.kt")
+        public void testVarargBeforeArgs() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/VarargBeforeArgs.kt");
         }
 
         @TestMetadata("VarargFirstArgTrailingComma.kt")

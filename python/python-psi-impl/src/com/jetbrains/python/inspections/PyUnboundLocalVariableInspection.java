@@ -46,14 +46,6 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       super(holder, context);
     }
 
-    /**
-     * @deprecated do not use
-     */
-    @Deprecated(forRemoval = true)
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
-    }
-
     @Override
     public void visitPyReferenceExpression(final @NotNull PyReferenceExpression node) {
       if (PyResolveUtil.allowForwardReferences(node)) {

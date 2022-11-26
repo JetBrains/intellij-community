@@ -10,8 +10,8 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.BalloonImpl;
+import com.intellij.ui.ClientProperty;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +28,7 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   private final JComponent myContent;
 
-  private Color myBorder = JBUI.CurrentTheme.Tooltip.borderColor();
+  private Color myBorder = MessageType.INFO.getBorderColor();
   @Nullable private Insets myBorderInsets;
   private Color myFill = MessageType.INFO.getPopupBackground();
   private boolean myHideOnMouseOutside = true;
@@ -63,7 +63,7 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
   public BalloonPopupBuilderImpl(@Nullable Map<Disposable, List<Balloon>> storage, @NotNull final JComponent content) {
     myStorage = storage;
     myContent = content;
-    if (UIUtil.isClientPropertyTrue(myContent, BalloonImpl.FORCED_NO_SHADOW)) {
+    if (ClientProperty.isTrue(myContent, BalloonImpl.FORCED_NO_SHADOW)) {
       myShadow = false;
     }
   }

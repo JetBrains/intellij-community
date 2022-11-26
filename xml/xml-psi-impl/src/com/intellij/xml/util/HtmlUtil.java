@@ -205,9 +205,11 @@ public final class HtmlUtil {
       }
       else if (parent instanceof HtmlDocumentImpl) {
         final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-        for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
-          if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
-            variants.add(elementDescriptor);
+        if (nsDescriptor != null) {
+          for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
+            if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
+              variants.add(elementDescriptor);
+            }
           }
         }
       }
@@ -756,7 +758,7 @@ public final class HtmlUtil {
     final List<XmlAttributeValue> result = new ArrayList<>();
     file.acceptChildren(new XmlRecursiveElementWalkingVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         XmlAttribute attribute = null;
         if ("link".equalsIgnoreCase(tag.getName())) {
           attribute = tag.getAttribute("href");

@@ -236,11 +236,11 @@ class ModuleInfoProvider(private val project: Project) {
             val library = orderEntry.library
             if (library != null) {
                 if (!isLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
-                    for (libraryInfo in libraryInfoCache.get(library)) {
+                    for (libraryInfo in libraryInfoCache[library]) {
                         register(libraryInfo)
                     }
                 } else if (isLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
-                    for (libraryInfo in libraryInfoCache.get(library)) {
+                    for (libraryInfo in libraryInfoCache[library]) {
                         register(libraryInfo.sourcesModuleInfo)
                     }
                 }
@@ -273,7 +273,7 @@ class ModuleInfoProvider(private val project: Project) {
 
         val library = container.customLibrary
         if (library != null) {
-            for (libraryInfo in libraryInfoCache.get(library)) {
+            for (libraryInfo in libraryInfoCache[library]) {
                 register(libraryInfo)
             }
         }

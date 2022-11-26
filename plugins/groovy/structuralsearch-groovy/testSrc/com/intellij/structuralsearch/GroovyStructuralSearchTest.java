@@ -11,10 +11,11 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
 
   public void test1() {
-    String s = "def int x = 0;\n" +
-               "def y = 0;\n" +
-               "int z = 10;\n" +
-               "def int x1";
+    String s = """
+      def int x = 0;
+      def y = 0;
+      int z = 10;
+      def int x1""";
 
     doTest(s, "def $x$ = $value$;", 3, 1);
     doTest(s, "def $x$", 4, 3);
@@ -26,16 +27,17 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void test2() {
-    String s = "def void f(int x) {}\n" +
-               "def f(int x) {\n" +
-               "  System.out.println(\"hello\");\n" +
-               "}\n" +
-               "def f(def x) {}\n" +
-               "void g(x) {}\n" +
-               "public def void f(def int y) {\n" +
-               "  System.out.println(\"hello\");\n" +
-               "}\n" +
-               "def int f() {}";
+    String s = """
+      def void f(int x) {}
+      def f(int x) {
+        System.out.println("hello");
+      }
+      def f(def x) {}
+      void g(x) {}
+      public def void f(def int y) {
+        System.out.println("hello");
+      }
+      def int f() {}""";
 
     doTest(s, "def $f$($param$)", 5, 2);
     doTest(s, "def $f$($param$) {}", 3, 1);
@@ -54,12 +56,13 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void test3() {
-    String s = "public class C implements I1, I2 {\n" +
-               "  void f() {\n" +
-               "    def a = 1;\n" +
-               "    def int b = 2;\n" +
-               "  }\n" +
-               "}";
+    String s = """
+      public class C implements I1, I2 {
+        void f() {
+          def a = 1;
+          def int b = 2;
+        }
+      }""";
 
     doTest(s, "class $name$", 1, 1);
     doTest(s, "class $name$ implements I1, I2", 1, 1);
@@ -73,52 +76,62 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void test4() {
-    String s = "for (a in list) {\n" +
-               "  println(\"hello1\");\n" +
-               "  println(\"hello2\");\n" +
-               "}";
-    doTest(s, "for ($a$ in $b$) {\n" +
-              "  $st1$;\n" +
-              "  $st2$\n" +
-              "}", 1, 0);
-    doTest(s, "for ($a$ in $b$) {\n" +
-              "  $st1$;\n" +
-              "  $st2$;\n" +
-              "}", 1, 1);
-    doTest(s, "for ($a$ in $b$) {\n" +
-              "  $st1$\n" +
-              "  $st2$\n" +
-              "}", 1, 0);
-    doTest(s, "for ($a$ in $b$) {\n" +
-              "  $st$\n" +
-              "}", 0, 0);
-    doTest(s, "for ($a$ in $b$) {\n" +
-              "  '_T*\n" +
-              "}", 1, 0);
-    doTest(s, "for ($a$ in $b$) {\n" +
-              "  '_T+\n" +
-              "}", 1, 0);
+    String s = """
+      for (a in list) {
+        println("hello1");
+        println("hello2");
+      }""";
+    doTest(s, """
+      for ($a$ in $b$) {
+        $st1$;
+        $st2$
+      }""", 1, 0);
+    doTest(s, """
+      for ($a$ in $b$) {
+        $st1$;
+        $st2$;
+      }""", 1, 1);
+    doTest(s, """
+      for ($a$ in $b$) {
+        $st1$
+        $st2$
+      }""", 1, 0);
+    doTest(s, """
+      for ($a$ in $b$) {
+        $st$
+      }""", 0, 0);
+    doTest(s, """
+      for ($a$ in $b$) {
+        '_T*
+      }""", 1, 0);
+    doTest(s, """
+      for ($a$ in $b$) {
+        '_T+
+      }""", 1, 0);
   }
 
   public void test5() {
-    String s = "class A {\n" +
-               "  def f = {\n" +
-               "    println('Hello1')\n" +
-               "    println('Hello2')\n" +
-               "  }\n" +
-               "  def f1 = {\n" +
-               "    println('Hello')\n" +
-               "  }\n" +
-               "}";
-    doTest(s, "def $name$ = {\n" +
-              "  '_T+\n" +
-              "}", 0, 0);
+    String s = """
+      class A {
+        def f = {
+          println('Hello1')
+          println('Hello2')
+        }
+        def f1 = {
+          println('Hello')
+        }
+      }""";
+    doTest(s, """
+      def $name$ = {
+        '_T+
+      }""", 0, 0);
     final PatternContext old = options.getPatternContext();
     try {
       options.setPatternContext(GroovyStructuralSearchProfile.CLASS_CONTEXT);
-      doTest(s, "def $name$ = {\n" +
-                    "  '_T+\n" +
-                    "}", 2, 2);
+      doTest(s, """
+        def $name$ = {
+          '_T+
+        }""", 2, 2);
     }
     finally {
       options.setPatternContext(old);

@@ -227,14 +227,11 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
     @NotNull
     private static ChangeKind createChangeData(@NotNull Change.Type type) {
-      switch (type) {
-        case NEW:
-          return ChangeKind.ADDED;
-        case DELETED:
-          return ChangeKind.REMOVED;
-        default:
-          return ChangeKind.MODIFIED;
-      }
+      return switch (type) {
+        case NEW -> ChangeKind.ADDED;
+        case DELETED -> ChangeKind.REMOVED;
+        case MOVED, MODIFICATION -> ChangeKind.MODIFIED;
+      };
     }
 
     @NotNull

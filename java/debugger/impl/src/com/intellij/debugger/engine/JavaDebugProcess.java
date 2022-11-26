@@ -444,6 +444,11 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       myAutoModeEnabled = enabled;
       DebuggerSettings.getInstance().AUTO_VARIABLES_MODE = enabled;
@@ -474,6 +479,11 @@ public class JavaDebugProcess extends XDebugProcess {
         presentation.setEnabled(false);
         presentation.setText(myTextUnavailable);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

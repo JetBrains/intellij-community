@@ -83,6 +83,10 @@ public final class Place implements ComparableObject {
 
     default void queryPlace(@NotNull Place place) {
     }
+
+    default boolean isValid(@NotNull Place place) {
+      return true;
+    }
   }
 
   public static ActionCallback goFurther(Object object, Place place, final boolean requestFocus) {

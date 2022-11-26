@@ -8,8 +8,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -31,9 +32,9 @@ object JpsProjectEntitiesLoader {
 
   @TestOnly
   suspend fun loadProject(configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
-                  externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager,
-                  fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
-                  externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
+                          externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager,
+                          fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
+                          externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
     val reader = CachingJpsFileContentReader(configLocation)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, virtualFileManager,
                                                 externalStorageConfigurationManager = externalStorageConfigurationManager,

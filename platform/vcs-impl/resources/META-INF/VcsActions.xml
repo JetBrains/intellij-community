@@ -5,14 +5,14 @@
     <action id="Vcs.ShowHistoryForRevision" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryForRevisionAction"
             icon="AllIcons.Vcs.History"/>
 
-    <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="AllIcons.Actions.Commit">
+    <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.commit.CommonCheckinProjectAction" icon="AllIcons.Actions.Commit">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
-    <action id="ChangesView.ToggleCommitUi" class="com.intellij.openapi.vcs.actions.ToggleChangesViewCommitUiAction" use-shortcut-of="CheckinProject">
+    <action id="ChangesView.ToggleCommitUi" class="com.intellij.openapi.vcs.actions.commit.ToggleChangesViewCommitUiAction" use-shortcut-of="CheckinProject">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
-    <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.CommonCheckinFilesAction"/>
+    <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.commit.CommonCheckinFilesAction"/>
     <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction"/>
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
@@ -28,7 +28,7 @@
     <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
             popup="true"/>
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
-    <action id="Vcs.GetVersion" class="com.intellij.openapi.vcs.history.actions.GetVersionAction"/>
+    <action id="Vcs.GetVersion" class="com.intellij.openapi.vcs.history.actions.GetVersionAction" icon="AllIcons.Actions.Download"/>
     <action id="Vcs.RefreshFileHistory" class="com.intellij.openapi.vcs.history.actions.RefreshFileHistoryAction"
             use-shortcut-of="Refresh"/>
     <action id="Vcs.ShowDiffWithLocal.Before" class="com.intellij.openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction"/>
@@ -143,9 +143,11 @@
       <reference ref="CheckinProject"/>
       <reference ref="ChangesView.ToggleCommitUi"/>
       <reference ref="ChangesView.Revert"/>
-      <action id="ChangesView.Diff" class="com.intellij.diff.actions.ShowDiffAction" icon="AllIcons.Actions.Diff"
-              use-shortcut-of="Diff.ShowDiff"/>
-      <group icon="AllIcons.Vcs.Changelist" id="ChangesView.Changelists" popup="true">
+      <reference ref="Diff.ShowDiff"/>
+      <group icon="AllIcons.Vcs.Changelist"
+             id="ChangesView.Changelists"
+             class="com.intellij.openapi.vcs.changes.actions.ChangeListActionGroup"
+             popup="true">
         <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
                 icon="AllIcons.General.Add"/>
         <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"
@@ -223,10 +225,6 @@
       <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"/>
       <reference ref="$Delete"/>
       <separator/>
-      <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"/>
-      <action id="ShelvedChanges.ShowRecentlyDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowRecentlyDeletedShelvesAction"/>
-      <action id="ShelvedChanges.CleanMarkedToDelete" class="com.intellij.openapi.vcs.changes.shelf.CleanUnshelvedAction"
-              icon="AllIcons.Actions.GC"/>
     </group>
 
     <group id="ShelvedChangesToolbar">
@@ -235,10 +233,11 @@
         <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
       </action>
       <reference ref="Diff.ShowDiff"/>
-      <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
-      <separator/>
-      <reference ref="ChangesView.GroupBy"/>
-      <reference ref="ShelvedChanges.ShowHideDeleted"/>
+      <group id="ShelvedChangesToolbar.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy">
+        <reference ref="ChangesView.GroupBy"/>
+        <separator key="separator.show"/>
+        <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"/>
+      </group>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
     </group>
@@ -329,6 +328,7 @@
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.RevertSelectedChanges"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
+      <reference ref="Vcs.GetVersion"/>
       <reference ref="Vcs.ShowHistoryForRevision"/>
     </group>
 
@@ -380,6 +380,7 @@
 
     <group id="ChangesView.CommitToolbar">
       <action id="Vcs.ToggleAmendCommitMode" class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
+      <reference id="Vcs.MessageActionGroup"/>
     </group>
 
     <action id="ChangesView.ShowCommitOptions" class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
@@ -477,7 +478,6 @@
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <separator/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
-      <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
       <separator/>
 
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>

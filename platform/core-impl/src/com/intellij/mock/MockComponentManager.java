@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
@@ -41,8 +42,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     myPicoContainer = new DefaultPicoContainer((DefaultPicoContainer)parent) {
       @Override
-      @Nullable
-      public Object getComponentInstance(@NotNull Object componentKey) {
+      public @Nullable Object getComponentInstance(@NotNull Object componentKey) {
         if (myDisposed) {
           throw new IllegalStateException("Cannot get " + componentKey + " from already disposed " + this);
         }
@@ -58,9 +58,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     Disposer.register(parentDisposable, this);
   }
 
-  @NotNull
   @Override
-  public ExtensionsAreaImpl getExtensionArea() {
+  public @NotNull ExtensionsAreaImpl getExtensionArea() {
     return myExtensionArea;
   }
 
@@ -121,17 +120,11 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     registerComponentInDisposer(instance);
   }
 
-  @Nullable
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
+  public @Nullable <T> T getComponent(@NotNull Class<T> interfaceClass) {
     final Object o = myPicoContainer.getComponentInstance(interfaceClass);
     //noinspection unchecked
     return (T)(o != null ? o : myComponents.get(interfaceClass));
-  }
-
-  @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -142,8 +135,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  @NotNull
-  public final MutablePicoContainer getPicoContainer() {
+  public final @NotNull MutablePicoContainer getPicoContainer() {
     return myPicoContainer;
   }
 
@@ -161,9 +153,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return false;
   }
 
-  @NotNull
   @Override
-  public MessageBus getMessageBus() {
+  public @NotNull MessageBus getMessageBus() {
     return myMessageBus;
   }
 
@@ -178,9 +169,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     myDisposed = true;
   }
 
-  @NotNull
   @Override
-  public Condition<?> getDisposed() {
+  public @NotNull Condition<?> getDisposed() {
     return Conditions.alwaysFalse();
   }
 
@@ -198,5 +188,15 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Override
   public @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
     return isExtension ? ActivityCategory.APP_EXTENSION : ActivityCategory.APP_SERVICE;
+  }
+
+  @Override
+  public final @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+    try {
+      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

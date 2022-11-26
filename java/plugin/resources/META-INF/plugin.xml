@@ -33,5 +33,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>
     <moduleType id="GENERAL_MODULE" implementationClass="com.intellij.ide.projectWizard.GeneralModuleTypeForIdea"/>
+    <iconMapper mappingFile="MavenIconMappings.json"/>
   </extensions>
 </idea-plugin>

@@ -1,15 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.laf
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeeded
 import com.intellij.ui.layout.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Assume.assumeTrue
@@ -53,7 +56,7 @@ class LafTest {
   @Before
   fun beforeMethod() = runBlocking {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      assumeTrue("macOS or Windows 10 are required", SystemInfo.isMacOSMojave || SystemInfo.isWin10OrNewer)
+      assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac || SystemInfo.isWin10OrNewer)
     }
 
     changeLafIfNeeded(lafName)
@@ -67,7 +70,7 @@ class LafTest {
   }
 
   private suspend fun doTest(panelCreator: () -> JPanel) {
-    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
       uiRule.validate(panelCreator(), testName, lafName)
     }
   }

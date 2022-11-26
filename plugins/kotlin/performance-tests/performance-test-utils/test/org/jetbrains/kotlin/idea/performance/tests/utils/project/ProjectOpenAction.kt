@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModuleManager
@@ -173,8 +174,16 @@ enum class ProjectOpenAction {
             DumbService.getInstance(project).waitForSmartMode()
 
             val checkerService = KotlinConfigurationCheckerService.getInstance(project)
+            val writeActionContinuations = mutableListOf<() -> Unit>()
             for (module in getModulesWithKotlinFiles(project)) {
-                checkerService.getAndCacheLanguageLevelByDependencies(module)
+                checkerService.getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
+            }
+            if (writeActionContinuations.isNotEmpty()) {
+                runInEdt {
+                    runWriteAction {
+                        writeActionContinuations.forEach { it.invoke() }
+                    }
+                }
             }
         }.get()
 

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.labelNameToTail
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
+import org.jetbrains.kotlin.types.Variance
 
 internal class ThisKeywordHandler(
     private val basicContext: FirBasicCompletionContext
@@ -63,7 +64,7 @@ internal class ThisKeywordHandler(
 
     private fun KtAnalysisSession.createThisLookupElement(receiver: KtImplicitReceiver, labelName: Name?): LookupElement {
         return createKeywordElement("this", labelName.labelNameToTail(), lookupObject = KeywordLookupObject())
-            .withTypeText(receiver.type.render(KtTypeRendererOptions.SHORT_NAMES))
+            .withTypeText(receiver.type.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
     }
 
     private fun KtAnalysisSession.getThisLabelBySymbol(symbol: KtSymbol): Name? = when {

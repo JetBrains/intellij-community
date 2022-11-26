@@ -7,7 +7,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,15 +29,11 @@ public class AnimatedIcon implements Icon {
    * If the corresponding client property is set to {@code true} the corresponding component
    * will be automatically repainted to update an animated icon painted by the renderer of the component.
    * Note, that animation may cause a performance problems and should not be used everywhere.
-   *
-   * @see UIUtil#putClientProperty
    */
   public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
   /**
    * This key can be used to increase performance of animated icons in lists, tables and trees.
    * A renderer should provide a {@code Runnable} that repaints only a part of a corresponding component.
-   *
-   * @see UIUtil#putClientProperty
    */
   @ApiStatus.Experimental
   public static final Key<Runnable> REFRESH_DELEGATE = Key.create("REFRESH_DELEGATE");
@@ -75,12 +70,12 @@ public class AnimatedIcon implements Icon {
     }
 
     public static final int DELAY = 125;
-    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), frame -> frame.getIcon());
+    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), Frame::getIcon);
 
     public static final AnimatedIcon INSTANCE = new Default();
   }
 
-  public static class Big extends AnimatedIcon {
+  public static final class Big extends AnimatedIcon {
     public Big() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
@@ -328,6 +323,6 @@ public class AnimatedIcon implements Icon {
 
   @Nullable
   protected Component getRendererOwner(@Nullable Component component) {
-    return UIUtil.isClientPropertyTrue(component, ANIMATION_IN_RENDERER_ALLOWED) ? component : null;
+    return ClientProperty.isTrue(component, ANIMATION_IN_RENDERER_ALLOWED) ? component : null;
   }
 }

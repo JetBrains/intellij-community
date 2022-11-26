@@ -17,12 +17,12 @@ import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIterato
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
 import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.EntityReference;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class EntityIndexingServiceImpl implements EntityIndexingService {
+class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   private static final Logger LOG = Logger.getInstance(EntityIndexingServiceImpl.class);
   private static final RootChangesLogger ROOT_CHANGES_LOGGER = new RootChangesLogger();
 
@@ -83,9 +83,13 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED || change == RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
         continue;
       }
-      if (change instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo) {
-        builders.addAll(getBuildersOnWorkspaceChange(project,
-                                                     ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)change).getEvents()));
+      if (change instanceof WorkspaceEventRescanningInfo) {
+        builders.addAll(getBuildersOnWorkspaceChange(project, ((WorkspaceEventRescanningInfo)change).events));
+      }
+      else if (change instanceof WorkspaceEntitiesRootsChangedRescanningInfo) {
+        List<EntityReference<WorkspaceEntity>> references = ((WorkspaceEntitiesRootsChangedRescanningInfo)change).references;
+        List<@NotNull WorkspaceEntity> entities = ContainerUtil.mapNotNull(references, (ref) -> ref.resolve(entityStorage));
+        builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities));
       }
       else if (change instanceof BuildableRootsChangeRescanningInfo) {
         builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change));
@@ -113,14 +117,14 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
           reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
         }
         logRootChanges(project, false);
-        new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue(project);
+        new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue();
       }
     }
   }
 
   private static void runFullRescan(@NotNull Project project, @NotNull @NonNls String reason) {
     logRootChanges(project, true);
-    new UnindexedFilesUpdater(project, reason).queue(project);
+    new UnindexedFilesUpdater(project, reason).queue();
   }
 
 
@@ -141,7 +145,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   @TestOnly
   @NotNull
   static List<IndexableFilesIterator> getIterators(@NotNull Project project,
-                                                   @NotNull Collection<EntityChange<?>> events) {
+                                                   @NotNull Collection<? extends EntityChange<?>> events) {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     List<IndexableIteratorBuilder> result = getBuildersOnWorkspaceChange(project, events);
     return IndexableIteratorBuilders.INSTANCE.instantiateBuilders(result, project, entityStorage);
@@ -149,7 +153,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
 
   @NotNull
   private static List<IndexableIteratorBuilder> getBuildersOnWorkspaceChange(@NotNull Project project,
-                                                                             @NotNull Collection<EntityChange<?>> event) {
+                                                                             @NotNull Collection<? extends EntityChange<?>> event) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     for (EntityChange<? extends WorkspaceEntity> change : event) {
       if (change instanceof EntityChange.Added) {
@@ -174,7 +178,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
 
   private static <E extends WorkspaceEntity> void collectIteratorBuildersOnAdd(@NotNull E entity,
                                                                                @NotNull Project project,
-                                                                               @NotNull Collection<IndexableIteratorBuilder> builders) {
+                                                                               @NotNull Collection<? super IndexableIteratorBuilder> builders) {
     Class<? extends WorkspaceEntity> entityClass = entity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
@@ -187,13 +191,13 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   private static <E extends WorkspaceEntity> void collectIteratorBuildersOnReplace(@NotNull E oldEntity,
                                                                                    @NotNull E newEntity,
                                                                                    @NotNull Project project,
-                                                                                   @NotNull Collection<IndexableIteratorBuilder> builders) {
+                                                                                   @NotNull Collection<? super IndexableIteratorBuilder> builders) {
     Class<? extends WorkspaceEntity> entityClass = oldEntity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
         //noinspection unchecked
         builders.addAll(
-          ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity));
+          ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity, project));
       }
       if (provider instanceof IndexableEntityProvider.ParentEntityDependent &&
           entityClass == ((IndexableEntityProvider.ParentEntityDependent<?, ?>)provider).getParentEntityClass()) {
@@ -206,7 +210,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
 
   private static <E extends WorkspaceEntity> void collectIteratorBuildersOnRemove(@NotNull E entity,
                                                                                   @NotNull Project project,
-                                                                                  @NotNull Collection<IndexableIteratorBuilder> builders) {
+                                                                                  @NotNull Collection<? super IndexableIteratorBuilder> builders) {
     Class<? extends WorkspaceEntity> entityClass = entity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
@@ -214,6 +218,15 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
         builders.addAll(((IndexableEntityProvider<E>)provider).getRemovedEntityIteratorBuilders(entity, project));
       }
     }
+  }
+
+  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnWorkspaceEntitiesRootsChange(@NotNull Project project,
+                                                                                                          @NotNull List<? extends WorkspaceEntity> entities) {
+    List<IndexableIteratorBuilder> builders = new SmartList<>();
+    for (WorkspaceEntity entity : entities) {
+      collectIteratorBuildersOnAdd(entity, project, builders);
+    }
+    return builders;
   }
 
   @NotNull
@@ -240,5 +253,52 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   @NotNull
   public BuildableRootsChangeRescanningInfo createBuildableInfo() {
     return new BuildableRootsChangeRescanningInfoImpl();
+  }
+
+  @Override
+  public @NotNull RootsChangeRescanningInfo createWorkspaceChangedEventInfo(@NotNull List<EntityChange<?>> changes) {
+    return new WorkspaceEventRescanningInfo(changes);
+  }
+
+  @NotNull
+  @Override
+  public RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityReference<WorkspaceEntity>> references) {
+    return new WorkspaceEntitiesRootsChangedRescanningInfo(references);
+  }
+
+  @Override
+  public boolean isFromWorkspaceOnly(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
+    if (indexingInfos.isEmpty()) return false;
+    for (RootsChangeRescanningInfo info : indexingInfos) {
+      if (!(info instanceof WorkspaceEventRescanningInfo)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public List<EntityReference<WorkspaceEntity>> getReferencesToEntitiesWithChangedRoots(@NotNull List<? extends RootsChangeRescanningInfo> infos) {
+    return infos.stream().filter(info -> info instanceof WorkspaceEntitiesRootsChangedRescanningInfo).
+      flatMap(info -> ((WorkspaceEntitiesRootsChangedRescanningInfo)info).references.stream()).collect(Collectors.toList());
+  }
+
+  private static class WorkspaceEventRescanningInfo implements RootsChangeRescanningInfo {
+    @NotNull
+    private final List<EntityChange<?>> events;
+
+    private WorkspaceEventRescanningInfo(@NotNull List<EntityChange<?>> events) {
+      this.events = events;
+    }
+  }
+
+  private static class WorkspaceEntitiesRootsChangedRescanningInfo implements RootsChangeRescanningInfo {
+    @NotNull
+    private final List<EntityReference<WorkspaceEntity>> references;
+
+    private WorkspaceEntitiesRootsChangedRescanningInfo(@NotNull List<EntityReference<WorkspaceEntity>> entities) {
+      this.references = entities;
+    }
   }
 }

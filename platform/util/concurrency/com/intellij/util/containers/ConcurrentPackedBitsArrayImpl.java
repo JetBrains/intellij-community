@@ -28,16 +28,14 @@ class ConcurrentPackedBitsArrayImpl implements ConcurrentPackedBitsArray {
 
   // stores chunk atomically, returns previous chunk
   @Override
-  public long set(int id, final long flags) {
+  public long set(int id, long flags) {
     assert id >= 0 : id;
     if ((flags & ~mask) != 0) {
       throw new IllegalArgumentException("Flags must be between 0 and "+ mask +" but got:"+flags);
     }
-    final int bitIndex = id/chunksPerWord * ConcurrentBitSetImpl.BITS_PER_WORD + (id%chunksPerWord)*bitsPerChunk;
+    int bitIndex = id/chunksPerWord * ConcurrentBitSetImpl.BITS_PER_WORD + (id%chunksPerWord)*bitsPerChunk;
 
-    int prevChunk = bits.changeWord(bitIndex, word -> word & ~(mask << bitIndex) | ((int)flags << bitIndex)) >> bitIndex;
-
-    return prevChunk;
+    return bits.changeWord(bitIndex, word -> word & ~(mask << bitIndex) | ((int)flags << bitIndex)) >> bitIndex;
   }
 
   @Override

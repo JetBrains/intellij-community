@@ -23,9 +23,6 @@ import javax.swing.table.TableCellEditor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public abstract class DomUIFactory {
 
   public final static ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.dom.uiControlsProvider");
@@ -141,15 +138,6 @@ public abstract class DomUIFactory {
 
     return new StringColumnInfo(presentableName);
   }
-
-  /**
-   * Adds an error-checking square that is usually found in the top-right ange of a text editor
-   * to the specified CaptionComponent.
-   * @param captionComponent The component to add error panel to
-   * @param elements DOM elements that will be error-checked
-   * @return captionComponent
-   */
-  public abstract CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements);
 
   public abstract BackgroundEditorHighlighter createDomHighlighter(Project project, PerspectiveFileEditor editor, DomElement element);
 

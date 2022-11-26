@@ -20,9 +20,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public abstract class LexerTestCase extends UsefulTestCase {
   protected void doTest(String text) {
     doTest(text, null);

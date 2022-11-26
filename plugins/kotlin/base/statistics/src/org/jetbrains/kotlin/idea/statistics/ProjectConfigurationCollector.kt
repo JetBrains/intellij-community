@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 
@@ -72,7 +72,7 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.project.configuration", 6)
+        private val GROUP = EventLogGroup("kotlin.project.configuration", 7)
 
         private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
         private val platformField = EventFields.String("platform", composePlatformFields())

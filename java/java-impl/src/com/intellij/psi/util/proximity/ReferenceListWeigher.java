@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.*;
 
-/**
- * @author peter
- */
 public class ReferenceListWeigher extends ProximityWeigher {
   public static final ReferenceListWeigher INSTANCE = new ReferenceListWeigher();
 

@@ -10,9 +10,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "editing/"
 

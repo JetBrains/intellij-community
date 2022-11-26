@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
@@ -29,21 +31,47 @@ public class ExtendsConcreteCollectionInspectionTest extends LightJavaInspection
 
   @Override
   protected String[] getEnvironmentClasses() {
-    return new String[] {
-      "package java.util;" +
-      "public class LinkedHashMap<K, V> extends HashMap<K,V> implements Map<K,V>{" +
-      "  protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {\n" +
-      "    return false;\n" +
-      "  }" +
-      "}",
-      "package java.util;" +
-      "public class ArrayDeque<E> extends AbstractCollection<E> {" +
-      "  public Iterator<E> iterator() { return null; }" +
-      "  public int size() { return 0; }" +
-      "}"
+    return new String[]{"""
+      package java.util;
+      public class LinkedHashMap<K, V> extends HashMap<K,V> implements Map<K,V>{
+        protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {
+          return false;
+        }
+      }""",
+      """
+      package java.util;
+      public class ArrayDeque<E> extends AbstractCollection<E> {
+        @Override public Iterator<E> iterator() { return Collections.emptyIterator(); }
+        @Override public int size() { return 0; }
+      }"""
     };
   }
 
-  public void testExtendsConcreteCollection() { doTest(); }
-
+  public void testExtendsConcreteCollection() {
+    doTest();
+    String message = InspectionGadgetsBundle.message("replace.inheritance.with.delegation.quickfix");
+    final IntentionAction intention = myFixture.getAvailableIntention(message);
+    assertNotNull(intention);
+    String text = myFixture.getIntentionPreviewText(intention);
+    assertEquals("""
+                   package com.siyeh.igtest.inheritance.extends_concrete_collection;
+                                      
+                   import java.util.ArrayDeque;
+                   import java.util.ArrayList;
+                   import java.util.LinkedHashMap;
+                   import java.util.Map;
+                                      
+                   class ExtendsConcreteCollection extends ArrayList {
+                                      
+                   }
+                   class MyMap extends LinkedHashMap<String, String> {
+                     @Override
+                     protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+                       return true;
+                     }
+                   }
+                   class MyDeque {
+                       private final ArrayDeque arrayDeque = new ArrayDeque();
+                   }""", text);
+  }
 }

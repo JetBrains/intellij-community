@@ -23,6 +23,7 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.ui.showOnboardingFeedbackNotification
+import training.util.enableLessonsAndPromoters
 import training.util.resetPrimaryLanguage
 import javax.swing.Icon
 import javax.swing.JLabel
@@ -33,8 +34,7 @@ private const val PROMO_HIDDEN = "ift.hide.welcome.screen.promo"
 /** Do not use lesson itself in the parameters to postpone IFT modules/lessons initialization */
 @ApiStatus.Internal
 open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
-                                    @Nls private val lessonName: String,
-                                    @NonNls private val languageName: String) : BannerStartPagePromoter() {
+                                    @Nls private val lessonName: String) : BannerStartPagePromoter() {
   override val promoImage: Icon
     get() = FeaturesTrainerIcons.PluginIcon
 
@@ -42,7 +42,9 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
     scheduleOnboardingFeedback()
     return super.getPromotion(isEmptyState)
   }
+
   override fun canCreatePromo(isEmptyState: Boolean): Boolean =
+    enableLessonsAndPromoters &&
     !PropertiesComponent.getInstance().getBoolean(PROMO_HIDDEN, false) &&
     RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size < 5
 
@@ -56,7 +58,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
     startOnboardingLessonWithSdk()
 
   override val description: String
-    get() = LearnBundle.message("welcome.promo.description", LessonUtil.productName, languageName)
+    get() = LearnBundle.message("welcome.promo.description", LessonUtil.productName)
 
   private fun startOnboardingLessonWithSdk() {
     val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }
@@ -64,7 +66,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
       logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
       return
     }
-    val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
+    val primaryLanguage: String = lesson.module.primaryLanguage?.primaryLanguage
+                                  ?: error("No primary language for promoting lesson ${lesson.name}")
     resetPrimaryLanguage(primaryLanguage)
     LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
       OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson, selectedSdk)
@@ -75,11 +78,10 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   // A bit hacky way to schedule the onboarding feedback informer after the lesson was closed
   private fun scheduleOnboardingFeedback() {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
-
     val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return
+    langSupport.onboardingFeedbackData = null
 
     invokeLater {
-      langSupport.onboardingFeedbackData = null
       showOnboardingFeedbackNotification(null, onboardingFeedbackData)
       (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
     }

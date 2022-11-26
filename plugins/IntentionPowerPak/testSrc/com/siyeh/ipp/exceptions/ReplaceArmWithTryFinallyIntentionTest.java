@@ -24,120 +24,130 @@ public class ReplaceArmWithTryFinallyIntentionTest extends IPPTestCase {
 
   public void testSimple() {
     doTest(
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m() throws Exception {\n" +
-      "        /*_Replace 'try-with-resources' with 'try finally'*/try (Reader r = new StringReader()) {\n" +
-      "            System.out.println(r);\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        import java.io.*;
+        class C {
+            void m() throws Exception {
+                /*_Replace 'try-with-resources' with 'try finally'*/try (Reader r = new StringReader()) {
+                    System.out.println(r);
+                }
+            }
+        }""",
 
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m() throws Exception {\n" +
-      "        Reader r = new StringReader();\n" +
-      "        try {\n" +
-      "            System.out.println(r);\n" +
-      "        } finally {\n" +
-      "            r.close();\n" +
-      "        }\n" +
-      "    }\n" +
-      "}");
+      """
+        import java.io.*;
+        class C {
+            void m() throws Exception {
+                Reader r = new StringReader();
+                try {
+                    System.out.println(r);
+                } finally {
+                    r.close();
+                }
+            }
+        }""");
   }
 
   public void testMixedResources() {
     doTest(
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m() throws Exception {\n" +
-      "        Reader r1 = new StringReader();\n" +
-      "        /*_Replace 'try-with-resources' with 'try finally'*/try (r1; Reader r2 = new StringReader()) {\n" +
-      "            System.out.println(r1 + \", \" + r2);\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        import java.io.*;
+        class C {
+            void m() throws Exception {
+                Reader r1 = new StringReader();
+                /*_Replace 'try-with-resources' with 'try finally'*/try (r1; Reader r2 = new StringReader()) {
+                    System.out.println(r1 + ", " + r2);
+                }
+            }
+        }""",
 
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m() throws Exception {\n" +
-      "        Reader r1 = new StringReader();\n" +
-      "        try {\n" +
-      "            Reader r2 = new StringReader();\n" +
-      "            try {\n" +
-      "                System.out.println(r1 + \", \" + r2);\n" +
-      "            } finally {\n" +
-      "                r2.close();\n" +
-      "            }\n" +
-      "        } finally {\n" +
-      "            r1.close();\n" +
-      "        }\n" +
-      "    }\n" +
-      "}");
+      """
+        import java.io.*;
+        class C {
+            void m() throws Exception {
+                Reader r1 = new StringReader();
+                try {
+                    Reader r2 = new StringReader();
+                    try {
+                        System.out.println(r1 + ", " + r2);
+                    } finally {
+                        r2.close();
+                    }
+                } finally {
+                    r1.close();
+                }
+            }
+        }""");
   }
 
   public void testArmWithFinally() {
     doTest(
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m() throws Exception {\n" +
-      "        /*_Replace 'try-with-resources' with 'try finally'*/try (Reader r = new StringReader()) {\n" +
-      "            System.out.println(r);\n" +
-      "        } finally {\n" +
-      "          System.out.println();\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        import java.io.*;
+        class C {
+            void m() throws Exception {
+                /*_Replace 'try-with-resources' with 'try finally'*/try (Reader r = new StringReader()) {
+                    System.out.println(r);
+                } finally {
+                  System.out.println();
+                }
+            }
+        }""",
 
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m() throws Exception {\n" +
-      "        try {\n" +
-      "            Reader r = new StringReader();\n" +
-      "            try {\n" +
-      "                System.out.println(r);\n" +
-      "            } finally {\n" +
-      "                r.close();\n" +
-      "            }\n" +
-      "        } finally {\n" +
-      "          System.out.println();\n" +
-      "        }\n" +
-      "    }\n" +
-      "}"
+      """
+        import java.io.*;
+        class C {
+            void m() throws Exception {
+                try {
+                    Reader r = new StringReader();
+                    try {
+                        System.out.println(r);
+                    } finally {
+                        r.close();
+                    }
+                } finally {
+                  System.out.println();
+                }
+            }
+        }"""
     );
   }
 
   public void testMultipleResourcesWithCatch() {
     doTest(
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m(StringReader r1, StringReader r2) {\n" +
-      "        try/*_Replace 'try-with-resources' with 'try finally'*/ (r1; r2) {\n" +
-      "            System.out.println(r1);\n" +
-      "        } catch (RuntimeException e) {\n" +
-      "            e.printStackTrace();\n" +
-      "        }\n" +
-      "    }\n" +
-      "}\n",
+      """
+        import java.io.*;
+        class C {
+            void m(StringReader r1, StringReader r2) {
+                try/*_Replace 'try-with-resources' with 'try finally'*/ (r1; r2) {
+                    System.out.println(r1);
+                } catch (RuntimeException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        """,
 
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m(StringReader r1, StringReader r2) {\n" +
-      "        try {\n" +
-      "            try {\n" +
-      "                try {\n" +
-      "                    System.out.println(r1);\n" +
-      "                } finally {\n" +
-      "                    r2.close();\n" +
-      "                }\n" +
-      "            } finally {\n" +
-      "                r1.close();\n" +
-      "            }\n" +
-      "        } catch (RuntimeException e) {\n" +
-      "            e.printStackTrace();\n" +
-      "        }\n" +
-      "    }\n" +
-      "}\n"
+      """
+        import java.io.*;
+        class C {
+            void m(StringReader r1, StringReader r2) {
+                try {
+                    try {
+                        try {
+                            System.out.println(r1);
+                        } finally {
+                            r2.close();
+                        }
+                    } finally {
+                        r1.close();
+                    }
+                } catch (RuntimeException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        """
     );
   }
 }

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.openapi.options.advanced
 
 import com.intellij.BundleBase
@@ -141,14 +143,12 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
     return findBundle()?.let { BundleBase.message(it, groupKey) }
   }
 
-  @Nls
-  fun description(): String? {
+  fun description(): @Nls String? {
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.$id.description" }
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.let { BundleBase.message(it, descriptionKey) }
   }
 
-  @Nls
-  fun trailingLabel(): String? {
+  fun trailingLabel(): @Nls String? {
     val trailingLabelKey = trailingLabelKey.ifEmpty { "advanced.setting.$id.trailingLabel" }
     return findBundle()?.takeIf { it.containsKey(trailingLabelKey) }?.let { BundleBase.message(it, trailingLabelKey) }
   }
@@ -224,7 +224,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private var modificationCount = 0L
 
   init {
-    AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean?> {
+    AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean> {
       override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
         defaultValueCache.remove(extension.id)
       }

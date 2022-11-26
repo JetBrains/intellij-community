@@ -23,12 +23,7 @@ package de.plushnikov.intellij.plugin.thirdparty;
 
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Container for static utility methods useful for some standard lombok handlers, regardless of

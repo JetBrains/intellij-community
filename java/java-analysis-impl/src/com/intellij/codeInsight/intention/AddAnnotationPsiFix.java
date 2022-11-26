@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.JavaElementKind;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -90,7 +91,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
   public static @IntentionName String calcText(PsiModifierListOwner modifierListOwner, @Nullable String annotation) {
     final String shortName = annotation == null ? null : annotation.substring(annotation.lastIndexOf('.') + 1);
     if (modifierListOwner instanceof PsiNamedElement) {
-      final String name = ((PsiNamedElement)modifierListOwner).getName();
+      final String name = PsiFormatUtil.formatSimple((PsiNamedElement)modifierListOwner);
       if (name != null) {
         JavaElementKind type = JavaElementKind.fromElement(modifierListOwner).lessDescriptive();
         if (shortName == null) {
@@ -198,9 +199,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
     final AnnotationPlace place = myAnnotationPlace == AnnotationPlace.NEED_ASK_USER ?
                                   annotationsManager.chooseAnnotationsPlace(modifierListOwner) : myAnnotationPlace;
     switch (place) {
-      case NOWHERE:
-        return;
-      case EXTERNAL:
+      case NOWHERE -> { }
+      case EXTERNAL -> {
         for (String fqn : myAnnotationsToRemove) {
           annotationsManager.deannotate(modifierListOwner, fqn);
         }
@@ -209,8 +209,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
         }
         catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {
         }
-        break;
-      case IN_CODE:
+      }
+      case IN_CODE -> {
         final PsiFile containingFile = modifierListOwner.getContainingFile();
         Runnable command = () -> {
           removePhysicalAnnotations(modifierListOwner, myAnnotationsToRemove);
@@ -229,7 +229,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
         if (containingFile != file) {
           UndoUtil.markPsiFileForUndo(file);
         }
-        break;
+      }
     }
   }
 
@@ -254,14 +254,6 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
       }
     }
     return annotationsManager.chooseAnnotationsPlaceNoUi(modifierListOwner);
-  }
-
-  /**
-   * @deprecated use {@link #addPhysicalAnnotationIfAbsent(String, PsiNameValuePair[], PsiAnnotationOwner)}
-   */
-  @Deprecated(forRemoval = true)
-  public static PsiAnnotation addPhysicalAnnotation(String fqn, PsiNameValuePair[] pairs, PsiModifierList modifierList) {
-    return addPhysicalAnnotationTo(fqn, pairs, modifierList);
   }
 
   /**

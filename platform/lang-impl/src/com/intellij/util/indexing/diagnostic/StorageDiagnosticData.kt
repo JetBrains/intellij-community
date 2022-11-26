@@ -4,6 +4,7 @@ package com.intellij.util.indexing.diagnostic
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
@@ -37,12 +38,15 @@ import kotlin.io.path.relativeTo
  */
 object StorageDiagnosticData {
   private const val fileNamePrefix = "storage-diagnostic-"
+  private const val onShutdownFileNameSuffix = "on-shutdown-"
 
   private const val maxFiles = 10
-  private const val dumpPeriodInMinutes = 5L
+  private const val dumpPeriodInMinutes = 1L
 
   @JvmStatic
   fun dumpPeriodically() {
+    setupReportingToOpenTelemetry()
+
     val executor = AppExecutorUtil.createBoundedScheduledExecutorService(
       "Storage Diagnostic Dumper",
       1,
@@ -72,7 +76,7 @@ object StorageDiagnosticData {
       thisLogger().error(e)
     }
     finally {
-      deleteOutdatedDiagnostics()
+      deleteOutdatedDiagnostics(onShutdown)
     }
   }
 
@@ -81,7 +85,7 @@ object StorageDiagnosticData {
     time,
     "json",
     IndexDiagnosticDumperUtils.indexingDiagnosticDir,
-    suffix = if (onShutdown) "on-shutdown-" else ""
+    suffix = if (onShutdown) onShutdownFileNameSuffix else ""
   )
 
   @VisibleForTesting
@@ -102,10 +106,11 @@ object StorageDiagnosticData {
     )
   }
 
-  private fun deleteOutdatedDiagnostics() {
+  private fun deleteOutdatedDiagnostics(onShutdown: Boolean) {
+    val suffix = if (onShutdown) onShutdownFileNameSuffix else ""
     val allDiagnosticFiles = IndexDiagnosticDumperUtils
       .indexingDiagnosticDir
-      .listDirectoryEntries("$fileNamePrefix*")
+      .listDirectoryEntries("$fileNamePrefix$suffix[0-9]*")
       .sortedBy { it.fileName }
     if (allDiagnosticFiles.size - maxFiles > 0) {
       val outdatedFiles = allDiagnosticFiles.take(allDiagnosticFiles.size - maxFiles)
@@ -153,7 +158,7 @@ object StorageDiagnosticData {
 
   private fun vfsStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
                                    enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>)
-  : StatsPerStorage {
+    : StatsPerStorage {
     val cachesDir = Path.of(FSRecords.getCachesDir()).absolute()
     return StatsPerStorage(
       filterStatsForStoragesUnderDir(mapStats, cachesDir),
@@ -212,4 +217,42 @@ object StorageDiagnosticData {
     val indexStorageStats: IndexStorageStats?,
     val otherStorageStats: StatsPerStorage?,
   )
+
+  /* =========================== Monitoring via OpenTelemetry: ========================================== */
+
+  //TODO RC: i'd think it is better to setup such monitoring in apt. component itself, because be
+  //         observable is a responsibility of component, same way as logging is. But a) FilePageCache
+  //         module haven't dependency on monitoring module now b) here we already have monitoring of
+  //         FilePageCache, so better to keep old/new monitoring in one place for a while
+  private fun setupReportingToOpenTelemetry() {
+    val otelMeter = TraceManager.getMeter("storage")
+
+    val uncachedFileAccess = otelMeter.counterBuilder("FilePageCache.uncachedFileAccess").buildObserver()
+    val maxRegisteredFiles = otelMeter.gaugeBuilder("FilePageCache.maxRegisteredFiles").ofLongs().buildObserver()
+    val maxCacheSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.maxCacheSizeInBytes").ofLongs().buildObserver()
+    val pageHit = otelMeter.counterBuilder("FilePageCache.pageHit").buildObserver()
+    val pageFastCacheHit = otelMeter.counterBuilder("FilePageCache.pageFastCacheHit").buildObserver()
+    val pageMiss = otelMeter.counterBuilder("FilePageCache.pageMiss").buildObserver()
+    val pageLoad = otelMeter.counterBuilder("FilePageCache.pageLoad").buildObserver()
+    val disposedBuffers = otelMeter.counterBuilder("FilePageCache.disposedBuffers").buildObserver()
+    val capacityInBytes = otelMeter.gaugeBuilder("FilePageCache.capacityInBytes").ofLongs().buildObserver()
+
+    otelMeter.batchCallback(
+      {
+        val stats = getStorageDataStatistics()
+        uncachedFileAccess.record(stats.pageCacheStats.uncachedFileAccess.toLong())
+        maxRegisteredFiles.record(stats.pageCacheStats.maxRegisteredFiles.toLong())
+        maxCacheSizeInBytes.record(stats.pageCacheStats.maxCacheSizeInBytes)
+        pageHit.record(stats.pageCacheStats.pageHit.toLong())
+        pageFastCacheHit.record(stats.pageCacheStats.pageFastCacheHit.toLong())
+        pageMiss.record(stats.pageCacheStats.pageMiss.toLong())
+        pageLoad.record(stats.pageCacheStats.pageLoad.toLong())
+        disposedBuffers.record(stats.pageCacheStats.disposedBuffers.toLong())
+        capacityInBytes.record(stats.pageCacheStats.capacityInBytes)
+      },
+      uncachedFileAccess, maxRegisteredFiles, maxCacheSizeInBytes,
+      pageHit, pageFastCacheHit, pageMiss, pageLoad,
+      disposedBuffers, capacityInBytes
+    )
+  }
 }

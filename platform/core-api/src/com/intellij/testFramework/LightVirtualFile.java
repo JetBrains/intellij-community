@@ -40,7 +40,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     this(name, fileType, text, LocalTimeCounter.currentTime());
   }
 
-  public LightVirtualFile(VirtualFile original, @NotNull CharSequence text, long modificationStamp) {
+  public LightVirtualFile(@NotNull VirtualFile original, @NotNull CharSequence text, long modificationStamp) {
     this(original.getName(), original.getFileType(), text, modificationStamp);
     setCharset(original.getCharset());
   }

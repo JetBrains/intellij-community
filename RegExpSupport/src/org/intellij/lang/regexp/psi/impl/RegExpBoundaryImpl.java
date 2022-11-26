@@ -37,16 +37,17 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
             return Type.LINE_END;
         } else if (type == RegExpTT.BOUNDARY){
             final String text = getUnescapedText();
-            switch (text) {
-                case "\\b": return Type.WORD;
-                case "\\b{g}": return Type.UNICODE_EXTENDED_GRAPHEME;
-                case "\\B": return Type.NON_WORD;
-                case "\\A": return Type.BEGIN;
-                case "\\Z": return Type.END_NO_LINE_TERM;
-                case "\\z": return Type.END;
-                case "\\G": return Type.PREVIOUS_MATCH;
-                case "\\K": return Type.RESET_MATCH;
-            }
+            return switch (text) {
+              case "\\b" -> Type.WORD;
+              case "\\b{g}" -> Type.UNICODE_EXTENDED_GRAPHEME;
+              case "\\B" -> Type.NON_WORD;
+              case "\\A" -> Type.BEGIN;
+              case "\\Z" -> Type.END_NO_LINE_TERM;
+              case "\\z" -> Type.END;
+              case "\\G" -> Type.PREVIOUS_MATCH;
+              case "\\K" -> Type.RESET_MATCH;
+              default -> throw new AssertionError("unknown boundary '" + text + "'");
+            };
         }
         throw new AssertionError("unknown boundary '" + getUnescapedText() + "'");
     }

@@ -29,7 +29,7 @@ public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
   }
 
   public void testNonPhysicalFiles() {
-    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getAllProviders()) {
       // SQL is a special case, has its own tests
       if (isSql(provider.getLanguage())) {
         continue;
@@ -48,7 +48,7 @@ public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
   }
 
   public void testAllCodeStylePreviewSamplesValid() {
-    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getAllProviders()) {
       if (isSql(provider.getLanguage())) {
         // SQL is a special case, has its own tests
         continue;

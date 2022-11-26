@@ -188,13 +188,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
     final byte[] oldContent;
     synchronized (LOCK) {
       if (myOldContent == null) {
-        final LocalHistory localHistory = LocalHistory.getInstance();
-        byte[] byteContent = localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
-          @Override
-          public boolean isSuitable(long revisionTimestamp) {
-            return revisionTimestamp < date;
-          }
-        });
+        byte[] byteContent = loadFromLocalHistory(date, virtualFile);
 
         if (byteContent == null && virtualFile.getTimeStamp() > date) {
           byteContent = loadFromVersionControl(date, virtualFile);
@@ -222,6 +216,16 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
       return null;
     }
     return new SoftReference<>(getCoverageVersionToCurrentLineMapping(change, oldLines.length));
+  }
+
+  private static byte @Nullable [] loadFromLocalHistory(long date, VirtualFile virtualFile) {
+    final LocalHistory localHistory = LocalHistory.getInstance();
+    return localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
+      @Override
+      public boolean isSuitable(long revisionTimestamp) {
+        return revisionTimestamp < date;
+      }
+    });
   }
 
   private byte @Nullable [] loadFromVersionControl(long date, VirtualFile f) {
@@ -427,10 +431,11 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
             if (newToOldLineMapping != null) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (editorBean.isDisposed()) return;
-                for (int line = lineNumber; line <= lastLineNumber; line++) {
+                final int lastLine = Math.min(document.getLineCount() - 1, lastLineNumber);
+                for (int line = lineNumber; line <= lastLine; line++) {
                   final int oldLineNumber = newToOldLineMapping.get(line);
                   final LineData lineData = executableLines.get(oldLineNumber);
-                  if (lineData != null && oldLineNumber < editorBean.getDocument().getLineCount()) {
+                  if (lineData != null) {
                     RangeHighlighter rangeHighlighter =
                       createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
                                              classNames.get(oldLineNumber), oldLineNumber, line, suite,
@@ -593,7 +598,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
     executableLines.put(updatedLineNumber, null);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (editorBean.isDisposed()) return;
-      if (lineNumber >= editorBean.getDocument().getLineCount()) return;
+      if (updatedLineNumber >= editorBean.getDocument().getLineCount()) return;
       final RangeHighlighter highlighter =
         createRangeHighlighter(outputFile.lastModified(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
                                updatedLineNumber, coverageSuite, null, editorBean);

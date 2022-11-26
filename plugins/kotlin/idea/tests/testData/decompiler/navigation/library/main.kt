@@ -1,12 +1,12 @@
 package testData.libraries
 
-public interface SimpleTrait {
+public interface SimpleInterface {
 }
 
 public class SimpleClass {
 }
 
-public class SimpleTraitImpl : SimpleTrait {
+public class SimpleInterfaceImpl : SimpleInterface {
 }
 
 public class WithInnerAndObject {
@@ -22,8 +22,8 @@ public class WithInnerAndObject {
     }
 }
 
-public class WithTraitClassObject {
-    companion object : SimpleTrait
+public class WithInterfaceClassObject {
+    companion object : SimpleInterface
 }
 
 public abstract class AbstractClass {

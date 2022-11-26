@@ -71,7 +71,7 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
     return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
   }
 
-  fun getAspect(file: PsiFile, editor: Editor): LineAnnotationAspect? {
+  private fun getAspect(file: PsiFile, editor: Editor): LineAnnotationAspect? {
     if (hasPreviewInfo(file)) return LineAnnotationAspectAdapter.NULL_ASPECT
     val virtualFile = file.virtualFile ?: return null
     val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null

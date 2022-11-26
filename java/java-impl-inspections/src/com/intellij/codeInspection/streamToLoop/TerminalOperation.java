@@ -177,23 +177,28 @@ abstract class TerminalOperation extends Operation {
     String collectorName = collector.getName();
     FunctionHelper fn;
     switch (collectorName) {
-      case "toList":
+      case "toList" -> {
         if (collectorArgs.length != 0) return null;
         return ToCollectionTerminalOperation.toList(resultType);
-      case "toUnmodifiableList":
+      }
+      case "toUnmodifiableList" -> {
         if (collectorArgs.length != 0) return null;
         return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList", resultType);
-      case "toSet":
+      }
+      case "toSet" -> {
         if (collectorArgs.length != 0) return null;
         return ToCollectionTerminalOperation.toSet(resultType);
-      case "toUnmodifiableSet":
+      }
+      case "toUnmodifiableSet" -> {
         if (collectorArgs.length != 0) return null;
         return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet", resultType);
-      case "toCollection":
+      }
+      case "toCollection" -> {
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
         return fn == null ? null : new ToCollectionTerminalOperation(resultType, fn, null);
-      case "collectingAndThen": {
+      }
+      case "collectingAndThen" -> {
         if (collectorArgs.length != 2) return null;
         PsiExpression collectorCall = collectorArgs[0];
         PsiType downstreamResultType = PsiUtil.substituteTypeParameter(collectorCall.getType(), "java.util.stream.Collector", 2, false);
@@ -204,73 +209,70 @@ abstract class TerminalOperation extends Operation {
         FunctionHelper andThen = FunctionHelper.create(collectorArgs[1], 1);
         return andThen != null ? new WrappedCollectionTerminalOperation(downstream, andThen) : null;
       }
-      case "toUnmodifiableMap":
-      case "toMap": {
+      case "toUnmodifiableMap", "toMap" -> {
         if (collectorArgs.length < 2 || collectorArgs.length > 4) return null;
         FunctionHelper key = FunctionHelper.create(collectorArgs[0], 1);
         FunctionHelper value = FunctionHelper.create(collectorArgs[1], 1);
-        if(key == null || value == null) return null;
+        if (key == null || value == null) return null;
         PsiExpression merger = collectorArgs.length > 2 ? collectorArgs[2] : null;
         FunctionHelper supplier = collectorArgs.length == 4
-                   ? FunctionHelper.create(collectorArgs[3], 0)
-                   : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
-        if(supplier == null) return null;
+                                  ? FunctionHelper.create(collectorArgs[3], 0)
+                                  : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
+        if (supplier == null) return null;
         CollectorBasedTerminalOperation operation = new ToMapTerminalOperation(key, value, merger, supplier, resultType);
         return collectorName.equals("toUnmodifiableMap")
                ? new WrappedCollectionTerminalOperation(operation, "unmodifiableMap", resultType)
                : operation;
       }
-      case "reducing":
+      case "reducing" -> {
         switch (collectorArgs.length) {
-          case 1:
+          case 1 -> {
             return ReduceToOptionalTerminalOperation.create(collectorArgs[0], resultType);
-          case 2:
+          }
+          case 2 -> {
             fn = FunctionHelper.create(collectorArgs[1], 2);
             return fn == null ? null : new ReduceTerminalOperation(collectorArgs[0], fn, resultType);
-          case 3:
+          }
+          case 3 -> {
             FunctionHelper mapper = FunctionHelper.create(collectorArgs[1], 1);
             fn = FunctionHelper.create(collectorArgs[2], 2);
             return fn == null || mapper == null
                    ? null
                    : new MappingTerminalOperation(mapper, new ReduceTerminalOperation(collectorArgs[0], fn, resultType));
+          }
         }
         return null;
-      case "counting":
+      }
+      case "counting" -> {
         if (collectorArgs.length != 0) return null;
         return TemplateBasedOperation.counting();
-      case "summingInt":
-      case "summingLong":
-      case "summingDouble": {
+      }
+      case "summingInt", "summingLong", "summingDouble" -> {
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 1);
         PsiPrimitiveType type = PsiPrimitiveType.getUnboxedType(resultType);
         return fn == null || type == null ? null : new InlineMappingTerminalOperation(fn, TemplateBasedOperation.summing(type));
       }
-      case "summarizingInt":
-      case "summarizingLong":
-      case "summarizingDouble": {
+      case "summarizingInt", "summarizingLong", "summarizingDouble" -> {
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 1);
         return fn == null ? null : new InlineMappingTerminalOperation(fn, TemplateBasedOperation.summarizing(resultType));
       }
-      case "averagingInt":
-      case "averagingLong":
-      case "averagingDouble": {
+      case "averagingInt", "averagingLong", "averagingDouble" -> {
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 1);
         return fn == null
                ? null
                : new InlineMappingTerminalOperation(fn, new AverageTerminalOperation(collectorName.equals("averagingDouble"), false));
       }
-      case "mapping": {
+      case "mapping" -> {
         if (collectorArgs.length != 2) return null;
         fn = FunctionHelper.create(collectorArgs[0], 1);
         if (fn == null) return null;
         TerminalOperation downstreamOp = fromCollector(fn.getResultType(), resultType, collectorArgs[1]);
         return downstreamOp == null ? null : new MappingTerminalOperation(fn, downstreamOp);
       }
-      case "groupingBy":
-      case "partitioningBy": {
+      case "groupingBy", "partitioningBy" -> {
         if (collectorArgs.length == 0 || collectorArgs.length > 3
             || collectorArgs.length == 3 && collectorName.equals("partitioningBy")) return null;
         fn = FunctionHelper.create(collectorArgs[0], 1);
@@ -296,26 +298,28 @@ abstract class TerminalOperation extends Operation {
                                   : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
         return new GroupByTerminalOperation(fn, supplier, resultType, downstreamCollector);
       }
-      case "minBy":
-      case "maxBy":
+      case "minBy", "maxBy" -> {
         if (collectorArgs.length != 1) return null;
         return MinMaxTerminalOperation.create(collectorArgs[0], elementType, collectorName.equals("maxBy"));
-      case "joining":
+      }
+      case "joining" -> {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(collector.getProject());
         switch (collectorArgs.length) {
-          case 0:
+          case 0 -> {
             return new TemplateBasedOperation("sb", factory.createTypeFromText(CommonClassNames.JAVA_LANG_STRING_BUILDER, collector),
-                                                    "new " + CommonClassNames.JAVA_LANG_STRING_BUILDER + "()",
+                                              "new " + CommonClassNames.JAVA_LANG_STRING_BUILDER + "()",
                                               "{acc}.append({item});",
                                               "{acc}.toString()");
-          case 1:
-          case 3:
+          }
+          case 1, 3 -> {
             String initializer =
               "new java.util.StringJoiner(" + StreamEx.of(collectorArgs).map(PsiElement::getText).joining(",") + ")";
             return new TemplateBasedOperation("joiner", factory.createTypeFromText("java.util.StringJoiner", collector), initializer,
                                               "{acc}.add({item});", "{acc}.toString()");
+          }
         }
         return null;
+      }
     }
     return null;
   }
@@ -557,21 +561,20 @@ abstract class TerminalOperation extends Operation {
 
     MatchTerminalOperation(FunctionHelper fn, String name) {
       myFn = fn;
-      switch(name) {
-        case "anyMatch":
+      switch (name) {
+        case "anyMatch" -> {
           myDefaultValue = false;
           myNegatePredicate = false;
-          break;
-        case "allMatch":
+        }
+        case "allMatch" -> {
           myDefaultValue = true;
           myNegatePredicate = true;
-          break;
-        case "noneMatch":
+        }
+        case "noneMatch" -> {
           myDefaultValue = true;
           myNegatePredicate = false;
-          break;
-        default:
-          throw new IllegalArgumentException(name);
+        }
+        default -> throw new IllegalArgumentException(name);
       }
     }
 

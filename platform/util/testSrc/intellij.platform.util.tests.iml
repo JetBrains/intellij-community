@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
@@ -22,7 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="bouncy-castle-provider" level="project" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
-    <orderEntry type="library" scope="TEST" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
@@ -30,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.diff" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.boot" scope="TEST" />
   </component>
 </module>

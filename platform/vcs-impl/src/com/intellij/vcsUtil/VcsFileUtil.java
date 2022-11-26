@@ -392,7 +392,7 @@ public final class VcsFileUtil {
   }
 
   private static void performAdditions(@NotNull AbstractVcs vcs,
-                                       @NotNull List<VirtualFile> value) {
+                                       @NotNull List<? extends VirtualFile> value) {
     CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
     if (checkinEnvironment != null) {
       checkinEnvironment.scheduleUnversionedFilesForAddition(value);
@@ -450,31 +450,15 @@ public final class VcsFileUtil {
         }
         final char e = path.charAt(i);
         switch (e) {
-          case '\\':
-            rc.append('\\');
-            break;
-          case 't':
-            rc.append('\t');
-            break;
-          case 'n':
-            rc.append('\n');
-            break;
-          case 'r':
-            rc.append('\r');
-            break;
-          case 'a':
-            rc.append('\u0007');
-            break;
-          case 'b':
-            rc.append('\b');
-            break;
-          case 'f':
-            rc.append('\f');
-            break;
-          case '"':
-            rc.append('"');
-            break;
-          default:
+          case '\\' -> rc.append('\\');
+          case 't' -> rc.append('\t');
+          case 'n' -> rc.append('\n');
+          case 'r' -> rc.append('\r');
+          case 'a' -> rc.append('\u0007');
+          case 'b' -> rc.append('\b');
+          case 'f' -> rc.append('\f');
+          case '"' -> rc.append('"');
+          default -> {
             if (isOctal(e)) {
               // collect sequence of characters as a byte array.
               // count bytes first
@@ -519,6 +503,7 @@ public final class VcsFileUtil {
             else {
               throw new IllegalArgumentException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
             }
+          }
         }
       }
       else {

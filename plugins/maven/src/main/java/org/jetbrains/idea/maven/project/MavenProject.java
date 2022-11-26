@@ -906,6 +906,10 @@ public class MavenProject {
     return getDependencyArtifactIndex().findArtifacts(groupId, artifactId);
   }
 
+  public boolean hasDependency(@NonNls @Nullable String groupId, @NonNls @Nullable String artifactId) {
+    return getDependencyArtifactIndex().hasArtifact(groupId, artifactId);
+  }
+
   public boolean hasUnresolvedArtifacts() {
     State state = myState;
     return !isParentResolved(state)

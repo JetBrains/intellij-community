@@ -19,10 +19,10 @@ class RuleGroup(rules: LinkedSet<String>): com.intellij.grazie.text.RuleGroup(ru
     val WHITESPACES = RuleGroup("WHITESPACE_RULE")
 
     /** Rules for checking casing errors */
-    val CASING = RuleGroup("UPPERCASE_SENTENCE_START")
+    private val CASING = RuleGroup("UPPERCASE_SENTENCE_START")
 
     /** Rules for checking punctuation errors */
-    val PUNCTUATION = RuleGroup("PUNCTUATION_PARAGRAPH_END", "UNLIKELY_OPENING_PUNCTUATION")
+    private val PUNCTUATION = RuleGroup("PUNCTUATION_PARAGRAPH_END", "UNLIKELY_OPENING_PUNCTUATION")
 
     /** Rules that are usually disabled for literal strings */
     val LITERALS = CASING + PUNCTUATION

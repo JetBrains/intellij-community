@@ -18,47 +18,63 @@ import java.io.File;
 
 public class XmlTreeStructureTest extends BaseProjectViewTestCase {
   public void testXmlStructureView() {
-    doTest("file1.xml", "XmlFile:file1.xml\n" +
-                         " XmlTag:root\n" +
-                         "  XmlTag:a\n" +
-                         "   XmlTag:a\n" +
-                         "    XmlTag:b\n" +
-                         "    XmlTag:text\n"
+    doTest("file1.xml", """
+      XmlFile:file1.xml
+       XmlTag:root
+        XmlTag:a
+         XmlTag:a
+          XmlTag:b
+          XmlTag:text
+      """
     );
 
   }
 
   public void testDtdStructureView() {
-    doTest("file1.dtd", "XmlFile:file1.dtd\n" +
-                        " book\n" +
-                        " draft\n" +
-                        " final\n" +
-                        " helpset (file:required, path:required)\n" +
-                        " myplugin (url:implied, version:implied)\n" +
-                        " price\n");
-    doTest("file2.dtd", "XmlFile:file2.dtd\n" + " HTMLlat1\n" + " nbsp\n");
+    doTest("file1.dtd", """
+      XmlFile:file1.dtd
+       book
+       draft
+       final
+       helpset (file:required, path:required)
+       myplugin (url:implied, version:implied)
+       price
+      """);
+    doTest("file2.dtd", """
+      XmlFile:file2.dtd
+       HTMLlat1
+       nbsp
+      """);
   }
 
   public void testDtdStructureViewInXml() {
     final String fileName = "file2.xml";
-    final String s = "XmlFile:file2.xml\n" + " body\n" + " supplements\n" + " title\n" + " XmlTag:title\n";
+    final String s = """
+      XmlFile:file2.xml
+       body
+       supplements
+       title
+       XmlTag:title
+      """;
     doTest(fileName, s);
   }
 
   public void testHtmlCustomRegions() {
     doTest(
       getTestName(false) + ".html",
-      "HtmlFile:HtmlCustomRegions.html\n" +
-      " Region 'A'\n" +
-      "  HtmlTag:div\n" +
-      "  HtmlTag:div\n" +
-      " Region 'B'\n" +
-      "  HtmlTag:ul\n" +
-      "   Region 'C'\n" +
-      "    HtmlTag:li\n" +
-      "    HtmlTag:li\n" +
-      "   HtmlTag:li\n" +
-      " HtmlTag:div\n");
+      """
+        HtmlFile:HtmlCustomRegions.html
+         Region 'A'
+          HtmlTag:div
+          HtmlTag:div
+         Region 'B'
+          HtmlTag:ul
+           Region 'C'
+            HtmlTag:li
+            HtmlTag:li
+           HtmlTag:li
+         HtmlTag:div
+        """);
   }
 
   private void doTest(final String fileName, final String s) {

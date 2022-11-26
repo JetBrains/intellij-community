@@ -33,21 +33,15 @@ class HgChangesParser implements VcsChangesLazilyParsedDetails.ChangesParser {
       String filePath = info.getFirstPath();
       HgRevisionNumber parentRevision =
         myRevisionNumber.getParents().isEmpty() ? null : myRevisionNumber.getParents().get(parentIndex);
-      switch (info.getType()) {
-        case MODIFICATION:
-          result.add(createChange(project, commit.getRoot(), filePath, parentRevision, filePath, myRevisionNumber, FileStatus.MODIFIED));
-          break;
-        case NEW:
-          result.add(createChange(project, commit.getRoot(), null, null, filePath, myRevisionNumber, FileStatus.ADDED));
-          break;
-        case DELETED:
-          result.add(createChange(project, commit.getRoot(), filePath, parentRevision, null, myRevisionNumber, FileStatus.DELETED));
-          break;
-        case MOVED:
-          result.add(createChange(project, commit.getRoot(), filePath, parentRevision, info.getSecondPath(), myRevisionNumber,
-                                  HgChangeProvider.RENAMED));
-          break;
-      }
+      Change change = switch (info.getType()) {
+        case MODIFICATION ->
+          createChange(project, commit.getRoot(), filePath, parentRevision, filePath, myRevisionNumber, FileStatus.MODIFIED);
+        case NEW -> createChange(project, commit.getRoot(), null, null, filePath, myRevisionNumber, FileStatus.ADDED);
+        case DELETED -> createChange(project, commit.getRoot(), filePath, parentRevision, null, myRevisionNumber, FileStatus.DELETED);
+        case MOVED -> createChange(project, commit.getRoot(), filePath, parentRevision, info.getSecondPath(), myRevisionNumber,
+                                   HgChangeProvider.RENAMED);
+      };
+      result.add(change);
     }
     return result;
   }

@@ -15,7 +15,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.application
 import com.jetbrains.rd.util.first
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
-import com.jetbrains.rd.util.lifetime.onTermination
 import java.awt.event.MouseEvent
 
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
@@ -38,7 +37,8 @@ open class EditorCodeVisionContext(
   private var frontendResults: List<RangeMarker> = listOf()
 
   companion object {
-    val logger: Logger = Logger.getInstance(EditorCodeVisionContext::class.java)
+    @JvmStatic
+    protected val logger: Logger = Logger.getInstance(EditorCodeVisionContext::class.java)
   }
 
   private var hasPendingLenses = false
@@ -68,7 +68,7 @@ open class EditorCodeVisionContext(
     logger.trace("Have new frontend lenses ${lenses.size}")
     frontendResults.forEach { it.dispose() }
     frontendResults = lenses.mapNotNull { (range, entry) ->
-      if(!range.isValidFor(editor.document)) return@mapNotNull null
+      if (!range.isValidFor(editor.document)) return@mapNotNull null
       editor.document.createRangeMarker(range).apply {
         putUserData(codeVisionEntryOnHighlighterKey, entry)
       }
@@ -77,12 +77,13 @@ open class EditorCodeVisionContext(
     hasPendingLenses = false
   }
 
-  fun discardPending(){
+  fun discardPending() {
     hasPendingLenses = false
   }
 
-
-  protected fun resubmitThings() {
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
+  fun resubmitThings() {
     val viewService = ServiceManager.getService(
       editor.project!!,
       CodeVisionView::class.java
@@ -141,7 +142,7 @@ open class EditorCodeVisionContext(
     return frontendResults.mapNotNull { it.getUserData(codeVisionEntryOnHighlighterKey) }.any { it.providerId == id }
   }
 
-  open fun hasOnlyPlaceholders(): Boolean{
+  open fun hasOnlyPlaceholders(): Boolean {
     return frontendResults.all { it.getUserData(codeVisionEntryOnHighlighterKey) is PlaceholderCodeVisionEntry }
   }
 }

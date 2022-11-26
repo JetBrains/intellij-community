@@ -12,10 +12,7 @@ import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -301,6 +298,11 @@ public class SvnDiffViewer implements DiffViewer {
   private class ToggleHidePropertiesAction extends ToggleAction implements DumbAware {
     ToggleHidePropertiesAction() {
       ActionUtil.copyFrom(this, "Subversion.TogglePropertiesDiff");
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

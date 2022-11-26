@@ -21,7 +21,15 @@ public final class JreHiDpiUtil {
    * (analogue of {@link com.intellij.util.ui.UIUtil#isRetina(Graphics2D)} on macOS)
    */
   public static boolean isJreHiDPI(@Nullable GraphicsConfiguration gc) {
-    return isJreHiDPIEnabled() && JBUIScale.isHiDPI(JBUIScale.sysScale(gc));
+    return isJreHiDPI(JBUIScale.sysScale(gc));
+  }
+
+  /**
+   * Returns whether the JRE-managed HiDPI mode is enabled and the specified scaling level corresponds to a HiDPI device.
+   * (analogue of {@link com.intellij.util.ui.UIUtil#isRetina(Graphics2D)} on macOS)
+   */
+  public static boolean isJreHiDPI(float sysScale) {
+    return isJreHiDPIEnabled() && JBUIScale.isHiDPI(sysScale);
   }
 
   /**

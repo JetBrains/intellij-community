@@ -47,16 +47,10 @@ public abstract class AlignProperty extends Property<RadComponent, Integer> {
     int fillMask = myHorizontal ? 1 : 2;
     int anchor = 0;
     int fill = 0;
-    switch(value.intValue()) {
-      case GridConstraints.ALIGN_FILL:
-        fill = myHorizontal ? GridConstraints.FILL_HORIZONTAL : GridConstraints.FILL_VERTICAL;
-        break;
-      case GridConstraints.ALIGN_LEFT:
-        anchor = myHorizontal ? GridConstraints.ANCHOR_WEST : GridConstraints.ANCHOR_NORTH;
-        break;
-      case GridConstraints.ALIGN_RIGHT:
-        anchor = myHorizontal ? GridConstraints.ANCHOR_EAST : GridConstraints.ANCHOR_SOUTH;
-        break;
+    switch (value.intValue()) {
+      case GridConstraints.ALIGN_FILL -> fill = myHorizontal ? GridConstraints.FILL_HORIZONTAL : GridConstraints.FILL_VERTICAL;
+      case GridConstraints.ALIGN_LEFT -> anchor = myHorizontal ? GridConstraints.ANCHOR_WEST : GridConstraints.ANCHOR_NORTH;
+      case GridConstraints.ALIGN_RIGHT -> anchor = myHorizontal ? GridConstraints.ANCHOR_EAST : GridConstraints.ANCHOR_SOUTH;
     }
     GridConstraints gc = component.getConstraints();
     GridConstraints oldGC = (GridConstraints) gc.clone();

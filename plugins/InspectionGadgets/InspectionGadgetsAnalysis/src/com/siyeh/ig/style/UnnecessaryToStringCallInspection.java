@@ -86,7 +86,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call =
         ObjectUtils.tryCast(descriptor.getPsiElement().getParent().getParent(), PsiMethodCallExpression.class);
       if (!isRedundantToString(call)) return;

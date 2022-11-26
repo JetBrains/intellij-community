@@ -172,35 +172,29 @@ public class IdeaDriver {
 
 
   private static OutputFormat getOutputFormat(SchemaType outputType) {
-    switch (outputType) {
-      case DTD:
-        return new DtdOutputFormat();
-      case RNC:
-        return new RncOutputFormat();
-      case RNG:
-        return new RngOutputFormat();
-      case XSD:
-        return new XsdOutputFormat();
-      default:
+    return switch (outputType) {
+      case DTD -> new DtdOutputFormat();
+      case RNC -> new RncOutputFormat();
+      case RNG -> new RngOutputFormat();
+      case XSD -> new XsdOutputFormat();
+      default -> {
         assert false : "Unsupported output type: " + outputType;
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
   private static InputFormat getInputFormat(SchemaType type) {
-    switch (type) {
-      case DTD:
-        return new DtdInputFormat();
-      case RNC:
-        return new CompactParseInputFormat();
-      case RNG:
-        return new SAXParseInputFormat();
-      case XML:
-        return new XmlInputFormat();
-      default:
+    return switch (type) {
+      case DTD -> new DtdInputFormat();
+      case RNC -> new CompactParseInputFormat();
+      case RNG -> new SAXParseInputFormat();
+      case XML -> new XmlInputFormat();
+      default -> {
         assert false : "Unsupported input type: " + type;
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
   private static class CanceledException extends RuntimeException {

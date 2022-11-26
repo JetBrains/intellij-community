@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiNewExpression
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
 import org.jetbrains.kotlin.nj2k.isEquals
-import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.isUnresolved
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -140,25 +140,10 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         }
     }
 
-    private fun JKExpression.castStringToRegex(toType: JKType): JKExpression? {
-        if (toType.safeAs<JKClassType>()?.classReference?.fqName != "java.util.regex.Pattern") return null
-        val expressionType = calculateType(typeFactory) ?: return null
-        if (!expressionType.isStringType()) return null
-        return JKQualifiedExpression(
-            copyTreeAndDetach().parenthesizeIfCompoundExpression(),
-            JKCallExpressionImpl(
-                symbolProvider.provideMethodSymbol("kotlin.text.toRegex"),
-                JKArgumentList(),
-                JKTypeArgumentList()
-            )
-        )
-    }
-
     private fun JKExpression.castTo(toType: JKType, strict: Boolean = false): JKExpression? {
         val expressionType = calculateType(typeFactory)
         if (expressionType == toType) return null
         castToAsPrimitiveTypes(this, toType, strict)?.also { return it }
-        castStringToRegex(toType)?.also { return it }
         return null
     }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,8 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myEnvVars = createBrowseComponent();
     setComponent(myEnvVars);
     setText(ExecutionBundle.message("environment.variables.component.title"));
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEnvVars.getChildComponent());
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
   }
 
   @NotNull

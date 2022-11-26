@@ -3,8 +3,12 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -17,12 +21,15 @@ interface ParentSingleAbEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentSingleAbEntity, ModifiableWorkspaceEntity<ParentSingleAbEntity>, ObjBuilder<ParentSingleAbEntity> {
+  interface Builder : ParentSingleAbEntity, WorkspaceEntity.Builder<ParentSingleAbEntity>, ObjBuilder<ParentSingleAbEntity> {
     override var entitySource: EntitySource
     override var child: ChildSingleAbstractBaseEntity?
   }
 
   companion object : Type<ParentSingleAbEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentSingleAbEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -47,13 +54,16 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : ChildSingleAbstractBaseEntity> : ChildSingleAbstractBaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : ChildSingleAbstractBaseEntity> : ChildSingleAbstractBaseEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentSingleAbEntity
   }
 
   companion object : Type<ChildSingleAbstractBaseEntity, Builder<ChildSingleAbstractBaseEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         entitySource: EntitySource,
                         init: (Builder<ChildSingleAbstractBaseEntity>.() -> Unit)? = null): ChildSingleAbstractBaseEntity {
@@ -73,7 +83,7 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSingleFirstEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleFirstEntity>, ModifiableWorkspaceEntity<ChildSingleFirstEntity>, ObjBuilder<ChildSingleFirstEntity> {
+  interface Builder : ChildSingleFirstEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleFirstEntity>, WorkspaceEntity.Builder<ChildSingleFirstEntity>, ObjBuilder<ChildSingleFirstEntity> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentSingleAbEntity
@@ -81,6 +91,9 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
   }
 
   companion object : Type<ChildSingleFirstEntity, Builder>(ChildSingleAbstractBaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         firstData: String,
                         entitySource: EntitySource,
@@ -108,7 +121,7 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSingleSecondEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleSecondEntity>, ModifiableWorkspaceEntity<ChildSingleSecondEntity>, ObjBuilder<ChildSingleSecondEntity> {
+  interface Builder : ChildSingleSecondEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleSecondEntity>, WorkspaceEntity.Builder<ChildSingleSecondEntity>, ObjBuilder<ChildSingleSecondEntity> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentSingleAbEntity
@@ -116,6 +129,9 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
   }
 
   companion object : Type<ChildSingleSecondEntity, Builder>(ChildSingleAbstractBaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         secondData: String,
                         entitySource: EntitySource,

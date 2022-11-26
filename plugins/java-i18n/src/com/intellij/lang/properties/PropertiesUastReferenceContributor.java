@@ -32,9 +32,6 @@ import java.util.List;
 
 import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
 
-/**
- * @author peter
- */
 public class PropertiesUastReferenceContributor extends PsiReferenceContributor {
   private static final Logger LOG = Logger.getInstance(PropertiesUastReferenceContributor.class);
 

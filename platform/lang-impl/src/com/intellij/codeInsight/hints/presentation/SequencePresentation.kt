@@ -22,7 +22,7 @@ class SequencePresentation(val presentations: List<InlayPresentation>) : BasePre
   }
 
   override val width: Int
-    get() = presentations.sumBy { it.width }
+    get() = presentations.sumOf { it.width }
   override val height: Int
     get() = presentations.maxByOrNull { it.height }!!.height
 

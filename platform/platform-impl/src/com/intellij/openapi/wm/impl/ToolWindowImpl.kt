@@ -114,6 +114,14 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     result
   }
 
+  private val moveOrResizeAlarm = SingleAlarm(Runnable {
+    val decorator = this@ToolWindowImpl.decorator
+    if (decorator != null) {
+      toolWindowManager.movedOrResized(decorator)
+    }
+    this@ToolWindowImpl.windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
+  }, 100, disposable)
+
   init {
     if (component != null) {
       val content = ContentImpl(component, "", false)
@@ -170,13 +178,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
-      private val alarm = SingleAlarm(Runnable {
-        toolWindowManager.resized(decorator)
-        windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
-      }, 100, disposable)
-
       override fun componentResized(e: ComponentEvent) {
-        alarm.cancelAndRequest()
+        onMovedOrResized()
       }
     })
 
@@ -196,6 +199,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     return contentManager
+  }
+
+  fun onMovedOrResized() {
+    moveOrResizeAlarm.cancelAndRequest()
   }
 
   internal fun setWindowInfoSilently(info: WindowInfo) {
@@ -246,7 +253,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun isActive(): Boolean {
-    toolWindowManager.assertIsEdt()
     return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
 
@@ -724,9 +730,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   fun requestFocusInToolWindow() {
     focusTask.resetStartTime()
-    val alarm = focusAlarm
-    alarm.cancelAllRequests()
-    alarm.request(delay = 0)
+    focusAlarm.cancelAllRequests()
+    focusTask.run()
   }
 }
 
@@ -756,14 +761,22 @@ private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
 }
 
 private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
-  contentUi.component.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
-    override fun iterator(): Iterator<JComponent> {
-      val contentManager = contentUi.contentManager
-      if (contentManager.contentCount == 0) {
-        return Collections.emptyIterator()
-      }
+  contentUi.component.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, NotInHierarchyComponents(contentUi))
+}
 
-      return contentManager.contents
+private class NotInHierarchyComponents(val contentUi: ToolWindowContentUi) : Iterable<Component> {
+  private val oldProperty = ClientProperty.get(contentUi.component, UIUtil.NOT_IN_HIERARCHY_COMPONENTS)
+
+  override fun iterator(): Iterator<Component> {
+    var result = emptySequence<Component>()
+
+    if (oldProperty != null) {
+      result += oldProperty.asSequence()
+    }
+
+    val contentManager = contentUi.contentManager
+    if (contentManager.contentCount != 0) {
+      result += contentManager.contents
         .asSequence()
         .mapNotNull { content: Content ->
           var last: JComponent? = null
@@ -777,9 +790,10 @@ private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
           }
           last
         }
-        .iterator()
     }
-  })
+
+    return result.iterator()
+  }
 }
 
 /**

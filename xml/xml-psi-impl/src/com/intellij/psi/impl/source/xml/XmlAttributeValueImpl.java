@@ -179,7 +179,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl
   }
 
   @Override
-  public boolean characterNeedsEscaping(char c) {
+  public boolean characterNeedsEscaping(char c, boolean isInClass) {
     return c == ']' || c == '}';
   }
 

@@ -29,16 +29,17 @@ import java.util.stream.Stream;
 
 public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
-  private static final @Language("JAVA") String A_CLASS = "package com.jetbrains;\n" +
-                                                          "import com.jetbrains.OtherClass;\n" +
-                                                          "import org.checkerframework.checker.tainting.qual.*;\n" +
-                                                          "class A {\n" +
-                                                          "    void callSink() {}\n" +
-                                                          "    void sink(@Untainted String s) {}\n" +
-                                                          "    static @Tainted String source() { return \"unsafe\"; }\n" +
-                                                          "    static String foo() { return \"bar\"; }\n" +
-                                                          "    static @Untainted String safe() { return \"safe\"; }\n" +
-                                                          "}";
+  private static final @Language("JAVA") String A_CLASS = """
+    package com.jetbrains;
+    import com.jetbrains.OtherClass;
+    import org.checkerframework.checker.tainting.qual.*;
+    class A {
+        void callSink() {}
+        void sink(@Untainted String s) {}
+        static @Tainted String source() { return "unsafe"; }
+        static String foo() { return "bar"; }
+        static @Untainted String safe() { return "safe"; }
+    }""";
 
 
   @Override
@@ -53,27 +54,30 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
   }
 
   public void testSinkToSourceFlowIsReported() {
-    myFixture.addClass("package org.checkerframework.checker.tainting.qual;\n" +
-                       "import java.lang.annotation.ElementType;\n" +
-                       "import java.lang.annotation.Target;\n" +
-                       "@Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})\n" +
-                       "public @interface Tainted {\n" +
-                       "}");
-    myFixture.addClass("package org.checkerframework.checker.tainting.qual;\n" +
-                       "import java.lang.annotation.ElementType;\n" +
-                       "import java.lang.annotation.Target;\n" +
-                       "@Target({TYPE_USE,TYPE_PARAMETER})\n" +
-                       "public @interface Untainted {\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.checkerframework.checker.tainting.qual;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         @Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})
+                         public @interface Tainted {
+                         }""");
+    myFixture.addClass("""
+                         package org.checkerframework.checker.tainting.qual;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         @Target({TYPE_USE,TYPE_PARAMETER})
+                         public @interface Untainted {
+                         }""");
 
     myFixture.addClass(A_CLASS);
-    myFixture.addClass("package com.jetbrains;\n" +
-                       "import org.checkerframework.checker.tainting.qual.*;\n" +
-                       "class OtherClass {\n" +
-                       "    static @Tainted String source() { return \"unsafe\"; }\n" +
-                       "    static String foo() { return \"bar\"; }\n" +
-                       "    static @Untainted String safe() { return \"safe\"; }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package com.jetbrains;
+                         import org.checkerframework.checker.tainting.qual.*;
+                         class OtherClass {
+                             static @Tainted String source() { return "unsafe"; }
+                             static String foo() { return "bar"; }
+                             static @Untainted String safe() { return "safe"; }
+                         }""");
     PropertyChecker.customized()
       .checkScenarios(() -> this::doTestSinkToSourceFlowIsReported);
   }

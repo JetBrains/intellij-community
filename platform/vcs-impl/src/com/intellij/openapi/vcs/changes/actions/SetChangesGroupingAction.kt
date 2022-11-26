@@ -29,7 +29,7 @@ abstract class SetChangesGroupingAction : ToggleAction(), DumbAware {
     getGroupingSupport(e)!![groupingKey] = state
   }
 
-  protected fun getGroupingSupport(e: AnActionEvent): ChangesGroupingSupport? = e.getData(ChangesGroupingSupport.KEY)
+  private fun getGroupingSupport(e: AnActionEvent): ChangesGroupingSupport? = e.getData(ChangesGroupingSupport.KEY)
 }
 
 class SetDirectoryChangesGroupingAction : SetChangesGroupingAction() {

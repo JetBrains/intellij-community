@@ -11,9 +11,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
-/**
- * @author peter
- */
 public final class FileContentUtil {
 
   public static void reparseFiles(@NotNull final Project project, @NotNull final Collection<? extends VirtualFile> files, final boolean includeOpenFiles) {

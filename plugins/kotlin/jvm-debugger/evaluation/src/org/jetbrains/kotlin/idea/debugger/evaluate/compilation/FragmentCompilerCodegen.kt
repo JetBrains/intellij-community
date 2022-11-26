@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -33,8 +32,7 @@ interface FragmentCompilerCodegen {
     fun computeFragmentParameters(
         executionContext: ExecutionContext,
         codeFragment: KtCodeFragment,
-        bindingContext: BindingContext,
-        status: EvaluationStatus
+        bindingContext: BindingContext
     ): CodeFragmentParameterInfo
 
     fun extractResult(

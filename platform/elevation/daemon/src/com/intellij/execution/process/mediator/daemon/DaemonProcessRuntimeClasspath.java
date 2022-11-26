@@ -2,6 +2,7 @@
 package com.intellij.execution.process.mediator.daemon;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.util.concurrent.internal.InternalFutureFailureAccess;
 import com.google.protobuf.Message;
 import com.intellij.execution.process.mediator.rpc.ProcessMediatorProto;
 import com.sun.jna.Native;
@@ -48,6 +49,7 @@ public class DaemonProcessRuntimeClasspath {
     Context.class, // grpc-context
     AbstractStub.class, // grpc-stub
     AbstractCoroutineStub.class, // grpc-kotlin-stub
+    InternalFutureFailureAccess.class, // guava
     MoreObjects.class, // guava
 
     Message.class, // protobuf
@@ -65,6 +67,7 @@ public class DaemonProcessRuntimeClasspath {
     "java.net.preferIPv4Stack",
     "java.net.preferIPv6Addresses",
     "java.util.logging.config.file",
+    "jna.boot.library.path",
   });
 
   public static @NotNull Class<?> getMainClass() {

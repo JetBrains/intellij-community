@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.config
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import git4idea.remote.hosting.knownRepositories
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -27,14 +28,14 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     get() {
       val (url, accountId) = state.selectedUrlAndAccountId ?: return null
       val repo = project.service<GHHostedRepositoriesManager>().knownRepositories.find {
-        it.gitRemoteUrlCoordinates.url == url
+        it.remote.url == url
       } ?: return null
       val account = GHAccountSerializer.deserialize(accountId) ?: return null
       return repo to account
     }
     set(value) {
       state.selectedUrlAndAccountId = value?.let { (repo, account) ->
-        UrlAndAccount(repo.gitRemoteUrlCoordinates.url, GHAccountSerializer.serialize(account))
+        UrlAndAccount(repo.remote.url, GHAccountSerializer.serialize(account))
       }
     }
 
@@ -56,7 +57,9 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
 
     class UrlAndAccount private constructor() {
 
+      @Suppress("MemberVisibilityCanBePrivate")
       var url: String = ""
+      @Suppress("MemberVisibilityCanBePrivate")
       var accountId: String = ""
 
       constructor(url: String, accountId: String) : this() {

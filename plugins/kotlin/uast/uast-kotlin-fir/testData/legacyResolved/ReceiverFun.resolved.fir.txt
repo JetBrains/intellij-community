@@ -7,4 +7,4 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = le
 UAnnotation (fqName = MyReceiverAnnotation) -> USimpleNameReferenceExpression (identifier = MyReceiverAnnotation) -> Kotlin_Light_Class:annotation class MyReceiverAnnotation(val name: String = ""): MyReceiverAnnotation
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UTypeReferenceExpression (name = kotlin.text.Regex) -> USimpleNameReferenceExpression (identifier = Regex) -> Decompiled_Class: Regex
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toRegex) -> FUN: toRegex
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = toRegex) -> FUN: toRegex

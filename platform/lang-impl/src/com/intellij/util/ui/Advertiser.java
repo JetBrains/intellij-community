@@ -18,9 +18,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 public class Advertiser {
   private final List<Item> myTexts = ContainerUtil.createLockFreeCopyOnWriteList();
   private final JPanel myComponent = new JPanel(new AdvertiserLayout());

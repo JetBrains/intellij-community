@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -497,6 +497,24 @@ public final class ExpectedTypesProvider {
       }
       else {
         myResult.add(createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY, PsiType.BOOLEAN, TailType.SEMICOLON));
+      }
+    }
+
+    @Override
+    public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
+      processGuard(guard);
+    }
+
+    @Override
+    public void visitGuardedPattern(@NotNull PsiGuardedPattern pattern) {
+      processGuard(pattern);
+    }
+
+    private void processGuard(@NotNull PsiCaseLabelElement guard) {
+      final PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(guard, PsiSwitchBlock.class);
+      if (switchBlock != null) {
+        final TailType caseTail = TailTypes.forSwitchLabel(switchBlock);
+        myResult.add(createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY, PsiType.BOOLEAN, caseTail));
       }
     }
 

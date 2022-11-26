@@ -3,7 +3,6 @@ package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
-import com.intellij.openapi.vfs.VfsUtil.isAncestor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
@@ -26,18 +25,16 @@ internal interface ProblemsTreeVisitor : TreeVisitor {
 
 
 internal class FileNodeFinder(private val file: VirtualFile) : ProblemsTreeVisitor {
-  override fun visitFile(node: FileNode) = when {
-    node.file == file -> TreeVisitor.Action.INTERRUPT
-    isAncestor(node.file, file, true) -> TreeVisitor.Action.CONTINUE
+  override fun visitFile(node: FileNode) = when (node.file) {
+    file -> TreeVisitor.Action.INTERRUPT
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 }
 
-
 internal class ProblemNodeFinder(private val problem: Problem) : ProblemsTreeVisitor {
   override fun visitFile(node: FileNode) = when {
     problem !is FileProblem -> TreeVisitor.Action.SKIP_CHILDREN
-    isAncestor(node.file, problem.file, false) -> TreeVisitor.Action.CONTINUE
+    node.file == problem.file -> TreeVisitor.Action.CONTINUE
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 

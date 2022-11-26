@@ -111,8 +111,6 @@ open class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle
 
   private fun TaskTestContext.invokeCompletion() = invokeActionViaShortcut("CTRL SPACE")
 
-  override val suitableTips = listOf("CodeCompletion")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("basic.completion.help.code.completion"),
          LessonUtil.getHelpLink("auto-completing-code.html#basic_completion")),

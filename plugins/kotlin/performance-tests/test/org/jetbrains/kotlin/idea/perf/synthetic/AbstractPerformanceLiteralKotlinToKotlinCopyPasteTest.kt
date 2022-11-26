@@ -30,7 +30,7 @@ abstract class AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest : AbstractC
         val stats: Stats = Stats("Literal-k2k-CopyPaste")
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override fun setUp() {
         super.setUp()

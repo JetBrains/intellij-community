@@ -23,7 +23,7 @@ import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 
 class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
-    val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
+    private val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
         get() = getExtensions(AnalysisHandlerExtension.extensionPointName)
                 .filterIsInstance<UastAnalysisHandlerExtension>()
                 .firstOrNull()

@@ -3,6 +3,7 @@ package org.intellij.lang.regexp.inspection;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.regexp.psi.*;
 
 import java.util.Arrays;
@@ -74,8 +75,7 @@ final class RegExpEquivalenceChecker {
 
   private static boolean areNamedGroupRefsEquivalent(RegExpNamedGroupRef namedGroupRef1, RegExpNamedGroupRef namedGroupRef2) {
     final String name = namedGroupRef1.getGroupName();
-    if (name != null) return name.equals(namedGroupRef2.getGroupName());
-    return namedGroupRef1.getText().equals(namedGroupRef2.getText());
+    return name != null && name.equals(namedGroupRef2.getGroupName());
   }
 
   private static boolean areIntersectionsEquivalent(RegExpIntersection intersection1, RegExpIntersection intersection2) {
@@ -138,12 +138,7 @@ final class RegExpEquivalenceChecker {
       Arrays.sort(elements1, TEXT_COMPARATOR);
       Arrays.sort(elements2, TEXT_COMPARATOR);
     }
-    for (int i = 0; i < elements1.length; i++) {
-      if (!areElementsEquivalent(elements1[i], elements2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return ArrayUtil.areEqual(elements1, elements2, RegExpEquivalenceChecker::areElementsEquivalent);
   }
 
   private static boolean areCharsEquivalent(RegExpChar aChar1, RegExpChar aChar2) {

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class AnnotationTargetUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationTargetUtil.class);
 

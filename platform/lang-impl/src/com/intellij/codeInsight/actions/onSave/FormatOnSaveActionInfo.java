@@ -20,16 +20,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.List;
 
-public class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOptions> {
+class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOptions> {
 
   private static final Key<FormatOnSaveOptions> CURRENT_UI_STATE_KEY = Key.create("format.on.save.options");
 
-  public FormatOnSaveActionInfo(@NotNull ActionOnSaveContext context) {
+  FormatOnSaveActionInfo(@NotNull ActionOnSaveContext context) {
     super(context, CodeInsightBundle.message("actions.on.save.page.checkbox.reformat.code"), CURRENT_UI_STATE_KEY);
   }
 
@@ -48,11 +46,8 @@ public class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnS
 
   @Override
   public @NotNull List<? extends ActionLink> getActionLinks() {
-    return List.of(new ActionLink(CodeInsightBundle.message("actions.on.save.page.link.configure.scope"), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        GeneralCodeStylePanel.selectFormatterTab(getSettings());
-      }
+    return List.of(new ActionLink(CodeInsightBundle.message("actions.on.save.page.link.configure.scope"), __ -> {
+      GeneralCodeStylePanel.selectFormatterTab(getSettings());
     }));
   }
 
@@ -64,7 +59,7 @@ public class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnS
   }
 
   @Override
-  protected void addApplicableFileTypes(@NotNull Collection<FileType> result) {
+  protected void addApplicableFileTypes(@NotNull Collection<? super FileType> result) {
     // add all file types that can be handled by the IDE internal formatter (== have FormattingModelBuilder)
     ExtensionPoint<KeyedLazyInstance<FormattingModelBuilder>> ep = LanguageFormatting.INSTANCE.getPoint();
     if (ep != null) {

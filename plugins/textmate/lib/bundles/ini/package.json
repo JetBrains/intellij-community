@@ -19,9 +19,9 @@
       {
         "id": "properties",
         "extensions": [
+          ".conf",
           ".properties",
           ".cfg",
-          ".conf",
           ".directory",
           ".gitattributes",
           ".gitconfig",
@@ -29,7 +29,8 @@
           ".editorconfig"
         ],
         "filenames": [
-          "gitconfig"
+          "gitconfig",
+          ".env"
         ],
         "filenamePatterns": [
           "**/.config/git/config",

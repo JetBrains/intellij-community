@@ -13,12 +13,12 @@ public class ThrowableResultOfMethodCallIgnoredInspectionTest extends LightJavaI
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package com.google.errorprone.annotations;\n" +
-      "import static java.lang.annotation.ElementType.METHOD;\n" +
-      "import static java.lang.annotation.ElementType.TYPE;\n" +
-      "import java.lang.annotation.Target;" +
-      "@Target({METHOD, TYPE})\n" +
-      "public @interface CanIgnoreReturnValue {}"
+      """
+package com.google.errorprone.annotations;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
+import java.lang.annotation.Target;@Target({METHOD, TYPE})
+public @interface CanIgnoreReturnValue {}"""
     };
   }
 

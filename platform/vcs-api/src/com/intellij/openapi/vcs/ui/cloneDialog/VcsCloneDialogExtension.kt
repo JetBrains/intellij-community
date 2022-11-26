@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ui.cloneDialog
 
 import com.intellij.openapi.application.ModalityState
@@ -12,6 +12,7 @@ import javax.swing.Icon
  * Extension point that provide an ability to add integration with specific cloud repository hosting/service (e.g "GitHub", "BitBucket", etc)
  */
 @ApiStatus.OverrideOnly
+@JvmDefaultWithCompatibility
 interface VcsCloneDialogExtension {
   companion object {
     val EP_NAME =
@@ -39,7 +40,6 @@ interface VcsCloneDialogExtension {
   @Nls fun getTooltip(): String? = null
 
   @Deprecated(message = "Implement createMainComponent(Project, ModalityState)")
-  @JvmDefault
   fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
     throw AssertionError("Shouldn't be called, implement createMainComponent(Project, ModalityState)")
   }
@@ -48,7 +48,6 @@ interface VcsCloneDialogExtension {
    * Builds [VcsCloneDialogExtensionComponent] that would be displayed on center of get-from-vcs dialog when extension is selected.
    * Will be called lazily and once on first choosing of extension.
    */
-  @JvmDefault
   fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
     return createMainComponent(project)
   }

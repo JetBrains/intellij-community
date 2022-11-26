@@ -6,9 +6,12 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logG
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.nameProperty
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
+import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.*
@@ -33,6 +36,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
 
   final override val parentProperty = propertyGraph.lazyProperty(::suggestParentByPath)
   final override val groupIdProperty = propertyGraph.lazyProperty(::suggestGroupIdByParent)
+    .bindStorage(GROUP_ID_PROPERTY_NAME)
   final override val artifactIdProperty = propertyGraph.lazyProperty(::suggestArtifactIdByName)
   final override val versionProperty = propertyGraph.lazyProperty(::suggestVersionByParent)
 
@@ -91,6 +95,8 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
           .columns(COLUMNS_MEDIUM)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID)
           .validation { validateArtifactId() }
+          .validationRequestor(AFTER_PROPERTY_CHANGE(artifactIdProperty))
+          .validationRequestor(AFTER_PROPERTY_CHANGE(nameProperty))
           .whenTextChangedFromUi { logArtifactIdChanged() }
       }.bottomGap(BottomGap.SMALL)
     }
@@ -124,7 +130,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
     return parent.version
   }
 
-  protected fun suggestPathByParent(): String {
+  private fun suggestPathByParent(): String {
     return if (parent.isPresent) parent.location else context.projectFileDirectory
   }
 

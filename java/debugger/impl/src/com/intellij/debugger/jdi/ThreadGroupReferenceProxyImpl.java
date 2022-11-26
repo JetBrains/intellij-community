@@ -9,8 +9,8 @@ package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.jdi.ThreadGroupReferenceProxy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ThreadGroupReference;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
@@ -61,11 +61,11 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
   }
 
   public List<ThreadReferenceProxyImpl> threads() {
-    return StreamEx.of(getThreadGroupReference().threads()).map(getVirtualMachineProxy()::getThreadReferenceProxy).toList();
+    return ContainerUtil.map(getThreadGroupReference().threads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 
   public List<ThreadGroupReferenceProxyImpl> threadGroups() {
-    return StreamEx.of(getThreadGroupReference().threadGroups()).map(getVirtualMachineProxy()::getThreadGroupReferenceProxy).toList();
+    return ContainerUtil.map(getThreadGroupReference().threadGroups(), getVirtualMachineProxy()::getThreadGroupReferenceProxy);
   }
 
   @Override

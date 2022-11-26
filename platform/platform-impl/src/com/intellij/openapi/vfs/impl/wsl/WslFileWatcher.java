@@ -79,7 +79,9 @@ public class WslFileWatcher extends PluggableFileWatcher {
 
   @Override
   public boolean isOperational() {
-    return myExecutable != null && (!ApplicationManager.getApplication().isUnitTestMode() || myTestStarted);
+    if (myExecutable == null) return false;
+    var app = ApplicationManager.getApplication();
+    return !(app.isCommandLine() || app.isUnitTestMode()) || myTestStarted;
   }
 
   @Override
@@ -121,7 +123,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
     }
   }
 
-  private static void sortRoots(List<String> roots, Map<String, VmData> vms, List<String> ignored, boolean recursive) {
+  private static void sortRoots(List<String> roots, Map<String, VmData> vms, List<? super String> ignored, boolean recursive) {
     for (String root : roots) {
       int nameEnd;
       if (StringUtil.startsWithIgnoreCase(root, WslConstants.UNC_PREFIX) && (nameEnd = root.indexOf('\\', NAME_START)) > NAME_START) {

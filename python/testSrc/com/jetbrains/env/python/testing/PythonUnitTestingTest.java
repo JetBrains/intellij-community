@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
@@ -39,7 +39,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -290,11 +290,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
         assertEquals("Runner did not stop after first fail", 1, runner.getAllTestsCount());
-        assertEquals("Bad tree produced for failfast", "Test tree:\n" +
-                                                       "[root](-)\n" +
-                                                       ".test_test(-)\n" +
-                                                       "..SomeTestCase(-)\n" +
-                                                       "...test_1_test(-)\n", runner.getFormattedTestTree());
+        assertEquals("Bad tree produced for failfast", """
+          Test tree:
+          [root](-)
+          .test_test(-)
+          ..SomeTestCase(-)
+          ...test_1_test(-)
+          """, runner.getFormattedTestTree());
       }
     });
   }
@@ -325,12 +327,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        assertEquals("wrong test launched", "Test tree:\n" +
-                                            "[root](+)\n" +
-                                            ".mymodule(+)\n" +
-                                            "..ExampleModuleTestCase(+)\n" +
-                                            "...test1(+)\n" +
-                                            "...test2(+)\n", runner.getFormattedTestTree());
+        assertEquals("wrong test launched", """
+          Test tree:
+          [root](+)
+          .mymodule(+)
+          ..ExampleModuleTestCase(+)
+          ...test1(+)
+          ...test2(+)
+          """, runner.getFormattedTestTree());
         assertEquals("wrong exit code", 0, exitCode);
       }
     });
@@ -355,11 +359,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
         runner.getFormattedTestTree();
         assertEquals("Skipped test with non-ascii message broke tree",
-                     "Test tree:\n" +
-                     "[root](~)\n" +
-                     ".test_test(~)\n" +
-                     "..TestCase(~)\n" +
-                     "...test(~)\n", runner.getFormattedTestTree());
+                     """
+                       Test tree:
+                       [root](~)
+                       .test_test(~)
+                       ..TestCase(~)
+                       ...test(~)
+                       """, runner.getFormattedTestTree());
         assertThat(stdout)
           .describedAs("non-ascii char broken in output")
           .contains("ошибка");
@@ -386,12 +392,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
         final String formattedTestTree = runner.getFormattedTestTree();
-        assertEquals("Bad tree:" + formattedTestTree, "Test tree:\n" +
-                                                      "[root](-)\n" +
-                                                      ".test_test(-)\n" +
-                                                      "..TestThis(-)\n" +
-                                                      "...test_this(-)\n" +
-                                                      "....[test](-)\n", formattedTestTree);
+        assertEquals("Bad tree:" + formattedTestTree, """
+          Test tree:
+          [root](-)
+          .test_test(-)
+          ..TestThis(-)
+          ...test_this(-)
+          ....[test](-)
+          """, formattedTestTree);
       }
     });
   }
@@ -443,17 +451,19 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String all, int exitCode) {
         assertEquals(3, runner.getFailedTestsCount());
         assertEquals(6, runner.getAllTestsCount());
-        assertEquals("Test tree:\n" +
-                     "[root](-)\n" +
-                     ".test_test(-)\n" +
-                     "..NumbersTest(-)\n" +
-                     "...test_even (Test that numbers between 0 and 5 are all even_)(-)\n" +
-                     "....(i=0)(+)\n" +
-                     "....(i=1)(-)\n" +
-                     "....(i=2)(+)\n" +
-                     "....(i=3)(-)\n" +
-                     "....(i=4)(+)\n" +
-                     "....(i=5)(-)\n", runner.getFormattedTestTree());
+        assertEquals("""
+                       Test tree:
+                       [root](-)
+                       .test_test(-)
+                       ..NumbersTest(-)
+                       ...test_even (Test that numbers between 0 and 5 are all even_)(-)
+                       ....(i=0)(+)
+                       ....(i=1)(-)
+                       ....(i=2)(+)
+                       ....(i=3)(-)
+                       ....(i=4)(+)
+                       ....(i=5)(-)
+                       """, runner.getFormattedTestTree());
       }
     });
   }
@@ -478,21 +488,23 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        assertEquals("dots in subtest names broke output", "Test tree:\n" +
-                                                           "[root](-)\n" +
-                                                           ".test_test(-)\n" +
-                                                           "..SampleTest(-)\n" +
-                                                           "...test_sample(-)\n" +
-                                                           "....(i='0_0')(-)\n" +
-                                                           "....(i='1_1')(-)\n" +
-                                                           "....(i='2_2')(+)\n" +
-                                                           "....(i='3_3')(+)\n" +
-                                                           "....(i='4_4')(+)\n" +
-                                                           "....(i='5_5')(+)\n" +
-                                                           "....(i='6_6')(+)\n" +
-                                                           "....(i='7_7')(+)\n" +
-                                                           "....(i='8_8')(+)\n" +
-                                                           "....(i='9_9')(+)\n", runner.getFormattedTestTree());
+        assertEquals("dots in subtest names broke output", """
+          Test tree:
+          [root](-)
+          .test_test(-)
+          ..SampleTest(-)
+          ...test_sample(-)
+          ....(i='0_0')(-)
+          ....(i='1_1')(-)
+          ....(i='2_2')(+)
+          ....(i='3_3')(+)
+          ....(i='4_4')(+)
+          ....(i='5_5')(+)
+          ....(i='6_6')(+)
+          ....(i='7_7')(+)
+          ....(i='8_8')(+)
+          ....(i='9_9')(+)
+          """, runner.getFormattedTestTree());
       }
     });
   }
@@ -511,13 +523,15 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        assertEquals("Output tree broken for skipped exception thrown in setup method", "Test tree:\n" +
-                                                                                        "[root](~)\n" +
-                                                                                        ".test_test(~)\n" +
-                                                                                        "..TestSimple(~)\n" +
-                                                                                        "...setUpClass(~)\n" +
-                                                                                        "..TestSubSimple(~)\n" +
-                                                                                        "...setUpClass(~)\n",
+        assertEquals("Output tree broken for skipped exception thrown in setup method", """
+                       Test tree:
+                       [root](~)
+                       .test_test(~)
+                       ..TestSimple(~)
+                       ...setUpClass(~)
+                       ..TestSubSimple(~)
+                       ...setUpClass(~)
+                       """,
                      runner.getFormattedTestTree());
       }
     });
@@ -656,21 +670,23 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull String stdout,
                                       @NotNull String stderr,
                                       @NotNull String all, int exitCode) {
-        final String expectedResult = "Test tree:\n" +
-                                      "[root](-)\n" +
-                                      ".test_subtest(-)\n" +
-                                      "..SpamTest(-)\n" +
-                                      "...test_test(-)\n" +
-                                      "....(i=0)(-)\n" +
-                                      "....(i=1)(+)\n" +
-                                      "....(i=2)(-)\n" +
-                                      "....(i=3)(+)\n" +
-                                      "....(i=4)(-)\n" +
-                                      "....(i=5)(+)\n" +
-                                      "....(i=6)(-)\n" +
-                                      "....(i=7)(+)\n" +
-                                      "....(i=8)(-)\n" +
-                                      "....(i=9)(+)\n";
+        final String expectedResult = """
+          Test tree:
+          [root](-)
+          .test_subtest(-)
+          ..SpamTest(-)
+          ...test_test(-)
+          ....(i=0)(-)
+          ....(i=1)(+)
+          ....(i=2)(-)
+          ....(i=3)(+)
+          ....(i=4)(-)
+          ....(i=5)(+)
+          ....(i=6)(-)
+          ....(i=7)(+)
+          ....(i=8)(-)
+          ....(i=9)(+)
+          """;
         final String tree = runner.getFormattedTestTree();
         assertEquals("Bad tree:" + tree + ". \nStdout:" + stdout + "\n. Stderr: " + stderr, expectedResult, tree);
       }
@@ -915,10 +931,9 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);
     }
 
-    @NotNull
     @Override
-    public Iterable<Class<?>> getClassesToEnableDebug() {
-      return Collections.singletonList(GeneralIdBasedToSMTRunnerEventsConvertor.class);
+    public @NotNull Collection<Class<?>> getClassesToEnableDebug() {
+      return List.of(GeneralIdBasedToSMTRunnerEventsConvertor.class);
     }
   }
 

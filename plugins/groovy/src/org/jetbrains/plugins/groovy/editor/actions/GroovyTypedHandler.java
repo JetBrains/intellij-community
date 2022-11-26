@@ -33,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.INVALID_INSIDE_REFERENCE;
 
-/**
- * @author peter
- */
 public class GroovyTypedHandler extends TypedHandlerDelegate {
   private boolean myJavaLTTyped;
 

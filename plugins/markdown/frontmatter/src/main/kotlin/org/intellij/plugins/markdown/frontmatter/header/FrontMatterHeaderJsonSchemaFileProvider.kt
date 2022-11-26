@@ -1,17 +1,18 @@
 package org.intellij.plugins.markdown.frontmatter.header
 
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.LightVirtualFile
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
+import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 import org.intellij.plugins.markdown.frontmatter.FrontMatterBundle
-import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider
 import org.jetbrains.yaml.YAMLFileType
-import org.jetbrains.yaml.YAMLLanguage
 
 internal class FrontMatterHeaderJsonSchemaFileProvider(private val project: Project): JsonSchemaFileProvider {
   override fun isAvailable(file: VirtualFile): Boolean {
@@ -26,15 +27,17 @@ internal class FrontMatterHeaderJsonSchemaFileProvider(private val project: Proj
 
   private fun isInjectedFrontMatter(file: VirtualFile): Boolean {
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return false
-    return psiFile.language == YAMLLanguage.INSTANCE
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
+    val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
+    return topLevelFile.language.isMarkdownLanguage()
   }
 
   override fun getName(): String {
     return FrontMatterBundle.message("markdown.frontmatter.header.json.schema.name")
   }
 
-  override fun getSchemaFile(): VirtualFile {
-    return LightVirtualFile("generic_front_matter_header_schema.json", schema)
+  override fun getSchemaFile(): VirtualFile? {
+    return JsonSchemaProviderFactory.getResourceFile(this::class.java, schemaFileName)
   }
 
   override fun getSchemaType(): SchemaType {
@@ -42,44 +45,6 @@ internal class FrontMatterHeaderJsonSchemaFileProvider(private val project: Proj
   }
 
   companion object {
-    // language=JSON
-    private const val schema = """
-    {
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "layout": {
-          "type": ["string", "null"]
-        },
-        "permalink": {
-          "type": "string"
-        },
-        "published": {
-          "type": "boolean"
-        },
-        "date": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "categories": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true
-        }
-      }
-    }
-    """
+    private const val schemaFileName = "generic_front_matter_header_schema.json"
   }
 }

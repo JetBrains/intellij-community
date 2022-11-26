@@ -16,12 +16,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -217,10 +219,8 @@ final class WatchRootsManager {
     int index = root.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (index >= 0) root = root.substring(0, index);
     try {
-      Path rootPath = Paths.get(FileUtil.toSystemDependentName(root));
-      if (!rootPath.isAbsolute()) {
-        throw new InvalidPathException(root, "Watch roots should be absolute");
-      }
+      Path rootPath = Path.of(FileUtil.toSystemDependentName(root));
+      if (!rootPath.isAbsolute()) throw new InvalidPathException(root, "Watch roots should be absolute");
       return FileUtil.toSystemIndependentName(rootPath.toString());
     }
     catch (InvalidPathException e) {

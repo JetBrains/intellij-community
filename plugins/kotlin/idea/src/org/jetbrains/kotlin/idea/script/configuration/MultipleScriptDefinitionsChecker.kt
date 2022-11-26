@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.script.configuration
 
@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotificationProvider.*
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.Nls
@@ -33,13 +32,13 @@ import javax.swing.JComponent
 
 class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
-    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
-        if (!file.isKotlinFileType()) return CONST_NULL
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+        if (!file.isKotlinFileType()) return null
 
-        val ktFile = PsiManager.getInstance(project).findFile(file).safeAs<KtFile>()?.takeIf(KtFile::isScript) ?: return CONST_NULL
+        val ktFile = PsiManager.getInstance(project).findFile(file).safeAs<KtFile>()?.takeIf(KtFile::isScript) ?: return null
 
         if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck ||
-            !ScriptDefinitionsManager.getInstance(project).isReady()) return CONST_NULL
+            !ScriptDefinitionsManager.getInstance(project).isReady()) return null
 
         val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
             .getAllDefinitions()
@@ -48,7 +47,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                         KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
             }
             .toList()
-        if (allApplicableDefinitions.size < 2 || areDefinitionsForGradleKts(allApplicableDefinitions)) return CONST_NULL
+        if (allApplicableDefinitions.size < 2 || areDefinitionsForGradleKts(allApplicableDefinitions)) return null
 
         return Function { fileEditor: FileEditor ->
             createNotification(fileEditor, project, allApplicableDefinitions)

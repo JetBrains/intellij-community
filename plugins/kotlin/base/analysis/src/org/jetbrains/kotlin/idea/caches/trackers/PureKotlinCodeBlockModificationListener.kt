@@ -74,7 +74,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                 }
             }
 
-        private inline fun isCommentChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiComment || it is KDoc }
+        private inline fun isCommentChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiComment }
 
         private inline fun isFormattingChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiWhiteSpace }
 
@@ -92,7 +92,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         fun getInsideCodeBlockModificationDirtyScope(element: PsiElement): PsiElement? {
             if (!element.isPhysical) return null
             // dirty scope for whitespaces and comments is the element itself
-            if (element is PsiWhiteSpace || element is PsiComment || element is KDoc) return element
+            if (element is PsiWhiteSpace || element is PsiComment) return element
 
             return getInsideCodeBlockModificationScope(element)?.blockDeclaration
         }
@@ -317,7 +317,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         Disposer.register(parentDisposable) { removeModelListener(listener) }
     }
 
-    fun removeModelListener(listener: PureKotlinOutOfCodeBlockModificationListener) {
+    private fun removeModelListener(listener: PureKotlinOutOfCodeBlockModificationListener) {
         listeners.remove(listener)
     }
 

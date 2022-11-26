@@ -143,7 +143,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiStatement.class);
       if (statement instanceof PsiBlockStatement) {
         statement = PsiTreeUtil.getNonStrictParentOfType(statement.getParent(), PsiStatement.class);

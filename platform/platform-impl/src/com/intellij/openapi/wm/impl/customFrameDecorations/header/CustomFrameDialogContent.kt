@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import java.awt.BorderLayout
@@ -6,20 +6,16 @@ import java.awt.Container
 import java.awt.Window
 import javax.swing.*
 
-internal class CustomFrameDialogContent private constructor(val window: Window, val header: CustomHeader, content: Container) : JPanel() {
+internal class CustomFrameDialogContent private constructor(private val window: Window,
+                                                            private val header: CustomHeader, content: Container) : JPanel() {
   companion object {
     @JvmStatic
-    fun getCustomContentHolder(window: Window,
-                               content: JComponent): JComponent {
+    fun getCustomContentHolder(window: Window, content: JComponent): JComponent {
       return CustomFrameDialogContent(window, CustomHeader.create(window), content)
     }
 
-    @JvmStatic
-    fun getCustomContentHolder(window: Window,
-                               content: JComponent,
-                               header: CustomHeader): JComponent {
+    fun getCustomContentHolder(window: Window, content: JComponent, header: CustomHeader): JComponent {
       checkContent(window, content) ?: return content
-
       return CustomFrameDialogContent(window, header, content)
     }
 

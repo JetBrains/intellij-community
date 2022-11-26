@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionWithState
 import org.jetbrains.kotlin.nj2k.asStatement
 import org.jetbrains.kotlin.nj2k.tree.*
 
@@ -11,8 +12,8 @@ class YieldStatementConversion(context: NewJ2kConverterContext) : RecursiveAppli
     override fun applyToElement(element: JKTreeElement, state: Boolean/*is yield allowed*/): JKTreeElement {
         when (element) {
             is JKKtWhenExpression -> return recurse(element, true)
-            is JKMethod -> return  recurse(element, false)
-            is JKLambdaExpression -> return  recurse(element, false)
+            is JKMethod -> return recurse(element, false)
+            is JKLambdaExpression -> return recurse(element, false)
             !is JKJavaYieldStatement -> return recurse(element, state)
         }
         element.invalidate()

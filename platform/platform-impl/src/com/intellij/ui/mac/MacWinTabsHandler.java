@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.RecentProjectsManagerBase;
@@ -36,7 +36,7 @@ import java.lang.reflect.Method;
 /**
  * @author Alexander Lobas
  */
-public class MacWinTabsHandler {
+public final class MacWinTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
   private static final String CLOSE_MARKER = "TABS_CLOSE_MARKER";
 
@@ -49,12 +49,7 @@ public class MacWinTabsHandler {
   private static Callback myObserverCallback; // don't convert to local var
   private static ID myObserverDelegate;
 
-  @NotNull
-  public static JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
-    if (!JdkEx.isTabbingModeAvailable()) {
-      return northComponent;
-    }
-
+  public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
     JPanel panel = new NonOpaquePanel(new BorderLayout());
 
     JPanel filler = new OpaquePanel();
@@ -70,7 +65,7 @@ public class MacWinTabsHandler {
 
   public MacWinTabsHandler(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     myFrame = frame;
-    myFrameAllowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, () -> updateTabBars(null));
+    myFrameAllowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null));
 
     if (myFrameAllowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
@@ -88,6 +83,7 @@ public class MacWinTabsHandler {
     return frame == null || frame instanceof IdeFrameImpl;
   }
 
+  // TODO: remove after release 2023.1
   public void frameInit() {
     if (!myFrameAllowed) {
       return;
@@ -95,10 +91,13 @@ public class MacWinTabsHandler {
 
     Foundation.executeOnMainThread(true, false, () -> {
       ID window = MacUtil.getWindowFromJavaWindow(myFrame);
-      String windowId = ApplicationNamesInfo.getInstance().getProductName() +
-                        (PluginManagerCore.isRunningFromSources() ? "-Snapshot" : "") + "-AwtWindow-WithTabs";
-      Foundation.invoke(window, "setTabbingIdentifier:", Foundation.nsString(windowId));
+      Foundation.invoke(window, "setTabbingIdentifier:", Foundation.nsString(getWindowId()));
     });
+  }
+
+  @NotNull
+  private static String getWindowId() {
+    return ApplicationNamesInfo.getInstance().getProductName() + (PluginManagerCore.isRunningFromSources() ? "-Snapshot" : "") + "-AwtWindow-WithTabs";
   }
 
   public void frameShow() {
@@ -123,12 +122,7 @@ public class MacWinTabsHandler {
     if (!myFrameAllowed) {
       return;
     }
-    if (isTransparentTitleBar()) {
-      updateTabBar();
-    }
-    else {
-      updateTabBar(myFrame, 0);
-    }
+    updateTabBar();
   }
 
   public void exitFullScreen() {
@@ -180,8 +174,6 @@ public class MacWinTabsHandler {
       return;
     }
 
-    boolean isTransparentTitleBar = isTransparentTitleBar();
-
     ApplicationManager.getApplication().invokeLater(() -> {
       Integer[] visibleAndHeights = new Integer[frames.length];
       boolean callInAppkit = false;
@@ -196,9 +188,6 @@ public class MacWinTabsHandler {
         if (newFrame == helper.getFrame()) {
           newIndex = i;
         }
-        if (!isTransparentTitleBar && helper.isInFullScreen()) {
-          visibleAndHeights[i] = 0;
-        }
         else {
           callInAppkit = true;
         }
@@ -212,15 +201,9 @@ public class MacWinTabsHandler {
             addTabObserver(window);
 
             if (visibleAndHeights[i] == null) {
-              int styleMask = isTransparentTitleBar ? 0 : Foundation.invoke(window, "styleMask").intValue();
-              if ((styleMask & (1 << 14)) != 0) { // NSWindowStyleMaskFullScreen
-                visibleAndHeights[i] = 0;
-              }
-              else {
-                visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
-                if (visibleAndHeights[i] == -1) {
-                  visibleAndHeights[i] = DEFAULT_WIN_TAB_HEIGHT();
-                }
+              visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
+              if (visibleAndHeights[i] == -1) {
+                visibleAndHeights[i] = DEFAULT_WIN_TAB_HEIGHT();
               }
             }
           }
@@ -269,7 +252,7 @@ public class MacWinTabsHandler {
     if (filler == null) {
       return;
     }
-    if (height > 0 && isTransparentTitleBar()) {
+    if (height > 0) {
       height++;
     }
     boolean visible = height > 0;
@@ -324,10 +307,6 @@ public class MacWinTabsHandler {
     catch (Throwable e) {
       Logger.getInstance(MacWinTabsHandler.class).error(e);
     }
-  }
-
-  private static boolean isTransparentTitleBar() {
-    return Registry.is("ide.mac.transparentTitleBarAppearance", false);
   }
 
   private static int DEFAULT_WIN_TAB_HEIGHT() {

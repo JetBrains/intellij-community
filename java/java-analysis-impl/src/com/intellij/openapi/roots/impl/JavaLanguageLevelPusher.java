@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.FileIntPropertyPusher;
+import com.intellij.FilePropertyPusherBase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -9,33 +9,31 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.FilePropertyKey;
+import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-/**
- * @author Gregory.Shrago
- */
-public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLevel> {
+public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<LanguageLevel> {
+
+  private static final FilePropertyKey<LanguageLevel> KEY = FilePropertyKeyImpl.createPersistentEnumKey("LANGUAGE_LEVEL",
+                                                                                                        "language_level_persistence", 4,
+                                                                                                        LanguageLevel.class);
+
   public static void pushLanguageLevel(@NotNull final Project project) {
-    PushedFilePropertiesUpdater instance = PushedFilePropertiesUpdater.getInstance(project);
-    for (FilePropertyPusher<?> pusher : EP_NAME.getExtensionList()) {
-      if (pusher instanceof JavaLanguageLevelPusher) {
-        instance.pushAll(pusher);
-      }
-    }
+    JavaLanguageLevelPusher pusher = EP_NAME.findExtension(JavaLanguageLevelPusher.class);
+    PushedFilePropertiesUpdater.getInstance(project).pushAll(pusher);
   }
 
   @Override
   @NotNull
-  public Key<LanguageLevel> getFileDataKey() {
-    return LanguageLevel.KEY;
+  public FilePropertyKey<LanguageLevel> getFileDataKey() {
+    return KEY;
   }
 
   @Override
@@ -51,7 +49,7 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
 
   @Override
   public LanguageLevel getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
-    return null;
+    return JavaLanguageLevelPusherCustomizer.getImmediateValueImpl(project, file);
   }
 
   @Override
@@ -62,23 +60,6 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
   @Override
   public boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project) {
     return ProjectFileIndex.getInstance(project).isInSourceContent(file);
-  }
-
-  private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 3, true);
-
-  @Override
-  public @NotNull FileAttribute getAttribute() {
-    return PERSISTENCE;
-  }
-
-  @Override
-  public int toInt(@NotNull LanguageLevel languageLevel) {
-    return languageLevel.ordinal();
-  }
-
-  @Override
-  public @NotNull LanguageLevel fromInt(int val) {
-    return LanguageLevel.values()[val];
   }
 
   @Override
@@ -105,16 +86,11 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
   public @NlsContexts.DetailedDescription String getInconsistencyLanguageLevelMessage(@NotNull String message,
                                                                                       @NotNull LanguageLevel level,
                                                                                       @NotNull PsiFile file) {
-    return null;
+    return JavaLanguageLevelPusherCustomizer.getInconsistencyLanguageLevelMessageImpl(message, level, file);
   }
 
   @Nullable
   public static LanguageLevel getPushedLanguageLevel(@NotNull VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    if (parent != null) {
-      LanguageLevel level = parent.getUserData(LanguageLevel.KEY);
-      if (level != null) return level;
-    }
-    return null;
+    return KEY.getPersistentValue(file.getParent());
   }
 }

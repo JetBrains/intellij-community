@@ -20,9 +20,6 @@ import javax.swing.*;
 
 import static com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT;
 
-/**
- * @author peter
- */
 public class TestDataProvider implements DataProvider {
   private final Project myProject;
   private final boolean myWithRules;

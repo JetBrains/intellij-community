@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -42,7 +41,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
 
         override fun doApplyInformationToEditor() {
             val info = buildHighlightingInfo()
-            UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument!!, 0, file.textLength, listOfNotNull(info), colorsScheme, id)
+            UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument, 0, file.textLength, listOfNotNull(info), colorsScheme, id)
         }
 
         private fun buildHighlightingInfo(): HighlightInfo? {
@@ -57,12 +56,10 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
                 return null
             }
 
-            val info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
                 .range(cookie.bounds.range!!)
+                .registerFix(MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount), null, null, null, null)
                 .createUnconditionally()
-            QuickFixAction.registerQuickFixAction(info, MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount))
-
-            return info
         }
     }
 }

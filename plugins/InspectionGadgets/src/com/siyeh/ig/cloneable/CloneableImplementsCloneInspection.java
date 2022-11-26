@@ -118,7 +118,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) {
@@ -152,9 +152,11 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
         methodText.append("return (").append(className).append(") super.clone();\n");
       }
       if (myGenerateTryCatch) {
-        methodText.append("} catch (CloneNotSupportedException e) {\n" +
-                          "throw new AssertionError();\n"  +
-                          "}\n");
+        methodText.append("""
+                            } catch (CloneNotSupportedException e) {
+                            throw new AssertionError();
+                            }
+                            """);
       }
       methodText.append("}");
       final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(methodText.toString(), element);

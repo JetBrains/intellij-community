@@ -74,6 +74,9 @@ internal class SemanticCombinedDiffHeader(title: @NlsSafe String, viewer: DiffVi
   }
 
   private class MyCloseAction(private val closeAction: () -> Unit) : CloseTabToolbarAction(), RightAlignedToolbarAction {
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.icon = AllIcons.Actions.CloseDarkGrey

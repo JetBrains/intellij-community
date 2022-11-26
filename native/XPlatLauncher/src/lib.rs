@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 #![warn(
 absolute_paths_not_starting_with_crate,
 elided_lifetimes_in_paths,
@@ -29,9 +30,7 @@ unused_results,
 variant_size_differences
 )]
 
-mod errors;
 mod java;
-mod utils;
 mod remote_dev;
 mod default;
 
@@ -39,17 +38,33 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::File;
 use std::path::PathBuf;
-use log::{debug, error, LevelFilter};
+use log::{debug, error, LevelFilter, warn};
 use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
-use crate::errors::{err_from_string, LauncherError, Result};
+use anyhow::{bail, Result};
 use crate::remote_dev::RemoteDevLaunchConfiguration;
-use crate::utils::canonical_non_unc;
+
+#[cfg(target_os = "windows")] use {
+    windows::core::GUID,
+    windows::Win32::Foundation::HANDLE,
+    windows::Win32::UI::Shell::SHGetKnownFolderPath,
+    windows::Win32::UI::Shell::KF_FLAG_CREATE
+};
 
 pub fn main_lib() {
+    let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
+        Ok(_) => false,
+        Err(_) => {
+            let cmd_args: Vec<String> = env::args().collect();
+            let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
+
+            !is_remote_dev
+        }
+    };
+
     let main_result = main_impl();
-    unwrap_with_human_readable_error(main_result);
+    unwrap_with_human_readable_error(main_result, show_error_ui);
 }
 
 fn main_impl() -> Result<()> {
@@ -111,30 +126,52 @@ pub struct ProductInfo {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
+    pub os: String,
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
     pub additionalJvmArguments: Vec<String>
+}
+
+impl ProductInfo {
+    pub fn get_current_platform_launch_field(&self) -> Result<&ProductInfoLaunchField> {
+        let current_os = env::consts::OS;
+        let os_specific_launch_field =
+            self.launch.iter().find(|&l| l.os.to_lowercase() == current_os);
+
+        match os_specific_launch_field {
+            None => bail!("Could not find current os {current_os} launch element in product-info.json 'launch' field"),
+            Some(x) => Ok(x),
+        }
+    }
 }
 
 trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
 
     fn get_intellij_vm_options(&self) -> Result<Vec<String>>;
-    fn get_properties_file(&self) -> Result<PathBuf>;
+    fn get_properties_file(&self) -> Result<Option<PathBuf>>;
     fn get_class_path(&self) -> Result<Vec<String>>;
 
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
+pub fn is_remote_dev(cmd_args: &[String]) -> bool {
+    // 0 arg is binary itself
+    let args = cmd_args.join(" ");
+    debug!("cmd_args={args}");
+
+    cmd_args.len() > 1 && cmd_args[1] == "--remote-dev"
+}
+
 fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
-
-    // 0 arg is binary itself
-    let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
+    
+    let is_remote_dev = is_remote_dev(&cmd_args);
+    debug!("is_remote_dev={is_remote_dev}");
 
     let (remote_dev_project_path, ij_args) = match is_remote_dev {
         true => {
-            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args[2..])?;
+            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args)?;
             (remote_dev_args.project_path, remote_dev_args.ij_args)
         },
         false => (None, cmd_args)
@@ -159,26 +196,15 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
 
 pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
 
-fn unwrap_with_human_readable_error<S>(result: Result<S>) -> S {
+fn unwrap_with_human_readable_error<S>(result: Result<S>, show_error_ui: bool) -> S {
     match result {
         Ok(x) => { x }
         Err(e) => {
-            let message =
-                match e {
-                    LauncherError::HumanReadableError(e) => {
-                        e.message
-                    }
-                    _ => {
-                        format!("{e:?}")
-                    }
-                };
+            eprintln!("{e:?}");
+            error!("{e:?}");
 
-            eprintln!("{}", message);
-            error!("{}", message);
-
-            match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
-                Ok(_) => {  }
-                Err(_) => { show_fail_to_start_message("Failed to start", format!("{message:?}").as_str()) }
+            if show_error_ui {
+                show_fail_to_start_message("Failed to start", format!("{e:?}").as_str())
             }
 
             std::process::exit(1);
@@ -191,88 +217,28 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
 
     debug!("Resolving IDE properties file");
     // 1. properties file
-    match configuration.get_properties_file() {
-        Ok(p) => {
+    match configuration.get_properties_file()? {
+        Some(p) => {
             let path_string = p.to_string_lossy();
             let vm_option = format!("-Didea.properties.file={path_string}");
             full_vm_options.push(vm_option);
         }
-        Err(_) => {
+        None => {
             debug!("IDE properties file is not set, skipping setting vm option")
         }
     };
 
-    debug!("Resolving IDE VM options from files");
-    // 2. .vmoptions
-    let intellij_vm_options = configuration.get_intellij_vm_options()?;
-    for vm_option in intellij_vm_options {
-        full_vm_options.push(vm_option);
-    }
-
     debug!("Resolving classpath");
-    // 3. classpath
+    // 2. classpath
     let class_path_separator = get_class_path_separator();
     let class_path = configuration.get_class_path()?.join(class_path_separator);
     let class_path_vm_option = "-Djava.class.path=".to_string() + class_path.as_str();
-
     full_vm_options.push(class_path_vm_option);
 
-    // 4. TODO: find out if that's still needed
-    // full_vm_options.push("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader".to_string());
-    full_vm_options.push("-XX:+StartAttachListener".to_string());
-
-    // TODO: shouldn't this already be in .vmoptions?
-    // answer: it's platform-specific :D
-    // linux - replaced
-    // windows - resource file
-    // macos - plist
-    // answer: add to product-info.json
-    full_vm_options.push("--add-opens=java.base/java.io=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.lang=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.lang.reflect=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.net=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.nio=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.nio.charset=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.text=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.time=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.nio.ch=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.security.ssl=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.security.util=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.event=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.image=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.font=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.datatransfer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.font=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.java2d=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.swing=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED".to_string());
-
-    // TODO:
-    // "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
-    // "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
+    debug!("Resolving IDE VM options");
+    // 3. vmoptions
+    let intellij_vm_options = configuration.get_intellij_vm_options()?;
+    full_vm_options.extend_from_slice(&intellij_vm_options);
 
     Ok(full_vm_options)
 }
@@ -299,6 +265,147 @@ fn show_fail_to_start_message(title: &str, text: &str) {
         Err(e) => {
             // TODO: proper message
             error!("Failed to show error message: {e:?}")
+        }
+    }
+}
+
+
+#[cfg(target_os = "windows")]
+pub fn get_config_home() -> Result<PathBuf> {
+    unsafe {
+        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_cache_home() -> Result<PathBuf> {
+    unsafe {
+        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    Ok(None)
+}
+
+#[cfg(target_os = "windows")]
+pub unsafe fn get_known_folder_path(rfid: &GUID, human_readable: &str) -> Result<PathBuf> {
+    debug!("Calling SHGetKnownFolderPath");
+    let pwstr = unsafe {
+        SHGetKnownFolderPath(
+            rfid,
+            KF_FLAG_CREATE,
+            HANDLE(0)
+        )?
+    };
+
+    debug!("Converting PWSTR to u16 vec");
+    let path_wide_vec = unsafe {
+        pwstr.as_wide()
+    };
+
+    let folder_path = String::from_utf16(path_wide_vec)?;
+    debug!("SHGetKnownFolderPath path for known folder {human_readable}: {folder_path}");
+
+    Ok(PathBuf::from(folder_path))
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_config_home() -> Result<PathBuf> {
+    let result = get_user_home()
+        .join("Library")
+        .join("Application Support");
+
+    Ok(result)
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_cache_home() -> Result<PathBuf> {
+    let result = get_user_home()
+        .join("Library")
+        .join("Caches");
+
+    Ok(result)
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    let result = get_user_home()
+        .join("Logs");
+
+    Ok(Some(result))
+}
+
+// CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+#[cfg(target_os = "linux")]
+pub fn get_config_home() -> Result<PathBuf> {
+    let xdg_config_home = get_xdg_dir("XDG_CONFIG_HOME");
+
+    let result = match xdg_config_home {
+        Some(p) => { p }
+        None => { get_user_home().join(".config") }
+    };
+
+    Ok(result)
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_cache_home() -> Result<PathBuf> {
+    let xdg_cache_home = get_xdg_dir("XDG_CACHE_HOME");
+
+    let result = match xdg_cache_home {
+        Some(p) => { p }
+        None => { get_user_home().join(".cache") }
+    };
+
+    Ok(result)
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    Ok(None)
+}
+
+#[cfg(target_os = "linux")]
+fn get_xdg_dir(env_var_name: &str) -> Option<PathBuf> {
+    let xdg_dir = env::var(env_var_name).unwrap_or(String::from(""));
+    debug!("{env_var_name}={xdg_dir}");
+
+    if xdg_dir.is_empty() {
+        return None
+    }
+
+    let path = PathBuf::from(xdg_dir);
+    if !path.is_absolute() {
+        // TODO: consider change
+        warn!("{env_var_name} is not set to an absolute path ({path:?}), this is likely a misconfiguration");
+    }
+
+    Some(path)
+}
+
+// used in ${HOME}/.config
+// TODO: is this the same as env:
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn get_user_home() -> PathBuf {
+    // TODO: dirs::home_dir seems better then just simply using $HOME as it checks `getpwuid_r`
+
+    match env::var("HOME") {
+        Ok(s) => {
+            debug!("User home directory resolved as '{s}'");
+            let path = PathBuf::from(s);
+            if !path.is_absolute() {
+                warn!("User home directory is not absolute, this may be a misconfiguration");
+            }
+
+            path
+        }
+        Err(e) => {
+            // TODO: this seems wrong
+            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
+
+            PathBuf::from("/")
         }
     }
 }

@@ -35,15 +35,15 @@ class RemoveToStringFix : LocalQuickFix {
         val element = descriptor.psiElement.parent as? KtDotQualifiedExpression ?: return
 
         val receiverExpression = element.receiverExpression
-        if (receiverExpression is KtNameReferenceExpression) {
-            val templateEntry = receiverExpression.parent.parent
-            if (templateEntry is KtBlockStringTemplateEntry && canPlaceAfterSimpleNameEntry(templateEntry.nextSibling)) {
-
-                val factory = KtPsiFactory(templateEntry)
-                templateEntry.replace(factory.createSimpleNameStringTemplateEntry(receiverExpression.getReferencedName()))
-                return
-            }
+        val templateEntry = element.parent
+        if (receiverExpression is KtNameReferenceExpression &&
+            templateEntry != null &&
+            canPlaceAfterSimpleNameEntry(templateEntry.nextSibling)
+        ) {
+            val factory = KtPsiFactory(project)
+            templateEntry.replace(factory.createSimpleNameStringTemplateEntry(receiverExpression.getReferencedName()))
+        } else {
+            element.replace(receiverExpression)
         }
-        element.replace(receiverExpression)
     }
 }

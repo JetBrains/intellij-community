@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.PopupMenuListenerAdapter
 import com.intellij.ui.components.DropDownLink
@@ -16,8 +15,8 @@ import com.intellij.ui.table.TableView
 import com.intellij.util.ui.TableViewModel
 import com.intellij.util.ui.tree.TreeModelAdapter
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.ItemSelectable
 import java.awt.event.*
 import javax.swing.*
@@ -67,9 +66,22 @@ fun JTree.whenTreeChanged(parentDisposable: Disposable? = null, listener: (TreeM
   model.whenTreeChanged(parentDisposable, listener)
 }
 
+fun JTree.onceWhenTreeChanged(parentDisposable: Disposable? = null, listener: (TreeModelEvent) -> Unit) {
+  model.onceWhenTreeChanged(parentDisposable, listener)
+}
+
 fun TreeModel.whenTreeChanged(parentDisposable: Disposable? = null, listener: (TreeModelEvent) -> Unit) {
   addTreeModelListener(parentDisposable, TreeModelAdapter.create { event, _ ->
     listener(event)
+  })
+}
+
+fun TreeModel.onceWhenTreeChanged(parentDisposable: Disposable? = null, listener: (TreeModelEvent) -> Unit) {
+  addTreeModelListener(parentDisposable, object : TreeModelAdapter() {
+    override fun process(event: TreeModelEvent, type: EventType) {
+      removeTreeModelListener(this)
+      listener(event)
+    }
   })
 }
 
@@ -154,6 +166,12 @@ fun Component.whenKeyReleased(parentDisposable: Disposable? = null, listener: (K
   })
 }
 
+fun JComponent.whenSizeChanged(parentDisposable: Disposable? = null, listener: (Dimension) -> Unit) {
+  addComponentListener(parentDisposable, object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent) = listener(size)
+  })
+}
+
 fun ItemSelectable.addItemListener(parentDisposable: Disposable? = null, listener: ItemListener) {
   addItemListener(listener)
   parentDisposable?.whenDisposed {
@@ -224,9 +242,11 @@ fun Component.addKeyListener(parentDisposable: Disposable? = null, listener: Key
   }
 }
 
-@Internal
-fun Disposable.whenDisposed(listener: () -> Unit): Disposable = apply {
-  Disposer.register(this, Disposable { listener() })
+fun Component.addComponentListener(parentDisposable: Disposable? = null, listener: ComponentListener) {
+  addComponentListener(listener)
+  parentDisposable?.whenDisposed {
+    removeComponentListener(listener)
+  }
 }
 
 @Experimental

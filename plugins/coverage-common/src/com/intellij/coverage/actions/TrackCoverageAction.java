@@ -35,7 +35,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   private TreeSelectionListener myTreeSelectionListener;
 
   public TrackCoverageAction(TestConsoleProperties properties) {
-    super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.text"), AllIcons.RunConfigurations.TrackCoverage, properties,
+    super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.description"), AllIcons.RunConfigurations.TrackCoverage, properties,
           TestConsoleProperties.TRACK_CODE_COVERAGE);
     myProperties = properties;
 

@@ -209,4 +209,11 @@ public interface ApplicationEx extends Application {
   default boolean isComponentCreated() {
     return true;
   }
+
+  // in some cases we cannot get service by class
+  /**
+   * Light service is not supported.
+   */
+  @ApiStatus.Internal
+  <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 }

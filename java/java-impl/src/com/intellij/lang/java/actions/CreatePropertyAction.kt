@@ -43,7 +43,7 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
 
   override fun getText(): String = message("create.property.from.usage.full.text", getPropertyName(), getNameForClass(target, false))
 
-  override fun createRenderer(project: Project): PropertyRenderer = object : PropertyRenderer(project, target, request, propertyInfo) {
+  override fun createRenderer(project: Project, targetClass: PsiClass): PropertyRenderer = object : PropertyRenderer(project, targetClass, request, propertyInfo) {
 
     private fun generatePrototypes(): Pair<PsiMethod, PsiMethod> {
       val prototypeField = generatePrototypeField()

@@ -37,7 +37,7 @@ class TerminalTitle {
   val tag: @Nls String?
     get() = state.tag
 
-  val defaultTitle: @Nls String
+  val defaultTitle: @Nls String?
     get() = state.defaultTitle
 
   fun addTitleListener(listener: TerminalTitleListener, parentDisposable: Disposable) {
@@ -56,7 +56,7 @@ class TerminalTitle {
   }
 
   fun buildTitle(): @Nls String {
-    val title = userDefinedTitle ?: applicationTitle ?: defaultTitle
+    val title = userDefinedTitle ?: applicationTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
     val trimmedTitle = StringUtil.trimMiddle(title, 20)
     return if (tag != null) "$trimmedTitle ($tag)" else trimmedTitle
   }
@@ -70,5 +70,5 @@ class TerminalTitle {
   data class State(var userDefinedTitle: @Nls String? = null,
                    var applicationTitle: @Nls String? = null,
                    var tag: @Nls String? = null,
-                   var defaultTitle: @Nls String = ExecutionBundle.message("terminal.default.title"))
+                   var defaultTitle: @Nls String? = null)
 }

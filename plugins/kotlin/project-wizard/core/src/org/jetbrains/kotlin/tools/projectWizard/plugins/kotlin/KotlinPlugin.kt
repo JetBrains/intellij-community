@@ -6,8 +6,11 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.fold
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settingValidator
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.service.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
@@ -54,13 +57,13 @@ class KotlinPlugin(context: Context) : Plugin(context) {
         val version by property(
             // todo do not hardcode kind & repository
             WizardKotlinVersion(
-              Versions.KOTLIN,
-              KotlinVersionKind.M,
-              Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
-              KotlinVersionProviderService.getBuildSystemPluginRepository(
-                  KotlinVersionKind.M,
-                  devRepository = Repositories.JETBRAINS_KOTLIN_DEV
-              )
+                Versions.KOTLIN,
+                KotlinVersionKind.M,
+                Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
+                KotlinVersionProviderService.getBuildSystemPluginRepository(
+                    KotlinVersionKind.M,
+                    devRepositories = listOf(Repositories.JETBRAINS_KOTLIN_DEV)
+                )
             )
         )
 
@@ -133,10 +136,13 @@ class KotlinPlugin(context: Context) : Plugin(context) {
             withAction {
                 val version = version.propertyValue
                 if (version.kind.isStable) return@withAction UNIT_SUCCESS
-                val pluginRepository = version.buildSystemPluginRepository(buildSystemType) ?: return@withAction UNIT_SUCCESS
+                val pluginRepository = version.buildSystemPluginRepository(buildSystemType)
                 BuildSystemPlugin.pluginRepositoreis.addValues(pluginRepository) andThen
                         updateBuildFiles { buildFile ->
-                            buildFile.withIrs(RepositoryIR(version.repository)).asSuccess()
+                            buildFile.withIrs(
+                                version.repositories
+                                    .map { RepositoryIR(it) }
+                            ).asSuccess()
                         }
             }
         }
@@ -215,12 +221,7 @@ enum class ProjectKind(
     Multiplatform(KotlinNewProjectWizardBundle.message("project.kind.multiplatform"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
     Android(KotlinNewProjectWizardBundle.message("project.kind.android"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
     Js(KotlinNewProjectWizardBundle.message("project.kind.kotlin.js"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
-    COMPOSE(
-        KotlinNewProjectWizardBundle.message("project.kind.compose"),
-        supportedBuildSystems = setOf(BuildSystemType.GradleKotlinDsl),
-        shortName = KotlinNewProjectWizardBundle.message("project.kind.compose.short.name"),
-        message = "uses Kotlin ${Versions.KOTLIN_VERSION_FOR_COMPOSE}"
-    )
+    KMM(KotlinNewProjectWizardBundle.message("project.kind.kmm"), supportedBuildSystems = BuildSystemType.ALL_GRADLE)
 }
 
 fun List<Module>.withAllSubModules(includeSourcesets: Boolean = false): List<Module> = buildList {

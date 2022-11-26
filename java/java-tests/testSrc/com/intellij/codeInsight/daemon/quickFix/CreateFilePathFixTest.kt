@@ -34,6 +34,16 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
                             "/main/java/pkg/ClassWithFileReference.java")
   }
 
+  fun testCreatePathExcludesGeneratedSourcesIfNoResourceRootsPresent() {
+    ApplicationManager.getApplication().runWriteAction {
+      // only src/main/java and src/main/gen will be available for new files
+      myFixture.tempDirFixture.getFile("/main/resources")!!.delete(null)
+    }
+    assertCreateFileOptions("my.properties",
+                            listOf("/src/main/java"),
+                            "/main/java/pkg/ClassWithFileReference.java")
+  }
+
   fun testCreatePathInSources() {
     ApplicationManager.getApplication().runWriteAction {
       // only src/main/java and /src/test/java will be available for new files

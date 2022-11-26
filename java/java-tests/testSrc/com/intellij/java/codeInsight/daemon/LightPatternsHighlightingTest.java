@@ -62,6 +62,10 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     doTest();
   }
 
+  public void testInstanceOfSubtypeJava19() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
   public void testInstanceOfPatternMatching() {
     doTest();
   }

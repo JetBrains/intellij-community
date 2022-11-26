@@ -21,9 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class LookupElementProximityWeigher extends CompletionWeigher {
 
   @Override

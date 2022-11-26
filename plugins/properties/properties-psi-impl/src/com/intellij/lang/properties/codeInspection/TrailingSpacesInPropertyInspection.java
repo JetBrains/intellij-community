@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.codeInspection;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -117,10 +118,15 @@ public final class TrailingSpacesInPropertyInspection extends PropertiesInspecti
       if (!(parent instanceof PropertyImpl)) return;
       TextRange textRange = getTrailingSpaces(element, myIgnoreVisibleSpaces);
       if (textRange != null) {
-        Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
+        Document document = element.getContainingFile().getViewProvider().getDocument();
         TextRange docRange = textRange.shiftRight(element.getTextRange().getStartOffset());
         document.deleteString(docRange.getStartOffset(), docRange.getEndOffset());
       }
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.DIFF_NO_TRIM;
     }
   }
 }

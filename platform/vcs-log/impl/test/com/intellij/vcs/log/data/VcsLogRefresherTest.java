@@ -16,7 +16,10 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.TestVcsLogProvider;
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
+import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +83,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
   public void test_initialize_shows_short_history() throws InterruptedException, ExecutionException, TimeoutException {
     myLogProvider.blockFullLog();
-    DataPack result = myLoader.readFirstBlock();
+    myLoader.readFirstBlock();
+    DataPack result = myLoader.getCurrentDataPack();
     myLogProvider.unblockFullLog();
     assertNotNull(result);
     assertDataPack(log(myCommits.subList(0, 2)), result.getPermanentGraph().getAllCommits());

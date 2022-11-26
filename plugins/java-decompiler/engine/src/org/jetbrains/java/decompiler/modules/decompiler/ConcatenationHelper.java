@@ -63,15 +63,15 @@ public final class ConcatenationHelper {
       int found = 0;
 
       switch (exprTmp.type) {
-        case Exprent.EXPRENT_INVOCATION:
+        case Exprent.EXPRENT_INVOCATION -> {
           InvocationExprent iex = (InvocationExprent)exprTmp;
           if (isAppendConcat(iex, cltype)) {
             lstOperands.add(0, iex.getParameters().get(0));
             exprTmp = iex.getInstance();
             found = 1;
           }
-          break;
-        case Exprent.EXPRENT_NEW:
+        }
+        case Exprent.EXPRENT_NEW -> {
           NewExprent nex = (NewExprent)exprTmp;
           if (isNewConcat(nex, cltype)) {
             VarType[] params = nex.getConstructor().getDescriptor().params;
@@ -80,6 +80,7 @@ public final class ConcatenationHelper {
             }
             found = 2;
           }
+        }
       }
 
       if (found == 0) {

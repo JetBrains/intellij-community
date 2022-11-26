@@ -156,7 +156,7 @@ public final class OSAgnosticPathUtil {
     return path.substring(0, lastSeparator == 0 ? 1 : lastSeparator);
   }
 
-  private static int nextSeparatorIndex(@NotNull String s, int start) {
+  private static int nextSeparatorIndex(String s, @SuppressWarnings("SameParameterValue") int start) {
     for (int i = start; i < s.length(); i++) {
       char c = s.charAt(i);
       if (PathUtilRt.isSeparator(c)) {

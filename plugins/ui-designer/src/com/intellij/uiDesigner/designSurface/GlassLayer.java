@@ -20,10 +20,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class GlassLayer extends JComponent implements DataProvider, PopupOwner {
   private static final Logger LOG = Logger.getInstance(GlassLayer.class);
 

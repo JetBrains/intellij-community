@@ -1,8 +1,8 @@
 from typing import Any, Callable, TypeVar, overload
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 _F = TypeVar("_F", bound=Callable[..., Any])
-_Actions = Literal["default", "error", "ignore", "always", "module", "once"]
+_Actions: TypeAlias = Literal["default", "error", "ignore", "always", "module", "once"]
 
 class ClassicAdapter:
     reason: str

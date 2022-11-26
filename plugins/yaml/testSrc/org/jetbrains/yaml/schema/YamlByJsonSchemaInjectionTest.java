@@ -37,44 +37,48 @@ public class YamlByJsonSchemaInjectionTest extends JsonSchemaHighlightingTestBas
   }
 
   public void testXml() {
-    doTest("{\n" +
-           "  \"properties\": {\n" +
-           "    \"X\": {\n" +
-           "      \"x-intellij-language-injection\": \"XML\"\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "X: <a<caret>></a>", true);
+    doTest("""
+             {
+               "properties": {
+                 "X": {
+                   "x-intellij-language-injection": "XML"
+                 }
+               }
+             }""", "X: <a<caret>></a>", true);
   }
 
   public void testNoInjection() {
-    doTest("{\n" +
-           "  \"properties\": {\n" +
-           "    \"X\": {\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "X: <a<caret>></a>", false);
+    doTest("""
+             {
+               "properties": {
+                 "X": {
+                 }
+               }
+             }""", "X: <a<caret>></a>", false);
   }
 
   public void testInArray() {
-    doTest("{\n" +
-           "  \"type\": \"object\",\n" +
-           "  \"additionalProperties\": {\n" +
-           "    \"type\": [\"array\"],\n" +
-           "    \"items\": {\n" +
-           "      \"type\": \"string\",\n" +
-           "      \"x-intellij-language-injection\": \"XML\"\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "x:\n" +
-                "  - <a><caret></a>;", true);
+    doTest("""
+             {
+               "type": "object",
+               "additionalProperties": {
+                 "type": ["array"],
+                 "items": {
+                   "type": "string",
+                   "x-intellij-language-injection": "XML"
+                 }
+               }
+             }""", "x:\n" +
+                   "  - <a><caret></a>;", true);
   }
 
   public void testRegex() {
-    doTest("{\n" +
-           "  \"additionalProperties\": {\n" +
-           "    \"type\": \"string\",\n" +
-           "    \"x-intellij-language-injection\": \"XML\"\n" +
-           "  }\n" +
-           "}", "abc: \"d<caret>ef\"", true);
+    doTest("""
+             {
+               "additionalProperties": {
+                 "type": "string",
+                 "x-intellij-language-injection": "XML"
+               }
+             }""", "abc: \"d<caret>ef\"", true);
   }
 }

@@ -25,97 +25,109 @@ public class UnnecessaryBreakFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveBreakOnCase() {
     doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
-                 "  public void printName(String name) {\n" +
-                 "    switch (name) {\n" +
-                 "      case \"A\" -> {\n" +
-                 "          System.out.println(\"A\");\n" +
-                 "          break/**/; // reports 'break' statement is unnecessary\n" +
-                 "      }\n" +
-                 "      default -> {\n" +
-                 "          System.out.println(\"Default\");\n" +
-                 "          break; // reports 'break' statement is unnecessary\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(String name) {\n" +
-                 "    switch (name) {\n" +
-                 "      case \"A\" -> {\n" +
-                 "          System.out.println(\"A\");\n" +
-                 "          // reports 'break' statement is unnecessary\n" +
-                 "      }\n" +
-                 "      default -> {\n" +
-                 "          System.out.println(\"Default\");\n" +
-                 "          break; // reports 'break' statement is unnecessary\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(String name) {
+                       switch (name) {
+                         case "A" -> {
+                             System.out.println("A");
+                             break/**/; // reports 'break' statement is unnecessary
+                         }
+                         default -> {
+                             System.out.println("Default");
+                             break; // reports 'break' statement is unnecessary
+                         }
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(String name) {
+                       switch (name) {
+                         case "A" -> {
+                             System.out.println("A");
+                             // reports 'break' statement is unnecessary
+                         }
+                         default -> {
+                             System.out.println("Default");
+                             break; // reports 'break' statement is unnecessary
+                         }
+                       }
+                     }
+                   """
     );
   }
 
   public void testRemoveBreakOnDefault() {
     doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
-                 "  public void printName(String name) {\n" +
-                 "    switch (name) {\n" +
-                 "      case \"A\" -> {\n" +
-                 "          System.out.println(\"A\");\n" +
-                 "          break; // reports 'break' statement is unnecessary\n" +
-                 "      }\n" +
-                 "      default -> {\n" +
-                 "          System.out.println(\"Default\");\n" +
-                 "          break/**/; // reports 'break' statement is unnecessary\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(String name) {\n" +
-                 "    switch (name) {\n" +
-                 "      case \"A\" -> {\n" +
-                 "          System.out.println(\"A\");\n" +
-                 "          break; // reports 'break' statement is unnecessary\n" +
-                 "      }\n" +
-                 "      default -> {\n" +
-                 "          System.out.println(\"Default\");\n" +
-                 "          // reports 'break' statement is unnecessary\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(String name) {
+                       switch (name) {
+                         case "A" -> {
+                             System.out.println("A");
+                             break; // reports 'break' statement is unnecessary
+                         }
+                         default -> {
+                             System.out.println("Default");
+                             break/**/; // reports 'break' statement is unnecessary
+                         }
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(String name) {
+                       switch (name) {
+                         case "A" -> {
+                             System.out.println("A");
+                             break; // reports 'break' statement is unnecessary
+                         }
+                         default -> {
+                             System.out.println("Default");
+                             // reports 'break' statement is unnecessary
+                         }
+                       }
+                     }
+                   """
     );
   }
 
   public void testDoNotFixClassicSwitch() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
-                               "class X {\n" +
-                               "  public void printName(String name) {\n" +
-                               "    switch (name) {\n" +
-                               "      case \"A\" : {\n" +
-                               "          System.out.println(\"A\");\n" +
-                               "          break/**/;\n" +
-                               "      }\n" +
-                               "      default : {\n" +
-                               "          System.out.println(\"Default\");\n" +
-                               "          break;\n" +
-                               "      }\n" +
-                               "    }\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public void printName(String name) {
+                                     switch (name) {
+                                       case "A" : {
+                                           System.out.println("A");
+                                           break/**/;
+                                       }
+                                       default : {
+                                           System.out.println("Default");
+                                           break;
+                                       }
+                                     }
+                                   }
+                                 }
+                                 """);
   }
 
   public void testDoNotFixLabelledBreak() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
-                               "class X {\n" +
-                               "  public void printName(String[] names) {\n" +
-                               "    label: for (String name : names) {\n" +
-                               "      switch (name) {\n" +
-                               "        case \"A\" -> {\n" +
-                               "            System.out.println(\"A\");\n" +
-                               "            break/**/ label;\n" +
-                               "        }\n" +
-                               "        default -> {\n" +
-                               "            System.out.println(\"Default\");\n" +
-                               "            break label;\n" +
-                               "        }\n" +
-                               "      }\n" +
-                               "    }\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public void printName(String[] names) {
+                                     label: for (String name : names) {
+                                       switch (name) {
+                                         case "A" -> {
+                                             System.out.println("A");
+                                             break/**/ label;
+                                         }
+                                         default -> {
+                                             System.out.println("Default");
+                                             break label;
+                                         }
+                                       }
+                                     }
+                                   }
+                                 }
+                                 """);
   }
 }

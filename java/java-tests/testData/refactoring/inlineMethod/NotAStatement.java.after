@@ -1,7 +1,6 @@
 class AAA {
   void fff(Project myProject) {
-      final String[] strings = new String[1];
-      ensureFilesWritable(strings).hasReadonlyFiles();
+      ensureFilesWritable(new String[1]).hasReadonlyFiles();
   }
 
     private Status ensureFilesWritable(final String[] strings) {

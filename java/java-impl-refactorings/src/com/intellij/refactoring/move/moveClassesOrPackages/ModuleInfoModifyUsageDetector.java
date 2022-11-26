@@ -4,7 +4,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -54,7 +54,7 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
                                           @NotNull List<? super UsageInfo> usageInfos,
                                           @NotNull MultiMap<PsiElement, String> conflicts,
                                           @NotNull MultiMap<PsiJavaModule, PsiDirectory> absentDirsByModuleDescriptor) {
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+    PackageIndex packageIndex = PackageIndex.getInstance(myProject);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     PsiPackage targetPackage = psiFacade.findPackage(myMoveDestination.getTargetPackage().getQualifiedName());
     for (var entry : sourceDirsByModuleDescriptor.entrySet()) {
@@ -69,7 +69,7 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
           absentDirsByModuleDescriptor.putValue(sourceModuleDescriptor, sourceDir);
           continue;
         }
-        String sourcePkgName = fileIndex.getPackageNameByDirectory(sourceDir.getVirtualFile());
+        String sourcePkgName = packageIndex.getPackageNameByDirectory(sourceDir.getVirtualFile());
         if (sourcePkgName == null) continue;
         PsiPackage sourcePkg = psiFacade.findPackage(sourcePkgName);
         if (sourcePkg == null) continue;

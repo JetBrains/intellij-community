@@ -63,6 +63,11 @@ public class GotoSuperTestGenerated extends AbstractGotoSuperTest {
         runTest("testData/navigation/gotoSuper/FunctionSimple.test");
     }
 
+    @TestMetadata("InterfaceSimple.test")
+    public void testInterfaceSimple() throws Exception {
+        runTest("testData/navigation/gotoSuper/InterfaceSimple.test");
+    }
+
     @TestMetadata("ObjectSimple.test")
     public void testObjectSimple() throws Exception {
         runTest("testData/navigation/gotoSuper/ObjectSimple.test");
@@ -76,11 +81,6 @@ public class GotoSuperTestGenerated extends AbstractGotoSuperTest {
     @TestMetadata("SuperWithNativeToGenericMapping.test")
     public void testSuperWithNativeToGenericMapping() throws Exception {
         runTest("testData/navigation/gotoSuper/SuperWithNativeToGenericMapping.test");
-    }
-
-    @TestMetadata("TraitSimple.test")
-    public void testTraitSimple() throws Exception {
-        runTest("testData/navigation/gotoSuper/TraitSimple.test");
     }
 
     @TestMetadata("TypeAliasInSuperType.test")

@@ -6,8 +6,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -37,7 +35,7 @@ public final class YAMLUnusedAnchorInspection extends LocalInspectionTool {
             anchor,
             YAMLBundle.message("inspections.unused.anchor.message", anchor.getName()),
             ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-            new RemoveAnchorQuickFix(anchor)
+            new RemoveAnchorQuickFix()
           );
         }
       }
@@ -45,12 +43,6 @@ public final class YAMLUnusedAnchorInspection extends LocalInspectionTool {
   }
 
   private static class RemoveAnchorQuickFix implements LocalQuickFix {
-    private final SmartPsiElementPointer<YAMLAnchor> myAnchorHolder;
-
-    RemoveAnchorQuickFix(@NotNull final YAMLAnchor anchor) {
-      myAnchorHolder = SmartPointerManager.getInstance(anchor.getProject()).createSmartPsiElementPointer(anchor);
-    }
-
     @Nls
     @NotNull
     @Override
@@ -60,14 +52,13 @@ public final class YAMLUnusedAnchorInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      YAMLAnchor anchor = myAnchorHolder.getElement();
+      YAMLAnchor anchor = (YAMLAnchor)descriptor.getPsiElement();
       if (anchor == null) {
         return;
       }
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(() -> {
         ASTNode node = TreeUtil.prevLeaf(anchor.getNode());
         while (YAMLElementTypes.SPACE_ELEMENTS.contains(PsiUtilCore.getElementType(node))) {
-          assert(node != null);
           ASTNode prev = TreeUtil.prevLeaf(node);
           ASTNode parent = node.getTreeParent();
           if (parent != null) {

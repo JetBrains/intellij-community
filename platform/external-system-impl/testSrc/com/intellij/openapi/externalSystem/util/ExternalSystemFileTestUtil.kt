@@ -30,15 +30,13 @@ fun VirtualFile.refreshAndWait() {
 }
 
 fun <R> runReadAction(action: () -> R): R {
-  @Suppress("RemoveExplicitTypeArguments")
   return ApplicationManager.getApplication()
-    .runReadAction(ThrowableComputable<R, Throwable> { action() })
+    .runReadAction(ThrowableComputable { action() })
 }
 
 fun <R> runWriteAction(action: () -> R): R {
-  @Suppress("RemoveExplicitTypeArguments")
   return ApplicationManager.getApplication()
-    .runWriteAction(ThrowableComputable<R, Throwable> { action() })
+    .runWriteAction(ThrowableComputable { action() })
 }
 
 fun <R> runWriteActionAndGet(action: () -> R): R {

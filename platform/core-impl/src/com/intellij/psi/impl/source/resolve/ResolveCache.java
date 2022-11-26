@@ -162,11 +162,11 @@ public class ResolveCache implements Disposable {
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
-  public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull final T ref,
-                                                                                          @NotNull final PolyVariantContextResolver<T> resolver,
+  public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull T ref,
+                                                                                          @NotNull PolyVariantContextResolver<T> resolver,
                                                                                           boolean needToPreventRecursion,
-                                                                                          final boolean incompleteCode,
-                                                                                          @NotNull final PsiFile containingFile) {
+                                                                                          boolean incompleteCode,
+                                                                                          @NotNull PsiFile containingFile) {
     ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 

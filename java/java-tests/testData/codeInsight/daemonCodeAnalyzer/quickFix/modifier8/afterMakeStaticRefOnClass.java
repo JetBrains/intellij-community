@@ -1,4 +1,4 @@
-// "Make 'PrivateMethodRef.filter' static" "true-preview"
+// "Make 'PrivateMethodRef.filter()' static" "true-preview"
 
 import java.util.function.Predicate;
 

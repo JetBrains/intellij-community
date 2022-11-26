@@ -16,9 +16,6 @@ import javax.swing.*;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-/**
- * @author peter
- */
 public class MavenIconProvider implements DumbAware, FileIconProvider {
   @Nullable
   @Override

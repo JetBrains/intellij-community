@@ -74,7 +74,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
-import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
@@ -660,20 +659,23 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Nullable
   private static File getGradleOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
     if (sourceDirectorySet == null) return null;
-    String firstExistingLang = sourceDirectorySet.getSrcDirs().stream()
+    Set<File> srcDirs = sourceDirectorySet.getSrcDirs();
+    Collection<File> outputDirectories = sourceDirectorySet.getGradleOutputDirs();
+    String firstExistingLang = srcDirs.stream()
+      .sorted()
       .filter(File::exists)
       .findFirst()
       .map(File::getName)
       .orElse(null);
 
     if (firstExistingLang == null) {
-      return ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs());
+      return ContainerUtil.getFirstItem(outputDirectories);
     }
 
-    return sourceDirectorySet.getGradleOutputDirs().stream()
+    return outputDirectories.stream()
       .filter(f -> f.getPath().contains(firstExistingLang))
       .findFirst()
-      .orElse(ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs()));
+      .orElse(ContainerUtil.getFirstItem(outputDirectories));
   }
 
   private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
@@ -848,7 +850,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @NotNull
   @Override
   public Set<Class<?>> getExtraProjectModelClasses() {
-    return newLinkedHashSet(
+    return ContainerUtil.newLinkedHashSet(
       BuildScriptClasspathModel.class,
       GradleExtensions.class,
       ExternalTestsModel.class,
@@ -862,12 +864,12 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @NotNull
   @Override
   public ProjectImportModelProvider getModelProvider() {
-    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), newLinkedHashSet(ExternalProject.class, IdeaProject.class));
+    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), ContainerUtil.newLinkedHashSet(ExternalProject.class, IdeaProject.class));
   }
 
   @Override
   public Set<Class<?>> getTargetTypes() {
-    return newLinkedHashSet(
+    return ContainerUtil.newLinkedHashSet(
       ExternalProjectDependency.class,
       ExternalLibraryDependency.class,
       FileCollectionDependency.class,

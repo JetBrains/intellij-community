@@ -258,22 +258,16 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       return myState.myDescription;
     }
 
-    switch (myState.myState) {
-      case STOPPED:
-        return JavaDebuggerBundle.message("status.debug.stopped");
-      case RUNNING:
-        return JavaDebuggerBundle.message("status.app.running");
-      case WAITING_ATTACH:
+    return switch (myState.myState) {
+      case STOPPED, DISPOSED -> JavaDebuggerBundle.message("status.debug.stopped");
+      case RUNNING -> JavaDebuggerBundle.message("status.app.running");
+      case WAITING_ATTACH -> {
         RemoteConnection connection = getProcess().getConnection();
-        return DebuggerUtilsImpl.getConnectionWaitStatus(connection);
-      case PAUSED:
-        return JavaDebuggerBundle.message("status.paused");
-      case WAIT_EVALUATION:
-        return JavaDebuggerBundle.message("status.waiting.evaluation.result");
-      case DISPOSED:
-        return JavaDebuggerBundle.message("status.debug.stopped");
-    }
-    return null;
+        yield DebuggerUtilsImpl.getConnectionWaitStatus(connection);
+      }
+      case PAUSED -> JavaDebuggerBundle.message("status.paused");
+      case WAIT_EVALUATION -> JavaDebuggerBundle.message("status.waiting.evaluation.result");
+    };
   }
 
   /* Stepping */

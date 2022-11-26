@@ -32,7 +32,7 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
     val features: Map<String, FeaturePluginList> = emptyMap(),
   )
 
-  fun <T> collectFeatureMapping(
+  fun <T : Any> collectFeatureMapping(
     featureType: String,
     ep: ExtensionPointName<T>,
     idMapping: (T) -> String,
@@ -60,9 +60,7 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
   ) {
     updateState { oldState ->
       val oldFeatures = oldState.features
-      val newFeatureMap = LinkedHashMap(oldFeatures.getFeatureMap(featureType) ?: emptyMap()) +
-                          featureMap
-
+      val newFeatureMap = LinkedHashMap(oldFeatures.getFeatureMap(featureType) ?: emptyMap()) + featureMap
       State(oldFeatures + (featureType to FeaturePluginList(newFeatureMap)))
     }
   }

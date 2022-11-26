@@ -17,11 +17,12 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil.*
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.layout.*
@@ -93,11 +94,13 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
         installNameGenerators(getBuilderId(), entityNameProperty)
       }
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.location.label")) {
-        val fileChooserDescriptor = createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-        val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
+        val fileChooserDescriptor = createSingleLocalFileDescriptor()
+          .withFileFilter { it.isDirectory }
+          .withPathToTextConvertor(::getPresentablePath)
+          .withTextToPathConvertor(::getCanonicalPath)
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
         val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-        textFieldWithBrowseButton(property, title, context.project, fileChooserDescriptor, fileChosen)
+        textFieldWithBrowseButton(property, title, context.project, fileChooserDescriptor)
           .withValidationOnApply { validateLocation() }
           .withValidationOnInput { validateLocation() }
       }
@@ -225,7 +228,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
   }
 
   protected open fun ValidationInfoBuilder.validateVersion() = superValidateVersion()
-  protected fun ValidationInfoBuilder.superValidateVersion(): ValidationInfo? {
+  private fun ValidationInfoBuilder.superValidateVersion(): ValidationInfo? {
     if (version.isEmpty()) {
       val propertyPresentation = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.presentation")
       val message = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.missing.error",
@@ -253,7 +256,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
   }
 
   protected open fun ValidationInfoBuilder.validateLocation() = superValidateLocation()
-  protected fun ValidationInfoBuilder.superValidateLocation(): ValidationInfo? {
+  private fun ValidationInfoBuilder.superValidateLocation(): ValidationInfo? {
     val location = location
     if (location.isEmpty()) {
       val propertyPresentation = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.location.presentation")

@@ -28,5 +28,7 @@
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.testFramework" scope="TEST" />
   </component>
 </module>

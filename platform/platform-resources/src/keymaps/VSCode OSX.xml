@@ -43,7 +43,6 @@
     <action id="ChangeSplitOrientation">
         <keyboard-shortcut first-keystroke="meta alt 0" />
     </action>
-    <action id="ChangesView.Diff" />
     <action id="ChangesView.GroupBy.Directory" />
     <action id="ChangesView.Move" />
     <action id="ChangesView.Rename">
@@ -142,13 +141,6 @@
     <action id="Diff.ShowSettingsPopup" />
     <action id="DirDiffMenu.SynchronizeDiff.All" />
     <action id="DomCollectionControl.Edit">
-        <keyboard-shortcut first-keystroke="f4" />
-    </action>
-    <action id="DomElementsTreeView.DeleteElement">
-        <keyboard-shortcut first-keystroke="delete" />
-        <keyboard-shortcut first-keystroke="back_space" />
-    </action>
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction">
         <keyboard-shortcut first-keystroke="f4" />
     </action>
     <action id="EditSource">

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.coverage
 
 import com.intellij.coverage.*
 import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -73,18 +73,13 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
     ): Boolean {
         if (srcFile is KtFile) {
             val fileIndex = ProjectRootManager.getInstance(srcFile.getProject()).fileIndex
-            if (fileIndex.isInLibraryClasses(srcFile.getVirtualFile()) ||
-                fileIndex.isInLibrarySource(srcFile.getVirtualFile())
-            ) {
+            if (runReadAction { fileIndex.isInLibraryClasses(srcFile.getVirtualFile()) || fileIndex.isInLibrarySource(srcFile.getVirtualFile()) }) {
                 return false
             }
-
-            return runReadAction {
-                val outputRoots = findOutputRoots(srcFile) ?: return@runReadAction false
-                val existingClassFiles = getClassesGeneratedFromFile(outputRoots, srcFile)
-                existingClassFiles.mapTo(classFiles) { File(it.path) }
-                true
-            }
+            val outputRoots = findOutputRoots(srcFile) ?: return false
+            val existingClassFiles = getClassesGeneratedFromFile(outputRoots, srcFile)
+            existingClassFiles.mapTo(classFiles) { File(it.path) }
+            return true
         }
         return false
     }
@@ -132,7 +127,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
 
 
         private fun getClassesGeneratedFromFile(outputRoots: Array<VirtualFile>, file: KtFile): List<VirtualFile> =
-            outputRoots.flatMap { getClassesGeneratedFromFile(it, file) }
+            outputRoots.flatMap { runReadAction { getClassesGeneratedFromFile(it, file) } }
 
         private fun getClassesGeneratedFromFile(outputRoot: VirtualFile?, file: KtFile): List<VirtualFile> {
             val relativePath = file.packageFqName.asString().replace('.', '/')
@@ -149,9 +144,9 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         }
 
         private fun findOutputRoots(file: KtFile): Array<VirtualFile>? {
-            val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
+            val module = runReadAction { ModuleUtilCore.findModuleForPsiElement(file) } ?: return null
             val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
-            val inTests = fileIndex.getKotlinSourceRootType(file.virtualFile) == TestSourceKotlinRootType
+            val inTests = runReadAction { fileIndex.getKotlinSourceRootType(file.virtualFile) } == TestSourceKotlinRootType
             return JavaCoverageClassesEnumerator.getRoots(CoverageDataManager.getInstance(file.project), module, inTests)
         }
 

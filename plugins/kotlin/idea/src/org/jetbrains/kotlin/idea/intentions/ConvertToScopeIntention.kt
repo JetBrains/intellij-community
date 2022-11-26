@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -87,7 +88,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
         if (dryRun) return true
 
-        val psiFactory = KtPsiFactory(expressionToApply)
+        val psiFactory = KtPsiFactory(expressionToApply.project)
 
         val (scopeFunctionCall, block) = createScopeFunctionCall(
             psiFactory,

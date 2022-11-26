@@ -28,10 +28,11 @@ public class FilePathCompletionTest extends JavaCodeInsightFixtureTestCase {
   public void testOverridesWordCompletion() {
     myFixture.addFileToProject("/foo/bar.xml", "");
     myFixture.addFileToProject("/foo/boo.xml", "");
-    myFixture.configureByText("a.java", "class A {\n" +
-                                        "  String s1 = \"foo/bar.xml\";\n" +
-                                        "  String s2 = \"/foo/b<caret>\";\n" +
-                                        "}");
+    myFixture.configureByText("a.java", """
+      class A {
+        String s1 = "foo/bar.xml";
+        String s2 = "/foo/b<caret>";
+      }""");
     assertNotNull(myFixture.completeBasic());
     assertOrderedEquals(myFixture.getLookupElementStrings(), "bar.xml", "boo.xml");
   }

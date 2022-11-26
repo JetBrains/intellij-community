@@ -45,15 +45,13 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.testFramework.common.ThreadUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
-/**
- * @author peter
- */
 @NeedsIndex.SmartMode(reason = "AutoPopup shouldn't work in dumb mode")
 class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   void testNewItemsOnLongerPrefix() {
@@ -609,7 +607,7 @@ public interface Test {
 
     @Override
     void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-      assert !ApplicationManager.application.dispatchThread
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       result.runRemainingContributors(parameters, true)
       Thread.sleep 500
     }
@@ -779,7 +777,7 @@ public interface Test {
       joinCompletion()
       LookupImpl l1 = LookupManager.getActiveLookup(another)
       if (l1) {
-        printThreadDump()
+        ThreadUtil.printThreadDump()
         println l1.items
         println l1.calculating
         println myFixture.editor

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -31,6 +32,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
     // assume root has FS-default case-sensitivity
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
+    segment.setFlag(id, VfsDataFlags.IS_OFFLINE, PersistentFS.isOfflineByDefault(getPersistence().getFileAttributes(id)));
   }
 
   @Override

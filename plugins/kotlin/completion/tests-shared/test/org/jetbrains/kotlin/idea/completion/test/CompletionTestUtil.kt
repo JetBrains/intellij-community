@@ -64,7 +64,7 @@ private fun testWithAutoCompleteSetting(fileText: String, doTest: () -> Unit) {
     }
 }
 
-fun JavaCodeInsightTestFixture.addCharacterCodingException() {
+internal fun JavaCodeInsightTestFixture.addCharacterCodingException() {
     addClass(
         """
         package java.nio.charset;
@@ -76,7 +76,7 @@ fun JavaCodeInsightTestFixture.addCharacterCodingException() {
     )
 }
 
-fun JavaCodeInsightTestFixture.addAppendable() {
+internal fun JavaCodeInsightTestFixture.addAppendable() {
     addClass(
         """
         package java.lang;
@@ -92,7 +92,7 @@ fun JavaCodeInsightTestFixture.addAppendable() {
     )
 }
 
-fun JavaCodeInsightTestFixture.addHashSet() {
+internal fun JavaCodeInsightTestFixture.addHashSet() {
     addClass(
         """
         package java.util;
@@ -114,7 +114,7 @@ fun JavaCodeInsightTestFixture.addHashSet() {
     )
 }
 
-fun JavaCodeInsightTestFixture.addLinkedHashSet() {
+internal fun JavaCodeInsightTestFixture.addLinkedHashSet() {
     addClass(
         """
         package java.util;
@@ -122,6 +122,109 @@ fun JavaCodeInsightTestFixture.addLinkedHashSet() {
         import java.io.Serializable;
                     
         public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable, Serializable {}
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addNoSuchAlgorithmException() {
+    addClass(
+        """
+        package java.security;
+        
+        public class NoSuchAlgorithmException extends Exception {}
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addUrlConnection() {
+    addClass(
+        """
+        package java.net;
+        
+        public class URLConnection {
+          public URL getURL() { return null; }
+        }
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addSocket() {
+    addClass(
+        """
+        package java.net;
+        
+        import java.io.InputStream;
+        
+        public class Socket {
+          public InputStream getInputStream() {
+            return null;
+          }
+        }
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addUnknownHostException() {
+    addClass(
+        """
+        package java.net;
+        
+        public class UnknownHostException extends Exception {}
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addSqlDate() {
+    addClass(
+        """
+        package java.sql;
+        
+        public class Date {}
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addSqlBlob() {
+    addClass(
+        """
+        package java.sql;
+        
+        public class Blob {}
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addSqlArray() {
+    addClass(
+        """
+        package java.sql;
+        
+        public class Array {}
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addSqlStatement() {
+    addClass(
+        """
+        package java.sql;
+        
+        public class Statement {}
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addSwingUtilities() {
+    addClass(
+        """
+        package javax.swing;
+        
+        public class SwingUtilities {
+          static public void invokeLater(Runnable doRun) {}
+          static public void invokeAndWait(Runnable doRun) {}
+          
+          static void installSwingDropTargetAsNecessary() {}
+        }
         """.trimIndent()
     )
 }

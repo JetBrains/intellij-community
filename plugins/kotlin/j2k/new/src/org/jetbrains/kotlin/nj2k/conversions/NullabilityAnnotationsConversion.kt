@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABLE_ANNOTATIONS
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
@@ -34,9 +35,9 @@ class NullabilityAnnotationsConversion(context: NewJ2kConverterContext) : Recurs
 
     private fun JKAnnotation.annotationNullability(): Nullability? =
         when (classSymbol.fqName) {
-          in nullableAnnotationsFqNames -> Nullability.Nullable
-          in notNullAnnotationsFqNames -> Nullability.NotNull
-          else -> null
+            in nullableAnnotationsFqNames -> Nullability.Nullable
+            in notNullAnnotationsFqNames -> Nullability.NotNull
+            else -> null
         }
 
     companion object {

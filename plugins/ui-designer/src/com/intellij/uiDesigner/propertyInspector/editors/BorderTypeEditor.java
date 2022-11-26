@@ -9,10 +9,6 @@ import com.intellij.uiDesigner.shared.BorderType;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BorderTypeEditor extends ComboBoxPropertyEditor<BorderType> {
   public BorderTypeEditor(){
     myCbx.setModel(new DefaultComboBoxModel<>(BorderType.getAllTypes()));

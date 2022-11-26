@@ -23,13 +23,13 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   val resizableColumns: MutableSet<Int> by this.grid::resizableColumns
 
-  var defaultHorizontalAlign = HorizontalAlign.LEFT
+  private var defaultHorizontalAlign = HorizontalAlign.LEFT
     private set
 
-  var defaultVerticalAlign = VerticalAlign.CENTER
+  private var defaultVerticalAlign = VerticalAlign.CENTER
     private set
 
-  var defaultBaselineAlign = false
+  private var defaultBaselineAlign = false
     private set
 
   private var x = 0
@@ -153,7 +153,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     grid.rowsGaps[y] = rowGaps
   }
 
-  fun defaultHorizontalAlign(defaultHorizontalAlign: HorizontalAlign): RowsGridBuilder {
+  private fun defaultHorizontalAlign(defaultHorizontalAlign: HorizontalAlign): RowsGridBuilder {
     this.defaultHorizontalAlign = defaultHorizontalAlign
     return this
   }

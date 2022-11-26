@@ -2,8 +2,12 @@
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.siblings
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -24,9 +28,11 @@ import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.toSubstitutor
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getValueParameterList
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -35,6 +41,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
 
 class KotlinCallableDefinitionUsage<T : PsiElement>(
@@ -143,7 +150,7 @@ class KotlinCallableDefinitionUsage<T : PsiElement>(
             val returnTypeText = changeInfo.renderReturnType(this)
             val returnType = changeInfo.newReturnTypeInfo.type
             if (returnType == null || !returnType.isUnit()) {
-                element.setTypeReference(KtPsiFactory(element).createType(returnTypeText))!!.addToShorteningWaitSet(Options.DEFAULT)
+                element.setTypeReference(KtPsiFactory(element.project).createType(returnTypeText))!!.addToShorteningWaitSet(Options.DEFAULT)
             }
         }
     }
@@ -182,6 +189,7 @@ class KotlinCallableDefinitionUsage<T : PsiElement>(
             newParameterList = if (canReplaceEntireList) {
                 parameterList.replace(newParameterList) as KtParameterList
             } else {
+                adjustTrailingComments(parameterList, newParameterList, psiFactory)
                 replaceListPsiAndKeepDelimiters(changeInfo, parameterList, newParameterList) { parameters }
             }
         } else {
@@ -227,5 +235,30 @@ class KotlinCallableDefinitionUsage<T : PsiElement>(
             val newIdentifier = psiFactory.createIdentifier(inheritedName)
             parameter.nameIdentifier?.replace(newIdentifier)
         }
+    }
+
+    private fun adjustTrailingComments(oldParameterList: KtParameterList, newParameterList: KtParameterList, psiFactory: KtPsiFactory) {
+        val oldLastParameter = oldParameterList.parameters.lastOrNull() ?: return
+        val oldLastParameterName = oldLastParameter.name ?: return
+        val (firstTrailingComment, lastTrailingComment) =
+            oldLastParameter.nextComma().nextCommentsOnSameLine().ifEmpty { return }.let { it.first() to it.last() }
+
+        val newParameter = newParameterList.parameters.firstOrNull { it.name == oldLastParameterName } ?: return
+        val newParameterComma = newParameter.nextComma() ?: return
+        newParameterList.addRangeAfter(firstTrailingComment, lastTrailingComment, newParameterComma)
+        newParameterList.addAfter(psiFactory.createWhiteSpace(), newParameterComma)
+
+        oldParameterList.deleteChildRange(firstTrailingComment, lastTrailingComment)
+    }
+
+    private fun KtParameter.nextComma(): PsiElement? =
+        getNextSiblingIgnoringWhitespaceAndComments()?.takeIf { it.elementType == KtTokens.COMMA }
+
+    private fun PsiElement?.nextCommentsOnSameLine(): List<PsiElement> {
+        if (this == null) return emptyList()
+        val siblings = siblings(withSelf = false)
+            .takeWhile { it is PsiComment || (it is PsiWhiteSpace && !it.textContains('\n')) }
+            .dropWhile { it is PsiWhiteSpace }
+        return if (siblings.any { it is PsiComment }) siblings.toList() else emptyList()
     }
 }

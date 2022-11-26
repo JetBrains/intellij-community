@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -13,7 +14,7 @@ fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true
 
 private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>?) -> Class<*>? {
   val projectDataManager = ProjectDataManager.getInstance()
-  val managerClassLoaders = ExternalSystemManager.EP_NAME.iterable.asSequence()
+  val managerClassLoaders = ExternalSystemManager.EP_NAME.lazySequence()
     .map { it.javaClass.classLoader }
     .toSet()
   return fun(name: String, hostObject: DataNode<*>?): Class<*>? {
@@ -26,16 +27,21 @@ private fun createDataClassResolver(log: Logger): (name: String, hostObject: Dat
       classLoadersToSearch = set
     }
 
+    var pe: PluginException? = null
     for (classLoader in classLoadersToSearch) {
       try {
         return classLoader.loadClass(name)
       }
-      catch (e: ClassNotFoundException) {
+      catch (e: PluginException) {
+        pe?.let(e::addSuppressed)
+        pe = e
+      }
+      catch (_: ClassNotFoundException) {
       }
     }
 
-    log.warn("Cannot find class `$name`")
-    return null
+    log.warn("Cannot find class `$name`", pe)
+    throw pe ?: return null
   }
 }
 

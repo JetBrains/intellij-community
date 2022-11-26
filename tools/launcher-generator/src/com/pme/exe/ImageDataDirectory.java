@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,30 @@ package com.pme.exe;
  * Time: 10:40:56 PM
  */
 public class ImageDataDirectory extends Bin.Structure {
+  public static final int IMAGE_DIRECTORY_ENTRY_RESOURCE = 2;
+  @SuppressWarnings("SpellCheckingInspection")
+  public static final int IMAGE_DIRECTORY_ENTRY_BASERELOC = 5;
+
+  private final DWord myVirtualAddress;
+  private final DWord mySize;
+
   public ImageDataDirectory(String name) {
     super(name);
-    addMember( new DWord( "VirtualAddress" ) );
-    addMember( new DWord( "Size" ) );
+    myVirtualAddress = addMember(new DWord("VirtualAddress"));
+    mySize = addMember(new DWord("Size"));
   }
-  public ImageDataDirectory( ){
-    this("");    
+
+  // Used by Bin.ArrayOfBins
+  @SuppressWarnings("unused")
+  public ImageDataDirectory() {
+    this("");
+  }
+
+  public DWord getVirtualAddress() {
+    return myVirtualAddress;
+  }
+
+  public DWord getSize() {
+    return mySize;
   }
 }

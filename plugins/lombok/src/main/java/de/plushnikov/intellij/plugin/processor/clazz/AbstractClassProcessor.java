@@ -3,13 +3,12 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.problem.ProblemValidationSink;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
@@ -50,7 +49,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     if (null != psiAnnotation
       && supportAnnotationVariant(psiAnnotation)
       && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
-      && validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())
+      && validate(psiAnnotation, psiClass, new ProblemProcessingSink())
     ) {
       result = new ArrayList<>();
       generatePsiElements(psiClass, psiAnnotation, result);
@@ -97,7 +96,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     // check first for fields, methods and filter it out, because PsiClass is parent of all annotations and will match other parents too
     PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiMethod.class, PsiClass.class);
     if (psiElement instanceof PsiClass) {
-      ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
+      ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
       validate(psiAnnotation, (PsiClass) psiElement, problemNewBuilder);
       result = problemNewBuilder.getProblems();
     }
@@ -118,43 +117,46 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClasses());
   }
 
-  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder);
+  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder);
 
   protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 
-  void validateOfParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
+  static void validateOfParam(PsiClass psiClass, ProblemSink builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
     for (String fieldName : ofProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(ofProperty, fieldName);
-          builder.addWarning(LombokBundle.message("inspection.message.field.s.does.not.exist.field", fieldName),
-            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
+          builder.addWarningMessage("inspection.message.field.s.does.not.exist.field", fieldName)
+            .withLocalQuickFixes(() -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
         }
       }
     }
   }
 
-  void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> excludeProperty) {
+  static void validateExcludeParam(PsiClass psiClass,
+                                   ProblemSink builder,
+                                   PsiAnnotation psiAnnotation,
+                                   Collection<String> excludeProperty) {
     for (String fieldName : excludeProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
-          builder.addWarning(LombokBundle.message("inspection.message.field.s.does.not.exist.exclude", fieldName),
-            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
+          builder.addWarningMessage("inspection.message.field.s.does.not.exist.exclude", fieldName)
+            .withLocalQuickFixes(() -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
         } else {
           if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
             final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
-            builder.addWarning(LombokBundle.message("inspection.message.field.s.would.have.been.excluded.anyway", fieldName),
-              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
+            builder.addWarningMessage("inspection.message.field.s.would.have.been.excluded.anyway", fieldName)
+              .withLocalQuickFixes(() -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
           }
         }
       }
     }
   }
 
-  private String calcNewPropertyValue(Collection<String> allProperties, String fieldName) {
+  private static String calcNewPropertyValue(Collection<String> allProperties, String fieldName) {
     String result = null;
     if (!allProperties.isEmpty() && (allProperties.size() > 1 || !allProperties.contains(fieldName))) {
       result = allProperties.stream().filter(((Predicate<String>) fieldName::equals).negate())

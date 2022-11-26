@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserEditor.Companion.getAllUsers
@@ -37,7 +38,6 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
-import java.awt.event.KeyEvent.VK_G
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -57,7 +57,7 @@ internal var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(
 private val HierarchyEvent.isShowingChanged get() = (changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L
 private val HierarchyEvent.isParentChanged get() = (changeFlags and HierarchyEvent.PARENT_CHANGED.toLong()) != 0L
 
-private val CheckinProjectPanel.commitAuthorTracker: CommitAuthorTracker? get() = commitWorkflowHandler as? CommitAuthorTracker
+private val CheckinProjectPanel.commitAuthorTracker: CommitAuthorTracker? get() = commitWorkflowHandler.commitAuthorTracker
 
 class GitCommitOptionsUi(
   private val commitPanel: CheckinProjectPanel,
@@ -83,6 +83,9 @@ class GitCommitOptionsUi(
     val user = commitPanel.roots.mapNotNull { userRegistry.getUser(it) }.firstOrNull()
     val signature = user?.let { escapeXmlEntities(VcsUserUtil.toExactString(it)) }.orEmpty()
     toolTipText = XmlStringUtil.wrapInHtml(GitBundle.message("commit.options.sign.off.commit.message.line", signature))
+    addActionListener {
+      CommitSessionCollector.getInstance(project).logCommitOptionToggled(CommitOption.SIGN_OFF, isSelected)
+    }
   }
   private val commitRenamesSeparately = JBCheckBox(
     GitBundle.message("commit.options.create.extra.commit.with.file.movements"),

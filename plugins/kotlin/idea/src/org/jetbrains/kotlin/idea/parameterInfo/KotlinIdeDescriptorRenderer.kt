@@ -97,7 +97,7 @@ open class KotlinIdeDescriptorRenderer(
     }
 
     /* FORMATTING */
-    protected fun renderKeyword(keyword: String): String {
+    private fun renderKeyword(keyword: String): String {
         val highlighted = highlight(keyword) { asKeyword }
         return when (textFormat) {
             RenderingFormat.PLAIN -> highlighted
@@ -405,7 +405,7 @@ open class KotlinIdeDescriptorRenderer(
         else -> error("Unexpected classifier: " + cd::class.java)
     }
 
-    fun renderTypeConstructorOfType(typeConstructor: TypeConstructor, type: KotlinType): String =
+    private fun renderTypeConstructorOfType(typeConstructor: TypeConstructor, type: KotlinType): String =
         when (val cd = typeConstructor.declarationDescriptor) {
             is TypeParameterDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asTypeParameterName }
             is ClassDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asClassName }

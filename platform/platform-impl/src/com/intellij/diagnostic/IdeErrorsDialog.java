@@ -97,7 +97,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private AttachmentList myAttachmentList;
   private JTextArea myAttachmentArea;
   private JPanel myAssigneePanel;
-  private PrivacyNoticeComponent myPrivacyNotice;
+  private PrivacyNotice myPrivacyNotice;
   private ComboBox<Developer> myAssigneeCombo;
   private JTextComponent myCredentialLabel;
 
@@ -301,7 +301,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myCredentialLabel.setBorder(JBUI.Borders.emptyTop(topOffset));
     }
 
-    myPrivacyNotice = new PrivacyNoticeComponent(DiagnosticBundle.message("error.dialog.notice.label"), DiagnosticBundle.message("error.dialog.notice.label.expanded"));
+    myPrivacyNotice = new PrivacyNotice(DiagnosticBundle.message("error.dialog.notice.label"),
+                                        DiagnosticBundle.message("error.dialog.notice.label.expanded"));
 
     JPanel commentPanel = new JPanel(new BorderLayout());
     commentPanel.setBorder(JBUI.Borders.emptyTop(5));
@@ -319,7 +320,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       accountRow.add(myAssigneePanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBInsets.emptyInsets(), 0, 0));
     JPanel bottomRow = new JPanel(new BorderLayout());
     bottomRow.add(accountRow, BorderLayout.NORTH);
-    bottomRow.add(myPrivacyNotice, BorderLayout.CENTER);
+    bottomRow.add(myPrivacyNotice.panel, BorderLayout.CENTER);
+    bottomRow.setBorder(JBUI.Borders.emptyBottom(6));
 
     JPanel rootPanel = new JPanel(new BorderLayout());
     rootPanel.setPreferredSize(JBUI.size(800, 400));
@@ -445,7 +447,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myInfoLabel.setText(t.getMessage());
       myDetailsLabel.setVisible(false);
       myForeignPluginWarningLabel.setVisible(false);
-      myPrivacyNotice.setVisible(false);
+      myPrivacyNotice.panel.setVisible(false);
       return;
     }
 
@@ -472,7 +474,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (t instanceof JBRCrash) {
       info.append(DiagnosticBundle.message("error.list.message.blame.jbr.crash"));
     }
-    else {
+    else if (t instanceof KotlinCompilerCrash) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.kotlin.crash") + " " + ((KotlinCompilerCrash)t).getVersion());
+    } else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
 
@@ -523,13 +527,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     String notice = submitter != null ? submitter.getPrivacyNoticeText() : null;
     if (notice != null) {
-      myPrivacyNotice.setVisible(true);
+      myPrivacyNotice.panel.setVisible(true);
       String hash = Integer.toHexString(StringUtil.stringHashCodeIgnoreWhitespaces(notice));
       myPrivacyNotice.setExpanded(!myAcceptedNotices.contains(hash));
       myPrivacyNotice.setPrivacyPolicy(notice);
     }
     else {
-      myPrivacyNotice.setVisible(false);
+      myPrivacyNotice.panel.setVisible(false);
     }
   }
 
@@ -647,7 +651,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  public static void confirmDisablePlugins(@Nullable Project project, @NotNull List<IdeaPluginDescriptor> pluginsToDisable) {
+  public static void confirmDisablePlugins(@Nullable Project project, @NotNull List<? extends IdeaPluginDescriptor> pluginsToDisable) {
     if (pluginsToDisable.isEmpty()) {
       return;
     }
@@ -987,9 +991,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static final class CompositeAction extends AbstractAction implements OptionAction {
     private final Action myMainAction;
-    private final List<Action> myAdditionalActions;
+    private final List<? extends Action> myAdditionalActions;
 
-    private CompositeAction(Action mainAction, List<Action> additionalActions) {
+    private CompositeAction(Action mainAction, List<? extends Action> additionalActions) {
       super((String)mainAction.getValue(Action.NAME));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
       myMainAction = mainAction;
@@ -1114,9 +1118,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     REPORT_ALL(dialog -> dialog.new ReportAllAction()),
     REPORT_AND_CLEAR_ALL(dialog -> dialog.new ReportAndClearAllAction());
 
-    private final Function<IdeErrorsDialog, Action> myActionProducer;
+    private final Function<? super IdeErrorsDialog, ? extends Action> myActionProducer;
 
-    ReportAction(Function<IdeErrorsDialog, Action> actionProducer) {
+    ReportAction(Function<? super IdeErrorsDialog, ? extends Action> actionProducer) {
       myActionProducer = actionProducer;
     }
 

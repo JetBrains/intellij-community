@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -33,6 +33,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.injection.Injectable;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -52,10 +54,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 10/1/2015.
- */
-public class JsonSchemaCompletionContributor extends CompletionContributor {
+public final class JsonSchemaCompletionContributor extends CompletionContributor {
   private static final String BUILTIN_USAGE_KEY = "builtin";
   private static final String SCHEMA_USAGE_KEY = "schema";
   private static final String USER_USAGE_KEY = "user";
@@ -87,9 +86,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     doCompletion(parameters, result, rootSchema, true);
   }
 
-  public static void doCompletion(@NotNull final CompletionParameters parameters,
-                                  @NotNull final CompletionResultSet result,
-                                  @NotNull final JsonSchemaObject rootSchema,
+  public static void doCompletion(final @NotNull CompletionParameters parameters,
+                                  final @NotNull CompletionResultSet result,
+                                  final @NotNull JsonSchemaObject rootSchema,
                                   boolean stop) {
     final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
                                           parameters.getPosition();
@@ -102,9 +101,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   }
 
   @TestOnly
-  @NotNull
-  public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema,
-                                                          @NotNull final PsiElement position, @NotNull final PsiElement originalPosition) {
+  public static @NotNull List<LookupElement> getCompletionVariants(final @NotNull JsonSchemaObject schema,
+                                                                   final @NotNull PsiElement position, final @NotNull PsiElement originalPosition) {
     final List<LookupElement> result = new ArrayList<>();
     new Worker(schema, position, originalPosition, element -> result.add(element)).work();
     return result;
@@ -119,28 +117,21 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       return;
     }
     final SchemaType schemaType = provider.getSchemaType();
-    switch (schemaType) {
-      case schema:
-        JsonSchemaUsageTriggerCollector.trigger(SCHEMA_USAGE_KEY);
-        break;
-      case userSchema:
-        JsonSchemaUsageTriggerCollector.trigger(USER_USAGE_KEY);
-        break;
-      case embeddedSchema:
-        JsonSchemaUsageTriggerCollector.trigger(BUILTIN_USAGE_KEY);
-        break;
-      case remoteSchema:
+    JsonSchemaUsageTriggerCollector.trigger(switch (schemaType) {
+      case schema -> SCHEMA_USAGE_KEY;
+      case userSchema -> USER_USAGE_KEY;
+      case embeddedSchema -> BUILTIN_USAGE_KEY;
+      case remoteSchema ->
         // this works only for user-specified remote schemas in our settings, but not for auto-detected remote schemas
-        JsonSchemaUsageTriggerCollector.trigger(REMOTE_USAGE_KEY);
-        break;
-    }
+        REMOTE_USAGE_KEY;
+    });
   }
 
   private static class Worker {
-    @NotNull private final JsonSchemaObject myRootSchema;
-    @NotNull private final PsiElement myPosition;
-    @NotNull private final PsiElement myOriginalPosition;
-    @NotNull private final Consumer<LookupElement> myResultConsumer;
+    private final @NotNull JsonSchemaObject myRootSchema;
+    private final @NotNull PsiElement myPosition;
+    private final @NotNull PsiElement myOriginalPosition;
+    private final @NotNull Consumer<LookupElement> myResultConsumer;
     private final boolean myWrapInQuotes;
     private final boolean myInsideStringLiteral;
     // we need this set to filter same-named suggestions (they can be suggested by several matching schemes)
@@ -149,7 +140,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private final Project myProject;
 
     Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
-           @NotNull PsiElement originalPosition, @NotNull final Consumer<LookupElement> resultConsumer) {
+           @NotNull PsiElement originalPosition, final @NotNull Consumer<LookupElement> resultConsumer) {
       myRootSchema = rootSchema;
       myPosition = position;
       myOriginalPosition = originalPosition;
@@ -408,13 +399,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
 
 
-    private void addValueVariant(@NotNull String key, @SuppressWarnings("SameParameterValue") @Nullable final String description) {
+    private void addValueVariant(@NotNull String key, @SuppressWarnings("SameParameterValue") final @Nullable String description) {
       addValueVariant(key, description, null, null);
     }
 
     private void addValueVariant(@NotNull String key,
-                                 @SuppressWarnings("SameParameterValue") @Nullable final String description,
-                                 @Nullable final String altText,
+                                 @SuppressWarnings("SameParameterValue") final @Nullable String description,
+                                 final @Nullable String altText,
                                  @Nullable InsertHandler<LookupElement> handler) {
       String unquoted = StringUtil.unquoteString(key);
       LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted, true) ? unquoted : key);
@@ -500,17 +491,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       return sentence;
     }
 
-    @NotNull
-    private static Icon getIcon(@Nullable JsonSchemaType type) {
-      if (type == null) return AllIcons.Nodes.Property;
-      switch (type) {
-        case _object:
-          return AllIcons.Json.Object;
-        case _array:
-          return AllIcons.Json.Array;
-        default:
-          return AllIcons.Nodes.Property;
+    private static @NotNull Icon getIcon(@Nullable JsonSchemaType type) {
+      if (type == null) {
+        return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
       }
+      return switch (type) {
+        case _object -> AllIcons.Json.Object;
+        case _array -> AllIcons.Json.Array;
+        default -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
+      };
     }
 
     private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
@@ -589,10 +578,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       };
     }
 
-    @NotNull
-    private InsertHandler<LookupElement> createPropertyInsertHandler(@NotNull JsonSchemaObject jsonSchemaObject,
-                                                                     final boolean hasValue,
-                                                                     boolean insertComma) {
+    private @NotNull InsertHandler<LookupElement> createPropertyInsertHandler(@NotNull JsonSchemaObject jsonSchemaObject,
+                                                                              final boolean hasValue,
+                                                                              boolean insertComma) {
       JsonSchemaType type = jsonSchemaObject.guessType();
       List<Object> values = jsonSchemaObject.getEnum();
       if (type == null && values != null && !values.isEmpty()) type = detectType(values);
@@ -621,7 +609,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           if (finalType != null) {
             boolean hadEnter;
             switch (finalType) {
-              case _object:
+              case _object -> {
                 EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
                                                            false, true,
                                                            insertColon ? 2 : 1);
@@ -649,8 +637,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                 if (stringToInsert != null && !invokeEnter) {
                   invokeEnterHandler(editor);
                 }
-                break;
-              case _boolean:
+              }
+              case _boolean -> {
                 String value = String.valueOf(Boolean.TRUE.toString().equals(defaultValueAsString));
                 stringToInsert = (insertColon ? ": " : " ") + value + comma;
                 SelectionModel model = editor.getSelectionModel();
@@ -662,8 +650,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                 int start = editor.getSelectionModel().getSelectionStart();
                 model.setSelection(start - value.length(), start);
                 AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
-                break;
-              case _array:
+              }
+              case _array -> {
                 EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
                                                            false, true,
                                                            insertColon ? 2 : 1);
@@ -687,13 +675,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                 if (stringToInsert != null) {
                   formatInsertedString(context, stringToInsert.length());
                 }
-                break;
-              case _string:
-              case _integer:
-              case _number:
+              }
+              case _string, _integer, _number ->
                 insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, myWalker, insertColon);
-                break;
-              default:
+              default -> { }
             }
           }
           else {
@@ -706,8 +691,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private static void invokeEnterHandler(Editor editor) {
       EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
       Caret caret = editor.getCaretModel().getCurrentCaret();
-      handler.execute(editor, caret,
-                      new CaretSpecificDataContext(DataManager.getInstance().getDataContext(editor.getContentComponent()), caret));
+      handler.execute(editor, caret, CaretSpecificDataContext.create(
+        DataManager.getInstance().getDataContext(editor.getContentComponent()), caret));
     }
 
     private boolean handleInsideQuotesInsertion(@NotNull InsertionContext context, @NotNull Editor editor, boolean hasValue) {
@@ -749,8 +734,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    @Nullable
-    private static JsonSchemaType detectType(List<Object> values) {
+    private static @Nullable JsonSchemaType detectType(List<Object> values) {
       JsonSchemaType type = null;
       for (Object value : values) {
         JsonSchemaType newType = null;

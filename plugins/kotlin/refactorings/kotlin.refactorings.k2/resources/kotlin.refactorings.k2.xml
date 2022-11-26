@@ -1,0 +1,16 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.refactoring">
+  <dependencies>
+    <module name="kotlin.searching.k2"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.KotlinFirRefactoringsSettings"/>
+    
+    <lang.refactoringSupport language="kotlin" 
+                             implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinFirRefactoringSupportProvider"/>
+    <refactoring.safeDeleteProcessor
+            id="kotlinFirProcessor"
+            implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinFirSafeDeleteProcessor" 
+            order="before kotlinProcessor"/>
+  </extensions>
+</idea-plugin>

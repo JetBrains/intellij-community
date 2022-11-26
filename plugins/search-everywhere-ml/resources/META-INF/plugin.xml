@@ -30,6 +30,9 @@
     <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
+    <advancedSetting default="false" id="searcheverywhere.ml.sort.classes"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlBundle"/>
 
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with actions order won't be performed"
@@ -37,6 +40,9 @@
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with files order won't be performed"
                  key="search.everywhere.force.disable.experiment.files.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with classes order won't be performed"
+                 key="search.everywhere.force.disable.experiment.classes.ml"/>
     <registryKey defaultValue="false"
                  description="When enabled ML logs and experiments in Search Everywhere will be disabled"
                  key="search.everywhere.force.disable.logging.ml"/>
@@ -50,6 +56,9 @@
     <registryKey defaultValue=""
                  description="Path to the local file-ranking model."
                  key="search.everywhere.ml.files.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local class-ranking model."
+                 key="search.everywhere.ml.classes.model.path"/>
 
     <statistician key="searchEverywhere"
                   implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereFileStatistician"/>
@@ -112,11 +121,13 @@
       implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelLoader"/>
     <rankingModelLoader
       implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereFilesRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereClassesRankingModelLoader"/>
   </extensions>
 
   <applicationListeners>
     <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$ProjectClosureListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
   </applicationListeners>
 
   <projectListeners>

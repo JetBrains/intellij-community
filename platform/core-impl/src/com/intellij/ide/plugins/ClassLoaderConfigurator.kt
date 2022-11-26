@@ -67,10 +67,10 @@ class ClassLoaderConfigurator(
     mainDescriptor: IdeaPluginDescriptorImpl,
     moduleDescriptor: IdeaPluginDescriptorImpl,
   ): Boolean {
-    assert(mainDescriptor != moduleDescriptor)
+    assert(mainDescriptor != moduleDescriptor) { "$mainDescriptor != $moduleDescriptor" }
 
     val pluginId = mainDescriptor.pluginId
-    assert(pluginId == moduleDescriptor.pluginId)
+    assert(pluginId == moduleDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${moduleDescriptor.pluginId}'"}
 
     val mainClassLoader = mainDescriptor.pluginClassLoader as PluginClassLoader
     mainToClassPath[pluginId] = MainInfo(mainClassLoader)
@@ -342,7 +342,7 @@ private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDes
 
     for (prefix in contentPackagePrefixes) {
       if (name.startsWith(prefix)) {
-        return@ResolveScopeManager "Class $name must be not requested from main classloader of $pluginId plugin"
+        return@ResolveScopeManager "Class $name must not be requested from main classloader of $pluginId plugin"
       }
     }
 

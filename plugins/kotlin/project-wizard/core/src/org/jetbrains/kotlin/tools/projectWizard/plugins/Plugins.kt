@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins
 
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.Plugin
 import org.jetbrains.kotlin.tools.projectWizard.core.buildPersistenceList
@@ -38,6 +37,7 @@ object Plugins {
             +TemplatesPlugin(context)
             +ProjectTemplatesPlugin(context)
             +RunConfigurationsPlugin(context)
+            +InspectionsPlugin(context)
             +AndroidPlugin(context)
 
             // templates
@@ -47,7 +47,6 @@ object Plugins {
             +ReactJsTemplatesPlugin(context)
             +SimpleNodeJsTemplatesPlugin(context)
             +NativeConsoleApplicationTemplatePlugin(context)
-            +ComposeTemplatesPlugin(context)
             +MobileMppTemplatePlugin(context)
         }
     }

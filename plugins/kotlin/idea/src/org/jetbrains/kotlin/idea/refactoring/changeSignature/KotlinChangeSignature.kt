@@ -66,12 +66,12 @@ fun runChangeSignature(
 }
 
 class KotlinChangeSignature(
-    project: Project,
-    editor: Editor?,
-    callableDescriptor: CallableDescriptor,
-    val configuration: KotlinChangeSignatureConfiguration,
-    val defaultValueContext: PsiElement,
-    @NlsContexts.Command commandName: String?
+  project: Project,
+  editor: Editor?,
+  callableDescriptor: CallableDescriptor,
+  val configuration: KotlinChangeSignatureConfiguration,
+  private val defaultValueContext: PsiElement,
+  @NlsContexts.Command commandName: String?
 ) : CallableRefactoring<CallableDescriptor>(
     project,
     editor,
@@ -216,7 +216,7 @@ class KotlinChangeSignature(
             append("class $previewClassName {\n").append(ktSignature).append("{}\n}")
             toString()
         }
-        val dummyFile = KtPsiFactory(project).createFileWithLightClassSupport("dummy.kt", dummyFileText, originalMethod)
+        val dummyFile = KtPsiFactory(originalMethod.project).createPhysicalFile("dummy.kt", dummyFileText)
         val dummyDeclaration = (dummyFile.declarations.first() as KtClass).body!!.declarations.first()
 
         // Convert to PsiMethod which can be used in Change Signature dialog

@@ -64,9 +64,9 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(file.getOriginalFile()));
     return new IntentionPreviewInfo.Html(
-      JavaBundle.message("increase.language.level.preview.description", Objects.requireNonNull(module).getName(), myLevel.toJavaVersion()));
+      JavaBundle.message("increase.language.level.preview.description", module.getName(), myLevel.toJavaVersion()));
   }
 
   @Override
@@ -83,25 +83,23 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
         return;
       }
     }
+    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(file));
+    LanguageLevel oldLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
+    VirtualFile vFile = file.getVirtualFile();
     WriteCommandAction.runWriteCommandAction(project, getText(), null, () -> {
-      Module module = ModuleUtilCore.findModuleForPsiElement(file);
-      if (module != null) {
-        LanguageLevel oldLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
-        JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
-        VirtualFile vFile = file.getVirtualFile();
-        if (oldLevel != null) {
-          UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
-            @Override
-            public void undo() {
-              JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, oldLevel);
-            }
+      JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
+      if (oldLevel != null) {
+        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
+          @Override
+          public void undo() {
+            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, oldLevel);
+          }
 
-            @Override
-            public void redo() {
-              JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
-            }
-          });
-        }
+          @Override
+          public void redo() {
+            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
+          }
+        });
       }
     });
   }

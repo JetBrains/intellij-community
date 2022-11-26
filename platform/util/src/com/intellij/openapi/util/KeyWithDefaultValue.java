@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public abstract class KeyWithDefaultValue<T> extends Key<T> {
   public KeyWithDefaultValue(@NotNull @NonNls String name) {
     super(name);

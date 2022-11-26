@@ -16,7 +16,6 @@ class CreateEditorConfigFileAction : CreateInDirectoryActionBase(
   EditorConfigBundle.get("create.file.description"),
   AllIcons.Nodes.Editorconfig
 ) {
-  @Suppress("UsePropertyAccessSyntax")
   override fun actionPerformed(event: AnActionEvent) {
     val view = event.getData(LangDataKeys.IDE_VIEW) ?: return
     val directory = view.getOrChooseDirectory() ?: return

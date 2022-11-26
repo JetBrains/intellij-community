@@ -54,12 +54,31 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   /**
    * Adds the specified file or directory as a content root.
+   * Also this method specifies an external source
+   *
+   * @param root root of a content
+   * @return new content entry
+   */
+  ContentEntry addContentEntry(@NotNull VirtualFile root, @NotNull ProjectModelExternalSource externalSource);
+
+  /**
+   * Adds the specified file or directory as a content root.
    *
    * @param url root of a content
    * @return new content entry
    */
   @NotNull
   ContentEntry addContentEntry(@NotNull String url);
+
+  /**
+   * Adds the specified file or directory as a content root.
+   * Also this method specifies an external source
+   *
+   * @param url root of a content
+   * @return new content entry
+   */
+  ContentEntry addContentEntry(@NotNull String url, @NotNull ProjectModelExternalSource externalSource);
+  ContentEntry addContentEntry(@NotNull String url, boolean useSourceOfModule);
 
   /**
    * Remove the specified content root.

@@ -5,11 +5,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
@@ -45,8 +45,8 @@ class KotlinBundledUsageDetector(private val project: Project) {
         }
     }
 
-    internal class MyStartupActivity : StartupActivity.DumbAware {
-        override fun runActivity(project: Project) {
+    internal class MyStartupActivity : ProjectPostStartupActivity {
+        override suspend fun execute(project: Project) {
             var isUsed = false
             project.forEachAllUsedLibraries { library ->
                 if (library.getUrls(OrderRootType.CLASSES).any(String::isStartsWithDistPrefix)) {

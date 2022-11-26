@@ -14,6 +14,11 @@ import javax.swing.text.JTextComponent
 
 abstract class ComponentPredicate : () -> Boolean {
   abstract fun addListener(listener: (Boolean) -> Unit)
+
+  companion object {
+    val TRUE: ComponentPredicate = ConstantComponentPredicate(true)
+    val FALSE: ComponentPredicate = ConstantComponentPredicate(false)
+  }
 }
 
 val AbstractButton.selected: ComponentPredicate
@@ -117,6 +122,13 @@ private class NotPredicate(private val that: ComponentPredicate) : ComponentPred
     that.addListener(notListener)
   }
 }
+
+private class ConstantComponentPredicate(private val value: Boolean) : ComponentPredicate() {
+  override fun addListener(listener: (Boolean) -> Unit) = Unit
+
+  override fun invoke(): Boolean = value
+}
+
 class AdvancedSettingsPredicate(val id: String, val disposable: Disposable) : ComponentPredicate() {
   override fun addListener(listener: (Boolean) -> Unit) {
     ApplicationManager.getApplication().messageBus.connect(disposable)

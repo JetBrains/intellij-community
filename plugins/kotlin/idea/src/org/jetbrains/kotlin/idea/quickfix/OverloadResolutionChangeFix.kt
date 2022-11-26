@@ -46,7 +46,7 @@ class OverloadResolutionChangeFix(element: KtExpression) : KotlinPsiOnlyQuickFix
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
         val typeArgument = getTypeArgumentForCast(expression) ?: return
-        val casted = KtPsiFactory(file).createExpressionByPattern("($0) as Iterable<$1>", expression, typeArgument)
+        val casted = KtPsiFactory(project).createExpressionByPattern("($0) as Iterable<$1>", expression, typeArgument)
         expression.replace(casted)
     }
 

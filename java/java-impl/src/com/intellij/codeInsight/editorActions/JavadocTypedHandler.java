@@ -133,19 +133,23 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
     for (int i = endOffset - 1; i >= 0; i--) {
       char c = text.charAt(i);
       switch (c) {
-        case '\n': return null;
-        case CLOSE_TAG_SYMBOL: return null;
-        case START_TAG_SYMBOL:
+        case '\n' -> {
+          return null;
+        }
+        case CLOSE_TAG_SYMBOL -> {
+          return null;
+        }
+        case START_TAG_SYMBOL -> {
           if (text.charAt(i + 1) == SLASH) {
             // Handle situation like <tag></tag>[offset].
             return null;
           }
           return text.subSequence(i + 1, endOffset).toString();
-        
+        }
+
         // There is a possible case that opening tag has attributes, e.g. <a href='bla-bla-bla'>[offset]. We want to extract
         // only tag name then.
-        case ' ':
-        case '\t': endOffset = i;
+        case ' ', '\t' -> endOffset = i;
       }
     }
     return null;

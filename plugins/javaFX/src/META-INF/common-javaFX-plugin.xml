@@ -97,7 +97,7 @@
     <moduleBuilder builderClass="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder"/>
     <fileTemplateGroup implementation="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleTemplateGroup"/>
 
-    <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavaeeBundledDictionaryProvider"/>
+    <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavafxBundledDictionaryProvider"/>
 
     <dependencySupport coordinate="org.openjfx:javafx-base" kind="java" displayName="JavaFX"/>
   </extensions>

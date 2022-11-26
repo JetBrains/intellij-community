@@ -3,12 +3,11 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.SubstitutedFileType;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +20,8 @@ import java.io.IOException;
 import java.util.Objects;
 
 final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
-  private final NotNullLazyValue<FileTypeMapReduceIndex> myIndex = NotNullLazyValue.lazy(() -> {
-    return (FileTypeMapReduceIndex)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(FileTypeIndex.NAME);
+  private final NotNullLazyValue<FileTypeNameEnumerator> myFileTypeNameEnumerator = NotNullLazyValue.lazy(() -> {
+    return (FileTypeNameEnumerator)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(FileTypeIndex.NAME);
   });
 
   @Override
@@ -48,16 +47,19 @@ final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
   @Override
   public FileType read(@NotNull DataInput in) throws IOException {
     String read = getFileTypeName(DataInputOutputUtil.readINT(in));
+    if (read == null) {
+      return UnknownFileType.INSTANCE;
+    }
     FileType fileType = FileTypeRegistry.getInstance().findFileTypeByName(read);
     return fileType == null ? new OutDatedFileType(read) : fileType;
   }
 
   int getFileTypeId(@NotNull String fileTypeName) throws IOException {
-    return myIndex.getValue().getFileTypeId(fileTypeName);
+    return myFileTypeNameEnumerator.getValue().getFileTypeId(fileTypeName);
   }
 
-  String getFileTypeName(int fileTypeId) throws IOException {
-    return myIndex.getValue().getFileTypeName(fileTypeId);
+  @Nullable String getFileTypeName(int fileTypeId) throws IOException {
+    return myFileTypeNameEnumerator.getValue().getFileTypeName(fileTypeId);
   }
 
   private static final class OutDatedFileType implements FileType {

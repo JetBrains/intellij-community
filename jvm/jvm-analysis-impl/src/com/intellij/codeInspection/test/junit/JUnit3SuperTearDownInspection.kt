@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.junit.JUnitCommonClassNames
@@ -16,13 +17,17 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 class JUnit3SuperTearDownInspection : AbstractBaseUastLocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-    UastHintedVisitorAdapter.create(
+  private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file)
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+    return UastHintedVisitorAdapter.create(
       holder.file.language,
       SuperTearDownInFinallyVisitor(holder),
       arrayOf(UCallExpression::class.java),
       directOnly = true
     )
+  }
 }
 
 private class SuperTearDownInFinallyVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {

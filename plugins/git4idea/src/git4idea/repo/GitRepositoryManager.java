@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -6,7 +6,6 @@ import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator;
@@ -29,15 +28,13 @@ import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublishe
 
 @Service(Service.Level.PROJECT)
 public final class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
-  private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
-
   public static final Comparator<GitRepository> DEPENDENCY_COMPARATOR =
     (repo1, repo2) -> -VirtualFileHierarchicalComparator.getInstance().compare(repo1.getRoot(), repo2.getRoot());
 
   private final ExecutorService myUpdateExecutor =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("GitRepositoryManager");
 
-  @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
+  private volatile @Nullable GitRebaseSpec myOngoingRebaseSpec;
 
   public GitRepositoryManager(@NotNull Project project) {
     super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
@@ -45,8 +42,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
     AsyncVfsEventsPostProcessor.getInstance().addListener(new GitUntrackedDirtyScopeListener(this), this);
   }
 
-  @NotNull
-  public static GitRepositoryManager getInstance(@NotNull Project project) {
+  public static @NotNull GitRepositoryManager getInstance(@NotNull Project project) {
     return project.getService(GitRepositoryManager.class);
   }
 
@@ -55,9 +51,8 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
     return GitVcsSettings.getInstance(getVcs().getProject()).getSyncSetting() == DvcsSyncSettings.Value.SYNC && !MultiRootBranches.diverged(getRepositories());
   }
 
-  @NotNull
   @Override
-  public List<GitRepository> getRepositories() {
+  public @NotNull List<GitRepository> getRepositories() {
     return getRepositories(GitRepository.class);
   }
 
@@ -70,8 +65,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
     return getRepositories().stream().anyMatch(repo -> !repo.getSubmodules().isEmpty());
   }
 
-  @Nullable
-  public GitRebaseSpec getOngoingRebaseSpec() {
+  public @Nullable GitRebaseSpec getOngoingRebaseSpec() {
     GitRebaseSpec rebaseSpec = myOngoingRebaseSpec;
     return rebaseSpec != null && rebaseSpec.isValid() ? rebaseSpec : null;
   }
@@ -98,8 +92,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
    * <p>Currently submodule-dependency is the only one which is taken into account.</p>
    * <p>If repositories are independent of each other, they are sorted {@link DvcsUtil#REPOSITORY_COMPARATOR by path}.</p>
    */
-  @NotNull
-  public List<GitRepository> sortByDependency(@NotNull Collection<? extends GitRepository> repositories) {
+  public @NotNull List<GitRepository> sortByDependency(@NotNull Collection<? extends GitRepository> repositories) {
     return ContainerUtil.sorted(repositories, DEPENDENCY_COMPARATOR);
   }
 }

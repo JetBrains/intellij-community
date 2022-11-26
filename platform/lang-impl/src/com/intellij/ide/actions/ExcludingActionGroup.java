@@ -26,15 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class ExcludingActionGroup extends ActionGroup {
   private final ActionGroup myDelegate;
   private final Set<AnAction> myExcludes;
 
   public ExcludingActionGroup(ActionGroup delegate, Set<AnAction> excludes) {
-    super(delegate.getTemplatePresentation().getText(), delegate.isPopup());
+    super(delegate.getTemplatePresentation().getTextWithMnemonic(), delegate.isPopup());
     myDelegate = delegate;
     myExcludes = excludes;
   }

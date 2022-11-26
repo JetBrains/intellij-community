@@ -5,13 +5,11 @@ import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.deft.meta.impl.KtInterfaceType
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
 import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.allFields
-import com.intellij.workspaceModel.codegen.writer.hasSetter
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
@@ -22,21 +20,20 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 /**
  * - Soft links
- * - with PersistentId
+ * - with SymbolicId
  */
 
 val ObjClass<*>.javaDataName
   get() = "${name.replace(".", "")}Data"
 
-val ObjClass<*>.isEntityWithPersistentId: Boolean
+val ObjClass<*>.isEntityWithSymbolicId: Boolean
   get() = superTypes.any { 
-    it is KtInterfaceType && it.shortName == WorkspaceEntityWithPersistentId::class.java.simpleName
-    || it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithPersistentId::class.java.name || it.isEntityWithPersistentId)
+    it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithSymbolicId::class.java.name || it.isEntityWithSymbolicId)
   }
 
 fun ObjClass<*>.implWsDataClassCode(): String {
-  val entityDataBaseClass = if (isEntityWithPersistentId) {
-    "${WorkspaceEntityData::class.fqn}.WithCalculablePersistentId<$javaFullName>()"
+  val entityDataBaseClass = if (isEntityWithSymbolicId) {
+    "${WorkspaceEntityData::class.fqn}.WithCalculableSymbolicId<$javaFullName>()"
   }
   else {
     "${WorkspaceEntityData::class.fqn}<$javaFullName>()"
@@ -45,45 +42,29 @@ fun ObjClass<*>.implWsDataClassCode(): String {
   val softLinkable = if (hasSoftLinks) SoftLinkable::class.fqn else null
   return lines {
     section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
-      listNl(allFields.noRefs().noEntitySource().noPersistentId()) { implWsDataFieldCode }
+      listNl(allFields.noRefs().noEntitySource().noSymbolicId()) { implWsDataFieldCode }
 
-      listNl(allFields.noRefs().noEntitySource().noPersistentId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
+      listNl(allFields.noRefs().noEntitySource().noSymbolicId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
 
       this@implWsDataClassCode.softLinksCode(this, hasSoftLinks)
 
       sectionNl(
-        "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
+        "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${WorkspaceEntity.Builder::class.fqn}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
-        line("modifiable.allowModifications {")
-        line("  modifiable.diff = diff")
-        line("  modifiable.snapshot = diff")
-        line("  modifiable.id = createEntityId()")
-        line("  modifiable.entitySource = this.entitySource")
-        line("}")
-        line("modifiable.changedProperty.clear()")
+        line("modifiable.diff = diff")
+        line("modifiable.snapshot = diff")
+        line("modifiable.id = createEntityId()")
         line("return modifiable")
       }
 
       // --- createEntity
       sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
-        line("val entity = $javaImplName()")
-        list(allFields.noRefs().noEntitySource().noPersistentId()) {
-          if (hasSetter) {
-            if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
-              "entity.$implFieldName = $name.toSet()"
-            } else if (this.valueType is ValueType.List<*> && !this.valueType.isRefType()) {
-              "entity.$implFieldName = $name.toList()"
-            } else {
-              "entity.$implFieldName = $name"
-            }
-          } else {
-            "entity.$name = $name"
-          }
+        section("return getCached(snapshot)") {
+          line("val entity = $javaImplName(this)")
+          line("entity.snapshot = snapshot")
+          line("entity.id = createEntityId()")
+          line("entity")
         }
-        line("entity.entitySource = entitySource")
-        line("entity.snapshot = snapshot")
-        line("entity.id = createEntityId()")
-        line("return entity")
       }
 
       val collectionFields = allFields.noRefs().filter { it.valueType is ValueType.Collection<*, *> }
@@ -103,20 +84,20 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         }
       }
 
-      if (isEntityWithPersistentId) {
-        val persistentIdField = fields.first { it.name == "persistentId" }
-        val valueKind = persistentIdField.valueKind
+      if (isEntityWithSymbolicId) {
+        val symbolicIdField = fields.first { it.name == "symbolicId" }
+        val valueKind = symbolicIdField.valueKind
         val methodBody = (valueKind as ObjProperty.ValueKind.Computable).expression
         if (methodBody.contains("return")) {
           if (methodBody.startsWith("{")) {
-            line("override fun persistentId(): ${PersistentEntityId::class.fqn}<*> $methodBody \n")
+            line("override fun symbolicId(): ${SymbolicEntityId::class.fqn}<*> $methodBody \n")
           } else {
-            sectionNl("override fun persistentId(): ${PersistentEntityId::class.fqn}<*>") {
+            sectionNl("override fun symbolicId(): ${SymbolicEntityId::class.fqn}<*>") {
                 line(methodBody)
             }
           }
         } else {
-          sectionNl("override fun persistentId(): ${PersistentEntityId::class.fqn}<*>") {
+          sectionNl("override fun symbolicId(): ${SymbolicEntityId::class.fqn}<*>") {
             if (methodBody.startsWith("=")) {
               line("return ${methodBody.substring(2)}")
             }
@@ -141,7 +122,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       }
 
       sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity::class.fqn}>): ${WorkspaceEntity::class.fqn}") {
-        val noRefs = allFields.noRefs().noPersistentId()
+        val noRefs = allFields.noRefs().noSymbolicId()
         val mandatoryFields = allFields.mandatoryFields()
         val constructor = mandatoryFields.joinToString(", ") { it.name }.let { if (it.isNotBlank()) "($it)" else "" }
         val optionalFields = noRefs.filterNot { it in mandatoryFields }
@@ -176,11 +157,11 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       val keyFields = allFields.filter { it.isKey }
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")
-        line("if (this::class != other::class) return false")
+        line("if (this.javaClass != other.javaClass) return false")
 
         lineWrapped("other as $javaDataName")
 
-        list(allFields.noRefs().noPersistentId()) {
+        list(allFields.noRefs().noSymbolicId()) {
           "if (this.$name != other.$name) return false"
         }
 
@@ -190,11 +171,11 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       // --- equalsIgnoringEntitySource
       sectionNl("override fun equalsIgnoringEntitySource(other: Any?): Boolean") {
         line("if (other == null) return false")
-        line("if (this::class != other::class) return false")
+        line("if (this.javaClass != other.javaClass) return false")
 
         lineWrapped("other as $javaDataName")
 
-        list(allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noSymbolicId()) {
           "if (this.$name != other.$name) return false"
         }
 
@@ -204,7 +185,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       // --- hashCode
       section("override fun hashCode(): Int") {
         line("var result = entitySource.hashCode()")
-        list(allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noSymbolicId()) {
           "result = 31 * result + $name.hashCode()"
         }
         line("return result")
@@ -213,7 +194,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       // --- hashCodeIgnoringEntitySource
       section("override fun hashCodeIgnoringEntitySource(): Int") {
         line("var result = javaClass.hashCode()")
-        list(allFields.noRefs().noEntitySource().noPersistentId()) {
+        list(allFields.noRefs().noEntitySource().noSymbolicId()) {
           "result = 31 * result + $name.hashCode()"
         }
         line("return result")
@@ -223,7 +204,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         line()
         section("override fun equalsByKey(other: Any?): Boolean") {
           line("if (other == null) return false")
-          line("if (this::class != other::class) return false")
+          line("if (this.javaClass != other.javaClass) return false")
 
           lineWrapped("other as $javaDataName")
 
@@ -250,8 +231,8 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 
 fun List<ObjProperty<*, *>>.noRefs(): List<ObjProperty<*, *>> = this.filterNot { it.valueType.isRefType() }
 fun List<ObjProperty<*, *>>.noEntitySource() = this.filter { it.name != "entitySource" }
-fun List<ObjProperty<*, *>>.noPersistentId() = this.filter { it.name != "persistentId" }
-fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is com.intellij.workspaceModel.codegen.deft.meta.ValueType.Optional<*> }
+fun List<ObjProperty<*, *>>.noSymbolicId() = this.filter { it.name != "symbolicId" }
+fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is ValueType.Optional<*> }
 fun List<ObjProperty<*, *>>.noDefaultValue() = this.filter { it.valueKind == ObjProperty.ValueKind.Plain }
 
 private fun ObjClass<*>.cacheCollector(linesBuilder: LinesBuilder) {
@@ -296,8 +277,8 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
     }
     is ValueType.Blob -> {
       val className = this.javaClassName
-      if (className !in setOf(VirtualFileUrl::class.java.name, EntitySource::class.java.name, PersistentEntityId::class.java.name)) {
-        clazzes.add(className)
+      if (className !in setOf(VirtualFileUrl::class.java.name, EntitySource::class.java.name, SymbolicEntityId::class.java.name)) {
+        accessors.add("this.$fieldName?.let { collector.addDataToInspect(it) }")
         return res
       }
       if (className == VirtualFileUrl::class.java.name) {
@@ -306,9 +287,14 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
       }
       return true
     }
+    is ValueType.Enum -> {
+      val className = this.javaClassName
+      clazzes.add(className)
+      return res
+    }
     is ValueType.DataClass -> {
-      // Here we might filter PersistentIds and get them from the index, but in this case we would need to inspect their fields on the fly
-      // Here we have all the information about the persistent ids and it's fields, so let's keep them here (at least for a while).
+      // Here we might filter SymbolicIds and get them from the index, but in this case we would need to inspect their fields on the fly
+      // Here we have all the information about the symbolic ids and it's fields, so let's keep them here (at least for a while).
       clazzes.add(javaClassName)
       properties.forEach { property ->
         property.type.getClasses(fieldName, clazzes, accessors, objects)

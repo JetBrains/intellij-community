@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isMethodsUsages;
   public boolean isFieldsUsages;

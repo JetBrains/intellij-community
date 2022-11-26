@@ -1,11 +1,14 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -16,12 +19,15 @@ interface MainEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MainEntity, ModifiableWorkspaceEntity<MainEntity>, ObjBuilder<MainEntity> {
+  interface Builder : MainEntity, WorkspaceEntity.Builder<MainEntity>, ObjBuilder<MainEntity> {
     override var entitySource: EntitySource
     override var x: String
   }
 
   companion object : Type<MainEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntity {
       val builder = builder()
       builder.x = x
@@ -48,13 +54,16 @@ interface AttachedEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AttachedEntity, ModifiableWorkspaceEntity<AttachedEntity>, ObjBuilder<AttachedEntity> {
+  interface Builder : AttachedEntity, WorkspaceEntity.Builder<AttachedEntity>, ObjBuilder<AttachedEntity> {
     override var entitySource: EntitySource
     override var ref: MainEntity
     override var data: String
   }
 
   companion object : Type<AttachedEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntity {
       val builder = builder()
       builder.data = data

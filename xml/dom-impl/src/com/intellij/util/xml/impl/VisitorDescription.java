@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class VisitorDescription {
   private final Class<? extends DomElementVisitor> myVisitorClass;
   private final ClassMap<Method> myMethods = new ClassMap<>(new ConcurrentHashMap<>());

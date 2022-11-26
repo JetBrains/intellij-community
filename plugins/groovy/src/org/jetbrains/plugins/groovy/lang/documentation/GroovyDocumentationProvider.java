@@ -441,8 +441,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   private static PsiElement getDocumentationElement(PsiElement element, PsiElement originalElement) {
-    if (element instanceof GrGdkMethod) {
-      element = ((GrGdkMethod)element).getStaticMethod();
+    if (element instanceof GrGdkMethod method) {
+      element = method.getStaticMethod();
     }
 
     final GrDocComment doc = PsiTreeUtil.getParentOfType(originalElement, GrDocComment.class);
@@ -450,27 +450,25 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       element = GrDocCommentUtil.findDocOwner(doc);
     }
 
-    if (element instanceof GrLightVariable) {
-      PsiElement navigationElement = element.getNavigationElement();
+    if (element instanceof GrLightVariable var) {
+      PsiElement navigationElement = var.getNavigationElement();
 
-      if (navigationElement != null) {
-        element = navigationElement;
+      element = navigationElement;
 
-        if (element.getContainingFile() instanceof PsiCompiledFile) {
-          navigationElement = element.getNavigationElement();
-          if (navigationElement != null) {
-            element = navigationElement;
-          }
+      if (element.getContainingFile() instanceof PsiCompiledFile) {
+        navigationElement = element.getNavigationElement();
+        if (navigationElement != null) {
+          element = navigationElement;
         }
+      }
 
-        if (element instanceof GrAccessorMethod) {
-          element = ((GrAccessorMethod)element).getProperty();
-        }
+      if (element instanceof GrAccessorMethod method) {
+        element = method.getProperty();
       }
     }
 
-    if (element instanceof GrPropertyForCompletion) {
-      element = ((GrPropertyForCompletion)element).getOriginalAccessor();
+    if (element instanceof GrPropertyForCompletion property) {
+      element = property.getOriginalAccessor();
     }
 
     return element;

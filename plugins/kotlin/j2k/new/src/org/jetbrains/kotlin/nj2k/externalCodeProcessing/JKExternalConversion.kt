@@ -42,7 +42,6 @@ internal class AccessorToPropertyKotlinExternalConversion(
     }
 }
 
-@Suppress("unused") // Try to use this class to fix KTIJ-21287
 internal class AccessorToPropertyJavaExternalConversion(
     private val name: String,
     private val accessorKind: AccessorKind,
@@ -82,8 +81,8 @@ internal class PropertyRenamedKotlinExternalUsageConversion(
 ) : JKExternalConversion() {
     override fun apply() {
         if (usage !is KtSimpleNameExpression) return
-        val factory = KtPsiFactory(usage)
-        usage.getReferencedNameElement().replace(factory.createExpression(newName))
+        val psiFactory = KtPsiFactory(usage.project)
+        usage.getReferencedNameElement().replace(psiFactory.createExpression(newName))
     }
 }
 

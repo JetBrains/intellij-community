@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAna
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.*
-import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms

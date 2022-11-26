@@ -84,7 +84,7 @@ class KtSymbolBasedResolutionFacade(
 
 }
 
-class KtSymbolBasedKotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
+class KtSymbolBasedKotlinCacheServiceImpl(private val project: Project) : KotlinCacheService {
     override fun getResolutionFacadeWithForcedPlatform(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade {
         TODO("Not yet implemented")
     }

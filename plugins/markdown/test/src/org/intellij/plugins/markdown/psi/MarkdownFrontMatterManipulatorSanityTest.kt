@@ -39,7 +39,7 @@ class MarkdownFrontMatterManipulatorSanityTest: LightPlatformCodeInsightTestCase
     ---
     """.trimIndent()
     configureFromFileText("some.md", content)
-    val element = file.firstChild.firstChild!!
+    val element = file.firstChild!!
     val manipulator = ElementManipulators.getNotNullManipulator(element)
     runWriteActionAndWait {
       manipulator.handleContentChange(element, TextRange(93, 100), "https://")

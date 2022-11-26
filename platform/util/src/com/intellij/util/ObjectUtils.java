@@ -15,9 +15,6 @@ import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 
-/**
- * @author peter
- */
 public final class ObjectUtils extends ObjectUtilsRt {
   private ObjectUtils() { }
 

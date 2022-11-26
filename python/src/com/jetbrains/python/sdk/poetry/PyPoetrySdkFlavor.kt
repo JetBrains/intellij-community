@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.poetry
 
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import java.io.File
 
 /**
@@ -12,8 +13,9 @@ import java.io.File
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-object PyPoetrySdkFlavor : CPythonSdkFlavor() {
+object PyPoetrySdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
   override fun getIcon() = POETRY_ICON
+  override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 
   override fun isValidSdkPath(file: File) = false
 }

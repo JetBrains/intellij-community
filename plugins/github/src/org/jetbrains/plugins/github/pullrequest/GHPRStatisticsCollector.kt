@@ -1,16 +1,25 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.async.disposingScope
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
 import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
 
 object GHPRStatisticsCollector {
 
@@ -56,4 +65,39 @@ object GHPRStatisticsCollector {
   fun logEnterpriseServerMeta(project: Project, server: GithubServerPath, meta: GHEnterpriseServerMeta) {
     SERVER_META_EVENT.log(project, server.toUrl(), meta.installedVersion)
   }
+}
+
+@Service
+private class GHServerVersionsCollector(private val project: Project) : Disposable {
+
+  private val scope = disposingScope()
+
+  init {
+    val accountsFlow = project.service<GHAccountManager>().accountsState
+    scope.launch {
+      accountsFlow.collect {
+        for (account in it) {
+          val server = account.server
+          if (server.isGithubDotCom) continue
+
+          //TODO: load with auth to avoid rate-limit
+          try {
+            val metadata = service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).await()
+            GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, metadata)
+          }
+          catch (ignore: Exception) {
+          }
+        }
+      }
+    }
+  }
+
+  class Initializer : StartupActivity.Background {
+    override fun runActivity(project: Project) {
+      //init service to start version checks
+      project.service<GHServerVersionsCollector>()
+    }
+  }
+
+  override fun dispose() = Unit
 }

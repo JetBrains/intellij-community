@@ -7,7 +7,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.toBufferExposingByteArray
@@ -52,10 +51,10 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     return true
   }
 
-  override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+  override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
     LOG.assertTrue(content.isNotEmpty())
     lock.write {
-      nameToData.put(PathUtilRt.getFileName(fileSpec), ArrayUtil.realloc(content, size))
+      nameToData.put(PathUtilRt.getFileName(fileSpec), content)
     }
     incModificationCount()
   }

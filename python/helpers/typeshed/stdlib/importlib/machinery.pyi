@@ -1,7 +1,8 @@
 import importlib.abc
 import sys
 import types
-from typing import Any, Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
+from typing import Any
 
 if sys.version_info >= (3, 8):
     from importlib.metadata import DistributionFinder, PathDistribution
@@ -133,10 +134,10 @@ class FileFinder(importlib.abc.PathEntryFinder):
         cls, *loader_details: tuple[type[importlib.abc.Loader], list[str]]
     ) -> Callable[[str], importlib.abc.PathEntryFinder]: ...
 
-class SourceFileLoader(importlib.abc.FileLoader, importlib.abc.SourceLoader):  # type: ignore # argument disparities
+class SourceFileLoader(importlib.abc.FileLoader, importlib.abc.SourceLoader):
     def set_data(self, path: importlib.abc._Path, data: bytes, *, _mode: int = ...) -> None: ...
 
-class SourcelessFileLoader(importlib.abc.FileLoader, importlib.abc.SourceLoader): ...  # type: ignore # argument disparities
+class SourcelessFileLoader(importlib.abc.FileLoader, importlib.abc.SourceLoader): ...
 
 class ExtensionFileLoader(importlib.abc.ExecutionLoader):
     def __init__(self, name: str, path: importlib.abc._Path) -> None: ...

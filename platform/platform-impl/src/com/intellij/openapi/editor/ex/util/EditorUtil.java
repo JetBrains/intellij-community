@@ -397,12 +397,15 @@ public final class EditorUtil {
       char c = text.charAt(i);
       int prevX = x;
       switch (c) {
-        case '\t':
+        case '\t' -> {
           x = nextTabStop(x, editor);
           result += columnsNumber(x - prevX, spaceSize);
-          break;
-        case '\n': x = result = 0; break;
-        default: x += charWidth(c, Font.PLAIN, editor); result++;
+        }
+        case '\n' -> x = result = 0;
+        default -> {
+          x += charWidth(c, Font.PLAIN, editor);
+          result++;
+        }
       }
     }
 
@@ -465,49 +468,83 @@ public final class EditorUtil {
   }
 
   /**
-   * Delegates to the {@link #calcSurroundingRange(Editor, VisualPosition, VisualPosition)} with the
-   * {@link CaretModel#getVisualPosition() caret visual position} as an argument.
-   *
-   * @param editor  target editor
-   * @return        surrounding logical positions
-   * @see #calcSurroundingRange(Editor, VisualPosition, VisualPosition)
+   * Calculates the text range of the line under the current caret.
+   * Note: it's neither visual, nor logical line; refer to {@link #calcSurroundingRange} for more info.
    */
-  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Editor editor) {
-    return calcSurroundingRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
-  }
-
-  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Caret caret) {
-    return calcSurroundingRange(caret.getEditor(), caret.getVisualPosition(), caret.getVisualPosition());
+  public static @NotNull TextRange calcCaretLineTextRange(@NotNull Editor editor) {
+    return logicalPairToTextRange(editor, calcCaretLineRange(editor));
   }
 
   /**
-   * Calculates logical positions that surround given visual positions and conform to the following criteria:
-   * <pre>
+   * Calculates the boundaries of the line under the current caret.
+   * Note: it's neither visual, nor logical line; refer to {@link #calcSurroundingRange} for more info.
+   */
+  public static @NotNull Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Editor editor) {
+    VisualPosition caretPosition = editor.getCaretModel().getCurrentCaret().getVisualPosition();
+    return calcSurroundingRange(editor, caretPosition, caretPosition);
+  }
+
+  /**
+   * Calculates the text range of the line under the specified caret.
+   * Note: it's neither visual, nor logical line; refer to {@link #calcSurroundingRange} for more info.
+   */
+  public static @NotNull TextRange calcCaretLineTextRange(@NotNull Caret caret) {
+    return logicalPairToTextRange(caret.getEditor(), calcCaretLineRange(caret));
+  }
+
+  /**
+   * Calculates the boundaries of the line under the specified caret.
+   * Note: it's neither visual, nor logical line; refer to {@link #calcSurroundingRange} for more info.
+   */
+  public static @NotNull Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Caret caret) {
+    VisualPosition caretPosition = caret.getVisualPosition();
+    return calcSurroundingRange(caret.getEditor(), caretPosition, caretPosition);
+  }
+
+  public static @NotNull TextRange calcSurroundingTextRange(@NotNull Editor editor,
+                                                            @NotNull VisualPosition start,
+                                                            @NotNull VisualPosition end) {
+    return logicalPairToTextRange(editor, calcSurroundingRange(editor, start, end));
+  }
+
+  /**
+   * Calculates the range covering line(s) between the specified visual positions.
+   * The "line" in question is neither visual, nor logical; it rather has traits of both:
+   * <ul>
+   *   <li>the "line" may span across several logical lines if there are folded regions;</li>
+   *   <li>the "line" may also span across several soft-wrapped visual lines.</li>
+   * </ul>
+   *
+   * Ultimately, this is the most intuitive definition of a line for user-facing actions
+   * like "Duplicate Line", "Extend Line Selection", and Copy/Cut with no selection.
+   *
+   * <p>
+   * Here's a more strict definition: this method calculates logical positions
+   * that surround the given visual positions and conform to the following criteria:
    * <ul>
    *   <li>located at the start or the end of the visual line;</li>
    *   <li>doesn't have soft wrap at the target offset;</li>
    * </ul>
-   * </pre>
-   * Example:
+   *
+   * Here's an example of a line that would be covered in its entirety
+   * (the very first and the very last positions are returned here):
    * <pre>
-   *   first line [soft-wrap] some [start-position] text [end-position] [fold-start] fold line 1
-   *   fold line 2
-   *   fold line 3[fold-end] [soft-wrap] end text
+   *
+   *   first line [soft-wrap->
+   *     ->] some [start]text[end] [fold-start]fold line 1
+   *                                           fold line 2
+   *                                           fold line 3[fold-end] [soft-wrap->
+   *     ->] end text
    * </pre>
-   * The very first and the last positions will be returned here.
    *
-   * @param editor    target editor to use
-   * @param start     target start coordinate
-   * @param end       target end coordinate
-   * @return          pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
-   *
+   * @return pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
    * @see #getNotFoldedLineStartOffset(Editor, int)
    * @see #getNotFoldedLineEndOffset(Editor, int)
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
-  public static Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
-                                                                            @NotNull VisualPosition start,
-                                                                            @NotNull VisualPosition end) {
+  public static @NotNull Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
+                                                                                     @NotNull VisualPosition start,
+                                                                                     @NotNull VisualPosition end) {
     final Document document = editor.getDocument();
     final FoldingModel foldingModel = editor.getFoldingModel();
 
@@ -554,6 +591,12 @@ public final class EditorUtil {
     return Pair.create(first, second);
   }
 
+  private static @NotNull TextRange logicalPairToTextRange(@NotNull Editor editor,
+                                                           @NotNull Pair<LogicalPosition, LogicalPosition> logicalPair) {
+    return TextRange.create(editor.logicalPositionToOffset(logicalPair.first),
+                            editor.logicalPositionToOffset(logicalPair.second));
+  }
+
   /**
    * Finds the start offset of visual line at which given offset is located, not taking soft wraps into account.
    */
@@ -562,7 +605,7 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset, boolean stopAtInvisibleFoldRegions) {
-    while(true) {
+    while (true) {
       offset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
       if (foldRegion == null ||

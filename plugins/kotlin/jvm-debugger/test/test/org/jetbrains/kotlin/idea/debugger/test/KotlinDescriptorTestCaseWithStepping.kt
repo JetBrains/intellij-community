@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
@@ -41,7 +42,6 @@ import org.jetbrains.kotlin.idea.debugger.test.util.render
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.InTextDirectivesUtils

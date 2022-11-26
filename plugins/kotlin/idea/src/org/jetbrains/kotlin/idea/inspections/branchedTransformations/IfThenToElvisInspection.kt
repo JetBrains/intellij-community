@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.branchedTransformations
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtNodeTypes
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getType
@@ -54,15 +54,15 @@ class IfThenToElvisInspection @JvmOverloads constructor(
         fun convert(element: KtIfExpression, editor: Editor?, inlineWithPrompt: Boolean) {
             val ifThenToSelectData = element.buildSelectTransformationData() ?: return
 
-            val factory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
 
             val commentSaver = CommentSaver(element, saveLineBreaks = false)
             val margin = element.containingKtFile.rightMarginOrDefault
             val elvis = runWriteAction {
-                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(factory)
+                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(psiFactory)
                 val negatedClause = ifThenToSelectData.negatedClause!!
                 val newExpr = element.replaced(
-                    factory.createExpressionByPattern(
+                    psiFactory.createExpressionByPattern(
                         elvisPattern(replacedBaseClause.textLength + negatedClause.textLength + 5 >= margin),
                         replacedBaseClause,
                         negatedClause

@@ -30,21 +30,23 @@ public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testRecognizeTestMethodInParameterizedClass() {
-    myFixture.configureByText("A.java", "import org.junit.Test;\n" +
-                                        "import org.junit.runner.RunWith;\n" +
-                                        "import org.junit.runners.Parameterized;\n" +
-                                        "import java.util.*;\n" +
-                                        "@RunWith(Parameterized.class)\n" +
-                                        "public class A {\n" +
-                                        "  @Parameterized.Parameters\n" +
-                                        "  public static Collection<Object[]> data() {\n" +
-                                        "    return Arrays.asList(new Object[] {\"11\"}, new Object[] {\"12\"});\n" +
-                                        "  }\n" +
-                                        "  @Parameterized.Parameter\n" +
-                                        "  public String myJUnitVersion;\n" +
-                                        "  @Test\n" +
-                                        "  public void ignoredTestMethod() throws Exception {}\n" +
-                                        "}\n");
+    myFixture.configureByText("A.java", """
+      import org.junit.Test;
+      import org.junit.runner.RunWith;
+      import org.junit.runners.Parameterized;
+      import java.util.*;
+      @RunWith(Parameterized.class)
+      public class A {
+        @Parameterized.Parameters
+        public static Collection<Object[]> data() {
+          return Arrays.asList(new Object[] {"11"}, new Object[] {"12"});
+        }
+        @Parameterized.Parameter
+        public String myJUnitVersion;
+        @Test
+        public void ignoredTestMethod() throws Exception {}
+      }
+      """);
     myFixture.testHighlighting(true, false, false);
   }
 }

@@ -17,13 +17,13 @@ UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identi
     UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
     UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
-USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
+USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> Decompiled_Method: isBlank
+USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> Decompiled_Method: isBlank
 UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
-USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
+USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> Decompiled_Method: isBlank
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isBlank) -> FUN: isBlank
-UBinaryExpression (operator = !=) -> UQualifiedReferenceExpression -> null: null
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isBlank) -> FUN: isBlank
+UBinaryExpression (operator = !=) -> UQualifiedReferenceExpression -> Decompiled_Method: isNotEmpty
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isNotEmpty) -> FUN: isNotEmpty
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isNotEmpty) -> FUN: isNotEmpty
 UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> null: null

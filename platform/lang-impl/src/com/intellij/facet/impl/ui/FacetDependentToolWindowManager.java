@@ -3,6 +3,8 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.*;
 import com.intellij.facet.ui.FacetDependentToolWindow;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
@@ -47,31 +49,43 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
     ProjectWideFacetListenersRegistry.getInstance(project).registerListener(new ProjectWideFacetAdapter<>() {
       @Override
       public void facetAdded(@NotNull Facet facet) {
-        for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
-          ensureToolWindowExists(extension, project);
-        }
+        checkIfToolwindowMustBeAdded(facet.getType());
       }
 
       @Override
       public void facetRemoved(@NotNull Facet facet) {
-        ProjectFacetManager facetManager = ProjectFacetManager.getInstance(project);
-        if (facetManager.hasFacets(facet.getTypeId())) {
-          return;
-        }
+        checkIfToolwindowMustBeRemoved(facet.getType());
+      }
 
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-        for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
-          ToolWindow toolWindow = toolWindowManager.getToolWindow(extension.id);
-          if (toolWindow != null) {
-            // check for other facets
-            for (FacetType<?, ?> facetType : extension.getFacetTypes()) {
-              if (facetManager.hasFacets(facetType.getId())) {
-                return;
-              }
-            }
-            toolWindow.remove();
+      private void checkIfToolwindowMustBeAdded(FacetType<?, ?> facetType) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          for (FacetDependentToolWindow extension : getDependentExtensions(facetType)) {
+            ensureToolWindowExists(extension, project);
           }
-        }
+        }, ModalityState.NON_MODAL, project.getDisposed());
+      }
+
+      private void checkIfToolwindowMustBeRemoved(FacetType<?, ?> removedFacetType) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          ProjectFacetManager facetManager = ProjectFacetManager.getInstance(project);
+          if (facetManager.hasFacets(removedFacetType.getId())) {
+            return;
+          }
+
+          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+          for (FacetDependentToolWindow extension : getDependentExtensions(removedFacetType)) {
+            ToolWindow toolWindow = toolWindowManager.getToolWindow(extension.id);
+            if (toolWindow != null) {
+              // check for other facets
+              for (FacetType<?, ?> facetType : extension.getFacetTypes()) {
+                if (facetManager.hasFacets(facetType.getId())) {
+                  return;
+                }
+              }
+              toolWindow.remove();
+            }
+          }
+        }, ModalityState.NON_MODAL, project.getDisposed());
       }
     }, project);
 
@@ -119,10 +133,10 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
     }
   }
 
-  private static @NotNull List<FacetDependentToolWindow> getDependentExtensions(@NotNull Facet<?> facet) {
+  private static @NotNull List<FacetDependentToolWindow> getDependentExtensions(@NotNull FacetType<?, ?> facetType) {
     return ContainerUtil.filter(FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList(), toolWindowEP -> {
       for (String id : toolWindowEP.getFacetIds()) {
-        if (facet.getType().getStringId().equals(id)) {
+        if (facetType.getStringId().equals(id)) {
           return true;
         }
       }

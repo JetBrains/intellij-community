@@ -57,7 +57,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
+      return CommonQuickFixBundle.message("fix.replace.with.x.call", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
     }
 
     @NotNull
@@ -67,7 +67,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor){
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor){
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
@@ -114,7 +114,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       CommentTracker tracker = new CommentTracker();
       String text =
         (deepHashCode ? "java.util.Arrays.deepHashCode(" : "java.util.Arrays.hashCode(") + tracker.text(descriptor.getPsiElement()) + ')';

@@ -9,57 +9,67 @@ import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.ui.jcef.JBCefApp;
+import com.intellij.util.CachedValueImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup {
-  private OpenFileInDefaultBrowserAction myDefaultBrowserAction;
+public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implements DumbAware {
+  private CachedValue<AnAction[]> myChildren;
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
-    super(popup);
-
     Presentation p = getTemplatePresentation();
-    p.setText(IdeBundle.message("open.in.browser"));
-    p.setDescription(IdeBundle.message("open.selected.file.in.browser"));
+    p.setPopupGroup(popup);
+    p.setHideGroupIfEmpty(true);
+    p.setText(IdeBundle.messagePointer("open.in.browser"));
+    p.setDescription(IdeBundle.messagePointer("open.selected.file.in.browser"));
     p.setIcon(AllIcons.Nodes.PpWeb);
   }
 
-  @NotNull
   @Override
-  protected final CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull final ActionManager actionManager) {
-    return () -> {
-      List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
-      boolean addDefaultBrowser = isPopup();
-      boolean hasLocalBrowser = hasLocalBrowser();
-      int offset = 0;
-      if (addDefaultBrowser) offset++;
-      if (hasLocalBrowser) offset++;
-      AnAction[] actions = new AnAction[browsers.size() + offset];
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    CachedValue<AnAction[]> children = myChildren;
+    if (children == null) {
+      children = new CachedValueImpl<>(() -> {
+        AnAction[] actions = computeChildren();
+        return CachedValueProvider.Result.create(actions, WebBrowserManager.getInstance());
+      });
+      myChildren = children;
+    }
+    return children.getValue();
+  }
 
-      if (hasLocalBrowser) {
-        actions[0] = new OpenHtmlInEmbeddedBrowserAction();
-      }
+  private AnAction @NotNull [] computeChildren() {
+    List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
+    boolean addDefaultBrowser = isPopup();
+    boolean hasLocalBrowser = hasLocalBrowser();
+    int offset = 0;
+    if (addDefaultBrowser) offset++;
+    if (hasLocalBrowser) offset++;
+    AnAction[] actions = new AnAction[browsers.size() + offset];
 
-      if (addDefaultBrowser) {
-        if (myDefaultBrowserAction == null) {
-          myDefaultBrowserAction = new OpenFileInDefaultBrowserAction();
-          myDefaultBrowserAction.getTemplatePresentation().setText(IdeBundle.message("default"));
-          myDefaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
-        }
-        actions[hasLocalBrowser ? 1 : 0] = myDefaultBrowserAction;
-      }
+    if (hasLocalBrowser) {
+      actions[0] = new OpenHtmlInEmbeddedBrowserAction();
+    }
 
-      for (int i = 0, size = browsers.size(); i < size; i++) {
-        actions[i + offset] = new BaseOpenInBrowserAction(browsers.get(i));
-      }
+    if (addDefaultBrowser) {
+      OpenFileInDefaultBrowserAction defaultBrowserAction = new OpenFileInDefaultBrowserAction();
+      defaultBrowserAction.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
+      defaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
+      actions[hasLocalBrowser ? 1 : 0] = defaultBrowserAction;
+    }
 
-      return CachedValueProvider.Result.create(actions, WebBrowserManager.getInstance());
-    };
+    for (int i = 0, size = browsers.size(); i < size; i++) {
+      actions[i + offset] = new BaseOpenInBrowserAction(browsers.get(i));
+    }
+    return actions;
   }
 
   @Override

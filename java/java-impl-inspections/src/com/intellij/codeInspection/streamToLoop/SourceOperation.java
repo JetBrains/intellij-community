@@ -426,16 +426,12 @@ abstract class SourceOperation extends Operation {
     }
 
     static String getIteratorType(String type) {
-      switch(type) {
-        case "int":
-          return "java.util.PrimitiveIterator.OfInt";
-        case "long":
-          return "java.util.PrimitiveIterator.OfLong";
-        case "double":
-          return "java.util.PrimitiveIterator.OfDouble";
-        default:
-          return CommonClassNames.JAVA_UTIL_ITERATOR+"<"+type+">";
-      }
+      return switch (type) {
+        case "int" -> "java.util.PrimitiveIterator.OfInt";
+        case "long" -> "java.util.PrimitiveIterator.OfLong";
+        case "double" -> "java.util.PrimitiveIterator.OfDouble";
+        default -> CommonClassNames.JAVA_UTIL_ITERATOR + "<" + type + ">";
+      };
     }
 
     @Override

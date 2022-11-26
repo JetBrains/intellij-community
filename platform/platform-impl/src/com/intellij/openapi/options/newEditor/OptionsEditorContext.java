@@ -31,7 +31,7 @@ public final class OptionsEditorContext {
   @NotNull
   Promise<? super Object> fireSelected(@Nullable final Configurable configurable, @NotNull OptionsEditorColleague requestor) {
     if (myCurrentConfigurable == configurable) {
-      return Promises.rejectedPromise();
+      return Promises.resolvedPromise();
     }
 
     final Configurable old = myCurrentConfigurable;

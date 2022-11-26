@@ -184,47 +184,48 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
   // PY-16419, PY-26417
   public void testExitPointInsideWith() {
     doTestByText(
-      "class C(object):\n" +
-      "    def __enter__(self):\n" +
-      "        return self\n" +
-      "\n" +
-      "    def __exit__(self, exc, value, traceback):\n" +
-      "        return undefined\n" +
-      "\n" +
-      "def g1():\n" +
-      "    raise Exception()\n" +
-      "\n" +
-      "def f1():\n" +
-      "    with C():\n" +
-      "        if undefined:\n" +
-      "            return g1()\n" +
-      "        x = 2\n" +
-      "    print(x) #pass\n" +
-      "\n" +
-      "def f2():\n" +
-      "    with C():\n" +
-      "        if undefined:\n" +
-      "            g1()\n" +
-      "        x = 2\n" +
-      "    print(x) #pass\n" +
-      "\n" +
-      "import contextlib\n" +
-      "from unittest import TestCase\n" +
-      "\n" +
-      "def f1():\n" +
-      "    with contextlib.suppress(Exception):\n" +
-      "        if undefined:\n" +
-      "            return g1()\n" +
-      "        x = 2\n" +
-      "    print(x) #pass\n" +
-      "\n" +
-      "class A(TestCase):\n" +
-      "    def f2(self):\n" +
-      "        with self.assertRaises(Exception):\n" +
-      "            if undefined:\n" +
-      "                g1()\n" +
-      "            x = 2\n" +
-      "        print(x) #pass"
+      """
+        class C(object):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc, value, traceback):
+                return undefined
+
+        def g1():
+            raise Exception()
+
+        def f1():
+            with C():
+                if undefined:
+                    return g1()
+                x = 2
+            print(x) #pass
+
+        def f2():
+            with C():
+                if undefined:
+                    g1()
+                x = 2
+            print(x) #pass
+
+        import contextlib
+        from unittest import TestCase
+
+        def f1():
+            with contextlib.suppress(Exception):
+                if undefined:
+                    return g1()
+                x = 2
+            print(x) #pass
+
+        class A(TestCase):
+            def f2(self):
+                with self.assertRaises(Exception):
+                    if undefined:
+                        g1()
+                    x = 2
+                print(x) #pass"""
     );
   }
 
@@ -259,15 +260,16 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
   // PY-23003
   public void testAccessInNestedLoop() {
     doTestByText(
-      "for file in ['test_file']:\n" +
-      "    for line in f:\n" +
-      "        if a:\n" +
-      "            block = True\n" +
-      "        elif <warning descr=\"Name 'block' can be undefined\">block</warning> and b:\n" +
-      "            block = False\n" +
-      "        else:\n" +
-      "            print(line)\n" +
-      "    print(block)"
+      """
+        for file in ['test_file']:
+            for line in f:
+                if a:
+                    block = True
+                elif <warning descr="Name 'block' can be undefined">block</warning> and b:
+                    block = False
+                else:
+                    print(line)
+            print(block)"""
     );
   }
 
@@ -279,41 +281,44 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-31834
   public void testTargetWithoutAssignedValueButInitialized() {
-    doTestByText("for var in range(10):\n" +
-                 "    print(var)\n" +
-                 "\n" +
-                 "with undefined as val:\n" +
-                 "    print(val)");
+    doTestByText("""
+                   for var in range(10):
+                       print(var)
+
+                   with undefined as val:
+                       print(val)""");
   }
 
   // PY-33886
   public void testAssignmentExpressions() {
     doTestByText(
-      "def foo():\n" +
-      "    if any((comment := line).startswith('#') for line in lines):\n" +
-      "        print(\"First comment:\", comment)\n" +
-      "    else:\n" +
-      "        print(\"There are no comments\")\n" +
-      "\n" +
-      "    if all((nonblank := line).strip() == '' for line in lines):\n" +
-      "        print(\"All lines are blank\")\n" +
-      "    else:\n" +
-      "        print(\"First non-blank line:\", nonblank)\n" +
-      "\n" +
-      "\n" +
-      "def bar():\n" +
-      "    [(comment := line).startswith('#') for line in lines]\n" +
-      "    print(<warning descr=\"Local variable 'comment' might be referenced before assignment\">comment</warning>)\n" +
-      "\n" +
-      "\n" +
-      "def baz():\n" +
-      "    while (line := input()) and any((first_digit := c).isdigit() for c in line):\n" +
-      "        print(line, first_digit)\n" +
-      "\n" +
-      "\n" +
-      "def more():\n" +
-      "    if (x := True) or (y := 'spam'):\n" +
-      "        print(<warning descr=\"Local variable 'y' might be referenced before assignment\">y</warning>)\n"
+      """
+        def foo():
+            if any((comment := line).startswith('#') for line in lines):
+                print("First comment:", comment)
+            else:
+                print("There are no comments")
+
+            if all((nonblank := line).strip() == '' for line in lines):
+                print("All lines are blank")
+            else:
+                print("First non-blank line:", nonblank)
+
+
+        def bar():
+            [(comment := line).startswith('#') for line in lines]
+            print(<warning descr="Local variable 'comment' might be referenced before assignment">comment</warning>)
+
+
+        def baz():
+            while (line := input()) and any((first_digit := c).isdigit() for c in line):
+                print(line, first_digit)
+
+
+        def more():
+            if (x := True) or (y := 'spam'):
+                print(<warning descr="Local variable 'y' might be referenced before assignment">y</warning>)
+        """
     );
   }
 
@@ -374,6 +379,11 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-48760
   public void testNameDefinedInCaseClauseBodyUsedAfterMatchStatement() {
+    doTest();
+  }
+
+  // PY-7758
+  public void testVariableNotReportedAfterBuiltinExit() {
     doTest();
   }
 

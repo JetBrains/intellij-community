@@ -1,12 +1,13 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
+import com.intellij.dependencytoolwindow.DependenciesToolWindowTabProvider
+import com.intellij.dependencytoolwindow.DependenciesToolWindowTabProvider.Subscription
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.Subscription
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories.RepositoryManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
@@ -18,7 +19,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 
-class RepositoryManagementPanelProvider : DependenciesToolwindowTabProvider {
+class RepositoryManagementPanelProvider : DependenciesToolWindowTabProvider {
+
+    companion object : DependenciesToolWindowTabProvider.Id
 
     @Service(Level.PROJECT)
     private class PanelContainer(private val project: Project) {
@@ -31,6 +34,8 @@ class RepositoryManagementPanelProvider : DependenciesToolwindowTabProvider {
             ) { isServiceReady, isFlagEnabled -> isServiceReady && isFlagEnabled }
                 .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
     }
+
+    override val id: DependenciesToolWindowTabProvider.Id = Companion
 
     override fun provideTab(project: Project): Content = project.service<PanelContainer>().packageManagementPanel
 

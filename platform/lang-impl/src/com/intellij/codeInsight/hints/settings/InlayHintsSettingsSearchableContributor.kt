@@ -3,16 +3,16 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
-import com.intellij.codeInsight.hints.InlayHintsProviderFactory
-import com.intellij.codeInsight.hints.InlayHintsSettings
-import com.intellij.codeInsight.hints.InlayParameterHintsExtension
-import com.intellij.codeInsight.hints.settings.language.SingleLanguageInlayHintsConfigurable
-import com.intellij.codeInsight.hints.withSettings
+import com.intellij.codeInsight.hints.*
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
+import com.intellij.lang.Language
 
 private class InlayHintsSettingsSearchableContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
+    for (inlayGroup in InlayGroup.values()) {
+      addOption(processor, inlayGroup.toString(), null)
+    }
     for (settingsProvider in CodeVisionGroupSettingProvider.EP.EXTENSION_POINT_NAME.extensionList) {
       addOption(processor, settingsProvider.description, null)
       addOption(processor, settingsProvider.groupName, null)
@@ -23,7 +23,7 @@ private class InlayHintsSettingsSearchableContributor : SearchableOptionContribu
     for (providerInfo in InlayHintsProviderFactory.EP.extensionList.flatMap(InlayHintsProviderFactory::getProvidersInfo)) {
       val provider = providerInfo.provider
       val name = provider.name
-      val id = SingleLanguageInlayHintsConfigurable.getId(providerInfo.language)
+      val id = getId(providerInfo.language)
       addOption(processor, name, id)
       val providerWithSettings = provider.withSettings(providerInfo.language, InlayHintsSettings.instance())
       val configurable = providerWithSettings.configurable
@@ -35,6 +35,8 @@ private class InlayHintsSettingsSearchableContributor : SearchableOptionContribu
     }
     InlayParameterHintsExtension.point?.extensions?.flatMap { it.instance.supportedOptions }?.forEach { addOption(processor, it.name, null) }
   }
+
+  private fun getId(language: Language) = "inlay.hints." + language.id
 
   private fun addOption(processor: SearchableOptionProcessor, name: String, id: String?) {
     if (id != null) {

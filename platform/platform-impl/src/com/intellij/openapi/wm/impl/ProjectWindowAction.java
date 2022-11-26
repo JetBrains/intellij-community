@@ -113,9 +113,6 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean selected) {
-    if (!selected) {
-      return;
-    }
     final Project project = findProject();
     if (project == null) {
       return;

@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
@@ -69,7 +70,7 @@ class MavenImportingManager(val project: Project) {
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(disposable)
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosing(p: Project) {
         Disposer.dispose(disposable)
         forceStopImport()
@@ -164,7 +165,7 @@ class MavenImportingManager(val project: Project) {
     VirtualFileManager.getInstance().asyncRefresh {
       vfsRefreshPromise.setResult(null)
     }
-    return MavenImportingResult(getImportFinishPromise(), vfsRefreshPromise, initialImportContext.dummyModule)
+    return MavenImportingResult(getImportFinishPromise(), vfsRefreshPromise, initialImportContext.previewModule)
   }
 
   private fun setProjectSettings(initialImportContext: MavenInitialImportContext) {
@@ -211,6 +212,7 @@ class MavenImportingManager(val project: Project) {
           MavenLog.LOG.warn(e)
         }
       }
+      flow.updateProjectManager(readMavenFiles)
 
       val dependenciesContext = doTask(MavenProjectBundle.message("maven.resolving"), activity,
                                        MavenImportStats.ResolvingTask::class.java) {
@@ -235,7 +237,7 @@ class MavenImportingManager(val project: Project) {
                             MavenImportStats.ConfiguringProjectsTask::class.java) {
         currentContext?.indicator?.checkCanceled()
         flow.runPostImportTasks(importContext)
-        flow.updateProjectManager(readMavenFiles)
+        runLegacyListeners(readMavenFiles) { projectImportCompleted() }
         setProjectSettings(initialImport)
         MavenResolveResultProblemProcessor.notifyMavenProblems(project) // remove this, should be in appropriate phase
         return@doTask MavenImportFinishedContext(importContext)

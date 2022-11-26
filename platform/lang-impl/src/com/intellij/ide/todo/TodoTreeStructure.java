@@ -3,6 +3,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.todo.nodes.ToDoRootNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -18,100 +19,108 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
-public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings{
+public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings {
   protected TodoTreeBuilder myBuilder;
-  protected AbstractTreeNode myRootElement;
+  protected AbstractTreeNode<?> myRootElement;
   protected final ToDoSummary mySummaryElement;
 
   private boolean myFlattenPackages;
-  protected boolean myArePackagesShown;
+  private boolean myArePackagesShown;
   private boolean myAreModulesShown;
 
 
-  protected final PsiTodoSearchHelper mySearchHelper;
+  private final PsiTodoSearchHelper mySearchHelper;
   /**
    * Current {@code TodoFilter}. If no filter is set then this field is {@code null}.
    */
-  protected TodoFilter myTodoFilter;
+  private TodoFilter myTodoFilter;
 
-  public TodoTreeStructure(Project project){
+  public TodoTreeStructure(Project project) {
     super(project);
-    myArePackagesShown=true;
-    mySummaryElement=new ToDoSummary();
-    mySearchHelper= PsiTodoSearchHelper.getInstance(project);
+    myArePackagesShown = true;
+    mySummaryElement = new ToDoSummary();
+    mySearchHelper = PsiTodoSearchHelper.getInstance(project);
   }
 
-  final void setTreeBuilder(TodoTreeBuilder builder){
-    myBuilder=builder;
-    myRootElement=createRootElement();
+  final void setTreeBuilder(TodoTreeBuilder builder) {
+    myBuilder = builder;
+    myRootElement = createRootElement();
   }
 
-  protected abstract AbstractTreeNode createRootElement();
+  protected AbstractTreeNode<?> createRootElement() {
+    return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
+  }
 
   public abstract boolean accept(PsiFile psiFile);
 
   /**
    * Validate whole the cache
    */
-  protected void validateCache(){
+  protected void validateCache() {
   }
 
-  public final boolean isPackagesShown(){
+  public final boolean isPackagesShown() {
     return myArePackagesShown;
   }
 
-  final void setShownPackages(boolean state){
-    myArePackagesShown=state;
+  final void setShownPackages(boolean state) {
+    myArePackagesShown = state;
   }
 
-  public final boolean areFlattenPackages(){
+  public final boolean areFlattenPackages() {
     return myFlattenPackages;
   }
 
-  public final void setFlattenPackages(boolean state){
-    myFlattenPackages=state;
+  public final void setFlattenPackages(boolean state) {
+    myFlattenPackages = state;
   }
 
   /**
    * Sets new {@code TodoFilter}. {@code null} is acceptable value. It means
    * that there is no any filtration of <code>TodoItem>/code>s.
    */
-  final void setTodoFilter(TodoFilter todoFilter){
-    myTodoFilter=todoFilter;
+  final void setTodoFilter(TodoFilter todoFilter) {
+    myTodoFilter = todoFilter;
   }
 
   /**
    * @return first element that can be selected in the tree. The method can returns {@code null}.
    */
-  abstract Object getFirstSelectableElement();
+  Object getFirstSelectableElement() {
+    return ((ToDoRootNode)myRootElement).getSummaryNode();
+  }
 
   /**
    * @return number of {@code TodoItem}s located in the file.
    */
-  public final int getTodoItemCount(PsiFile psiFile){
-    int count=0;
-    if(psiFile != null){
-      if(myTodoFilter!=null){
-        for(Iterator i=myTodoFilter.iterator();i.hasNext();){
-          TodoPattern pattern=(TodoPattern)i.next();
-          count+=getSearchHelper().getTodoItemsCount(psiFile,pattern);
+  public final int getTodoItemCount(PsiFile psiFile) {
+    int count = 0;
+    if (psiFile != null) {
+      if (myTodoFilter != null) {
+        for (Iterator i = myTodoFilter.iterator(); i.hasNext(); ) {
+          TodoPattern pattern = (TodoPattern)i.next();
+          count += getSearchHelper().getTodoItemsCount(psiFile, pattern);
         }
-      }else{
-        count=getSearchHelper().getTodoItemsCount(psiFile);
+      }
+      else {
+        count = getSearchHelper().getTodoItemsCount(psiFile);
       }
     }
     return count;
   }
 
-  boolean isAutoExpandNode(NodeDescriptor descriptor){
-    Object element=descriptor.getElement();
+  boolean isAutoExpandNode(NodeDescriptor descriptor) {
+    Object element = descriptor.getElement();
     if (element instanceof AbstractTreeNode) {
       element = ((AbstractTreeNode<?>)element).getValue();
     }
     return element == getRootElement() || element == mySummaryElement && (myAreModulesShown || myArePackagesShown);
+  }
+
+  protected boolean acceptTodoFilter(PsiFile psiFile) {
+    PsiTodoSearchHelper searchHelper = getSearchHelper();
+    return myTodoFilter != null && myTodoFilter.accept(searchHelper, psiFile) ||
+           (myTodoFilter == null && searchHelper.getTodoItemsCount(psiFile) > 0);
   }
 
   @Override
@@ -132,12 +141,17 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
 
   @NotNull
   @Override
-  public final Object getRootElement(){
+  public final Object getRootElement() {
     return myRootElement;
   }
 
   public boolean getIsFlattenPackages() {
     return myFlattenPackages;
+  }
+
+  @Override
+  public boolean getIsPackagesShown() {
+    return myArePackagesShown;
   }
 
   public PsiTodoSearchHelper getSearchHelper() {

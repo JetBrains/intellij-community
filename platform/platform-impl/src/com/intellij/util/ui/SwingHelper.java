@@ -423,8 +423,14 @@ public class SwingHelper {
                                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
                                                        @NotNull FileChooserDescriptor fileChooserDescriptor,
                                                        @NotNull TextComponentAccessor<T> textComponentAccessor) {
-    ComponentsKt.installFileCompletionAndBrowseDialog(project, componentWithBrowseButton, textField, browseDialogTitle,
-                                                      fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix), textComponentAccessor);
+    ComponentsKt.installFileCompletionAndBrowseDialog(
+      project,
+      componentWithBrowseButton,
+      textField,
+      browseDialogTitle,
+      fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix),
+      textComponentAccessor
+    );
   }
 
   /**
@@ -776,7 +782,7 @@ public class SwingHelper {
       bodyInnerHtml
     );
     String disabledHtml = buildHtml(
-      UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
+      UIUtil.getCssFontDeclaration(font, NamedColorUtil.getInactiveTextColor(), null, null),
       ObjectUtils.notNull(disabledBodyInnerHtml, bodyInnerHtml)
     );
 

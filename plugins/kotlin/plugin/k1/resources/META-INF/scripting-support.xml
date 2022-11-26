@@ -14,11 +14,6 @@
             dynamic="true"
             area="IDEA_PROJECT"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.support.checker.provider"
-            interface="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportCheckerProvider"
-            dynamic="true"
-            area="IDEA_PROJECT"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
             interface="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider"
             area="IDEA_PROJECT"
@@ -89,6 +84,22 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
+    <!--suppress PluginXmlValidity -->
+    <customEntityProjectModelInfoProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptProjectModelInfoProvider"/>
+
+    <indexableIteratorBuilderHandler implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryIndexableIteratorHandler"/>
+
+    <!--suppress PluginXmlValidity -->
+    <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
+
+    <!--suppress PluginXmlValidity -->
+    <indexableEntityProvider implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptDependencyIndexableEntityProvider"/>
+
+    <registryKey key="kotlin.scripts.as.entities"
+                 description="Enables explicit script dependencies support"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
     <registryKey key="kotlin.scripting.support.warning"
                  description="Show Kotlin scripting support warning"
                  defaultValue="true"
@@ -101,6 +112,11 @@
 
     <registryKey key="kotlin.scripting.fs.roots.storage.enabled"
                  description="Cache resolved dependencies paths across all scripts"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.scripting.filter.redundant.deps"
+                 description="Filter redundant dependencies from Kotlin/Gradle script dependencies like groovy/kotlin-daemon-embeddable/etc"
                  defaultValue="false"
                  restartRequired="true"/>
 
@@ -150,6 +166,9 @@
 
     <scripting.support.checker.provider id="TeamCityKtsScriptCheckerProvider"
             implementation="org.jetbrains.kotlin.idea.script.TeamCityKtsScriptCheckerProvider"/>
+
+    <scripting.support.checker.provider id="WorkspaceKtsScriptCheckerProvider"
+            implementation="org.jetbrains.kotlin.idea.script.WorkspaceKtsScriptCheckerProvider"/>
 
     <ideScriptConfigurationControlFacade implementation="org.jetbrains.kotlin.idea.script.DefaultIdeScriptingConfigurationFacade"/>
 

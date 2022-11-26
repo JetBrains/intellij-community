@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.search.ideaExtensions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
@@ -39,7 +40,6 @@ import org.jetbrains.kotlin.idea.search.*
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.Empty
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.calculateEffectiveScope
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReferenceSearcher
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
@@ -74,18 +74,8 @@ data class KotlinReferencesSearchOptions(
             } ?: listOf(elementToSearch)
 
             return elements.fold(parameters.effectiveSearchScope) { scope, e ->
-                scope.unionSafe(parameters.effectiveSearchScope(e))
+                scope.union(parameters.effectiveSearchScope(e))
             }
-        }
-
-        private fun SearchScope.unionSafe(other: SearchScope): SearchScope {
-            if (this is LocalSearchScope && this.scope.isEmpty()) {
-                return other
-            }
-            if (other is LocalSearchScope && other.scope.isEmpty()) {
-                return this
-            }
-            return this.union(other)
         }
     }
 }

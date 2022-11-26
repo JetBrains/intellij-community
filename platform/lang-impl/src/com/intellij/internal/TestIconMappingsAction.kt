@@ -1,21 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
+import com.intellij.ide.ui.IconMapLoader
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.IconLoader
-import com.intellij.ui.ExperimentalUIImpl
 
 /**
  * @author Konstantin Bulenkov
  */
-class TestIconMappingsAction : DumbAwareAction() {
+private class TestIconMappingsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = mutableListOf<String>()
-    val mappings = ExperimentalUIImpl.loadIconMappingsImpl()
-    mappings.forEach { (classLoader, map) ->
-      map.forEach { (expUI, oldUI) ->
+    val mappings = service<IconMapLoader>().loadIconMapping()
+    for ((classLoader, map) in mappings) {
+      for ((expUI, oldUI) in map) {
         listOf(expUI, oldUI).forEach {
           if (!(it.endsWith(".svg") || it.endsWith(".png"))) {
             errors.add("Path should end with .svg or .png '$it'")

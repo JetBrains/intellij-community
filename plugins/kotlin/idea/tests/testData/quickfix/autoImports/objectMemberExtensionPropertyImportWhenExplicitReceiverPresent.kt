@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension property 'T.foobar'" "true"
 package p
 
 class T

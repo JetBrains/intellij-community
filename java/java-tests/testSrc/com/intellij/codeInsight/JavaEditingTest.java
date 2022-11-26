@@ -127,10 +127,11 @@ public class JavaEditingTest extends EditingTestBase {
     // Inspired by IDEA-69872
 
     String initial =
-      "class Test {\n" +
-      " <caret>   void test() {\n" +
-      "    }\n" +
-      "}";
+      """
+        class Test {
+         <caret>   void test() {
+            }
+        }""";
     init(initial, JavaFileType.INSTANCE);
 
     final CommonCodeStyleSettings.IndentOptions options = mySettings.getIndentOptions(JavaFileType.INSTANCE);
@@ -149,10 +150,11 @@ public class JavaEditingTest extends EditingTestBase {
     }
 
     String expected =
-      "class Test {\n" +
-      "\t<caret>void test() {\n" +
-      "\t}\n" +
-      "}";
+      """
+        class Test {
+        \t<caret>void test() {
+        \t}
+        }""";
     checkResultByText(expected);
   }
 
@@ -160,11 +162,12 @@ public class JavaEditingTest extends EditingTestBase {
     // Inspired by IDEA-70898.
 
     String initial =
-      "/**\n" +
-      " * @param <T<caret>\n" +
-      " */\n" +
-      "class Test<T> {\n" +
-      "}";
+      """
+        /**
+         * @param <T<caret>
+         */
+        class Test<T> {
+        }""";
     init(initial, JavaFileType.INSTANCE);
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     final boolean old = settings.JAVADOC_GENERATE_CLOSING_TAG;
@@ -173,11 +176,12 @@ public class JavaEditingTest extends EditingTestBase {
       settings.JAVADOC_GENERATE_CLOSING_TAG = true;
       type("> <test-tag>");
       String expected =
-        "/**\n" +
-        " * @param <T> <test-tag><caret></test-tag>\n" +
-        " */\n" +
-        "class Test<T> {\n" +
-        "}";
+        """
+          /**
+           * @param <T> <test-tag><caret></test-tag>
+           */
+          class Test<T> {
+          }""";
       checkResultByText(expected);
     }
     finally {
@@ -189,11 +193,12 @@ public class JavaEditingTest extends EditingTestBase {
     // Inspired by IDEA-76050
 
     String initial =
-      "class Test {\n" +
-      "\tvoid test() {\n" +
-      "\t\t<caret>\n" +
-      "\t}\n" +
-      "}";
+      """
+        class Test {
+        \tvoid test() {
+        \t\t<caret>
+        \t}
+        }""";
     init(initial, JavaFileType.INSTANCE);
     CommonCodeStyleSettings.IndentOptions indentOptions =
       getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
@@ -204,24 +209,27 @@ public class JavaEditingTest extends EditingTestBase {
     indentOptions.SMART_TABS = true;
     unindent();
     checkResultByText(
-      "class Test {\n" +
-      "\tvoid test() {\n" +
-      "\t<caret>\n" +
-      "\t}\n" +
-      "}"
+      """
+        class Test {
+        \tvoid test() {
+        \t<caret>
+        \t}
+        }"""
     );
   }
 
   public void testHungryBackspaceWinsOverSmartBackspace() {
-    init("class Test {\n" +
-         "    void m() {\n" +
-         "    \n" +
-         "    <caret>}\n" +
-         "}", JavaFileType.INSTANCE);
+    init("""
+           class Test {
+               void m() {
+              \s
+               <caret>}
+           }""", JavaFileType.INSTANCE);
     executeAction("EditorHungryBackSpace");
-    checkResultByText("class Test {\n" +
-                      "    void m() {<caret>}\n" +
-                      "}");
+    checkResultByText("""
+                        class Test {
+                            void m() {<caret>}
+                        }""");
   }
 
   public void testDeleteToWordStartAndQuotes() {
@@ -261,12 +269,13 @@ public class JavaEditingTest extends EditingTestBase {
 
   public void testNoTypeParameterClosingTagCompletion() {
     init(
-      "/**\n" +
-      " * @param <P<caret>\n" +
-      " * @author <a href='mailto:xxx@xxx.com'>Mr. Smith</a>\n" +
-      " */\n" +
-      "public class Test<P> {\n" +
-      "}",
+      """
+        /**
+         * @param <P<caret>
+         * @author <a href='mailto:xxx@xxx.com'>Mr. Smith</a>
+         */
+        public class Test<P> {
+        }""",
       JavaFileType.INSTANCE
     );
 
@@ -280,50 +289,57 @@ public class JavaEditingTest extends EditingTestBase {
       settings.JAVADOC_GENERATE_CLOSING_TAG = oldValue;
     }
     checkResultByText(
-      "/**\n" +
-      " * @param <P>\n" +
-      " * @author <a href='mailto:xxx@xxx.com'>Mr. Smith</a>\n" +
-      " */\n" +
-      "public class Test<P> {\n" +
-      "}"
+      """
+        /**
+         * @param <P>
+         * @author <a href='mailto:xxx@xxx.com'>Mr. Smith</a>
+         */
+        public class Test<P> {
+        }"""
     );
   }
 
   public void testEmacsTabWithSelection() {
-    configureFromFileText(getTestName(false) + ".java", "class Foo {\n" +
-                                                        "<selection>int a;\n" +
-                                                        "int b;<caret></selection>\n" +
-                                                        "}");
+    configureFromFileText(getTestName(false) + ".java", """
+      class Foo {
+      <selection>int a;
+      int b;<caret></selection>
+      }""");
     executeAction(IdeActions.ACTION_EDITOR_EMACS_TAB);
-    checkResultByText("class Foo {\n" +
-                      "    <selection>int a;\n" +
-                      "    int b;<caret></selection>\n" +
-                      "}");
+    checkResultByText("""
+                        class Foo {
+                            <selection>int a;
+                            int b;<caret></selection>
+                        }""");
   }
 
   public void testSmartHomeInJavadoc() {
-    init("/**\n" +
-         " * some text<caret>\n" +
-         " */\n" +
-         "class C {}",
+    init("""
+           /**
+            * some text<caret>
+            */
+           class C {}""",
          JavaFileType.INSTANCE);
     home();
-    checkResultByText("/**\n" +
-                      " * <caret>some text\n" +
-                      " */\n" +
-                      "class C {}");
+    checkResultByText("""
+                        /**
+                         * <caret>some text
+                         */
+                        class C {}""");
   }
 
   public void testSmartHomeWithSelectionInJavadoc() {
-    init("/**\n" +
-         " * some text<caret>\n" +
-         " */\n" +
-         "class C {}",
+    init("""
+           /**
+            * some text<caret>
+            */
+           class C {}""",
          JavaFileType.INSTANCE);
     homeWithSelection();
-    checkResultByText("/**\n" +
-                      " * <selection><caret>some text</selection>\n" +
-                      " */\n" +
-                      "class C {}");
+    checkResultByText("""
+                        /**
+                         * <selection><caret>some text</selection>
+                         */
+                        class C {}""");
   }
 }

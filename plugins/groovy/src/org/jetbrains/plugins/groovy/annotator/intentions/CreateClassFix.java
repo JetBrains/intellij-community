@@ -184,32 +184,24 @@ public abstract class CreateClassFix {
 
       @Nullable
       private PsiClass createTemplate(JVMElementFactory factory, String name) {
-        switch (getType()) {
-          case ENUM:
-            return factory.createEnum(name);
-          case TRAIT:
-            if (factory instanceof GroovyPsiElementFactory) {
-              return ((GroovyPsiElementFactory)factory).createTrait(name);
+        return switch (getType()) {
+          case ENUM -> factory.createEnum(name);
+          case TRAIT -> {
+            if (factory instanceof GroovyPsiElementFactory groovyFactory) {
+              yield groovyFactory.createTrait(name);
             }
-            else {
-              return null;
+            yield null;
+          }
+          case CLASS -> factory.createClass(name);
+          case INTERFACE -> factory.createInterface(name);
+          case ANNOTATION -> factory.createAnnotationType(name);
+          case RECORD -> {
+            if (factory instanceof GroovyPsiElementFactory groovyFactory) {
+              yield groovyFactory.createRecord(name);
             }
-          case CLASS:
-            return factory.createClass(name);
-          case INTERFACE:
-            return factory.createInterface(name);
-          case ANNOTATION:
-            return factory.createAnnotationType(name);
-          case RECORD:
-            if (factory instanceof GroovyPsiElementFactory) {
-              return ((GroovyPsiElementFactory)factory).createRecord(name);
-            }
-            else {
-              return null;
-            }
-          default:
-            return null;
-        }
+            yield null;
+          }
+        };
       }
 
       private void createTopLevelClass(@NotNull Project project, @NotNull GroovyFileBase file) {
@@ -263,21 +255,13 @@ public abstract class CreateClassFix {
   }
 
   private static String getTemplateName(GrCreateClassKind createClassKind) {
-    switch (createClassKind) {
-      case TRAIT:
-        return GroovyTemplates.GROOVY_TRAIT;
-      case ENUM:
-        return GroovyTemplates.GROOVY_ENUM;
-      case CLASS:
-        return GroovyTemplates.GROOVY_CLASS;
-      case INTERFACE:
-        return GroovyTemplates.GROOVY_INTERFACE;
-      case ANNOTATION:
-        return GroovyTemplates.GROOVY_ANNOTATION;
-      case RECORD:
-        return GroovyTemplates.GROOVY_RECORD;
-      default:
-        return null;
-    }
+    return switch (createClassKind) {
+      case TRAIT -> GroovyTemplates.GROOVY_TRAIT;
+      case ENUM -> GroovyTemplates.GROOVY_ENUM;
+      case CLASS -> GroovyTemplates.GROOVY_CLASS;
+      case INTERFACE -> GroovyTemplates.GROOVY_INTERFACE;
+      case ANNOTATION -> GroovyTemplates.GROOVY_ANNOTATION;
+      case RECORD -> GroovyTemplates.GROOVY_RECORD;
+    };
   }
 }

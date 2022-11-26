@@ -2,18 +2,18 @@
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 
 open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
   init {
-    val busConnection = project.messageBus.connect()
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyModulesListener())
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyModulesListener())
   }
 
   override fun getDefaultVcsRoots(): Collection<VirtualFile> {
@@ -32,11 +32,10 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
       }
     }
 
-    // assertion for read access inside
-    val modules = runReadAction { ModuleManager.getInstance(myProject).modules }
-    for (module in modules) {
-      val moduleRootManager = ModuleRootManager.getInstance(module)
-      result += moduleRootManager.contentRoots.asSequence()
+    result += runReadAction {
+      WorkspaceModel.getInstance(myProject).entityStorage.current
+        .entities(ContentRootEntity::class.java)
+        .mapNotNull { it.url.virtualFile }
         .filter { it.isInLocalFileSystem }
         .filter { it.isDirectory }
     }

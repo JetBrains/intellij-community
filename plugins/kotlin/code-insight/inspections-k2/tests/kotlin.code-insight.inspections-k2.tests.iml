@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xskip-prerelease-check" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xskip-prerelease-check" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -37,6 +37,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
@@ -44,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.editor" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
   </component>
 </module>

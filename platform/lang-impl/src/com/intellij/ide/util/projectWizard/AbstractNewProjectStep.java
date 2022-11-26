@@ -10,10 +10,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -127,7 +124,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return EP_NAME.getExtensionList();
     }
 
-    public AnAction[] getActions(@NotNull List<DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
+    public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
       List<AnAction> actions = new ArrayList<>();
       for (DirectoryProjectGenerator<?> projectGenerator : generators) {
         try {
@@ -193,7 +190,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   protected static @NotNull OpenProjectTask createOpenProjectOptions(@Nullable Project projectToClose,
-                                                                     @Nullable Consumer<UserDataHolder> extraUserData) {
+                                                                     @Nullable Consumer<? super UserDataHolder> extraUserData) {
     return OpenProjectTaskKt.OpenProjectTask(builder -> {
       builder.setProjectToClose(projectToClose);
       builder.setNewProject(true);
@@ -241,7 +238,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       String noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
       int result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
-        return PlatformProjectOpenProcessor.doOpenProject(location, OpenProjectTask.build());
+        return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask.build());
       }
     }
 
@@ -272,5 +269,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
   public static boolean created(@NotNull Project project) {
     return Boolean.TRUE.equals(project.getUserData(CREATED_KEY));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

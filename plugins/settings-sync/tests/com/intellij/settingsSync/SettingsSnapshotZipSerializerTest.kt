@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import org.junit.Assert.*
@@ -20,11 +21,13 @@ class SettingsSnapshotZipSerializerTest {
       fileState("options/laf.xml", "Laf")
       fileState("colors/my.icls", "Color Scheme")
       fileState("file.xml", "File")
+      plugin("com.jetbrains.CyanTheme", false, SettingsCategory.UI, setOf("com.intellij.modules.lang"))
     }
     val zip = SettingsSnapshotZipSerializer.serializeToZip(snapshot)
 
     val actualSnapshot = SettingsSnapshotZipSerializer.extractFromZip(zip)
     assertEquals(date, actualSnapshot.metaInfo.dateCreated)
+    assertEquals(snapshot.plugins, actualSnapshot.plugins)
     assertEquals(snapshot.fileStates, actualSnapshot.fileStates)
   }
 }

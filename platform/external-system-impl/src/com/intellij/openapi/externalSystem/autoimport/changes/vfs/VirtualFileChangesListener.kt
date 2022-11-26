@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 
 interface VirtualFileChangesListener {
 
-  fun isProcessRecursively(): Boolean = true
+  fun isProcessRecursively(): Boolean = false
 
   fun init() {}
 
@@ -25,14 +25,14 @@ interface VirtualFileChangesListener {
 
     fun installBulkVirtualFileListener(listener: VirtualFileChangesListener, parentDisposable: Disposable) {
       val bulkListener = object : BulkFileListener {
-        override fun before(events: MutableList<out VFileEvent>) {
+        override fun before(events: List<VFileEvent>) {
           val separator = VirtualFileChangesSeparator(listener, events)
           listener.init()
           separator.processBeforeEvents()
           listener.apply()
         }
 
-        override fun after(events: MutableList<out VFileEvent>) {
+        override fun after(events: List<VFileEvent>) {
           val separator = VirtualFileChangesSeparator(listener, events)
           listener.init()
           separator.processAfterEvents()

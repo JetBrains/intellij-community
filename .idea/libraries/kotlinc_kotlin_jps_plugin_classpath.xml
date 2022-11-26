@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-classpath" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:1.7.10-release-334" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:1.7.21-release-272" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.7.10-release-334/kotlin-jps-plugin-classpath-1.7.10-release-334.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.7.21-release-272/kotlin-jps-plugin-classpath-1.7.21-release-272.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.7.10-release-334/kotlin-jps-plugin-classpath-1.7.10-release-334-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1.7.21-release-272/kotlin-jps-plugin-classpath-1.7.21-release-272-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

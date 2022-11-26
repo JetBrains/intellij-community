@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
@@ -27,6 +28,12 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
         myEvents.add(event)
       }
     }
+    myProject.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
+    setupTestManagerForLegacyImport()
+  }
+
+  private fun setupTestManagerForLegacyImport() {
+
     myProjectsManager.setProgressListener(myTestSyncViewManager)
   }
 

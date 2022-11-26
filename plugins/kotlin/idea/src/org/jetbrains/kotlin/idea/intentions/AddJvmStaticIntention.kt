@@ -3,22 +3,25 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.restrictByFileType
-import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
+import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.util.addAnnotation
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -53,6 +56,12 @@ class AddJvmStaticIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
         }
         if (element.findAnnotation(JvmStaticFqName) != null) return null
         return element.nameIdentifier?.textRange
+    }
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+        val target = getTarget(editor, file) ?: return IntentionPreviewInfo.EMPTY
+        target.addAnnotation(JvmStaticFqName)
+        return IntentionPreviewInfo.DIFF
     }
 
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {

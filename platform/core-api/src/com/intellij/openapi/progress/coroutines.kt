@@ -5,11 +5,14 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.replaceThreadContext
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -64,15 +67,21 @@ suspend fun checkCanceled() {
  *
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
  * @throws CancellationException if [current job][Cancellation.currentJob] is cancelled
- * @see runUnderIndicator
+ * @see coroutineToIndicator
+ * @see blockingContext
+ * @see blockingContextToIndicator
  * @see runBlocking
  */
 fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
+  return runBlockingCancellable(allowOrphan = false, action)
+}
+
+private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend CoroutineScope.() -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
     return runBlockingCancellable(indicator, action)
   }
-  return ensureCurrentJob { currentJob ->
+  return ensureCurrentJob(allowOrphan) { currentJob ->
     val context = currentThreadContext() +
                   currentJob +
                   CoroutineName("job run blocking")
@@ -93,9 +102,7 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
  */
 @Internal
 fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
-  return ensureCurrentJobAllowingOrphan {
-    runBlockingCancellable(action)
-  }
+  return runBlockingCancellable(allowOrphan = true, action)
 }
 
 @Internal
@@ -143,12 +150,12 @@ suspend fun <T> blockingContext(action: () -> T): T {
 /**
  * Runs blocking (e.g. Java) code under indicator, which is canceled if current Job is canceled.
  *
- * This is a bridge for invoking blocking code from suspending code.
+ * This function switches from suspending context to indicator context.
  *
  * Example:
  * ```
  * launch {
- *   runUnderIndicator {
+ *   coroutineToIndicator {
  *     someJavaFunctionWhichDoesntKnowAboutCoroutines()
  *   }
  * }
@@ -157,16 +164,54 @@ suspend fun <T> blockingContext(action: () -> T): T {
  * @see ProgressManager.runProcess
  */
 @Internal
-suspend fun <T> runUnderIndicator(action: () -> T): T {
+suspend fun <T> coroutineToIndicator(action: () -> T): T {
   val ctx = coroutineContext
-  return runUnderIndicator(ctx.job, ctx.progressSink, action)
+  return contextToIndicator(ctx, action)
+}
+
+/**
+ * Runs blocking (e.g. Java) code under indicator, which is canceled if [current][Cancellation.currentJob] Job is canceled.
+ *
+ * This function switches from [blockingContext] to indicator context.
+ *
+ * Example:
+ * ```
+ * launch {
+ *   // suspending, installs current Job
+ *   readAction {
+ *     blockingContextToIndicator {
+ *       // ProgressManager.getGlobalProgressIndicator() available here
+ *     }
+ *   }
+ * }
+ */
+@Internal
+fun <T> blockingContextToIndicator(action: () -> T): T {
+  val ctx = currentThreadContext()
+  return contextToIndicator(ctx, action)
+}
+
+private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
+  val job = ctx.job
+  job.ensureActive()
+  val indicator = ctx.createIndicator()
+  return jobToIndicator(job, indicator, action)
+}
+
+private fun CoroutineContext.createIndicator(): ProgressIndicator {
+  val contextModality = contextModality()
+                        ?: ModalityState.NON_MODAL
+  val progressSink = progressSink
+  return if (progressSink == null) {
+    EmptyProgressIndicator(contextModality)
+  }
+  else {
+    ProgressSinkIndicator(progressSink, contextModality)
+  }
 }
 
 @Internal
-@Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
-  job.ensureActive()
-  val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
+fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T): T {
   try {
     return ProgressManager.getInstance().runProcess(Computable {
       // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.
@@ -218,4 +263,13 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
 )
 fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(indicator, action)
+}
+
+@Deprecated(
+  message = "Method was renamed",
+  replaceWith = ReplaceWith("coroutineToIndicator(action)"),
+  level = DeprecationLevel.ERROR,
+)
+suspend fun <T> runUnderIndicator(action: () -> T): T {
+  return coroutineToIndicator(action)
 }

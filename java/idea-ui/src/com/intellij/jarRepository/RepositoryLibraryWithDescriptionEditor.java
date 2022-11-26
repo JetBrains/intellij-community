@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
@@ -119,28 +118,17 @@ public class RepositoryLibraryWithDescriptionEditor
     String toolTipText = JavaUiBundle.message("button.reload.description", directory.getPath());
     myReloadButton.setVisible(true);
     myReloadButton.setToolTipText(toolTipText);
-    myReloadButton.addActionListener(e -> reloadLibraryDirectory(project, directory, (LibraryEx)library));
+    myReloadButton.addActionListener(e -> reloadLibraryDirectory(project, (LibraryEx)library));
   }
 
-  private void reloadLibraryDirectory(Project project, VirtualFile directory, LibraryEx library) {
-    if (directory == null) return;
-    VirtualFile[] children = directory.getChildren();
-    if (children == null) return;
-
-    logger.debug("start delete " + directory);
+  private void reloadLibraryDirectory(Project project, LibraryEx library) {
     try {
-      for (VirtualFile child : children) {
-        FileUtil.delete(child.toNioPath());
-      }
-    }
-    catch (IOException e) {
-      logger.error("error on delete", e);
-      String error = e.getLocalizedMessage();
+      deleteAndReloadDependencies(project, library);
+      showBalloon(JavaUiBundle.message("popup.reload.success.result", library.getName()), MessageType.INFO);
+    } catch (IOException | UnsupportedOperationException e) {
+      var error = e.getLocalizedMessage();
       showBalloon(error, MessageType.ERROR);
-      return;
     }
-    reloadDependencies(project, library);
-    showBalloon(JavaUiBundle.message("popup.reload.success.result", directory.getPath()), MessageType.INFO);
   }
 
   private void showBalloon(@NlsSafe String text, MessageType type) {

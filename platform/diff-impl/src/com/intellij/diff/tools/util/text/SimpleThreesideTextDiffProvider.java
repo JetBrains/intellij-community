@@ -74,26 +74,23 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
 
   @NotNull
   private MergeConflictType getConflictType(@NotNull ComparisonPolicy comparisonPolicy,
-                                            @NotNull List<CharSequence> sequences,
-                                            @NotNull List<LineOffsets> lineOffsets,
+                                            @NotNull List<? extends CharSequence> sequences,
+                                            @NotNull List<? extends LineOffsets> lineOffsets,
                                             @NotNull MergeLineFragment fragment) {
-    switch (myColorsMode) {
-      case MERGE_CONFLICT:
-        return MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
-      case MERGE_RESULT:
+    return switch (myColorsMode) {
+      case MERGE_CONFLICT -> MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+      case MERGE_RESULT -> {
         MergeConflictType conflictType = MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
-        return invertConflictType(conflictType);
-      case LEFT_TO_RIGHT:
-        return MergeRangeUtil.getLineLeftToRightThreeSideDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
-      default:
-        throw new IllegalStateException(myColorsMode.name());
-    }
+        yield invertConflictType(conflictType);
+      }
+      case LEFT_TO_RIGHT -> MergeRangeUtil.getLineLeftToRightThreeSideDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+    };
   }
 
   @NotNull
   private static List<CharSequence> getChunks(@NotNull MergeLineFragment fragment,
-                                              @NotNull List<CharSequence> sequences,
-                                              @NotNull List<LineOffsets> lineOffsets,
+                                              @NotNull List<? extends CharSequence> sequences,
+                                              @NotNull List<? extends LineOffsets> lineOffsets,
                                               @NotNull MergeConflictType conflictType) {
     return ThreeSide.map(side -> {
       if (!conflictType.isChange(side)) return null;

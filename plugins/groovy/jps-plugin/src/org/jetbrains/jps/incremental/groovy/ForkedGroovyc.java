@@ -25,9 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
-/**
- * @author peter
- */
 final class ForkedGroovyc implements GroovycFlavor {
   private final boolean myOptimizeClassLoading;
   private final ModuleChunk myChunk;

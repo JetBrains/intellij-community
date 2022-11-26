@@ -18,27 +18,25 @@
 #       F405 defined from star imports
 
 # Rules that we'd like to enable in the future:
-#       Y026 Use typing_extensions.TypeAlias for type aliases (blocked by #4913)
 #       Y027 Disallow importing typing.ContextManager, typing.OrderedDict &
 #            typing_extensions.OrderedDict (cannot be globally enabled while typeshed
 #            still contains stubs supporting Python 2).
 #       Y034 Detect common errors where certain methods are annotated as having a fixed
 #            return type, despite returning self at runtime (temporarily disabled for
 #            typing.pyi, enabled elsewhere).
+#       Y037 Use PEP 604 syntax instead of `typing.Union` and `typing.Optional`.
+#            Currently can't be enabled due to a few lingering bugs in mypy regarding
+#            PEP 604 type aliases (see #4819).
 
 [flake8]
 per-file-ignores =
   *.py: E203, E501
-  *.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y026
+  *.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y037
   # Since typing.pyi defines "overload" this is not recognized by flake8 as typing.overload.
   # Unfortunately, flake8 does not allow to "noqa" just a specific error inside the file itself.
   # https://github.com/PyCQA/flake8/issues/1079
   #     F811 redefinition of unused '...'
-  stubs/*.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y026, Y027
-  stdlib/@python2/*.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y026, Y027
-  stdlib/@python2/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y026, Y027
-  stdlib/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y026, Y034
+  stubs/*.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y027, Y037
+  stdlib/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y034, Y037
 
-# We are checking with Python 3 but many of the stubs are Python 2 stubs.
-builtins = buffer,file,long,raw_input,unicode,xrange
-exclude = .venv*,.git,*_pb2.pyi
+exclude = .venv*,.git,*_pb2.pyi,stdlib/@python2/*

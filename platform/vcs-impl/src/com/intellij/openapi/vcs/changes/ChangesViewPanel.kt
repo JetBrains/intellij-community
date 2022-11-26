@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.HoverIcon
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -20,6 +21,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.OpenSourceUtil.openSourcesFrom
 import com.intellij.util.Processor
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JComponent
@@ -67,22 +69,29 @@ class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
     if (newValue != null) centerPanel.addToBottom(newValue)
   }
 
-  private val centerPanel = simplePanel(createScrollPane(changesView))
+  private val centerPanel = simplePanel(createScrollPane(changesView)).andTransparent()
 
   init {
     addToCenter(centerPanel)
     addToolbar(isToolbarHorizontal)
   }
 
+  override fun updateUI() {
+    super.updateUI()
+    background = UIUtil.getTreeBackground()
+  }
+
   private fun addToolbar(isHorizontal: Boolean) {
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
-      centerPanel.border = createBorder(JBColor.border(), SideBorder.TOP)
+      val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
+      centerPanel.border = createBorder(JBColor.border(), sideBorder)
       addToTop(toolbar.component)
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
-      centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
+      val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.LEFT
+      centerPanel.border = createBorder(JBColor.border(), sideBorder)
       addToLeft(toolbar.component)
     }
   }

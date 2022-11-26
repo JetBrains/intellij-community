@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class WslAttachHost implements XAttachHost {
   private final WSLDistribution myWsl;
@@ -46,5 +47,18 @@ public class WslAttachHost implements XAttachHost {
       }
     }
     return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    WslAttachHost host = (WslAttachHost)o;
+    return Objects.equals(myWsl, host.myWsl);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myWsl);
   }
 }

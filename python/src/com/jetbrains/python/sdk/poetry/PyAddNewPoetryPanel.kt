@@ -63,7 +63,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
     addInterpretersAsync(baseSdkField) {
       val sdks = findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() }
                  ?: detectSystemWideSdks(module, existingSdks, context)
-      sdks.filterNot { PythonSdkUtil.isInvalid(it) || it.isPoetry }
+      sdks.filterNot { !it.sdkSeemsValid || it.isPoetry }
     }
   }
 

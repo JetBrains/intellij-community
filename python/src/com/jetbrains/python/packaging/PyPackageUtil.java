@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -47,7 +48,9 @@ import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
 import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -328,8 +331,22 @@ public final class PyPackageUtil {
     });
   }
 
-  public static boolean packageManagementEnabled(@Nullable Sdk sdk) {
+  /**
+   * @param newUi                set only for new toolwindow
+   * @param calledFromInspection when so, we can't change anything, and if sdk lacks of additional data we do not add it.
+   *                             See {@link PySdkExtKt#getOrCreateAdditionalData(Sdk)}
+   */
+  public static boolean packageManagementEnabled(@Nullable Sdk sdk, boolean newUi, boolean calledFromInspection) {
     if (sdk == null) {
+      return false;
+    }
+    // Temporary fix because old UI doesn't support non-local conda
+    var data = calledFromInspection ? (ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class)) :  PySdkExtKt.getOrCreateAdditionalData(sdk);
+    if (!newUi
+        && data != null
+        && data.getFlavor() instanceof CondaEnvSdkFlavor
+        && PySdkExtKt.getTargetEnvConfiguration(sdk) != null) {
+      LOG.warn("Remote Conda package manager is disabled");
       return false;
     }
     Boolean supported = PythonInterpreterTargetEnvironmentFactory.isPackageManagementSupported(sdk);
@@ -397,7 +414,7 @@ public final class PyPackageUtil {
    * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
    */
   public static boolean updatePackagesSynchronouslyWithGuard(@NotNull PyPackageManager manager, @NotNull AtomicBoolean isUpdating) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!isUpdating.compareAndSet(false, true)) {
       return false;
     }

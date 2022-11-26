@@ -22,9 +22,6 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class AbstractQualifiedReference<T extends AbstractQualifiedReference<T>> extends ASTWrapperPsiElement
   implements PsiPolyVariantReference, PsiQualifiedReferenceElement {
   private static final ResolveCache.PolyVariantResolver<AbstractQualifiedReference> MY_RESOLVER =

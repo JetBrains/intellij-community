@@ -17,41 +17,22 @@ public enum JsonSchemaType {
   }
 
   public String getDefaultValue() {
-    switch (this) {
-      case _string:
-        return "\"\"";
-      case _number:
-      case _integer:
-      case _string_number:
-        return "0";
-      case _object:
-        return "{}";
-      case _array:
-        return "[]";
-      case _boolean:
-        return "false";
-      case _null:
-        return "null";
-      case _any:
-      default:
-        return "";
-    }
+    return switch (this) {
+      case _string -> "\"\"";
+      case _number, _integer, _string_number -> "0";
+      case _object -> "{}";
+      case _array -> "[]";
+      case _boolean -> "false";
+      case _null -> "null";
+      case _any -> "";
+    };
   }
 
   public boolean isSimple() {
-    switch (this) {
-      case _string:
-      case _number:
-      case _integer:
-      case _boolean:
-      case _null:
-        return true;
-      case _object:
-      case _array:
-      case _any:
-      default:
-        return false;
-    }
+    return switch (this) {
+      case _string, _number, _integer, _boolean, _null -> true;
+      case _object, _array, _any, _string_number -> false;
+    };
   }
 
   @Nullable

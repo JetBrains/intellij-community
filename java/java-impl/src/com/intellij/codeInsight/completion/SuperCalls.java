@@ -17,9 +17,6 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 final class SuperCalls {
   static @NotNull Set<LookupElement> suggestQualifyingSuperCalls(@NotNull PsiElement element,
                                                                  @NotNull PsiJavaReference javaReference,

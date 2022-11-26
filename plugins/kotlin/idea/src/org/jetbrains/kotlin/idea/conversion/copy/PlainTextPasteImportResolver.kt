@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.conversion.copy
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.search.PsiShortNamesCache
@@ -21,8 +23,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -118,6 +118,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
             runReadAction {
                 val importDirectives = targetFile.importDirectives
                 importDirectives.forEachIndexed { index, value ->
+                    ProgressManager.checkCanceled()
                     ProgressManager.getInstance().progressIndicator?.fraction = 1.0 * index / importDirectives.size
                     tryConvertKotlinImport(value)
                 }
@@ -140,6 +141,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
             }
 
             fun tryResolveReference(reference: PsiQualifiedReference): Boolean {
+                ProgressManager.checkCanceled()
                 if (runReadAction { reference.resolve() } != null) return true
                 val referenceName = runReadAction { reference.referenceName } ?: return false
                 if (referenceName in failedToResolveReferenceNames) return false
@@ -184,7 +186,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
                         .filter { canBeImported(it.second) }
                         .toList()
                 }
-
+                ProgressManager.checkCanceled()
                 members.singleOrNull()?.let { (psiMember, _) ->
                     performWriteAction {
                         addImport(
@@ -227,6 +229,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
             }
         }
 
+        ProgressManager.checkCanceled()
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             task, KotlinBundle.message("copy.text.resolving.references"), true, project
         )

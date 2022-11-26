@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -43,7 +44,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
@@ -73,7 +73,7 @@ data class IntroduceParameterDescriptor(
 ) {
     val newArgumentValue: KtExpression by lazy {
         if (argumentValue.mustBeParenthesizedInInitializerPosition()) {
-            KtPsiFactory(callable).createExpressionByPattern("($0)", argumentValue)
+            KtPsiFactory(callable.project).createExpressionByPattern("($0)", argumentValue)
         } else {
             argumentValue
         }

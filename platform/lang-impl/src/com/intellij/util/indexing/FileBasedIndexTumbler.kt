@@ -30,7 +30,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   fun turnOff() {
     val app = ApplicationManager.getApplication()
-    LOG.assertTrue(app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {
@@ -91,7 +91,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           beforeIndexTasksStarted?.run()
           cleanupProcessedFlag()
           for (project in ProjectUtil.getOpenProjects()) {
-            UnindexedFilesUpdater(project, reason).queue(project)
+            UnindexedFilesUpdater(project, reason).queue()
           }
           LOG.info("Index rescanning has been started after `$reason`")
         }

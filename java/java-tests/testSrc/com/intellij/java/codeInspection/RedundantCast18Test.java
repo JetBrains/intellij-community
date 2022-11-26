@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -23,6 +23,7 @@ public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   public void testLambdaContext() { doTest(); }
   public void testMethodRefContext() { doTest(); }
   public void testExpectedSupertype() { doTest(); }
+  public void testExpressionRendering() { doTest(); }
   public void testForeachValue() { doTest(); }
   public void testConditional() { doTest(); }
   public void testInferApplicabilityError() { doTest(); }

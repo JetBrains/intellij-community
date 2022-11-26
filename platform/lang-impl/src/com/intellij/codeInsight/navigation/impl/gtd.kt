@@ -86,7 +86,7 @@ private class TargetGTDActionData(private val project: Project, private val targ
       }
       else -> {
         val targets = result.map { (navigationTarget, navigationProvider) ->
-          LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.targetPresentation, navigationProvider)
+          LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.presentation(), navigationProvider)
         }
         MultipleTargets(targets)
       }

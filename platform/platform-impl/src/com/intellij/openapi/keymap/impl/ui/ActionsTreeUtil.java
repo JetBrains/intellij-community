@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actionMacro.ActionMacro;
@@ -8,6 +9,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -275,10 +277,15 @@ public final class ActionsTreeUtil {
     path.add(groupName);
 
     ActionManager actionManager = ActionManager.getInstance();
-    Group group = new Group(groupName, actionManager.getId(actionGroup), actionGroup.getTemplatePresentation().getIcon());
+    String groupId = actionManager.getId(actionGroup);
+    Group group = new Group(groupName, groupId, actionGroup.getTemplatePresentation().getIcon());
     List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
 
     for (ActionUrl actionUrl : actionUrls) {
+      Object component = actionUrl.getComponent();
+      if (component instanceof Group correctedGroup && Objects.equals(correctedGroup.getId(), groupId)) {
+        group.setForceShowAsPopup(correctedGroup.isForceShowAsPopup());
+      }
       if (areEqual(path, actionUrl)) { //actual path is shorter when we use custom root
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
@@ -716,7 +723,7 @@ public final class ActionsTreeUtil {
         adjusted = (ActionGroup)action;
       }
       else {
-        LOG.error("not an ActionGroup: " + action + " id=" + id);
+        PluginException.logPluginError(LOG, "not an ActionGroup: " + action + " id=" + id, null, action.getClass());
       }
     }
     return adjusted instanceof DefaultActionGroup
@@ -741,6 +748,21 @@ public final class ActionsTreeUtil {
   @Nls
   public static String getMainToolbar() {
     return KeyMapBundle.message("main.toolbar.title");
+  }
+
+  @Nls
+  public static String getMainToolbarLeft() {
+    return ActionsBundle.message("group.MainToolbarLeft.text");
+  }
+
+  @Nls
+  public static String getMainToolbarCenter() {
+    return ActionsBundle.message("group.MainToolbarCenter.text");
+  }
+
+  @Nls
+  public static String getMainToolbarRight() {
+    return ActionsBundle.message("group.MainToolbarRight.text");
   }
 
   @Nls

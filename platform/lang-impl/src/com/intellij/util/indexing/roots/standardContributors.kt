@@ -26,8 +26,7 @@ import java.util.function.Predicate
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
     val providers: List<IndexableFilesIterator>
-    @Suppress("DEPRECATION")
-    if (indexProjectBasedOnIndexableEntityProviders()) {
+    if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
       val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
@@ -100,16 +99,6 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
         iterators.addAll(provider.getExistingEntityIteratorBuilder(entity, project))
       }
     }
-
-    /**
-     * Registry property introduced to provide quick workaround for possible performance issues.
-     * Should be removed when the feature becomes stable
-     */
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Registry property introduced to provide quick workaround for possible performance issues. " +
-                "Should be removed when the feature is proved to be stable", ReplaceWith("true"))
-    @JvmStatic
-    fun indexProjectBasedOnIndexableEntityProviders(): Boolean = Registry.`is`("indexing.enable.entity.provider.based.indexing")
   }
 }
 
@@ -160,3 +149,12 @@ internal class AdditionalLibraryRootsContributor : IndexableFilesContributor {
       AdditionalLibraryIndexableAddedFilesIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug)
   }
 }
+
+/**
+ * Registry property introduced to provide quick workaround for possible performance issues.
+ * To be removed when the feature becomes stable.
+ * It's `true` by default in all the IDEs except for Rider. Rider plans to enable it in 2023.1.
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+fun shouldIndexProjectBasedOnIndexableEntityProviders(): Boolean = Registry.`is`("indexing.enable.entity.provider.based.indexing")

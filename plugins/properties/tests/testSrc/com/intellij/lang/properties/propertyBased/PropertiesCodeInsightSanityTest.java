@@ -2,6 +2,7 @@
 package com.intellij.lang.properties.propertyBased;
 
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -25,7 +26,7 @@ public class PropertiesCodeInsightSanityTest extends LightJavaCodeInsightFixture
   }
 
   public void testRandomActivity() {
-    MadTestingUtil.enableAllInspections(getProject());
+    MadTestingUtil.enableAllInspections(getProject(), PropertiesLanguage.INSTANCE);
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new IntentionPolicy() {
                                       @Override

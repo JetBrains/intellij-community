@@ -12,19 +12,16 @@ interface ExternalSystemSettingsListenerEx {
   /**
    * @see ExternalSystemSettingsListener.onProjectsLoaded
    */
-  @JvmDefault
   fun onProjectsLoaded(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, settings: Collection<ExternalProjectSettings>) {}
 
   /**
    * @see ExternalSystemSettingsListener.onProjectsLinked
    */
-  @JvmDefault
   fun onProjectsLinked(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, settings: Collection<ExternalProjectSettings>) {}
 
   /**
    * @see ExternalSystemSettingsListener.onProjectsUnlinked
    */
-  @JvmDefault
   fun onProjectsUnlinked(project: Project, manager: ExternalSystemManager<*, *, *, *, *>, linkedProjectPaths: Set<String>) {}
 
   companion object {

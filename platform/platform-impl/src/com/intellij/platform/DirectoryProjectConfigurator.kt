@@ -17,7 +17,6 @@ interface DirectoryProjectConfigurator {
    * @return if code must be called or EDT or not.
    * If [.configureProject] is slow (heavy computations, network access etc) return "false" here.
    */
-  @JvmDefault
   val isEdtRequired: Boolean
     get() = true
 

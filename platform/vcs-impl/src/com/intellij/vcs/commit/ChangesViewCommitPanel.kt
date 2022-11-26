@@ -3,6 +3,8 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -26,6 +28,7 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcsUtil.VcsUtil.getFilePath
+import org.jetbrains.concurrency.Promise
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
@@ -57,11 +60,10 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
   init {
     Disposer.register(this, commitMessage)
 
-    buildLayout {
-      add(progressPanel.apply { border = empty(6) })
-      add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-      add(commitActionsPanel)
-    }
+    bottomPanel.add(progressPanel.component)
+    bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
+    bottomPanel.add(commitActionsPanel)
+
     addToolbar(isToolbarHorizontal)
 
     for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
@@ -73,7 +75,6 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     changesViewHost.statusComponent =
       CommitStatusPanel(this).apply {
         border = emptyRight(6)
-        background = changesView.background
 
         addToLeft(toolbarPanel)
       }
@@ -109,8 +110,11 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
   }
 
   override var editedCommit by observable<EditedCommitDetails?>(null) { _, _, newValue ->
-    refreshData()
-    newValue?.let { expand(it) }
+    refreshData().then {
+      invokeLater(ModalityState.NON_MODAL) {
+        newValue?.let { expand(it) }
+      }
+    }
   }
 
   override val isActive: Boolean get() = isVisible
@@ -184,7 +188,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
   }
 
-  override fun refreshData() = ChangesViewManager.getInstanceEx(project).refreshImmediately()
+  override fun refreshData(): Promise<*> = ChangesViewManager.getInstanceEx(project).promiseRefresh()
 
   override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
   override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)
@@ -209,8 +213,11 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
     if (!ChangesViewManager.isEditorPreview(project)) return
 
-    refreshData()
-    changesViewManager.closeEditorPreview(true)
+    refreshData().then {
+      invokeLater(ModalityState.NON_MODAL) {
+        changesViewManager.closeEditorPreview(true)
+      }
+    }
   }
 
   override fun dispose() {
@@ -228,7 +235,7 @@ private class ChangesViewCommitProgressPanel(
   private var oldInclusion: Set<Any> = emptySet()
 
   init {
-    setup(commitWorkflowUi, commitMessage)
+    setup(commitWorkflowUi, commitMessage, empty(6))
   }
 
   override fun inclusionChanged() {

@@ -137,20 +137,18 @@ public final class TextWithImportsImpl implements TextWithImports{
 
   @NotNull
   private static EvaluationMode getMode(@NotNull CodeFragmentKind kind) {
-    switch (kind) {
-      case EXPRESSION: return EvaluationMode.EXPRESSION;
-      case CODE_BLOCK: return EvaluationMode.CODE_FRAGMENT;
-    }
-    throw new IllegalStateException("Unknown kind " + kind);
+    return switch (kind) {
+      case EXPRESSION -> EvaluationMode.EXPRESSION;
+      case CODE_BLOCK -> EvaluationMode.CODE_FRAGMENT;
+    };
   }
 
   @NotNull
   private static CodeFragmentKind getKind(@NotNull EvaluationMode mode) {
-    switch (mode) {
-      case EXPRESSION: return CodeFragmentKind.EXPRESSION;
-      case CODE_FRAGMENT: return CodeFragmentKind.CODE_BLOCK;
-    }
-    throw new IllegalStateException("Unknown mode " + mode);
+    return switch (mode) {
+      case EXPRESSION -> CodeFragmentKind.EXPRESSION;
+      case CODE_FRAGMENT -> CodeFragmentKind.CODE_BLOCK;
+    };
   }
 
   public static TextWithImports fromXExpression(@Nullable XExpression expression) {

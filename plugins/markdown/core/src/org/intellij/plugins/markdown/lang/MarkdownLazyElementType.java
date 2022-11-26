@@ -35,19 +35,25 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
       flavour = MarkdownParserManager.FLAVOUR;
     }
 
-    final org.intellij.markdown.ast.ASTNode node = new MarkdownParser(flavour)
-      .parseInline(MarkdownElementType.markdownType(chameleon.getElementType()), chars, 0, chars.length());
+    final var parser = new MarkdownParser(flavour);
+    final var nodeType = MarkdownElementType.markdownType(chameleon.getElementType());
+    final var node = parser.parseInline(nodeType, chars, 0, chars.length());
 
     final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, getLanguage(), chars);
 
     PsiBuilder.Marker rootMarker = builder.mark();
 
     //Flatten type is used to solve problem with trailing whitespaces
-    new PsiBuilderFillingVisitor(builder).visitNode(node);
+    new PsiBuilderFillingVisitor(builder, false).visitNode(node);
     assert builder.eof();
 
     rootMarker.done(this);
 
-    return builder.getTreeBuilt().getFirstChildNode().getFirstChildNode();
+    final var tree = builder.getTreeBuilt();
+    final var actualElement = tree.getFirstChildNode().getFirstChildNode();
+
+    //System.out.println("Expanded tree:\n" + DebugKt.astToString(tree));
+
+    return actualElement;
   }
 }

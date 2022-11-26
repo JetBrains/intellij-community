@@ -6,8 +6,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintMap
-import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
@@ -20,10 +19,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import it.unimi.dsi.fastutil.objects.*
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -37,7 +33,7 @@ import org.jetbrains.annotations.TestOnly
 //internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
 //internal typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
 internal typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
-internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongOpenHashMap<String>>
+internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<String>>
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
@@ -261,7 +257,7 @@ open class VirtualFileIndex internal constructor(
           return vfu
         }
         else {
-          val result = createSmallMemoryFootprintSet<VirtualFileUrl>()
+          val result = CollectionFactory.createSmallMemoryFootprintSet<VirtualFileUrl>()
           result.add(vfu as VirtualFileUrl)
           result.add(virtualFileUrl)
           return result
@@ -284,7 +280,7 @@ open class VirtualFileIndex internal constructor(
           is Pair<*, *> -> {
             property2Vfu as Pair<String, Any>
             if (property2Vfu.first != propertyName) {
-              val result = createSmallMemoryFootprintMap<String, Any>()
+              val result = CollectionFactory.createSmallMemoryFootprintMap<String, Any>()
               result[property2Vfu.first] = property2Vfu.second
               result[propertyName] = virtualFileUrl
               result
@@ -343,13 +339,13 @@ open class VirtualFileIndex internal constructor(
 
     private fun copyEntityMap(originMap: EntityId2Vfu): EntityId2Vfu {
       val copiedMap = EntityId2Vfu()
-      fun getVirtualFileUrl(value: Any) = if (value is Set<*>) ObjectOpenHashSet(value as Set<VirtualFileUrl>) else value
+      fun getVirtualFileUrl(value: Any) = if (value is Set<*>) CollectionFactory.createSmallMemoryFootprintSet(value as Set<VirtualFileUrl>) else value
 
       originMap.forEach { (entityId, vfuMap) ->
         when (vfuMap) {
           is Map<*, *> -> {
             vfuMap as Map<String, *>
-            val copiedVfuMap = Object2ObjectOpenHashMap<String, Any>()
+            val copiedVfuMap = CollectionFactory.createSmallMemoryFootprintMap<String, Any>()
             vfuMap.forEach { copiedVfuMap[it.key] = getVirtualFileUrl(it.value!!) }
             copiedMap[entityId] = copiedVfuMap
           }

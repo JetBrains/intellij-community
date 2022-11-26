@@ -140,17 +140,13 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         });
       }
 
-      private @Nullable PsiType getWantedType(PsiElement body, String name) {
-        switch (name) {
-          case "equals":
-            return PsiType.BOOLEAN.getBoxedType(body);
-          case "hashCode":
-            return PsiType.INT.getBoxedType(body);
-          case "toString":
-            return PsiType.getJavaLangString(body.getManager(), body.getResolveScope());
-          default:
-            return null;
-        }
+      private static @Nullable PsiType getWantedType(PsiElement body, String name) {
+        return switch (name) {
+          case "equals" -> PsiType.BOOLEAN.getBoxedType(body);
+          case "hashCode" -> PsiType.INT.getBoxedType(body);
+          case "toString" -> PsiType.getJavaLangString(body.getManager(), body.getResolveScope());
+          default -> null;
+        };
       }
     };
   }

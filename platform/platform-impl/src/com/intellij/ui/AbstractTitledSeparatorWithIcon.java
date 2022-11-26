@@ -12,6 +12,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+/**
+ * @deprecated Use Kotlin UI DSL and {@link com.intellij.ui.dsl.builder.Panel#collapsibleGroup} instead
+ */
+@Deprecated
 public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
   protected RefreshablePanel myDetailsComponent;
   protected final JLabel myLabel;
@@ -24,6 +28,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
   public AbstractTitledSeparatorWithIcon(@NotNull final Icon icon,
                                          @NotNull final Icon iconOpen,
                                          @NlsContexts.Separator @NotNull final String text) {
+    UIUtil.applyDeprecatedBackground(this);
     myIcon = icon;
     myIconOpen = iconOpen;
     setLayout(new GridBagLayout());
@@ -71,7 +76,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
       }
     });
   }
-  
+
   public void setText(@NlsContexts.Separator String text) {
     myLabel.setText(UIUtil.replaceMnemonicAmpersand(text));
   }

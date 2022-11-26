@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config.gpg
 
-import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.help.HelpManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
@@ -22,7 +22,7 @@ import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
@@ -38,7 +38,7 @@ class GitGpgConfigDialog(
   private val repoConfig: RepoConfigValue
 ) : DialogWrapper(repository.project) {
 
-  private val uiDispatcher get() = AppUIExecutor.onUiThread(ModalityState.any()).coroutineDispatchingContext()
+  private val uiDispatcher get() = Dispatchers.EDT + ModalityState.any().asContextElement()
   private val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
 
   private lateinit var checkBox: JCheckBox
@@ -86,7 +86,7 @@ class GitGpgConfigDialog(
       row {
         errorLabel = label("")
           .visible(false)
-          .applyToComponent { foreground = UIUtil.getErrorForeground() }
+          .applyToComponent { foreground = NamedColorUtil.getErrorForeground() }
       }
       row {
         docLinkLabel = link(message("gpg.error.see.documentation.link.text")) {
@@ -158,7 +158,7 @@ class GitGpgConfigDialog(
   @Throws(VcsException::class)
   private suspend fun writeGitSettings(gpgKey: GpgKey?) {
     withContext(Dispatchers.IO) {
-      runUnderIndicator { writeGitGpgConfig(repository, gpgKey) }
+      coroutineToIndicator { writeGitGpgConfig(repository, gpgKey) }
     }
   }
 

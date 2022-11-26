@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @see CustomReferenceConverter
  *
  * @param <T> Type to convert from/to.
- *
- * @author peter
  */
 public abstract class Converter<T> {
   @Nullable
@@ -51,7 +49,7 @@ public abstract class Converter<T> {
   /**
    * @deprecated not necessary for Integer, use {@link com.intellij.util.xml.converters.values.NumberValueConverter}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<>() {
     @Override
     public Integer fromString(final String s, final ConvertContext context) {
@@ -78,7 +76,7 @@ public abstract class Converter<T> {
   /**
    * @deprecated unnecessary
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static final Converter<String> EMPTY_CONVERTER = new Converter<>() {
     @Override
     public String fromString(final String s, final ConvertContext context) {

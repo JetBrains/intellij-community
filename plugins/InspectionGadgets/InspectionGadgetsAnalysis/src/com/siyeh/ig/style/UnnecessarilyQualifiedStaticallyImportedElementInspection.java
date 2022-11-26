@@ -51,7 +51,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       element.delete();
     }

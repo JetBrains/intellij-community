@@ -42,6 +42,18 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
+  fun `test source root points at the content root`() {
+    val contentRoot = "/home/source"
+    val contentRoots = collect(projectRoots = listOf(contentRoot),
+                               mainSourceFolders = listOf(contentRoot))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(expectedPath = contentRoot,
+                                                  expectedMainSourceFolders = listOf(contentRoot)))
+    )
+  }
+
+  @Test
   fun `test do not register nested sources`() {
     val baseContentRoot = "/home"
     val source = "/home/source"
@@ -53,6 +65,101 @@ class ContentRootCollectorTest : MavenTestCase() {
     assertContentRoots(contentRoots,
                        listOf(ContentRootTestData(expectedPath = baseContentRoot,
                                                   expectedMainSourceFolders = listOf(source)))
+    )
+  }
+
+  @Test
+  fun `test inner source folders overwrite outer with lower rank`() {
+    val baseContentRoot = "/home"
+
+    // main overwrites test
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        testSourceFolders = listOf("/home/tests"),
+        mainSourceFolders = listOf("/home/tests/main"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedMainSourceFolders = listOf("/home/tests/main")))
+    )
+
+    // source overwrites resources
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        mainResourceFolders = listOf("/home/resources"),
+        mainSourceFolders = listOf("/home/resources/main"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedMainSourceFolders = listOf("/home/resources/main")))
+    )
+
+    // test source overwrites main resources
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        mainResourceFolders = listOf("/home/resources"),
+        testSourceFolders = listOf("/home/resources/test"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedTestSourceFolders = listOf("/home/resources/test")))
+    )
+
+    // main resources overwrite test resources
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        testResourceFolders = listOf("/home/test_resources"),
+        mainResourceFolders = listOf("/home/test_resources/main_resources"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedMainResourcesFolders = listOf("/home/test_resources/main_resources")))
+    )
+
+    // only one remains
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        testResourceFolders = listOf("/home/test_resources"),
+        mainResourceFolders = listOf("/home/test_resources/main_resources"),
+        testSourceFolders = listOf("/home/test_resources/main_resources/test"),
+        mainSourceFolders = listOf("/home/test_resources/main_resources/test/main"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedMainSourceFolders = listOf("/home/test_resources/main_resources/test/main")))
+    )
+  }
+
+  @Test
+  fun `test do not register nested test and resources`() {
+    val baseContentRoot = "/home"
+    val source = "/home/source"
+    val nestedResource = "/home/source/nested-resource"
+    val nestedTestSource = "/home/source/nested-test-source"
+    val nestedTestResource = "/home/source/nested-test-resource"
+
+    val contentRoots = collect(projectRoots = listOf(baseContentRoot),
+                               mainSourceFolders = listOf(source),
+                               mainResourceFolders = listOf(nestedResource),
+                               testSourceFolders = listOf(nestedTestSource),
+                               testResourceFolders = listOf(nestedTestResource))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                                  expectedMainSourceFolders = listOf(source)))
+    )
+  }
+
+  @Test
+  fun `test normalizing relative paths`() {
+    val contentRoots = collect(projectRoots = listOf("/home", "/home/../home"),
+                               mainSourceFolders = listOf("/home/dir/../source", "/home/../source"))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(expectedPath = "/home",
+                                                  expectedMainSourceFolders = listOf("/home/source")),
+                              ContentRootTestData(expectedPath = "/source",
+                                                  expectedMainSourceFolders = listOf("/source")))
     )
   }
 
@@ -123,7 +230,7 @@ class ContentRootCollectorTest : MavenTestCase() {
 
   @Test
   fun `test do not register nested generated folder under a source folder`() {
-    val root = "/project/"
+    val root = "/project"
 
     val source = "/project/source"
     val nestedGeneratedFolder = "/project/source/generated"
@@ -141,7 +248,7 @@ class ContentRootCollectorTest : MavenTestCase() {
 
   @Test
   fun `test do not register generated folder when there is a nested source or generated folder`() {
-    val root = "/project/"
+    val root = "/project"
 
     val generatedWithNestedSourceFolder = "/project/generated-with-sources"
     val source = "/project/generated-with-sources/source"
@@ -149,7 +256,7 @@ class ContentRootCollectorTest : MavenTestCase() {
     val generatedWithNestedGeneratedFolder = "/project/generated-with-generated"
     val generatedNestedFoldersHolder = "/project/generated-with-generated/generated"
 
-    val generatedNoNestedFolders = "/project/target/generated-no-subsources/"
+    val generatedNoNestedFolders = "/project/target/generated-no-subsources"
 
     val contentRoots = collect(projectRoots = listOf(root),
                                mainSourceFolders = listOf(source),
@@ -169,7 +276,7 @@ class ContentRootCollectorTest : MavenTestCase() {
 
   @Test
   fun `test do not register generated folder with a nested source, but create a root`() {
-    val root = "/root1/"
+    val root = "/root1"
 
     val generatedWithNestedSourceFolder = "/generated-with-sources"
     val source = "/generated-with-sources/source"

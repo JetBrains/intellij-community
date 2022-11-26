@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
@@ -22,7 +21,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.HtmlUtil;
@@ -60,10 +58,9 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return element instanceof XmlText ? element.getText().trim() : super.getTypedVarString(element);
   }
 
-  @NotNull
   @Override
-  public NodeFilter getLexicalNodesFilter() {
-    return element -> XmlMatchUtil.isWhiteSpace(element) || element instanceof PsiErrorElement;
+  public boolean isMatchNode(PsiElement element) {
+    return !XmlMatchUtil.isWhiteSpace(element) && !(element instanceof PsiErrorElement);
   }
 
   @Override
@@ -225,13 +222,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         elementParent.addRangeBefore(replacements[0], replacements[replacements.length - 1], elementToReplace);
       }
       else if (replacements.length == 1) {
-        Replacer.handleComments(elementToReplace, replacements[0], info);
-        try {
-          elementParent.addBefore(replacements[0], elementToReplace);
-        }
-        catch (IncorrectOperationException e) {
-          elementToReplace.replace(replacements[0]);
-        }
+        elementToReplace.replace(replacements[0]);
+        return;
       }
 
       final int matchSize = info.getMatchesCount();

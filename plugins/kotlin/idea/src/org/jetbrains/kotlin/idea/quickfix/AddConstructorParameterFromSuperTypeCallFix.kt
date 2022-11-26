@@ -37,7 +37,7 @@ class AddConstructorParameterFromSuperTypeCallFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val superTypeCallArgList = element ?: return
         val constructorParamList = superTypeCallArgList.containingClass()?.createPrimaryConstructorIfAbsent()?.valueParameterList ?: return
-        val psiFactory = KtPsiFactory(superTypeCallArgList)
+        val psiFactory = KtPsiFactory(project)
         val constructorParam = constructorParamList.addParameter(psiFactory.createParameter("$parameterName: $parameterTypeSourceCode"))
         val superTypeCallArg = superTypeCallArgList.addArgument(psiFactory.createArgument(parameterName))
         ShortenReferences.DEFAULT.process(constructorParam)

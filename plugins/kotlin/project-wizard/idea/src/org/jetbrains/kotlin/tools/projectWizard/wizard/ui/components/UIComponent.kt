@@ -43,7 +43,7 @@ abstract class UIComponent<V : Any>(
 
     protected fun fireValueUpdated(value: V) {
         if (allowEventFiring) {
-            onValueUpdate(value, allowEventFiring)
+            onValueUpdate(value, true)
         }
         validate(value)
     }

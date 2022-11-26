@@ -12,41 +12,117 @@ import java.util.HashSet;
 /**
  * @author ProjectLombok Team
  * @author Plushnikov Michail
+ * @see lombok.core.handlers.HandlerUtil from https://projectlombok.org/
  */
 public final class LombokUtils {
   public static final String LOMBOK_INTERN_FIELD_MARKER = "$";
 
   public static final String[] NONNULL_ANNOTATIONS = {
-    "androidx.annotation.NonNull",
+    "android.annotation.NonNull",
     "android.support.annotation.NonNull",
-    "com.sun.istack.internal.NotNull",
+    "android.support.annotation.RecentlyNonNull",
+    "androidx.annotation.NonNull",
+    "androidx.annotation.RecentlyNonNull",
+    "com.android.annotations.NonNull",
+    "com.google.firebase.database.annotations.NotNull", // Even though it's in a database package, it does mean semantically: "Check if never null at the language level", and not 'db column cannot be null'.
+    "com.mongodb.lang.NonNull", // Even though mongo is a DB engine, this semantically refers to language, not DB table designs (mongo is a document DB engine, so this isn't surprising perhaps).
+    "com.sun.istack.NotNull",
+    "com.unboundid.util.NotNull",
     "edu.umd.cs.findbugs.annotations.NonNull",
+    "io.micrometer.core.lang.NonNull",
+    "io.reactivex.annotations.NonNull",
+    "io.reactivex.rxjava3.annotations.NonNull",
     "javax.annotation.Nonnull",
     // "javax.validation.constraints.NotNull", // The field might contain a null value until it is persisted.
+    "libcore.util.NonNull",
     "lombok.NonNull",
     "org.checkerframework.checker.nullness.qual.NonNull",
+    "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
+    "org.checkerframework.checker.nullness.compatqual.NonNullType",
+    "org.codehaus.commons.nullanalysis.NotNull",
     "org.eclipse.jdt.annotation.NonNull",
-    "org.eclipse.jgit.annotations.NonNull",
     "org.jetbrains.annotations.NotNull",
     "org.jmlspecs.annotation.NonNull",
     "org.netbeans.api.annotations.common.NonNull",
-    "org.springframework.lang.NonNull"};
+    "org.springframework.lang.NonNull",
+    "reactor.util.annotation.NonNull"};
 
   static final String[] BASE_COPYABLE_ANNOTATIONS = {
-    "androidx.annotation.NonNull",
-    "androidx.annotation.Nullable",
+    "android.annotation.NonNull",
+    "android.annotation.Nullable",
     "android.support.annotation.NonNull",
     "android.support.annotation.Nullable",
+    "android.support.annotation.RecentlyNonNull",
+    "android.support.annotation.RecentlyNullable",
+    "androidx.annotation.NonNull",
+    "androidx.annotation.Nullable",
+    "androidx.annotation.RecentlyNonNull",
+    "androidx.annotation.RecentlyNullable",
+    "com.android.annotations.NonNull",
+    "com.android.annotations.Nullable",
+    // "com.google.api.server.spi.config.Nullable", - let's think about this one a litte, as it is targeted solely at parameters, so you can't even put it on fields. If we choose to support it, we should REMOVE it from the field, then - that's not something we currently support.
+    "com.google.firebase.database.annotations.NotNull",
+    "com.google.firebase.database.annotations.Nullable",
+    "com.mongodb.lang.NonNull",
+    "com.mongodb.lang.Nullable",
+    "com.sun.istack.NotNull",
+    "com.sun.istack.Nullable",
+    "com.unboundid.util.NotNull",
+    "com.unboundid.util.Nullable",
+    "edu.umd.cs.findbugs.annotations.CheckForNull",
     "edu.umd.cs.findbugs.annotations.NonNull",
     "edu.umd.cs.findbugs.annotations.Nullable",
+    "edu.umd.cs.findbugs.annotations.PossiblyNull",
     "edu.umd.cs.findbugs.annotations.UnknownNullness",
+    "io.micrometer.core.lang.NonNull",
+    "io.micrometer.core.lang.Nullable",
+    "io.reactivex.annotations.NonNull",
+    "io.reactivex.annotations.Nullable",
+    "io.reactivex.rxjava3.annotations.NonNull",
+    "io.reactivex.rxjava3.annotations.Nullable",
     "javax.annotation.CheckForNull",
     "javax.annotation.Nonnull",
+    "javax.annotation.Nonnull",
     "javax.annotation.Nullable",
+    //			"javax.validation.constraints.NotNull", // - this should definitely not be included; validation is not about language-level nullity, therefore should not be in this core list.
+    "libcore.util.NonNull",
+    "libcore.util.Nullable",
     "lombok.NonNull",
+    "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
+    "org.checkerframework.checker.nullness.compatqual.NonNullType",
+    "org.checkerframework.checker.nullness.compatqual.NullableDecl",
+    "org.checkerframework.checker.nullness.compatqual.NullableType",
+    "org.checkerframework.checker.nullness.qual.NonNull",
+    "org.checkerframework.checker.nullness.qual.Nullable",
+    "org.codehaus.commons.nullanalysis.NotNull",
+    "org.codehaus.commons.nullanalysis.Nullable",
+    "org.eclipse.jdt.annotation.NonNull",
+    "org.eclipse.jdt.annotation.Nullable",
+    "org.jetbrains.annotations.NotNull",
+    "org.jetbrains.annotations.Nullable",
+    "org.jetbrains.annotations.UnknownNullability",
     "org.jmlspecs.annotation.NonNull",
     "org.jmlspecs.annotation.Nullable",
+    "org.jspecify.nullness.Nullable",
+    "org.jspecify.nullness.NullnessUnspecified",
+    "org.netbeans.api.annotations.common.CheckForNull",
+    "org.netbeans.api.annotations.common.NonNull",
+    "org.netbeans.api.annotations.common.NullAllowed",
+    "org.netbeans.api.annotations.common.NullUnknown",
+    "org.springframework.lang.NonNull",
+    "org.springframework.lang.Nullable",
+    "reactor.util.annotation.NonNull",
+    "reactor.util.annotation.Nullable",
 
+    // Checker Framework annotations.
+    // To update Checker Framework annotations, run:
+    // grep --recursive --files-with-matches -e '^@Target\b.*TYPE_USE' $CHECKERFRAMEWORK/checker/src/main/java $CHECKERFRAMEWORK/checker-qual/src/main/java $CHECKERFRAMEWORK/checker-util/src/main/java $CHECKERFRAMEWORK/framework/src/main/java | grep '\.java$' | sed 's/.*\/java\//\t\t\t"/' | sed 's/\.java$/",/' | sed 's/\//./g' | sort
+    // Only add new annotations, do not remove annotations that have been removed from the lastest version of the Checker Framework.
+    "org.checkerframework.checker.builder.qual.CalledMethods",
+    "org.checkerframework.checker.builder.qual.NotCalledMethods",
+    "org.checkerframework.checker.calledmethods.qual.CalledMethods",
+    "org.checkerframework.checker.calledmethods.qual.CalledMethodsBottom",
+    "org.checkerframework.checker.calledmethods.qual.CalledMethodsPredicate",
     "org.checkerframework.checker.compilermsgs.qual.CompilerMessageKey",
     "org.checkerframework.checker.compilermsgs.qual.CompilerMessageKeyBottom",
     "org.checkerframework.checker.compilermsgs.qual.UnknownCompilerMessageKey",
@@ -70,6 +146,7 @@ public final class LombokUtils {
     "org.checkerframework.checker.formatter.qual.Format",
     "org.checkerframework.checker.formatter.qual.FormatBottom",
     "org.checkerframework.checker.formatter.qual.InvalidFormat",
+    "org.checkerframework.checker.formatter.qual.UnknownFormat",
     "org.checkerframework.checker.guieffect.qual.AlwaysSafe",
     "org.checkerframework.checker.guieffect.qual.PolyUI",
     "org.checkerframework.checker.guieffect.qual.UI",
@@ -114,6 +191,7 @@ public final class LombokUtils {
     "org.checkerframework.checker.index.qual.SubstringIndexFor",
     "org.checkerframework.checker.index.qual.SubstringIndexUnknown",
     "org.checkerframework.checker.index.qual.UpperBoundBottom",
+    "org.checkerframework.checker.index.qual.UpperBoundLiteral",
     "org.checkerframework.checker.index.qual.UpperBoundUnknown",
     "org.checkerframework.checker.initialization.qual.FBCBottom",
     "org.checkerframework.checker.initialization.qual.Initialized",
@@ -127,18 +205,21 @@ public final class LombokUtils {
     "org.checkerframework.checker.lock.qual.GuardedByBottom",
     "org.checkerframework.checker.lock.qual.GuardedByUnknown",
     "org.checkerframework.checker.lock.qual.GuardSatisfied",
+    "org.checkerframework.checker.lock.qual.NewObject",
+    "org.checkerframework.checker.mustcall.qual.MustCall",
+    "org.checkerframework.checker.mustcall.qual.MustCallAlias",
+    "org.checkerframework.checker.mustcall.qual.MustCallUnknown",
+    "org.checkerframework.checker.mustcall.qual.PolyMustCall",
     "org.checkerframework.checker.nullness.qual.KeyFor",
     "org.checkerframework.checker.nullness.qual.KeyForBottom",
     "org.checkerframework.checker.nullness.qual.MonotonicNonNull",
     "org.checkerframework.checker.nullness.qual.NonNull",
-    "org.checkerframework.checker.nullness.qual.NonRaw",
     "org.checkerframework.checker.nullness.qual.Nullable",
     "org.checkerframework.checker.nullness.qual.PolyKeyFor",
     "org.checkerframework.checker.nullness.qual.PolyNull",
-    "org.checkerframework.checker.nullness.qual.PolyRaw",
-    "org.checkerframework.checker.nullness.qual.Raw",
     "org.checkerframework.checker.nullness.qual.UnknownKeyFor",
     "org.checkerframework.checker.optional.qual.MaybePresent",
+    "org.checkerframework.checker.optional.qual.OptionalBottom",
     "org.checkerframework.checker.optional.qual.PolyPresent",
     "org.checkerframework.checker.optional.qual.Present",
     "org.checkerframework.checker.propkey.qual.PropertyKey",
@@ -148,29 +229,36 @@ public final class LombokUtils {
     "org.checkerframework.checker.regex.qual.Regex",
     "org.checkerframework.checker.regex.qual.RegexBottom",
     "org.checkerframework.checker.regex.qual.UnknownRegex",
+    "org.checkerframework.checker.signature.qual.ArrayWithoutPackage",
     "org.checkerframework.checker.signature.qual.BinaryName",
-    "org.checkerframework.checker.signature.qual.BinaryNameInUnnamedPackage",
+    "org.checkerframework.checker.signature.qual.BinaryNameOrPrimitiveType",
+    "org.checkerframework.checker.signature.qual.BinaryNameWithoutPackage",
+    "org.checkerframework.checker.signature.qual.CanonicalName",
+    "org.checkerframework.checker.signature.qual.CanonicalNameAndBinaryName",
+    "org.checkerframework.checker.signature.qual.CanonicalNameOrEmpty",
+    "org.checkerframework.checker.signature.qual.CanonicalNameOrPrimitiveType",
     "org.checkerframework.checker.signature.qual.ClassGetName",
     "org.checkerframework.checker.signature.qual.ClassGetSimpleName",
     "org.checkerframework.checker.signature.qual.DotSeparatedIdentifiers",
+    "org.checkerframework.checker.signature.qual.DotSeparatedIdentifiersOrPrimitiveType",
     "org.checkerframework.checker.signature.qual.FieldDescriptor",
     "org.checkerframework.checker.signature.qual.FieldDescriptorForPrimitive",
-    "org.checkerframework.checker.signature.qual.FieldDescriptorForPrimitiveOrArrayInUnnamedPackage",
+    "org.checkerframework.checker.signature.qual.FieldDescriptorWithoutPackage",
     "org.checkerframework.checker.signature.qual.FqBinaryName",
     "org.checkerframework.checker.signature.qual.FullyQualifiedName",
     "org.checkerframework.checker.signature.qual.Identifier",
-    "org.checkerframework.checker.signature.qual.IdentifierOrArray",
+    "org.checkerframework.checker.signature.qual.IdentifierOrPrimitiveType",
     "org.checkerframework.checker.signature.qual.InternalForm",
     "org.checkerframework.checker.signature.qual.MethodDescriptor",
     "org.checkerframework.checker.signature.qual.PolySignature",
+    "org.checkerframework.checker.signature.qual.PrimitiveType",
     "org.checkerframework.checker.signature.qual.SignatureBottom",
-    "org.checkerframework.checker.signedness.qual.Constant",
-    "org.checkerframework.checker.signedness.qual.PolySignedness",
     "org.checkerframework.checker.signedness.qual.PolySigned",
     "org.checkerframework.checker.signedness.qual.Signed",
     "org.checkerframework.checker.signedness.qual.SignednessBottom",
     "org.checkerframework.checker.signedness.qual.SignednessGlb",
     "org.checkerframework.checker.signedness.qual.SignedPositive",
+    "org.checkerframework.checker.signedness.qual.SignedPositiveFromUnsigned",
     "org.checkerframework.checker.signedness.qual.UnknownSignedness",
     "org.checkerframework.checker.signedness.qual.Unsigned",
     "org.checkerframework.checker.tainting.qual.PolyTainted",
@@ -184,37 +272,48 @@ public final class LombokUtils {
     "org.checkerframework.checker.units.qual.cd",
     "org.checkerframework.checker.units.qual.Current",
     "org.checkerframework.checker.units.qual.degrees",
+    "org.checkerframework.checker.units.qual.Force",
     "org.checkerframework.checker.units.qual.g",
     "org.checkerframework.checker.units.qual.h",
     "org.checkerframework.checker.units.qual.K",
     "org.checkerframework.checker.units.qual.kg",
     "org.checkerframework.checker.units.qual.km",
     "org.checkerframework.checker.units.qual.km2",
+    "org.checkerframework.checker.units.qual.km3",
     "org.checkerframework.checker.units.qual.kmPERh",
+    "org.checkerframework.checker.units.qual.kN",
     "org.checkerframework.checker.units.qual.Length",
     "org.checkerframework.checker.units.qual.Luminance",
     "org.checkerframework.checker.units.qual.m",
     "org.checkerframework.checker.units.qual.m2",
+    "org.checkerframework.checker.units.qual.m3",
     "org.checkerframework.checker.units.qual.Mass",
     "org.checkerframework.checker.units.qual.min",
     "org.checkerframework.checker.units.qual.mm",
     "org.checkerframework.checker.units.qual.mm2",
+    "org.checkerframework.checker.units.qual.mm3",
     "org.checkerframework.checker.units.qual.mol",
     "org.checkerframework.checker.units.qual.mPERs",
     "org.checkerframework.checker.units.qual.mPERs2",
+    "org.checkerframework.checker.units.qual.N",
     "org.checkerframework.checker.units.qual.PolyUnit",
     "org.checkerframework.checker.units.qual.radians",
     "org.checkerframework.checker.units.qual.s",
     "org.checkerframework.checker.units.qual.Speed",
     "org.checkerframework.checker.units.qual.Substance",
+    "org.checkerframework.checker.units.qual.t",
     "org.checkerframework.checker.units.qual.Temperature",
     "org.checkerframework.checker.units.qual.Time",
     "org.checkerframework.checker.units.qual.UnitsBottom",
     "org.checkerframework.checker.units.qual.UnknownUnits",
+    "org.checkerframework.checker.units.qual.Volume",
     "org.checkerframework.common.aliasing.qual.LeakedToResult",
     "org.checkerframework.common.aliasing.qual.MaybeAliased",
     "org.checkerframework.common.aliasing.qual.NonLeaked",
     "org.checkerframework.common.aliasing.qual.Unique",
+    "org.checkerframework.common.initializedfields.qual.InitializedFields",
+    "org.checkerframework.common.initializedfields.qual.InitializedFieldsBottom",
+    "org.checkerframework.common.initializedfields.qual.PolyInitializedFields",
     "org.checkerframework.common.reflection.qual.ClassBound",
     "org.checkerframework.common.reflection.qual.ClassVal",
     "org.checkerframework.common.reflection.qual.ClassValBottom",
@@ -222,6 +321,9 @@ public final class LombokUtils {
     "org.checkerframework.common.reflection.qual.MethodValBottom",
     "org.checkerframework.common.reflection.qual.UnknownClass",
     "org.checkerframework.common.reflection.qual.UnknownMethod",
+    "org.checkerframework.common.returnsreceiver.qual.BottomThis",
+    "org.checkerframework.common.returnsreceiver.qual.This",
+    "org.checkerframework.common.returnsreceiver.qual.UnknownThis",
     "org.checkerframework.common.subtyping.qual.Bottom",
     "org.checkerframework.common.util.report.qual.ReportUnqualified",
     "org.checkerframework.common.value.qual.ArrayLen",
@@ -229,23 +331,15 @@ public final class LombokUtils {
     "org.checkerframework.common.value.qual.BoolVal",
     "org.checkerframework.common.value.qual.BottomVal",
     "org.checkerframework.common.value.qual.DoubleVal",
+    "org.checkerframework.common.value.qual.EnumVal",
     "org.checkerframework.common.value.qual.IntRange",
     "org.checkerframework.common.value.qual.IntVal",
+    "org.checkerframework.common.value.qual.MatchesRegex",
     "org.checkerframework.common.value.qual.MinLen",
     "org.checkerframework.common.value.qual.PolyValue",
     "org.checkerframework.common.value.qual.StringVal",
     "org.checkerframework.common.value.qual.UnknownVal",
-    "org.checkerframework.framework.qual.PolyAll",
-    "org.checkerframework.framework.util.PurityUnqualified",
-
-    "org.eclipse.jdt.annotation.NonNull",
-    "org.eclipse.jdt.annotation.Nullable",
-    "org.jetbrains.annotations.NotNull",
-    "org.jetbrains.annotations.Nullable",
-    "org.springframework.lang.NonNull",
-    "org.springframework.lang.Nullable",
-    "org.netbeans.api.annotations.common.NonNull",
-    "org.netbeans.api.annotations.common.NullAllowed"};
+    "org.checkerframework.framework.qual.PurityUnqualified"};
 
   static final String[] COPY_TO_SETTER_ANNOTATIONS = {
     "com.fasterxml.jackson.annotation.JacksonInject",
@@ -257,9 +351,12 @@ public final class LombokUtils {
     "com.fasterxml.jackson.annotation.JsonSetter",
     "com.fasterxml.jackson.annotation.JsonSubTypes",
     "com.fasterxml.jackson.annotation.JsonTypeInfo",
+    "com.fasterxml.jackson.annotation.JsonUnwrapped",
     "com.fasterxml.jackson.annotation.JsonView",
     "com.fasterxml.jackson.databind.annotation.JsonDeserialize",
-    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty"};
+    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper",
+    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty",
+    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText",};
 
   static final String[] COPY_TO_BUILDER_SINGULAR_SETTER_ANNOTATIONS = {
     "com.fasterxml.jackson.annotation.JsonAnySetter"};
@@ -278,8 +375,11 @@ public final class LombokUtils {
     "com.fasterxml.jackson.databind.annotation.JsonNaming"};
 
   public static String getGetterName(final @NotNull PsiField psiField) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    return getGetterName(psiField, accessorsInfo);
+  }
 
+  public static String getGetterName(@NotNull PsiField psiField, AccessorsInfo accessorsInfo) {
     final String psiFieldName = psiField.getName();
     final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
@@ -287,12 +387,12 @@ public final class LombokUtils {
   }
 
   public static String getSetterName(@NotNull PsiField psiField) {
-    return getSetterName(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    return getSetterName(psiField, accessorsInfo);
   }
 
-  public static String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
-    return toSetterName(accessorsInfo, psiField.getName(), isBoolean);
+  public static String getSetterName(@NotNull PsiField psiField, AccessorsInfo accessorsInfo) {
+    return toSetterName(accessorsInfo, psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
   }
 
   /**
@@ -386,14 +486,14 @@ public final class LombokUtils {
     if (useBooleanPrefix) {
       if (fieldName.startsWith("is") && fieldName.length() > 2 && !Character.isLowerCase(fieldName.charAt(2))) {
         final String baseName = fieldName.substring(2);
-        result = buildName(booleanPrefix, baseName);
+        result = buildName(booleanPrefix, baseName, accessorsInfo.getCapitalizationStrategy());
       }
       else {
-        result = buildName(booleanPrefix, fieldName);
+        result = buildName(booleanPrefix, fieldName, accessorsInfo.getCapitalizationStrategy());
       }
     }
     else {
-      result = buildName(normalPrefix, fieldName);
+      result = buildName(normalPrefix, fieldName, accessorsInfo.getCapitalizationStrategy());
     }
     return result;
   }
@@ -454,34 +554,35 @@ public final class LombokUtils {
       return result;
     }
 
+    final CapitalizationStrategy capitalizationStrategy = accessorsInfo.getCapitalizationStrategy();
     if (isBoolean) {
-      result.add(buildName(normalPrefix, fieldName));
-      result.add(buildName(booleanPrefix, fieldName));
+      result.add(buildName(normalPrefix, fieldName, capitalizationStrategy));
+      result.add(buildName(booleanPrefix, fieldName, capitalizationStrategy));
 
       if (fieldName.startsWith("is") && fieldName.length() > 2 && !Character.isLowerCase(fieldName.charAt(2))) {
         final String baseName = fieldName.substring(2);
-        result.add(buildName(normalPrefix, baseName));
-        result.add(buildName(booleanPrefix, baseName));
+        result.add(buildName(normalPrefix, baseName, capitalizationStrategy));
+        result.add(buildName(booleanPrefix, baseName, capitalizationStrategy));
       }
     }
     else {
-      result.add(buildName(normalPrefix, fieldName));
+      result.add(buildName(normalPrefix, fieldName, capitalizationStrategy));
     }
     return result;
   }
 
-  public static String buildAccessorName(String prefix, String suffix) {
-    if (prefix.isEmpty()) {
-      return suffix;
-    }
+  public static String buildAccessorName(String prefix, String suffix, CapitalizationStrategy capitalizationStrategy) {
     if (suffix.isEmpty()) {
       return prefix;
     }
-    return buildName(prefix, suffix);
+    if (prefix.isEmpty()) {
+      return suffix;
+    }
+    return buildName(prefix, suffix, capitalizationStrategy);
   }
 
-  private static String buildName(String prefix, String suffix) {
-    return prefix + StringUtil.capitalize(suffix);
+  private static String buildName(String prefix, String suffix, CapitalizationStrategy capitalizationStrategy) {
+    return prefix + capitalizationStrategy.capitalize(suffix);
   }
 
   public static String camelCaseToConstant(String fieldName) {

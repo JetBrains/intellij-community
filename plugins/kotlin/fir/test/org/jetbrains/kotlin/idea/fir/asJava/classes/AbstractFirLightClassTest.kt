@@ -65,7 +65,7 @@ abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase
         KotlinTestUtils.assertEqualsToFile(KotlinTestUtils.replaceExtension(testData, "java"), actual)
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     open val fileExtension = ".kt"
 }

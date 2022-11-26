@@ -378,24 +378,6 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  /**
-   * @deprecated there is no need to call this method since we don't put message bundles to separate resources_en.jar files (IDEA-255246)
-   */
-  @Deprecated(forRemoval = true)
-  public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
-    String pathToUse = bundlePath.replace('.', '/');
-    if (!pathToUse.endsWith(".properties")) {
-      pathToUse += ".properties";
-    }
-    if (!pathToUse.startsWith("/")) {
-      pathToUse = '/' + pathToUse;
-    }
-    String root = PathManager.getResourceRoot(contextClass, pathToUse);
-    if (root != null) {
-      classPath.add(root);
-    }
-  }
-
   public static @Nullable String normalizePath(@Nullable String s) {
     return s == null ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
   }

@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiFile
 
 fun getConfigureHighlightingLevelPopup(context: DataContext): JBPopup? {
   val psi = context.getData(PSI_FILE) ?: return null
@@ -93,4 +94,11 @@ internal class ConfigureHighlightingLevelAction : DumbAwareAction() {
     val popup = getConfigureHighlightingLevelPopup(event.dataContext)
     popup?.showInBestPositionFor(event.dataContext)
   }
+}
+
+object NotebookInjectedCodeUtility {
+  private const val notebookInjectedFileExtension: String = "jupyter.kts"
+
+  fun isSuitableKtNotebookFragment(psiFile: PsiFile?): Boolean =
+    psiFile?.name?.endsWith(notebookInjectedFileExtension) == true
 }

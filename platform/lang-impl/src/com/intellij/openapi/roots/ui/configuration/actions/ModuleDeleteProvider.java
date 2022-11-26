@@ -12,9 +12,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.*;
-import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -30,15 +31,13 @@ import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
+public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
   public static ModuleDeleteProvider getInstance() {
     return ApplicationManager.getApplication().getService(ModuleDeleteProvider.class);
   }
@@ -80,37 +79,46 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
 
-    List<ModuleDescription> moduleDescriptions = new ArrayList<>();
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    if (modules != null) {
-      moduleDescriptions.addAll(ContainerUtil.map(modules, LoadedModuleDescriptionImpl::new));
-    }
     List<UnloadedModuleDescription> unloadedModules = ProjectView.UNLOADED_MODULES_CONTEXT_KEY.getData(dataContext);
-    if (unloadedModules != null) {
-      moduleDescriptions.addAll(unloadedModules);
-    }
 
-    String names = StringUtil.join(moduleDescriptions, description -> "'" + description.getName() + "'", ", ");
+    Set<String> moduleNamesToDelete = getModuleNamesToDelete(modules, unloadedModules);
+    String names = StringUtil.join(moduleNamesToDelete, name -> "'" + name + "'", ", ");
     String dialogTitle = StringUtil.trimEnd(getActionTitle(), "...");
-    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleDescriptions.size()), dialogTitle, CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleNamesToDelete.size()), dialogTitle, CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
     if (ret != Messages.OK) return;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       final Runnable action = () -> {
-        detachModules(project, moduleDescriptions, modules, unloadedModules);
+        detachModules(project, modules, unloadedModules);
       };
       ApplicationManager.getApplication().runWriteAction(action);
     }, ProjectBundle.message("module.remove.command"), null);
   }
 
-  public static void detachModules(@NotNull Project project,
-                                   @NotNull List<ModuleDescription> moduleDescriptions,
-                                   Module @Nullable [] modules,
-                                   @Nullable List<UnloadedModuleDescription> unloadedModules) {
+  private static Set<String> getModuleNamesToDelete(Module @Nullable [] modules,
+                                                    @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
+    Set<String> moduleNamesToDelete = new HashSet<>();
+    if (null != modules) {
+      for (var module : modules) {
+        moduleNamesToDelete.add(module.getName());
+      }
+    }
+    if (unloadedModules != null) {
+      for (var unloadedModule : unloadedModules) {
+        moduleNamesToDelete.add(unloadedModule.getName());
+      }
+    }
+    return moduleNamesToDelete;
+  }
+
+  protected void doDetachModules(@NotNull Project project,
+                                 Module @Nullable [] modules,
+                                 @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] currentModules = moduleManager.getModules();
     final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
     final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
-    Set<String> moduleNamesToDelete = moduleDescriptions.stream().map(ModuleDescription::getName).collect(Collectors.toSet());
+    Set<String> moduleNamesToDelete = getModuleNamesToDelete(modules, unloadedModules);
     for (final Module otherModule : currentModules) {
       if (!moduleNamesToDelete.contains(otherModule.getName())) {
         otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
@@ -132,6 +140,16 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     }
   }
 
+  private void detachModules(@NotNull Project project,
+                             Module @Nullable [] modules,
+                             @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
+    doDetachModules(project, modules, unloadedModules);
+  }
+
+  public static void detachModules(@NotNull Project project, Module @Nullable [] modules) {
+    getInstance().detachModules(project, modules, null);
+  }
+
   protected @NlsContexts.DialogMessage String getConfirmationText(String names, int numberOfModules) {
     if (ProjectAttachProcessor.canAttachToProject()) {
       return ProjectBundle.message("project.remove.confirmation.prompt", names, numberOfModules);
@@ -145,11 +163,17 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
                                                        : ProjectBundle.message("action.text.remove.module");
   }
 
+  protected void doRemoveModule(@NotNull final Module moduleToRemove,
+                                @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
+                                @NotNull final ModifiableModuleModel moduleModel) {
+    removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
+    moduleModel.disposeModule(moduleToRemove);
+  }
+
   public static void removeModule(@NotNull final Module moduleToRemove,
                                   @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
                                   @NotNull final ModifiableModuleModel moduleModel) {
-    removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
-    moduleModel.disposeModule(moduleToRemove);
+    getInstance().doRemoveModule(moduleToRemove, otherModuleRootModels, moduleModel);
   }
 
   private static void removeDependenciesOnModules(@NotNull Set<String> moduleNamesToRemove,

@@ -5,12 +5,10 @@ import com.intellij.CommonBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -29,21 +27,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.ui.layout.Row as RowV1
 
-
-@Deprecated("Please, migrate on Kotlin UI DSL Version 2")
-@ApiStatus.ScheduledForRemoval
-fun RowV1.sdkComboBox(
-  sdkModel: ProjectSdksModel,
-  sdkProperty: GraphProperty<Sdk?>,
-  project: Project?,
-  moduleBuilder: ModuleBuilder
-): CellBuilder<JdkComboBox> {
-  return component(createSdkComboBox(project, sdkModel, sdkProperty, StdModuleTypes.JAVA.id, moduleBuilder::isSuitableSdkType))
-}
+private val ANY_SDK_FILTER: ((Sdk) -> Boolean) = { true }
+private val ANY_SDK_TYPE_FILTER: ((SdkTypeId) -> Boolean) = { true }
+private val ANY_SUGGESTED_SDK_FILTER: ((SdkListItem.SuggestedItem) -> Boolean) = { true }
+private val NEW_SDK_CALLBACK_DEFAULT: ((Sdk) -> Unit) = {}
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
@@ -51,11 +41,11 @@ fun Row.sdkComboBox(
   context: WizardContext,
   sdkProperty: GraphProperty<Sdk?>,
   sdkPropertyId: String,
-  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  sdkFilter: ((Sdk) -> Boolean)? = null,
-  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
-  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  onNewSdkAdded: ((Sdk) -> Unit)? = null
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  sdkFilter: ((Sdk) -> Boolean)? = ANY_SDK_FILTER,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = ANY_SUGGESTED_SDK_FILTER,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  onNewSdkAdded: ((Sdk) -> Unit)? = NEW_SDK_CALLBACK_DEFAULT
 ) = sdkComboBox(
   context, sdkProperty, sdkPropertyId,
   sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded
@@ -65,11 +55,11 @@ fun Row.sdkComboBox(
   context: WizardContext,
   sdkProperty: ObservableMutableProperty<Sdk?>,
   sdkPropertyId: String,
-  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  sdkFilter: ((Sdk) -> Boolean)? = null,
-  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
-  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  onNewSdkAdded: ((Sdk) -> Unit)? = null
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  sdkFilter: ((Sdk) -> Boolean)? = ANY_SDK_FILTER,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = ANY_SUGGESTED_SDK_FILTER,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  onNewSdkAdded: ((Sdk) -> Unit)? = NEW_SDK_CALLBACK_DEFAULT
 ): Cell<JdkComboBox> {
   val sdksModel = ProjectSdksModel()
 
@@ -92,13 +82,12 @@ fun createSdkComboBox(
   sdkModel: ProjectSdksModel,
   sdkProperty: ObservableMutableProperty<Sdk?>,
   sdkPropertyId: String,
-  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  sdkFilter: ((Sdk) -> Boolean)? = null,
-  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
-  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  onNewSdkAdded: ((Sdk) -> Unit)? = null
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  sdkFilter: ((Sdk) -> Boolean)? = ANY_SDK_FILTER,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = ANY_SUGGESTED_SDK_FILTER,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  onNewSdkAdded: ((Sdk) -> Unit)? = NEW_SDK_CALLBACK_DEFAULT
 ): JdkComboBox {
-
   sdkModel.reset(project)
 
   val sdkComboBox = JdkComboBox(project, sdkModel, sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded)

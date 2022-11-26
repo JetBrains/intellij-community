@@ -32,9 +32,6 @@ import java.util.Objects;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isThisRef;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isNullLiteral;
 
-/**
- * @author peter
- */
 public class InstanceOfInstruction extends InstructionImpl implements MixinTypeInstruction {
   private final ConditionInstruction myCondition;
   private final Map<VariableDescriptor, Integer> myVariableIndex;

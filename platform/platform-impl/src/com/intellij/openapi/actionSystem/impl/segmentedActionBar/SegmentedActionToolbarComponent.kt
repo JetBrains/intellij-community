@@ -19,7 +19,7 @@ import javax.swing.border.Border
 
 open class SegmentedActionToolbarComponent(place: String,
                                            group: ActionGroup,
-                                           val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
+                                           private val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
     internal const val CONTROL_BAR_PROPERTY = "CONTROL_BAR_PROPERTY"
     internal const val CONTROL_BAR_FIRST = "CONTROL_BAR_PROPERTY_FIRST"
@@ -31,7 +31,7 @@ open class SegmentedActionToolbarComponent(place: String,
 
     private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
-    internal val segmentedButtonLook = object : ActionButtonLook() {
+    val segmentedButtonLook = object : ActionButtonLook() {
       override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
       }
 

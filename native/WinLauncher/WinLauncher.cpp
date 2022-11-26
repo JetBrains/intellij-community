@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include <algorithm>
 #include <cstdio>
@@ -21,6 +21,8 @@
 #include "resource.h"
 
 
+#define IDE_HOME_MACRO "%IDE_HOME%"
+
 typedef JNIIMPORT jint(JNICALL *JNI_createJavaVM)(JavaVM **pvm, JNIEnv **env, void *args);
 
 HINSTANCE hInst; // Current instance.
@@ -37,17 +39,18 @@ HANDLE hFileMapping;
 HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
 const int FILE_MAPPING_SIZE = 16000;
+const int FILE_MAPPING_CMD_OFFSET = sizeof(DWORD);
 
 void TrimLine(char* line);
 
 static std::string EncodeWideACP(const std::wstring &str)
 {
-  const int cbANSI = WideCharToMultiByte(CP_ACP, 0, str.c_str(), str.size(), NULL, 0, NULL, NULL);
+  const int cbANSI = WideCharToMultiByte(CP_ACP, 0, str.c_str(), (int)str.size(), NULL, 0, NULL, NULL);
   if (cbANSI <= 0)
     return std::string();
 
   char* ansiBuf = new char[cbANSI];
-  WideCharToMultiByte(CP_ACP, 0, str.c_str(), str.size(), ansiBuf, cbANSI, NULL, NULL);
+  WideCharToMultiByte(CP_ACP, 0, str.c_str(), (int)str.size(), ansiBuf, cbANSI, NULL, NULL);
   std::string result(ansiBuf, cbANSI);
   delete[] ansiBuf;
   return result;
@@ -89,18 +92,16 @@ bool FindValidJVM(const char* path)
   return false;
 }
 
-std::string GetAdjacentDir(const char* suffix)
-{
-  char libDir[_MAX_PATH];
-  GetModuleFileNameA(NULL, libDir, _MAX_PATH - 1);
-  char* lastSlash = strrchr(libDir, '\\');
+static std::string GetHomeDir() {
+  char path[_MAX_PATH];
+  GetModuleFileNameA(NULL, path, _MAX_PATH - 1);
+  char* lastSlash = strrchr(path, '\\');
   if (!lastSlash) return "";
   *lastSlash = '\0';
-  lastSlash = strrchr(libDir, '\\');
+  lastSlash = strrchr(path, '\\');
   if (!lastSlash) return "";
-  strcpy(lastSlash + 1, suffix);
-  strcat_s(libDir, "\\");
-  return std::string(libDir);
+  *lastSlash = '\0';
+  return path;
 }
 
 bool FindJVMInEnvVar(const char* envVarName, bool& result)
@@ -138,8 +139,8 @@ bool FindJVMInSettings() {
     ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
     std::wstring path(copy);
     path += module.substr(module.find_last_of('\\')) + L".jdk";
-    FILE *f = _tfopen(path.c_str(), _T("rt"));
-    if (!f) return false;
+    FILE *f;
+    if (!_wfopen_s(&f, path.c_str(), L"rt")) return false;
 
     char line[_MAX_PATH];
     if (!fgets(line, _MAX_PATH, f)) {
@@ -155,79 +156,7 @@ bool FindJVMInSettings() {
   return false;
 }
 
-bool FindJVMInRegistryKey(const char* key, bool wow64_32)
-{
-  HKEY hKey;
-  int flags = KEY_READ;
-  if (wow64_32) flags |= KEY_WOW64_32KEY;
-  if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &hKey) != ERROR_SUCCESS) return false;
-  char javaHome[_MAX_PATH];
-  DWORD javaHomeSize = _MAX_PATH - 1;
-  bool success = false;
-  if (RegQueryValueExA(hKey, "JavaHome", NULL, NULL, (LPBYTE)javaHome, &javaHomeSize) == ERROR_SUCCESS)
-  {
-    success = FindValidJVM(javaHome);
-  }
-  RegCloseKey(hKey);
-  return success;
-}
-
-bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
-{
-  char* keyName = "Java Runtime Environment";
-  // starting from java 9 key name has been changed
-  char* jreKeyName = "JRE";
-  char* jdkKeyName = "JDK";
-
-  bool foundJava = false;
-  char buf[_MAX_PATH];
-  //search jre in registry if the product doesn't require tools.jar
-  if (LoadStdString(IDS_JDK_ONLY) != std::string("true")) {
-    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
-    foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    if (!foundJava) {
-      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jreKeyName, version);
-      foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    }
-  }
-
-  //search jdk in registry if the product requires tools.jar or jre isn't installed.
-  if (!foundJava) {
-    keyName = "Java Development Kit";
-    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
-    foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    if (!foundJava) {
-      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jdkKeyName, version);
-      foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    }
-  }
-  return foundJava;
-}
-
-bool FindJVMInRegistry()
-{
-#ifndef _M_X64
-  if (FindJVMInRegistryWithVersion("1.8", true))
-    return true;
-  if (FindJVMInRegistryWithVersion("9", true))
-    return true;
-  if (FindJVMInRegistryWithVersion("10", true))
-    return true;
-#endif
-
-  if (FindJVMInRegistryWithVersion("1.8", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("9", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("10", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("11", false))
-    return true;
-  return false;
-}
-
-bool LocateJVM()
-{
+static bool LocateJVM(const std::string &homeDir) {
   bool result;
   if (FindJVMInEnvVar(LoadStdString(IDS_JDK_ENV_VAR).c_str(), result))
   {
@@ -236,19 +165,11 @@ bool LocateJVM()
 
   if (FindJVMInSettings()) return true;
 
-  if (FindValidJVM(GetAdjacentDir("jbr").c_str()) && Is64BitJRE(jvmPath))
-  {
-    return true;
-  }
+  if (FindValidJVM((homeDir + "\\jbr").c_str()) && Is64BitJRE(jvmPath)) return true;
 
   if (FindJVMInEnvVar("JAVA_HOME", result))
   {
     return result;
-  }
-
-  if (FindJVMInRegistry())
-  {
-    return true;
   }
 
   std::string jvmError;
@@ -275,8 +196,8 @@ void TrimLine(char* line)
 }
 
 static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOptionLines) {
-  FILE *f = fopen(path, "rt");
-  if (!f) return false;
+  FILE *f;
+  if (!fopen_s(&f, path, "rt")) return false;
 
   char line[4096];
   while (fgets(line, sizeof(line), f)) {
@@ -290,93 +211,72 @@ static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOpti
   return true;
 }
 
-std::string CollectLibJars(const std::string& jarList)
-{
-  std::string libDir = GetAdjacentDir("lib");
-  if (libDir.size() == 0 || !FileExists(libDir))
-  {
-    return "";
+static void ReplaceAll(std::string &str, const std::string &find, const std::string &replace) {
+  size_t p = 0;
+  while (p < str.length()) {
+    p = str.find(find, p);
+    if (p == std::string::npos) break;
+    str.replace(p, find.size(), replace);
+    p += replace.size();
   }
+}
 
+static std::string CollectLibJars(const std::string& jarList, const std::string &homeDir) {
   std::string result;
-  int pos = 0;
-  while (pos < jarList.size())
-  {
-    int delimiterPos = jarList.find(';', pos);
-    if (delimiterPos == std::string::npos)
-    {
-      delimiterPos = jarList.size();
-    }
-    if (result.size() > 0)
-    {
-      result += ";";
-    }
-    result += libDir;
+
+  size_t pos = 0;
+  while (pos < jarList.size()) {
+    size_t delimiterPos = jarList.find(';', pos);
+    if (delimiterPos == std::string::npos) delimiterPos = jarList.size();
+    if (!result.empty()) result += ';';
     result += jarList.substr(pos, delimiterPos - pos);
     pos = delimiterPos + 1;
   }
+
+  ReplaceAll(result, IDE_HOME_MACRO, homeDir);
+
   return result;
 }
 
-std::string BuildClassPath()
-{
+static void AddClassPathOptions(const std::string &homeDir, std::vector<std::string> &vmOptionLines) {
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
-  return CollectLibJars(classpathLibs);
+  if (!classpathLibs.empty()) {
+    std::string classPath = CollectLibJars(classpathLibs, homeDir);
+    vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
+  }
 }
 
-std::string BuildBootClassPath()
-{
+static void AddBootClassPathOptions(const std::string &homeDir, std::vector<std::string> &vmOptionLines) {
   std::string classpathLibs = LoadStdString(IDS_BOOTCLASSPATH_LIBS);
-  return CollectLibJars(classpathLibs);
-}
-
-bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
-{
-  std::string classPath = BuildClassPath();
-  if (classPath.size() == 0) return false;
-  vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
-
-  return true;
-}
-
-bool AddBootClassPathOptions(std::vector<std::string>& vmOptionLines)
-{
-  std::string classPath = BuildBootClassPath();
-  if (classPath.size() == 0) return false;
-  vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + classPath);
-
-  return true;
-}
-
-std::string getVMOption(int resource){
-  TCHAR buffer[_MAX_PATH];
-  TCHAR copy[_MAX_PATH];
-  std::string vmOption = "";
-  if (LoadString(hInst, resource, buffer, _MAX_PATH))
-  {
-    ExpandEnvironmentStrings(buffer, copy, _MAX_PATH);
-    std::wstring module(copy);
-    vmOption = std::string(module.begin(), module.end());
+  if (!classpathLibs.empty()) {
+    std::string classPath = CollectLibJars(classpathLibs, homeDir);
+    vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + classPath);
   }
-  return vmOption;
 }
 
-void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
-{
-  std::string vmOptions = LoadStdString(IDS_VM_OPTIONS);
-  while (vmOptions.size() > 0)
-  {
-    int pos = vmOptions.find(' ');
-    if (pos == std::string::npos) pos = vmOptions.size();
-    vmOptionLines.push_back(vmOptions.substr(0, pos));
-    while (pos < vmOptions.size() && vmOptions[pos] == ' ') pos++;
-    vmOptions = vmOptions.substr(pos);
+static void addVMOption(int resource, std::vector<std::string> &vmOptionLines) {
+  wchar_t buffer[_MAX_PATH];
+  if (LoadStringW(hInst, resource, buffer, _MAX_PATH)) {
+    wchar_t copy[_MAX_PATH];
+    ExpandEnvironmentStringsW(buffer, copy, _MAX_PATH);
+    vmOptionLines.push_back(EncodeWideACP(copy));
+  }
+}
+
+void AddPredefinedVMOptions(const std::string &homeDir, std::vector<std::string> &vmOptionLines) {
+  std::string vmOptionsStr = LoadStdString(IDS_VM_OPTIONS);
+  while (!vmOptionsStr.empty()) {
+    size_t pos = vmOptionsStr.find(' ');
+    if (pos == std::string::npos) pos = vmOptionsStr.size();
+    std::string option = vmOptionsStr.substr(0, pos);
+    ReplaceAll(option, IDE_HOME_MACRO, homeDir);
+    vmOptionLines.push_back(option);
+    while (pos < vmOptionsStr.size() && vmOptionsStr[pos] == ' ') pos++;
+    vmOptionsStr = vmOptionsStr.substr(pos);
   }
 
-  std::string errorFile = getVMOption(IDS_VM_OPTION_ERRORFILE);
-  std::string heapDumpPath = getVMOption(IDS_VM_OPTION_HEAPDUMPPATH);
-  if (errorFile != "") vmOptionLines.push_back(errorFile);
-  if (heapDumpPath != "") vmOptionLines.push_back(heapDumpPath);
+  addVMOption(IDS_VM_OPTION_ERRORFILE, vmOptionLines);
+  addVMOption(IDS_VM_OPTION_HEAPDUMPPATH, vmOptionLines);
 
   char propertiesFile[_MAX_PATH];
   if (GetEnvironmentVariableA(LoadStdString(IDS_PROPS_ENV_VAR).c_str(), propertiesFile, _MAX_PATH))
@@ -392,7 +292,7 @@ void (JNICALL jniExitHook)(jint code) {
   hookExitCode = code;
 }
 
-bool LoadVMOptions() {
+static void LoadVMOptions(const std::string &homeDir) {
   char bin_vmoptions[_MAX_PATH], buffer1[_MAX_PATH], buffer2[_MAX_PATH], *vmOptionsFile = NULL;
   std::vector<std::string> lines, user_lines;
 
@@ -451,9 +351,9 @@ bool LoadVMOptions() {
     }
   }
 
-  AddClassPathOptions(lines);
-  AddBootClassPathOptions(lines);
-  AddPredefinedVMOptions(lines);
+  AddClassPathOptions(homeDir, lines);
+  AddBootClassPathOptions(homeDir, lines);
+  AddPredefinedVMOptions(homeDir, lines);
 
   vmOptionCount = (int)lines.size() + 1;
   vmOptions = (JavaVMOption *)calloc(vmOptionCount, sizeof(JavaVMOption));
@@ -463,8 +363,6 @@ bool LoadVMOptions() {
     vmOptions[i + 1].optionString = _strdup(lines[i].c_str());
     vmOptions[i + 1].extraInfo = NULL;
   }
-
-  return true;
 }
 
 bool LoadJVMLibrary()
@@ -723,13 +621,14 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
     WaitForSingleObject(hEvent, INFINITE);
     if (terminating) break;
 
-    wchar_t *view = static_cast<wchar_t *>(MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
+    void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
     if (!view) continue;
-    std::wstring command(view);
-    int pos = command.find('\n');
+    void *cmdView = (char*)view + FILE_MAPPING_CMD_OFFSET;
+    std::wstring command(static_cast<wchar_t *>(cmdView));
+    size_t pos = command.find('\n');
     if (pos >= 0)
     {
-      int second_pos = command.find('\n', pos + 1);
+      size_t second_pos = command.find('\n', pos + 1);
       std::wstring curDir = command.substr(0, pos);
       std::wstring args = command.substr(pos + 1, second_pos - pos - 1);
       std::wstring response_id = command.substr(second_pos + 1);
@@ -764,25 +663,57 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
   return 0;
 }
 
+std::wstring GetCurrentDirectoryAsString()
+{
+  DWORD length = GetCurrentDirectoryW(0, NULL);
+  wchar_t* buffer = new wchar_t[length];
+  length = GetCurrentDirectoryW(length, buffer);
+
+  std::wstring str = std::wstring(buffer, length);
+  delete[] buffer;
+  return str;
+}
+
 void SendCommandLineToFirstInstance(int response_id)
 {
-  wchar_t curDir[_MAX_PATH];
-  GetCurrentDirectoryW(_MAX_PATH - 1, curDir);
-  std::string resultFileName = std::to_string(static_cast<long long>(response_id));
+  std::wstring curDir = GetCurrentDirectoryAsString();
+  std::wstring resultFileName = std::to_wstring(static_cast<long long>(response_id));
 
   std::wstring command(curDir);
   command += _T("\n");
   command += GetCommandLineW();
   command += _T("\n");
-  command += std::wstring(resultFileName.begin(), resultFileName.end());
+  command += std::wstring(resultFileName);
 
   void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
   if (view)
   {
-    memcpy(view, command.c_str(), (command.size() + 1) * sizeof(wchar_t));
+    DWORD pid = *(DWORD*)view;
+    AllowSetForegroundWindow(pid);
+
+    void *cmdView = (char*)view + FILE_MAPPING_CMD_OFFSET;
+    memcpy(cmdView, command.c_str(), (command.size() + 1) * sizeof(wchar_t));
     UnmapViewOfFile(view);
   }
   SetEvent(hEvent);
+}
+
+// returns 'true' if file mapping has been created, and 'false' if existing one has been opened
+static bool CreateOrOpenFileMapping(const char* name) {
+  hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
+  if (hFileMapping) {
+    return false;
+  } else {
+    hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, name);
+    if (hFileMapping) {
+      DWORD *view = (DWORD*)MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+      if (view) {
+        *view = GetCurrentProcessId();
+        UnmapViewOfFile(view);
+      }
+    }
+    return true;
+  }
 }
 
 int CheckSingleInstance()
@@ -802,11 +733,8 @@ int CheckSingleInstance()
 
   hEvent = CreateEventA(NULL, FALSE, FALSE, eventName.c_str());
 
-  hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
-  if (!hFileMapping)
+  if (CreateOrOpenFileMapping(mappingName.c_str()))
   {
-    hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
-      mappingName.c_str());
     // Means we're the first instance
     return -1;
   }
@@ -846,12 +774,9 @@ int CheckSingleInstance()
     while (WaitForSingleObject(hResponseEvent, waitTimeoutMs) == WAIT_TIMEOUT)
     {
       // Check if the file mapping still exists outside the current process:
-      hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
-      if (!hFileMapping)
+      if (CreateOrOpenFileMapping(mappingName.c_str()))
       {
         // Means the mapping was abandoned by the initial process we observed. So, we should take over.
-        hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
-          mappingName.c_str());
         CloseHandle(hResultFileMapping);
         CloseHandle(hResponseEvent);
         return -1;
@@ -880,162 +805,6 @@ int CheckSingleInstance()
     CloseHandle(hResultFileMapping);
     return exitCode;
   }
-}
-
-void DrawSplashImage(HWND hWnd)
-{
-  HBITMAP hSplashBitmap = (HBITMAP)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-  PAINTSTRUCT ps;
-  HDC hDC = BeginPaint(hWnd, &ps);
-  HDC hMemDC = CreateCompatibleDC(hDC);
-  HBITMAP hOldBmp = (HBITMAP)SelectObject(hMemDC, hSplashBitmap);
-  BITMAP splashBitmap;
-  GetObject(hSplashBitmap, sizeof(splashBitmap), &splashBitmap);
-  BitBlt(hDC, 0, 0, splashBitmap.bmWidth, splashBitmap.bmHeight, hMemDC, 0, 0, SRCCOPY);
-  SelectObject(hMemDC, hOldBmp);
-  DeleteDC(hMemDC);
-  EndPaint(hWnd, &ps);
-}
-
-LRESULT CALLBACK SplashScreenWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  switch (uMsg)
-  {
-  case WM_PAINT:
-    DrawSplashImage(hWnd);
-    break;
-  }
-  return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
-
-const TCHAR splashClassName[] = _T("IntelliJLauncherSplash");
-
-void RegisterSplashScreenWndClass()
-{
-  WNDCLASSEX wcx;
-  wcx.cbSize = sizeof(wcx);
-  wcx.style = 0;
-  wcx.lpfnWndProc = SplashScreenWndProc;
-  wcx.cbClsExtra = 0;
-  wcx.cbWndExtra = 0;
-  wcx.hInstance = hInst;
-  wcx.hIcon = 0;
-  wcx.hCursor = LoadCursor(NULL, IDC_WAIT);
-  wcx.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-  wcx.lpszMenuName = 0;
-  wcx.lpszClassName = splashClassName;
-  wcx.hIconSm = 0;
-
-  RegisterClassEx(&wcx);
-}
-
-HWND ShowSplashScreenWindow(HBITMAP hSplashBitmap)
-{
-  RECT workArea;
-  SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
-  BITMAP splashBitmap;
-  GetObject(hSplashBitmap, sizeof(splashBitmap), &splashBitmap);
-  int x = workArea.left + ((workArea.right - workArea.left) - splashBitmap.bmWidth) / 2;
-  int y = workArea.top + ((workArea.bottom - workArea.top) - splashBitmap.bmHeight) / 2;
-
-  HWND splashWindow = CreateWindowEx(WS_EX_TOOLWINDOW, splashClassName, splashClassName, WS_POPUP,
-    x, y, splashBitmap.bmWidth, splashBitmap.bmHeight, NULL, NULL, NULL, NULL);
-  SetWindowLongPtr(splashWindow, GWLP_USERDATA, (LONG_PTR)hSplashBitmap);
-  ShowWindow(splashWindow, SW_SHOW);
-  UpdateWindow(splashWindow);
-  return splashWindow;
-}
-
-DWORD parentProcId;
-HANDLE parentProcHandle;
-
-BOOL IsParentProcessRunning(HANDLE hProcess)
-{
-  if (hProcess == NULL) return FALSE;
-  DWORD ret = WaitForSingleObject(hProcess, 0);
-  return ret == WAIT_TIMEOUT;
-}
-
-BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
-{
-  DWORD procId = 0;
-  GetWindowThreadProcessId(hWnd, &procId);
-  if (parentProcId == procId)
-  {
-    WINDOWINFO wi;
-    wi.cbSize = sizeof(WINDOWINFO);
-    GetWindowInfo(hWnd, &wi);
-    if ((wi.dwStyle & WS_VISIBLE) != 0)
-    {
-      HWND *phNewWindow = (HWND *)lParam;
-      *phNewWindow = hWnd;
-      return FALSE;
-    }
-  }
-  return TRUE;
-}
-
-DWORD WINAPI SplashScreen(HBITMAP hSplashBitmap)
-{
-  RegisterSplashScreenWndClass();
-  HWND splashWindow = ShowSplashScreenWindow(hSplashBitmap);
-  MSG msg;
-  while (true)
-  {
-    while (PeekMessage(&msg, splashWindow, 0, 0, PM_REMOVE))
-    {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
-    }
-    Sleep(50);
-    HWND hNewWindow = NULL;
-    EnumWindows(EnumWindowsProc, (LPARAM)&hNewWindow);
-    if (hNewWindow)
-    {
-      BringWindowToTop(hNewWindow);
-      Sleep(100);
-      DeleteObject(hSplashBitmap);
-      DestroyWindow(splashWindow);
-      break;
-    }
-    if (!IsParentProcessRunning(parentProcHandle)) break;
-  }
-  return 0;
-}
-
-void StartSplashProcess()
-{
-  TCHAR ownPath[_MAX_PATH];
-  TCHAR params[_MAX_PATH];
-
-  PROCESS_INFORMATION splashProcessInformation;
-  STARTUPINFO startupInfo;
-  memset(&splashProcessInformation, 0, sizeof(splashProcessInformation));
-  memset(&startupInfo, 0, sizeof(startupInfo));
-  startupInfo.cb = sizeof(startupInfo);
-  startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-  startupInfo.wShowWindow = SW_SHOW;
-
-  GetModuleFileName(NULL, ownPath, (sizeof(ownPath)));
-  _snwprintf(params, _MAX_PATH, _T("SPLASH %d"), GetCurrentProcessId());
-  if (CreateProcess(ownPath, params, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &splashProcessInformation))
-  {
-    CloseHandle(splashProcessInformation.hProcess);
-    CloseHandle(splashProcessInformation.hThread);
-  }
-}
-
-std::wstring GetCurrentDirectoryAsString()
-{
-  std::vector<wchar_t> buffer(_MAX_PATH);
-  DWORD sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
-  if (sizeWithoutTerminatingZero >= buffer.size())
-  {
-    buffer.resize(sizeWithoutTerminatingZero + 1);
-    sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
-  }
-
-  return std::wstring(buffer.data(), sizeWithoutTerminatingZero);
 }
 
 static void SetPathVariable(const wchar_t *varName, REFKNOWNFOLDERID rfId)
@@ -1079,19 +848,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   hInst = hInstance;
 
-  if (__argc == 2 && _wcsicmp(__wargv[0], _T("SPLASH")) == 0)
-  {
-    HBITMAP hSplashBitmap = static_cast<HBITMAP>(LoadImage(hInst, MAKEINTRESOURCE(IDB_SPLASH), IMAGE_BITMAP, 0, 0, 0));
-    if (hSplashBitmap)
-    {
-      parentProcId = _wtoi(__wargv[1]);
-      parentProcHandle = OpenProcess(SYNCHRONIZE, FALSE, parentProcId);
-      if (IsParentProcessRunning(parentProcHandle)) SplashScreen(hSplashBitmap);
-    }
-    CloseHandle(parentProcHandle);
-    return 0;
-  }
-
   for (int i = 1; i < __argc; i++)
   {
     if (wcscmp(L"-h", __wargv[i]) == 0 || wcscmp(L"-?", __wargv[i]) == 0 || wcscmp(L"--help", __wargv[i]) == 0)
@@ -1116,17 +872,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   std::vector<LPWSTR> args = ParseCommandLine(GetCommandLineW());
 
-  bool nativesplash = false;
-  for (int i = 0; i < args.size(); i++)
-  {
-    if (_wcsicmp(args[i], _T("/nativesplash")) == 0) nativesplash = true;
-  }
   args = RemovePredefinedArgs(args);
 
-  if (nativesplash) StartSplashProcess();
-
-  if (!LocateJVM()) return 1;
-  if (!LoadVMOptions()) return 1;
+  std::string homeDir = GetHomeDir();
+  if (!LocateJVM(homeDir)) return 1;
+  LoadVMOptions(homeDir);
   if (!LoadJVMLibrary()) return 1;
   JNIEnv* jenv = CreateJVM();
   if (jenv == NULL) return 1;

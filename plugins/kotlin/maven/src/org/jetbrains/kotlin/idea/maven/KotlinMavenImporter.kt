@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.notification.BrowseNotificationAction
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.PersistentStateComponent
@@ -11,8 +13,10 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.PathUtil
@@ -51,6 +55,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.*
 
 interface MavenProjectImportHandler {
@@ -112,14 +117,15 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
         super.postProcess(module, mavenProject, changes, modifiableModelsProvider)
-        module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
+        val project = module.project
+        project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
             KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
-                module.project,
+                project,
                 version.rawVersion,
-                isDelegatedToExtBuild = MavenRunner.getInstance(module.project).settings.isDelegateBuildToMaven
+                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven
             )
 
-            module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
+            project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }
 
         if (changes.hasDependencyChanges()) {
@@ -130,7 +136,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
                 modifiableModelsProvider.getModifiableRootModel(module).orderEntries().forEachLibrary { library ->
                     if ((library as LibraryEx).kind == null) {
                         val model = modifiableModelsProvider.getModifiableLibraryModel(library) as LibraryEx.ModifiableModelEx
-                        detectLibraryKind(model.getFiles(OrderRootType.CLASSES))?.let { model.kind = it }
+                        detectLibraryKind(library, project)?.let { model.kind = it }
                     }
                     true
                 }
@@ -302,6 +308,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         KotlinMavenConfigurator.MAVEN_PLUGIN_ID,
     )
 
+    private var kotlinJsCompilerWarning = WeakReference<Notification>(null)
+
     private fun configureFacet(mavenProject: MavenProject, modifiableModelsProvider: IdeModifiableModelsProvider, module: Module) {
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
         val compilerVersion = mavenPlugin.compilerVersion
@@ -315,12 +323,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         // TODO There should be a way to figure out the correct platform version
         val platform = detectPlatform(mavenProject)?.defaultPlatform
 
-        kotlinFacet.configureFacet(
-            compilerVersion,
-            platform,
-            modifiableModelsProvider,
-            emptySet()
-        )
+        kotlinFacet.configureFacet(compilerVersion, platform, modifiableModelsProvider)
 
         val facetSettings = kotlinFacet.configuration.settings
         val configuredPlatform = kotlinFacet.configuration.settings.targetPlatform!!
@@ -335,6 +338,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }
         if (facetSettings.compilerArguments is K2JSCompilerArguments) {
             configureJSOutputPaths(mavenProject, modifiableModelsProvider.getModifiableRootModel(module), facetSettings, mavenPlugin)
+            deprecatedKotlinJsCompiler(module.project, compilerVersion.kotlinVersion)
         }
 
         MavenProjectImportHandler.getInstances(module.project).forEach { it(kotlinFacet, mavenProject) }
@@ -347,6 +351,34 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             module.project.putUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED, true)
             displayJvmTarget6UsageNotification(module.project)
         }
+    }
+
+    private fun deprecatedKotlinJsCompiler(
+        project: Project,
+        kotlinVersion: KotlinVersion,
+    ) {
+
+        if (!kotlinVersion.isAtLeast(1, 7)) return
+
+        if (kotlinJsCompilerWarning.get() != null) return
+
+        NotificationGroupManager.getInstance()
+            .getNotificationGroup("Kotlin/JS compiler Maven")
+            .createNotification(
+                KotlinMavenBundle.message("notification.text.kotlin.js.compiler.title"),
+                KotlinMavenBundle.message("notification.text.kotlin.js.compiler.body"),
+                NotificationType.WARNING
+            )
+            .addAction(
+                BrowseNotificationAction(
+                    KotlinMavenBundle.message("notification.text.kotlin.js.compiler.learn.more"),
+                    KotlinMavenBundle.message("notification.text.kotlin.js.compiler.link"),
+                )
+            )
+            .also {
+                kotlinJsCompilerWarning = WeakReference(it)
+            }
+            .notify(project)
     }
 
     private fun detectPlatform(mavenProject: MavenProject) =

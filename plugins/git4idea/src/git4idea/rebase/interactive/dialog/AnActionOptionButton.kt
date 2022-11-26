@@ -3,6 +3,7 @@ package git4idea.rebase.interactive.dialog
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -46,10 +47,14 @@ internal class AnActionOptionButton(
     action = AnActionWrapper(this@AnActionOptionButton.action, this)
     setOptions(this@AnActionOptionButton.options)
     adjustForToolbar()
-    mnemonic = this@AnActionOptionButton.action.templatePresentation.text.first().toInt()
+    mnemonic = this@AnActionOptionButton.action.templatePresentation.text.first().code
   }
 
   private val optionButtonPanel = optionButton.withLeftToolbarBorder()
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     throw UnsupportedOperationException()

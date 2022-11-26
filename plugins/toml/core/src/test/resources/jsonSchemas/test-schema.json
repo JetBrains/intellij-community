@@ -105,6 +105,29 @@
                     "enum": [1, 2, 3]
                 }
             }
+        },
+        "bar": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            ]
+        },
+        "baz": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "object"
+                }
+            ]
         }
     },
     "$defs": {

@@ -35,10 +35,12 @@ public class ZipUtilTest {
     Path simpleZipFile = getZipParentDir().resolve("simple.zip");
     try (ZipInputStream stream = new ZipInputStream(Files.newInputStream(simpleZipFile))) {
       ZipUtil.unzip(null, tempDir, stream, null, null, true);
-      assertThat(FileTreePrinterKt.getDirectoryTree(tempDir, Collections.emptySet(), false, false)).isEqualTo("/\n" +
-                                                                                                              "  a.txt\n" +
-                                                                                                              "  /\n" +
-                                                                                                              "    b.txt\n");
+      assertThat(FileTreePrinterKt.getDirectoryTree(tempDir, Collections.emptySet(), false, false)).isEqualTo("""
+                                                                                                                /
+                                                                                                                  a.txt
+                                                                                                                  /
+                                                                                                                    b.txt
+                                                                                                                """);
     }
   }
 

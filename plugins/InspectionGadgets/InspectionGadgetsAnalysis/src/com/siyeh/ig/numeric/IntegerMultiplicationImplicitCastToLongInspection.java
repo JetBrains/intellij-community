@@ -163,7 +163,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
 
       final PsiExpression[] operands = expression.getOperands();

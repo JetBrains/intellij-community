@@ -4,7 +4,6 @@ package com.intellij.codeInsight.generation;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.formatting.IndentData;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.injected.editor.EditorWindow;
@@ -155,8 +154,6 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
 
   @Override
   public void postInvoke() {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.line");
-
     // second pass - determining whether we need to comment or to uncomment
     boolean allLinesCommented = true;
     for (Block block : myBlocks) {
@@ -241,7 +238,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       Document document = block.editor.getDocument();
       for (Caret caret : block.carets) {
         switch (block.caretUpdate) {
-          case PUT_AT_COMMENT_START:
+          case PUT_AT_COMMENT_START -> {
             final Commenter commenter = block.commenters[0];
             if (commenter != null) {
               String prefix;
@@ -269,8 +266,8 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
               if (lineStart > document.getTextLength()) lineStart = document.getTextLength();
               caret.moveToOffset(lineStart);
             }
-            break;
-          case SHIFT_DOWN:
+          }
+          case SHIFT_DOWN -> {
             // Don't tweak caret position if we're already located on the last document line.
             LogicalPosition position = caret.getLogicalPosition();
             if (position.line < document.getLineCount() - 1) {
@@ -278,8 +275,8 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
                                   - EditorUtil.getSoftWrapCountAfterLineStart(block.editor, position);
               caret.moveCaretRelatively(0, verticalShift, false, true);
             }
-            break;
-          case RESTORE_SELECTION:
+          }
+          case RESTORE_SELECTION ->
             caret.setSelection(document.getLineStartOffset(document.getLineNumber(caret.getSelectionStart())), caret.getSelectionEnd());
         }
       }

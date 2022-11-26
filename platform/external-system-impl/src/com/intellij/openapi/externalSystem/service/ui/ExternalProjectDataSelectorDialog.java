@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -195,7 +196,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
           new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
+              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject);
             }
           }.queue();
         });
@@ -692,6 +693,11 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         myShowSelectedRowsOnly = true;
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class UnselectAllButton extends AnActionButton {
@@ -716,6 +722,11 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         reloadTree();
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class ShowSelectedOnlyButton extends ToggleActionButton {
@@ -726,6 +737,11 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     @Override
     public boolean isSelected(AnActionEvent e) {
       return myShowSelectedRowsOnly;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -769,6 +785,11 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         reloadTree();
       }
       updateSelectionState();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

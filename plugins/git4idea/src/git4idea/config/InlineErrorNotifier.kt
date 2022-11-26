@@ -16,7 +16,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
@@ -136,7 +136,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
       .setCopyable(true)
       .setAllowAutoWrapping(true)
       .apply {
-        foreground = UIUtil.getErrorForeground()
+        foreground = NamedColorUtil.getErrorForeground()
       }
 
     container.addToCenter(label)

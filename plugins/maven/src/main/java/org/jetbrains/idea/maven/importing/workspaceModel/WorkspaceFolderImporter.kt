@@ -5,12 +5,7 @@ import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetection
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaResourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
@@ -20,6 +15,7 @@ import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -27,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.io.File
+import java.util.stream.Stream
 
 internal class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
@@ -143,12 +140,23 @@ internal class WorkspaceFolderImporter(
 
     for (each in legacyImporters) {
       val excludes = mutableListOf<String>()
-      each.collectExcludedFolders(mavenProject, excludes)
+      try {
+        each.collectExcludedFolders(mavenProject, excludes)
+      }
+      catch (e: Exception) {
+        MavenLog.LOG.error("Exception in MavenImporter.collectExcludedFolders, skipping it.", e)
+      }
       excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it))) }
     }
     for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
-        each.getFoldersToExclude(configuratorContext)
+        try {
+          each.getFoldersToExclude(configuratorContext)
+        }
+        catch (e: Exception) {
+          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.getFoldersToExclude, skipping it.", e)
+          Stream.empty()
+        }
       }.forEach {
         folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it)))
       }
@@ -207,19 +215,38 @@ internal class WorkspaceFolderImporter(
 
     for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
-        each.getAdditionalSourceFolders(configuratorContext)
+        try {
+          each.getAdditionalSourceFolders(configuratorContext)
+        }
+        catch (e: Exception) {
+          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.getAdditionalSourceFolders, skipping it.", e)
+          Stream.empty()
+        }
       }.forEach {
         result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.SOURCE))
       }
+
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
-        each.getAdditionalTestSourceFolders(configuratorContext)
+        try {
+          each.getAdditionalTestSourceFolders(configuratorContext)
+        }
+        catch (e: Exception) {
+          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.getAdditionalTestSourceFolders, skipping it.", e)
+          Stream.empty()
+        }
       }.forEach {
         result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.TEST_SOURCE))
       }
     }
+
     for (each in legacyImporters) {
-      each.collectSourceRoots(mavenProject) { path: String, type: JpsModuleSourceRootType<*> ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), type))
+      try {
+        each.collectSourceRoots(mavenProject) { path: String, type: JpsModuleSourceRootType<*> ->
+          result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), type))
+        }
+      }
+      catch (e: Exception) {
+        MavenLog.LOG.error("Exception in MavenImporter.collectSourceRoots, skipping it.", e)
       }
     }
   }

@@ -2,24 +2,36 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddRemainingWhenBranchesApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 internal class AddWhenRemainingBranchesIntention
-    : AbstractKotlinApplicatorBasedIntention<KtWhenExpression, AddRemainingWhenBranchesApplicator.Input>(KtWhenExpression::class) {
-    override fun getApplicator() =
-        AddRemainingWhenBranchesApplicator.applicator
+    : AbstractKotlinApplicableIntentionWithContext<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
+    override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(false)
+    override fun getActionName(element: KtWhenExpression, context: AddRemainingWhenBranchesUtils.Context): String = familyName
 
-    override fun getInputProvider() = inputProvider { whenExpression: KtWhenExpression ->
-        val whenMissingCases = whenExpression.getMissingCases().takeIf {
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
+
+    override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.Context? {
+        val whenMissingCases = element.getMissingCases().takeIf {
             it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
-        } ?: return@inputProvider null
-        AddRemainingWhenBranchesApplicator.Input(whenMissingCases, enumToStarImport = null)
+        } ?: return null
+        return AddRemainingWhenBranchesUtils.Context(whenMissingCases, enumToStarImport = null)
+    }
+
+    override fun apply(element: KtWhenExpression, context: AddRemainingWhenBranchesUtils.Context, project: Project, editor: Editor?) {
+        addRemainingWhenBranches(element, context)
     }
 }

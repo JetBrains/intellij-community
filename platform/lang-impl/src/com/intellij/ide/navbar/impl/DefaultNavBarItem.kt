@@ -12,7 +12,6 @@ import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.navigation.NavigationRequest
 import com.intellij.navigation.NavigationService
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.module.Module
@@ -40,6 +39,7 @@ import com.intellij.ui.SimpleTextAttributes.*
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -61,12 +61,15 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
     val textAttributes = getTextAttributes(selected = false)
     val selectedTextAttributes = getTextAttributes(selected = true)
 
+    val hasContainingFile = (data as? PsiElement)?.containingFile != null
+
     return NavBarItemPresentation(
       icon,
       text,
       popupText,
       textAttributes,
-      selectedTextAttributes
+      selectedTextAttributes,
+      hasContainingFile
     )
   }
 
@@ -89,10 +92,9 @@ internal class ProjectNavBarItem(data: Project) : DefaultNavBarItem<Project>(dat
 
   override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
     val problemSolver = WolfTheProblemSolver.getInstance(data)
-    val hasProblems = ReadAction
-      .compute<Array<Module>, RuntimeException> { ModuleManager.getInstance(data).modules }
+    val hasProblems = ModuleManager.getInstance(data)
+      .modules
       .any(problemSolver::hasProblemFilesBeneath)
-
     return if (hasProblems) errorAttributes else REGULAR_ATTRIBUTES
   }
 }
@@ -147,9 +149,10 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
 
   override fun getIcon(): Icon? =
     try {
-      ReadAction
-        .compute<Icon?, RuntimeException> { data.getIcon(0) }
-        ?.let { IconUtil.cropIcon(it, 16 * 2, 16 * 2) }
+      data.getIcon(0)?.let {
+        val maxDimension = JBUI.scale(16 * 2)
+        IconUtil.cropIcon(it, maxDimension, maxDimension)
+      }
     }
     catch (e: IndexNotReadyException) {
       null

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -31,6 +32,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcsUtil.VcsUtil;
@@ -161,21 +163,24 @@ public class VcsStructureChooser extends DialogWrapper {
           return file == null ? "" : file.getName();
         }
         return o.toString();
-      });
+      }) {
+        @Override
+        protected Comparator<? super NodeDescriptor<?>> getFileComparator() {
+          return (o1, o2) -> {
+            if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
+              VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
+              VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
 
-    fileSystemTree.getTreeBuilder().getUi().setNodeDescriptorComparator((o1, o2) -> {
-      if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
-        VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
-        VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
+              boolean isDir1 = f1.isDirectory();
+              boolean isDir2 = f2.isDirectory();
+              if (isDir1 != isDir2) return isDir1 ? -1 : 1;
 
-        boolean isDir1 = f1.isDirectory();
-        boolean isDir2 = f2.isDirectory();
-        if (isDir1 != isDir2) return isDir1 ? -1 : 1;
-
-        return f1.getPath().compareToIgnoreCase(f2.getPath());
-      }
-      return o1.getIndex() - o2.getIndex();
-    });
+              return f1.getPath().compareToIgnoreCase(f2.getPath());
+            }
+            return o1.getIndex() - o2.getIndex();
+          };
+        }
+      };
 
     new ClickListener() {
       @Override
@@ -310,7 +315,7 @@ public class VcsStructureChooser extends DialogWrapper {
       myFictive = new JBList();
       myFictive.setBackground(RenderingUtil.getBackground(tree));
       myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
-      myFictive.setSelectionForeground(UIUtil.getListSelectionForeground(true));
+      myFictive.setSelectionForeground(NamedColorUtil.getListSelectionForeground(true));
 
       myTextRenderer = new WithModulesListCellRenderer(project, myModulesSet) {
         @Override

@@ -3,11 +3,13 @@ package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.ui.FontUtil
@@ -131,6 +133,10 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
 
   private fun statusToAction(status: VcsCommitExternalStatusPresentation) =
     object : DumbAwareAction(status.text, null, status.icon) {
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+      }
+
       override fun update(e: AnActionEvent) {
         e.presentation.apply {
           isVisible = true
@@ -309,7 +315,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
   }
 
   private var icon: ColorIcon? = null
-  private var tooltipText: String? = null
+  private var tooltipText: @NlsContexts.Tooltip String? = null
   private val mouseMotionListener = object : MouseAdapter() {
     override fun mouseMoved(e: MouseEvent?) {
       if (IdeTooltipManager.getInstance().hasCurrent()) {

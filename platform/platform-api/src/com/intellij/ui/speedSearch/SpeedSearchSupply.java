@@ -18,11 +18,15 @@ package com.intellij.ui.speedSearch;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
+
+import static com.intellij.ui.JBColor.namedColor;
 
 /**
  * @author spLeaner
@@ -36,6 +40,12 @@ public abstract class SpeedSearchSupply {
   private static final Key SPEED_SEARCH_COMPONENT_MARKER = new Key("SPEED_SEARCH_COMPONENT_MARKER");
   public static final DataKey<String> SPEED_SEARCH_CURRENT_QUERY = DataKey.create("SPEED_SEARCH_CURRENT_QUERY");
   public static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
+
+  protected static final JBColor BACKGROUND_COLOR = namedColor("SpeedSearch.background", namedColor("Editor.SearchField.background", UIUtil.getTextFieldBackground()));
+  protected static final JBColor BORDER_COLOR = namedColor("SpeedSearch.borderColor", namedColor("Editor.Toolbar.borderColor", JBColor.LIGHT_GRAY));
+  protected static final JBColor FOREGROUND_COLOR = namedColor("SpeedSearch.foreground", namedColor("TextField.foreground", UIUtil.getToolTipForeground()));
+  protected static final JBColor ERROR_FOREGROUND_COLOR = namedColor("SpeedSearch.errorForeground", namedColor("SearchField.errorForeground", JBColor.RED));
+
 
   @Nullable
   public static SpeedSearchSupply getSupply(@NotNull final JComponent component) {

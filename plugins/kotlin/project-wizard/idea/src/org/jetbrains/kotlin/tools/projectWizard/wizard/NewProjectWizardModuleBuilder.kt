@@ -7,6 +7,7 @@ import com.intellij.ide.util.projectWizard.*
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleManager
@@ -27,7 +28,6 @@ import com.intellij.util.ui.EDT
 import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
 import org.jetbrains.kotlin.idea.statistics.WizardStatsService.UiEditorUsageStats
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.StringValidators

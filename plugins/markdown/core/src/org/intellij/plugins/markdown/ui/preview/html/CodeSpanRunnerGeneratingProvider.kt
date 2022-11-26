@@ -12,7 +12,7 @@ import org.intellij.markdown.html.TrimmingInlineHolderProvider
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider.Companion.escape
 
-internal class CodeSpanRunnerGeneratingProvider(val generatingProvider: GeneratingProvider,
+internal class CodeSpanRunnerGeneratingProvider(private val generatingProvider: GeneratingProvider,
                                                 val project: Project,
                                                 val file: VirtualFile) : TrimmingInlineHolderProvider() {
 

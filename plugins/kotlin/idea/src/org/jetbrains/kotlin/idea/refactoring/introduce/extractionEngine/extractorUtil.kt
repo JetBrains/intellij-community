@@ -454,7 +454,7 @@ private var KtReturnExpression.isReturnForLabelRemoval: Boolean
 fun ExtractionGeneratorConfiguration.generateDeclaration(
     declarationToReplace: KtNamedDeclaration? = null
 ): ExtractionResult {
-    val psiFactory = KtPsiFactory(descriptor.extractionData.originalFile)
+    val psiFactory = KtPsiFactory(descriptor.extractionData.project)
 
     fun getReturnsForLabelRemoval() = descriptor.controlFlow.outputValues
         .flatMapTo(arrayListOf()) { it.originalExpressions.filterIsInstance<KtReturnExpression>() }

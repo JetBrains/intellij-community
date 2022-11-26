@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventWatcher;
@@ -71,9 +71,6 @@ import java.util.function.Function;
 
 /**
  * This class is automaton with finite number of state.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class IdeKeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
@@ -224,22 +221,14 @@ public final class IdeKeyEventDispatcher {
     myContext.setProject(CommonDataKeys.PROJECT.getData(dataContext));
 
     try {
-      switch (getState()) {
-        case STATE_INIT:
-          return inInitState();
-        case STATE_PROCESSED:
-          return inProcessedState();
-        case STATE_WAIT_FOR_SECOND_KEYSTROKE:
-          return inWaitForSecondStrokeState();
-        case STATE_SECOND_STROKE_IN_PROGRESS:
-          return inSecondStrokeInProgressState();
-        case STATE_KEY_GESTURE_PROCESSOR:
-          return myKeyGestureProcessor.process();
-        case STATE_WAIT_FOR_POSSIBLE_ALT_GR:
-          return inWaitForPossibleAltGr();
-        default:
-          throw new IllegalStateException("state = " + getState());
-      }
+      return switch (getState()) {
+        case STATE_INIT -> inInitState();
+        case STATE_PROCESSED -> inProcessedState();
+        case STATE_WAIT_FOR_SECOND_KEYSTROKE -> inWaitForSecondStrokeState();
+        case STATE_SECOND_STROKE_IN_PROGRESS -> inSecondStrokeInProgressState();
+        case STATE_KEY_GESTURE_PROCESSOR -> myKeyGestureProcessor.process();
+        case STATE_WAIT_FOR_POSSIBLE_ALT_GR -> inWaitForPossibleAltGr();
+      };
     }
     finally {
       myContext.clear();
@@ -610,7 +599,7 @@ public final class IdeKeyEventDispatcher {
   boolean processAction(@NotNull InputEvent e,
                         @NotNull String place,
                         @NotNull DataContext context,
-                        @NotNull List<AnAction> actions,
+                        @NotNull List<? extends AnAction> actions,
                         @NotNull ActionProcessor processor,
                         @NotNull PresentationFactory presentationFactory,
                         @NotNull Shortcut shortcut) {
@@ -676,7 +665,7 @@ public final class IdeKeyEventDispatcher {
 
   @Nullable
   private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull UpdateSession session,
-                                                                             @NotNull List<AnAction> actions,
+                                                                             @NotNull List<? extends AnAction> actions,
                                                                              boolean dumb,
                                                                              @NotNull List<? super AnAction> wouldBeEnabledIfNotDumb,
                                                                              @NotNull Function<? super Presentation, ? extends AnActionEvent> events) {
@@ -739,21 +728,15 @@ public final class IdeKeyEventDispatcher {
     }
     ContainerUtil.removeDuplicates(actionNames);
     if (actionNames.isEmpty()) {
-      return getUnavailableMessage(IdeBundle.message("dumb.balloon.this.action"), false);
+      return IdeBundle.message("dumb.balloon.this.action.is.not.available.during.indexing");
     }
     else if (actionNames.size() == 1) {
-      return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
+      return IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", actionNames.get(0));
     }
     else {
       @NlsSafe String join = String.join(", ", actionNames);
-      return getUnavailableMessage(IdeBundle.message("dumb.balloon.none.of.the.following.actions"), true) +
-             ": " + join;
+      return IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0", join);
     }
-  }
-
-  public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
-    return plural ? IdeBundle.message("dumb.balloon.0.are.not.available.while.indexing", action) :
-           IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", action);
   }
 
   /**
@@ -812,7 +795,7 @@ public final class IdeKeyEventDispatcher {
     }
   }
 
-  private static void fireBeforeShortcutTriggered(@NotNull Shortcut shortcut, @NotNull List<AnAction> actions, @NotNull DataContext context) {
+  private static void fireBeforeShortcutTriggered(@NotNull Shortcut shortcut, @NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     try {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC)
         .beforeShortcutTriggered(shortcut, Collections.unmodifiableList(actions), context);

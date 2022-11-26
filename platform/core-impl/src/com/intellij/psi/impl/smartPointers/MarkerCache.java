@@ -20,9 +20,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author peter
- */
 class MarkerCache {
   static final Comparator<SelfElementInfo> INFO_COMPARATOR = (info1, info2) -> {
     int o1 = info1.getPsiStartOffset();
@@ -92,9 +89,9 @@ class MarkerCache {
     FrozenDocument frozen = struct.myResultDocument;
     ManualRangeMarker[] resultMarkers = struct.myMarkers.clone();
     for (DocumentEvent event : events) {
-      final FrozenDocument before = frozen;
+      FrozenDocument before = frozen;
       frozen = frozen.applyEvent(event, 0);
-      final DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
+      DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
                                                             event.getOldTimeStamp(), event.isWholeTextReplaced(),
                                                             ((DocumentEventImpl)event).getInitialStartOffset(),
                                                             ((DocumentEventImpl)event).getInitialOldLength(),

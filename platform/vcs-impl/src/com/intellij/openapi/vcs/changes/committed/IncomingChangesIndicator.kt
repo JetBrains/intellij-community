@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN
@@ -28,7 +27,7 @@ import kotlin.properties.Delegates.observable
 
 private val LOG = logger<IncomingChangesIndicator>()
 
-class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
+private class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
   companion object {
     const val ID = "IncomingChanges"
   }
@@ -42,10 +41,6 @@ class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
   }
 
   override fun createWidget(project: Project): StatusBarWidget = IncomingChangesIndicator(project)
-
-  override fun disposeWidget(widget: StatusBarWidget) {
-    Disposer.dispose(widget)
-  }
 
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 
@@ -75,11 +70,10 @@ private class IncomingChangesIndicator(private val project: Project) : StatusBar
     return if (incomingChangesCount > 0) AllIcons.Ide.IncomingChangesOn else getDisabledIcon(AllIcons.Ide.IncomingChangesOn)
   }
 
-  override fun getTooltipText(): String? {
-    if (!isIncomingChangesAvailable) return null
-
-    return if (incomingChangesCount > 0) message("incoming.changes.indicator.tooltip", incomingChangesCount)
-    else message("changes.no.incoming.changelists.available")
+  override fun getTooltipText(): String? = when {
+    !isIncomingChangesAvailable -> null
+    incomingChangesCount > 0 -> message("incoming.changes.indicator.tooltip", incomingChangesCount)
+    else -> message("changes.no.incoming.changelists.available")
   }
 
   override fun getClickConsumer(): Consumer<MouseEvent> =

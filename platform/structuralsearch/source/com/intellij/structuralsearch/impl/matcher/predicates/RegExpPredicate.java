@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
@@ -32,7 +33,7 @@ public final class RegExpPredicate extends MatchPredicate {
   }
 
   public RegExpPredicate(@NotNull String regexp, boolean caseSensitive, String _baseHandlerName, boolean _wholeWords, boolean _target) {
-    couldBeOptimized = !StructuralSearchUtil.containsRegExpMetaChar(regexp);
+    couldBeOptimized = !MatchUtil.containsRegExpMetaChar(regexp);
     if (!_wholeWords) {
       simpleString = couldBeOptimized;
     }

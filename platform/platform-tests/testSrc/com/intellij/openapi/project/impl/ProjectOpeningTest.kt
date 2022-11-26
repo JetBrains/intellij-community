@@ -23,7 +23,6 @@ import org.junit.Test
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
-@Suppress("UsePropertyAccessSyntax")
 class ProjectOpeningTest : BareTestFixtureTestCase() {
   @Rule @JvmField val inMemoryFs = InMemoryFsRule()
   @Rule @JvmField val tempDir = TempDirectory()

@@ -8,9 +8,6 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantReference {
   @Override
   public final ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
@@ -28,7 +25,7 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
   protected abstract ResolveResult @NotNull [] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile);
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 

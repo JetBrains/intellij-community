@@ -21,24 +21,23 @@ public final class LineHandlerHelper {
     ArrayList<String> rc = new ArrayList<>();
     while (i < n) {
       switch (text.charAt(i)) {
-        case '\n':
+        case '\n' -> {
           i++;
           if (i < n && text.charAt(i) == '\r') {
             i++;
           }
           rc.add(text.substring(startLine, i));
           startLine = i;
-          break;
-        case '\r':
+        }
+        case '\r' -> {
           i++;
           if (i < n && text.charAt(i) == '\n') {
             i++;
           }
           rc.add(text.substring(startLine, i));
           startLine = i;
-          break;
-        default:
-          i++;
+        }
+        default -> i++;
       }
     }
     if (startLine == text.length()) {

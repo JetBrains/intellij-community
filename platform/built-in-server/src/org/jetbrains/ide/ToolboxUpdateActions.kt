@@ -3,6 +3,7 @@ package org.jetbrains.ide
 
 import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -71,7 +72,7 @@ internal class ToolboxUpdateAction(
   val lifetime: Disposable,
   text: @Nls String,
   description: @Nls String,
-  val actionHandler: Consumer<AnActionEvent>,
+  private val actionHandler: Consumer<AnActionEvent>,
   val restartRequired: Boolean
 ) : SettingsEntryPointAction.UpdateAction(text) {
   lateinit var registry : ToolboxSettingsActionRegistry
@@ -104,6 +105,8 @@ internal class ToolboxUpdateAction(
       e.presentation.isEnabledAndVisible = false
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
 interface UpdateActionsListener: EventListener {

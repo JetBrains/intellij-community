@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -40,26 +41,6 @@ public final class ServiceDescriptor {
     TRUE, FALSE, AWAIT, NOT_HEADLESS, NOT_LIGHT_EDIT
   }
 
-  public enum ClientKind {
-    /**
-     * States that a dedicated service should be created for each participant
-     */
-    ALL,
-    /**
-     * States that dedicated services should be created only for the guests (local owner excluded)
-     */
-    GUEST,
-    /**
-     * USE WITH CARE.
-     * States that a service should be created only for the local owner of the IDE.
-     * Implies that guest implementations are also defined somewhere!
-     * Should be used either
-     * 1) by platform code if corresponding guest implementations are registered by CWM
-     * 2) for defining different implementations of the local owner's and guests' services side-by-side in one plugin
-     */
-    LOCAL,
-  }
-
   @Attribute
   public final String serviceInterface;
 
@@ -96,12 +77,11 @@ public final class ServiceDescriptor {
   public final ExtensionDescriptor.Os os;
 
   /**
-   * States whether the service should be created once per client.
+   * States that a separate service should be created for each client matching the specified kind.
    * Applicable only for application/project level services.
-   * {@code null} means the service is an ordinary one that is created once per application/project.
+   * If the client is not specified the service is considered an ordinary one that is created once per application/project.
    */
   @Attribute
-  @ApiStatus.Internal
   @Nullable
   public final ClientKind client;
 

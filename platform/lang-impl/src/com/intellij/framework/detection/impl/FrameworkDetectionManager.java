@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -32,7 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 public final class FrameworkDetectionManager implements FrameworkDetectionIndexListener, Disposable {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectionManager.class);
 
@@ -55,6 +57,7 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
       doRunDetection();
     }
   };
+
   private final Set<String> myDetectorsToProcess = new HashSet<>();
   private final Project myProject;
   private MergingUpdateQueue myDetectionQueue;
@@ -62,7 +65,7 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
   private DetectedFrameworksData myDetectedFrameworksData;
 
   public static FrameworkDetectionManager getInstance(@NotNull Project project) {
-    return project.getComponent(FrameworkDetectionManager.class);
+    return project.getService(FrameworkDetectionManager.class);
   }
 
   public FrameworkDetectionManager(@NotNull Project project) {
@@ -71,15 +74,6 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     if (!myProject.isDefault() && !ApplicationManager.getApplication().isUnitTestMode()) {
       doInitialize();
     }
-
-    StartupManager.getInstance(myProject).runAfterOpened(() -> {
-      @NotNull Collection<String> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
-      synchronized (myLock) {
-        myDetectorsToProcess.clear();
-        myDetectorsToProcess.addAll(ids);
-      }
-      queueDetection();
-    });
 
     FrameworkDetector.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
@@ -102,6 +96,22 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
         }
       }
     }, project);
+  }
+
+  private void projectOpened() {
+    @NotNull Collection<String> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
+    synchronized (myLock) {
+      myDetectorsToProcess.clear();
+      myDetectorsToProcess.addAll(ids);
+    }
+    queueDetection();
+  }
+
+  static final class MyPostStartupActivity implements StartupActivity.DumbAware {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      getInstance(project).projectOpened();
+    }
   }
 
   static final class FrameworkDetectionHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {

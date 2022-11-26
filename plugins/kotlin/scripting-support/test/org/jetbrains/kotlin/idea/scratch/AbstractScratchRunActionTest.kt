@@ -6,7 +6,9 @@ import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.CompilerModuleExtension
@@ -22,9 +24,9 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
@@ -32,7 +34,6 @@ import org.jetbrains.kotlin.idea.scratch.output.InlayScratchFileRenderer
 import org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
@@ -295,9 +296,9 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
         UIUtil.dispatchAllInvocationEvents()
     }
 
-    private fun getActionEvent(action: AnAction): TestActionEvent {
+    private fun getActionEvent(action: AnAction): AnActionEvent {
         val context = TestDataProvider(project)
-        return TestActionEvent(context::getData, action)
+        return TestActionEvent.createTestEvent(action, context::getData)
     }
 
     protected fun doTestScratchText(): String {
@@ -311,7 +312,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             testName.endsWith("WithKotlinTest") -> INSTANCE_WITH_KOTLIN_TEST
             testName.endsWith("NoRuntime") -> INSTANCE_WITHOUT_RUNTIME
             testName.endsWith("ScriptRuntime") -> INSTANCE_WITH_SCRIPT_RUNTIME
-            else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+            else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
         }
     }
 

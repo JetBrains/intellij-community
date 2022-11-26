@@ -20,11 +20,10 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-// todo remove 'open' in version 2022.2
 @ApiStatus.Internal
-internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                              var spacingConfiguration: SpacingConfiguration,
-                              private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
+                         var spacingConfiguration: SpacingConfiguration,
+                         private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
@@ -37,7 +36,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   private var enabled = true
 
   override fun row(label: String, init: Row.() -> Unit): RowImpl {
-    if (label === EMPTY_LABEL) {
+    if (label.isEmpty()) {
       val result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.LABEL_ALIGNED)
       result.cell()
       result.init()
@@ -45,10 +44,6 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
       return result
     }
     else {
-      if (label.isEmpty()) {
-        warn("Row is created with empty label")
-      }
-
       return row(Label(label), init)
     }
   }
@@ -152,7 +147,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun panel(init: Panel.() -> Unit): PanelImpl {
     lateinit var result: PanelImpl
     row {
-      result = panel(init).verticalAlign(VerticalAlign.FILL) as PanelImpl
+      result = panel(init).align(AlignY.FILL) as PanelImpl
     }
     return result
   }
@@ -182,7 +177,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
         else {
           init()
         }
-      }.verticalAlign(VerticalAlign.FILL)
+      }.align(AlignY.FILL)
     }
     result.internalTopGap = spacingConfiguration.verticalMediumGap
     result.internalBottomGap = spacingConfiguration.verticalMediumGap
@@ -246,37 +241,6 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     _rows.add(result)
 
     return result
-  }
-
-  @Deprecated("Use overloaded collapsibleGroup(...) instead")
-  override fun collapsibleGroup(title: String,
-                                indent: Boolean,
-                                topGroupGap: Boolean?,
-                                bottomGroupGap: Boolean?,
-                                init: Panel.() -> Unit): CollapsiblePanel {
-    val row = row { }
-    val result = CollapsiblePanelImpl(dialogPanelConfig, row, title) {
-      if (indent) {
-        indent(init)
-      }
-      else {
-        init()
-      }
-    }
-
-    result.expanded = false
-    row.cell(result)
-
-    setTopGroupGap(row, topGroupGap)
-    setBottomGroupGap(row, bottomGroupGap)
-
-    return result
-  }
-
-  @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun buttonGroup(title: String?, indent: Boolean, init: Panel.() -> Unit) {
-    buttonsGroup(title, indent, init)
   }
 
   @Deprecated("Use buttonsGroup(...) instead")
@@ -388,13 +352,20 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return visible && (parent == null || parent.isVisible())
   }
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
     super.verticalAlign(verticalAlign)
+    return this
+  }
+
+  override fun align(align: Align): PanelImpl {
+    super.align(align)
     return this
   }
 
@@ -480,7 +451,7 @@ private fun Panel.createSeparatorRow(title: JBLabel?, background: Color? = null)
 
   return row {
     cell(separator)
-      .horizontalAlign(HorizontalAlign.FILL)
+      .align(AlignX.FILL)
   }
 }
 

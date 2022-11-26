@@ -22,11 +22,12 @@ public class TextMateSnippetsCompletionTest extends TextMateAcceptanceTestCase {
     assertSameElements(myFixture.getLookupElementStrings(), "select");
     myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     myFixture
-      .checkResult("<select name=\"${1:some_name}\" id=\"${2:$1}\"${3:${4: multiple}${5: onchange=\"${6:}\"}${7: size=\"${8:1}\"}}>\n" +
-                   "\t<option${9: value=\"${10:option1}\"}>${11:$10}</option>\n" +
-                   "\t<option${12: value=\"${13:option2}\"}>${14:$13}</option>${15:}\n" +
-                   "\t$0\n" +
-                   "</select>");
+      .checkResult("""
+                     <select name="${1:some_name}" id="${2:$1}"${3:${4: multiple}${5: onchange="${6:}"}${7: size="${8:1}"}}>
+                     \t<option${9: value="${10:option1}"}>${11:$10}</option>
+                     \t<option${12: value="${13:option2}"}>${14:$13}</option>${15:}
+                     \t$0
+                     </select>""");
   }
 
   public void testCompletionWithEmptyPrefix() {
@@ -47,11 +48,12 @@ public class TextMateSnippetsCompletionTest extends TextMateAcceptanceTestCase {
     myFixture.getLookup().setCurrentItem(ContainerUtil.find(lookupElements,
                                                             element -> "fieldset".equalsIgnoreCase(element.getLookupString())));
     myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-    myFixture.checkResult("<fieldset id=\"${1/[[:alpha:]]+|( )/(?1:_:\\L$0)/g}\" ${2:class=\"${3:}\"}>\n" +
-                          "\t<legend>${1:$TM_SELECTED_TEXT}</legend>\n" +
-                          "\t\n" +
-                          "\t$0\n" +
-                          "</fieldset>");
+    myFixture.checkResult("""
+                            <fieldset id="${1/[[:alpha:]]+|( )/(?1:_:\\L$0)/g}" ${2:class="${3:}"}>
+                            \t<legend>${1:$TM_SELECTED_TEXT}</legend>
+                            \t
+                            \t$0
+                            </fieldset>""");
   }
 
   public void testListTemplateWithEmptyPrefix() {

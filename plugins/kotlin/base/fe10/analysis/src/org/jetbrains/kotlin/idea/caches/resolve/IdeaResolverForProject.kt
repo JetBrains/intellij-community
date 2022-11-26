@@ -121,6 +121,7 @@ class IdeaResolverForProject(
             IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project)
 
         val resolverForModuleFactory = getResolverForModuleFactory(moduleInfo)
+        val optimizingOptions = ResolveOptimizingOptionsProvider.getOptimizingOptions(projectContext.project, descriptor, moduleInfo)
 
         return resolverForModuleFactory.createResolverForModule(
             descriptor as ModuleDescriptorImpl,
@@ -128,7 +129,8 @@ class IdeaResolverForProject(
             moduleContent,
             this,
             languageVersionSettings,
-            sealedInheritorsProvider = IdeSealedClassInheritorsProvider
+            sealedInheritorsProvider = IdeSealedClassInheritorsProvider,
+            resolveOptimizingOptions = optimizingOptions,
         )
     }
 

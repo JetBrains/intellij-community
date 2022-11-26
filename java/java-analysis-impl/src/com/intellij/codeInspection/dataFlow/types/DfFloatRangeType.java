@@ -207,32 +207,29 @@ class DfFloatRangeType implements DfFloatType {
   static @NotNull DfType fromRelation(@NotNull RelationType relationType, float min, float max) {
     assert !Float.isNaN(min);
     assert !Float.isNaN(max);
-    switch (relationType) {
-      case LE:
-        return create(Float.NEGATIVE_INFINITY, max == 0.0f ? 0.0f : max, false, true);
-      case LT:
-        return max == Float.NEGATIVE_INFINITY ? DfTypes.FLOAT_NAN :
+    return switch (relationType) {
+      case LE -> create(Float.NEGATIVE_INFINITY, max == 0.0f ? 0.0f : max, false, true);
+      case LT -> max == Float.NEGATIVE_INFINITY ? DfTypes.FLOAT_NAN :
                create(Float.NEGATIVE_INFINITY, Math.nextDown(max), false, true);
-      case GE:
-        return create(min == 0.0f ? -0.0f : min, Float.POSITIVE_INFINITY, false, true);
-      case GT:
-        return min == Float.POSITIVE_INFINITY ? DfTypes.FLOAT_NAN :
+      case GE -> create(min == 0.0f ? -0.0f : min, Float.POSITIVE_INFINITY, false, true);
+      case GT -> min == Float.POSITIVE_INFINITY ? DfTypes.FLOAT_NAN :
                create(Math.nextUp(min), Float.POSITIVE_INFINITY, false, true);
-      case EQ:
+      case EQ -> {
         if (min == 0.0f) min = -0.0f;
         if (max == 0.0f) max = 0.0f;
-        return create(min, max, false, true);
-      case NE:
+        yield create(min, max, false, true);
+      }
+      case NE -> {
         if (min == max) {
           if (min == 0.0f) {
-            return create(-0.0f, 0.0f, true, true);
+            yield create(-0.0f, 0.0f, true, true);
           }
-          return create(min, min, true, true);
+          yield create(min, min, true, true);
         }
-        return DfTypes.FLOAT;
-      default:
-        return DfTypes.FLOAT;
-    }
+        yield DfTypes.FLOAT;
+      }
+      default -> DfTypes.FLOAT;
+    };
   }
 
   @Override

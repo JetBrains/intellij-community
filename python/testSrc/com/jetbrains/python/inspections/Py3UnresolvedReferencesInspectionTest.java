@@ -266,16 +266,17 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-27866
   public void testUnionOwnSlots() {
-    doTestByText("from typing import Union\n" +
-                 "\n" +
-                 "class A:\n" +
-                 "    __slots__ = ['x']\n" +
-                 "\n" +
-                 "class B:\n" +
-                 "    __slots__ = ['y']\n" +
-                 "    \n" +
-                 "def foo(ab: Union[A, B]):\n" +
-                 "    print(ab.x)");
+    doTestByText("""
+                   from typing import Union
+
+                   class A:
+                       __slots__ = ['x']
+
+                   class B:
+                       __slots__ = ['y']
+                      \s
+                   def foo(ab: Union[A, B]):
+                       print(ab.x)""");
   }
 
   // PY-37755 PY-2700
@@ -315,5 +316,10 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   // PY-50885
   public void testNamespacePackageReferenceInDocstringType() {
     doMultiFileTest();
+  }
+
+  // PY-46257
+  public void testNoWarningForTypeGetItem() {
+    doTestByText("expr: type[str]");
   }
 }

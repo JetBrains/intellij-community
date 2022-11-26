@@ -205,12 +205,10 @@ public class DependenciesIndexedStatusService {
   }
 
 
-  private static class MyStatus implements StatusMark {
-    private final int version;
-    private final List<? extends SyntheticLibraryDescriptor> libraries;
-    private final List<? extends IndexableSetContributorDescriptor> contributors;
-    private final List<? extends ExcludePolicyDescriptor> excludePolicyDescriptors;
-
+  private record MyStatus(int version,
+                          @Nullable List<? extends SyntheticLibraryDescriptor> libraries,
+                          @Nullable List<? extends IndexableSetContributorDescriptor> contributors,
+                          @Nullable List<? extends ExcludePolicyDescriptor> excludePolicyDescriptors) implements StatusMark {
     private MyStatus(int version,
                      @Nullable List<? extends SyntheticLibraryDescriptor> libraries,
                      @Nullable List<? extends IndexableSetContributorDescriptor> contributors,

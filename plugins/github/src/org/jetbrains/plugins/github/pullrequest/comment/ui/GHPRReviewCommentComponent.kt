@@ -43,7 +43,7 @@ object GHPRReviewCommentComponent {
     val avatarLabel = ActionLink("") {
       comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
     }.apply {
-      icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl)
+      icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl, GHUIUtil.AVATAR_SIZE)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -12,7 +12,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +21,10 @@ import java.awt.event.MouseEvent;
 /**
  * "Power save mode: enabled/disabled" icon in the status bar
  */
-public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
+final class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
   private static final String ID = "PowerSaveMode";
 
-  public PowerSaveStatusWidgetFactory() {
+  PowerSaveStatusWidgetFactory() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, () -> {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
@@ -41,7 +40,6 @@ public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
     return ID;
   }
 
-  @Nls
   @Override
   public @NotNull String getDisplayName() {
     return InspectionsBundle.message("power.save.mode.widget.display.name");
@@ -55,10 +53,6 @@ public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new PowerWidget();
-  }
-
-  @Override
-  public void disposeWidget(@NotNull StatusBarWidget widget) {
   }
 
   @Override
@@ -78,8 +72,7 @@ public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
     }
 
     @Override
-    public void install(@NotNull StatusBar statusBar) {
-    }
+    public void install(@NotNull StatusBar statusBar) { }
 
     @Override
     public @Nullable WidgetPresentation getPresentation() {
@@ -104,7 +97,6 @@ public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
     }
 
     @Override
-    public void dispose() {
-    }
+    public void dispose() { }
   }
 }

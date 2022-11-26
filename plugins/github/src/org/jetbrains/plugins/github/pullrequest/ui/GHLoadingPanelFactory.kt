@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -12,7 +13,6 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import com.intellij.collaboration.ui.SingleValueModel
 import java.awt.BorderLayout
@@ -101,7 +101,9 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
           }
           panel.validate()
           panel.repaint()
-          if (wasFocused) GHUIUtil.focusPanel(panel)
+          if (wasFocused) {
+            CollaborationToolsUIUtil.focusPanel(panel)
+          }
         }
       }
 

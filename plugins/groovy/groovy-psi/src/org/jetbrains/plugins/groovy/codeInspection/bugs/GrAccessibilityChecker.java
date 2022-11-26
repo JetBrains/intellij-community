@@ -4,12 +4,13 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
@@ -95,21 +96,22 @@ public class GrAccessibilityChecker {
 
   @Nullable
   public HighlightInfo checkCodeReferenceElement(@NotNull GrCodeReferenceElement ref) {
-    return checkReferenceImpl(ref);
+    HighlightInfo.Builder builder = checkReferenceImpl(ref);
+    return builder==null?null:builder.create();
   }
 
-  private HighlightInfo checkReferenceImpl(@NotNull GrReferenceElement<?> ref) {
+  private HighlightInfo.Builder checkReferenceImpl(@NotNull GrReferenceElement<?> ref) {
     boolean isCompileStatic = CompileStaticUtil.isCompileStatic(ref);
 
     if (!needToCheck(ref, isCompileStatic)) return null;
 
     PsiElement parent = ref.getParent();
     if (parent instanceof GrConstructorCall) {
-      var constructorError = checkConstructorCall((GrConstructorCall)parent);
+      Pair<@DetailedDescription String, GroovyResolveResult> constructorError = checkConstructorCall((GrConstructorCall)parent);
       if (constructorError != null) {
-        HighlightInfo info = createAnnotationForRef(ref, isCompileStatic, constructorError.first);
-        registerFixes(ref, constructorError.second, info);
-        return info;
+        Pair<HighlightInfo.Builder,HighlightSeverity> info = createAnnotationForRef(ref, isCompileStatic, constructorError.first);
+        registerFixes(ref, constructorError.second, info.getFirst(), info.getSecond());
+        return info.getFirst();
       }
     }
 
@@ -117,17 +119,18 @@ public class GrAccessibilityChecker {
     boolean hasInaccessibleResults = ContainerUtil.or(results, GrAccessibilityChecker::checkResolveResult);
     if (hasInaccessibleResults) {
       String error = GroovyBundle.message("cannot.access", ref.getReferenceName());
-      HighlightInfo info = createAnnotationForRef(ref, isCompileStatic, error);
+      Pair<HighlightInfo.Builder,HighlightSeverity> info = createAnnotationForRef(ref, isCompileStatic, error);
       if (results.length == 1) {
-        registerFixes(ref, results[0], info);
+        registerFixes(ref, results[0], info.getFirst(), info.getSecond());
       }
-      return info;
+      return info.getFirst();
     }
 
     return null;
   }
 
-  private void registerFixes(GrReferenceElement<?> ref, GroovyResolveResult result, HighlightInfo info) {
+  private void registerFixes(GrReferenceElement<?> ref, GroovyResolveResult result, @NotNull HighlightInfo.Builder info,
+                             @NotNull HighlightSeverity severity) {
     PsiElement element = result.getElement();
     assert element != null;
     if (element instanceof LightElement) return;
@@ -135,22 +138,26 @@ public class GrAccessibilityChecker {
     if (fixes.length == 0) {
       String displayName = HighlightDisplayKey.getDisplayNameByKey(myDisplayKey);
       if (displayName != null) {
-        QuickFixAction.registerQuickFixAction(info, new EmptyIntentionAction(displayName), myDisplayKey);
+        IntentionAction action = new EmptyIntentionAction(displayName);
+        info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDisplayKey), null, myDisplayKey);
       }
     }
     else {
       ProblemDescriptor descriptor = InspectionManager.getInstance(ref.getProject()).
-        createProblemDescriptor(element, element, "", HighlightInfo.convertSeverityToProblemHighlight(info.getSeverity()), true,
+        createProblemDescriptor(element, element, "", HighlightInfo.convertSeverityToProblemHighlight(severity), true,
                                 LocalQuickFix.EMPTY_ARRAY);
       for (GroovyFix fix : fixes) {
-        QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor), myDisplayKey);
+        info.registerFix(new LocalQuickFixAsIntentionAdapter(fix, descriptor), null, HighlightDisplayKey.getDisplayNameByKey(myDisplayKey),
+                         null,
+                         myDisplayKey);
       }
     }
   }
 
   @Nullable
   public HighlightInfo checkReferenceExpression(@NotNull GrReferenceExpression ref) {
-    return checkReferenceImpl(ref);
+    HighlightInfo.Builder builder = checkReferenceImpl(ref);
+    return builder==null?null:builder.create();
   }
 
   private static boolean checkResolveResult(GroovyResolveResult result) {
@@ -186,12 +193,12 @@ public class GrAccessibilityChecker {
     return null;
   }
 
-  @Nullable
-  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement<?> ref,
+  @NotNull
+  private static Pair<HighlightInfo.Builder,HighlightSeverity> createAnnotationForRef(@NotNull GrReferenceElement<?> ref,
                                                       boolean strongError,
                                                       @DetailedDescription @NotNull String message) {
     HighlightDisplayLevel displayLevel = strongError ? HighlightDisplayLevel.ERROR
                                                      : GroovyAccessibilityInspection.getHighlightDisplayLevel(ref.getProject(), ref);
-    return GrInspectionUtil.createAnnotationForRef(ref, displayLevel, message);
+    return Pair.create(GrInspectionUtil.createAnnotationForRef(ref, displayLevel, message), displayLevel.getSeverity());
   }
 }

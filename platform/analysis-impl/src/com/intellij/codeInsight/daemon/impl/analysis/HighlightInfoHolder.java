@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +53,10 @@ public class HighlightInfoHolder {
     return myErrorCount != 0;
   }
 
+  /**
+   * @deprecated Use {@link #add(HighlightInfo)} instead, as soon as HighlightInfo is ready, to reduce the latency between generating the highlight info and showing it onscreen
+   */
+  @Deprecated
   public boolean addAll(@NotNull Collection<? extends HighlightInfo> highlightInfos) {
     boolean added = false;
     for (HighlightInfo highlightInfo : highlightInfos) {
@@ -92,11 +95,4 @@ public class HighlightInfoHolder {
   public TextAttributesScheme getColorsScheme() {
     return key -> key.getDefaultAttributes();
   }
-
-  // internal optimization method to reduce latency between creating HighlightInfo and showing it on screen
-  // (Do not) call this method to
-  // 1. state that all HighlightInfos in this holder are final (no further HighlightInfo.setXXX() or .registerFix() are following) and
-  // 2. queue them all for converting to RangeHighlighters in EDT
-  @ApiStatus.Internal
-  public void queueToUpdateIncrementally() {}
 }

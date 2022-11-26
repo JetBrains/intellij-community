@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -30,6 +29,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.HttpRequests;
@@ -67,26 +68,22 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     static final ExecutorService EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("UPDATE_GRADLE_PLUGIN_VERSIONS");
   }
 
-  @NotNull
   @Override
-  public FrameworkTypeEx getFrameworkType() {
+  public @NotNull FrameworkTypeEx getFrameworkType() {
     return new FrameworkTypeEx(ID) {
-      @NotNull
       @Override
-      public FrameworkSupportInModuleProvider createProvider() {
+      public @NotNull FrameworkSupportInModuleProvider createProvider() {
         return GradleIntellijPluginFrameworkSupportProvider.this;
       }
 
-      @NotNull
       @Override
-      public String getPresentableName() {
+      public @NotNull String getPresentableName() {
         return DevKitGradleBundle.message("module.wizard.gradle.presentable.name");
       }
 
-      @NotNull
       @Override
-      public Icon getIcon() {
-        return AllIcons.Nodes.Plugin;
+      public @NotNull Icon getIcon() {
+        return IconManager.getInstance().getPlatformIcon(PlatformIcons.Plugin);
       }
     };
   }
@@ -124,11 +121,12 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
       .addOther(HELP_COMMENT +
                 "intellij {\n    version = '" + ideVersion + "'\n}\n")
-      .addOther("patchPluginXml {\n" +
-                "    changeNotes = \"\"\"\n" +
-                "      Add change notes here.<br>\n" +
-                "      <em>most HTML tags may be used</em>\"\"\"\n" +
-                "}");
+      .addOther("""
+                  patchPluginXml {
+                      changeNotes = ""\"
+                        Add change notes here.<br>
+                        <em>most HTML tags may be used</em>""\"
+                  }""");
   }
 
   @Override
@@ -159,7 +157,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
 
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
     linkLabel.setHtmlText(DevKitGradleBundle.message("module.wizard.gradle.learn.title"));
-    linkLabel.setHyperlinkTarget("https://plugins.jetbrains.com/docs/intellij/gradle-build-system.html?from=DevkitGradleProjectWizard");
+    linkLabel.setHyperlinkTarget("https://plugins.jetbrains.com/docs/intellij/developing-plugins.html?from=DevkitGradleProjectWizard");
     return linkLabel;
   }
 

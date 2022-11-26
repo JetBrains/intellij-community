@@ -52,18 +52,10 @@ public class MacColorPipette extends ColorPipetteBase {
           Point location = updateLocation();
           if (myRobot != null && location != null) {
             switch (event.getKeyCode()) {
-              case KeyEvent.VK_DOWN:
-                myRobot.mouseMove(location.x, location.y + diff);
-                break;
-              case KeyEvent.VK_UP:
-                myRobot.mouseMove(location.x, location.y - diff);
-                break;
-              case KeyEvent.VK_LEFT:
-                myRobot.mouseMove(location.x - diff, location.y);
-                break;
-              case KeyEvent.VK_RIGHT:
-                myRobot.mouseMove(location.x + diff, location.y);
-                break;
+              case KeyEvent.VK_DOWN -> myRobot.mouseMove(location.x, location.y + diff);
+              case KeyEvent.VK_UP -> myRobot.mouseMove(location.x, location.y - diff);
+              case KeyEvent.VK_LEFT -> myRobot.mouseMove(location.x - diff, location.y);
+              case KeyEvent.VK_RIGHT -> myRobot.mouseMove(location.x + diff, location.y);
             }
             updateLocation();
           }

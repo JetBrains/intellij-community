@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public interface DeferredIcon extends Icon {
+public interface DeferredIcon extends UpdatableIcon {
   @NotNull Icon evaluate();
 
   @NotNull Icon getBaseIcon();

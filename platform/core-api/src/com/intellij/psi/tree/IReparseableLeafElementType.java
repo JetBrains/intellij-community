@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * An interface to be implemented by {@link IElementType} instances for leaf AST nodes, providing a possibility for quick reparse.
  * @see #reparseLeaf(ASTNode, CharSequence)
- * @author peter
  */
 public interface IReparseableLeafElementType<T extends ASTNode> {
 

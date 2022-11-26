@@ -20,10 +20,10 @@
 
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <xi:include href="/META-INF/JavaAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JvmAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaPsiPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/JavaAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -38,18 +38,16 @@
     <xi:fallback/>
   </xi:include>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
-    </component>
-  </project-components>
-
   <projectListeners>
     <listener class="com.intellij.lang.java.JavaModuleRenameListener" topic="com.intellij.openapi.project.ModuleListener"/>
     <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener" topic="com.intellij.execution.ui.RunContentWithExecutorListener"/>
     <listener class="com.intellij.debugger.impl.HotSwapManager$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.packaging.impl.artifacts.ArtifactVirtualFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="com.intellij.ide.ProjectLoadedListener"
+              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
+    <listener class="com.intellij.ide.LibraryAddedListener"
+              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
   </projectListeners>
 
   <extensionPoints>
@@ -125,6 +123,8 @@
     <extensionPoint qualifiedName="com.intellij.jreProvider" interface="com.intellij.execution.ui.JreProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.effectively.final.fixer"
+                    interface="com.intellij.codeInsight.daemon.impl.quickfix.makefinal.EffectivelyFinalFixer" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.buildTargetScopeProvider"
                     interface="com.intellij.compiler.impl.BuildTargetScopeProvider" dynamic="true"/>
@@ -323,6 +323,7 @@
     <editorFactoryDocumentListener implementation="com.intellij.compiler.server.BuildManager$MyDocumentListener"/>
 
     <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
+    <postStartupActivity implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$MyPostStartupActivity"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
 
@@ -331,9 +332,6 @@
     <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
-
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector" preload="notHeadless"/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyPostStartUpActivity"/>
 
     <postStartupActivity implementation="com.intellij.execution.testDiscovery.TestDiscoveryIndex$MyPostStartUpActivity"/>
 
@@ -441,6 +439,9 @@
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl"
                         overrides="true"/>
+
+    <preloadingActivity implementation="com.intellij.openapi.projectRoots.impl.ExistingJdkConfigurationActivity"/>
+    <registryKey key="jdk.configure.existing" defaultValue="false" description="Attempt to add an existing SDK to the SDK table."/>
 
     <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
                         serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
@@ -747,6 +748,10 @@
                               implementationClass="com.intellij.execution.application.JvmApplicationRunLineMarkerContributor"/>
     <runLineMarkerContributor language="JAVA" id="applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.execution.ui.VmOptionsCompletionContributor"
+      order="first"/>
+    <applicationService serviceInterface="com.intellij.execution.vmOptions.VMOptionsService"
+                        serviceImplementation="com.intellij.execution.vmOptions.VMOptionsServiceImpl"/>
 
     <runDashboardCustomizer implementation="com.intellij.execution.CommonJavaRunDashboardCustomizer" id="commonJavaCustomizer"/>
 
@@ -1020,6 +1025,7 @@
     <renameInputValidator implementation="com.intellij.refactoring.rename.PsiPackageRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaTypeRenameValidator"/>
+    <testDiffProvider language="JAVA" implementationClass="com.intellij.execution.testframework.JavaTestDiffProvider"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiPackageProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor"/>
@@ -1145,6 +1151,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CastToLeftSideTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.IterableVariableMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.IterableComponentTypeMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeParameterOfMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.DescendantClassesEnumMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SubtypesMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeOfVariableMacro"/>
@@ -1252,12 +1259,29 @@
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler"/>
     <codeInsight.parameterNameHints language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
-    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.MethodChainsInlayProvider"/>
-    <codeInsight.inlayProvider language="JAVA"
-                               implementationClass="com.intellij.codeInsight.hints.ImplicitTypeInlayProvider"
-                               isEnabledByDefault="false"
-                               settingsKeyId="java.implicit.types"/>
+    <!--suppress PluginXmlValidity -->
+    <codeInsight.declarativeInlayProviderCustomSettingsProvider language="JAVA"
+                                                                providerId="java.method.chains"
+                                                                implementationClass="com.intellij.codeInsight.hints.chain.DeclarativeCallChainCustomSettingsProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.AnnotationInlayProvider"/>
+    <codeInsight.declarativeInlayProvider language="JAVA"
+                                          implementationClass="com.intellij.codeInsight.hints.JavaImplicitTypeDeclarativeInlayHintsProvider"
+                                          isEnabledByDefault="false"
+                                          group="TYPES_GROUP"
+                                          providerId="java.implicit.types"
+                                          bundle="messages.JavaBundle"
+                                          nameKey="java.implicit.types.inlay.provider.name"
+                                          descriptionKey="settings.inlay.java.implicit.types.description"/>
+    <codeInsight.declarativeInlayProvider language="JAVA"
+                                          implementationClass="com.intellij.codeInsight.hints.JavaMethodChainsDeclarativeInlayProvider"
+                                          isEnabledByDefault="true"
+                                          group="METHOD_CHAINS_GROUP"
+                                          providerId="java.method.chains"
+                                          bundle="messages.JavaBundle"
+                                          nameKey="java.method.chains.inlay.provider.name"
+                                          descriptionKey="inlay.MethodChainsInlayProvider.description"/>
+    <codeInsight.inlayActionHandler implementationClass="com.intellij.codeInsight.hints.JavaFqnDeclarativeInlayActionHandler" handlerId="java.fqn.class" />
+
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFoldingBuilder"/>
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
     <anonymousElementProvider implementation="com.intellij.lang.java.JavaAnonymousClassesProvider" />
@@ -1276,6 +1300,7 @@
     <lang.formatting.extractor language="JAVA" implementationClass="com.intellij.psi.codeStyle.extractor.differ.JavaExtractor"/>
     <lang.rearranger language="JAVA" implementationClass="com.intellij.psi.codeStyle.arrangement.JavaRearranger"/>
     <lang.whiteSpaceFormattingStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.JavadocWhiteSpaceFormattingStrategy"/>
+    <postFormatProcessor implementation="com.intellij.psi.formatter.JavaCStyleCommentSpaceConverterFormatProcessor" />
     <lang.formatter language="JAVA" implementationClass="com.intellij.lang.java.JavaFormattingModelBuilder"/>
     <encapsulateFields.Helper implementationClass="com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper" language="JAVA"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
@@ -1286,8 +1311,6 @@
     <editor.injectedFileChangesHandlerProvider language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.injected.JavaInjectedFileChangesHandlerProvider"/>
     <registryKey key="injections.java.fragment.editor.new" defaultValue="true" restartRequired="false"
                  description="Using new optimised JavaInjectedFileChangesHandler when editing code injected to Java in the fragment editor"/>
-    <registryKey key="jvm.debugger.gray.out" defaultValue="false" restartRequired="false"
-                 description="Gray out unreachable code blocks when debugging Java applications (experimental)"/>
     <registryKey key="java.jspecify.annotations.available" defaultValue="true" restartRequired="true"
                  description="Experimental support for experimental annotations"/>
     <deadCode implementation="com.intellij.codeInspection.deadCode.DeprecatedEntryPoint"/>
@@ -1360,6 +1383,7 @@
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchActionPromoter"/>
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaNextParameterActionPromoter"/>
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
+    <java.error.fix errorCode="guarded.pattern.variable.must.be.final" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.codeEditor.JavaStripTrailingSpacesFilterFactory"/>
 
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
@@ -1785,9 +1809,15 @@
     <localInspection groupPath="Java" language="JAVA" shortName="UnusedAssignment" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      level="WARNING" implementationClass="com.intellij.codeInspection.defUse.DefUseInspection" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.assignment.display.name" bundle="messages.JavaBundle"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConstantConditions" bundle="messages.JavaBundle" key="inspection.data.flow.display.name"
+    <localInspection groupPath="Java" language="JAVA" shortName="DataFlowIssue"
+                     bundle="messages.JavaBundle" key="inspection.data.flow.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.DataFlowInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ConstantValue" bundle="messages.JavaBundle" key="inspection.data.flow.constant.values.display.name"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.dataFlow.ConstantValueInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.ConstantValueInspectionMerger" />
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.DataFlowInspectionMerger" />
     <localInspection groupPath="Java" language="JAVA" shortName="Java9UndeclaredServiceUsage"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
                      enabledByDefault="true" level="WARNING"
@@ -1942,12 +1972,6 @@
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.strings</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <language>JAVA</language>
-      <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
@@ -2182,12 +2206,14 @@
       <descriptionDirectoryName>MakeInferredAnnotationExplicit</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <language>UAST</language>
       <className>com.intellij.codeInspection.dataFlow.EditContractIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <language>UAST</language>
       <className>com.intellij.codeInspection.dataFlow.EditRangeIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>
@@ -2304,12 +2330,11 @@
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
     <vcs.codeVisionLanguageContext language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaVcsCodeVisionContext"/>
-    <codeInsight.codeVisionSettingsPreviewLanguage modelId="vcs.code.vision" language="JAVA" order="first"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="vcs.code.vision" language="JAVA"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider"/>
-    <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="JAVA" order="first"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="JAVA"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider"/>
-    <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="JAVA" order="first"/>
-    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="JAVA"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector"/>
     <notificationGroup id="Clean artifact" displayType="BALLOON" hideFromSettings="true"/>
@@ -2351,6 +2376,8 @@
     <registryKey defaultValue="true" description="Show no usages in Java reference code lenses" key="code.lens.java.show.0.usages"/>
     <debugger.dfaAssistProvider language="JAVA" implementationClass="com.intellij.debugger.engine.dfaassist.java.JavaDfaAssistProvider"/>
     <dataflowIRProvider language="JAVA" implementationClass="com.intellij.codeInspection.dataFlow.java.JavaDataFlowIRProvider"/>
+    <java.effectively.final.fixer implementation="com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MoveInitializerToIfBranchFixer"/>
+    <java.effectively.final.fixer implementation="com.intellij.codeInspection.streamMigration.ConvertToStreamFixer"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

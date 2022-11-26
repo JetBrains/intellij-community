@@ -10,9 +10,11 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -25,9 +27,7 @@ import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.debugger.base.util.*
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -115,9 +115,9 @@ private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
 private fun functionNameByArgument(elementAt: KtFunction): String? =
     analyze(elementAt) {
         val parentCall = KtPsiUtil.getParentCallIfPresent(elementAt) as? KtCallExpression ?: return null
-        val call = getResolvedFunctionCall(parentCall) ?: return null
-        val callSymbol = call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
-        return callSymbol.name.asString()
+        val call = parentCall.resolveCall().successfulFunctionCallOrNull() ?: return null
+        val function = call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+        return function.name.asString()
     }
 
 private fun Location.visibleVariables(debugProcess: DebugProcessImpl): List<LocalVariable> {

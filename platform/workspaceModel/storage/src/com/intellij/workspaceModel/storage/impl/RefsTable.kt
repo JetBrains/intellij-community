@@ -97,6 +97,9 @@ class ConnectionId private constructor(
   }
 }
 
+val ConnectionId.isOneToOne: Boolean
+  get() = this.connectionType == ConnectionType.ONE_TO_ONE || this.connectionType == ConnectionType.ABSTRACT_ONE_TO_ONE
+
 /**
  * [oneToManyContainer]: [ImmutableNonNegativeIntIntBiMap] - key - child, value - parent
  */
@@ -233,7 +236,8 @@ internal class MutableRefsTable(
     }.let { }
   }
 
-  internal fun updateChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, childrenIds: List<ChildEntityId>) {
+  internal fun updateChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, childrenIds: Collection<ChildEntityId>) {
+    if (childrenIds !is Set<ChildEntityId> && childrenIds.size != childrenIds.toSet().size) error("Children have duplicates: $childrenIds")
     when (connectionId.connectionType) {
       ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
@@ -243,7 +247,13 @@ internal class MutableRefsTable(
       }
       ConnectionType.ONE_TO_ONE -> {
         val copiedMap = getOneToOneMutableMap(connectionId)
-        copiedMap.putForce(childrenIds.single().id.arrayId, parentId.id.arrayId)
+        when (childrenIds.size) {
+          0 -> {
+            copiedMap.removeValue(parentId.id.arrayId)
+          }
+          1 -> copiedMap.putForce(childrenIds.single().id.arrayId, parentId.id.arrayId)
+          else -> error("Trying to add multiple children to one-to-one connection")
+        }
       }
       ConnectionType.ONE_TO_ABSTRACT_MANY -> {
         val copiedMap = getOneToAbstractManyMutableMap(connectionId)
@@ -285,6 +295,7 @@ internal class MutableRefsTable(
   ) {
     val copiedMap = getAbstractOneToOneMutableMap(connectionId)
     copiedMap.remove(childId)
+    copiedMap.inverse().remove(parentId)
     copiedMap[childId] = parentId
   }
 

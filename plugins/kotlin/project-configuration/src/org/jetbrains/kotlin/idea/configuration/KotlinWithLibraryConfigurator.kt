@@ -8,6 +8,8 @@ import com.intellij.jarRepository.RepositoryAddLibraryAction
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -40,8 +42,6 @@ import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfiguration
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -246,7 +246,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         writeActions.addOrExecute { runWriteAction { model.commit() } }
     }
 
-    fun createNewLibrary(
+    private fun createNewLibrary(
         project: Project,
         collector: NotificationMessageCollector
     ): Library {

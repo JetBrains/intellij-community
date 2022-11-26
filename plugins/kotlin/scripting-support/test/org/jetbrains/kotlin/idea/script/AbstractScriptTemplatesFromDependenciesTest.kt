@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -20,7 +21,6 @@ import com.intellij.util.io.ZipUtil
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils

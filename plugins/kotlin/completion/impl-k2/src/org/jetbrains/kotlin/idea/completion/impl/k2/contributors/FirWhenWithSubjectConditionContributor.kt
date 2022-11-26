@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
@@ -7,33 +7,33 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentOfType
-import gnu.trove.THashSet
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
+import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirWithSubjectEntryPositionContext
-import org.jetbrains.kotlin.idea.completion.createKeywordElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
-import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
-import org.jetbrains.kotlin.idea.base.util.letIf
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
@@ -183,7 +183,7 @@ internal class FirWhenWithSubjectConditionContributor(
             }
         }
 
-        return THashSet(KtNamedClassOrObjectSymbolTObjectHashingStrategy)
+        return ObjectOpenCustomHashSet(KtNamedClassOrObjectSymbolTObjectHashingStrategy)
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
@@ -297,10 +297,10 @@ private fun getIsPrefix(prefixNeeded: Boolean): String {
 }
 
 @Suppress("AnalysisApiMissingLifetimeControlOnCallable")
-private object KtNamedClassOrObjectSymbolTObjectHashingStrategy : TObjectHashingStrategy<KtNamedClassOrObjectSymbol> {
-    override fun equals(p0: KtNamedClassOrObjectSymbol, p1: KtNamedClassOrObjectSymbol): Boolean =
-        p0.classIdIfNonLocal == p1.classIdIfNonLocal
+private object KtNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KtNamedClassOrObjectSymbol> {
+    override fun equals(p0: KtNamedClassOrObjectSymbol?, p1: KtNamedClassOrObjectSymbol?): Boolean {
+        return p0?.classIdIfNonLocal == p1?.classIdIfNonLocal
+    }
 
-    override fun computeHashCode(p0: KtNamedClassOrObjectSymbol): Int =
-        p0.classIdIfNonLocal.hashCode()
+    override fun hashCode(p0: KtNamedClassOrObjectSymbol?): Int = p0?.classIdIfNonLocal?.hashCode() ?: 0
 }

@@ -26,9 +26,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class ExpandLiveTemplateCustomAction extends EditorAction {
   public ExpandLiveTemplateCustomAction() {
     super(createExpandTemplateHandler(TemplateSettings.CUSTOM_CHAR));

@@ -1,11 +1,15 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -18,12 +22,15 @@ interface AssertConsistencyEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AssertConsistencyEntity, ModifiableWorkspaceEntity<AssertConsistencyEntity>, ObjBuilder<AssertConsistencyEntity> {
+  interface Builder : AssertConsistencyEntity, WorkspaceEntity.Builder<AssertConsistencyEntity>, ObjBuilder<AssertConsistencyEntity> {
     override var entitySource: EntitySource
     override var passCheck: Boolean
   }
 
   companion object : Type<AssertConsistencyEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(passCheck: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AssertConsistencyEntity {
       val builder = builder()
       builder.passCheck = passCheck

@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class JavaClassSupersImpl extends JavaClassSupers {
   private static final Logger LOG = Logger.getInstance(JavaClassSupersImpl.class);
 

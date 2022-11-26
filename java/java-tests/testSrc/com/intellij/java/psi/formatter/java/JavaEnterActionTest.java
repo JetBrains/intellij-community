@@ -438,17 +438,18 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     indentOptions.CONTINUATION_INDENT_SIZE = 8;
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
-    String text = "class Foo {\n" +
-                  "\tint\n" +
-                  "\n" +
-                  "\t\t\t\t\tmyField;\n" +
-                  "\n" +
-                  "\tvoid foo (int i,\n" +
-                  "\n" +
-                  "\t          int j\n" +
-                  "\n) {\n" +
-                  "\t}" +
-                  "}";
+    String text = """
+      class Foo {
+      \tint
+
+      \t\t\t\t\tmyField;
+
+      \tvoid foo (int i,
+
+      \t          int j
+
+      ) {
+      \t}}""";
     PsiFileFactory factory = PsiFileFactory.getInstance(PsiManager.getInstance(getProject()).getProject());
     final PsiFile file = factory.createFileFromText("a.java", JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), true);
     doGetIndentTest(file, 2, "\t\t\t\t\t");
@@ -458,10 +459,23 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
 
   public void _testSCR1488() {
     JavaCodeStyleSettings.getInstance(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED = false;
-    doTextTest("java", "class Foo {\n" + "/**<caret>\n" + "    public int foo(int i, int j, int k) throws IOException {\n" + "    }" + "}",
-               "class Foo {\n" + "    /**\n" + "     <caret>\n" + "     @param i\n" + "     @param j\n" + "     @param k\n" +
-               "     @return\n" + "     @throws IOException\n" + "     */\n" +
-               "    public int foo(int i, int j, int k) throws IOException {\n" + "    }}");
+    doTextTest("java", """
+                 class Foo {
+                 /**<caret>
+                     public int foo(int i, int j, int k) throws IOException {
+                     }}""",
+               """
+                 class Foo {
+                     /**
+                      <caret>
+                      @param i
+                      @param j
+                      @param k
+                      @return
+                      @throws IOException
+                      */
+                     public int foo(int i, int j, int k) throws IOException {
+                     }}""");
   }
 
   public void testJavaDocSplitWhenLeadingAsterisksAreDisabled() throws Exception {
@@ -470,16 +484,56 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   }
 
   public void testSCR1535() {
-    doTextTest("java", "/**\n" + "*/<caret>\n" + "class Foo{}", "/**\n" + "*/\n" + "<caret>\n" + "class Foo{}");
+    doTextTest("java", """
+      /**
+      */<caret>
+      class Foo{}""", """
+                 /**
+                 */
+                 <caret>
+                 class Foo{}""");
 
-    doTextTest("java", "class Foo {\n" + "    /**\n" + "    */<caret>\n" + "    void foo() {}\n" + "}",
-               "class Foo {\n" + "    /**\n" + "    */\n" + "    <caret>\n" + "    void foo() {}\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     /**
+                     */<caret>
+                     void foo() {}
+                 }""",
+               """
+                 class Foo {
+                     /**
+                     */
+                     <caret>
+                     void foo() {}
+                 }""");
 
-    doTextTest("java", "class Foo {\n" + "    /**\n" + "    */<caret>\n" + "    abstract void foo();\n" + "}",
-               "class Foo {\n" + "    /**\n" + "    */\n" + "    <caret>\n" + "    abstract void foo();\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     /**
+                     */<caret>
+                     abstract void foo();
+                 }""",
+               """
+                 class Foo {
+                     /**
+                     */
+                     <caret>
+                     abstract void foo();
+                 }""");
 
-    doTextTest("java", "class Foo {\n" + "    /**\n" + "    */<caret>\n" + "    int myFoo;\n" + "}",
-               "class Foo {\n" + "    /**\n" + "    */\n" + "    <caret>\n" + "    int myFoo;\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     /**
+                     */<caret>
+                     int myFoo;
+                 }""",
+               """
+                 class Foo {
+                     /**
+                     */
+                     <caret>
+                     int myFoo;
+                 }""");
 
 
   }
@@ -487,60 +541,146 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   public void testSCR3006() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).INDENT_CASE_FROM_SWITCH = false;
-    doTextTest("java", "class Foo {\n" + "    void foo(){\n" + "        switch (foo) { \n" + "        case 1: \n" +
-                       "            doSomething();<caret> \n" + "            break; \n" + "  } " + "    }\n" + "}", "class Foo {\n" +
-                                                                                                                    "    void foo(){\n" +
-                                                                                                                    "        switch (foo) { \n" +
-                                                                                                                    "        case 1: \n" +
-                                                                                                                    "            doSomething();\n" +
-                                                                                                                    "            <caret>\n" +
-                                                                                                                    "            break; \n" +
-                                                                                                                    "  } " + "    }\n" +
-                                                                                                                    "}");
+    doTextTest("java", """
+      class Foo {
+          void foo(){
+              switch (foo) {\s
+              case 1:\s
+                  doSomething();<caret>\s
+                  break;\s
+        }     }
+      }""", """
+                 class Foo {
+                     void foo(){
+                         switch (foo) {\s
+                         case 1:\s
+                             doSomething();
+                             <caret>
+                             break;\s
+                   }     }
+                 }""");
   }
   public void testSCRblabla() {
 
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).INDENT_CASE_FROM_SWITCH = true;
 
-    doTextTest("java", "class Foo {\n" + "    void foo(){\n" + "        switch (foo) { \n" + "            case 1: \n" +
-                       "                doSomething();<caret> \n" + "                break; \n" + "  } " + "    }\n" + "}",
-               "class Foo {\n" + "    void foo(){\n" + "        switch (foo) { \n" + "            case 1: \n" +
-               "                doSomething();\n" + "                <caret>\n" + "                break; \n" + "  } " + "    }\n" +
-               "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo(){
+                         switch (foo) {\s
+                             case 1:\s
+                                 doSomething();<caret>\s
+                                 break;\s
+                   }     }
+                 }""",
+               """
+                 class Foo {
+                     void foo(){
+                         switch (foo) {\s
+                             case 1:\s
+                                 doSomething();
+                                 <caret>
+                                 break;\s
+                   }     }
+                 }""");
 
   }
 
 
   public void testSCR1692() {
-    doTextTest("java", "public class TryFinallyCatch {\n" + "    public static void main(String[] args) {\n" + "        try {\n" +
-                       "            System.out.println(\"Hello\");\n" + "        }<caret>\n" + "        finally{ \n" + "        }\n" +
-                       "    }\n" + "}", "public class TryFinallyCatch {\n" + "    public static void main(String[] args) {\n" +
-                                        "        try {\n" + "            System.out.println(\"Hello\");\n" + "        }\n" +
-                                        "        <caret>\n" + "        finally{ \n" + "        }\n" + "    }\n" + "}");
+    doTextTest("java", """
+      public class TryFinallyCatch {
+          public static void main(String[] args) {
+              try {
+                  System.out.println("Hello");
+              }<caret>
+              finally{\s
+              }
+          }
+      }""", """
+                 public class TryFinallyCatch {
+                     public static void main(String[] args) {
+                         try {
+                             System.out.println("Hello");
+                         }
+                         <caret>
+                         finally{\s
+                         }
+                     }
+                 }""");
   }
 
   public void testSCR1696() {
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        for(;;)<caret>\n" + "        foo();" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        for(;;)\n" + "            <caret>\n" + "        foo();" + "    }\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         for(;;)<caret>
+                         foo();    }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         for(;;)
+                             <caret>
+                         foo();    }
+                 }""");
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        for(;;) {<caret>\n" + "        foo();}" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        for(;;) {\n" + "            <caret>\n" + "        foo();}" + "    }\n" +
-               "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         for(;;) {<caret>
+                         foo();}    }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         for(;;) {
+                             <caret>
+                         foo();}    }
+                 }""");
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        for(;;) <caret>{\n" + "        foo();}" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        for(;;) \n" + "        <caret>{\n" + "        foo();}" + "    }\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         for(;;) <caret>{
+                         foo();}    }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         for(;;)\s
+                         <caret>{
+                         foo();}    }
+                 }""");
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        for(;<caret>;) {\n" + "        foo();}" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        for(;\n" + "                <caret>;) {\n" + "        foo();}" +
-               "    }\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         for(;<caret>;) {
+                         foo();}    }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         for(;
+                                 <caret>;) {
+                         foo();}    }
+                 }""");
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        for(;;)<caret>\n" + "    }\n" + "}",
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        for(;;)\n" +
-               "            <caret>\n" +
-               "    }\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         for(;;)<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         for(;;)
+                             <caret>
+                     }
+                 }""");
 
   }
 
@@ -548,129 +688,271 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).KEEP_FIRST_COLUMN_COMMENT = false;
     doTextTest("java",
-               "class A {\n" + "      void foo() {<caret>\n" + "/*\n" + "    previousContent();\n" + "*/\n" + "       }\n" + "\n" + "}",
-               "class A {\n" + "      void foo() {\n" + "          <caret>\n" + "/*\n" + "    previousContent();\n" + "*/\n" +
-               "       }\n" + "\n" + "}");
+               """
+                 class A {
+                       void foo() {<caret>
+                 /*
+                     previousContent();
+                 */
+                        }
+
+                 }""",
+               """
+                 class A {
+                       void foo() {
+                           <caret>
+                 /*
+                     previousContent();
+                 */
+                        }
+
+                 }""");
   }
 
   public void testInsideParameterList() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        foo(1,<caret>);\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        foo(1,\n" + "                <caret>);\n" + "    }\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         foo(1,<caret>);
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         foo(1,
+                                 <caret>);
+                     }
+                 }""");
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        foo(1,<caret>\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        foo(1,\n" + "                <caret>\n" + "    }\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         foo(1,<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         foo(1,
+                                 <caret>
+                     }
+                 }""");
   }
   public void testBlaBla() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        foo(1,<caret>\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        foo(1,\n" + "            <caret>\n" + "    }\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         foo(1,<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         foo(1,
+                             <caret>
+                     }
+                 }""");
 
   }
 
   public void testInsideFor() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_FOR = true;
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        for(int i = 0;<caret>\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        for(int i = 0;\n" + "            <caret>\n" + "    }\n" + "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         for(int i = 0;<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         for(int i = 0;
+                             <caret>
+                     }
+                 }""");
 
     doTextTest("java",
-               "class Foo {\n" + "    void foo() {\n" + "        for(int i = 0;\n" + "            i < 10;<caret>\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        for(int i = 0;\n" + "            i < 10;\n" + "            <caret>\n" +
-               "    }\n" + "}");
+               """
+                 class Foo {
+                     void foo() {
+                         for(int i = 0;
+                             i < 10;<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         for(int i = 0;
+                             i < 10;
+                             <caret>
+                     }
+                 }""");
   }
 
   public void testEnterInImplementsList() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_EXTENDS_LIST = false;
-    doTextTest("java", "class A implements B,<caret>\n" + "{\n" + "}", "class A implements B,\n" + "        <caret>\n" + "{\n" + "}");
+    doTextTest("java", """
+      class A implements B,<caret>
+      {
+      }""", """
+                 class A implements B,
+                         <caret>
+                 {
+                 }""");
   }
 
   public void testEnterBlaBla() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_EXTENDS_LIST = true;
-    doTextTest("java", "class A implements B,<caret>\n" + "{\n" + "}",
-               "class A implements B,\n" + "                   <caret>\n" + "{\n" + "}");
+    doTextTest("java", """
+                 class A implements B,<caret>
+                 {
+                 }""",
+               """
+                 class A implements B,
+                                    <caret>
+                 {
+                 }""");
 
   }
 
   public void testInsideCodeBlock() {
-    doTextTest("java", "class Foo{\n" + "    void foo() {\n" + "        int[] i = new int[] {1,2,3,4,5<caret>\n" + "        ,6,7,8}\n" +
-                       "    }\n" + "}", "class Foo{\n" + "    void foo() {\n" + "        int[] i = new int[] {1,2,3,4,5\n" +
-                                        "                <caret>\n" + "        ,6,7,8}\n" + "    }\n" + "}");
+    doTextTest("java", """
+      class Foo{
+          void foo() {
+              int[] i = new int[] {1,2,3,4,5<caret>
+              ,6,7,8}
+          }
+      }""", """
+                 class Foo{
+                     void foo() {
+                         int[] i = new int[] {1,2,3,4,5
+                                 <caret>
+                         ,6,7,8}
+                     }
+                 }""");
   }
 
   public void testInsideAnonymousClass() {
-    doTextTest("java", "class Foo{\n" + "    void foo() {\n" + "        Runnable i = new Runnable() {\n" +
-                       "            public void foo1(){}\n" + "            public void foo2(){}\n" + "            public void foo3(){}\n" +
-                       "            public void foo4(){}\n" + "            <caret>\n" + "        }\n" + "    }\n" + "}", "class Foo{\n" +
-                                                                                                                         "    void foo() {\n" +
-                                                                                                                         "        Runnable i = new Runnable() {\n" +
-                                                                                                                         "            public void foo1(){}\n" +
-                                                                                                                         "            public void foo2(){}\n" +
-                                                                                                                         "            public void foo3(){}\n" +
-                                                                                                                         "            public void foo4(){}\n" +
-                                                                                                                         "            \n" +
-                                                                                                                         "            <caret>\n" +
-                                                                                                                         "        }\n" +
-                                                                                                                         "    }\n" + "}");
+    doTextTest("java", """
+      class Foo{
+          void foo() {
+              Runnable i = new Runnable() {
+                  public void foo1(){}
+                  public void foo2(){}
+                  public void foo3(){}
+                  public void foo4(){}
+                  <caret>
+              }
+          }
+      }""", """
+                 class Foo{
+                     void foo() {
+                         Runnable i = new Runnable() {
+                             public void foo1(){}
+                             public void foo2(){}
+                             public void foo3(){}
+                             public void foo4(){}
+                            \s
+                             <caret>
+                         }
+                     }
+                 }""");
   }
 
   public void testEnterInConditionOperation() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true;
-    doTextTest("java", "class Foo {\n" + "    void foo () {\n" + "        int var = condition ?<caret>\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo () {\n" + "        int var = condition ?\n" + "                  <caret>\n" + "    }\n" +
-               "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo () {
+                         int var = condition ?<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo () {
+                         int var = condition ?
+                                   <caret>
+                     }
+                 }""");
   }
 
   public void testInsideIfCondition() throws Exception {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
-    doTextTest("java", "class Foo{\n" + "    void foo() {\n" + "        if(A != null &&\n" + "           B != null &&<caret>\n" +
-                       "          ) {\n" + "        }\n" + "    }\n" + "}", "class Foo{\n" + "    void foo() {\n" +
-                                                                            "        if(A != null &&\n" + "           B != null &&\n" +
-                                                                            "           <caret>\n" + "          ) {\n" + "        }\n" +
-                                                                            "    }\n" + "}");
+    doTextTest("java", """
+      class Foo{
+          void foo() {
+              if(A != null &&
+                 B != null &&<caret>
+                ) {
+              }
+          }
+      }""", """
+                 class Foo{
+                     void foo() {
+                         if(A != null &&
+                            B != null &&
+                            <caret>
+                           ) {
+                         }
+                     }
+                 }""");
   }
 
   public void testInsideIfCondition_2() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        if (info.myTargetElement != null &&\n" +
-                       "          info.myElementAtPointer != null && <caret>info.myTargetElement != info.myElementAtPointer) {\n" +
-                       "        }\n" + "    }\n" + "}", "class Foo {\n" + "    void foo() {\n" +
-                                                        "        if (info.myTargetElement != null &&\n" +
-                                                        "          info.myElementAtPointer != null && \n" +
-                                                        "            <caret>info.myTargetElement != info.myElementAtPointer) {\n" +
-                                                        "        }\n" + "    }\n" + "}");
+    doTextTest("java", """
+      class Foo {
+          void foo() {
+              if (info.myTargetElement != null &&
+                info.myElementAtPointer != null && <caret>info.myTargetElement != info.myElementAtPointer) {
+              }
+          }
+      }""", """
+                 class Foo {
+                     void foo() {
+                         if (info.myTargetElement != null &&
+                           info.myElementAtPointer != null &&\s
+                             <caret>info.myTargetElement != info.myElementAtPointer) {
+                         }
+                     }
+                 }""");
   }
 
   public void testBreakingElseIfWithoutBraces() {
     // Inspired by IDEA-60304.
     doTextTest(
       "java",
-      "class Foo {\n" +
-      "    void test() {\n" +
-      "        if (foo()) {\n" +
-      "        } else {<caret> if (bar())\n" +
-      "            quux();\n" +
-      "    }\n" +
-      "}",
-      "class Foo {\n" +
-      "    void test() {\n" +
-      "        if (foo()) {\n" +
-      "        } else {\n" +
-      "            if (bar())\n" +
-      "                quux();\n" +
-      "        }\n" +
-      "    }\n" +
-      "}"
+      """
+        class Foo {
+            void test() {
+                if (foo()) {
+                } else {<caret> if (bar())
+                    quux();
+            }
+        }""",
+      """
+        class Foo {
+            void test() {
+                if (foo()) {
+                } else {
+                    if (bar())
+                        quux();
+                }
+            }
+        }"""
     );
   }
 
@@ -678,219 +960,278 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     // Inspired by IDEA-60304.
     doTextTest(
       "java",
-      "class Foo {\n" +
-      "    void test() {\n" +
-      "        if (foo()) {\n" +
-      "        } else {<caret> if (bar()) {\n" +
-      "            quux();\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
-      "class Foo {\n" +
-      "    void test() {\n" +
-      "        if (foo()) {\n" +
-      "        } else {\n" +
-      "            if (bar()) {\n" +
-      "                quux();\n" +
-      "            }\n" +
-      "        }\n" +
-      "    }\n" +
-      "}"
+      """
+        class Foo {
+            void test() {
+                if (foo()) {
+                } else {<caret> if (bar()) {
+                    quux();
+                }
+            }
+        }""",
+      """
+        class Foo {
+            void test() {
+                if (foo()) {
+                } else {
+                    if (bar()) {
+                        quux();
+                    }
+                }
+            }
+        }"""
     );
   }
 
   public void testSCR2238() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        switch (a) {<caret>\n" + "        }\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        switch (a) {\n" + "            <caret>\n" + "        }\n" + "    }\n" +
-               "}");
+    doTextTest("java", """
+                 class Foo {
+                     void foo() {
+                         switch (a) {<caret>
+                         }
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             <caret>
+                         }
+                     }
+                 }""");
 
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        switch (a) {\n" + "            case 1:\n" + "            {\n" +
-                       "            }<caret>\n" + "        }\n" + "    }\n" + "}", "class Foo {\n" + "    void foo() {\n" +
-                                                                                   "        switch (a) {\n" + "            case 1:\n" +
-                                                                                   "            {\n" + "            }\n" +
-                                                                                   "            <caret>\n" + "        }\n" + "    }\n" +
-                                                                                   "}");
+    doTextTest("java", """
+      class Foo {
+          void foo() {
+              switch (a) {
+                  case 1:
+                  {
+                  }<caret>
+              }
+          }
+      }""", """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             case 1:
+                             {
+                             }
+                             <caret>
+                         }
+                     }
+                 }""");
+
+
+    doTextTest("java",
+
+               """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             case 1:
+                                 foo();<caret>
+                         }
+                     }
+                 }""",
+
+               """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             case 1:
+                                 foo();
+                                 <caret>
+                         }
+                     }
+                 }""");
 
 
     doTextTest("java",
 
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        switch (a) {\n" +
-               "            case 1:\n" +
-               "                foo();<caret>\n" +
-               "        }\n" +
-               "    }\n" +
-               "}",
-
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        switch (a) {\n" +
-               "            case 1:\n" +
-               "                foo();\n" +
-               "                <caret>\n" +
-               "        }\n" +
-               "    }\n" + "}");
-
-
-    doTextTest("java",
-
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        switch (a) {\n" +
-               "            case 1:\n" +
-               "                foo();\n" +
-               "                break;<caret>\n" +
-               "        }\n" +
-               "    }\n" +
-               "}",
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        switch (a) {\n" +
-               "            case 1:\n" +
-               "                foo();\n" +
-               "                break;\n" +
-               "                <caret>\n" +
-               "        }\n" +
-               "    }\n" + "}");
+               """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             case 1:
+                                 foo();
+                                 break;<caret>
+                         }
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             case 1:
+                                 foo();
+                                 break;
+                                 <caret>
+                         }
+                     }
+                 }""");
 
     doTextTest("java",
 
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        switch (a) {\n" +
-               "            case 1:\n" +
-               "                foo();\n" +
-               "                return;<caret>\n" +
-               "        }\n" +
-               "    }\n" +
-               "}",
+               """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             case 1:
+                                 foo();
+                                 return;<caret>
+                         }
+                     }
+                 }""",
 
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        switch (a) {\n" +
-               "            case 1:\n" +
-               "                foo();\n" +
-               "                return;\n" +
-               "                <caret>\n" +
-               "        }\n" +
-               "    }\n" +
-               "}");
+               """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             case 1:
+                                 foo();
+                                 return;
+                                 <caret>
+                         }
+                     }
+                 }""");
 
 
   }
 
 
   public void testEnterAfterSecondAnnotation() {
-    doTextTest("java", "@A\n" + "@B<caret>\n" + "class C{}", "@A\n" + "@B\n" + "<caret>\n" + "class C{}");
+    doTextTest("java", """
+      @A
+      @B<caret>
+      class C{}""", """
+                 @A
+                 @B
+                 <caret>
+                 class C{}""");
   }
 
   public void testIncompleteBeginOfFile() {
     doTextTest("java",
-               "public class Test {\n" +
-               "" + "  public void foo(){\n" +
-               "" + "    if (a)<caret>",
-               "public class Test {\n" +
-               "  public void foo(){\n" +
-               "    if (a)\n" +
-               "        <caret>");
+               """
+                 public class Test {
+                   public void foo(){
+                     if (a)<caret>""",
+               """
+                 public class Test {
+                   public void foo(){
+                     if (a)
+                         <caret>""");
   }
 
   public void testAtEndOfFile() {
     doTextTest("java",
-               "public class Test {\n" +
-               "  public void foo(){\n" +
-               "  }\n" +
-               "       <caret>",
-               "public class Test {\n" +
-               "  public void foo(){\n" +
-               "  }\n" +
-               "       \n" +
-               "  <caret>"
+               """
+                 public class Test {
+                   public void foo(){
+                   }
+                        <caret>""",
+               """
+                 public class Test {
+                   public void foo(){
+                   }
+                       \s
+                   <caret>"""
     );
   }
 
   public void testStringLiteralAsReferenceExpression() {
     doTextTest("java",
-               "public class Test {\n" +
-               "  {\n" +
-               "    String q = \"abcdef<caret>ghijkl\".replaceAll(\"KEY\", \"key\");\n" +
-               "  }\n" +
-               "}",
+               """
+                 public class Test {
+                   {
+                     String q = "abcdef<caret>ghijkl".replaceAll("KEY", "key");
+                   }
+                 }""",
 
-               "public class Test {\n" +
-               "  {\n" +
-               "    String q = (\"abcdef\" +\n" +
-               "            \"<caret>ghijkl\").replaceAll(\"KEY\", \"key\");\n" +
-               "  }\n" +
-               "}"
+               """
+                 public class Test {
+                   {
+                     String q = ("abcdef" +
+                             "<caret>ghijkl").replaceAll("KEY", "key");
+                   }
+                 }"""
     );
   }
 
   public void testLineCommentInJavadoc() {
     doTextTest("java",
-               "  abstract class Test {\n" +
-               "    /**<caret>Foo//bar */\n" +
-               "    public abstract void foo();\n" +
-               "  }",
+               """
+                   abstract class Test {
+                     /**<caret>Foo//bar */
+                     public abstract void foo();
+                   }\
+                 """,
 
-               "  abstract class Test {\n" +
-               "    /**\n" +
-               "     * <caret>Foo//bar */\n" +
-               "    public abstract void foo();\n" +
-               "  }"
+               """
+                   abstract class Test {
+                     /**
+                      * <caret>Foo//bar */
+                     public abstract void foo();
+                   }\
+                 """
     );
   }
 
   public void testLineCommentInBlock() {
     doTextTest("java",
-               "  abstract class Test {\n" +
-               "    /*\n" +
-               "     * <caret>Foo//bar */\n" +
-               "    public abstract void foo();\n" +
-               "  }",
+               """
+                   abstract class Test {
+                     /*
+                      * <caret>Foo//bar */
+                     public abstract void foo();
+                   }\
+                 """,
 
-               "  abstract class Test {\n" +
-               "    /*\n" +
-               "     * \n" +
-               "     * <caret>Foo//bar */\n" +
-               "    public abstract void foo();\n" +
-               "  }"
+               """
+                   abstract class Test {
+                     /*
+                      *\s
+                      * <caret>Foo//bar */
+                     public abstract void foo();
+                   }\
+                 """
     );
   }
 
   public void testIDEADEV_28200() {
     doTextTest("java",
-               "class Foo {\n" +
-               "    public void context() {\n" +
-               "\t\tint v = 0;<caret>\n" +
-               "\t\tmyField += v;\n" +
-               "\t}" +
-               "}",
-               "class Foo {\n" +
-               "    public void context() {\n" +
-               "\t\tint v = 0;\n" +
-               "        <caret>\n" +
-               "\t\tmyField += v;\n" +
-               "\t}" +
-               "}");
+               """
+                 class Foo {
+                     public void context() {
+                 \t\tint v = 0;<caret>
+                 \t\tmyField += v;
+                 \t}}""",
+               """
+                 class Foo {
+                     public void context() {
+                 \t\tint v = 0;
+                         <caret>
+                 \t\tmyField += v;
+                 \t}}""");
   }
 
   public void testIndentStatementAfterIf() {
     doTextTest("java",
-               "class Foo {\n" +
-               "    void foo () {\n" +
-               "        if(blah==3)<caret>\n" +
-               "    }\n" +
-               "}",
-               "class Foo {\n" +
-               "    void foo () {\n" +
-               "        if(blah==3)\n" +
-               "            <caret>\n" +
-               "    }\n" +
-               "}"
+               """
+                 class Foo {
+                     void foo () {
+                         if(blah==3)<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo () {
+                         if(blah==3)
+                             <caret>
+                     }
+                 }"""
     );
   }
 
@@ -898,12 +1239,13 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true;
     doTextTest("java",
-               "class Foo {\n" +
-               "    void foo () {\n" +
-               "        PsiSubstitutor s = aClass == null ?\n" +
-               "        PsiSubstitutor.EMPTY : <caret>\n" +
-               "    }\n" +
-               "}",
+               """
+                 class Foo {
+                     void foo () {
+                         PsiSubstitutor s = aClass == null ?
+                         PsiSubstitutor.EMPTY : <caret>
+                     }
+                 }""",
                "class Foo {\n" +
                "    void foo () {\n" +
                "        PsiSubstitutor s = aClass == null ?\n" +
@@ -916,92 +1258,96 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
 
   public void testAfterTryBlock() {
     doTextTest("java",
-               "class Foo {\n" +
-               "    void foo () {\n" +
-               "        try {}<caret>\n" +
-               "    }\n" +
-               "}",
-               "class Foo {\n" +
-               "    void foo () {\n" +
-               "        try {}\n" +
-               "        <caret>\n" +
-               "    }\n" +
-               "}"
+               """
+                 class Foo {
+                     void foo () {
+                         try {}<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo () {
+                         try {}
+                         <caret>
+                     }
+                 }"""
     );
 
   }
 
   public void testTryCatch() {
     doTextTest("java",
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        try {\n" +
-               "        \n" +
-               "        } catch () {<caret>\n" +
-               "    }\n" +
-               "}",
-               "class Foo {\n" +
-               "    void foo() {\n" +
-               "        try {\n" +
-               "        \n" +
-               "        } catch () {\n" +
-               "            <caret>\n" +
-               "        }\n" +
-               "    }\n" +
-               "}");
+               """
+                 class Foo {
+                     void foo() {
+                         try {
+                        \s
+                         } catch () {<caret>
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void foo() {
+                         try {
+                        \s
+                         } catch () {
+                             <caret>
+                         }
+                     }
+                 }""");
   }
 
   public void testEnterBetweenBracesAtJavadoc() {
     // Inspired by IDEA-61221
     doTextTest(
       "java",
-      "/**\n" +
-      " *    class Foo {<caret>}\n" +
-      " */" +
-      "class Test {\n" +
-      "}",
-      "/**\n" +
-      " *    class Foo {\n" +
-      " *        <caret>\n" +
-      " *    }\n" +
-      " */" +
-      "class Test {\n" +
-      "}"
+      """
+        /**
+         *    class Foo {<caret>}
+         */class Test {
+        }""",
+      """
+        /**
+         *    class Foo {
+         *        <caret>
+         *    }
+         */class Test {
+        }"""
     );
   }
 
   public void testEnterBetweenNestedJavadocTag() {
     doTextTest(
       "java",
-      "/**\n" +
-      " *    <outer><inner><caret></inner></outer>\n" +
-      " */" +
-      "class Test {\n" +
-      "}",
-      "/**\n" +
-      " *    <outer><inner>\n" +
-      " *        <caret>\n" +
-      " *    </inner></outer>\n" +
-      " */" +
-      "class Test {\n" +
-      "}"
+      """
+        /**
+         *    <outer><inner><caret></inner></outer>
+         */class Test {
+        }""",
+      """
+        /**
+         *    <outer><inner>
+         *        <caret>
+         *    </inner></outer>
+         */class Test {
+        }"""
     );
   }
 
   public void testIndentAfterStartJavadocTag() {
     doTextTest(
       "java",
-      "/**\n" +
-      " *    <pre><caret>\n" +
-      " */" +
-      "class Test {\n" +
-      "}",
-      "/**\n" +
-      " *    <pre>\n" +
-      " *        <caret>\n" +
-      " */" +
-      "class Test {\n" +
-      "}"
+      """
+        /**
+         *    <pre><caret>
+         */class Test {
+        }""",
+      """
+        /**
+         *    <pre>
+         *        <caret>
+         */class Test {
+        }"""
     );
   }
 
@@ -1009,88 +1355,90 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     // Inspired by IDEA-65031
     doTextTest(
       "java",
-      "/**\n" +
-      " *    <p/><caret>\n" +
-      " */" +
-      "class Test {\n" +
-      "}",
-      "/**\n" +
-      " *    <p/>\n" +
-      " *    <caret>\n" +
-      " */" +
-      "class Test {\n" +
-      "}"
+      """
+        /**
+         *    <p/><caret>
+         */class Test {
+        }""",
+      """
+        /**
+         *    <p/>
+         *    <caret>
+         */class Test {
+        }"""
     );
   }
 
   public void testEnterBetweenJavadocTagsProducesNewLine() {
     doTextTest(
       "java",
-      "/**\n" +
-      " *    <pre><caret></pre>\n" +
-      " */" +
-      "class Test {\n" +
-      "}",
-      "/**\n" +
-      " *    <pre>\n" +
-      " *        <caret>\n" +
-      " *    </pre>\n" +
-      " */" +
-      "class Test {\n" +
-      "}"
+      """
+        /**
+         *    <pre><caret></pre>
+         */class Test {
+        }""",
+      """
+        /**
+         *    <pre>
+         *        <caret>
+         *    </pre>
+         */class Test {
+        }"""
     );
   }
 
   public void testTextBetweenJavadocTagStartAndCaret() {
     doTextTest(
       "java",
-      "/**\n" +
-      " *    <pre>a<caret></pre>\n" +
-      " */" +
-      "class Test {\n" +
-      "}",
-      "/**\n" +
-      " *    <pre>a\n" +
-      " *    <caret></pre>\n" +
-      " */" +
-      "class Test {\n" +
-      "}"
+      """
+        /**
+         *    <pre>a<caret></pre>
+         */class Test {
+        }""",
+      """
+        /**
+         *    <pre>a
+         *    <caret></pre>
+         */class Test {
+        }"""
     );
   }
 
   public void testTextBetweenCaretAndJavadocEndTag() {
     doTextTest(
       "java",
-      "/**\n" +
-      " *    <pre><caret>text</pre>\n" +
-      " */" +
-      "class Test {\n" +
-      "}",
-      "/**\n" +
-      " *    <pre>\n" +
-      " *        <caret>text\n" +
-      " *    </pre>\n" +
-      " */" +
-      "class Test {\n" +
-      "}"
+      """
+        /**
+         *    <pre><caret>text</pre>
+         */class Test {
+        }""",
+      """
+        /**
+         *    <pre>
+         *        <caret>text
+         *    </pre>
+         */class Test {
+        }"""
     );
   }
 
   public void testInitBlockAtAnonymousInnerClass() {
     doTextTest(
       "java",
-      "class Test {\n" +
-      "    public void test() {\n" +
-      "        new Foo(new Bar() {{<caret>);\n" +
-      "    }\n" +
-      "}",
-      "class Test {\n" +
-      "    public void test() {\n" +
-      "        new Foo(new Bar() {{\n" +
-      "            <caret>\n" +
-      "        }});\n" +
-      "    }\n" +
-      "}"
+      """
+        class Test {
+            public void test() {
+                new Foo(new Bar() {{<caret>);
+            }
+        }""",
+      """
+        class Test {
+            public void test() {
+                new Foo(new Bar() {{
+                    <caret>
+                }});
+            }
+        }"""
     );
   }
 
@@ -1098,19 +1446,21 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     // Inspired by IDEA-64989
     doTextTest(
       "java",
-      "class Test {\n" +
-      "    public void test() {\n" +
-      "        new Foo()\n" +
-      "                .bar()<caret>\n" +
-      "    }\n" +
-      "}",
-      "class Test {\n" +
-      "    public void test() {\n" +
-      "        new Foo()\n" +
-      "                .bar()\n" +
-      "                <caret>\n" +
-      "    }\n" +
-      "}"
+      """
+        class Test {
+            public void test() {
+                new Foo()
+                        .bar()<caret>
+            }
+        }""",
+      """
+        class Test {
+            public void test() {
+                new Foo()
+                        .bar()
+                        <caret>
+            }
+        }"""
     );
   }
 
@@ -1118,22 +1468,24 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     // Inspired by IDEA-64896
     doTextTest(
       "java",
-      "/**<caret>\n" +
-      "public class BrokenAlignment {\n" +
-      "\n" +
-      "    int foo() {\n" +
-      "       return 1 */*comment*/ 1;\n" +
-      "    }\n" +
-      "}",
-      "/**\n" +
-      " * <caret>\n" +
-      " */\n" +
-      "public class BrokenAlignment {\n" +
-      "\n" +
-      "    int foo() {\n" +
-      "       return 1 */*comment*/ 1;\n" +
-      "    }\n" +
-      "}"
+      """
+        /**<caret>
+        public class BrokenAlignment {
+
+            int foo() {
+               return 1 */*comment*/ 1;
+            }
+        }""",
+      """
+        /**
+         * <caret>
+         */
+        public class BrokenAlignment {
+
+            int foo() {
+               return 1 */*comment*/ 1;
+            }
+        }"""
     );
   }
 
@@ -1144,15 +1496,17 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
 
     doTextTest(
       "java",
-      "public abstract class BrokenAlignment\n" +
-      "        implements Comparable,<caret> {\n" +
-      "\n" +
-      "}",
-      "public abstract class BrokenAlignment\n" +
-      "        implements Comparable,\n" +
-      "                   <caret>{\n" +
-      "\n" +
-      "}"
+      """
+        public abstract class BrokenAlignment
+                implements Comparable,<caret> {
+
+        }""",
+      """
+        public abstract class BrokenAlignment
+                implements Comparable,
+                           <caret>{
+
+        }"""
     );
   }
 
@@ -1160,21 +1514,23 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     // Inspired by IDEA-IDEA-70194
     doTextTest(
       "java",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * @param i  this is my description<caret>\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * @param i  this is my description\n" +
-      "     *           <caret>\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}"
+      """
+        abstract class Test {
+            /**
+             * @param i  this is my description<caret>
+             */
+             void test(int i) {
+             }
+        }""",
+      """
+        abstract class Test {
+            /**
+             * @param i  this is my description
+             *           <caret>
+             */
+             void test(int i) {
+             }
+        }"""
     );
   }
 
@@ -1182,23 +1538,25 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     // Inspired by IDEA-IDEA-70194
     doTextTest(
       "java",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * @param i  this is my description\n" +
-      "     *           that spreads multiple lines<caret>\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * @param i  this is my description\n" +
-      "     *           that spreads multiple lines\n" +
-      "     *           <caret>\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}"
+      """
+        abstract class Test {
+            /**
+             * @param i  this is my description
+             *           that spreads multiple lines<caret>
+             */
+             void test(int i) {
+             }
+        }""",
+      """
+        abstract class Test {
+            /**
+             * @param i  this is my description
+             *           that spreads multiple lines
+             *           <caret>
+             */
+             void test(int i) {
+             }
+        }"""
     );
   }
 
@@ -1206,21 +1564,23 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     // Inspired by IDEA-IDEA-70194
     doTextTest(
       "java",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * @param i  this is my <caret>description\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * @param i  this is my \n" +
-      "     *           <caret>description\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}"
+      """
+        abstract class Test {
+            /**
+             * @param i  this is my <caret>description
+             */
+             void test(int i) {
+             }
+        }""",
+      """
+        abstract class Test {
+            /**
+             * @param i  this is my\s
+             *           <caret>description
+             */
+             void test(int i) {
+             }
+        }"""
     );
   }
 
@@ -1228,21 +1588,23 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     // Inspired by IDEA-IDEA-70194
     doTextTest(
       "java",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * <caret>@param i  this is my description\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * \n" +
-      "     * <caret>@param i  this is my description\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}"
+      """
+        abstract class Test {
+            /**
+             * <caret>@param i  this is my description
+             */
+             void test(int i) {
+             }
+        }""",
+      """
+        abstract class Test {
+            /**
+             *\s
+             * <caret>@param i  this is my description
+             */
+             void test(int i) {
+             }
+        }"""
     );
   }
 
@@ -1251,74 +1613,83 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     JavaCodeStyleSettings.getInstance(getProject()).JD_ALIGN_PARAM_COMMENTS = false;
     doTextTest(
       "java",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * @param i  this is my <caret>description\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}",
-      "abstract class Test {\n" +
-      "    /**\n" +
-      "     * @param i  this is my \n" +
-      "     * <caret>description\n" +
-      "     */\n" +
-      "     void test(int i) {\n" +
-      "     }\n" +
-      "}"
+      """
+        abstract class Test {
+            /**
+             * @param i  this is my <caret>description
+             */
+             void test(int i) {
+             }
+        }""",
+      """
+        abstract class Test {
+            /**
+             * @param i  this is my\s
+             * <caret>description
+             */
+             void test(int i) {
+             }
+        }"""
     );
   }
 
   public void testCommentAtFileEnd() {
-    doTextTest("java", "/*<caret>", "/*\n" +
-                                    "<caret>\n" +
-                                    " */");
+    doTextTest("java", "/*<caret>", """
+      /*
+      <caret>
+       */""");
   }
 
   public void testEnterAfterIfCondition() {
-    String before = "public class Test {\n" +
-                    "    public void main() {\n" +
-                    "       if (true){<caret> return;\n" +
-                    "       System.out.println(\"!\");\n" +
-                    "    }\n" +
-                    "}";
-    String after = "public class Test {\n" +
-                   "    public void main() {\n" +
-                   "       if (true){\n" +
-                   "           return;\n" +
-                   "       }\n" +
-                   "       System.out.println(\"!\");\n" +
-                   "    }\n" +
-                   "}";
+    String before = """
+      public class Test {
+          public void main() {
+             if (true){<caret> return;
+             System.out.println("!");
+          }
+      }""";
+    String after = """
+      public class Test {
+          public void main() {
+             if (true){
+                 return;
+             }
+             System.out.println("!");
+          }
+      }""";
     doTextTest("java", before, after);
   }
 
   public void testNoneIndentAfterMethodAnnotation() {
-    String before = "class Test {\n" +
-                    "    @Get<caret>\n" +
-                    "    void test() {\n" +
-                    "    }\n" +
-                    "}";
-    String after = "class Test {\n" +
-                   "    @Get\n" +
-                   "    <caret>\n" +
-                   "    void test() {\n" +
-                   "    }\n" +
-                   "}";
+    String before = """
+      class Test {
+          @Get<caret>
+          void test() {
+          }
+      }""";
+    String after = """
+      class Test {
+          @Get
+          <caret>
+          void test() {
+          }
+      }""";
     doTextTest("java", before, after);
   }
 
   public void testAfterDocComment() {
     doTextTest("java",
-               "class Test {\n" +
-               "    /*\n" +
-               "     * */<caret>void m() {}\n" +
-               "}",
-               "class Test {\n" +
-               "    /*\n" +
-               "     * */\n" +
-               "    <caret>void m() {}\n" +
-               "}");
+               """
+                 class Test {
+                     /*
+                      * */<caret>void m() {}
+                 }""",
+               """
+                 class Test {
+                     /*
+                      * */
+                     <caret>void m() {}
+                 }""");
   }
 
   public void testEnumWithoutContinuation() {
@@ -1334,40 +1705,44 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     javaCommon.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true;
 
     doTextTest("java",
-               "public class CucumberInspectionsProvider implements InspectionToolProvider {\n" +
-               "  public Class[] getInspectionClasses() {\n" +
-               "    return new Class[] { CucumberStepInspection.class,\n" +
-               "                         CucumberMissedExamplesInspection.class,\n" +
-               "                         CucumberExamplesColonInspection.class, <caret>\n" +
-               "    };\n" +
-               "  }\n" +
-               "}",
-               "public class CucumberInspectionsProvider implements InspectionToolProvider {\n" +
-               "  public Class[] getInspectionClasses() {\n" +
-               "    return new Class[] { CucumberStepInspection.class,\n" +
-               "                         CucumberMissedExamplesInspection.class,\n" +
-               "                         CucumberExamplesColonInspection.class, \n" +
-               "                         <caret>\n" +
-               "    };\n" +
-               "  }\n" +
-               "}");
+               """
+                 public class CucumberInspectionsProvider implements InspectionToolProvider {
+                   public Class[] getInspectionClasses() {
+                     return new Class[] { CucumberStepInspection.class,
+                                          CucumberMissedExamplesInspection.class,
+                                          CucumberExamplesColonInspection.class, <caret>
+                     };
+                   }
+                 }""",
+               """
+                 public class CucumberInspectionsProvider implements InspectionToolProvider {
+                   public Class[] getInspectionClasses() {
+                     return new Class[] { CucumberStepInspection.class,
+                                          CucumberMissedExamplesInspection.class,
+                                          CucumberExamplesColonInspection.class,\s
+                                          <caret>
+                     };
+                   }
+                 }""");
 
     doTextTest("java",
-               "public class CucumberInspectionsProvider implements InspectionToolProvider {\n" +
-               "  public Class[] getInspectionClasses() {\n" +
-               "    return new Class[] { CucumberStepInspection.class,\n" +
-               "                         CucumberMissedExamplesInspection.class,\n" +
-               "                         CucumberExamplesColonInspection.class, <caret>};\n" +
-               "  }\n" +
-               "}",
-               "public class CucumberInspectionsProvider implements InspectionToolProvider {\n" +
-               "  public Class[] getInspectionClasses() {\n" +
-               "    return new Class[] { CucumberStepInspection.class,\n" +
-               "                         CucumberMissedExamplesInspection.class,\n" +
-               "                         CucumberExamplesColonInspection.class, \n" +
-               "                         <caret>};\n" +
-               "  }\n" +
-               "}");
+               """
+                 public class CucumberInspectionsProvider implements InspectionToolProvider {
+                   public Class[] getInspectionClasses() {
+                     return new Class[] { CucumberStepInspection.class,
+                                          CucumberMissedExamplesInspection.class,
+                                          CucumberExamplesColonInspection.class, <caret>};
+                   }
+                 }""",
+               """
+                 public class CucumberInspectionsProvider implements InspectionToolProvider {
+                   public Class[] getInspectionClasses() {
+                     return new Class[] { CucumberStepInspection.class,
+                                          CucumberMissedExamplesInspection.class,
+                                          CucumberExamplesColonInspection.class,\s
+                                          <caret>};
+                   }
+                 }""");
   }
 
   public void testEnterInArrayDeclaration_BeforeRBrace() {
@@ -1376,21 +1751,23 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     javaCommon.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true;
 
     doTextTest("java",
-               "public class CucumberInspectionsProvider implements InspectionToolProvider {\n" +
-               "  public Class[] getInspectionClasses() {\n" +
-               "    return new Class[] { CucumberStepInspection.class,\n" +
-               "                         CucumberMissedExamplesInspection.class,\n" +
-               "                         CucumberExamplesColonInspection.class<caret>};\n" +
-               "  }\n" +
-               "}",
-               "public class CucumberInspectionsProvider implements InspectionToolProvider {\n" +
-               "  public Class[] getInspectionClasses() {\n" +
-               "    return new Class[] { CucumberStepInspection.class,\n" +
-               "                         CucumberMissedExamplesInspection.class,\n" +
-               "                         CucumberExamplesColonInspection.class\n" +
-               "    <caret>};\n" +
-               "  }\n" +
-               "}");
+               """
+                 public class CucumberInspectionsProvider implements InspectionToolProvider {
+                   public Class[] getInspectionClasses() {
+                     return new Class[] { CucumberStepInspection.class,
+                                          CucumberMissedExamplesInspection.class,
+                                          CucumberExamplesColonInspection.class<caret>};
+                   }
+                 }""",
+               """
+                 public class CucumberInspectionsProvider implements InspectionToolProvider {
+                   public Class[] getInspectionClasses() {
+                     return new Class[] { CucumberStepInspection.class,
+                                          CucumberMissedExamplesInspection.class,
+                                          CucumberExamplesColonInspection.class
+                     <caret>};
+                   }
+                 }""");
   }
 
 
@@ -1398,28 +1775,30 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.acme;\n" +
-      "\n" +
-      "public class Main {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        if (true)\n" +
-      "            System.out.println();\n" +
-      "        else<caret>\n" +
-      "        System.out.println();\n" +
-      "    }\n" +
-      "}",
+      """
+        package com.acme;
 
-      "package com.acme;\n" +
-      "\n" +
-      "public class Main {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        if (true)\n" +
-      "            System.out.println();\n" +
-      "        else\n" +
-      "            <caret>\n" +
-      "        System.out.println();\n" +
-      "    }\n" +
-      "}"
+        public class Main {
+            public static void main(String[] args) {
+                if (true)
+                    System.out.println();
+                else<caret>
+                System.out.println();
+            }
+        }""",
+
+      """
+        package com.acme;
+
+        public class Main {
+            public static void main(String[] args) {
+                if (true)
+                    System.out.println();
+                else
+                    <caret>
+                System.out.println();
+            }
+        }"""
     );
   }
 
@@ -1428,20 +1807,22 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.acme;\n" +
-      "\n" +
-      "class Foo implements Bar,\n" +
-      "                     Baz {\n" +
-      "    void foo() {}\n" +
-      "<caret>}",
+      """
+        package com.acme;
 
-      "package com.acme;\n" +
-      "\n" +
-      "class Foo implements Bar,\n" +
-      "                     Baz {\n" +
-      "    void foo() {}\n" +
-      "\n" +
-      "<caret>}"
+        class Foo implements Bar,
+                             Baz {
+            void foo() {}
+        <caret>}""",
+
+      """
+        package com.acme;
+
+        class Foo implements Bar,
+                             Baz {
+            void foo() {}
+
+        <caret>}"""
     );
   }
 
@@ -1449,23 +1830,25 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.acme;\n" +
-      "\n" +
-      "class Foo {\n" +
-      "    void foo() {\n" +
-      "        \n" +
-      "    <caret>}\n" +
-      "<caret>}",
+      """
+        package com.acme;
 
-      "package com.acme;\n" +
-      "\n" +
-      "class Foo {\n" +
-      "    void foo() {\n" +
-      "        \n" +
-      "    \n" +
-      "    <caret>}\n" +
-      "\n" +
-      "<caret>}"
+        class Foo {
+            void foo() {
+               \s
+            <caret>}
+        <caret>}""",
+
+      """
+        package com.acme;
+
+        class Foo {
+            void foo() {
+               \s
+           \s
+            <caret>}
+
+        <caret>}"""
     );
   }
 
@@ -1474,30 +1857,32 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.acme;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    protected boolean fix(String foo, String bar) {\n" +
-      "        if (foo != null) { // That's a comment\n" +
-      "            if (bar == null) {<caret>\n" +
-      "            }\n" +
-      "        }\n" +
-      "        return true;\n" +
-      "    }\n" +
-      "}",
+      """
+        package com.acme;
 
-      "package com.acme;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    protected boolean fix(String foo, String bar) {\n" +
-      "        if (foo != null) { // That's a comment\n" +
-      "            if (bar == null) {\n" +
-      "                <caret>\n" +
-      "            }\n" +
-      "        }\n" +
-      "        return true;\n" +
-      "    }\n" +
-      "}"
+        public class Test {
+            protected boolean fix(String foo, String bar) {
+                if (foo != null) { // That's a comment
+                    if (bar == null) {<caret>
+                    }
+                }
+                return true;
+            }
+        }""",
+
+      """
+        package com.acme;
+
+        public class Test {
+            protected boolean fix(String foo, String bar) {
+                if (foo != null) { // That's a comment
+                    if (bar == null) {
+                        <caret>
+                    }
+                }
+                return true;
+            }
+        }"""
     );
   }
 
@@ -1506,32 +1891,34 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.acme;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    private void foo() {\n" +
-      "        int foo = 1;\n" +
-      "        switch (foo) {\n" +
-      "            case 1:\n" +
-      "                for (int i = 0; i < 10; ++i) {<caret>\n" +
-      "                }\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        package com.acme;
 
-      "package com.acme;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    private void foo() {\n" +
-      "        int foo = 1;\n" +
-      "        switch (foo) {\n" +
-      "            case 1:\n" +
-      "                for (int i = 0; i < 10; ++i) {\n" +
-      "                    <caret>\n" +
-      "                }\n" +
-      "        }\n" +
-      "    }\n" +
-      "}"
+        public class Test {
+            private void foo() {
+                int foo = 1;
+                switch (foo) {
+                    case 1:
+                        for (int i = 0; i < 10; ++i) {<caret>
+                        }
+                }
+            }
+        }""",
+
+      """
+        package com.acme;
+
+        public class Test {
+            private void foo() {
+                int foo = 1;
+                switch (foo) {
+                    case 1:
+                        for (int i = 0; i < 10; ++i) {
+                            <caret>
+                        }
+                }
+            }
+        }"""
     );
   }
 
@@ -1539,26 +1926,28 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.company;\n" +
-      "\n" +
-      "class Test {\n" +
-      "    void foo() {\n" +
-      "        int[] ints = {\n" +
-      "                1,\n" +
-      "                2};<caret>\n" +
-      "    }\n" +
-      "}",
+      """
+        package com.company;
 
-      "package com.company;\n" +
-      "\n" +
-      "class Test {\n" +
-      "    void foo() {\n" +
-      "        int[] ints = {\n" +
-      "                1,\n" +
-      "                2};\n" +
-      "        <caret>\n" +
-      "    }\n" +
-      "}"
+        class Test {
+            void foo() {
+                int[] ints = {
+                        1,
+                        2};<caret>
+            }
+        }""",
+
+      """
+        package com.company;
+
+        class Test {
+            void foo() {
+                int[] ints = {
+                        1,
+                        2};
+                <caret>
+            }
+        }"""
     );
   }
 
@@ -1566,132 +1955,148 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.company;\n" +
-      "\n" +
-      "class Test {\n" +
-      "    void foo() {\n" +
-      "        int[] ints = {<caret>1, 2};\n" +
-      "    }\n" +
-      "}",
+      """
+        package com.company;
 
-      "package com.company;\n" +
-      "\n" +
-      "class Test {\n" +
-      "    void foo() {\n" +
-      "        int[] ints = {\n" +
-      "                <caret>1, 2};\n" +
-      "    }\n" +
-      "}"
+        class Test {
+            void foo() {
+                int[] ints = {<caret>1, 2};
+            }
+        }""",
+
+      """
+        package com.company;
+
+        class Test {
+            void foo() {
+                int[] ints = {
+                        <caret>1, 2};
+            }
+        }"""
     );
   }
 
   public void testEnterDoesNotGenerateAsteriskInNonCommentContext() {
-    doTextTest("java", "import java.util.List;\n" +
-                       "\n" +
-                       "class Calculator{\n" +
-                       "  public int calculateSomething(List<Integer> input){\n" +
-                       "    return 2\n" +
-                       "    * input.stream().map(i -> {<caret>});\n" +
-                       "  }\n" +
-                       "}\n",
-               "import java.util.List;\n" +
-               "\n" +
-               "class Calculator{\n" +
-               "  public int calculateSomething(List<Integer> input){\n" +
-               "    return 2\n" +
-               "    * input.stream().map(i -> {\n" +
-               "        \n" +
-               "    });\n" +
-               "  }\n" +
-               "}\n");
+    doTextTest("java", """
+                 import java.util.List;
+
+                 class Calculator{
+                   public int calculateSomething(List<Integer> input){
+                     return 2
+                     * input.stream().map(i -> {<caret>});
+                   }
+                 }
+                 """,
+               """
+                 import java.util.List;
+
+                 class Calculator{
+                   public int calculateSomething(List<Integer> input){
+                     return 2
+                     * input.stream().map(i -> {
+                        \s
+                     });
+                   }
+                 }
+                 """);
   }
 
   public void testEnterInsideTryWithResources() {
     doTextTest("java",
-               "public class Test {\n" +
-               "    public static void main(String[] args) {\n" +
-               "        try (Reader r1 = null; <caret>Reader r2 = null) {}\n" +
-               "    }\n" +
-               "}\n",
-               "public class Test {\n" +
-               "    public static void main(String[] args) {\n" +
-               "        try (Reader r1 = null; \n" +
-               "             Reader r2 = null) {}\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 public class Test {
+                     public static void main(String[] args) {
+                         try (Reader r1 = null; <caret>Reader r2 = null) {}
+                     }
+                 }
+                 """,
+               """
+                 public class Test {
+                     public static void main(String[] args) {
+                         try (Reader r1 = null;\s
+                              Reader r2 = null) {}
+                     }
+                 }
+                 """);
   }
 
   public void testDontApplyCaseIndentAfterConditionalOperator() {
     doTextTest("java",
-               "public class Test {\n" +
-               "  private void foo(boolean condition) {\n" +
-               "\n" +
-               "    boolean x = condition ? bar(\n" +
-               "      \"param\"\n" +
-               "    ) : true;<caret>\n" +
-               "  }\n" +
-               "\n" +
-               "  private boolean bar(String param) {\n" +
-               "    return false;\n" +
-               "  }\n" +
-               "}",
-               "public class Test {\n" +
-               "  private void foo(boolean condition) {\n" +
-               "\n" +
-               "    boolean x = condition ? bar(\n" +
-               "      \"param\"\n" +
-               "    ) : true;\n" +
-               "    <caret>\n" +
-               "  }\n" +
-               "\n" +
-               "  private boolean bar(String param) {\n" +
-               "    return false;\n" +
-               "  }\n" +
-               "}");
+               """
+                 public class Test {
+                   private void foo(boolean condition) {
+
+                     boolean x = condition ? bar(
+                       "param"
+                     ) : true;<caret>
+                   }
+
+                   private boolean bar(String param) {
+                     return false;
+                   }
+                 }""",
+               """
+                 public class Test {
+                   private void foo(boolean condition) {
+
+                     boolean x = condition ? bar(
+                       "param"
+                     ) : true;
+                     <caret>
+                   }
+
+                   private boolean bar(String param) {
+                     return false;
+                   }
+                 }""");
   }
 
   public void testEnterInCaseBlockWithComment() {
     doTextTest("java",
-               "class Test {\n" +
-               "      private void foo(String p) {\n" +
-               "          switch (p) {\n" +
-               "              case \"123\": //some comment about this case\n" +
-               "                  if (false) {<caret>\n" +
-               "                  }\n" +
-               "                  break;\n" +
-               "              default:\n" +
-               "                  break;\n" +
-               "          }\n" +
-               "  \n" +
-               "      }\n" +
-               "  }",
-               "class Test {\n" +
-               "      private void foo(String p) {\n" +
-               "          switch (p) {\n" +
-               "              case \"123\": //some comment about this case\n" +
-               "                  if (false) {\n" +
-               "                      <caret>\n" +
-               "                  }\n" +
-               "                  break;\n" +
-               "              default:\n" +
-               "                  break;\n" +
-               "          }\n" +
-               "  \n" +
-               "      }\n" +
-               "  }");
+               """
+                 class Test {
+                       private void foo(String p) {
+                           switch (p) {
+                               case "123": //some comment about this case
+                                   if (false) {<caret>
+                                   }
+                                   break;
+                               default:
+                                   break;
+                           }
+                  \s
+                       }
+                   }""",
+               """
+                 class Test {
+                       private void foo(String p) {
+                           switch (p) {
+                               case "123": //some comment about this case
+                                   if (false) {
+                                       <caret>
+                                   }
+                                   break;
+                               default:
+                                   break;
+                           }
+                  \s
+                       }
+                   }""");
   }
 
   public void testBetweenComments() {
     doTextTest("java",
-               "/*\n" +
-               " */<caret>/**\n" +
-               " */\n" +
-               "class C {}",
-               "/*\n" +
-               " */\n" +
-               "<caret>/**\n" +
-               " */\n" +
-               "class C {}");
+               """
+                 /*
+                  */<caret>/**
+                  */
+                 class C {}""",
+               """
+                 /*
+                  */
+                 <caret>/**
+                  */
+                 class C {}""");
   }
 
   public void testTodoInLineComment() {
@@ -1717,51 +2122,115 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "class Test {<caret>}\n" +
       "class TestIncomplete {",
 
-      "class Test {\n" +
-      "    <caret>\n" +
-      "}\n" +
-      "class TestIncomplete {"
+      """
+        class Test {
+            <caret>
+        }
+        class TestIncomplete {"""
     );
   }
 
   public void testSCR2024() {
-    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        switch (a) {\n" + "            case 1:<caret>\n" + "        }\n" +
-                       "    }\n" + "}", "class Foo {\n" + "    void foo() {\n" + "        switch (a) {\n" + "            case 1:\n" +
-                                        "                <caret>\n" + "        }\n" + "    }\n" + "}");
+    doTextTest("java", """
+      class Foo {
+          void foo() {
+              switch (a) {
+                  case 1:<caret>
+              }
+          }
+      }""", """
+                 class Foo {
+                     void foo() {
+                         switch (a) {
+                             case 1:
+                                 <caret>
+                         }
+                     }
+                 }""");
   }
 
   public void testSCR2124() {
-    doTextTest("java", "class Foo {\n" + "    public final int f() { \n" + "        A:<caret>\n" + "        int i;\n" + "    }\n" + "}",
-               "class Foo {\n" + "    public final int f() { \n" + "        A:\n" + "        <caret>\n" + "        int i;\n" + "    }\n" +
-               "}");
+    doTextTest("java", """
+                 class Foo {
+                     public final int f() {\s
+                         A:<caret>
+                         int i;
+                     }
+                 }""",
+               """
+                 class Foo {
+                     public final int f() {\s
+                         A:
+                         <caret>
+                         int i;
+                     }
+                 }""");
   }
   public void testCStyleCommentCompletion() {
 
     doTextTest("java",
 
-               "public class Foo {\n" + "    public void foo() {\n" + "        /*<caret>\n" + "    }\n",
+               """
+                 public class Foo {
+                     public void foo() {
+                         /*<caret>
+                     }
+                 """,
 
-               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "        <caret>\n" + "         */\n" + "    }\n");
+               """
+                 public class Foo {
+                     public void foo() {
+                         /*
+                         <caret>
+                          */
+                     }
+                 """);
   }
 
   public void testInsideCStyleComment() {
     doTextTest("java",
 
-               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "         Some comment<caret>\n" + "         */\n" +
-               "    }\n",
+               """
+                 public class Foo {
+                     public void foo() {
+                         /*
+                          Some comment<caret>
+                          */
+                     }
+                 """,
 
-               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "         Some comment\n" + "         <caret>\n" +
-               "         */\n" + "    }\n");
+               """
+                 public class Foo {
+                     public void foo() {
+                         /*
+                          Some comment
+                          <caret>
+                          */
+                     }
+                 """);
   }
 
   public void testInsideCStyleCommentWithStars() {
     doTextTest("java",
 
-               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "         * Some comment<caret>\n" +
-               "         */\n" + "    }\n",
+               """
+                 public class Foo {
+                     public void foo() {
+                         /*
+                          * Some comment<caret>
+                          */
+                     }
+                 """,
 
-               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "         * Some comment\n" +
-               "         * <caret>\n" + "         */\n" + "    }\n");
+               """
+                 public class Foo {
+                     public void foo() {
+                         /*
+                          * Some comment
+                          * <caret>
+                          */
+                     }
+                 """);
   }
 
   protected void doTest() throws Exception {
@@ -1772,49 +2241,53 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
 
-    doTextTest("java", 
-               "public class T {\n" +
-               "\n" +
-               "  @Configurable(order = 25, \n" +
-               "                validator = BigDecimalPercentValidator.class, <caret>)\n" +
-               "  public void run() {\n" +
-               "  }\n" +
-               "  \n" +
-               "  \n" +
-               "}", 
-               "public class T {\n" +
-               "\n" +
-               "  @Configurable(order = 25, \n" +
-               "                validator = BigDecimalPercentValidator.class, \n" +
-               "                <caret>)\n" +
-               "  public void run() {\n" +
-               "  }\n" +
-               "  \n" +
-               "  \n" +
-               "}");
+    doTextTest("java",
+               """
+                 public class T {
+
+                   @Configurable(order = 25,\s
+                                 validator = BigDecimalPercentValidator.class, <caret>)
+                   public void run() {
+                   }
+                  \s
+                  \s
+                 }""",
+               """
+                 public class T {
+
+                   @Configurable(order = 25,\s
+                                 validator = BigDecimalPercentValidator.class,\s
+                                 <caret>)
+                   public void run() {
+                   }
+                  \s
+                  \s
+                 }""");
 
     doTextTest("java",
-               "public class T {\n" +
-               "\n" +
-               "  @Configurable(order = 25, \n" +
-               "                validator = BigDecimalPercentValidator.class, <caret>\n" +
-               "  )\n" +
-               "  public void run() {\n" +
-               "  }\n" +
-               "  \n" +
-               "  \n" +
-               "}",
-               "public class T {\n" +
-               "\n" +
-               "  @Configurable(order = 25, \n" +
-               "                validator = BigDecimalPercentValidator.class, \n" +
-               "                <caret>\n" +
-               "  )\n" +
-               "  public void run() {\n" +
-               "  }\n" +
-               "  \n" +
-               "  \n" +
-               "}");
+               """
+                 public class T {
+
+                   @Configurable(order = 25,\s
+                                 validator = BigDecimalPercentValidator.class, <caret>
+                   )
+                   public void run() {
+                   }
+                  \s
+                  \s
+                 }""",
+               """
+                 public class T {
+
+                   @Configurable(order = 25,\s
+                                 validator = BigDecimalPercentValidator.class,\s
+                                 <caret>
+                   )
+                   public void run() {
+                   }
+                  \s
+                  \s
+                 }""");
   }
 
   public void testEnterInsideAnnotationParameters_AfterNameValuePairBeforeLparenth() throws IOException {
@@ -1822,63 +2295,69 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     javaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
 
     doTextTest("java",
-               "public class T {\n" +
-               "\n" +
-               "  @Configurable(order = 25, \n" +
-               "                validator = BigDecimalPercentValidator.class<caret>)\n" +
-               "  public void run() {\n" +
-               "  }\n" +
-               "  \n" +
-               "  \n" +
-               "}",
-               "public class T {\n" +
-               "\n" +
-               "  @Configurable(order = 25, \n" +
-               "                validator = BigDecimalPercentValidator.class\n" +
-               "  <caret>)\n" +
-               "  public void run() {\n" +
-               "  }\n" +
-               "  \n" +
-               "  \n" +
-               "}");
+               """
+                 public class T {
+
+                   @Configurable(order = 25,\s
+                                 validator = BigDecimalPercentValidator.class<caret>)
+                   public void run() {
+                   }
+                  \s
+                  \s
+                 }""",
+               """
+                 public class T {
+
+                   @Configurable(order = 25,\s
+                                 validator = BigDecimalPercentValidator.class
+                   <caret>)
+                   public void run() {
+                   }
+                  \s
+                  \s
+                 }""");
   }
 
   public void testToCodeBlockLambda() throws Exception {
-    doTextTest("java", "class Issue {\n" +
-                       "public static void main(String[] args) {\n" +
-                       "Arrays.asList().stream().collect(() -> {<caret> new ArrayList<>(), ArrayList::add, ArrayList::addAll);\n" +
-                       "}\n" +
-                       "}",
-                        "class Issue {\n" +
-                        "public static void main(String[] args) {\n" +
-                        "Arrays.asList().stream().collect(() -> {\n" +
-                        "    new ArrayList<>()\n" +
-                        "}, ArrayList::add, ArrayList::addAll);\n" +
-                        "}\n" +
-                        "}");
+    doTextTest("java", """
+                 class Issue {
+                 public static void main(String[] args) {
+                 Arrays.asList().stream().collect(() -> {<caret> new ArrayList<>(), ArrayList::add, ArrayList::addAll);
+                 }
+                 }""",
+               """
+                 class Issue {
+                 public static void main(String[] args) {
+                 Arrays.asList().stream().collect(() -> {
+                     new ArrayList<>()
+                 }, ArrayList::add, ArrayList::addAll);
+                 }
+                 }""");
   }
 
   public void testEnter_BetweenChainedMethodCalls() throws IOException {
     doTextTest("java",
-               "class T {\n" +
-               "    public void main() {\n" +
-               "        ActionBarPullToRefresh.from(getActivity())\n" +
-               "                .theseChildrenArePullable(eventsListView)\n" +
-               "                .listener(this)\n" +
-               "                .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())<caret>\n" +
-               "                .setup(mPullToRefreshLayout);\n" +
-               "    }\n" +
-               "}",
-               "class T {\n" +
-               "    public void main() {\n" +
-               "        ActionBarPullToRefresh.from(getActivity())\n" +
-               "                .theseChildrenArePullable(eventsListView)\n" +
-               "                .listener(this)\n" +
-               "                .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
-               "                <caret>\n" +
-               "                .setup(mPullToRefreshLayout);\n" +
-               "    }\n" +
-               "}");
+               """
+                 class T {
+                     public void main() {
+                         ActionBarPullToRefresh.from(getActivity())
+                                 .theseChildrenArePullable(eventsListView)
+                                 .listener(this)
+                                 .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())<caret>
+                                 .setup(mPullToRefreshLayout);
+                     }
+                 }""",
+               """
+                 class T {
+                     public void main() {
+                         ActionBarPullToRefresh.from(getActivity())
+                                 .theseChildrenArePullable(eventsListView)
+                                 .listener(this)
+                                 .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())
+                                 <caret>
+                                 .setup(mPullToRefreshLayout);
+                     }
+                 }""");
   }
   
   public void testEnter_BetweenAlignedChainedMethodCalls() throws IOException {
@@ -1887,25 +2366,27 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     javaCommon.ALIGN_MULTILINE_CHAINED_METHODS = true;
 
     doTextTest("java",
-               "class T {\n" +
-               "    public void main() {\n" +
-               "        ActionBarPullToRefresh.from(getActivity())\n" +
-               "                              .theseChildrenArePullable(eventsListView)\n" +
-               "                              .listener(this)\n" +
-               "                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())<caret>\n" +
-               "                              .setup(mPullToRefreshLayout);\n" +
-               "    }\n" +
-               "}",
-               "class T {\n" +
-               "    public void main() {\n" +
-               "        ActionBarPullToRefresh.from(getActivity())\n" +
-               "                              .theseChildrenArePullable(eventsListView)\n" +
-               "                              .listener(this)\n" +
-               "                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
-               "                              <caret>\n" +
-               "                              .setup(mPullToRefreshLayout);\n" +
-               "    }\n" +
-               "}");
+               """
+                 class T {
+                     public void main() {
+                         ActionBarPullToRefresh.from(getActivity())
+                                               .theseChildrenArePullable(eventsListView)
+                                               .listener(this)
+                                               .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())<caret>
+                                               .setup(mPullToRefreshLayout);
+                     }
+                 }""",
+               """
+                 class T {
+                     public void main() {
+                         ActionBarPullToRefresh.from(getActivity())
+                                               .theseChildrenArePullable(eventsListView)
+                                               .listener(this)
+                                               .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())
+                                               <caret>
+                                               .setup(mPullToRefreshLayout);
+                     }
+                 }""");
   }
   
   public void testEnter_AfterLastChainedCall() throws IOException {
@@ -1914,23 +2395,25 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     javaCommon.ALIGN_MULTILINE_CHAINED_METHODS = true;
 
     doTextTest("java",
-               "class T {\n" +
-               "    public void main() {\n" +
-               "        ActionBarPullToRefresh.from(getActivity())\n" +
-               "                              .theseChildrenArePullable(eventsListView)\n" +
-               "                              .listener(this)\n" +
-               "                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())<caret>\n" +
-               "    }\n" +
-               "}",
-               "class T {\n" +
-               "    public void main() {\n" +
-               "        ActionBarPullToRefresh.from(getActivity())\n" +
-               "                              .theseChildrenArePullable(eventsListView)\n" +
-               "                              .listener(this)\n" +
-               "                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
-               "                              <caret>\n" +
-               "    }\n" +
-               "}");
+               """
+                 class T {
+                     public void main() {
+                         ActionBarPullToRefresh.from(getActivity())
+                                               .theseChildrenArePullable(eventsListView)
+                                               .listener(this)
+                                               .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())<caret>
+                     }
+                 }""",
+               """
+                 class T {
+                     public void main() {
+                         ActionBarPullToRefresh.from(getActivity())
+                                               .theseChildrenArePullable(eventsListView)
+                                               .listener(this)
+                                               .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())
+                                               <caret>
+                     }
+                 }""");
   }
 
   public void testEnter_NewArgumentWithTabs() throws IOException {
@@ -1940,146 +2423,182 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     javaCommon.getIndentOptions().SMART_TABS = true;
 
     doTextTest("java",
-               "class T {\n" +
-               "\tvoid test(\n" +
-               "\t\t\tint a,<caret>\n" +
-               ") {}",
-               "class T {\n" +
-               "\tvoid test(\n" +
-               "\t\t\tint a,\n" +
-               "\t\t\t<caret>\n" +
-               ") {}");
+               """
+                 class T {
+                 \tvoid test(
+                 \t\t\tint a,<caret>
+                 ) {}""",
+               """
+                 class T {
+                 \tvoid test(
+                 \t\t\tint a,
+                 \t\t\t<caret>
+                 ) {}""");
   }
 
   public void testEnter_AfterStatementWithoutBlock() throws IOException {
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        if (true)\n" +
-               "            while (true) <caret>\n" +
-               "    }\n" +
-               "}\n",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        if (true)\n" +
-               "            while (true) \n" +
-               "                <caret>\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 class T {
+                     void test() {
+                         if (true)
+                             while (true) <caret>
+                     }
+                 }
+                 """,
+               """
+                 class T {
+                     void test() {
+                         if (true)
+                             while (true)\s
+                                 <caret>
+                     }
+                 }
+                 """);
 
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        if (true)\n" +
-               "            while (true) {<caret>\n" +
-               "    }\n" +
-               "}\n",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        if (true)\n" +
-               "            while (true) {\n" +
-               "                <caret>\n" +
-               "            }\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 class T {
+                     void test() {
+                         if (true)
+                             while (true) {<caret>
+                     }
+                 }
+                 """,
+               """
+                 class T {
+                     void test() {
+                         if (true)
+                             while (true) {
+                                 <caret>
+                             }
+                     }
+                 }
+                 """);
 
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        if (true)\n" +
-               "            try {<caret>\n" +
-               "    }\n" +
-               "}\n",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        if (true)\n" +
-               "            try {\n" +
-               "                <caret>\n" +
-               "            }\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 class T {
+                     void test() {
+                         if (true)
+                             try {<caret>
+                     }
+                 }
+                 """,
+               """
+                 class T {
+                     void test() {
+                         if (true)
+                             try {
+                                 <caret>
+                             }
+                     }
+                 }
+                 """);
   }
 
   public void testEnter_AfterStatementWithLabel() throws IOException {
     // as prev
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "lb:\n" +
-               "        while (true) break lb;<caret>\n" +
-               "    }\n" +
-               "}\n",
-               "class T {\n" +
-               "    void test() {\n" +
-               "lb:\n" +
-               "        while (true) break lb;\n" +
-               "        <caret>\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 class T {
+                     void test() {
+                 lb:
+                         while (true) break lb;<caret>
+                     }
+                 }
+                 """,
+               """
+                 class T {
+                     void test() {
+                 lb:
+                         while (true) break lb;
+                         <caret>
+                     }
+                 }
+                 """);
 
     // as block
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "lb:  while (true) break lb;<caret>\n" +
-               "    }\n" +
-               "}\n",
-               "class T {\n" +
-               "    void test() {\n" +
-               "lb:  while (true) break lb;\n" +
-               "        <caret>\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 class T {
+                     void test() {
+                 lb:  while (true) break lb;<caret>
+                     }
+                 }
+                 """,
+               """
+                 class T {
+                     void test() {
+                 lb:  while (true) break lb;
+                         <caret>
+                     }
+                 }
+                 """);
   }
 
   public void testEnter_inlineComment() throws IOException {
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        /<caret>/\n" +
-               "    }\n" +
-               "}\n",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        /\n" +
-               "        <caret>/\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 class T {
+                     void test() {
+                         /<caret>/
+                     }
+                 }
+                 """,
+               """
+                 class T {
+                     void test() {
+                         /
+                         <caret>/
+                     }
+                 }
+                 """);
 
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        <caret>//\n" +
-               "    }\n" +
-               "}\n",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        \n" +
-               "        <caret>//\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 class T {
+                     void test() {
+                         <caret>//
+                     }
+                 }
+                 """,
+               """
+                 class T {
+                     void test() {
+                        \s
+                         <caret>//
+                     }
+                 }
+                 """);
 
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        //a<caret>b\n" +
-               "    }\n" +
-               "}\n",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        //a\n" +
-               "        // <caret>b\n" +
-               "    }\n" +
-               "}\n");
+               """
+                 class T {
+                     void test() {
+                         //a<caret>b
+                     }
+                 }
+                 """,
+               """
+                 class T {
+                     void test() {
+                         //a
+                         // <caret>b
+                     }
+                 }
+                 """);
 
     doTextTest("java",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        //<caret>",
-               "class T {\n" +
-               "    void test() {\n" +
-               "        //\n" +
-               "    <caret>");
+               """
+                 class T {
+                     void test() {
+                         //<caret>""",
+               """
+                 class T {
+                     void test() {
+                         //
+                     <caret>""");
     }  
   
   public void testEnter_NewArgumentWithTabsNoAlign() throws IOException {
@@ -2090,74 +2609,82 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     javaCommon.ALIGN_MULTILINE_PARAMETERS = false;
 
     doTextTest("java",
-               "class T {\n" +
-               "\tvoid test(\n" +
-               "\t\t\tint a,<caret>\n" +
-               ") {}",
-               "class T {\n" +
-               "\tvoid test(\n" +
-               "\t\t\tint a,\n" +
-               "\t\t\t<caret>\n" +
-               ") {}");
+               """
+                 class T {
+                 \tvoid test(
+                 \t\t\tint a,<caret>
+                 ) {}""",
+               """
+                 class T {
+                 \tvoid test(
+                 \t\t\tint a,
+                 \t\t\t<caret>
+                 ) {}""");
   }
 
   public void testIdea179073() throws IOException {
     doTextTest("java",
-               "ArrayList<String> strings = new ArrayList<>();\n" +
-               "    strings.stream()\n" +
-               "        .forEach((e) -> {<caret>\n" +
-               "        });",
+               """
+                 ArrayList<String> strings = new ArrayList<>();
+                     strings.stream()
+                         .forEach((e) -> {<caret>
+                         });""",
 
-               "ArrayList<String> strings = new ArrayList<>();\n" +
-               "    strings.stream()\n" +
-               "        .forEach((e) -> {\n" +
-               "            <caret>\n" +
-               "        });");
+               """
+                 ArrayList<String> strings = new ArrayList<>();
+                     strings.stream()
+                         .forEach((e) -> {
+                             <caret>
+                         });""");
   }
 
   public void testIdea187535() throws IOException {
     doTextTest(
       "java",
 
-      "public class Main {\n" +
-      "    void foo() {\n" +
-      "        {\n" +
-      "            int a = 1;\n" +
-      "        }\n" +
-      "        int b = 2;<caret>\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Main {
+            void foo() {
+                {
+                    int a = 1;
+                }
+                int b = 2;<caret>
+            }
+        }"""
       ,
-      "public class Main {\n" +
-      "    void foo() {\n" +
-      "        {\n" +
-      "            int a = 1;\n" +
-      "        }\n" +
-      "        int b = 2;\n" +
-      "        <caret>\n" +
-      "    }\n" +
-      "}");
+      """
+        public class Main {
+            void foo() {
+                {
+                    int a = 1;
+                }
+                int b = 2;
+                <caret>
+            }
+        }""");
   }
 
   public void testIdea189059() throws IOException {
     doTextTest(
       "java",
 
-      "public class Test {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        String[] s =\n" +
-      "                new String[] {<caret>};\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Test {
+            public static void main(String[] args) {
+                String[] s =
+                        new String[] {<caret>};
+            }
+        }""",
 
-      "public class Test {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        String[] s =\n" +
-      "                new String[] {\n" +
-      "                        <caret>\n" +
-      "                };\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            public static void main(String[] args) {
+                String[] s =
+                        new String[] {
+                                <caret>
+                        };
+            }
+        }"""
     );
   }
 
@@ -2169,22 +2696,24 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "public class Test {\n" +
-      "    public void bar() {\n" +
-      "        boolean abc;\n" +
-      "        while (abc &&<caret>) {\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Test {
+            public void bar() {
+                boolean abc;
+                while (abc &&<caret>) {
+                }
+            }
+        }""",
 
-      "public class Test {\n" +
-      "    public void bar() {\n" +
-      "        boolean abc;\n" +
-      "        while (abc &&\n" +
-      "               <caret>) {\n" +
-      "        }\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            public void bar() {
+                boolean abc;
+                while (abc &&
+                       <caret>) {
+                }
+            }
+        }"""
     );
   }
 
@@ -2196,18 +2725,20 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "public class Test {\n" +
-      "    public boolean hasInvalidResults() {\n" +
-      "        return foo ||<caret>;\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Test {
+            public boolean hasInvalidResults() {
+                return foo ||<caret>;
+            }
+        }""",
 
-      "public class Test {\n" +
-      "    public boolean hasInvalidResults() {\n" +
-      "        return foo ||\n" +
-      "               <caret>;\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            public boolean hasInvalidResults() {
+                return foo ||
+                       <caret>;
+            }
+        }"""
     );
   }
 
@@ -2215,20 +2746,22 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "class T {\n" +
-      "    private void someMethod() {\n" +
-      "        System.out.println(\"foo\" +<caret>);\n" +
-      "    }\n" +
-      "\n" +
-      "}",
+      """
+        class T {
+            private void someMethod() {
+                System.out.println("foo" +<caret>);
+            }
 
-      "class T {\n" +
-      "    private void someMethod() {\n" +
-      "        System.out.println(\"foo\" +\n" +
-      "                <caret>);\n" +
-      "    }\n" +
-      "\n" +
-      "}"
+        }""",
+
+      """
+        class T {
+            private void someMethod() {
+                System.out.println("foo" +
+                        <caret>);
+            }
+
+        }"""
     );
   }
 
@@ -2240,20 +2773,22 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "class T {\n" +
-      "    private void someMethod() {\n" +
-      "        System.out.println(\"foo\" +<caret>);\n" +
-      "    }\n" +
-      "\n" +
-      "}",
+      """
+        class T {
+            private void someMethod() {
+                System.out.println("foo" +<caret>);
+            }
 
-      "class T {\n" +
-      "    private void someMethod() {\n" +
-      "        System.out.println(\"foo\" +\n" +
-      "                           <caret>);\n" +
-      "    }\n" +
-      "\n" +
-      "}"
+        }""",
+
+      """
+        class T {
+            private void someMethod() {
+                System.out.println("foo" +
+                                   <caret>);
+            }
+
+        }"""
     );
   }
 
@@ -2261,30 +2796,32 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.company;\n" +
-      "\n" +
-      "public class SomeExample {\n" +
-      "    void test() {\n" +
-      "        for (int i = 0; i < 10; i++)\n" +
-      "            for (int j = 0; j < 5; j++)\n" +
-      "                for (int k = 0; k < 5; k++) {\n" +
-      "                    System.out.println(\"Sum \" + (i + j + k));\n" +
-      "                }<caret>\n" +
-      "    }\n" +
-      "}",
+      """
+        package com.company;
 
-      "package com.company;\n" +
-      "\n" +
-      "public class SomeExample {\n" +
-      "    void test() {\n" +
-      "        for (int i = 0; i < 10; i++)\n" +
-      "            for (int j = 0; j < 5; j++)\n" +
-      "                for (int k = 0; k < 5; k++) {\n" +
-      "                    System.out.println(\"Sum \" + (i + j + k));\n" +
-      "                }\n" +
-      "        <caret>\n" +
-      "    }\n" +
-      "}"
+        public class SomeExample {
+            void test() {
+                for (int i = 0; i < 10; i++)
+                    for (int j = 0; j < 5; j++)
+                        for (int k = 0; k < 5; k++) {
+                            System.out.println("Sum " + (i + j + k));
+                        }<caret>
+            }
+        }""",
+
+      """
+        package com.company;
+
+        public class SomeExample {
+            void test() {
+                for (int i = 0; i < 10; i++)
+                    for (int j = 0; j < 5; j++)
+                        for (int k = 0; k < 5; k++) {
+                            System.out.println("Sum " + (i + j + k));
+                        }
+                <caret>
+            }
+        }"""
     );
   }
 
@@ -2301,56 +2838,60 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "package com.company;\n" +
-      "\n" +
-      "public class Test3 {\n" +
-      "    public static void main(String[] args)\n" +
-      "    {\n" +
-      "/*\n" +
-      "        System.out.println(\"Commented\");\n" +
-      "*/\n" +
-      "        <caret>System.out.println(\"Hello\");\n" +
-      "    }\n" +
-      "}",
+      """
+        package com.company;
 
-      "package com.company;\n" +
-      "\n" +
-      "public class Test3 {\n" +
-      "    public static void main(String[] args)\n" +
-      "    {\n" +
-      "/*\n" +
-      "        System.out.println(\"Commented\");\n" +
-      "*/\n" +
-      "        \n" +
-      "        <caret>System.out.println(\"Hello\");\n" +
-      "    }\n" +
-      "}");
+        public class Test3 {
+            public static void main(String[] args)
+            {
+        /*
+                System.out.println("Commented");
+        */
+                <caret>System.out.println("Hello");
+            }
+        }""",
+
+      """
+        package com.company;
+
+        public class Test3 {
+            public static void main(String[] args)
+            {
+        /*
+                System.out.println("Commented");
+        */
+               \s
+                <caret>System.out.println("Hello");
+            }
+        }""");
   }
 
   public void testIdea235221() {
     doTextTest(
       "java",
 
-      "package test;\n" +
-      "\n" +
-      "public class Crush {\n" +
-      "    void crush() {\n" +
-      "        assertThat()\n" +
-      "                /* Then */\n" +
-      "        .isNotNull()<caret>\n" +
-      "    }\n" +
-      "}",
+      """
+        package test;
 
-      "package test;\n" +
-      "\n" +
-      "public class Crush {\n" +
-      "    void crush() {\n" +
-      "        assertThat()\n" +
-      "                /* Then */\n" +
-      "        .isNotNull()\n" +
-      "                <caret>\n" +
-      "    }\n" +
-      "}"
+        public class Crush {
+            void crush() {
+                assertThat()
+                        /* Then */
+                .isNotNull()<caret>
+            }
+        }""",
+
+      """
+        package test;
+
+        public class Crush {
+            void crush() {
+                assertThat()
+                        /* Then */
+                .isNotNull()
+                        <caret>
+            }
+        }"""
     );
   }
 
@@ -2358,16 +2899,18 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "class MyTest\n" +
-      "{\n" +
-      "    private void foo() { String a = \"a\";<caret> String b = \"b\";}\n" +
-      "}",
+      """
+        class MyTest
+        {
+            private void foo() { String a = "a";<caret> String b = "b";}
+        }""",
 
-      "class MyTest\n" +
-      "{\n" +
-      "    private void foo() { String a = \"a\";\n" +
-      "        <caret>String b = \"b\";}\n" +
-      "}"
+      """
+        class MyTest
+        {
+            private void foo() { String a = "a";
+                <caret>String b = "b";}
+        }"""
     );
   }
 
@@ -2375,16 +2918,18 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "public class Test {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        System.out.println(\"Hello World!\");}<caret>\n" +
-      "}",
+      """
+        public class Test {
+            public static void main(String[] args) {
+                System.out.println("Hello World!");}<caret>
+        }""",
 
-      "public class Test {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        System.out.println(\"Hello World!\");}\n" +
-      "    <caret>\n" +
-      "}"
+      """
+        public class Test {
+            public static void main(String[] args) {
+                System.out.println("Hello World!");}
+            <caret>
+        }"""
     );
   }
 
@@ -2392,22 +2937,24 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "public class Test {\n" +
-      "    /**\n" +
-      "     * Something<br><caret>\n" +
-      "     */\n" +
-      "    void foo() {\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Test {
+            /**
+             * Something<br><caret>
+             */
+            void foo() {
+            }
+        }""",
 
-      "public class Test {\n" +
-      "    /**\n" +
-      "     * Something<br>\n" +
-      "     * <caret>\n" +
-      "     */\n" +
-      "    void foo() {\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            /**
+             * Something<br>
+             * <caret>
+             */
+            void foo() {
+            }
+        }"""
     );
   }
 
@@ -2415,24 +2962,26 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "public class Test {\n" +
-      "    void foo(String a, String b, String c)\n" +
-      "    {\n" +
-      "        if(true) \n" +
-      "        {}\n" +
-      "        else<caret>{}\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Test {
+            void foo(String a, String b, String c)
+            {
+                if(true)\s
+                {}
+                else<caret>{}
+            }
+        }""",
 
-      "public class Test {\n" +
-      "    void foo(String a, String b, String c)\n" +
-      "    {\n" +
-      "        if(true) \n" +
-      "        {}\n" +
-      "        else\n" +
-      "        <caret>{}\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            void foo(String a, String b, String c)
+            {
+                if(true)\s
+                {}
+                else
+                <caret>{}
+            }
+        }"""
     );
   }
 
@@ -2448,9 +2997,10 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
           "public class Test extends A implements B,C {<caret>\n" +
           "}",
 
-          "public class Test extends A implements B,C {\n" +
-          "<caret>\n" +
-          "}"
+          """
+            public class Test extends A implements B,C {
+            <caret>
+            }"""
         );
       });
   }
@@ -2459,46 +3009,50 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "java",
 
-      "class Test {\n" +
-      "    void foo() {\n" +
-      "        boolean value = true;\n" +
-      "        if (value)\n" +
-      "            if (value)\n" +
-      "                value = false;<caret>\n" +
-      "    }\n" +
-      "}",
+      """
+        class Test {
+            void foo() {
+                boolean value = true;
+                if (value)
+                    if (value)
+                        value = false;<caret>
+            }
+        }""",
 
-      "class Test {\n" +
-      "    void foo() {\n" +
-      "        boolean value = true;\n" +
-      "        if (value)\n" +
-      "            if (value)\n" +
-      "                value = false;\n" +
-      "        <caret>\n" +
-      "    }\n" +
-      "}"
+      """
+        class Test {
+            void foo() {
+                boolean value = true;
+                if (value)
+                    if (value)
+                        value = false;
+                <caret>
+            }
+        }"""
     );
   }
 
   public void testIfElseChain() {
     doTextTest(
       "java",
-      "class X {\n" +
-      "  void test(int x) {\n" +
-      "    if(x > 0) {\n" +
-      "    } else if(x == 0) {<caret>else {\n" +
-      "    }\n" +
-      "  }\n" +
-      "}",
-      "class X {\n" +
-      "  void test(int x) {\n" +
-      "    if(x > 0) {\n" +
-      "    } else if(x == 0) {\n" +
-      "        \n" +
-      "    }else {\n" +
-      "    }\n" +
-      "  }\n" +
-      "}"
+      """
+        class X {
+          void test(int x) {
+            if(x > 0) {
+            } else if(x == 0) {<caret>else {
+            }
+          }
+        }""",
+      """
+        class X {
+          void test(int x) {
+            if(x > 0) {
+            } else if(x == 0) {
+               \s
+            }else {
+            }
+          }
+        }"""
     );
   }
 }

@@ -2,7 +2,9 @@
 package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.openapi.diagnostic.thisLogger
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LibraryLayer private constructor(
   /**
    * Library on this layer. Must be no more than one per layer.
@@ -13,8 +15,8 @@ class LibraryLayer private constructor(
    * Nested layer
    */
   private val nextLayers: Map<String, LibraryLayer> = emptyMap(),
-) : LibraryDescriptorFinder {
-  override fun findSuitableLibrary(packageQualifier: String): String? = findLibrary(packageQualifier)
+) {
+  fun findSuitableLibrary(packageQualifier: String): String? = findLibrary(packageQualifier)
 
   private fun findLibrary(packageQualifier: String?): String? {
     if (packageQualifier == null) return libraryName

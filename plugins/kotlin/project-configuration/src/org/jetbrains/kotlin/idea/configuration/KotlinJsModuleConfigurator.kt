@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType
 import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.js.JavaScript
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms

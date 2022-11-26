@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.Disposable
@@ -49,8 +49,6 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
   val threads: XDebuggerThreadsList get() = myThreadsList
   val frames: XDebuggerFramesList get() = myFramesList
-
-  private var myAlreadyPaused = false
 
   private val myFramesPresentationCache = mutableMapOf<Any, String>()
 
@@ -207,14 +205,12 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     }
     val suspendContext = session.suspendContext
     if (suspendContext == null) {
-      UIUtil.invokeLaterIfNeeded { myAlreadyPaused = false }
       requestClear()
       return
     }
 
     UIUtil.invokeLaterIfNeeded {
-      if (!myAlreadyPaused && (event == SessionEvent.PAUSED || event == SessionEvent.SETTINGS_CHANGED && session.isSuspended)) {
-        myAlreadyPaused = true
+      if (event == SessionEvent.PAUSED || event == SessionEvent.SETTINGS_CHANGED && session.isSuspended) {
         // clear immediately
         cancelClear()
         clear()

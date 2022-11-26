@@ -36,6 +36,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
@@ -252,9 +253,13 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   private @Nullable Content getCurrentContent() {
     ToolWindow window = getCurrentToolWindow();
-    if (window == null) return null;
+    if (window == null) {
+      return null;
+    }
     ContentManager manager = window.getContentManagerIfCreated();
-    if (manager == null) return null;
+    if (manager == null) {
+      return null;
+    }
     return manager.getContent(this);
   }
 
@@ -278,16 +283,23 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     Node node = getSelectedNode();
     if (node != null) {
       if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) return node;
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
-      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        Navigatable navigatable = node.getNavigatable();
-        return navigatable == null ? null : new Navigatable[]{navigatable};
-      }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         VirtualFile file = node.getVirtualFile();
         return file == null ? null : new VirtualFile[]{file};
       }
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId, node);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Node node) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      Navigatable navigatable = node.getNavigatable();
+      return navigatable == null ? null : new Navigatable[]{navigatable};
     }
     return null;
   }
@@ -300,12 +312,12 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
     String padding = String.valueOf(count <= 0 ? 0 : JBUI.scale(8));
-    String fg = toHtmlColor(UIUtil.getInactiveTextColor());
+    String fg = toHtmlColor(NamedColorUtil.getInactiveTextColor());
     String number = count <= 0 ? "" : String.valueOf(count);
     @Language("HTML")
     String labelWithCounter = "<html><body>" +
                               "<table cellpadding='0' cellspacing='0'><tr>" +
-                                "<td>%s</td>" +
+                                "<td><nobr>%s</nobr></td>" +
                                 "<td width='%s'></td>" +
                                 "<td><font color='%s'>%s</font></td>" +
                               "</tr></table></body></html>";
@@ -381,8 +393,13 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     }
     else {
       Long time = myShowTime.getAndSet(null);
-      if (time != null) ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
-      IntentionsUI.getInstance(getProject()).hide();
+      if (time != null) {
+        ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
+      }
+      IntentionsUI intentionUI = getProject().getServiceIfCreated(IntentionsUI.class);
+      if (intentionUI != null) {
+        intentionUI.hide();
+      }
     }
   }
 

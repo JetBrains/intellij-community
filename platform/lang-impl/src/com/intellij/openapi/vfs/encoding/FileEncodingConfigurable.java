@@ -20,7 +20,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.PerFileConfigurableBase;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,34 +30,34 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
-import java.util.function.Supplier;
 
 class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
   private final FileEncodingConfigurableUI ui = new FileEncodingConfigurableUI();
   private Charset myPropsCharset;
-  private final Trinity<String, Supplier<? extends Charset>, Consumer<? super Charset>> myProjectMapping;
-  private final Trinity<String, Supplier<? extends Charset>, Consumer<? super Charset>> myGlobalMapping;
+
+  private final Mapping<Charset> myProjectMapping;
+  private final Mapping<Charset> myGlobalMapping;
 
   FileEncodingConfigurable(@NotNull Project project) {
     super(project, createMappings(project));
     EncodingManager app = EncodingManager.getInstance();
     EncodingProjectManagerImpl prj = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
-    myProjectMapping = Trinity.create(IdeBundle.message("file.encoding.option.global.encoding"),
-                                      () -> app.getDefaultCharsetName().isEmpty() ? null : app.getDefaultCharset(),
-                                      o -> app.setDefaultCharsetName(getCharsetName(o)));
-    myGlobalMapping = Trinity.create(IdeBundle.message("file.encoding.option.project.encoding"),
-                                     prj::getConfiguredDefaultCharset,
-                                     o -> prj.setDefaultCharsetName(getCharsetName(o)));
+    myProjectMapping = new Mapping<>(IdeBundle.message("file.encoding.option.global.encoding"),
+                                     () -> app.getDefaultCharsetName().isEmpty() ? null : app.getDefaultCharset(),
+                                     o -> app.setDefaultCharsetName(getCharsetName(o)));
+    myGlobalMapping = new Mapping<>(IdeBundle.message("file.encoding.option.project.encoding"),
+                                    prj::getConfiguredDefaultCharset,
+                                    o -> prj.setDefaultCharsetName(getCharsetName(o)));
   }
 
   @Override
-  protected boolean isGlobalMapping(Trinity<@NlsContexts.Label String, Supplier<? extends Charset>, Consumer<? super Charset>> prop) {
+  protected boolean isGlobalMapping(Mapping<Charset> prop) {
     return prop == myGlobalMapping || super.isGlobalMapping(prop);
   }
 
   @Override
-  protected boolean isProjectMapping(Trinity<@NlsContexts.Label String, Supplier<? extends Charset>, Consumer<? super Charset>> prop) {
+  protected boolean isProjectMapping(Mapping<Charset> prop) {
     return prop == myProjectMapping || super.isProjectMapping(prop);
   }
 
@@ -165,7 +164,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   }
 
   @Override
-  protected @NotNull List<Trinity<@Nls String, Supplier<? extends Charset>, Consumer<? super Charset>>> getDefaultMappings() {
+  protected @NotNull List<Mapping<Charset>> getDefaultMappings() {
     return Arrays.asList(
       myProjectMapping,
       myGlobalMapping);

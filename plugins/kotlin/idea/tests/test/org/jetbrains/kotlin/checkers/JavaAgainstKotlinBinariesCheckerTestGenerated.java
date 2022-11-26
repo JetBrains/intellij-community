@@ -108,9 +108,9 @@ public class JavaAgainstKotlinBinariesCheckerTestGenerated extends AbstractJavaA
         runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/FunctionInNestedClassInDataFlowInspection.kt");
     }
 
-    @TestMetadata("ImplementedMethodsFromTraits.kt")
-    public void testImplementedMethodsFromTraits() throws Exception {
-        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ImplementedMethodsFromTraits.kt");
+    @TestMetadata("ImplementedMethodsFromInterfaces.kt")
+    public void testImplementedMethodsFromInterfaces() throws Exception {
+        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ImplementedMethodsFromInterfaces.kt");
     }
 
     @TestMetadata("InferenceReturnType_1_6.kt")

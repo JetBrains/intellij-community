@@ -328,11 +328,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return options;
   }
 
-  @Override
-  public @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName, @NotNull AbstractVcs vcs) {
-    return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
-  }
-
   @RequiresEdt
   @Override
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {

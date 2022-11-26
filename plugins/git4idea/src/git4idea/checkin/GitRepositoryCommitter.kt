@@ -42,7 +42,7 @@ data class GitCommitOptions(
   )
 }
 
-internal class GitRepositoryCommitter(val repository: GitRepository, val commitOptions: GitCommitOptions) {
+internal class GitRepositoryCommitter(val repository: GitRepository, private val commitOptions: GitCommitOptions) {
   val project: Project get() = repository.project
   val root: VirtualFile get() = repository.root
 

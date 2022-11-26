@@ -22,6 +22,7 @@ public class PatternParserTest extends JavaParsingTestCase {
   public void testRecord9() { doParserTest("Rec(int a"); }
   public void testRecord10() { doParserTest("Rec r"); }
   public void testRecord11() { doParserTest("Rec(var x) r"); }
+  public void testRecord12() { doParserTest("Rec(String)"); }
 
   private void doParserTest(String text) {
     doParserTest(text, builder -> {

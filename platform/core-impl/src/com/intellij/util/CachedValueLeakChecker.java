@@ -24,9 +24,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/**
- * @author peter
- */
 final class CachedValueLeakChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueLeakChecker.class);
   private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();

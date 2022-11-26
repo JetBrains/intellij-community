@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
@@ -31,16 +33,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public final class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private static final long PARSING_CALL_TIMEOUT_MS = 50L;
   private static final long RENDERING_DELAY_MS = 20L;
-  public static final Key<MarkdownHtmlPanel> PREVIEW_BROWSER = Key.create("PREVIEW_BROWSER");
+  public static final Key<WeakReference<MarkdownHtmlPanel>> PREVIEW_BROWSER = Key.create("PREVIEW_BROWSER");
 
   private final Project myProject;
   private final VirtualFile myFile;
@@ -61,47 +61,19 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
   private Editor mainEditor;
 
+  private boolean isDisposed = false;
+
   public MarkdownPreviewFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
     myDocument = FileDocumentManager.getInstance().getDocument(myFile);
 
     if (myDocument != null) {
-      myDocument.addDocumentListener(new DocumentListener() {
-
-        @Override
-        public void beforeDocumentChange(@NotNull DocumentEvent e) {
-          myPooledAlarm.cancelAllRequests();
-        }
-
-        @Override
-        public void documentChanged(@NotNull DocumentEvent e) {
-          myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
-        }
-      }, this);
+      myDocument.addDocumentListener(new ReparseContentDocumentListener(), this);
     }
 
     myHtmlPanelWrapper = new JPanel(new BorderLayout());
-
-    myHtmlPanelWrapper.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentShown(ComponentEvent e) {
-        mySwingAlarm.addRequest(() -> {
-          if (myPanel == null) {
-            attachHtmlPanel();
-          }
-        }, 0, ModalityState.stateForComponent(getComponent()));
-      }
-
-      @Override
-      public void componentHidden(ComponentEvent e) {
-        mySwingAlarm.addRequest(() -> {
-          if (myPanel != null) {
-            detachHtmlPanel();
-          }
-        }, 0, ModalityState.stateForComponent(getComponent()));
-      }
-    });
+    myHtmlPanelWrapper.addComponentListener(new AttachPanelOnVisibilityChangeListener());
 
     if (isPreviewShown(project, file)) {
       attachHtmlPanel();
@@ -112,24 +84,24 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
     messageBusConnection.subscribe(MarkdownExtensionsSettings.ChangeListener.TOPIC, fromSettingsDialog -> {
       if (!fromSettingsDialog) {
-        mySwingAlarm.addRequest(() -> {
+        addImmediateRequest(mySwingAlarm, () -> {
           if (myPanel != null) {
             myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
           }
-        }, 0, ModalityState.stateForComponent(getComponent()));
+        });
       }
     });
   }
 
   private void setupScrollHelper() {
-    final var actualEditor = (mainEditor instanceof EditorImpl)? (EditorImpl)mainEditor : null;
+    final var actualEditor = ObjectUtils.tryCast(mainEditor, EditorImpl.class);
     if (actualEditor == null) {
       return;
     }
     final var scrollPane = actualEditor.getScrollPane();
     final var helper = new PreciseVerticalScrollHelper(
       actualEditor,
-      () -> (myPanel instanceof MarkdownHtmlPanelEx)? (MarkdownHtmlPanelEx)myPanel : null
+      () -> ObjectUtils.tryCast(myPanel, MarkdownHtmlPanelEx.class)
     );
     scrollPane.addMouseWheelListener(helper);
   }
@@ -152,6 +124,9 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     }
 
     synchronized (REQUESTS_LOCK) {
+      if (mySwingAlarm.isDisposed()) {
+        return;
+      }
       if (myLastScrollRequest != null) {
         mySwingAlarm.cancelRequest(myLastScrollRequest);
       }
@@ -216,9 +191,14 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     return myFile;
   }
 
+  public boolean isDisposed() {
+    return this.isDisposed;
+  }
+
   @Override
   public void dispose() {
     if (myPanel != null) {
+      this.isDisposed = true;
       Disposer.dispose(myPanel);
     }
   }
@@ -253,18 +233,23 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
   // Is always run from pooled thread
   private void updateHtml() {
-    if (myPanel == null || myDocument == null || !myFile.isValid() || Disposer.isDisposed(this)) {
+    if (myPanel == null || myDocument == null || !myFile.isValid() || isDisposed()) {
       return;
     }
 
-    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
+    final var html = ReadAction.compute(() -> {
+      return MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
+    });
 
     // EA-75860: The lines to the top may be processed slowly; Since we're in pooled thread, we can be disposed already.
-    if (!myFile.isValid() || Disposer.isDisposed(this)) {
+    if (!myFile.isValid() || isDisposed()) {
       return;
     }
 
     synchronized (REQUESTS_LOCK) {
+      if (mySwingAlarm.isDisposed()) {
+        return;
+      }
       if (myLastHtmlOrRefreshRequest != null) {
         mySwingAlarm.cancelRequest(myLastHtmlOrRefreshRequest);
       }
@@ -304,13 +289,19 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     if (myHtmlPanelWrapper.isShowing()) myHtmlPanelWrapper.validate();
     myHtmlPanelWrapper.repaint();
     myLastRenderedHtml = "";
-    this.putUserData(PREVIEW_BROWSER, myPanel);
+    this.putUserData(PREVIEW_BROWSER, new WeakReference<>(myPanel));
     updateHtmlPooled();
   }
 
   private void updateHtmlPooled() {
     myPooledAlarm.cancelAllRequests();
     myPooledAlarm.addRequest(() -> updateHtml(), 0);
+  }
+
+  private void addImmediateRequest(@NotNull Alarm alarm, @NotNull Runnable request) {
+    if (!alarm.isDisposed()) {
+      alarm.addRequest(request, 0, ModalityState.stateForComponent(getComponent()));
+    }
   }
 
   private static boolean isPreviewShown(@NotNull Project project, @NotNull VirtualFile file) {
@@ -328,13 +319,47 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     return layout == null || !layout.equals("FIRST"); //todo[kb] remove after migration to the new state model
   }
 
+  private class ReparseContentDocumentListener implements DocumentListener {
+    @Override
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
+      myPooledAlarm.cancelAllRequests();
+    }
+
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event) {
+      if (!myPooledAlarm.isDisposed()) {
+        myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
+      }
+    }
+  }
+
+  private class AttachPanelOnVisibilityChangeListener extends ComponentAdapter {
+    @Override
+    public void componentShown(ComponentEvent event) {
+      addImmediateRequest(mySwingAlarm, () -> {
+        if (myPanel == null) {
+          attachHtmlPanel();
+        }
+      });
+    }
+
+    @Override
+    public void componentHidden(ComponentEvent event) {
+      addImmediateRequest(mySwingAlarm, () -> {
+        if (myPanel != null) {
+          detachHtmlPanel();
+        }
+      });
+    }
+  }
+
   private class MyUpdatePanelOnSettingsChangedListener implements MarkdownSettings.ChangeListener {
     @Override
     public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {}
 
     @Override
     public void settingsChanged(@NotNull MarkdownSettings settings) {
-      mySwingAlarm.addRequest(() -> {
+      addImmediateRequest(mySwingAlarm, () -> {
         if (settings.getSplitLayout() != TextEditorWithPreview.Layout.SHOW_EDITOR) {
           if (myPanel == null) {
             attachHtmlPanel();
@@ -348,40 +373,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
         if (myPanel != null) {
           myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
         }
-      }, 0, ModalityState.stateForComponent(getComponent()));
-    }
-  }
-
-  private static class PreciseVerticalScrollHelper extends MouseAdapter {
-    private final @NotNull EditorImpl editor;
-    private final @NotNull Supplier<MarkdownHtmlPanelEx> htmlPanelSupplier;
-    private int lastOffset = 0;
-
-    private PreciseVerticalScrollHelper(@NotNull EditorImpl editor, @NotNull Supplier<MarkdownHtmlPanelEx> htmlPanelSupplier) {
-      this.editor = editor;
-      this.htmlPanelSupplier = htmlPanelSupplier;
-    }
-
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent event) {
-      final var currentOffset = editor.getScrollingModel().getVerticalScrollOffset();
-      if (lastOffset == currentOffset) {
-        boundaryReached(event);
-      } else {
-        lastOffset = currentOffset;
-      }
-    }
-
-    private void boundaryReached(MouseWheelEvent event) {
-      final var actualPanel = htmlPanelSupplier.get();
-      if (actualPanel == null) {
-        return;
-      }
-      if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-        final var multiplier = Registry.intValue("ide.browser.jcef.osr.wheelRotation.factor", 1);
-        final var amount = event.getScrollAmount() * event.getWheelRotation() * multiplier;
-        actualPanel.scrollBy(0, amount);
-      }
+      });
     }
   }
 }

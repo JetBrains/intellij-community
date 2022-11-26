@@ -548,7 +548,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       VirtualFile classesDir = ProjectStructureDslKt.resolveVirtualFile(classesDirSpec.get());
       VirtualFile sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
 
-      Sdk sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName"), sdkModificator -> {
+      Sdk sdk = projectModelRule.addSdk("sdkName", sdkModificator -> {
         sdkModificator.addRoot(classesDir, OrderRootType.CLASSES);
         sdkModificator.addRoot(sourcesDir, OrderRootType.SOURCES);
         return Unit.INSTANCE;
@@ -604,7 +604,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       VirtualFile sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
       VirtualFile sourcesExcludedDir = ProjectStructureDslKt.resolveVirtualFile(sourcesExcludedDirSpec.get());
 
-      Sdk sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName"), sdkModificator -> {
+      Sdk sdk = projectModelRule.addSdk("sdkName", sdkModificator -> {
         sdkModificator.addRoot(classesDir, OrderRootType.CLASSES);
         sdkModificator.addRoot(sourcesDir, OrderRootType.SOURCES);
         return Unit.INSTANCE;

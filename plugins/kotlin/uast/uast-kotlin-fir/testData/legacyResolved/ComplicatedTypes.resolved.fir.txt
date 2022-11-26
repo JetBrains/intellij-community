@@ -25,11 +25,11 @@ internal open class TypeBase<T>: TypeBase
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> Decompiled_Method: getJavaClass
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = genericSuperclass) -> Decompiled_Method: getGenericSuperclass
     UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
-    UPostfixExpression (operator = !!) -> UQualifiedReferenceExpression -> null: null
+    UPostfixExpression (operator = !!) -> UQualifiedReferenceExpression -> Decompiled_Method: first
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Method: getActualTypeArguments
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = superType) -> Kotlin_Light_Variable: superType
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
     UTypeReferenceExpression (name = java.lang.reflect.ParameterizedType) -> USimpleNameReferenceExpression (identifier = ParameterizedType) -> Decompiled_Class: ParameterizedType
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = actualTypeArguments) -> Decompiled_Method: getActualTypeArguments
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = first) -> FUN: first
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = first) -> FUN: first
     UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null

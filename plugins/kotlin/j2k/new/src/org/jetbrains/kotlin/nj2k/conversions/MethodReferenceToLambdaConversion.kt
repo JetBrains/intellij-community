@@ -7,6 +7,7 @@ import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.nullIfStubExpression
 import org.jetbrains.kotlin.nj2k.qualified
 import org.jetbrains.kotlin.nj2k.symbols.*
@@ -77,12 +78,14 @@ class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : Recur
                         symbol,
                         JKArgumentList(arguments)
                     )
-                is JKClassSymbol -> JKNewExpression(symbol, JKArgumentList(), JKTypeArgumentList())
+
+                is JKClassSymbol -> JKNewExpression(symbol, JKArgumentList())
                 else -> return recurse(element)
             }
         val qualifier = when {
             receiverParameter != null ->
                 JKFieldAccessExpression(symbolProvider.provideUniverseSymbol(receiverParameter))
+
             element.isConstructorCall -> element.qualifier.safeAs<JKQualifiedExpression>()?.let { it::receiver.detached() }
             else -> element::qualifier.detached().nullIfStubExpression()
         }
@@ -118,14 +121,17 @@ class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : Recur
                 ?.parameterList
                 ?.parameters
                 ?.map { typeFactory.fromPsiType(it.type).substituteTypeParameters(this) }
+
             is JKMultiverseKtClassSymbol -> reference.target.body
                 ?.functions
                 ?.singleOrNull()
                 ?.valueParameters
                 ?.map { typeFactory.fromKotlinType(it.kotlinType(it.analyze()) ?: return null).substituteTypeParameters(this) }
+
             is JKUniverseClassSymbol -> reference.target.classBody.declarations.firstIsInstanceOrNull<JKMethod>()
                 ?.parameters
                 ?.map { it.type.type.substituteTypeParameters(this) }
+
             else -> null
         }
     }

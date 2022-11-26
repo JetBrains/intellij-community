@@ -36,7 +36,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   }
 
   @Override
-  public void visitXmlFile(XmlFile file) {
+  public void visitXmlFile(@NotNull XmlFile file) {
     XmlDocument document = file.getDocument();
     List<XmlTag> tags = PsiTreeUtil.getChildrenOfTypeAsList(document, XmlTag.class);
 
@@ -48,7 +48,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   }
 
   @Override
-  public void visitXmlTag(XmlTag tag) {
+  public void visitXmlTag(@NotNull XmlTag tag) {
     final XmlElementArrangementEntry entry = createNewEntry(tag, XML_TAG, tag.getName(), tag.getNamespace());
     processEntry(entry, tag);
     if (entry != null) {
@@ -60,7 +60,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   }
 
   @Override
-  public void visitXmlAttribute(XmlAttribute attribute) {
+  public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
     final XmlElementArrangementEntry entry = createNewEntry(attribute, XML_ATTRIBUTE, attribute.getName(), attribute.getNamespace());
     processEntry(entry, null);
   }

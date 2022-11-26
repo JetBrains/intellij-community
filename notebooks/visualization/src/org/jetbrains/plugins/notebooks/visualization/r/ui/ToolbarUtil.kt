@@ -146,6 +146,8 @@ object ToolbarUtil {
       fallbackIcon = templatePresentation.icon
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun actionPerformed(e: AnActionEvent) {
       holder.onClick()
     }

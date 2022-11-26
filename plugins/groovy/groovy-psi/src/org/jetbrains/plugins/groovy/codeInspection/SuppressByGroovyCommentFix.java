@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * @author peter
- */
 public class SuppressByGroovyCommentFix extends SuppressByCommentFix {
 
   public SuppressByGroovyCommentFix(@NotNull String toolId) {

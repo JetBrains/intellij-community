@@ -11,7 +11,8 @@ interface UiDslConfigurable : UnnamedConfigurable {
   fun RowBuilder.createComponentRow()
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("UiDslUnnamedConfigurable.Simple"))
+  @Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("UiDslUnnamedConfigurable.Simple"),
+              level = DeprecationLevel.HIDDEN)
   abstract class Simple : DslConfigurableBase(), UiDslConfigurable {
     final override fun createPanel(): DialogPanel {
       return panel {

@@ -54,7 +54,7 @@ class PluginSetTestBuilder(private val path: Path) {
     loadingContext.use {
       runBlocking {
         result!!.addAll(
-          descriptors = paths.map { loadDescriptor(file = it, parentContext = loadingContext) },
+          descriptors = paths.map { loadDescriptor(it, loadingContext) },
           overrideUseIfCompatible = false,
           productBuildNumber = loadingContext.productBuildNumber(),
         )

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -8,12 +9,10 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
 
 
 public class PyDirectoryIconProvider extends IconProvider {
@@ -24,7 +23,7 @@ public class PyDirectoryIconProvider extends IconProvider {
       // Preserve original icons for excluded directories and source roots
       if (isSpecialDirectory(directory)) return null;
       if (PyUtil.isExplicitPackage(directory)) {
-        return PlatformIcons.PACKAGE_ICON;
+        return AllIcons.Nodes.Package;
       }
     }
     return null;

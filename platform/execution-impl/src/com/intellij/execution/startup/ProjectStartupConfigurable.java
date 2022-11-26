@@ -35,6 +35,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +141,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
     final JPanel tasksPanel = myDecorator.createPanel();
     final JLabel label = new JLabel(ExecutionBundle.message("settings.project.startup.run.tasks.and.tools.via.run.configurations"));
-    label.setForeground(UIUtil.getInactiveTextColor());
+    label.setForeground(NamedColorUtil.getInactiveTextColor());
     label.setHorizontalAlignment(SwingConstants.RIGHT);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(new JLabel(ExecutionBundle.message("settings.project.startup.to.be.started.on.project.opening")), BorderLayout.WEST);

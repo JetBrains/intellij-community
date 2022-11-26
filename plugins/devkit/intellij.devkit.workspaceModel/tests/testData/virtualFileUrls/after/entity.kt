@@ -2,11 +2,13 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -18,7 +20,7 @@ interface EntityWithUrls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : EntityWithUrls, ModifiableWorkspaceEntity<EntityWithUrls>, ObjBuilder<EntityWithUrls> {
+  interface Builder : EntityWithUrls, WorkspaceEntity.Builder<EntityWithUrls>, ObjBuilder<EntityWithUrls> {
     override var entitySource: EntitySource
     override var simpleUrl: VirtualFileUrl
     override var nullableUrl: VirtualFileUrl?
@@ -27,6 +29,9 @@ interface EntityWithUrls : WorkspaceEntity {
   }
 
   companion object : Type<EntityWithUrls, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(simpleUrl: VirtualFileUrl,
                         listOfUrls: List<VirtualFileUrl>,
                         dataClassWithUrl: DataClassWithUrl,

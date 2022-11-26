@@ -11,7 +11,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.tailOrEmpty
 import com.intellij.util.text.splitLineRanges
 import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.YAMLTokenTypes
@@ -50,7 +49,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
           listOf(contentRanges.single().let { TextRange.create(it.endOffset, it.endOffset) })
         contentRanges.isEmpty() -> emptyList()
         includeFirstLineInContent -> contentRanges
-        else -> contentRanges.tailOrEmpty()
+        else -> contentRanges.drop(1)
       }, PsiModificationTracker.MODIFICATION_COUNT)
   })
 

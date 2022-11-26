@@ -16,9 +16,6 @@ import java.util.List;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.util.Comparator.comparingInt;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {

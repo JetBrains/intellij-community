@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Deprecated(forRemoval = true)
 public class InvalidUsageNoteProjectNode extends ProjectViewNodeWithChildrenList<InvalidUsageNoteNode> {
   public InvalidUsageNoteProjectNode(Project project, @NotNull InvalidUsageNoteNode node, ViewSettings viewSettings) {
     super(project, node, viewSettings);

@@ -281,17 +281,12 @@ public class LocalTaskImpl extends LocalTask {
   }
 
   public static Icon getIconFromType(TaskType type, boolean issue) {
-    switch (type) {
-      case BUG:
-        return TasksIcons.Bug;
-      case EXCEPTION:
-        return TasksIcons.Exception;
-      case FEATURE:
-        return AllIcons.Nodes.Favorite;
-      default:
-      case OTHER:
-        return issue ? AllIcons.FileTypes.Any_type : AllIcons.FileTypes.Unknown;
-    }
+    return switch (type) {
+      case BUG -> TasksIcons.Bug;
+      case EXCEPTION -> TasksIcons.Exception;
+      case FEATURE -> AllIcons.Nodes.Favorite;
+      case OTHER -> issue ? AllIcons.FileTypes.Any_type : AllIcons.FileTypes.Unknown;
+    };
   }
 
   @Override

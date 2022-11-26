@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import function 'foo'" "true"
 // ERROR: Too many arguments for public final fun foo(): Unit defined in main.X
 /* IGNORE_FIR */
 
@@ -21,7 +21,7 @@ fun foo(p: Int) {
 }
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import function 'foo'" "true"
 // ERROR: Too many arguments for public final fun foo(): Unit defined in main.X
 /* IGNORE_FIR */
 

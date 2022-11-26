@@ -3,6 +3,7 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -111,10 +112,15 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
       return myPackage.hashCode();
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (!isValid()) return null;
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId);
+      }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return myPackage;
       }

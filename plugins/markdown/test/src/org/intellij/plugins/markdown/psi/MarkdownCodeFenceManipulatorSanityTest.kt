@@ -115,15 +115,15 @@ class MarkdownCodeFenceManipulatorSanityTest: LightPlatformCodeInsightTestCase()
 
 
   private fun plainCodeFenceGetter(file: PsiFile): PsiElement? {
-    return file.firstChild.firstChild
+    return file.firstChild
   }
 
   private fun singleBlockquoteGetter(file: PsiFile): PsiElement? {
-    return file.firstChild.firstChild.firstChild.nextSibling
+    return file.firstChild.firstChild.nextSibling
   }
 
   private fun doubleBlockquoteGetter(file: PsiFile): PsiElement? {
-    return file.firstChild.firstChild.firstChild.nextSibling.firstChild.nextSibling
+    return file.firstChild.firstChild.nextSibling.firstChild.nextSibling
   }
 
   private fun doReplacementTest(

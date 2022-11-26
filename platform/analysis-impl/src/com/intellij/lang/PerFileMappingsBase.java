@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -24,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
@@ -77,7 +77,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   private @NotNull Map<VirtualFile, T> doGetMappings() {
-    return Collections.unmodifiableMap(ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).getValue())));
+    return Collections.unmodifiableMap(ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value())));
   }
 
   private void cleanup() {
@@ -86,7 +86,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       VirtualFile file = entry.getKey();
       MappingValue<T> mapping = entry.getValue();
       if (file == null) continue;
-      if (mapping == null || !file.isValid() || mapping.getUnknownValue() == null && isDefaultMapping(file, mapping.getValue())) {
+      if (mapping == null || !file.isValid() || mapping.unknownValue() == null && isDefaultMapping(file, mapping.value())) {
         it.remove();
       }
     }
@@ -111,7 +111,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Nullable
-  private T getMappingInner(@Nullable VirtualFile file, @Nullable Key<T> pusherKey, boolean forHierarchy) {
+  private T getMappingInner(@Nullable VirtualFile file, @Nullable FilePropertyKey<T> pusherKey, boolean forHierarchy) {
     if (file instanceof VirtualFileWindow) {
       VirtualFileWindow window = (VirtualFileWindow)file;
       file = window.getDelegate();
@@ -120,11 +120,11 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     if (Comparing.equal(originalFile, file)) originalFile = null;
 
     if (file != null) {
-      T pushedValue = pusherKey == null ? null : file.getUserData(pusherKey);
+      T pushedValue = pusherKey == null ? null : pusherKey.getPersistentValue(file);
       if (pushedValue != null) return pushedValue;
     }
     if (originalFile != null) {
-      T pushedValue = pusherKey == null ? null : originalFile.getUserData(pusherKey);
+      T pushedValue = pusherKey == null ? null : pusherKey.getPersistentValue(originalFile);
       if (pushedValue != null) return pushedValue;
     }
     synchronized (myMappings) {
@@ -176,7 +176,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
 
   private @Nullable T doGetImmediateMapping(@Nullable VirtualFile key) {
     MappingValue<T> mappingValue = myMappings.get(key);
-    return mappingValue != null ? mappingValue.getValue() : null;
+    return mappingValue != null ? mappingValue.value() : null;
   }
 
   @Override
@@ -228,7 +228,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     if (project != null && pusher != null) {
       for (VirtualFile oldFile : oldFiles) {
         if (oldFile == null) continue; // project
-        oldFile.putUserData(pusher.getFileDataKey(), null);
+        pusher.getFileDataKey().setPersistentValue(oldFile, null);
       }
       if (!project.isDefault()) {
         PushedFilePropertiesUpdater.getInstance(project).pushAll(pusher);
@@ -264,8 +264,8 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       });
       for (VirtualFile file : files) {
         MappingValue<T> mappingValue = myMappings.get(file);
-        T value = mappingValue != null ? mappingValue.getValue() : null;
-        String valueStr = mappingValue != null && mappingValue.getUnknownValue() != null ? mappingValue.getUnknownValue() :
+        T value = mappingValue != null ? mappingValue.value() : null;
+        String valueStr = mappingValue != null && mappingValue.unknownValue() != null ? mappingValue.unknownValue() :
                           value == null ? null :
                           serialize(value);
         if (valueStr == null) continue;
@@ -283,7 +283,6 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     return null;
   }
 
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Deprecated
   // better to not override
@@ -482,29 +481,13 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  private static class MappingValue<T> {
-    private final @NotNull T myValue;
-    private final @Nullable String myUnknownValue;
-
-    private MappingValue(@NotNull T value, @Nullable String unknownValue) {
-      myValue = value;
-      myUnknownValue = unknownValue;
-    }
-
-    public static <T> @NotNull MappingValue<T> known(@NotNull T t) {
+  private record MappingValue<T>(@NotNull T value, @Nullable String unknownValue) {
+    static <T> @NotNull MappingValue<T> known(@NotNull T t) {
       return new MappingValue<T>(t, null);
     }
 
-    public static <T> @NotNull MappingValue<T> unknown(@NotNull T defaultValue, @NotNull String unknownValue) {
+    static <T> @NotNull MappingValue<T> unknown(@NotNull T defaultValue, @NotNull String unknownValue) {
       return new MappingValue<T>(defaultValue, unknownValue);
-    }
-
-    private @NotNull T getValue() {
-      return myValue;
-    }
-
-    private @Nullable String getUnknownValue() {
-      return myUnknownValue;
     }
   }
 }

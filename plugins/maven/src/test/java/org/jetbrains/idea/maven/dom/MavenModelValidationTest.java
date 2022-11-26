@@ -147,8 +147,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  @Test 
-  public void testAddingProfilesXmlReadingProblemsToProjectTag() {
+  @Test
+  public void testAddingProfilesXmlReadingProblemsToProjectTag() throws Exception {
     myFixture.saveText(myProjectPom,
                        "<project>" +
                        "  <modelVersion>4.0.0</modelVersion>" +
@@ -170,8 +170,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  @Test 
-  public void testAddingStructureReadingProblemsToParentTag() {
+  @Test
+  public void testAddingStructureReadingProblemsToParentTag() throws Exception {
     myFixture.saveText(myProjectPom,
                        "<project>" +
                        "  <modelVersion>4.0.0</modelVersion>" +
@@ -203,8 +203,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting(myProjectPom, true, false, true);
   }
 
-  @Test 
-  public void testAddingParentReadingProblemsToParentTag() {
+  @Test
+  public void testAddingParentReadingProblemsToParentTag() throws Exception {
     createModulePom("parent",
                     "<groupId>test</groupId>" +
                     "<artifactId>parent</artifactId>" +
@@ -242,8 +242,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  @Test 
-  public void testDoNotAddReadingSyntaxProblemsToProjectTag() {
+  @Test
+  public void testDoNotAddReadingSyntaxProblemsToProjectTag() throws Exception {
     myFixture.saveText(myProjectPom,
                        "<project>" +
                        "  <modelVersion>4.0.0</modelVersion>" +
@@ -266,8 +266,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
-  @Test 
-  public void testDoNotAddDependencyAndModuleProblemsToProjectTag() {
+  @Test
+  public void testDoNotAddDependencyAndModuleProblemsToProjectTag() throws Exception {
     myFixture.saveText(myProjectPom,
                        "<project>" +
                        "  <modelVersion>4.0.0</modelVersion>" +

@@ -30,9 +30,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 final class DirectoryPathMatcher {
   private final @NotNull GotoFileModel myModel;
   private final @Nullable List<Pair<VirtualFile, String>> myFiles;
@@ -172,8 +169,8 @@ final class DirectoryPathMatcher {
       Collections.addAll(roots, ModuleRootManager.getInstance(module).getContentRoots());
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (entry instanceof LibraryOrSdkOrderEntry) {
-          Collections.addAll(roots, entry.getFiles(OrderRootType.CLASSES));
-          Collections.addAll(roots, entry.getFiles(OrderRootType.SOURCES));
+          Collections.addAll(roots, ((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
+          Collections.addAll(roots, ((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.SOURCES));
         }
       }
     }

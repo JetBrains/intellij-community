@@ -89,6 +89,7 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
+import org.jetbrains.idea.maven.server.utils.MavenServerParallelRunner;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -96,6 +97,7 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Overridden maven components:
@@ -764,8 +766,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
     Collection<MavenExecutionResult> results =
-      doResolveProject(files, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles),
-                       Collections.singletonList(listener));
+      doResolveProject(files, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), Collections.singletonList(listener));
     return ContainerUtilRt.map2List(results, result -> {
       try {
         return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
@@ -797,7 +798,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    final Collection<MavenExecutionResult> executionResults = new ArrayList<MavenExecutionResult>();
+    final Collection<MavenExecutionResult> executionResults = new ConcurrentLinkedQueue<>();
+    Map<MavenProject, MavenExecutionResult> projectsToResolveDependencies = new HashMap<>();
 
     executeWithMavenSession(request, (Runnable)() -> {
       try {
@@ -844,19 +846,26 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           loadExtensions(project, exceptions);
 
           project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
-          //
 
           if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
             addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
           }
           else {
-            final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-            boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
-            Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
-            project.setArtifacts(artifacts);
-            executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems));
+            MavenExecutionResult executionResult = new MavenExecutionResult(project, null, exceptions, modelProblems);
+            projectsToResolveDependencies.put(project, executionResult);
           }
         }
+
+        boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
+        boolean runInParallel = canResolveDependenciesInParallel();
+        MavenServerParallelRunner.run(runInParallel, projectsToResolveDependencies.keySet(), project -> {
+          MavenExecutionResult executionResult = projectsToResolveDependencies.get(project);
+          final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
+          Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
+          project.setArtifacts(artifacts);
+          executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, executionResult.getExceptions(), executionResult.getModelProblems()));
+        });
+
       }
       catch (Exception e) {
         executionResults.add(handleException(e));
@@ -864,6 +873,20 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     });
 
     return executionResults;
+  }
+
+  /**
+   * The ThreadLocal approach was introduced in maven 3.8.2 and reverted in 3.8.4 as it caused too many side effects.
+   * More details in Maven 3.8.4 release notes
+   *
+   * @return true if dependencies can be resolved in parallel for better performance
+   */
+  private static boolean canResolveDependenciesInParallel() {
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    if ("3.8.2".equals(mavenVersion) || "3.8.3".equals(mavenVersion)) {
+      return false;
+    }
+    return true;
   }
 
   private static void fillSessionCache(MavenSession mavenSession,

@@ -1,16 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.testFramework
 
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.util.ExceptionUtil
+import com.intellij.util.ExceptionUtilRt
+import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import org.opentest4j.TestAbortedException
@@ -19,17 +25,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.function.Supplier
-
-private val initializeTracer by lazy {
-  val endpoint = System.getenv("JAEGER_ENDPOINT")
-  if (endpoint != null) {
-    val defaultExporters = TracerProviderManager.spanExporterProvider.get()
-    TracerProviderManager.spanExporterProvider = Supplier {
-      defaultExporters + JaegerGrpcSpanExporter.builder().setEndpoint(endpoint).build()
-    }
-  }
-}
+import kotlin.io.path.name
 
 fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
   options.skipDependencySetup = skipDependencySetup
@@ -44,12 +40,12 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
   options.buildMacArtifactsWithRuntime = false
   options.buildMacArtifactsWithoutRuntime = false
   options.buildUnixSnaps = false
-  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
+  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
   options.useCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
 }
 
-fun createBuildContext(
+suspend fun createBuildContext(
   homePath: Path, productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot,
@@ -66,33 +62,67 @@ fun createBuildContext(
                                         options = options)
 }
 
+// don't expose BuildDependenciesCommunityRoot
+fun runTestBuild(homePath: Path, productProperties: ProductProperties, buildTools: ProprietaryBuildTools, buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
+  runTestBuild(homePath = homePath, productProperties = productProperties, buildTools = buildTools, traceSpanName = null, buildOptionsCustomizer = buildOptionsCustomizer)
+}
+
 fun runTestBuild(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
   traceSpanName: String? = null,
-  onFinish: (context: BuildContext) -> Unit = {},
+  onFinish: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
-  val buildArtifactsReproducibilityTest = BuildArtifactsReproducibilityTest()
-  if (!buildArtifactsReproducibilityTest.isEnabled) {
-    testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, onFinish, buildOptionsCustomizer)
+  if (!BuildArtifactsReproducibilityTest.isEnabled) {
+    testBuild(homePath = homePath,
+              productProperties = productProperties,
+              buildTools = buildTools,
+              communityHomePath = communityHomePath,
+              traceSpanName = traceSpanName,
+              onFinish = onFinish,
+              buildOptionsCustomizer = buildOptionsCustomizer)
+    return
   }
-  else {
-    testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, buildOptionsCustomizer = {
-      buildOptionsCustomizer(it)
-      buildArtifactsReproducibilityTest.configure(it)
-    }, onFinish = { firstIteration ->
-      onFinish(firstIteration)
-      testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, buildOptionsCustomizer = {
-        buildOptionsCustomizer(it)
-        buildArtifactsReproducibilityTest.configure(it)
-      }, onFinish = { nextIteration ->
-        onFinish(nextIteration)
-        buildArtifactsReproducibilityTest.compare(firstIteration, nextIteration)
-      })
-    })
+
+  val buildArtifactsReproducibilityTest = BuildArtifactsReproducibilityTest()
+  testBuild(homePath = homePath,
+            productProperties = productProperties,
+            buildTools = buildTools,
+            communityHomePath = communityHomePath,
+            traceSpanName = traceSpanName,
+            buildOptionsCustomizer = {
+              buildOptionsCustomizer(it)
+              buildArtifactsReproducibilityTest.configure(it)
+            },
+            onFinish = { firstIteration ->
+              onFinish(firstIteration)
+              firstIteration.cleanBuildOutput()
+              testBuild(homePath = homePath,
+                        productProperties = productProperties,
+                        buildTools = buildTools,
+                        communityHomePath = communityHomePath,
+                        traceSpanName = traceSpanName,
+                        buildOptionsCustomizer = {
+                          buildOptionsCustomizer(it)
+                          buildArtifactsReproducibilityTest.configure(it)
+                        },
+                        onFinish = { nextIteration ->
+                          onFinish(nextIteration)
+                          nextIteration.cleanBuildOutput()
+                          buildArtifactsReproducibilityTest.compare(firstIteration, nextIteration)
+                        })
+            })
+}
+
+private fun BuildContext.cleanBuildOutput() {
+  Files.newDirectoryStream(paths.buildOutputDir).use { content ->
+    content.filter { it != paths.artifactDir }.forEach(NioFiles::deleteRecursively)
+  }
+  Files.newDirectoryStream(paths.artifactDir).use { content ->
+    content.filter { it.name == "unscrambled" || it.name == "scramble-logs" }.forEach(NioFiles::deleteRecursively)
   }
 }
 
@@ -102,89 +132,80 @@ private fun testBuild(
   buildTools: ProprietaryBuildTools,
   communityHomePath: BuildDependenciesCommunityRoot,
   traceSpanName: String?,
-  onFinish: (context: BuildContext) -> Unit,
+  onFinish: suspend (context: BuildContext) -> Unit,
   buildOptionsCustomizer: (BuildOptions) -> Unit,
 ) {
-  val context = createBuildContext(
-    homePath = homePath,
-    productProperties = productProperties,
-    buildTools = buildTools,
-    skipDependencySetup = false,
-    communityHomePath = communityHomePath,
-    buildOptionsCustomizer = buildOptionsCustomizer,
-  )
-
-  runTestBuild(
-    buildContext = context,
-    traceSpanName = traceSpanName,
-    onFinish = onFinish,
-  )
+  runBlocking(Dispatchers.Default) {
+    runTestBuild(
+      context = createBuildContext(
+        homePath = homePath,
+        productProperties = productProperties,
+        buildTools = buildTools,
+        skipDependencySetup = false,
+        communityHomePath = communityHomePath,
+        buildOptionsCustomizer = buildOptionsCustomizer,
+      ),
+      traceSpanName = traceSpanName,
+      onFinish = onFinish,
+    )
+  }
 }
 
 // FIXME: test reproducibility
-fun runTestBuild(
-  buildContext: BuildContext,
-  traceSpanName: String? = null,
-  onFinish: (context: BuildContext) -> Unit = {},
-) {
-  initializeTracer
-
-  val productProperties = buildContext.productProperties
+suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, onFinish: suspend (context: BuildContext) -> Unit = {}) {
+  val productProperties = context.productProperties
 
   // to see in Jaeger as a one trace
   val traceFileName = "${productProperties.baseFileName}-trace.json"
-  val span = TraceManager.spanBuilder(traceSpanName ?: "test build of ${productProperties.baseFileName}").startSpan()
-  var spanEnded = false
-  val spanScope = span.makeCurrent()
-
+  val outDir = context.paths.buildOutputDir
+  var error: Throwable? = null
   try {
-    val outDir = buildContext.paths.buildOutputDir
-    span.setAttribute("outDir", outDir.toString())
-    val messages = buildContext.messages as BuildMessagesImpl
-    try {
-      BuildTasks.create(buildContext).runTestBuild()
-      onFinish(buildContext)
-    }
-    catch (e: Throwable) {
-      if (e !is FileComparisonData) {
-        span.recordException(e)
-      }
-      span.setStatus(StatusCode.ERROR)
+    spanBuilder(traceSpanName ?: "test build of ${productProperties.baseFileName}")
+      .setAttribute("outDir", outDir.toString())
+      .useWithScope2 { span ->
+        try {
+          buildDistributions(context)
+          onFinish(context)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          if (e !is FileComparisonData) {
+            span.recordException(e)
+          }
+          span.setStatus(StatusCode.ERROR)
 
-      copyDebugLog(productProperties, messages)
+          copyDebugLog(productProperties, context.messages as BuildMessagesImpl)
 
-      if (ExceptionUtil.causedBy(e, HttpConnectTimeoutException::class.java)) {
-        //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
-        throw TestAbortedException("failed to load data for build scripts", e)
+          if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
+            //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
+            error = TestAbortedException("failed to load data for build scripts", e)
+          }
+          else {
+            error = e
+          }
+        }
       }
-      else {
-        throw e
-      }
-    }
-    finally {
-      // redirect debug logging to some other file to prevent locking of output directory on Windows
-      val newDebugLog = FileUtil.createTempFile("debug-log-", ".log", true)
-      messages.setDebugLogPath(newDebugLog.toPath())
-
-      spanScope.close()
-      span.end()
-      spanEnded = true
-      copyPerfReport(traceFileName)
-
-      try {
-        NioFiles.deleteRecursively(outDir)
-      }
-      catch (e: Throwable) {
-        System.err.println("cannot cleanup $outDir:")
-        e.printStackTrace(System.err)
-      }
-    }
   }
   finally {
-    if (!spanEnded) {
-      spanScope.close()
-      span.end()
+    closeKtorClient()
+
+    // close debug logging to prevent locking of output directory on Windows
+    (context.messages as BuildMessagesImpl).close()
+
+    copyPerfReport(traceFileName)
+    try {
+      NioFiles.deleteRecursively(outDir)
     }
+    catch (e: Throwable) {
+      System.err.println("cannot cleanup $outDir:")
+      e.printStackTrace(System.err)
+    }
+  }
+
+  error?.let {
+    throw it
   }
 }
 
@@ -192,11 +213,11 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
   try {
     val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)
-    Files.copy(messages.debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
-    messages.info("Debug log copied to $targetFile")
+    Files.copy(messages.debugLogFile!!, targetFile, StandardCopyOption.REPLACE_EXISTING)
+    Span.current().addEvent("debug log copied to $targetFile")
   }
   catch (e: Throwable) {
-    messages.warning("Failed to copy debug log: ${e.message}")
+    Span.current().addEvent("failed to copy debug log: ${e.message}")
   }
 }
 

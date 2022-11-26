@@ -5,7 +5,6 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +47,7 @@ public enum LanguageLevel {
   /**
    * Should point to the last released JDK.
    */
-  public static final LanguageLevel HIGHEST = JDK_18;
-  public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
+  public static final LanguageLevel HIGHEST = JDK_19;
 
   private final Supplier<@Nls String> myPresentableText;
   private final JavaVersion myVersion;

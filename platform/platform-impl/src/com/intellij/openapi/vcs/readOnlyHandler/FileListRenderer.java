@@ -13,7 +13,7 @@ import java.awt.*;
 /**
  * @deprecated Please use {@link TargetPopup#createTargetPresentationRenderer}
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public class FileListRenderer implements ListCellRenderer<VirtualFile> {
   private final ListCellRenderer<VirtualFile> myPresentationRenderer;
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -56,7 +57,7 @@ public final class MarkdownPsiElementFactory {
     String content = "```" + StringUtil.notNullize(language) + text + "\n" + StringUtil.notNullize(indent) + "```";
     final MarkdownFile file = createFile(project, content);
 
-    return (MarkdownCodeFence)file.getFirstChild().getFirstChild();
+    return (MarkdownCodeFence)file.getFirstChild();
   }
 
   @NotNull
@@ -69,45 +70,45 @@ public final class MarkdownPsiElementFactory {
       path,
       Objects.requireNonNullElse(title, "")
     );
-    return createFile(project, text).getFirstChild().getFirstChild().getFirstChild();
+    return createFile(project, text).getFirstChild().getFirstChild();
   }
 
   @NotNull
   public static PsiElement createHtmlBlockWithImage(@NotNull Project project, @NotNull MarkdownImageData imageData) {
     String text = ImageUtils.createHtmlImageText(imageData);
-    return createFile(project, text).getFirstChild().getFirstChild();
+    return createFile(project, text).getFirstChild();
   }
 
   @NotNull
   public static PsiElement createHtmlImageTag(@NotNull Project project, @NotNull MarkdownImageData imageData) {
     String text = ImageUtils.createHtmlImageText(imageData);
     PsiElement root = createFile(project, "Prefix text" + text).getFirstChild();
-    return root.getFirstChild().getFirstChild().getNextSibling();
+    return root.getFirstChild().getNextSibling();
   }
 
   @NotNull
   public static MarkdownPsiElement createTextElement(@NotNull Project project, @NotNull String text) {
-    return (MarkdownPsiElement)createFile(project, text).getFirstChild().getFirstChild();
+    return (MarkdownPsiElement)createFile(project, text).getFirstChild();
   }
 
   @NotNull
   public static MarkdownHeader createSetext(@NotNull Project project, @NotNull String text, @NotNull String symbol, int count) {
-    return (MarkdownHeader)createFile(project, text + "\n" + StringUtil.repeat(symbol, count)).getFirstChild().getFirstChild();
+    return (MarkdownHeader)createFile(project, text + "\n" + StringUtil.repeat(symbol, count)).getFirstChild();
   }
 
   @NotNull
   public static MarkdownHeader createHeader(@NotNull Project project, @NotNull String text, int level) {
-    return (MarkdownHeader)createFile(project, StringUtil.repeat("#", level) + " " + text).getFirstChild().getFirstChild();
+    return (MarkdownHeader)createFile(project, StringUtil.repeat("#", level) + " " + text).getFirstChild();
   }
 
   @NotNull
   public static MarkdownHeader createHeader(@NotNull Project project, @NotNull String text) {
-    return (MarkdownHeader)createFile(project, text).getFirstChild().getFirstChild();
+    return (MarkdownHeader)createFile(project, text).getFirstChild();
   }
 
   @NotNull
   public static PsiElement createNewLine(@NotNull Project project) {
-    return createFile(project, "\n").getFirstChild().getFirstChild();
+    return createFile(project, "\n").getFirstChild();
   }
 
   /**
@@ -116,8 +117,8 @@ public final class MarkdownPsiElementFactory {
    * @return root element children of which are new lines
    */
   @NotNull
-  public static PsiElement createNewLines(@NotNull Project project, int num) {
-    return createFile(project, StringUtil.repeat("\n", num)).getFirstChild();
+  public static MarkdownFile createNewLines(@NotNull Project project, int num) {
+    return createFile(project, StringUtil.repeat("\n", num));
   }
 
   /**
@@ -134,7 +135,7 @@ public final class MarkdownPsiElementFactory {
 
     String linkReference = "[" + text + "][" + reference + "]" + "\n\n" + "[" + reference + "]" + ": " + url + title;
 
-    PsiElement linkReferenceElement = createFile(project, linkReference).getFirstChild();
+    PsiElement linkReferenceElement = createFile(project, linkReference);
 
     PsiElement ref = linkReferenceElement.getFirstChild();
     assert ref instanceof MarkdownParagraph;
@@ -160,8 +161,17 @@ public final class MarkdownPsiElementFactory {
     builder.append('\n');
     builder.append(text);
     final var file = createFile(project, builder.toString());
-    final var table = Objects.requireNonNull(file.findElementAt(0)).getParent().getParent();
-    return Objects.requireNonNull(PsiTreeUtil.getChildOfType(table, MarkdownTableSeparatorRow.class));
+    final var table = PsiTreeUtil.getParentOfType(file.findElementAt(0), MarkdownTable.class);
+    if (table == null) {
+      final var psi = DebugUtil.psiToString(file, true, true);
+      throw new IllegalStateException("Failed to find table. PSI:\n" + psi);
+    }
+    final var separatorRowElement = PsiTreeUtil.getChildOfType(table, MarkdownTableSeparatorRow.class);
+    if (separatorRowElement == null) {
+      final var psi = DebugUtil.psiToString(file, true, true);
+      throw new IllegalStateException("Failed to find separator row. PSI:\n" + psi);
+    }
+    return separatorRowElement;
   }
 
   @ApiStatus.Experimental
@@ -244,7 +254,7 @@ public final class MarkdownPsiElementFactory {
   public static @NotNull MarkdownHeader createHeader(@NotNull Project project, int level, @NotNull String text) {
     final var contents = StringUtil.repeat("#", level) + " " + text;
     final var file = createFile(project, contents);
-    final var element = Objects.requireNonNull(file.getFirstChild().getFirstChild());
+    final var element = Objects.requireNonNull(file.getFirstChild());
     assert(element instanceof MarkdownHeader);
     return (MarkdownHeader)element;
   }
@@ -253,7 +263,7 @@ public final class MarkdownPsiElementFactory {
   public static @NotNull PsiElement createListMarker(@NotNull Project project, @NotNull String markerText) {
     final var contents = markerText + " list item";
     final var file = createFile(project, contents);
-    return Objects.requireNonNull(file.getFirstChild().getFirstChild().getFirstChild().getFirstChild());
+    return Objects.requireNonNull(file.getFirstChild().getFirstChild().getFirstChild());
   }
 
   @ApiStatus.Experimental
@@ -278,7 +288,7 @@ public final class MarkdownPsiElementFactory {
       contents = "* list item";
     }
     final var file = createFile(project, contents);
-    final var list = Objects.requireNonNull(file.getFirstChild().getFirstChild());
+    final var list = Objects.requireNonNull(file.getFirstChild());
     assert(list instanceof MarkdownList);
     for (final var child: list.getChildren()) {
       child.delete();
@@ -302,8 +312,25 @@ public final class MarkdownPsiElementFactory {
       itemIndex += 1;
     }
     final var file = createFile(project, builder.toString());
-    final var list = Objects.requireNonNull(file.getFirstChild().getFirstChild());
+    final var list = Objects.requireNonNull(file.getFirstChild());
     assert(list instanceof MarkdownList);
     return (MarkdownList)list;
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull MarkdownLinkDestination createLinkDestination(@NotNull Project project, @NotNull String link) {
+    final var content = "[](" + link + ")";
+    final var file = createFile(project, content);
+    final var element = Objects.requireNonNull(file.getFirstChild().getFirstChild());
+    if (!(element instanceof MarkdownInlineLink)) {
+      final var psi = DebugUtil.psiToString(file, true, true);
+      final var message = "Expected a MarkdownInlineLink but was " + element + ". PSI was:\n" + psi;
+      throw new IllegalStateException(message);
+    }
+    final var destination = Objects.requireNonNull(
+      ((MarkdownInlineLink)element).getLinkDestination(),
+      () -> "Failed to get link destination. PSI was:\n" + DebugUtil.psiToString(file, true, true)
+    );
+    return destination;
   }
 }

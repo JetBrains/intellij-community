@@ -32,13 +32,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_TOTAL;
@@ -78,7 +78,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
       if (element instanceof PsiSwitchLabelStatementBase) {
         DeleteSwitchLabelFix.deleteLabel((PsiSwitchLabelStatementBase)element);
@@ -176,7 +176,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
 
   private static boolean isDefaultNeededForInitializationOfVariable(PsiSwitchBlock switchBlock) {
     final Collection<PsiReferenceExpression> expressions = PsiTreeUtil.findChildrenOfType(switchBlock, PsiReferenceExpression.class);
-    final Set<PsiElement> checked = new THashSet<>();
+    final Set<PsiElement> checked = new HashSet<>();
     for (PsiReferenceExpression expression : expressions) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
       if (!(parent instanceof PsiAssignmentExpression)) {

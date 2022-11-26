@@ -6,10 +6,7 @@ import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.AntNoFileException;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,7 +85,7 @@ public final class AddAntBuildFile extends AnAction {
     final Project project = e.getProject();
     if (project != null) {
       final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-      if (files != null && files.length > 0) {
+      if (files != null) {
         for (VirtualFile file : files) {
           final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
           if (!(psiFile instanceof XmlFile)) {
@@ -117,6 +114,11 @@ public final class AddAntBuildFile extends AnAction {
     }
 
     disable(presentation);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static void enable(Presentation presentation) {

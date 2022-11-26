@@ -22,7 +22,7 @@ class Test {
   int test5(Object o) {
     return switch(o) {
       case String s when s.length() > 5 -> 1;
-      case String s1 when <warning descr="Condition 's1.length() > 10' is always 'false'">s1.length() > 10</warning> -> 2;
+      case <warning descr="Switch label 'String s1 when s1.length() > 10' is unreachable">String s1 when <warning descr="Condition 's1.length() > 10' is always 'false'">s1.length() > 10</warning></warning> -> 2;
       default -> 3;
     };
   }

@@ -21,10 +21,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class Painter {
   /**
    * This color is used to paint decoration of non selected components

@@ -1,16 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +35,7 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement().getParent();
     PsiMethod method = findMethodToFix(element);
     if (method != null) {
@@ -52,11 +50,19 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     PsiElement parent = previewDescriptor.getPsiElement().getParent();
     PsiMethod method = findMethodToFix(parent);
-    if (method != null && parent.getContainingFile() == method.getContainingFile()) {
-      method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+    if (method == null) return IntentionPreviewInfo.EMPTY;
+    PsiFile file = method.getContainingFile();
+    if (parent.getContainingFile() == file) {
+      doMakeFinal(method);
       return IntentionPreviewInfo.DIFF;
     }
-    return IntentionPreviewInfo.EMPTY;
+    PsiMethod copy = (PsiMethod)method.copy();
+    doMakeFinal(copy);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, file.getName(), method.getText(), copy.getText());
+  }
+
+  private static void doMakeFinal(PsiMethod method) {
+    method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
   }
 
   private static @Nullable PsiMethod findMethodToFix(PsiElement element) {

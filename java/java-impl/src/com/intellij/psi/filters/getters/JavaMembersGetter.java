@@ -23,9 +23,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaMembersGetter extends MembersGetter {
   private final @NotNull PsiType myExpectedType;
   private final CompletionParameters myParameters;
@@ -59,19 +56,9 @@ public class JavaMembersGetter extends MembersGetter {
       new BuilderCompletion((PsiClassType)myExpectedType, psiClass, myPlace).suggestBuilderVariants().forEach(results::consume);
     }
   }
-  
-  private static class ConstantClass {
-    final @NotNull String myConstantContainingClass; 
-    final @NotNull LanguageLevel myLanguageLevel;
-    final @Nullable String myPriorityConstant;
 
-    private ConstantClass(@NotNull String aClass,
-                          @NotNull LanguageLevel level,
-                          @Nullable String constant) {
-      myConstantContainingClass = aClass;
-      myLanguageLevel = level;
-      myPriorityConstant = constant;
-    }
+  private record ConstantClass(@NotNull String constantContainingClass, @NotNull LanguageLevel languageLevel,
+                               @Nullable String priorityConstant) {
   }
   
   private static final Map<String, ConstantClass> CONSTANT_SUGGESTIONS = Map.of(
@@ -83,15 +70,15 @@ public class JavaMembersGetter extends MembersGetter {
   private void addKnownConstants(Consumer<? super LookupElement> results) {
     PsiFile file = myParameters.getOriginalFile();
     ConstantClass constantClass = CONSTANT_SUGGESTIONS.get(myExpectedType.getCanonicalText());
-    if (constantClass != null && PsiUtil.getLanguageLevel(file).isAtLeast(constantClass.myLanguageLevel)) {
+    if (constantClass != null && PsiUtil.getLanguageLevel(file).isAtLeast(constantClass.languageLevel)) {
       PsiClass charsetsClass =
-        JavaPsiFacade.getInstance(file.getProject()).findClass(constantClass.myConstantContainingClass, file.getResolveScope());
+        JavaPsiFacade.getInstance(file.getProject()).findClass(constantClass.constantContainingClass, file.getResolveScope());
       if (charsetsClass != null) {
         for (PsiField field : charsetsClass.getFields()) {
           if (field.hasModifierProperty(PsiModifier.STATIC) &&
               field.hasModifierProperty(PsiModifier.PUBLIC) && myExpectedType.isAssignableFrom(field.getType())) {
             LookupElement element = createFieldElement(field);
-            if (element != null && field.getName().equals(constantClass.myPriorityConstant)) {
+            if (element != null && field.getName().equals(constantClass.priorityConstant)) {
               element = PrioritizedLookupElement.withPriority(element, 1.0);
             }
             results.consume(element);

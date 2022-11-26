@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -74,6 +75,10 @@ public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
     return mySourceConfigurable.getSelectedElement() instanceof LibraryProjectStructureElement;
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
   @Override
   protected LibraryTableModifiableModelProvider getModifiableTableModelProvider() {
     return myTargetConfigurable.getModelProvider();

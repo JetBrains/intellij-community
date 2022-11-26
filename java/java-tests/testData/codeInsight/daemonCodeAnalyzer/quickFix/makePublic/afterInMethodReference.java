@@ -1,4 +1,4 @@
-// "Make 'PrivateMethodRef.filter' package-private" "true"
+// "Make 'PrivateMethodRef.filter()' package-private" "true"
 import java.util.function.Predicate;
 
 class PrivateMethodRef {

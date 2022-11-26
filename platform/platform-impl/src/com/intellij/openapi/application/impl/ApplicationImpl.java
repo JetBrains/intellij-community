@@ -39,7 +39,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
@@ -47,13 +46,11 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
-import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
@@ -106,59 +103,44 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine) {
+  @TestOnly
+  public ApplicationImpl(boolean isHeadless, RwLockHolder lockHolder) {
     super(null, true);
+
+    myLock = lockHolder.getLock$intellij_platform_ide_impl();
 
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
 
-    if (isUnitTestMode || isInternal) {
-      BundleBase.assertOnMissedKeys(true);
-    }
+    BundleBase.assertOnMissedKeys(true);
 
     // do not crash AWT on exceptions
     AWTExceptionHandler.register();
 
-    Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
+    Disposer.setDebugMode(true);
 
-    myIsInternal = isInternal;
-    myTestModeFlag = isUnitTestMode;
+    myIsInternal = true;
+    myTestModeFlag = true;
     myHeadlessMode = isHeadless;
-    myCommandLineMode = isCommandLine;
-    if (isUnitTestMode) {
-      //noinspection TestOnlyProblems
-      Logger.setUnitTestMode();
-    }
+    myCommandLineMode = true;
+    Logger.setUnitTestMode();
 
-    mySaveAllowed = !isUnitTestMode && !isHeadless;
+    mySaveAllowed = false;
 
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
 
-    AtomicReference<Thread> edtThread = new AtomicReference<>();
-    EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
-      // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
-      // That thread was chosen because we know for sure it's running.
-      Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
-      AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
-      Disposer.register(this, () -> {
-        AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
-      });
-      edtThread.set(Thread.currentThread());
-    });
-    myLock = new ReadMostlyRWLock(edtThread.get());
     // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
-    }
+    EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
 
     NoSwingUnderWriteAction.watchForEvents(this);
   }
 
-  // this constructor must be called only by ApplicationLoader
-  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, @NotNull Thread edtThread) {
+  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, RwLockHolder lockHolder) {
     super(null, true);
+
+    myLock = lockHolder.getLock$intellij_platform_ide_impl();
 
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
@@ -173,7 +155,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
 
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
-    myLock = new ReadMostlyRWLock(edtThread);
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD) {
       EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass().getName()));
@@ -316,7 +297,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isDispatchThread() {
-    return isWriteThread() && EDT.isCurrentThreadEdt();
+    return isWriteThread();
   }
 
   @Override
@@ -1047,7 +1028,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertIsNonDispatchThread() {
-    if (!isUnitTestMode() && !isHeadlessEnvironment() && isDispatchThread()) {
+    if (isDispatchThread()) {
       throwThreadAccessException("Access from event dispatch thread is not allowed");
     }
   }

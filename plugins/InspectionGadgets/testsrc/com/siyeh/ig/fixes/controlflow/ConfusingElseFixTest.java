@@ -17,96 +17,114 @@ public class ConfusingElseFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveElse() {
     doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
-                 "  public void printName(String name) {\n" +
-                 "    if (name == null) {\n" +
-                 "        throw new IllegalArgumentException();\n" +
-                 "    } else/**/ {\n" +
-                 "        System.out.println(name);\n" +
-                 "    }\n" +
-                 "}\n",
-                 "  public void printName(String name) {\n" +
-                 "    if (name == null) {\n" +
-                 "        throw new IllegalArgumentException();\n" +
-                 "    }\n" +
-                 "    System.out.println(name);\n" +
-                 "}\n"
+                 """
+                     public void printName(String name) {
+                       if (name == null) {
+                           throw new IllegalArgumentException();
+                       } else/**/ {
+                           System.out.println(name);
+                       }
+                   }
+                   """,
+                 """
+                     public void printName(String name) {
+                       if (name == null) {
+                           throw new IllegalArgumentException();
+                       }
+                       System.out.println(name);
+                   }
+                   """
     );
   }
 
   public void testReturnStatement() {
     doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
-                 "  public int printName(String name) {\n" +
-                 "    if (name == null) {\n" +
-                 "        return -1;\n" +
-                 "    } else/**/ {\n" +
-                 "        System.out.println(name);\n" +
-                 "    }\n" +
-                 "    return 0;\n" +
-                 "  }\n",
-                 "  public int printName(String name) {\n" +
-                 "    if (name == null) {\n" +
-                 "        return -1;\n" +
-                 "    }\n" +
-                 "    System.out.println(name);\n" +
-                 "    return 0;\n" +
-                 "  }\n"
+                 """
+                     public int printName(String name) {
+                       if (name == null) {
+                           return -1;
+                       } else/**/ {
+                           System.out.println(name);
+                       }
+                       return 0;
+                     }
+                   """,
+                 """
+                     public int printName(String name) {
+                       if (name == null) {
+                           return -1;
+                       }
+                       System.out.println(name);
+                       return 0;
+                     }
+                   """
     );
   }
 
   public void testBreakStatement() {
     doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
-                 "  public void printName(String[] texts) {\n" +
-                 "    for (String text : texts) {\n" +
-                 "      if (\"illegal\".equals(text)) {\n" +
-                 "        break;\n" +
-                 "      } else/**/ {\n" +
-                 "        System.out.println(text);\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(String[] texts) {\n" +
-                 "    for (String text : texts) {\n" +
-                 "      if (\"illegal\".equals(text)) {\n" +
-                 "        break;\n" +
-                 "      }\n" +
-                 "        System.out.println(text);\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(String[] texts) {
+                       for (String text : texts) {
+                         if ("illegal".equals(text)) {
+                           break;
+                         } else/**/ {
+                           System.out.println(text);
+                         }
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(String[] texts) {
+                       for (String text : texts) {
+                         if ("illegal".equals(text)) {
+                           break;
+                         }
+                           System.out.println(text);
+                       }
+                     }
+                   """
     );
   }
 
   public void testContinueStatement() {
     doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
-                 "  public void printName(String[] texts) {\n" +
-                 "    for (String text : texts) {\n" +
-                 "      if (\"illegal\".equals(text)) {\n" +
-                 "        continue;\n" +
-                 "      } else/**/ {\n" +
-                 "        System.out.println(text);\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(String[] texts) {\n" +
-                 "    for (String text : texts) {\n" +
-                 "      if (\"illegal\".equals(text)) {\n" +
-                 "        continue;\n" +
-                 "      }\n" +
-                 "        System.out.println(text);\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(String[] texts) {
+                       for (String text : texts) {
+                         if ("illegal".equals(text)) {
+                           continue;
+                         } else/**/ {
+                           System.out.println(text);
+                         }
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(String[] texts) {
+                       for (String text : texts) {
+                         if ("illegal".equals(text)) {
+                           continue;
+                         }
+                           System.out.println(text);
+                       }
+                     }
+                   """
     );
   }
 
   public void testDoNotFixElseWithoutJump() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
-                               "class X {\n" +
-                               "  public void printName(String name) {\n" +
-                               "    if (name == null) {\n" +
-                               "        System.out.println(\"illegal\");\n" +
-                               "    } else/**/ {\n" +
-                               "        System.out.println(name);\n" +
-                               "    }\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public void printName(String name) {
+                                     if (name == null) {
+                                         System.out.println("illegal");
+                                     } else/**/ {
+                                         System.out.println(name);
+                                     }
+                                   }
+                                 }
+                                 """);
   }
 }

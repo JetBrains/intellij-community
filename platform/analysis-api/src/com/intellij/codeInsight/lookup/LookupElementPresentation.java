@@ -14,9 +14,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class LookupElementPresentation {
   private Icon myIcon;
   private Icon myTypeIcon;

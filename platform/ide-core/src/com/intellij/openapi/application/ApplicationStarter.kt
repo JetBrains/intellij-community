@@ -15,9 +15,8 @@ abstract class ModernApplicationStarter : ApplicationStarter {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated(message = "use start", level = DeprecationLevel.ERROR)
-  final override fun main(args: List<String>) {
+  final override fun main(args: List<String>): Unit =
     throw UnsupportedOperationException("Use start(args)")
-  }
 
   abstract suspend fun start(args: List<String>)
 }
@@ -46,7 +45,6 @@ interface ApplicationStarter {
    * Return [NOT_IN_EDT] if handling the command can be performed on a background thread (please note that the platform
    * may ignore the flag and process a command as [NON_MODAL]).
    */
-  @JvmDefault
   @get:MagicConstant(intValues = [NON_MODAL.toLong(), ANY_MODALITY.toLong(), NOT_IN_EDT.toLong()])
   val requiredModality: Int
     get() = NON_MODAL
@@ -63,9 +61,7 @@ interface ApplicationStarter {
    *
    * @param args program arguments (including the command)
    */
-  @JvmDefault
-  fun premain(args: List<String>) {
-  }
+  fun premain(args: List<String>) = Unit
 
   /**
    *
@@ -75,13 +71,11 @@ interface ApplicationStarter {
    *
    * @param args program arguments (including the selector)
    */
-  fun main(args: List<String>) {
-  }
+  fun main(args: List<String>) = Unit
 
   /**
    * Applications that are incapable of working in a headless mode should override the method and return `false`.
    */
-  @JvmDefault
   val isHeadless: Boolean
     get() = true
 
@@ -91,13 +85,9 @@ interface ApplicationStarter {
    *
    * @see .processExternalCommandLineAsync
    */
-  @JvmDefault
   fun canProcessExternalCommandLine(): Boolean = false
 
-  /** @see .canProcessExternalCommandLine
-   */
-  @JvmDefault
-  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
-    throw UnsupportedOperationException("Class " + javaClass.name + " must implement `processExternalCommandLineAsync()`")
-  }
+  /** @see .canProcessExternalCommandLine */
+  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult =
+    throw UnsupportedOperationException("Class ${javaClass.name} must implement `processExternalCommandLineAsync()`")
 }

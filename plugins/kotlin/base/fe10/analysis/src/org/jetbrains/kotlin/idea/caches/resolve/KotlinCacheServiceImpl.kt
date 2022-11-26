@@ -30,16 +30,15 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.useCompositeAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.util.GlobalFacadeModuleFilters
 import org.jetbrains.kotlin.idea.caches.resolve.util.contextWithCompositeExceptionTracker
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
@@ -55,7 +54,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.KotlinSuppressCache
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.sumByLong
 
 internal val LOG = Logger.getInstance(KotlinCacheService::class.java)
@@ -124,7 +122,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val moduleInfo = files.first().moduleInfo
         val settings = PlatformAnalysisSettingsImpl(
             platform,
-            moduleInfo.sdk,
+            moduleInfo.sdk(),
             moduleInfo.supportsAdditionalBuiltInsMembers(project)
         )
 
@@ -225,7 +223,6 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
 
         val dependenciesForScriptDependencies = listOf(
             LibraryModificationTracker.getInstance(project),
-            ProjectRootModificationTracker.getInstance(project),
             ScriptDependenciesModificationTracker.getInstance(project)
         )
 
@@ -248,7 +245,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             //TODO: provide correct trackers
             dependencies = dependenciesForScriptDependencies,
             moduleFilter = { it == dependenciesModuleInfo },
-            invalidateOnOOCB = true
+            invalidateOnOOCB = false
         )
     }
 
@@ -286,16 +283,13 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             project, modulesContext, settings,
             reuseDataFrom = facadeForLibraries,
             moduleFilter = moduleFilters::moduleFacadeFilter,
-            dependencies = listOf(
-                LibraryModificationTracker.getInstance(project),
-                ProjectRootModificationTracker.getInstance(project)
-            ),
+            dependencies = listOf(ProjectRootModificationTracker.getInstance(project)),
             invalidateOnOOCB = true
         )
     }
 
     private fun IdeaModuleInfo.platformSettings(targetPlatform: TargetPlatform) = createPlatformAnalysisSettings(
-        this@KotlinCacheServiceImpl.project, targetPlatform, sdk,
+        this@KotlinCacheServiceImpl.project, targetPlatform, sdk(),
         supportsAdditionalBuiltInsMembers(this@KotlinCacheServiceImpl.project)
     )
 
@@ -632,5 +626,3 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         return if (contextFile is KtCodeFragment) contextFile.getContextFile() else contextFile
     }
 }
-
-val IdeaModuleInfo.sdk: Sdk? get() = dependencies().firstIsInstanceOrNull<SdkInfo>()?.sdk

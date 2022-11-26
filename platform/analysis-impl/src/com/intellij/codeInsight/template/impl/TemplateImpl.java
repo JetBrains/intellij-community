@@ -348,10 +348,6 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return getTemplateContext().createCopy();
   }
 
-  boolean contextsEqual(TemplateImpl defaultTemplate) {
-    return getTemplateContext().getDifference(defaultTemplate.getTemplateContext()) == null;
-  }
-
   public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {
     for (Map.Entry<TemplateOptionalProcessor, Boolean> entry : context.entrySet()) {
       entry.getKey().setEnabled(this, entry.getValue().booleanValue());

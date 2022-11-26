@@ -48,9 +48,10 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testPositionCalculationOnEmptyLine() {
-    initText("text with\n" +
-         "\n" +
-         "empty line");
+    initText("""
+               text with
+
+               empty line""");
     VisualPosition pos = new VisualPosition(1, 0);
     VisualPosition recalculatedPos = getEditor().xyToVisualPosition(getEditor().visualPositionToXY(pos));
     assertEquals(pos, recalculatedPos);
@@ -66,12 +67,13 @@ public class EditorImplTest extends AbstractEditorTest {
 
   public void testSoftWrapsRecalculationInASpecificCase() {
     configureFromFileText(getTestName(false) + ".java",
-                          "<selection>class Foo {\n" +
-                          "\t@Override\n" +
-                          "\tpublic boolean equals(Object other) {\n" +
-                          "\t\treturn this == other;\n" +
-                          "\t}\n" +
-                          "}</selection>");
+                          """
+                            <selection>class Foo {
+                            \t@Override
+                            \tpublic boolean equals(Object other) {
+                            \t\treturn this == other;
+                            \t}
+                            }</selection>""");
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
     configureSoftWraps(32, false);
 
@@ -92,17 +94,19 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testCorrectVisibleLineCountCalculation() {
-    initText("line containing FOLDED_REGION\n" +
-         "next <caret>line\n" +
-         "last line");
+    initText("""
+               line containing FOLDED_REGION
+               next <caret>line
+               last line""");
     foldOccurrences("FOLDED_REGION", "...");
     configureSoftWraps(16); // wrap right at folded region start
     verifySoftWrapPositions(16);
 
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
-    checkResultByText("line containing FOLDED_REGION\n" +
-                      "next line\n" +
-                      "last <caret>line");
+    checkResultByText("""
+                        line containing FOLDED_REGION
+                        next line
+                        last <caret>line""");
   }
 
   public void testInsertingFirstTab() {
@@ -157,10 +161,11 @@ public class EditorImplTest extends AbstractEditorTest {
   }
   
   public void testPositionCalculationForMultilineFoldingWithEmptyPlaceholder() {
-    initText("line1\n" +
-             "line2\n" +
-             "line3\n" +
-             "line4");
+    initText("""
+               line1
+               line2
+               line3
+               line4""");
     addCollapsedFoldRegion(6, 17, "");
     configureSoftWraps(1000);
     

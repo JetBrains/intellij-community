@@ -4,13 +4,12 @@ package com.intellij.collaboration.api
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import org.jetbrains.annotations.Nls
 
-class HttpStatusErrorException(val method: String,
-                               val uri: String,
+class HttpStatusErrorException(val requestName: String,
                                val statusCode: Int,
                                val body: String?)
-  : RuntimeException("HTTP Request ${method} ${uri} failed with status code ${statusCode} and response body: ${body}") {
+  : RuntimeException("HTTP Request $requestName failed with status code ${statusCode} and response body: ${body}") {
 
   @Nls
   override fun getLocalizedMessage(): String =
-    CollaborationToolsBundle.message("http.status.error", method, uri, statusCode.toString(), body)
+    CollaborationToolsBundle.message("http.status.error", requestName, statusCode.toString(), body)
 }

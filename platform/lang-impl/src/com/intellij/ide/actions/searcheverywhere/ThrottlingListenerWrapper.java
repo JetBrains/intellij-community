@@ -16,6 +16,8 @@ import java.util.Map;
  */
 class ThrottlingListenerWrapper extends BufferingListenerWrapper {
 
+  private static final int DEFAULT_THROTTLING_TIMEOUT = 100;
+
   public final int myThrottlingDelay;
 
   private final Alarm flushAlarm = new Alarm();
@@ -24,6 +26,10 @@ class ThrottlingListenerWrapper extends BufferingListenerWrapper {
   ThrottlingListenerWrapper(int throttlingDelay, SearchListener delegateListener) {
     super(delegateListener);
     myThrottlingDelay = throttlingDelay;
+  }
+
+  ThrottlingListenerWrapper(SearchListener delegateListener) {
+    this(DEFAULT_THROTTLING_TIMEOUT, delegateListener);
   }
 
   @Override

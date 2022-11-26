@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
@@ -536,10 +537,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
                                               @NotNull MyColorScheme scheme) {
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (ColorSettingsPage page : pages) {
-      initDescriptions(page, descriptions, scheme);
+      try {
+        initDescriptions(page, descriptions, scheme);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     for (ColorAndFontDescriptorsProvider provider : ColorAndFontDescriptorsProvider.EP_NAME.getExtensionList()) {
-      initDescriptions(provider, descriptions, scheme);
+      try {
+        initDescriptions(provider, descriptions, scheme);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 

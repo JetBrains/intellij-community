@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ProjectBasedInspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.filter.InspectionFilterAction;
 import com.intellij.profile.codeInspection.ui.filter.InspectionsFilter;
@@ -153,7 +154,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
     if (profile.isProjectLevel()) {
-      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectInspectionProfileManager)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
+      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectBasedInspectionProfileManager)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
     }
     return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(profile);
   }
@@ -199,7 +200,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private static boolean isDescriptorAccepted(Descriptor descriptor,
                                               @NonNls String filter,
                                               final boolean forceInclude,
-                                              final List<Set<String>> keySetList, final Set<String> quoted) {
+                                              final List<? extends Set<String>> keySetList, final Set<String> quoted) {
     filter = StringUtil.toLowerCase(filter);
     if (StringUtil.containsIgnoreCase(descriptor.getText(), filter)) {
       return true;
@@ -603,7 +604,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    new TreeSpeedSearch(tree, o -> {
+    new TreeSpeedSearch(tree, false, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
     });
@@ -667,7 +668,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return includeDoNotShow(myTreeTable.getSelectedToolNodes());
   }
 
-  private boolean includeDoNotShow(Collection<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean includeDoNotShow(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     return !ContainerUtil.exists(nodes, node -> {
       final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
@@ -883,12 +884,14 @@ public class SingleInspectionProfilePanel extends JPanel {
           .withLabel(InspectionsBundle.message("inspection.severity"))
           .moveLabelOnTop()
           .createPanel();
+        severityLevelChooserPanel.setMinimumSize(severityLevelChooserPanel.getPreferredSize());
         severityPanel.add(severityLevelChooserPanel, constraint.next());
 
         final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
           .withLabel(InspectionsBundle.message("inspection.highlighting"))
           .moveLabelOnTop()
           .createPanel();
+        highlightChooserPanel.setMinimumSize(highlightChooserPanel.getPreferredSize());
         severityPanel.add(highlightChooserPanel, constraint.next());
 
         if (toolState != null) {
@@ -998,7 +1001,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
-  private static void updateHighlightingChooser(Collection<InspectionConfigTreeNode.Tool> nodes,
+  private static void updateHighlightingChooser(Collection<? extends InspectionConfigTreeNode.Tool> nodes,
                                                 Project project,
                                                 HighlightingChooser highlightingChooser) {
     final TextAttributesKey key = ScopesAndSeveritiesTable.getEditorAttributesKey(
@@ -1016,7 +1019,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  private boolean isThoughOneNodeEnabled(Collection<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean isThoughOneNodeEnabled(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     for (final InspectionConfigTreeNode.Tool node : nodes) {
       final String toolId = node.getKey().toString();
@@ -1146,7 +1149,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     mainSplitter.setSplitterProportionKey("SingleInspectionProfilePanel.VERTICAL_DIVIDER_PROPORTION");
     mainSplitter.setFirstComponent(tree);
     mainSplitter.setSecondComponent(rightSplitter);
-    mainSplitter.setHonorComponentsMinimumSize(false);
     mainSplitter.setDividerWidth(SECTION_GAP);
 
     final JPanel inspectionTreePanel = new JPanel(new BorderLayout());

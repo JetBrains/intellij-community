@@ -1,4 +1,4 @@
-// "Make 'foo' static" "true-preview"
+// "Make 'foo()' static" "true-preview"
 import java.lang.annotation.*;
 
 interface I {

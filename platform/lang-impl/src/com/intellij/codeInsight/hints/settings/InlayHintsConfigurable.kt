@@ -3,64 +3,38 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.InlayHintsProviderExtension
-import com.intellij.codeInsight.hints.InlayHintsSettings
-import com.intellij.codeInsight.hints.settings.language.SingleLanguageInlayHintsConfigurable
-import com.intellij.ide.DataManager
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
-import com.intellij.util.messages.MessageBusConnection
 import java.util.function.Predicate
 import javax.swing.JComponent
+import javax.swing.JPanel
 
+@Deprecated("Use com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable")
 class InlayHintsConfigurable(private val project: Project) : Configurable, Configurable.Composite, Configurable.WithEpDependencies {
-  private val configurables: List<SingleLanguageInlayHintsConfigurable>
-  private val panel: InlayHintsPanel
-  private var connection: MessageBusConnection? = null
+  override fun getConfigurables(): Array<Configurable> = emptyArray()
 
-  init {
-    val allInlayLanguages = InlaySettingsProvider.EP.getExtensions()
-      .flatMap { it.getSupportedLanguages(project) }
-      .toSortedSet(compareBy { it.displayName })
-    configurables = allInlayLanguages.map { SingleLanguageInlayHintsConfigurable(project, it) }
-    panel = InlayHintsPanel(allInlayLanguages)
-  }
-
-  override fun getConfigurables(): Array<Configurable> = configurables.toTypedArray()
-
-  override fun isModified() = panel.isModified()
+  override fun isModified() = false
 
   override fun getDisplayName(): String {
     return CodeInsightBundle.message("settings.inlay.hints.panel.name")
   }
 
   override fun createComponent(): JComponent {
-    connection = ApplicationManager.getApplication().messageBus.connect(project)
-    connection?.subscribe(InlayHintsSettings.INLAY_SETTINGS_CHANGED, ConfigurationChangeListener(configurables))
-
-    return panel
+    return JPanel()
   }
 
   override fun apply() {
-    panel.apply()
+
   }
 
   override fun reset() {
-    panel.reset()
+
   }
 
   override fun disposeUIResources() {
-    connection?.disconnect()
-  }
 
-  fun loadFromSettings() {
-    for (configurable in configurables) {
-      configurable.reset()
-    }
   }
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> =
@@ -72,60 +46,26 @@ class InlayHintsConfigurable(private val project: Project) : Configurable, Confi
      * Updates settings UI when external change happens (e. g. when some provider is changed).
      */
     @JvmStatic
+    @Deprecated("New UI doesn't need it, just drop call")
     fun updateInlayHintsUI() {
-      val dataContextFromFocusAsync = DataManager.getInstance().dataContextFromFocusAsync
-      dataContextFromFocusAsync.onSuccess {
-        val settings = Settings.KEY.getData(it) ?: return@onSuccess
-        val configurable = settings.find(InlayHintsConfigurable::class.java) ?: return@onSuccess
-        configurable.loadFromSettings()
-      }
+
     }
 
     @JvmStatic
+    @Deprecated("Use com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableKt.showInlaySettings",
+                ReplaceWith("showInlaySettings(project, language, null)"))
     fun showSettingsDialogForLanguage(project: Project, language: Language) {
-      showSettingsDialogForLanguage(project, language, null)
+      showInlaySettings(project, language, null)
     }
 
     @JvmStatic
+    @Deprecated("Use com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableKt.showInlaySettings",
+                ReplaceWith("showInlaySettings(project, language, selector)"))
     fun showSettingsDialogForLanguage(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
-      if (showNewSettings(project, language, selector)) {
+      if (showInlaySettings(project, language, selector)) {
         return
       }
-      val languages = hashSetOf<Language>()
-      var current: Language? = language
-      while (current != null) {
-        languages.add(current)
-        current = current.baseLanguage
-      }
-      ShowSettingsUtil.getInstance().showSettingsDialog(
-        project,
-        { it is SingleLanguageInlayHintsConfigurable && it.language in languages },
-        { configurable ->
-          if (selector == null) return@showSettingsDialog
-          configurable as SingleLanguageInlayHintsConfigurable
-          val models = configurable.getModels()
-          val model = models.find { selector.test(it) }
-          if (model != null) {
-            configurable.setCurrentModel(model)
-          }
-        }
-      )
-    }
-  }
-}
-
-private class ConfigurationChangeListener(private val configurables: List<Configurable>) : InlayHintsSettings.SettingsListener {
-  override fun languageStatusChanged() {
-    reset()
-  }
-
-  override fun globalEnabledStatusChanged(newEnabled: Boolean) {
-    reset()
-  }
-
-  private fun reset() {
-    for (configurable in configurables) {
-      configurable.reset()
+      throw UnsupportedOperationException()
     }
   }
 }

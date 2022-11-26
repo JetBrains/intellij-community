@@ -3,9 +3,6 @@ package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public final class OffsetKey {
   private final String myName; // for debug purposes only
   private final boolean myMovableToRight;

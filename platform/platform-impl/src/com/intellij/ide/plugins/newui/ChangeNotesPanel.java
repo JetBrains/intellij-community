@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Alexander Lobas
  */
-public class ChangeNotesPanel {
+public class ChangeNotesPanel implements ChangeNotes {
   private final JPanel myPanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
   private final JLabel myTitle = new JLabel(IdeBundle.message("label.plugin.change.notes"), AllIcons.General.ArrowRight, SwingConstants.LEFT) {
     @Override
@@ -53,6 +53,7 @@ public class ChangeNotesPanel {
     setDecorateState(false);
   }
 
+  @Override
   public void show(@Nullable @NlsContexts.DialogMessage String text) {
     if (text == null) {
       myPanel.setVisible(false);

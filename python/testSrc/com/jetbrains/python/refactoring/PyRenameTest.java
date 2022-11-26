@@ -224,6 +224,26 @@ public class PyRenameTest extends PyTestCase {
     renameWithDocStringFormat(DocStringFormat.NUMPY, "bar");
   }
 
+  // PY-16760
+  public void testGoogleDocstringAttributeRenamesWithClassAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-28549
+  public void testGoogleDocstringAttributeRenamesWithDataclassClassAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-28549
+  public void testGoogleDocstringDataClassParameterRenamesWithClassAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-28549
+  public void testGoogleDocstringDataClassParameterRenamesWithInitParameterOverClassAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
   // PY-2748
   public void testFormatStringDictLiteral() {
     doUnsupportedOperationTest();

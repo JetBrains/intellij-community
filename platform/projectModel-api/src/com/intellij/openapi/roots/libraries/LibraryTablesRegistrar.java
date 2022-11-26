@@ -32,20 +32,14 @@ public abstract class LibraryTablesRegistrar {
   public abstract @NotNull LibraryTable getLibraryTable(@NotNull Project project);
 
   /**
-   * Returns the standard or a custom library table registered by {@link #registerLibraryTable(LibraryTable)} or via {@link CustomLibraryTableDescription}.
+   * Returns the standard or a custom library table registered via {@link CustomLibraryTableDescription}.
    */
   public abstract @Nullable LibraryTable getLibraryTableByLevel(@NonNls String level, @NotNull Project project);
 
   /**
-   * Returns a custom library table registered by {@link #registerLibraryTable(LibraryTable)} or via {@link CustomLibraryTableDescription}.
+   * Returns a custom library table registered via {@link CustomLibraryTableDescription}.
    */
   public abstract @Nullable LibraryTable getCustomLibraryTableByLevel(@NonNls String level);
-
-  /**
-   * @deprecated use {@link CustomLibraryTableDescription} extension point instead
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void registerLibraryTable(@NotNull LibraryTable libraryTable);
 
   public abstract @NotNull List<LibraryTable> getCustomLibraryTables();
 }

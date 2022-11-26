@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.scratch
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.run.createLibraryWithLongPaths
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

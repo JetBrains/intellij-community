@@ -24,7 +24,7 @@ public class JavaSwitchExpressionUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)e;
     return rule.getEnclosingSwitchBlock();

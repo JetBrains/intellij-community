@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   public static final Key<Boolean> CHAIN_QUALIFIER = Key.create("CHAIN_QUALIFIER");
   public static final ClassConditionKey<JavaChainLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaChainLookupElement.class);

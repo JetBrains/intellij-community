@@ -14,7 +14,6 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
   private var placeholderCellData: PlaceholderCellData? = null
   private var visible = true
   private var enabled = true
-
   private var componentField: JComponent? = null
 
   var component: JComponent?
@@ -92,7 +91,7 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
       val gaps = customGaps ?: getComponentGaps(it.constraints.gaps.left, it.constraints.gaps.right, installedComponent, it.spacing)
       it.constraints = it.constraints.copy(
         gaps = gaps,
-        visualPaddings = prepareVisualPaddings(installedComponent.origin)
+        visualPaddings = prepareVisualPaddings(installedComponent)
       )
       it.panel.add(installedComponent, it.constraints)
       if (installedComponent is DialogPanel) {

@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.tools.sdkTools;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -33,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.io.IOException;
 
 /**
  * Engine to create SDK for tests.
@@ -71,7 +73,12 @@ public final class PySdkTools {
     });
     final Sdk sdk = ref.get();
     if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
-      generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
+      try {
+        generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
+      }
+      catch (ExecutionException e) {
+        throw new InvalidSdkException("Can't generate skeleton packages", e);
+      }
     }
     ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
     return sdk;
@@ -89,7 +96,7 @@ public final class PySdkTools {
   public static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
                                                      final boolean addSkeletons,
                                                      @Nullable final Module module)
-    throws InvalidSdkException {
+    throws InvalidSdkException, ExecutionException {
     Project project = null;
 
     if (module != null) {
@@ -98,13 +105,16 @@ public final class PySdkTools {
       PySdkExtKt.setPythonSdk(project, sdk);
       PySdkExtKt.setPythonSdk(module, sdk);
     }
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
 
 
     final SdkModificator modificator = sdk.getSdkModificator();
 
     modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
 
-    for (final String path : PythonSdkType.getSysPathsFromScript(sdk)) {
+    for (final String path : new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator())) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {

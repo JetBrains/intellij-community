@@ -62,14 +62,6 @@ public class RunConfigurationModule implements JDOMExternalizable {
     prev.setAttribute(ATTRIBUTE, getModuleName());
   }
 
-  /**
-   * @deprecated It is not init. It sets module to any first module if no module yet configured. Use {@link #setModuleToAnyFirstIfNotSpecified} if need.
-   */
-  @Deprecated(forRemoval = true)
-  public void init() {
-    setModuleToAnyFirstIfNotSpecified();
-  }
-
   public void setModuleToAnyFirstIfNotSpecified() {
     if (StringUtil.isEmptyOrSpaces(getModuleName())) {
       Module[] modules = getModuleManager().getModules();

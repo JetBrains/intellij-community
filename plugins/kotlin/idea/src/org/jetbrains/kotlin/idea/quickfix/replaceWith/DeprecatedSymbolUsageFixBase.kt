@@ -73,6 +73,9 @@ abstract class DeprecatedSymbolUsageFixBase(
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element != null && isAvailable
 
+    // TODO: it has to be fixed as it runs ReferencesSearch under writeAction
+    override fun startInWriteAction(): Boolean = true
+
     final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
         val strategy = buildUsageReplacementStrategy(
@@ -113,7 +116,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             descriptor: DeclarationDescriptor
         ): String {
             if (element == null) return this
-            val psiFactory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
             val expressionFromPattern = psiFactory.createExpressionIfPossible(this) ?: return this
 
             val classLiteral = when (expressionFromPattern) {

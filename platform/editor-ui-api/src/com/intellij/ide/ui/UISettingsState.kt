@@ -67,6 +67,8 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("WIDESCREEN_SUPPORT")
   var wideScreenSupport by property(false)
+  @get:OptionTag("REMEMBER_SIZE_FOR_EACH_TOOL_WINDOW")
+  var rememberSizeForEachToolWindow by property(false)
   @get:OptionTag("LEFT_HORIZONTAL_SPLIT")
   var leftHorizontalSplit by property(false)
   @get:OptionTag("RIGHT_HORIZONTAL_SPLIT")

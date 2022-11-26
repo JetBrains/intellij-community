@@ -144,8 +144,8 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
       final MyFetchCacheEntry entry = myFetchCache.get(url);
       final long currentTime = System.currentTimeMillis();
 
-      if (entry != null && currentTime - entry.getTime() < FETCH_CACHE_TIMEOUT) {
-        return entry.getFetchResult();
+      if (entry != null && currentTime - entry.time() < FETCH_CACHE_TIMEOUT) {
+        return entry.fetchResult();
       }
 
       final MyFetchResult fetchResult = doCheckUrl(url);
@@ -179,23 +179,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     return MyFetchResult.OK;
   }
 
-  private static final class MyFetchCacheEntry {
-    private final long myTime;
-    private final MyFetchResult myFetchResult;
-
-    private MyFetchCacheEntry(long time, @NotNull MyFetchResult fetchResult) {
-      myTime = time;
-      myFetchResult = fetchResult;
-    }
-
-    public long getTime() {
-      return myTime;
-    }
-
-    @NotNull
-    public MyFetchResult getFetchResult() {
-      return myFetchResult;
-    }
+  private record MyFetchCacheEntry(long time, @NotNull MyFetchResult fetchResult) {
   }
 
   private enum MyFetchResult {

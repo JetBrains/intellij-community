@@ -11,7 +11,7 @@ public class OpenThemeReferenceDocsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    BrowserUtil.browse("https://plugins.jetbrains.com/docs/intellij/themes-intro.html?from=DevkitOpenThemeReference");
+    BrowserUtil.browse("https://plugins.jetbrains.com/docs/intellij/themes-getting-started.html?from=DevkitOpenThemeReference");
   }
 
   @Override

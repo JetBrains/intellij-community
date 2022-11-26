@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
+import com.intellij.openapi.wm.impl.content.SingleContentSupplier;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.toolWindow.ToolWindowPane;
@@ -591,7 +592,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  public JComponent getContainerComponent() {
+  public @NotNull JComponent getContainerComponent() {
     initUi();
     return myManager.getComponent();
   }
@@ -1156,14 +1157,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
     usedNames.add(title);
 
-    boolean hidden = true;
-    for (Content content : contents) {
-      if (!grid.isMinimized(content)) {
-        hidden = false;
-        break;
+    if (!ClientProperty.isTrue(tab.getComponent(), SingleContentSupplier.DRAGGED_OUT_KEY)) {
+      boolean hidden = true;
+      for (Content content : contents) {
+        if (!grid.isMinimized(content)) {
+          hidden = false;
+          break;
+        }
       }
+      tab.setHidden(hidden);
     }
-    tab.setHidden(hidden);
     if (icon == null && contents.size() == 1) {
       icon = contents.get(0).getIcon();
     }
@@ -1568,21 +1571,19 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       Dimension size = component.getSize();
       Rectangle r = new Rectangle(size);
       switch (targetPlaceInGrid) {
-        case left:
-          r.width /= 3;
-          break;
-        case center:
+        case left -> r.width /= 3;
+        case center -> {
           r.width /= 3;
           r.x += r.width;
-          break;
-        case right:
+        }
+        case right -> {
           r.width /= 3;
           r.x += 2 * r.width;
-          break;
-        case bottom:
+        }
+        case bottom -> {
           r.height /= 4;
           r.y += 3 * r.height;
-          break;
+        }
       }
       // adjust the rectangle if the target grid cell is already present and showing
       for (Content c : ui.getContentManager().getContents()) {
@@ -2024,8 +2025,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     public ShowDebugContentAction(RunnerContentUi runner, JComponent component, @NotNull Disposable parentDisposable) {
       myContentUi = runner;
-      AnAction original = ActionManager.getInstance().getAction(ShowContentAction.ACTION_ID);
-      new ShadowAction(this, original, component, parentDisposable);
+      new ShadowAction(this, ShowContentAction.ACTION_ID, component, parentDisposable);
       ActionUtil.copyFrom(this, ShowContentAction.ACTION_ID);
     }
 
@@ -2033,6 +2033,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myContentUi != null && myContentUi.getPopupContents().size() > 1);
       e.getPresentation().setText(ExecutionBundle.messagePointer("action.presentation.RunnerContentUi.text.show.list.of.tabs"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -2056,6 +2061,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public boolean isSelected(@NotNull AnActionEvent e) {
       boolean isSelected = delegate.isSelected(e);
       return myInverted ? !isSelected : isSelected;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return delegate.getActionUpdateThread();
     }
 
     @Override

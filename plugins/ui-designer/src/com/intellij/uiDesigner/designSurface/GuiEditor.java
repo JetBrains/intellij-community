@@ -82,9 +82,6 @@ import java.util.*;
  * {@code GuiEditor} is a panel with border layout. It has palette at the north,
  * tree of component with property editor at the west and editor area at the center.
  * This editor area contains internal component where user edit the UI.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(GuiEditor.class);

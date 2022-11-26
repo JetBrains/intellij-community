@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.EventDispatcher
 import java.util.*
@@ -48,8 +49,14 @@ interface NotebookCellLines {
   }
 
   interface IntervalListener : EventListener {
-    /** Called when document is changed. */
-    fun segmentChanged(event: NotebookCellLinesEvent)
+    /**
+     * Called each time when document is changed, even if intervals are the same.
+     * Contains DocumentEvent and additional information about intervals.
+     * Components which work with intervals can simply listen for NotebookCellLinesEvent and don't subscribe for DocumentEvent.
+     */
+    fun documentChanged(event: NotebookCellLinesEvent)
+
+    fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {}
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
@@ -61,11 +68,17 @@ interface NotebookCellLines {
   val modificationStamp: Long
 
   companion object {
+    fun get(document: Document): NotebookCellLines =
+      NotebookCellLinesProvider.get(document)?.create(document)
+      ?: error("Can't get NotebookCellLinesProvider for document ${document}")
+
+    fun hasSupport(document: Document): Boolean =
+      NotebookCellLinesProvider.get(document) != null
+
     fun get(editor: Editor): NotebookCellLines =
-      editor.notebookCellLinesProvider?.create(editor.document)
-      ?: error("Can't get for $editor with document ${editor.document}")
+      get(editor.document)
 
     fun hasSupport(editor: Editor): Boolean =
-      editor.notebookCellLinesProvider != null
+      hasSupport(editor.document)
   }
 }

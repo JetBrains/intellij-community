@@ -100,7 +100,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     fun processLastHeaderIfNeeded() {
       val lastHeader = lastProcessedHeader
       if (lastHeader != null) {
-        val lastFileChild = lastHeader.containingFile.lastChild.lastChild
+        val lastFileChild = lastHeader.containingFile.lastChild
         val regionEnd = when (PsiUtilCore.getElementType(lastFileChild)) {
           MarkdownTokenTypes.EOL -> skipNewLinesBackward(lastFileChild)
           else -> lastFileChild

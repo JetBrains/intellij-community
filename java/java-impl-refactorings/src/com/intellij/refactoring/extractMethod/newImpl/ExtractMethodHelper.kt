@@ -48,7 +48,7 @@ object ExtractMethodHelper {
     return annotationClass != null
   }
 
-  fun wrapWithCodeBlock(elements: List<PsiElement>): List<PsiCodeBlock> {
+  private fun wrapWithCodeBlock(elements: List<PsiElement>): List<PsiCodeBlock> {
     require(elements.isNotEmpty())
     val codeBlock = PsiElementFactory.getInstance(elements.first().project).createCodeBlock()
     elements.forEach { codeBlock.add(it) }
@@ -121,7 +121,7 @@ object ExtractMethodHelper {
     return references.asSequence().mapNotNull { reference -> (reference.resolve() as? PsiVariable) }
   }
 
-  fun hasConflictResolve(name: String?, scopeToIgnore: List<PsiElement>): Boolean {
+  private fun hasConflictResolve(name: String?, scopeToIgnore: List<PsiElement>): Boolean {
     require(scopeToIgnore.isNotEmpty())
     if (name == null) return false
     val lastElement = scopeToIgnore.last()

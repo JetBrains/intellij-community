@@ -14,6 +14,8 @@ fun foo() {
 }
 
 object Foo {
+    private var _foo: String = "default"
+
     val Foo: String = ""
 
     var FOO_BAR: Int = 0
@@ -27,6 +29,8 @@ class D {
     private val FOO_BAR: String
 
     companion object {
+        private var _bar: String = "default"
+
         val Foo: String = ""
 
         var FOO_BAR: Int = 0

@@ -9,9 +9,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   private final CheckResourcesTarget myTarget;
   private final ResourceRootDescriptor myDescriptor;

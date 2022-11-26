@@ -18,9 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private static final Key<CachedValue<Map<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
   private static final Map<EvaluatedXmlNameImpl, EvaluatedXmlNameImpl> ourInterned =

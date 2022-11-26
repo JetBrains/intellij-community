@@ -18,6 +18,8 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.TextAccessor
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import com.intellij.util.TextFieldCompletionProvider
@@ -25,6 +27,7 @@ import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.textCompletion.TextFieldWithCompletion
+import com.intellij.util.ui.JBUI
 import com.jetbrains.extensions.ContextAnchor
 import com.jetbrains.extensions.QNameResolveContext
 import com.jetbrains.extensions.getQName
@@ -78,6 +81,7 @@ class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
         childComponent.setText(element.getQName()?.toString())
       }
     }
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(JBUI.scale(3), JBUI.scale(3), JBUI.scale(3), button.insets.right))
   }
 
   override fun setText(text: String?) {
@@ -188,5 +192,5 @@ private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, 
         super.getQualifiedName(item)
       }
     }
-  }))
+  }), disposable)
 }

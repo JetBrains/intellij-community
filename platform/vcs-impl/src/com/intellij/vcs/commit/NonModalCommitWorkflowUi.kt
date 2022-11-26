@@ -5,10 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.Nls.Capitalization.Sentence
 
 interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi, CommitAuthorTracker {
   val commitProgressUi: CommitProgressUi
@@ -35,11 +33,9 @@ interface CommitProgressUi {
 
   var isDumbMode: Boolean
 
-  fun startProgress(isOnlyRunCommitChecks: Boolean): ProgressIndicatorEx
+  suspend fun <T> runWithProgress(isOnlyRunCommitChecks: Boolean, action: suspend CoroutineScope.() -> T): T
 
   fun addCommitCheckFailure(failure: CommitCheckFailure)
-  fun addCommitCheckFailure(@Nls(capitalization = Sentence) text: String, detailsViewer: (() -> Unit)?) =
-    addCommitCheckFailure(CommitCheckFailure(text, detailsViewer))
 
   fun clearCommitCheckFailures()
   fun getCommitCheckFailures(): List<CommitCheckFailure>

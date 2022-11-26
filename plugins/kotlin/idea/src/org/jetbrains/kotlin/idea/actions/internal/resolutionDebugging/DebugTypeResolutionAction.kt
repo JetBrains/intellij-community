@@ -8,9 +8,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Caret
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -83,8 +82,7 @@ class DebugTypeResolutionAction : AnAction("Debug Resolution of Type at Caret") 
         val window = panel {
             row {
                 textArea()
-                    .horizontalAlign(HorizontalAlign.FILL)
-                    .verticalAlign(VerticalAlign.FILL)
+                    .align(Align.FILL)
                     .applyToComponent { text = content }
                     .resizableColumn()
             }.resizableRow()

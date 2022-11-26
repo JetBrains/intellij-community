@@ -24,27 +24,27 @@ import java.util.List;
 public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @Override
   public PsiElement @NotNull [] getMovableSubElements(@NotNull PsiElement element) {
-    if (element instanceof PsiParameterList) {
-      return ((PsiParameterList)element).getParameters();
+    if (element instanceof PsiParameterList list) {
+      return list.getParameters();
     }
-    else if (element instanceof PsiExpressionList) {
-      return  ((PsiExpressionList)element).getExpressions();
+    else if (element instanceof PsiExpressionList list) {
+      return list.getExpressions();
     }
-    else if (element instanceof PsiAnnotationParameterList) {
-      return  ((PsiAnnotationParameterList)element).getAttributes();
+    else if (element instanceof PsiAnnotationParameterList list) {
+      return list.getAttributes();
     }
-    else if (element instanceof PsiArrayInitializerExpression) {
-      return  ((PsiArrayInitializerExpression)element).getInitializers();
+    else if (element instanceof PsiArrayInitializerExpression arrayInitializer) {
+      return arrayInitializer.getInitializers();
     }
-    else if (element instanceof PsiArrayInitializerMemberValue) {
-      return  ((PsiArrayInitializerMemberValue)element).getInitializers();
+    else if (element instanceof PsiArrayInitializerMemberValue arrayInitializerMemberValue) {
+      return arrayInitializerMemberValue.getInitializers();
     }
-    else if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
+    else if (element instanceof PsiClass cls && cls.isEnum()) {
       PsiEnumConstant[] enumConstants = PsiTreeUtil.getChildrenOfType(element, PsiEnumConstant.class);
       if (enumConstants != null) return enumConstants;
     }
-    else if (element instanceof PsiReferenceList) {
-      return ((PsiReferenceList)element).getReferenceElements();
+    else if (element instanceof PsiReferenceList list) {
+      return list.getReferenceElements();
     }
     else if (element instanceof PsiTypeElement) {
       PsiTypeElement[] result = PsiTreeUtil.getChildrenOfType(element, PsiTypeElement.class);
@@ -54,18 +54,21 @@ public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
       PsiElement[] result = PsiTreeUtil.getChildrenOfType(element, PsiResourceListElement.class);
       if (result != null) return result;
     }
-    else if (element instanceof PsiPolyadicExpression) {
-      return ((PsiPolyadicExpression)element).getOperands();
+    else if (element instanceof PsiPolyadicExpression list) {
+      return list.getOperands();
     }
-    else if (element instanceof PsiReferenceParameterList) {
-      return ((PsiReferenceParameterList)element).getTypeParameterElements();
+    else if (element instanceof PsiReferenceParameterList list) {
+      return list.getTypeParameterElements();
     }
-    else if (element instanceof PsiTypeParameterList) {
-      return ((PsiTypeParameterList)element).getTypeParameters();
+    else if (element instanceof PsiTypeParameterList list) {
+      return list.getTypeParameters();
     }
     else if (element instanceof PsiModifierList) {
       final List<PsiElement> elements = PsiTreeUtil.getChildrenOfAnyType(element, PsiKeyword.class, PsiAnnotation.class);
       return elements.toArray(PsiElement.EMPTY_ARRAY);
+    }
+    else if (element instanceof PsiCaseLabelElementList list) {
+      return list.getElements();
     }
     return PsiElement.EMPTY_ARRAY;
   }

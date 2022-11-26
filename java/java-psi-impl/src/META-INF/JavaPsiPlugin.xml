@@ -54,6 +54,9 @@
     <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
                     interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.evaluation.uastEvaluatorExtension"
+                    interface="org.jetbrains.uast.evaluation.UEvaluatorExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jvm.declarationSearcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.jvm.source.JvmDeclarationSearcher"/>
     </extensionPoint>
@@ -67,6 +70,8 @@
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
     <applicationService serviceInterface="com.intellij.psi.PsiSubstitutorFactory"
                         serviceImplementation="com.intellij.psi.impl.PsiSubstitutorFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService"
+                        serviceImplementation="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService$DefaultImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>

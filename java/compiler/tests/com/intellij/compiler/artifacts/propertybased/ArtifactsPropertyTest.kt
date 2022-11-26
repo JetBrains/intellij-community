@@ -22,22 +22,22 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assert.*
-import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -368,7 +368,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.persistentId)!!
+        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.symbolicId)!!
         assertEquals(!selectedArtifact.includeInProjectBuild, artifactEntity.includeInProjectBuild)
 
         onManager(env) { manager ->
@@ -570,8 +570,12 @@ class ArtifactsPropertyTest {
       if (artifacts.isEmpty()) return
 
       val index = env.generateValue(Generator.integers(0, artifacts.lastIndex), null)
+      val newName = selectArtifactName(env, artifacts.map { it.name }) ?: run {
+        env.logMessage("Cannot select name for new artifact via workspace model")
+        return
+      }
+
       val artifact = artifacts[index]
-      val newName = selectArtifactName(env, artifacts.map { it.name })
       val oldName = artifact.name
       env.logMessage("Rename artifact: $oldName -> $newName")
       makeChecksHappy {
@@ -662,7 +666,7 @@ class ArtifactsPropertyTest {
   private fun selectArtifactName(env: ImperativeCommand.Environment, notLike: List<String>): String? {
     var counter = 50
     while (counter > 0) {
-      val name = "Artifact-${env.generateValue(Generator.integers(0, MAX_ARTIFACT_NUMBER), null)}"
+      val name = selectArtifactName(env)
       if (name !in notLike) return name
       counter--
     }
@@ -954,7 +958,7 @@ object MyWorkspacePackagingElementType : PackagingElementType<MyWorkspacePackagi
 
   override fun chooseAndCreate(context: ArtifactEditorContext,
                                artifact: Artifact,
-                               parent: CompositePackagingElement<*>): MutableList<out PackagingElement<*>> {
+                               parent: CompositePackagingElement<*>): List<PackagingElement<*>> {
     throw UnsupportedOperationException()
   }
 
@@ -999,7 +1003,7 @@ object MyCompositeWorkspacePackagingElementType : PackagingElementType<MyComposi
 
   override fun chooseAndCreate(context: ArtifactEditorContext,
                                artifact: Artifact,
-                               parent: CompositePackagingElement<*>): MutableList<out PackagingElement<*>> {
+                               parent: CompositePackagingElement<*>): List<PackagingElement<*>> {
     throw UnsupportedOperationException()
   }
 

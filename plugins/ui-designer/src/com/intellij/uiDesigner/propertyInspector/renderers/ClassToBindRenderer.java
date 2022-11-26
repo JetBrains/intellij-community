@@ -4,10 +4,6 @@ package com.intellij.uiDesigner.propertyInspector.renderers;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.uiDesigner.UIDesignerBundle;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ClassToBindRenderer extends LabelPropertyRenderer<String> {
   @Override
   public void customize(final String value){

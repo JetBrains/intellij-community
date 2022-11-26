@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/kdoc/javadoc/navigate")
 @RunWith(JUnit38ClassRunner::class)
 class JavadocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     fun testExtMethod() {
         myFixture.addFileToProject(

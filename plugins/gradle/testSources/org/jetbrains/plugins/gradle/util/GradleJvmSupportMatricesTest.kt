@@ -40,6 +40,11 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
 
     assertFalse(isSupported("7.4", 18))
     assertTrue(isSupported("7.5", 18))
+    assertTrue(isSupported("7.5.1", 18))
+
+    assertFalse(isSupported("7.5", 19))
+    assertFalse(isSupported("7.5.1", 19))
+    assertTrue(isSupported("7.6", 19))
   }
 
   @Test
@@ -53,7 +58,8 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(11))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(15))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(17))
-    assertEquals("7.5", suggestGradleVersion(18))
+    assertEquals(bundledGradleVersion.version, suggestGradleVersion(18))
+    //assertEquals(bundledGradleVersion.version, suggestGradleVersion(19))
   }
 
   @Test
@@ -73,6 +79,8 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(17, suggestJavaVersion("7.2"))
     assertEquals(17, suggestJavaVersion("7.4"))
     assertEquals(18, suggestJavaVersion("7.5"))
+    assertEquals(18, suggestJavaVersion("7.5.1"))
+    assertEquals(19, suggestJavaVersion("7.6"))
   }
 
   @Test
@@ -90,7 +98,8 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals("7.0", suggestOldestCompatibleGradleVersion(16))
     assertEquals("7.2", suggestOldestCompatibleGradleVersion(17))
     assertEquals("7.5", suggestOldestCompatibleGradleVersion(18))
-    assertEquals("7.5", suggestOldestCompatibleGradleVersion(24))
+    //assertEquals("7.6", suggestOldestCompatibleGradleVersion(19))
+    //assertEquals("7.6", suggestOldestCompatibleGradleVersion(24))
   }
 
   @Test
@@ -102,5 +111,6 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(9, suggestOldestCompatibleJavaVersion("7.1"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("7.2"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("7.5"))
+    assertEquals(8, suggestOldestCompatibleJavaVersion("7.6"))
   }
 }

@@ -46,31 +46,30 @@ interface CellBase<out T : CellBase<T>> {
    */
   fun enabledIf(predicate: ComponentPredicate): CellBase<T>
 
+  @Deprecated("Use align method instead")
+  fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
+
+  @Deprecated("Use align method instead")
+  fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
+
   /**
-   * Sets horizontal alignment of content inside the cell, [HorizontalAlign.LEFT] by default.
-   * Use [HorizontalAlign.FILL] to stretch the content on whole cell width. In case the cell should occupy all
-   * available width in parent mark the column as [resizableColumn]
+   * Updates horizontal and/or vertical alignment of the component inside the cell. To stretch the content on whole cell
+   * use [AlignX.FILL]/[AlignY.FILL]/[Align.FILL]. For setting both horizontal and vertical alignment use [Align] constants or
+   * overloaded plus operator like `align(AlignX.LEFT + AlignY.TOP)`. Default alignment is [AlignX.LEFT] + [AlignY.CENTER].
+   *
+   * In case the cell should occupy all available width or height in parent mark the column as [resizableColumn]
+   * or the row as [Row.resizableRow] (or both if needed).
    *
    * @see [resizableColumn]
    * @see [Constraints.horizontalAlign]
    */
-  fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
-
-  /**
-   * Sets vertical alignment of content inside the cell, [VerticalAlign.CENTER] by default
-   * Use [VerticalAlign.FILL] to stretch the content on whole cell height. In case the cell should occupy all
-   * available height in parent mark the row as [Row.resizableRow]
-   *
-   * @see [Row.resizableRow]
-   * @see [Constraints.verticalAlign]
-   */
-  fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
+  fun align(align: Align): CellBase<T>
 
   /**
    * Marks column of the cell as resizable: the column occupies all extra horizontal space in parent and changes size together with parent.
    * It's possible to have several resizable columns, which means extra space is shared between them.
    * There is no need to set resizable for cells in different rows but in the same column: it has no additional effect.
-   * Note that horizontal size and placement of component in columns are managed by [horizontalAlign]
+   * Note that alignment inside the cell is managed by [align] method
    *
    * @see [Grid.resizableColumns]
    */

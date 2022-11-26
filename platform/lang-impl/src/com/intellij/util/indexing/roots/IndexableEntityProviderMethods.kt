@@ -8,14 +8,17 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
+import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 object IndexableEntityProviderMethods {
   fun createIterators(entity: ModuleEntity,
@@ -31,8 +34,7 @@ object IndexableEntityProviderMethods {
   }
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
-    @Suppress("DEPRECATION")
-    if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
+    if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       if (entity.isModuleUnloaded(entityStorage)) return emptyList()
       val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
@@ -70,5 +72,9 @@ object IndexableEntityProviderMethods {
     }?.run {
       LibraryIndexableFilesIteratorImpl.createIteratorList(this)
     } ?: emptyList()
+  }
+
+  fun getExcludedFiles(entity: ContentRootEntity): List<VirtualFile> {
+    return ContainerUtil.mapNotNull(entity.excludedUrls) { param -> param.url.virtualFile }
   }
 }

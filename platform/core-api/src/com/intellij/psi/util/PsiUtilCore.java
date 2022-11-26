@@ -393,6 +393,9 @@ public class PsiUtilCore {
     return name1.compareToIgnoreCase(name2);
   }
 
+  /**
+   * Returns whether the element has a child that is an instance of {@link PsiErrorElement} or not.
+   */
   public static boolean hasErrorElementChild(@NotNull PsiElement element) {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiErrorElement) return true;
@@ -540,7 +543,6 @@ public class PsiUtilCore {
    * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();

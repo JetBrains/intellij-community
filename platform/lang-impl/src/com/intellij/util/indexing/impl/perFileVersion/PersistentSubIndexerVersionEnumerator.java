@@ -2,7 +2,9 @@
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,9 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
   private volatile int myNextVersion;
   private volatile int myWrittenNextVersion;
 
+  // only initialized on first request to valueOf()
+  private volatile IntObjectLRUMap<Ref<SubIndexerVersion>> myValueOfCache = null;
+
   public PersistentSubIndexerVersionEnumerator(@NotNull File file,
                                                @NotNull KeyDescriptor<SubIndexerVersion> subIndexerTypeDescriptor) throws IOException {
     myFile = file;
@@ -64,13 +69,29 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
    * should not be used in production code, only testing purposes
    */
   public SubIndexerVersion valueOf(int idx) throws IOException {
+    if (myValueOfCache == null) {
+      synchronized (this) {
+        if (myValueOfCache == null) {
+          myValueOfCache = new IntObjectLRUMap<>(256);
+        }
+      }
+    }
+    synchronized (this) {
+      var cached = myValueOfCache.getEntry(idx);
+      if (cached != null) return cached.value.get();
+    }
+    SubIndexerVersion result = null;
     for (SubIndexerVersion version : myMap.getAllKeysWithExistingMapping()) {
       Integer versionIdx = myMap.get(version);
       if (Comparing.equal(idx, versionIdx)) {
-        return version;
+        result = version;
+        break;
       }
     }
-    return null;
+    synchronized (this) {
+      myValueOfCache.putEntry(new IntObjectLRUMap.MapEntry<>(idx, Ref.create(result)));
+    }
+    return result;
   }
 
   private void init() throws IOException {

@@ -77,11 +77,20 @@ public final class CodeStyle {
    * A shorter way to get language-specific settings it to use one of the methods {@link #getLanguageSettings(PsiFile)}
    * or {@link #getLanguageSettings(PsiFile, Language)}.
    *
-   * @param file The file to get code style settings for. The method may substitute it with an associated PSI,
-   *             see {@link #getSettingsPsi(PsiFile)}
+   * @param file The file to get code style settings for.
    * @return The current root code style settings associated with the file or default settings if the file is invalid.
    */
   @NotNull
+  public static CodeStyleSettings getSettings(@NotNull VirtualFile file, @NotNull Project project) {
+    @SuppressWarnings("TestOnlyProblems")
+    CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
+    if (tempSettings != null) {
+      return tempSettings;
+    }
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
+    return cachedSettings != null ? cachedSettings : getSettings(project);
+  }
+
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     final Project project = file.getProject();
     @SuppressWarnings("TestOnlyProblems")
@@ -94,7 +103,11 @@ public final class CodeStyle {
     if (settingsFile == null) {
       return getSettings(project);
     }
-    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(settingsFile);
+    VirtualFile virtualFile = settingsFile.getVirtualFile();
+    if (virtualFile == null) {
+      return getSettings(project);
+    }
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(virtualFile);
     return cachedSettings != null ? cachedSettings : getSettings(project);
   }
 
@@ -130,8 +143,9 @@ public final class CodeStyle {
 
   public static CodeStyleSettings getSettings(@NotNull Editor editor) {
     Project project = editor.getProject();
-    if (project != null) {
-      return getSettings(project, editor.getDocument());
+    VirtualFile file = editor.getVirtualFile();
+    if (file != null && project != null) {
+      return getSettings(file, project);
     }
     return getDefaultSettings();
   }

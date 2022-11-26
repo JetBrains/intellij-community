@@ -201,6 +201,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/autoPopup/AutopopupInFunExtensionReceiver.kt");
             }
 
+            @TestMetadata("FunInterface.kt")
+            public void testFunInterface() throws Exception {
+                runTest("../testData/basic/common/autoPopup/FunInterface.kt");
+            }
+
             @TestMetadata("GenericExtensionFunTypeArgument.kt")
             public void testGenericExtensionFunTypeArgument() throws Exception {
                 runTest("../testData/basic/common/autoPopup/GenericExtensionFunTypeArgument.kt");
@@ -1247,6 +1252,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/namedArguments/OnlyNamedArguments.kt");
             }
 
+            @TestMetadata("ParamsFromSingleUnapplicableOverload.kt")
+            public void testParamsFromSingleUnapplicableOverload() throws Exception {
+                runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
+            }
+
             @TestMetadata("WithParameterExpression.kt")
             public void testWithParameterExpression() throws Exception {
                 runTest("../testData/basic/common/namedArguments/WithParameterExpression.kt");
@@ -2249,6 +2259,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
             }
 
+            @TestMetadata("EnumValuesMethodLowerPriority.kt")
+            public void testEnumValuesMethodLowerPriority() throws Exception {
+                runTest("../testData/basic/common/EnumValuesMethodLowerPriority.kt");
+            }
+
+            @TestMetadata("EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt")
+            public void testEnumValuesMethodUsualPriorityWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt");
+            }
+
             @TestMetadata("ExtendClassName.kt")
             public void testExtendClassName() throws Exception {
                 runTest("../testData/basic/common/ExtendClassName.kt");
@@ -3221,6 +3241,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/java/ExtensionFromStandardLibrary.kt");
             }
 
+            @TestMetadata("FlowCollectMethodLowerPriority.kt")
+            public void testFlowCollectMethodLowerPriority() throws Exception {
+                runTest("../testData/basic/java/FlowCollectMethodLowerPriority.kt");
+            }
+
             @TestMetadata("InPackage.kt")
             public void testInPackage() throws Exception {
                 runTest("../testData/basic/java/InPackage.kt");
@@ -3289,6 +3314,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("PackageDirective.kt")
             public void testPackageDirective() throws Exception {
                 runTest("../testData/basic/java/PackageDirective.kt");
+            }
+
+            @TestMetadata("ReadlineMethodLowerPriority.kt")
+            public void testReadlineMethodLowerPriority() throws Exception {
+                runTest("../testData/basic/java/ReadlineMethodLowerPriority.kt");
+            }
+
+            @TestMetadata("ReadlineMethodUsualPriorityInInOldVersions.kt")
+            public void testReadlineMethodUsualPriorityInInOldVersions() throws Exception {
+                runTest("../testData/basic/java/ReadlineMethodUsualPriorityInInOldVersions.kt");
             }
 
             @TestMetadata("SAMAdaptersStatic.kt")

@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.calls.util.getFirstArgumentExpression
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getFirstArgumentExpression
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -90,14 +90,15 @@ internal object CoroutineBlockingCallInspectionUtils {
 
     const val BLOCKING_EXECUTOR_ANNOTATION = "org.jetbrains.annotations.BlockingExecutor"
     const val NONBLOCKING_EXECUTOR_ANNOTATION = "org.jetbrains.annotations.NonBlockingExecutor"
-    const val DISPATCHERS_FQN = "kotlinx.coroutines.Dispatchers"
+    private const val DISPATCHERS_FQN = "kotlinx.coroutines.Dispatchers"
     const val IO_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.IO"
     const val MAIN_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Main"
     const val DEFAULT_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Default"
     const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
     const val COROUTINE_CONTEXT = "kotlin.coroutines.CoroutineContext"
-    const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"
+    private const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"
     const val FLOW_PACKAGE_FQN = "kotlinx.coroutines.flow"
-    const val FLOW_FQN = "kotlinx.coroutines.flow.Flow"
+    private const val FLOW_FQN = "kotlinx.coroutines.flow.Flow"
     const val WITH_CONTEXT_FQN = "kotlinx.coroutines.withContext"
+    const val COROUTINE_NAME = "kotlinx.coroutines.CoroutineName"
 }

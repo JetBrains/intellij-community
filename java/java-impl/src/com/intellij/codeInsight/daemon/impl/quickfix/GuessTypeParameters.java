@@ -244,16 +244,12 @@ public class GuessTypeParameters {
   }
 
   private static boolean matches(@NotNull PsiType type, @NotNull PsiType expectedType, @Type int kind) {
-    switch (kind) {
-      case TYPE_STRICTLY:
-        return type.equals(expectedType);
-      case TYPE_OR_SUBTYPE:
-        return expectedType.isAssignableFrom(type);
-      case TYPE_OR_SUPERTYPE:
-        return type.isAssignableFrom(expectedType);
-      default:
-        return false;
-    }
+    return switch (kind) {
+      case TYPE_STRICTLY -> type.equals(expectedType);
+      case TYPE_OR_SUBTYPE -> expectedType.isAssignableFrom(type);
+      case TYPE_OR_SUPERTYPE -> type.isAssignableFrom(expectedType);
+      default -> false;
+    };
   }
 
   private static boolean hasNullSubstitutions(@NotNull PsiSubstitutor substitutor) {

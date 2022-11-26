@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
@@ -28,6 +29,6 @@ public class ToolbarClicksCollector extends CounterUsagesCollector {
   public static void record(@NotNull AnAction action, String place, @NotNull InputEvent inputEvent, @NotNull DataContext dataContext) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       inputEvent, place, null, dataContext, false, true);
-    ActionsCollectorImpl.record(CLICKED, event.getProject(), action, event, null);
+    ActionsCollectorImpl.record(CLICKED, event.getProject(), action, event, (list) -> Unit.INSTANCE);
   }
 }

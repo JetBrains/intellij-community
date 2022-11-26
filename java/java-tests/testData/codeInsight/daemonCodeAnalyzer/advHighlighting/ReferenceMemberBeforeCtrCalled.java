@@ -20,14 +20,14 @@ class B extends A {
   }
 
   B(String s) {
-    super(<error descr="Cannot reference 'B.db' before supertype constructor has been called">db</error>(1) );
+    super(<error descr="Cannot reference 'B.db()' before supertype constructor has been called">db</error>(1) );
   }
 
   B(int i, int j) {
-    super(<error descr="Cannot reference 'A.f' before supertype constructor has been called">f</error>());
+    super(<error descr="Cannot reference 'A.f()' before supertype constructor has been called">f</error>());
   }
   B(int i, int j, int k) {
-    super(<error descr="Cannot reference 'A.f' before supertype constructor has been called">super.f</error>());
+    super(<error descr="Cannot reference 'A.f()' before supertype constructor has been called">super.f</error>());
   }
 
   B(String s, int i) {
@@ -146,7 +146,7 @@ class Outer {
      return null;
     }
     UseIt(int x) {
-      <error descr="Cannot reference 'UseIt.geto' before supertype constructor has been called">geto</error>().super();
+      <error descr="Cannot reference 'UseIt.geto()' before supertype constructor has been called">geto</error>().super();
     }
     UseIt(Outer x) {
       <error descr="Cannot reference 'this' before supertype constructor has been called">this</error>.super();

@@ -11,6 +11,7 @@ import com.intellij.compiler.server.PortableCachesLoadListener
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -44,8 +45,8 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceS
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
@@ -235,11 +236,12 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
 
     fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? {
         if (!isServiceEnabledFor(element)) return null
+        val originalElement = element.unwrapped ?: return null
 
         return runActionSafe("scope with code references") {
-            CachedValuesManager.getCachedValue(element) {
+            CachedValuesManager.getCachedValue(originalElement) {
                 CachedValueProvider.Result.create(
-                    buildScopeWithReferences(referentFiles(element), element),
+                    buildScopeWithReferences(referentFiles(originalElement), originalElement),
                     PsiModificationTracker.MODIFICATION_COUNT,
                     this,
                 )
@@ -458,22 +460,21 @@ private fun executeOnBuildThread(compilationFinished: () -> Unit): Unit =
         BuildManager.getInstance().runCommand(compilationFinished)
     }
 
-private fun extractFqNames(element: PsiElement): List<FqName>? {
-    extractFqName(element)?.let { return listOf(it) }
-    return when (element) {
-        is PsiMethod -> extractFqNamesFromPsiMethod(element)
-        is KtParameter -> extractFqNamesFromParameter(element)
+private fun extractFqNames(element: PsiElement): List<FqName>? = when (element) {
+    is PsiMethod -> extractFqNamesFromPsiMethod(element)
+    is KtParameter -> extractFqNamesFromParameter(element)
+    is KtObjectDeclaration -> extractFqNamesFromObject(element)
+    else -> when (element) {
+        is KtConstructor<*> -> element.getContainingClassOrObject().fqName
+        is KtClass, is KtNamedFunction, is KtProperty, is PsiClass, is PsiField -> element.kotlinFqName
         else -> null
-    }
+    }?.let(::listOf)
 }
 
-private fun extractFqName(element: PsiElement): FqName? = when (element) {
-    is KtClassOrObject, is PsiClass -> element.kotlinFqName
-    is KtConstructor<*> -> element.getContainingClassOrObject().fqName
-    is KtNamedFunction -> element.fqName
-    is KtProperty -> element.fqName
-    is PsiField -> element.kotlinFqName
-    else -> null
+fun extractFqNamesFromObject(objectDeclaration: KtObjectDeclaration): List<FqName>? {
+    val fqName = objectDeclaration.fqName ?: return null
+    if (!objectDeclaration.isCompanion()) return listOf(fqName)
+    return listOf(fqName, fqName.child(Name.identifier("invoke")))
 }
 
 private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName>? {

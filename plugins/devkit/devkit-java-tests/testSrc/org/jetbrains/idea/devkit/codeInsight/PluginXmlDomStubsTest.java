@@ -31,65 +31,67 @@ public class PluginXmlDomStubsTest extends DomStubTest {
 
   public void testStubs() {
     doBuilderTest("pluginXmlStubs.xml",
-                  "File:idea-plugin\n" +
-                  "  Element:idea-plugin\n" +
-                  "    Attribute:package:idea.plugin.package\n" +
-                  "    Element:id:com.intellij.myPlugin\n" +
-                  "    Element:name:pluginName\n" +
-                  "    Element:depends:anotherPlugin\n" +
-                  "      Attribute:config-file:anotherPlugin.xml\n" +
-                  "      Attribute:optional:true\n" +
-                  "    Element:module\n" +
-                  "      Attribute:value:myModule\n" +
-                  "    Element:content\n" +
-                  "      Element:module\n" +
-                  "        Attribute:name:module.name\n" +
-                  "    Element:dependencies\n" +
-                  "      Element:module\n" +
-                  "        Attribute:name:dependencies.module\n" +
-                  "      Element:plugin\n" +
-                  "        Attribute:id:dependencies.plugin.id\n" +
-                  "    Element:resource-bundle:MyResourceBundle\n" +
-                  "    Element:idea-version\n" +
-                  "      Attribute:since-build:sinceBuildValue\n" +
-                  "      Attribute:until-build:untilBuildValue\n" +
-                  "    Element:extensionPoints\n" +
-                  "      Element:extensionPoint\n" +
-                  "        Attribute:name:myEP\n" +
-                  "        Attribute:interface:SomeInterface\n" +
-                  "        Attribute:dynamic:true\n" +
-                  "        Element:with\n" +
-                  "          Attribute:attribute:attributeName\n" +
-                  "          Attribute:implements:SomeImplements\n" +
-                  "      Element:extensionPoint\n" +
-                  "        Attribute:qualifiedName:qualifiedName\n" +
-                  "        Attribute:beanClass:BeanClass\n" +
-                  "    Element:extensions\n" +
-                  "      Attribute:defaultExtensionNs:com.intellij\n" +
-                  "    Element:extensions\n" +
-                  "      Attribute:defaultExtensionNs:defaultExtensionNs\n" +
-                  "      Attribute:xmlns:extensionXmlNs\n" +
-                  "    Element:actions\n" +
-                  "      Attribute:resource-bundle:ActionsResourceBundle\n" +
-                  "      Element:action\n" +
-                  "        Attribute:id:actionId\n" +
-                  "        Attribute:text:actionText\n" +
-                  "        Attribute:description:descriptionText\n" +
-                  "        Attribute:popup:false\n" +
-                  "      Element:group\n" +
-                  "        Attribute:id:groupId\n" +
-                  "        Attribute:description:groupDescriptionText\n" +
-                  "        Attribute:text:groupText\n" +
-                  "        Attribute:popup:true\n" +
-                  "        Element:action\n" +
-                  "          Attribute:id:groupAction\n" +
-                  "          Attribute:text:groupActionText\n" +
-                  "          Attribute:description:groupActionDescriptionText\n" +
-                  "        Element:group\n" +
-                  "          Attribute:id:nestedGroup\n" +
-                  "          Element:action\n" +
-                  "            Attribute:id:nestedGroupActionId\n" +
-                  "            Attribute:text:nestedGroupActionText\n");
+                  """
+                    File:idea-plugin
+                      Element:idea-plugin
+                        Attribute:package:idea.plugin.package
+                        Element:id:com.intellij.myPlugin
+                        Element:name:pluginName
+                        Element:depends:anotherPlugin
+                          Attribute:config-file:anotherPlugin.xml
+                          Attribute:optional:true
+                        Element:module
+                          Attribute:value:myModule
+                        Element:content
+                          Element:module
+                            Attribute:name:module.name
+                        Element:dependencies
+                          Element:module
+                            Attribute:name:dependencies.module
+                          Element:plugin
+                            Attribute:id:dependencies.plugin.id
+                        Element:resource-bundle:MyResourceBundle
+                        Element:idea-version
+                          Attribute:since-build:sinceBuildValue
+                          Attribute:until-build:untilBuildValue
+                        Element:extensionPoints
+                          Element:extensionPoint
+                            Attribute:name:myEP
+                            Attribute:interface:SomeInterface
+                            Attribute:dynamic:true
+                            Element:with
+                              Attribute:attribute:attributeName
+                              Attribute:implements:SomeImplements
+                          Element:extensionPoint
+                            Attribute:qualifiedName:qualifiedName
+                            Attribute:beanClass:BeanClass
+                        Element:extensions
+                          Attribute:defaultExtensionNs:com.intellij
+                        Element:extensions
+                          Attribute:defaultExtensionNs:defaultExtensionNs
+                          Attribute:xmlns:extensionXmlNs
+                        Element:actions
+                          Attribute:resource-bundle:ActionsResourceBundle
+                          Element:action
+                            Attribute:id:actionId
+                            Attribute:text:actionText
+                            Attribute:description:descriptionText
+                            Attribute:popup:false
+                          Element:group
+                            Attribute:id:groupId
+                            Attribute:description:groupDescriptionText
+                            Attribute:text:groupText
+                            Attribute:popup:true
+                            Element:action
+                              Attribute:id:groupAction
+                              Attribute:text:groupActionText
+                              Attribute:description:groupActionDescriptionText
+                            Element:group
+                              Attribute:id:nestedGroup
+                              Element:action
+                                Attribute:id:nestedGroupActionId
+                                Attribute:text:nestedGroupActionText
+                    """);
   }
 
   public void testXInclude() {

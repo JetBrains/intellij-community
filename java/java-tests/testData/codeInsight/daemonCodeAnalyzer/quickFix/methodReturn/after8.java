@@ -1,4 +1,4 @@
-// "Make 'call' return 'int'" "true"
+// "Make 'call()' return 'int'" "true"
 public class a implements Callable<Integer> {
   public Integer call() {
     return 42;

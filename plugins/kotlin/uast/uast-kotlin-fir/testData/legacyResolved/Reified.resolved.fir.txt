@@ -7,7 +7,7 @@ UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = T) -> nu
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> Decompiled_Method: getJavaClass
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = getSystemService) -> null: null
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> UQualifiedReferenceExpression -> Decompiled_Method: getJavaClass
-UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: StringCompanionObject
+UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> Decompiled_Method: getJavaClass
 UTypeReferenceExpression (name = test.pkg.Context) -> USimpleNameReferenceExpression (identifier = Context) -> Kotlin_Light_Class:class Context {
     inline fun <reified T> ownSystemService1() = getSystemService(T::class.java)
@@ -23,5 +23,5 @@ UTypeReferenceExpression (name = test.pkg.Context) -> USimpleNameReferenceExpres
 }: Context
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = getSystemService) -> null: null
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> UQualifiedReferenceExpression -> Decompiled_Method: getJavaClass
-UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: StringCompanionObject
+UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> Decompiled_Method: getJavaClass

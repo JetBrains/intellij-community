@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.dvcs.repo.VcsRepositoryManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -19,7 +20,6 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
@@ -34,15 +34,14 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
   private static final String INCOMING_WIDGET_ID = "InHgIncomingOutgoingWidget";
   private static final String OUTGOING_WIDGET_ID = "OutHgIncomingOutgoingWidget";
 
-  @NotNull private final HgVcs myVcs;
+  private final @NotNull HgVcs myVcs;
   private final boolean myIsIncoming;
-  @NotNull private final Icon myEnabledIcon;
-  @NotNull private final Icon myDisabledIcon;
-
-  private volatile @Nls String myTooltip = "";
+  private final @NotNull Icon myEnabledIcon;
+  private final @NotNull Icon myDisabledIcon;
+  private volatile @NlsContexts.Tooltip String myTooltip = "";
   private Icon myCurrentIcon;
 
-  public HgIncomingOutgoingWidget(@NotNull HgVcs vcs, boolean isIncoming) {
+  HgIncomingOutgoingWidget(@NotNull HgVcs vcs, boolean isIncoming) {
     super(vcs.getProject());
     myIsIncoming = isIncoming;
     myVcs = vcs;
@@ -68,9 +67,8 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     return new HgIncomingOutgoingWidget(myVcs, myIsIncoming);
   }
 
-  @NotNull
   @Override
-  public String ID() {
+  public @NotNull String ID() {
     return myIsIncoming ? INCOMING_WIDGET_ID : OUTGOING_WIDGET_ID;
   }
 
@@ -120,9 +118,8 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     });
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return myCurrentIcon;
   }
 
@@ -167,7 +164,7 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     }
   }
 
-  private static abstract class MyWidgetFactory implements StatusBarWidgetFactory {
+  private abstract static class MyWidgetFactory implements StatusBarWidgetFactory {
     private final boolean myIsIncoming;
 
     protected MyWidgetFactory(boolean isIncoming) {
@@ -186,11 +183,6 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     }
 
     @Override
-    public void disposeWidget(@NotNull StatusBarWidget widget) {
-      Disposer.dispose(widget);
-    }
-
-    @Override
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return true;
     }
@@ -201,10 +193,8 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     }
 
     @Override
-    public @Nls @NotNull String getDisplayName() {
-      return myIsIncoming ? HgBundle.message("hg4idea.status.bar.incoming.widget.name")
-                          : HgBundle.message("hg4idea.status.bar.outgoing.widget.name");
+    public @NotNull String getDisplayName() {
+      return myIsIncoming ? HgBundle.message("hg4idea.status.bar.incoming.widget.name") : HgBundle.message("hg4idea.status.bar.outgoing.widget.name");
     }
   }
 }
-

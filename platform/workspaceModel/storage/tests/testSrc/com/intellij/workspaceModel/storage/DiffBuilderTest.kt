@@ -2,108 +2,106 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entities.test.addChildEntity
-import com.intellij.workspaceModel.storage.entities.test.addChildSampleEntity
-import com.intellij.workspaceModel.storage.entities.test.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.test.addParentEntity
-import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.*
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
-import org.hamcrest.CoreMatchers
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
-import org.junit.Assert.*
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExpectedException
-
-private fun MutableEntityStorage.applyDiff(anotherBuilder: MutableEntityStorage): EntityStorage {
-  val builder = createBuilderFrom(this)
-  builder.addDiff(anotherBuilder)
-  val storage =  builder.toSnapshot() as EntityStorageSnapshotImpl
-  storage.assertConsistency()
-  return storage
-}
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import java.util.*
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class DiffBuilderTest {
-  @JvmField
-  @Rule
-  val expectedException = ExpectedException.none()
+  private lateinit var target: MutableEntityStorageImpl
+  private var shaker = -1L
 
-  @Test
+  private fun MutableEntityStorage.applyDiff(anotherBuilder: MutableEntityStorage): EntityStorage {
+    val builder = createBuilderFrom(this)
+    builder.upgradeAddDiffEngine = { it.shaker = shaker }
+    builder.addDiff(anotherBuilder)
+    val storage = builder.toSnapshot() as EntityStorageSnapshotImpl
+    storage.assertConsistency()
+    return storage
+  }
+
+  @BeforeEach
+  internal fun setUp(info: RepetitionInfo) {
+    target = createEmptyBuilder()
+    // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
+    shaker = Random(info.currentRepetition.toLong()).nextLong()
+    target.upgradeAddDiffEngine = { it.shaker = shaker }
+  }
+
+  @RepeatedTest(10)
   fun `add entity`() {
     val source = createEmptyBuilder()
     source.addSampleEntity("first")
-    val target = createEmptyBuilder()
     target.addSampleEntity("second")
     val storage = target.applyDiff(source)
     assertEquals(setOf("first", "second"), storage.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `remove entity`() {
-    val target = createEmptyBuilder()
     val entity = target.addSampleEntity("hello")
     val entity2 = target.addSampleEntity("hello")
     val source = createBuilderFrom(target.toSnapshot())
-    source.removeEntity(entity)
+    source.removeEntity(entity.from(source))
     val storage = target.applyDiff(source)
     assertEquals(entity2, storage.singleSampleEntity())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `modify entity`() {
-    val target = createEmptyBuilder()
     val entity = target.addSampleEntity("hello")
     val source = createBuilderFrom(target.toSnapshot())
-    source.modifyEntity(entity) {
+    source.modifyEntity(entity.from(source)) {
       stringProperty = "changed"
     }
     val storage = target.applyDiff(source)
     assertEquals("changed", storage.singleSampleEntity().stringProperty)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `remove removed entity`() {
-    val target = createEmptyBuilder()
     val entity = target.addSampleEntity("hello")
     val entity2 = target.addSampleEntity("hello")
     val source = createBuilderFrom(target.toSnapshot())
     target.removeEntity(entity)
     target.assertConsistency()
     source.assertConsistency()
-    source.removeEntity(entity)
+    source.removeEntity(entity.from(source))
     val storage = target.applyDiff(source)
     assertEquals(entity2, storage.singleSampleEntity())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `modify removed entity`() {
-    val target = createEmptyBuilder()
     val entity = target.addSampleEntity("hello")
     val source = createBuilderFrom(target.toSnapshot())
     target.removeEntity(entity)
     source.assertConsistency()
-    source.modifyEntity(entity) {
+    source.modifyEntity(entity.from(source)) {
       stringProperty = "changed"
     }
     val storage = target.applyDiff(source)
     assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class.java).toList())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `modify removed child entity`() {
-    val target = createEmptyBuilder()
     val parent = target.addParentEntity("parent")
     val child = target.addChildEntity(parent, "child")
     val source = createBuilderFrom(target)
     target.removeEntity(child)
-    source.modifyEntity(parent) {
+    source.modifyEntity(parent.from(source)) {
       this.parentProperty = "new property"
     }
-    source.modifyEntity(child) {
+    source.modifyEntity(child.from(source)) {
       this.childProperty = "new property"
     }
 
@@ -114,23 +112,21 @@ class DiffBuilderTest {
     assertTrue(res.entities(XChildEntity::class.java).toList().isEmpty())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `remove modified entity`() {
-    val target = createEmptyBuilder()
     val entity = target.addSampleEntity("hello")
     val source = createBuilderFrom(target.toSnapshot())
     target.modifyEntity(entity) {
       stringProperty = "changed"
     }
-    source.removeEntity(entity)
+    source.removeEntity(entity.from(source))
     source.assertConsistency()
     val storage = target.applyDiff(source)
     assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class.java).toList())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `add entity with refs at the same slot`() {
-    val target = createEmptyBuilder()
     val source = createEmptyBuilder()
     source.addSampleEntity("Another entity")
     val parentEntity = target.addSampleEntity("hello")
@@ -146,10 +142,9 @@ class DiffBuilderTest {
     assertEquals(resultingStorage.entities(SampleEntity::class.java).last(), resultingStorage.entities(ChildSampleEntity::class.java).single().parentEntity)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `add remove and add with refs`() {
     val source = createEmptyBuilder()
-    val target = createEmptyBuilder()
     val parent = source.addSampleEntity("Another entity")
     source.addChildSampleEntity("String", parent)
 
@@ -170,7 +165,7 @@ class DiffBuilderTest {
     assertEquals(resultingStorage.entities(SampleEntity::class.java).last(), resultingStorage.entities(ChildSampleEntity::class.java).last().parentEntity)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `add dependency without changing entities`() {
     val source = createEmptyBuilder()
     val parent = source.addSampleEntity("Another entity")
@@ -193,7 +188,7 @@ class DiffBuilderTest {
     assertEquals(resultingStorage.entities(SampleEntity::class.java).single(), resultingStorage.entities(ChildSampleEntity::class.java).single().parentEntity)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `dependency to removed parent`() {
     val source = createEmptyBuilder()
     val parent = source.addParentEntity()
@@ -205,14 +200,14 @@ class DiffBuilderTest {
     source.applyDiff(target)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `modify child and parent`() {
     val source = createEmptyBuilder()
     val parent = source.addParentEntity()
     source.addChildEntity(parent)
 
     val target = createBuilderFrom(source)
-    target.modifyEntity(parent) {
+    target.modifyEntity(parent.from(target)) {
       this.parentProperty = "anotherValue"
     }
     source.addChildEntity(parent)
@@ -220,27 +215,27 @@ class DiffBuilderTest {
     source.applyDiff(target)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `remove parent in both difs with dependency`() {
     val source = createEmptyBuilder()
     val parent = source.addParentEntity()
 
     val target = createBuilderFrom(source)
     target.addChildWithOptionalParentEntity(parent)
-    target.removeEntity(parent)
+    target.removeEntity(parent.from(target))
     source.removeEntity(parent)
 
     source.applyDiff(target)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `remove parent in both diffs`() {
     val source = createEmptyBuilder()
     val parent = source.addParentEntity()
     val optionalChild = source.addChildWithOptionalParentEntity(null)
 
     val target = createBuilderFrom(source)
-    target.modifyEntity(optionalChild) {
+    target.modifyEntity(optionalChild.from(target)) {
       this.optionalParent = parent
     }
 
@@ -249,36 +244,38 @@ class DiffBuilderTest {
     source.applyDiff(target)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `adding duplicated persistent ids`() {
-    expectedException.expectCause(CoreMatchers.isA(AddDiffException::class.java))
-
     val source = createEmptyBuilder()
     val target = createBuilderFrom(source)
 
     target.addNamedEntity("Name")
     source.addNamedEntity("Name")
 
-    source.applyDiff(target)
+    val thrown = assertThrows<Throwable> {
+      source.applyDiff(target)
+    }
+    assertEquals(thrown.cause!!.javaClass, AddDiffException::class.java)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `modifying duplicated persistent ids`() {
-    expectedException.expectCause(CoreMatchers.isA(AddDiffException::class.java))
-
     val source = createEmptyBuilder()
     val namedEntity = source.addNamedEntity("Hello")
     val target = createBuilderFrom(source)
 
     source.addNamedEntity("Name")
-    target.modifyEntity(namedEntity) {
+    target.modifyEntity(namedEntity.from(target)) {
       this.myName = "Name"
     }
 
-    source.applyDiff(target)
+    val thrown = assertThrows<Throwable> {
+      source.applyDiff(target)
+    }
+    assertEquals(thrown.cause!!.javaClass, AddDiffException::class.java)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `checking external mapping`() {
     val target = createEmptyBuilder()
 
@@ -296,13 +293,12 @@ class DiffBuilderTest {
     assertEquals(1, externalMapping.index.size)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `change source in diff`() {
-    val target = createEmptyBuilder()
     val sampleEntity = target.addSampleEntity("Prop", MySource)
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(sampleEntity) {
+    source.modifyEntity(sampleEntity.from(source)) {
       this.entitySource = AnotherSource
     }
 
@@ -315,16 +311,15 @@ class DiffBuilderTest {
     assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `change source and data in diff`() {
-    val target = createEmptyBuilder()
     val sampleEntity = target.addSampleEntity("Prop", MySource)
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(sampleEntity) {
+    source.modifyEntity(sampleEntity.from(source)) {
       this.entitySource = AnotherSource
     }
-    source.modifyEntity(sampleEntity) {
+    source.modifyEntity(sampleEntity.from(source)) {
       stringProperty = "Prop2"
     }
 
@@ -341,9 +336,8 @@ class DiffBuilderTest {
     assertEquals(AnotherSource, updatedEntity.entitySource)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `change source in target`() {
-    val target = createEmptyBuilder()
     val sampleEntity = target.addSampleEntity("Prop", MySource)
 
     val source = createBuilderFrom(target)
@@ -351,7 +345,7 @@ class DiffBuilderTest {
       this.entitySource = AnotherSource
     }
 
-    source.modifyEntity(sampleEntity) {
+    source.modifyEntity(sampleEntity.from(source)) {
       this.stringProperty = "Updated"
     }
 
@@ -364,10 +358,9 @@ class DiffBuilderTest {
     assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `adding parent with child and shifting`() {
     val parentAndChildProperty = "Bound"
-    val target = createEmptyBuilder()
     target.addChildWithOptionalParentEntity(null, "Existing")
 
     val source = createEmptyBuilder()
@@ -381,10 +374,9 @@ class DiffBuilderTest {
     assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `adding parent with child and shifting and later connecting`() {
     val parentAndChildProperty = "Bound"
-    val target = createEmptyBuilder()
     target.addChildWithOptionalParentEntity(null, "Existing")
 
     val source = createEmptyBuilder()
@@ -401,10 +393,9 @@ class DiffBuilderTest {
     assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `adding parent with child and shifting and later child connecting`() {
     val parentAndChildProperty = "Bound"
-    val target = createEmptyBuilder()
     target.addChildWithOptionalParentEntity(null, "Existing")
 
     val source = createEmptyBuilder()
@@ -421,7 +412,7 @@ class DiffBuilderTest {
     assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `removing non-existing entity while adding the new one`() {
     val initial = createEmptyBuilder()
     val toBeRemoved = initial.addSampleEntity("En1")
@@ -433,14 +424,14 @@ class DiffBuilderTest {
 
     // In the incorrect implementation remove event will remove added entity
     source.addSampleEntity("En2")
-    source.removeEntity(toBeRemoved)
+    source.removeEntity(toBeRemoved.from(source))
 
     target.addDiff(source)
 
     assertOneElement(target.entities(SampleEntity::class.java).toList())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `remove entity and reference`() {
     val initial = createEmptyBuilder()
     val parentEntity = initial.addParentEntity()
@@ -448,15 +439,15 @@ class DiffBuilderTest {
 
     val source = createBuilderFrom(initial)
 
-    source.modifyEntity(childEntity) {
+    source.modifyEntity(childEntity.from(source)) {
       this.childProperty = "newProp"
     }
 
-    source.modifyEntity(parentEntity) {
+    source.modifyEntity(parentEntity.from(source)) {
       this.optionalChildren = emptyList()
     }
 
-    source.removeEntity(childEntity)
+    source.removeEntity(childEntity.from(source))
 
     val res = initial.applyDiff(source)
 
@@ -465,7 +456,7 @@ class DiffBuilderTest {
     assertTrue(newParent.optionalChildren.toList().isEmpty())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `remove reference to created entity`() {
     val initial = createEmptyBuilder()
     val parentEntity = initial.addParentEntity()
@@ -474,7 +465,7 @@ class DiffBuilderTest {
 
     source.addChildWithOptionalParentEntity(parentEntity)
 
-    source.modifyEntity(parentEntity) {
+    source.modifyEntity(parentEntity.from(source)) {
       this.optionalChildren = emptyList()
     }
 
@@ -483,5 +474,92 @@ class DiffBuilderTest {
     assertEquals(2, res.entities(XChildWithOptionalParentEntity::class.java).toList().size)
     val newParent = assertOneElement(res.entities(XParentEntity::class.java).toList())
     assertTrue(newParent.optionalChildren.toList().isEmpty())
+  }
+
+  @RepeatedTest(10)
+  fun `add parent with children`() {
+    target addEntity ParentMultipleEntity("Parent", MySource)
+    val source = createBuilderFrom(target)
+    source.modifyEntity(source.entities(ParentMultipleEntity::class.java).single()) {
+      this.children = listOf(
+        ChildMultipleEntity("child1", MySource),
+        ChildMultipleEntity("child2", MySource),
+      )
+    }
+
+    val result = target.applyDiff(source)
+
+    assertEquals(2, result.entities(ParentMultipleEntity::class.java).single().children.size)
+  }
+
+  @RepeatedTest(10)
+  fun `add parent with children 2`() {
+    target addEntity ParentMultipleEntity("Parent", MySource)
+    val source = createBuilderFrom(target)
+    val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
+    source.modifyEntity(parentToModify) {
+      this.children = listOf(
+        ChildMultipleEntity("child1", MySource),
+        ChildMultipleEntity("child2", MySource),
+      )
+    }
+
+    val result = target.applyDiff(source)
+
+    assertEquals(2, result.entities(ParentMultipleEntity::class.java).single().children.size)
+  }
+
+  @RepeatedTest(10)
+  fun `add parent with children 3`() {
+    target addEntity ParentMultipleEntity("Parent", MySource)
+    val source = createBuilderFrom(target)
+    val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
+    source.modifyEntity(parentToModify) {
+      this.children = listOf(
+        ChildMultipleEntity("child1", MySource),
+      )
+    }
+
+    val result = target.applyDiff(source)
+
+    assertEquals(1, result.entities(ParentMultipleEntity::class.java).single().children.size)
+  }
+
+  @RepeatedTest(10)
+  fun `check one to one connection change`() {
+    var builder = MutableEntityStorage.create()
+    builder addEntity OoParentEntity("aaa", MySource) {
+      child = OoChildEntity("bbb", MySource)
+    }
+    val snapshot = builder.toSnapshot()
+    builder = snapshot.toBuilder()
+
+    val parentEntity = builder.entities(OoParentEntity::class.java).single()
+    builder.modifyEntity(parentEntity) {
+      this.parentProperty = "eee"
+    }
+    parentEntity.child?.let { builder.removeEntity(it) }
+    builder.modifyEntity(parentEntity) {
+      this.child = OoChildEntity("ccc", MySource)
+    }
+
+    snapshot.toBuilder().addDiff(builder)
+  }
+
+  @RepeatedTest(10)
+  fun `check one to one connection change 2`() {
+    var builder = MutableEntityStorage.create()
+    builder addEntity OoParentEntity("aaa", MySource)
+    val snapshot = builder.toSnapshot()
+    builder = snapshot.toBuilder()
+
+    val parentEntity = builder.entities(OoParentEntity::class.java).single()
+    val newChild = OoChildEntity("ccc", MySource)
+    builder.modifyEntity(parentEntity) {
+      this.child = newChild
+    }
+    builder.removeEntity(newChild)
+
+    snapshot.toBuilder().addDiff(builder)
   }
 }

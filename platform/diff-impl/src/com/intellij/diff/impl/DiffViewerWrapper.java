@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * WARNING: This is not an extension point you are looking for.
  * <p/>
- * Please, consider using {@link com.intellij.diff.DiffTool}, {@link com.intellij.diff.DiffExtension} or introducing a better extension point into platform,
- * rather than adding second usage of this one.
+ * Please, consider using {@link com.intellij.diff.DiffTool}, {@link com.intellij.diff.DiffExtension}
+ * or introducing a better designed extension point into the platform, rather than adding a second usage of this one.
  */
 @ApiStatus.Internal
 public interface DiffViewerWrapper {

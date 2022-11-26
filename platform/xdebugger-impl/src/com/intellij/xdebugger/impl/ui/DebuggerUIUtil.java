@@ -36,7 +36,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -52,13 +51,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -441,20 +437,6 @@ public final class DebuggerUIUtil {
       res = valueNode.getRawValue();
     }
     return res;
-  }
-
-  /**
-   * @deprecated avoid, {@link XValue#calculateEvaluationExpression()} may produce side effects
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean hasEvaluationExpression(@NotNull XValue value) {
-    Promise<XExpression> promise = value.calculateEvaluationExpression();
-    try {
-      return promise.getState() == Promise.State.PENDING || promise.blockingGet(0) != null;
-    }
-    catch (ExecutionException | TimeoutException e) {
-      return true;
-    }
   }
 
   public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {

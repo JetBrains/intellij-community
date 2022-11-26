@@ -1027,7 +1027,7 @@ private val INDENT_RULES = arrayOf(
     strategy("Indices")
         .within(INDICES)
         .notForType(RBRACKET)
-        .set(Indent.getContinuationIndent(false)),
+        .continuationIf(KotlinCodeStyleSettings::CONTINUATION_INDENT_IN_ARGUMENT_LISTS),
 
     strategy("Binary expressions")
         .within(BINARY_EXPRESSIONS)

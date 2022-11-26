@@ -38,11 +38,11 @@ fun demoGroups(): DialogPanel {
                    "See how aligned Panel.rowsRange row")
     }
 
-    collapsibleGroup("Panel.collapsibleGroup") {
+    collapsibleGroup("Panel.collapsible&Group") {
       row("Panel.collapsibleGroup row:") {
         textField()
       }.rowComment("Panel.collapsibleGroup adds collapsible panel with independent grid, title and some vertical " +
-                   "space before/after the group")
+                   "space before/after the group. The group title is focusable via the Tab key and supports mnemonics")
     }
 
     var value = true

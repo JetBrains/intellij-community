@@ -6,8 +6,9 @@ import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.addSourceEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -187,9 +188,9 @@ class ExternalEntityMappingTest {
     val builder = createBuilderFrom(storage)
     val entity3 = builder.addSampleEntity("3")
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity3, 3)
-    builder.removeEntity(entity1)
+    builder.removeEntity(entity1.from(builder))
     val diff = MutableEntityStorage.from(storage)
-    diff.removeEntity(entity2)
+    diff.removeEntity(entity2.from(diff))
     builder.addDiff(diff)
     builder.removeEntity(entity3)
 
@@ -220,11 +221,11 @@ class ExternalEntityMappingTest {
     val builder = createBuilderFrom(storage)
     val entity3 = builder.addSampleEntity("3")
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity3, 3)
-    val entity1a = builder.modifyEntity(entity1) {
+    val entity1a = builder.modifyEntity(entity1.from(builder)) {
       stringProperty = "1a"
     }
     val diff = MutableEntityStorage.from(storage)
-    val entity2a = diff.modifyEntity(entity2) {
+    val entity2a = diff.modifyEntity(entity2.from(diff)) {
       stringProperty = "2a"
     }
     builder.addDiff(diff)
@@ -381,7 +382,7 @@ class ExternalEntityMappingTest {
     externalMapping.addMapping(fooEntity, 1)
 
     val replacement = createBuilderFrom(initialBuilder)
-    replacement.removeEntity(fooEntity)
+    replacement.removeEntity(fooEntity.from(replacement))
     assertNull(replacement.getMutableExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
@@ -515,12 +516,25 @@ class ExternalEntityMappingTest {
 
     val diff1 = createBuilderFrom(initialStorage)
     val diff2 = createBuilderFrom(initialStorage)
-    diff1.removeEntity(foo)
+    diff1.removeEntity(foo.from(diff1))
     diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 2)
     val updatedStorage = diff1.toSnapshot()
     val mergeBuilder = createBuilderFrom(updatedStorage)
     mergeBuilder.addDiff(diff2)
     val merged = mergeBuilder.toSnapshot()
     assertEmpty(merged.entities(SampleEntity::class.java).toList())
+  }
+
+  @Test
+  fun `check double mapping adding`() {
+    val initialBuilder = createEmptyBuilder()
+    val foo = initialBuilder.addSampleEntity("foo")
+    initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 1)
+    initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 2)
+    assertEquals(2, (((initialBuilder.getMutableExternalMapping<Int>(INDEX_ID) as MutableExternalEntityMappingImpl)
+      .indexLogBunches
+      .chain
+      .single() as MutableExternalEntityMappingImpl.IndexLogOperation.Changes)
+      .changes.values.single() as MutableExternalEntityMappingImpl.IndexLogRecord.Add<*>).data)
   }
 }

@@ -288,37 +288,19 @@ public final class JsonReaderEx implements Closeable {
       p = doPeek();
     }
 
-    switch (p) {
-      case PEEKED_BEGIN_OBJECT:
-        return JsonToken.BEGIN_OBJECT;
-      case PEEKED_END_OBJECT:
-        return JsonToken.END_OBJECT;
-      case PEEKED_BEGIN_ARRAY:
-        return JsonToken.BEGIN_ARRAY;
-      case PEEKED_END_ARRAY:
-        return JsonToken.END_ARRAY;
-      case PEEKED_SINGLE_QUOTED_NAME:
-      case PEEKED_DOUBLE_QUOTED_NAME:
-      case PEEKED_UNQUOTED_NAME:
-        return JsonToken.NAME;
-      case PEEKED_TRUE:
-      case PEEKED_FALSE:
-        return JsonToken.BOOLEAN;
-      case PEEKED_NULL:
-        return JsonToken.NULL;
-      case PEEKED_SINGLE_QUOTED:
-      case PEEKED_DOUBLE_QUOTED:
-      case PEEKED_UNQUOTED:
-      case PEEKED_BUFFERED:
-        return JsonToken.STRING;
-      case PEEKED_LONG:
-      case PEEKED_NUMBER:
-        return JsonToken.NUMBER;
-      case PEEKED_EOF:
-        return JsonToken.END_DOCUMENT;
-      default:
-        throw new AssertionError();
-    }
+    return switch (p) {
+      case PEEKED_BEGIN_OBJECT -> JsonToken.BEGIN_OBJECT;
+      case PEEKED_END_OBJECT -> JsonToken.END_OBJECT;
+      case PEEKED_BEGIN_ARRAY -> JsonToken.BEGIN_ARRAY;
+      case PEEKED_END_ARRAY -> JsonToken.END_ARRAY;
+      case PEEKED_SINGLE_QUOTED_NAME, PEEKED_DOUBLE_QUOTED_NAME, PEEKED_UNQUOTED_NAME -> JsonToken.NAME;
+      case PEEKED_TRUE, PEEKED_FALSE -> JsonToken.BOOLEAN;
+      case PEEKED_NULL -> JsonToken.NULL;
+      case PEEKED_SINGLE_QUOTED, PEEKED_DOUBLE_QUOTED, PEEKED_UNQUOTED, PEEKED_BUFFERED -> JsonToken.STRING;
+      case PEEKED_LONG, PEEKED_NUMBER -> JsonToken.NUMBER;
+      case PEEKED_EOF -> JsonToken.END_DOCUMENT;
+      default -> throw new AssertionError();
+    };
   }
 
   private int doPeek() {
@@ -357,29 +339,31 @@ public final class JsonReaderEx implements Closeable {
         }
       }
       int c = nextNonWhitespace(true);
-      switch (c) {
-        case '"':
-          return peeked = PEEKED_DOUBLE_QUOTED_NAME;
-        case '\'':
+      return peeked = switch (c) {
+        case '"' -> PEEKED_DOUBLE_QUOTED_NAME;
+        case '\'' -> {
           checkLenient();
-          return peeked = PEEKED_SINGLE_QUOTED_NAME;
-        case '}':
+          yield PEEKED_SINGLE_QUOTED_NAME;
+        }
+        case '}' -> {
           if (peekStack != JsonScope.NONEMPTY_OBJECT) {
-            return peeked = PEEKED_END_OBJECT;
+            yield PEEKED_END_OBJECT;
           }
           else {
             throw createParseError("Expected name");
           }
-        default:
+        }
+        default -> {
           checkLenient();
           position--; // Don't consume the first character in an unquoted string.
           if (isLiteral((char)c)) {
-            return peeked = PEEKED_UNQUOTED_NAME;
+            yield PEEKED_UNQUOTED_NAME;
           }
           else {
             throw createParseError("Expected name");
           }
-      }
+        }
+      };
     }
     else if (peekStack == JsonScope.DANGLING_NAME) {
       stack[stackSize - 1] = JsonScope.NONEMPTY_OBJECT;
@@ -547,7 +531,7 @@ public final class JsonReaderEx implements Closeable {
 
       char c = in.charAt(p + i);
       switch (c) {
-        case '-':
+        case '-' -> {
           if (last == NUMBER_CHAR_NONE) {
             negative = true;
             last = NUMBER_CHAR_SIGN;
@@ -558,30 +542,29 @@ public final class JsonReaderEx implements Closeable {
             continue;
           }
           return PEEKED_NONE;
-
-        case '+':
+        }
+        case '+' -> {
           if (last == NUMBER_CHAR_EXP_E) {
             last = NUMBER_CHAR_EXP_SIGN;
             continue;
           }
           return PEEKED_NONE;
-
-        case 'e':
-        case 'E':
+        }
+        case 'e', 'E' -> {
           if (last == NUMBER_CHAR_DIGIT || last == NUMBER_CHAR_FRACTION_DIGIT) {
             last = NUMBER_CHAR_EXP_E;
             continue;
           }
           return PEEKED_NONE;
-
-        case '.':
+        }
+        case '.' -> {
           if (last == NUMBER_CHAR_DIGIT) {
             last = NUMBER_CHAR_DECIMAL;
             continue;
           }
           return PEEKED_NONE;
-
-        default:
+        }
+        default -> {
           if (c < '0' || c > '9') {
             if (!isLiteral(c)) {
               break charactersOfNumber;
@@ -607,6 +590,7 @@ public final class JsonReaderEx implements Closeable {
           else if (last == NUMBER_CHAR_EXP_E || last == NUMBER_CHAR_EXP_SIGN) {
             last = NUMBER_CHAR_EXP_DIGIT;
           }
+        }
       }
     }
 
@@ -1266,7 +1250,7 @@ public final class JsonReaderEx implements Closeable {
         checkLenient();
         char peek = in.charAt(position);
         switch (peek) {
-          case '*':
+          case '*' -> {
             // skip a /* c-style comment */
             position++;
             if (!skipTo("*/")) {
@@ -1274,18 +1258,17 @@ public final class JsonReaderEx implements Closeable {
             }
             p = position + 2;
             l = limit;
-            continue;
-
-          case '/':
+          }
+          case '/' -> {
             // skip a // end-of-line comment
             position++;
             skipToEndOfLine();
             p = position;
             l = limit;
-            continue;
-
-          default:
+          }
+          default -> {
             return c;
+          }
         }
       }
       else if (c == '#') {
@@ -1371,8 +1354,8 @@ public final class JsonReaderEx implements Closeable {
     }
 
     char escaped = in.charAt(position++);
-    switch (escaped) {
-      case 'u':
+    return switch (escaped) {
+      case 'u' -> {
         if (position + 4 > limit) {
           throw createParseError("Unterminated escape sequence");
         }
@@ -1395,34 +1378,16 @@ public final class JsonReaderEx implements Closeable {
           }
         }
         position += 4;
-        return result;
-
-      case 't':
-        return '\t';
-
-      case 'b':
-        return '\b';
-
-      case 'n':
-        return '\n';
-
-      case 'r':
-        return '\r';
-
-      case 'f':
-        return '\f';
-
-      case '\n':
-        //lineNumber++;
-        //lineStart = pos;
-        // fall-through
-
-      case '\'':
-      case '"':
-      case '\\':
-      default:
-        return escaped;
-    }
+        yield result;
+      }
+      case 't' -> '\t';
+      case 'b' -> '\b';
+      case 'n' -> '\n';
+      case 'r' -> '\r';
+      case 'f' -> '\f';
+      //case '\n', '\'', '"', '\\',
+      default -> escaped;
+    };
   }
 
   /**

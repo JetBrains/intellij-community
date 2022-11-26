@@ -24,7 +24,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -34,7 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +42,6 @@ import java.util.HashSet;
 import java.util.Objects;
 
 public class IterateOverIterableIntention implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(IterateOverIterableIntention.class);
   private final @Nullable PsiExpression myExpression;
   private @IntentionName String myText;
 
@@ -64,7 +61,8 @@ public class IterateOverIterableIntention implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
-    if (template == null) return false;
+    if (template == null || template.isDeactivated()) return false;
+
     int offset = editor.getCaretModel().getOffset();
     int startOffset = offset;
     if (editor.getSelectionModel().hasSelection()) {
@@ -86,11 +84,6 @@ public class IterateOverIterableIntention implements IntentionAction {
     if (psiStatement != null) {
       startOffset = psiStatement.getTextRange().getStartOffset();
     }
-    if (template.isDeactivated() ||
-        (!TemplateManagerImpl.isApplicable(file, offset, template) &&
-         (!TemplateManagerImpl.isApplicable(file, startOffset, template)))) {
-      return false;
-    }
     PsiExpression expression = getIterableExpression(editor, file);
     if (expression == null) return false;
     if (ConstructionUtils.isEmptyCollectionInitializer(expression)) {
@@ -101,6 +94,13 @@ public class IterateOverIterableIntention implements IntentionAction {
       // new array without initializers: all elements are 0/null/false, so iterating doesn't make much sense
       return false;
     }
+
+    // we are checking Template applicability later, because it requires initialization of all (for all languages) template context types
+    if (!TemplateManagerImpl.isApplicable(file, offset, template) &&
+        !TemplateManagerImpl.isApplicable(file, startOffset, template)) {
+      return false;
+    }
+
     myText = JavaBundle.message("intention.name.iterate.over", Objects.requireNonNull(expression.getType()).getPresentableText());
     return true;
   }
@@ -169,7 +169,8 @@ public class IterateOverIterableIntention implements IntentionAction {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final PsiExpression iterableExpression = getIterableExpression(editor, file);
-      LOG.assertTrue(iterableExpression != null);
+      Logger.getInstance(IterateOverIterableIntention.class).assertTrue(iterableExpression != null);
+
       PsiElement element = PsiTreeUtil.skipSiblingsForward(iterableExpression, PsiWhiteSpace.class, PsiComment.class);
       if (PsiUtil.isJavaToken(element, JavaTokenType.SEMICOLON)) {
         element.delete();

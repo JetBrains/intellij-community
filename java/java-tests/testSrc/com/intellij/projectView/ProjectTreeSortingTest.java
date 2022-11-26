@@ -2,7 +2,6 @@
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.*;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
@@ -23,7 +22,7 @@ import java.util.Map;
 
 public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
   private ProjectView myProjectView;
-  private AbstractProjectViewPSIPane myPane;
+  private TestProjectViewPSIPane myPane;
   private boolean myOriginalManualOrder;
   private boolean myOriginalSortByType;
   private boolean myOriginalFoldersAlwaysOnTop;
@@ -65,28 +64,34 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
 
   public void testSortByName() {
     myProjectView.setSortByType(myPane.getId(), false);
-    assertTree("-sortByName\n" +
-               " a.java\n" +
-               " a-a.java\n" +
-               " a-b.java\n" +
-               " ab.java\n" +
-               " b.java\n");
+    assertTree("""
+                 -sortByName
+                  a.java
+                  a-a.java
+                  a-b.java
+                  ab.java
+                  b.java
+                 """);
   }
 
   public void testSortByType() {
     myProjectView.setSortByType(myPane.getId(), false);
-    assertTree("-sortByType\n" +
-               " a.java\n" +
-               " a.txt\n" +
-               " b.java\n" +
-               " b.txt\n");
+    assertTree("""
+                 -sortByType
+                  a.java
+                  a.txt
+                  b.java
+                  b.txt
+                 """);
 
     myProjectView.setSortByType(myPane.getId(), true);
-    assertTree("-sortByType\n" +
-               " a.java\n" +
-               " b.java\n" +
-               " a.txt\n" +
-               " b.txt\n");
+    assertTree("""
+                 -sortByType
+                  a.java
+                  b.java
+                  a.txt
+                  b.txt
+                 """);
   }
 
   public void testFoldersOnTop() {
@@ -94,68 +99,80 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     myProjectView.setSortByType(myPane.getId(), false);
 
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true);
-    assertTree("-foldersOnTop\n" +
-               " +b.java\n" +
-               " +b.txt\n" +
-               " a.java\n" +
-               " a.txt\n" +
-               " c.java\n" +
-               " c.txt\n");
+    assertTree("""
+                 -foldersOnTop
+                  +b.java
+                  +b.txt
+                  a.java
+                  a.txt
+                  c.java
+                  c.txt
+                 """);
 
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
-    assertTree("-foldersOnTop\n" +
-               " a.java\n" +
-               " a.txt\n" +
-               " +b.java\n" +
-               " +b.txt\n" +
-               " c.java\n" +
-               " c.txt\n");
+    assertTree("""
+                 -foldersOnTop
+                  a.java
+                  a.txt
+                  +b.java
+                  +b.txt
+                  c.java
+                  c.txt
+                 """);
 
     // now let's check the behavior, when sortByType is enabled
     myProjectView.setSortByType(myPane.getId(), true);
 
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true);
-    assertTree("-foldersOnTop\n" +
-               " +b.java\n" +
-               " +b.txt\n" +
-               " a.java\n" +
-               " c.java\n" +
-               " a.txt\n" +
-               " c.txt\n");
+    assertTree("""
+                 -foldersOnTop
+                  +b.java
+                  +b.txt
+                  a.java
+                  c.java
+                  a.txt
+                  c.txt
+                 """);
 
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
-    assertTree("-foldersOnTop\n" +
-               " a.java\n" +
-               " +b.java\n" +
-               " c.java\n" +
-               " a.txt\n" +
-               " +b.txt\n"+
-               " c.txt\n");
+    assertTree("""
+                 -foldersOnTop
+                  a.java
+                  +b.java
+                  c.java
+                  a.txt
+                  +b.txt
+                  c.txt
+                 """);
   }
 
   public void testSortByTypeBetweenFilesAndFolders() {
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
     myProjectView.setSortByType(myPane.getId(), false);
-    assertTree("-sortByTypeBetweenFilesAndFolders\n" +
-               " a.java\n" +
-               " +a.java_folder\n" +
-               " a.txt\n" +
-               " +a_folder\n" +
-               " b.java\n" +
-               " +b.java_folder\n" +
-               " b.txt\n" +
-               " +b_folder\n");
+    assertTree("""
+                 -sortByTypeBetweenFilesAndFolders
+                  a.java
+                  +a.java_folder
+                  a.txt
+                  +a_folder
+                  b.java
+                  +b.java_folder
+                  b.txt
+                  +b_folder
+                 """);
 
     myProjectView.setSortByType(myPane.getId(), true);
-    assertTree("-sortByTypeBetweenFilesAndFolders\n" +
-               " a.java\n" +
-               " b.java\n" +
-               " +a.java_folder\n" +
-               " +b.java_folder\n" +
-               " a.txt\n" +
-               " b.txt\n" +
-               " +a_folder\n" +
-               " +b_folder\n");
+    assertTree("""
+                 -sortByTypeBetweenFilesAndFolders
+                  a.java
+                  b.java
+                  +a.java_folder
+                  +b.java_folder
+                  a.txt
+                  b.txt
+                  +a_folder
+                  +b_folder
+                 """);
   }
 
   public void testManualOrder() {
@@ -173,70 +190,74 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true);
 
     myProjectView.setSortByType(myPane.getId(), false);
-    assertTree("-manualOrder\n" +
-               " b_ordered.java\n" +
-               " +a_folder_ordered\n" +
-               " b_ordered.txt\n" +
-               " a_ordered.txt\n" +
-               " +b_folder_ordered\n" +
-               " a_ordered.java\n" +
-
-               " +a_folder_unordered\n" +
-               " +b_folder_unordered\n" +
-               " a_unordered.java\n" +
-               " a_unordered.txt\n" +
-               " b_unordered.java\n" +
-               " b_unordered.txt\n");
+    assertTree("""
+                 -manualOrder
+                  b_ordered.java
+                  +a_folder_ordered
+                  b_ordered.txt
+                  a_ordered.txt
+                  +b_folder_ordered
+                  a_ordered.java
+                  +a_folder_unordered
+                  +b_folder_unordered
+                  a_unordered.java
+                  a_unordered.txt
+                  b_unordered.java
+                  b_unordered.txt
+                 """);
 
     myProjectView.setSortByType(myPane.getId(), true);
-    assertTree("-manualOrder\n" +
-               " b_ordered.java\n" +
-               " +a_folder_ordered\n" +
-               " b_ordered.txt\n" +
-               " a_ordered.txt\n" +
-               " +b_folder_ordered\n" +
-               " a_ordered.java\n" +
-
-               " +a_folder_unordered\n" +
-               " +b_folder_unordered\n" +
-               " a_unordered.java\n" +
-               " b_unordered.java\n" +
-               " a_unordered.txt\n" +
-               " b_unordered.txt\n");
+    assertTree("""
+                 -manualOrder
+                  b_ordered.java
+                  +a_folder_ordered
+                  b_ordered.txt
+                  a_ordered.txt
+                  +b_folder_ordered
+                  a_ordered.java
+                  +a_folder_unordered
+                  +b_folder_unordered
+                  a_unordered.java
+                  b_unordered.java
+                  a_unordered.txt
+                  b_unordered.txt
+                 """);
 
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
 
     myProjectView.setSortByType(myPane.getId(), false);
-    assertTree("-manualOrder\n" +
-               " b_ordered.java\n" +
-               " +a_folder_ordered\n" +
-               " b_ordered.txt\n" +
-               " a_ordered.txt\n" +
-               " +b_folder_ordered\n" +
-               " a_ordered.java\n" +
-
-               " +a_folder_unordered\n" +
-               " a_unordered.java\n" +
-               " a_unordered.txt\n" +
-               " +b_folder_unordered\n" +
-               " b_unordered.java\n" +
-               " b_unordered.txt\n");
+    assertTree("""
+                 -manualOrder
+                  b_ordered.java
+                  +a_folder_ordered
+                  b_ordered.txt
+                  a_ordered.txt
+                  +b_folder_ordered
+                  a_ordered.java
+                  +a_folder_unordered
+                  a_unordered.java
+                  a_unordered.txt
+                  +b_folder_unordered
+                  b_unordered.java
+                  b_unordered.txt
+                 """);
 
     myProjectView.setSortByType(myPane.getId(), true);
-    assertTree("-manualOrder\n" +
-               " b_ordered.java\n" +
-               " +a_folder_ordered\n" +
-               " b_ordered.txt\n" +
-               " a_ordered.txt\n" +
-               " +b_folder_ordered\n" +
-               " a_ordered.java\n" +
-
-               " a_unordered.java\n" +
-               " b_unordered.java\n" +
-               " a_unordered.txt\n" +
-               " b_unordered.txt\n" +
-               " +a_folder_unordered\n" +
-               " +b_folder_unordered\n");
+    assertTree("""
+                 -manualOrder
+                  b_ordered.java
+                  +a_folder_ordered
+                  b_ordered.txt
+                  a_ordered.txt
+                  +b_folder_ordered
+                  a_ordered.java
+                  a_unordered.java
+                  b_unordered.java
+                  a_unordered.txt
+                  b_unordered.txt
+                  +a_folder_unordered
+                  +b_folder_unordered
+                 """);
   }
 
   private void assertTree(String expected) {

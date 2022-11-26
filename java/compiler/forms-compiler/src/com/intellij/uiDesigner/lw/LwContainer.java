@@ -11,10 +11,6 @@ import org.jdom.Element;
 import java.awt.*;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class LwContainer extends LwComponent implements IContainer{
   /**
    * Children components

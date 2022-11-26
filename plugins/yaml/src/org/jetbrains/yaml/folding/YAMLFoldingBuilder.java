@@ -7,11 +7,15 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
@@ -51,9 +55,50 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
       descriptors.add(new FoldingDescriptor(element, nodeTextRange));
     }
 
-    for (PsiElement child : element.getChildren()) {
+    PsiElement child = element.getFirstChild();
+    while (child != null) {
+      child = foldComments(child, descriptors);
+      if (child == null) break;
       collectDescriptors(child, descriptors);
+      child = child.getNextSibling();
     }
+  }
+
+  @Nullable
+  private static PsiElement foldComments(PsiElement child, @NotNull List<? super FoldingDescriptor> descriptors) {
+    PsiComment startComment = null;
+    PsiComment endComment = null;
+    int commentsCount = 0;
+    while (child instanceof PsiComment) {
+      commentsCount++;
+      if (startComment == null) {
+        startComment = (PsiComment)child;
+      }
+      endComment = (PsiComment)child;
+      child = skipSpaceElementsUpToLine(child.getNextSibling());
+    }
+    if (commentsCount > 2) {
+      descriptors.add(new FoldingDescriptor(startComment,
+                                            TextRange.create(startComment.getTextRange().getStartOffset(),
+                                                             endComment.getTextRange().getEndOffset()
+                                            )
+      ));
+    }
+    return child;
+  }
+
+  private static PsiElement skipSpaceElementsUpToLine(PsiElement element) {
+    int eol = 0;
+    while (element != null) {
+      IElementType elementType = PsiUtilCore.getElementType(element);
+      if (YAMLElementTypes.EOL_ELEMENTS.contains(elementType)) {
+        if (eol > 0) break;
+        eol++;
+      }
+      if (!YAMLElementTypes.SPACE_ELEMENTS.contains(elementType)) break;
+      element = element.getNextSibling();
+    }
+    return element;
   }
 
   @Override
@@ -67,6 +112,9 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
 
     if (psiElement instanceof YAMLDocument) {
       return "---";
+    }
+    else if (psiElement instanceof PsiComment) {
+      return "# ...";
     }
     else if (psiElement instanceof YAMLScalar) {
       return normalizePlaceHolderText(((YAMLScalar)psiElement).getTextValue());

@@ -50,10 +50,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class StringEditorDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance(StringEditorDialog.class);
 

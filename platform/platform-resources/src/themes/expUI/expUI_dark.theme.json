@@ -256,10 +256,20 @@
       "rowHeight": "24",
       "border": "4,0,4,0",
       "Button": {
-        "separatorColor": "Grey2",
+        "separatorColor": "#FFFFFF33",
+        "separatorInset": 4,
         "hoverBackground": "Blue3",
         "leftRightInset": 8
+      },
+      "Tag": {
+        "background": "Grey3",
+        "foreground": "Grey8"
       }
+    },
+
+    "MainMenu": {
+      "selectionForeground": "Grey12",
+      "selectionBackground": "Grey3"
     },
 
     "MemoryIndicator": {
@@ -395,10 +405,9 @@
 
     "SpeedSearch": {
       "background": "Grey1",
-      "borderColor": "Grey4",
+      "borderColor": "Grey3",
       "errorForeground": "Red6"
     },
-
 
     "StatusBar": {
       "Widget": {
@@ -494,10 +503,14 @@
         "pressedBackground": "Grey3"
       },
       "Dropdown": {
-        "borderInsets": "3,8,3,4",
+        "borderInsets": "3,12,3,6",
         "pressedBackground": "Grey3"
       },
-      "background": "Grey2"
+      "Button": {
+        "buttonInsets": "0,0,0,0"
+      },
+      "background": "Grey2",
+      "separatorColor": "Grey1"
     },
 
     "Tree": {
@@ -540,6 +553,70 @@
 
     "Lesson": {
       "shortcutBackground": "Grey5"
+    },
+
+    "UnattendedHostStatus": {
+      "warningBackground": "Yellow7",
+      "warningForeground": "Grey3",
+      "dangerBackground": "Red6"
+    },
+
+    "CodeWithMe.Users": {
+      "1": {
+        "Background": "Green6",
+        "Foreground": "Grey13"
+      },
+      "2": {
+        "Background": "#15A0B2",
+        "Foreground": "Grey13"
+      },
+      "3": {
+        "Background": "Red6",
+        "Foreground": "Grey13"
+      },
+      "4": {
+        "Background": "#955AE0",
+        "Foreground": "Grey13"
+      },
+      "5": {
+        "Background": "Yellow6",
+        "Foreground": "Grey13"
+      },
+      "6": {
+        "Background": "Orange6",
+        "Foreground": "Grey13"
+      }
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#1c2433",
+        "hoverBackground": "#2c3341",
+        "PackageTag": {
+          "background": "#2e3643",
+          "foreground": "Grey12",
+          "hoverBackground": "#3d4350",
+          "selectedBackground": "Blue4",
+          "selectedForeground": "Grey12"
+        }
+      },
+      "PackageTag": {
+        "background": "Grey4",
+        "foreground": "Grey9",
+        "hoverBackground": "#4a4c4e",
+        "selectedBackground": "Grey4",
+        "selectedForeground": "Grey9"
+      },
+      "PackageTagSelected.background": "Blue4",
+      "PackageTagSelected.foreground": "Grey10"
+    },
+    "RunWidget" : {
+      "foreground": "Grey14",
+      "background": "Blue5",
+      "runningBackground": "Green5",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
     }
   },
 

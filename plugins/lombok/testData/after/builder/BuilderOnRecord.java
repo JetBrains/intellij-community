@@ -3,7 +3,7 @@ import lombok.Builder;
 @Builder
 public record Person(String name) {
   public static PersonBuilder builder() {
-    return new PersonBuilder();
+    return new Person.PersonBuilder();
   }
 
   public static class PersonBuilder {
@@ -18,7 +18,7 @@ public record Person(String name) {
     }
 
     public Person build() {
-      return new Person(name);
+      return new Person(this.name);
     }
 
     public String toString() {

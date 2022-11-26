@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.google.gson.JsonObject
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
@@ -16,7 +17,6 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
-import com.intellij.util.ActionRunner
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
@@ -161,7 +161,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             val targetPackage = config.getNullableString("targetPackage")
             val targetDirPath = targetPackage?.replace('.', '/') ?: config.getNullableString("targetDirectory")
             if (targetDirPath != null) {
-                ActionRunner.runInsideWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDirPath) }
+                runWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDirPath) }
                 val newParent = if (targetPackage != null) {
                     JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories[0]
                 } else {

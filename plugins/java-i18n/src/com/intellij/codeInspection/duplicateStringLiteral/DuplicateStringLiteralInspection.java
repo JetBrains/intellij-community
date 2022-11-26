@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.codeInspection.util.IntentionName;
@@ -12,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -32,6 +35,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
+import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -168,7 +172,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
 
     Collection<LocalQuickFix> fixes = new SmartList<>();
     if (isOnTheFly) {
-      fixes.add(new IntroduceLiteralConstantFix(originalExpression));
+      fixes.add(new IntroduceLiteralConstantFix());
       fixes.add(new NavigateToOccurrencesFix(originalExpression));
     }
     createReplaceFixes(foundExpr, originalExpression, fixes);
@@ -257,31 +261,14 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
      private JCheckBox myIgnorePropertyKeyExpressions;
   }
 
-  private class IntroduceLiteralConstantFix extends LocalQuickFixOnPsiElement {
-    IntroduceLiteralConstantFix(PsiLiteralExpression representative) {
-      super(representative);
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return getFamilyName();
+  private class IntroduceLiteralConstantFix extends IntroduceConstantFix {
+    private IntroduceLiteralConstantFix() {
+      super(JavaI18nBundle.message("introduce.constant.across.the.project"));
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return JavaI18nBundle.message("introduce.constant.across.the.project");
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      PsiExpression[] literalExpressions = getDuplicateLiteralsUnderProgress(startElement);
+    protected void doIntroduce(@NotNull Project project, PsiExpression element) {
+      PsiExpression[] literalExpressions = getDuplicateLiteralsUnderProgress(element);
       if (literalExpressions == null) return;
       introduceConstant(literalExpressions, project);
     }
@@ -393,6 +380,27 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     public String getFamilyName() {
       return JavaI18nBundle.message("inspection.duplicates.navigate.to.occurrences");
     }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiElement element = previewDescriptor.getPsiElement();
+      if (element instanceof PsiLiteralExpression literal) {
+        final PsiExpression[] duplicates = getDuplicateLiterals(project, literal, true);
+        if (duplicates.length < 10) {
+          return new IntentionPreviewInfo.Html(JavaI18nBundle.message(
+            "inspection.duplicates.navigate.to.occurrences.preview",
+            duplicates.length,
+            literal.getText()
+          ));
+        }
+        return new IntentionPreviewInfo.Html(JavaI18nBundle.message(
+          "inspection.duplicates.navigate.to.many.occurrences.preview",
+          duplicates.length,
+          literal.getText()
+        ));
+      }
+      return IntentionPreviewInfo.EMPTY;
+    }
   }
 
   private static final class StringLiteralSearchQuery {
@@ -429,11 +437,18 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
   private PsiExpression @Nullable [] getDuplicateLiteralsUnderProgress(@NotNull PsiElement literalExpression) {
     if (!(literalExpression instanceof PsiLiteralExpression)) return null;
     Project project = literalExpression.getProject();
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      return ReadAction.compute(()->getDuplicateLiterals(project,
-                                             (PsiLiteralExpression)literalExpression,
-                                             false /* here we want find all the expressions */));
-    }, JavaI18nBundle.message("progress.title.searching.for.duplicates.of.0", ((PsiLiteralExpression)literalExpression).getValue()), true, project);
+    ThrowableComputable<PsiExpression[], RuntimeException> findDuplicatesComputable = () -> {
+      return ReadAction.compute(() -> getDuplicateLiterals(project,
+                                                           (PsiLiteralExpression)literalExpression,
+                                                           false /* here we want find all the expressions */));
+    };
+    if (IntentionPreviewUtils.isPreviewElement(literalExpression)) {
+      PsiExpression[] expressions = findDuplicatesComputable.compute();
+      if (expressions == null) return null;
+      PsiFile file = literalExpression.getContainingFile();
+      return ContainerUtil.map2Array(expressions, PsiExpression.EMPTY_ARRAY, e -> PsiTreeUtil.findSameElementInCopy(e, file));
+    }
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(findDuplicatesComputable, JavaI18nBundle.message("progress.title.searching.for.duplicates.of.0", ((PsiLiteralExpression)literalExpression).getValue()), true, project);
   }
 
   private static void introduceConstant(PsiExpression @NotNull [] expressions, @NotNull Project project) {

@@ -43,6 +43,26 @@ public class FirUastTypesTestGenerated extends AbstractFirUastTypesTest {
         runTest("testData/type/classLiteral.kt");
     }
 
+    @TestMetadata("jvmInlineParameter.kt")
+    public void testJvmInlineParameter() throws Exception {
+        runTest("testData/type/jvmInlineParameter.kt");
+    }
+
+    @TestMetadata("nonNullCompanion.kt")
+    public void testNonNullCompanion() throws Exception {
+        runTest("testData/type/nonNullCompanion.kt");
+    }
+
+    @TestMetadata("nonNullablePair.kt")
+    public void testNonNullablePair() throws Exception {
+        runTest("testData/type/nonNullablePair.kt");
+    }
+
+    @TestMetadata("nullnessInVarargs.kt")
+    public void testNullnessInVarargs() throws Exception {
+        runTest("testData/type/nullnessInVarargs.kt");
+    }
+
     @TestMetadata("objectLiteral.kt")
     public void testObjectLiteral() throws Exception {
         runTest("testData/type/objectLiteral.kt");

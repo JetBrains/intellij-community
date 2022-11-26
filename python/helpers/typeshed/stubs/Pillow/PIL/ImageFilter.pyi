@@ -1,10 +1,11 @@
 from _typeshed import Self
-from typing import Any, Callable, Iterable, Sequence
-from typing_extensions import Literal
+from collections.abc import Callable, Iterable, Sequence
+from typing import Any
+from typing_extensions import Literal, TypeAlias
 
 from .Image import Image
 
-_FilterArgs = tuple[Sequence[int], int, int, Sequence[int]]
+_FilterArgs: TypeAlias = tuple[Sequence[int], int, int, Sequence[int]]
 
 # filter image parameters below are the C images, i.e. Image().im.
 

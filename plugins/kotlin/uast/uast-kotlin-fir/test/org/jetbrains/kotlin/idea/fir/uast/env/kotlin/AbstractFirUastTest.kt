@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.uast.env.kotlin
 
@@ -11,10 +11,12 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.URLUtil
-import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.fir.uast.invalidateAllCachesForUastTests
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.KtAssert
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
@@ -23,7 +25,6 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
 import org.jetbrains.uast.test.common.kotlin.UastPluginSelection
-import java.lang.AssertionError
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -38,7 +39,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
             }
     }
 
-    protected open val basePath: Path? = null
+    protected open val testBasePath: Path? = null
 
     private fun registerExtensionPointAndServiceIfNeeded() {
         val area = Extensions.getRootArea()
@@ -75,7 +76,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     private fun getVirtualFile(filepath: String): VirtualFile {
         val vfs = VirtualFileManager.getInstance().getFileSystem(URLUtil.FILE_PROTOCOL)
@@ -91,7 +92,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     protected fun doCheck(filePath: String, checkCallback: (String, UFile) -> Unit = { _filePath, file -> check(_filePath, file) }) {
         check(UastLanguagePlugin.getInstances().count { it.language == KotlinLanguage.INSTANCE } == 1)
-        val normalizedFile = Paths.get(filePath).let { basePath?.resolve(it) ?: it}.normalize()
+        val normalizedFile = Paths.get(filePath).let { testBasePath?.resolve(it) ?: it }.normalize()
         val virtualFile = getVirtualFile(normalizedFile.toString())
 
         val testName = normalizedFile.fileName.toString().removeSuffix(".kt")

@@ -25,7 +25,8 @@ class ConvertLazyPropertyToOrdinaryIntention : SelfTargetingIntention<KtProperty
         val delegate = element.delegate ?: return
         val delegateExpression = delegate.expression as? KtCallExpression ?: return
         val functionLiteral = delegateExpression.functionLiteral() ?: return
-        element.initializer = functionLiteral.singleStatement() ?: KtPsiFactory(element).createExpression("run ${functionLiteral.text}")
+        element.initializer = functionLiteral.singleStatement()
+            ?: KtPsiFactory(element.project).createExpression("run ${functionLiteral.text}")
         delegate.delete()
     }
 

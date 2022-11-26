@@ -13,7 +13,9 @@ public final class JUnitCommonClassNames {
   public static final String JUNIT_FRAMEWORK_ASSERT = "junit.framework.Assert";
   public static final String ORG_JUNIT_JUPITER_API_ASSERTIONS = "org.junit.jupiter.api.Assertions";
   public static final String ORG_JUNIT_JUPITER_API_ASSUMPTIONS = "org.junit.jupiter.api.Assumptions";
+  public static final String JUNIT_FRAMEWORK_TEST = "junit.framework.Test";
   public static final String JUNIT_FRAMEWORK_TEST_CASE = "junit.framework.TestCase";
+  public static final String JUNIT_FRAMEWORK_TEST_SUITE = "junit.framework.TestSuite";
   public static final String ORG_JUNIT_TEST = "org.junit.Test";
   public static final String ORG_JUNIT_IGNORE = "org.junit.Ignore";
   public static final String ORG_JUNIT_RULE = "org.junit.Rule";
@@ -24,6 +26,9 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_AFTER = "org.junit.After";
   public static final String ORG_JUNIT_BEFORE_CLASS = "org.junit.BeforeClass";
   public static final String ORG_JUNIT_AFTER_CLASS = "org.junit.AfterClass";
+  public static final String ORG_JUNIT_RUNNER_RUN_WITH = "org.junit.runner.RunWith";
+  public static final String ORG_JUNIT_RUNNERS_SUITE = "org.junit.runners.Suite";
+  public static final String ORG_JUNIT_RUNNERS_SUITE_SUITE_CLASSES = "org.junit.runners.Suite.SuiteClasses";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST = "org.junit.jupiter.params.ParameterizedTest";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE = "org.junit.jupiter.params.provider.MethodSource";
   public static final String ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF = "org.junit.jupiter.api.condition.EnabledIf";

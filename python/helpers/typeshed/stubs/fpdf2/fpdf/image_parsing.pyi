@@ -1,7 +1,7 @@
 from typing import Any
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
-_ImageFilter = Literal["AUTO", "FlateDecode", "DCTDecode", "JPXDecode"]
+_ImageFilter: TypeAlias = Literal["AUTO", "FlateDecode", "DCTDecode", "JPXDecode"]
 
 SUPPORTED_IMAGE_FILTERS: tuple[_ImageFilter, ...]
 

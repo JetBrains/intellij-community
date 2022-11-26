@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.junit.Test
@@ -10,7 +12,7 @@ import java.nio.file.Files
 
 class BundledRuntimeTest {
   @Test
-  fun download() {
+  fun download(): Unit = runBlocking(Dispatchers.IO) {
     withCompilationContext { context ->
       val bundledRuntime = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
       val currentJbr = bundledRuntime.getHomeForCurrentOsAndArch()
@@ -53,8 +55,16 @@ class BundledRuntimeTest {
   @Test
   fun currentArchDownload() {
     withCompilationContext { context ->
-      val currentJbrHome = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
-        .getHomeForCurrentOsAndArch()
+      val currentJbrHome = runBlocking(Dispatchers.IO) {
+        BundledRuntimeImpl(
+          options = context.options,
+          paths = context.paths,
+          dependenciesProperties = context.dependenciesProperties,
+          error = context.messages::error,
+          info = context.messages::info
+        )
+          .getHomeForCurrentOsAndArch()
+      }
       val javaExe = JdkDownloader.getJavaExecutable(currentJbrHome)
       val process = ProcessBuilder(javaExe.toString(), "-version")
         .inheritIO()
@@ -66,11 +76,11 @@ class BundledRuntimeTest {
     }
   }
 
-  private fun withCompilationContext(block: (CompilationContext) -> Unit) {
+  private inline fun withCompilationContext(block: (CompilationContext) -> Unit) {
     val tempDir = Files.createTempDirectory("compilation-context-")
     try {
       val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-      val context = createCompilationContext(
+      val context = createCompilationContextBlocking(
         communityHome = communityHome,
         projectHome = communityHome.communityRoot,
         defaultOutputRoot = tempDir,

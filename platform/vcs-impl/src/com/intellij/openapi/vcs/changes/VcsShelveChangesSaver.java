@@ -98,7 +98,7 @@ public class VcsShelveChangesSaver {
   }
 
   @NotNull
-  private List<Change> filterChangesByRoots(@NotNull Collection<Change> changes, @NotNull Set<? extends VirtualFile> rootsToSave) {
+  private List<Change> filterChangesByRoots(@NotNull Collection<? extends Change> changes, @NotNull Set<? extends VirtualFile> rootsToSave) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     return ContainerUtil.filter(changes, change -> {
       return rootsToSave.contains(vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));

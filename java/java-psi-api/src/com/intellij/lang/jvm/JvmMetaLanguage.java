@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm;
 
 import com.intellij.lang.Language;
@@ -23,7 +23,7 @@ public final class JvmMetaLanguage extends MetaLanguage {
 
   @Override
   public @NotNull Collection<Language> getMatchingLanguages() {
-    ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> point = getPoint();
+    ExtensionPointImpl<@NotNull LanguageExtensionPoint<JvmDeclarationSearcher>> point = getPoint();
     List<Language> result = new ArrayList<>();
     for (Language language : Language.getRegisteredLanguages()) {
       if (language instanceof JvmLanguage || (point != null && matchesRegisteredLanguage(language, point))) {
@@ -39,15 +39,16 @@ public final class JvmMetaLanguage extends MetaLanguage {
       return true;
     }
 
-    ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> point = getPoint();
+    ExtensionPointImpl<@NotNull LanguageExtensionPoint<JvmDeclarationSearcher>> point = getPoint();
     return point != null && matchesRegisteredLanguage(language, point);
   }
 
-  private static boolean matchesRegisteredLanguage(@NotNull Language language, @NotNull ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> point) {
-    return ExtensionProcessingHelper.getByKey(point, language.getID(), JvmMetaLanguage.class, LanguageExtensionPoint::getKey) != null;
+  private static boolean matchesRegisteredLanguage(@NotNull Language language,
+                                                   @NotNull ExtensionPointImpl<@NotNull LanguageExtensionPoint<JvmDeclarationSearcher>> point) {
+    return ExtensionProcessingHelper.INSTANCE.getByKey(point, language.getID(), JvmMetaLanguage.class, LanguageExtensionPoint::getKey) != null;
   }
 
-  private @Nullable static ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> getPoint() {
+  private @Nullable static ExtensionPointImpl<@NotNull LanguageExtensionPoint<JvmDeclarationSearcher>> getPoint() {
     ExtensionsAreaImpl area = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
 
     return area.getExtensionPointIfRegistered(JvmDeclarationSearcher.EP.getName());

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
@@ -54,7 +55,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     }
     else {
       int max = data.requiredLength - data.toFitLength + getMoreRectAxisSize();
-      if (getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
+      if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
         max += getStrategy().getEntryPointAxisSize();
       }
       myScrollOffset = Math.max(0, Math.min(myScrollOffset, max));
@@ -91,7 +92,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
         }
         else {
           int maxLength = passInfo.toFitLength - getMoreRectAxisSize();
-          if (getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
+          if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
             maxLength -= getStrategy().getEntryPointAxisSize();
           }
           if (offset + length > maxLength) {
@@ -125,6 +126,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   protected void layoutMoreButton(SingleRowPassInfo data) {
     if (data.requiredLength > data.toFitLength) {
       data.moreRect = getStrategy().getMoreRect(data);
+      if (isWithScrollBar()) data.moreRect.width = 0;
     }
   }
 
@@ -134,9 +136,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
       final int moreRectSize = getMoreRectAxisSize();
       if (data.position + length > data.toFitLength - moreRectSize) {
-        final int clippedLength = getStrategy().drawPartialOverflowTabs()
-                                  ? data.toFitLength - data.position - moreRectSize : 0;
-        super.applyTabLayout(data, label, clippedLength);
+        if (getStrategy().drawPartialOverflowTabs()) {
+          int clippedLength = ExperimentalUI.isNewUI() && myTabs.getTabsPosition().isSide()
+                              ? length : data.toFitLength - data.position - moreRectSize;
+          super.applyTabLayout(data, label, clippedLength);
+        }
         label.setAlignmentToCenter(false);
         return false;
       }

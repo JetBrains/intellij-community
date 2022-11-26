@@ -15,6 +15,7 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.message
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
+    if (checkMultipleSelectionAndDisableAction(event)) return
     val manager = event.bookmarksManager
     val bookmark = event.contextBookmark
     val type = bookmark?.let { manager?.getType(it) }
@@ -50,7 +51,7 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.message
       null -> BookmarkBundle.message("mnemonic.chooser.bookmark.create.popup.title")
       else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.popup.title")
     }
-    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser, chooser.firstButton)
+    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser.content, chooser.firstButton)
       .setFocusable(true).setRequestFocus(true)
       .setMovable(false).setResizable(false)
       .setTitle(title).createPopup()

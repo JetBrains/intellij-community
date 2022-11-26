@@ -34,10 +34,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class ContentManagerImpl implements ContentManager, PropertyChangeListener, Disposable.Parent {
   private static final Logger LOG = Logger.getInstance(ContentManagerImpl.class);
 
@@ -186,7 +182,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (!Content.TEMPORARY_REMOVED_KEY.get(content, false) && getContentCount() == 0 && !isEmpty()) {
       ContentManager oldManager = content.getManager();
       for (ContentManagerImpl nestedManager : myNestedManagers) {
-        if (nestedManager.getContentCount() > 0) {
+        if (!nestedManager.isEmpty()) {
           nestedManager.doAddContent(content, index);
           if (content.getManager() != oldManager) {
             return;

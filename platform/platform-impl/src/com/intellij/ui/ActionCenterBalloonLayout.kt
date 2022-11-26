@@ -190,7 +190,7 @@ internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : Ba
     return size
   }
 
-  override fun setBounds(balloons: MutableList<Balloon>, startX: Int, startY: Int) {
+  override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
     var y = startY
 
     for (balloon in balloons) {

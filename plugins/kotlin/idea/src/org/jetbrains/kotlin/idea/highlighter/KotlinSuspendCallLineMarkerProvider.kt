@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
 import org.jetbrains.kotlin.descriptors.accessors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.highlighter.markers.LineMarkerInfos
-import org.jetbrains.kotlin.idea.refactoring.getLineNumber
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -47,7 +47,7 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
-    override fun collectSlowLineMarkers(elements: MutableList<out PsiElement>, result: LineMarkerInfos) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         val markedLineNumbers = HashSet<Int>()
 
         for (element in elements) {

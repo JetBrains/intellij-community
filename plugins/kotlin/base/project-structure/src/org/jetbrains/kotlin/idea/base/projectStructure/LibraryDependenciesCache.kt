@@ -24,5 +24,7 @@ interface LibraryDependenciesCache {
 
     fun getLibraryDependencies(library: LibraryInfo): LibraryDependencies
 
-    class LibraryDependencies(val libraries: List<LibraryInfo>, val sdk: List<SdkInfo>)
+    class LibraryDependencies(val library: LibraryInfo, val libraries: List<LibraryInfo>, val sdk: List<SdkInfo>) {
+        val librariesWithoutSelf: List<LibraryInfo> by lazy { libraries - library }
+    }
 }

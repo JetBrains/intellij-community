@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -20,7 +21,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.versions.getLibraryRootsWithIncompatibleAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -39,19 +38,19 @@ import javax.swing.JComponent
 
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
-    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (!file.isKotlinFileType()) {
-            return CONST_NULL
+            return null
         }
 
-        val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return CONST_NULL
+        val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         if (psiFile.language !== KotlinLanguage.INSTANCE) {
-            return CONST_NULL
+            return null
         }
 
-        val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return CONST_NULL
+        val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return null
         if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file)) {
-            return CONST_NULL
+            return null
         }
 
         if (ModuleRootManager.getInstance(module).sdk == null && psiFile.platform.isJvm()) {
@@ -63,12 +62,13 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
         if (!configurationChecker.isSyncing &&
             isNotConfiguredNotificationRequired(module.toModuleGroup()) &&
             !hasAnyKotlinRuntimeInScope(module) &&
+            !isStdlibModule(module) &&
             getLibraryRootsWithIncompatibleAbi(module).isEmpty()
         ) {
             return createKotlinNotConfiguredPanel(module, getAbleToRunConfigurators(module).toList())
         }
 
-        return CONST_NULL
+        return null
     }
 
     companion object {

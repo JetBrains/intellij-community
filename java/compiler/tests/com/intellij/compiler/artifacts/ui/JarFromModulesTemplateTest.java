@@ -81,10 +81,11 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     VirtualFile jDomJar = getFastUtilJar();
     addProjectLibrary(module, "jdom", jDomJar);
     createFromTemplate(module, null, file.getParent().getPath(), false);
-    assertLayout("<root>\n" +
-                 " a.jar\n" +
-                 "  module:a\n" +
-                 " lib:jdom(project)");
+    assertLayout("""
+                   <root>
+                    a.jar
+                     module:a
+                    lib:jdom(project)""");
     assertManifest(null, jDomJar.getName());
   }
 
@@ -146,9 +147,10 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     final Module b = addModuleWithSourceRoot("b");
     addModuleDependency(a, b);
     createFromTemplate(a, null, null, true);
-    assertLayout("a.jar\n" +
-                 " module:a\n" +
-                 " module:b");
+    assertLayout("""
+                   a.jar
+                    module:a
+                    module:b""");
   }
 
   public void testDependentModuleWithLibrary() {
@@ -168,9 +170,10 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir);
     createFromTemplate(a, null, null, true);
-    assertLayout("a.jar\n" +
-                 " module:a\n" +
-                 " lib:dir(project)");
+    assertLayout("""
+                   a.jar
+                    module:a
+                    lib:dir(project)""");
   }
 
   public void testCopiedLibraryWithDirectories() {

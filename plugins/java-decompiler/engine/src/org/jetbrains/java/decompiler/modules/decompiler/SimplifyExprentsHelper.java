@@ -24,28 +24,29 @@ import java.util.Map.Entry;
 
 public class SimplifyExprentsHelper {
   @SuppressWarnings("SpellCheckingInspection") private static final MatchEngine class14Builder = new MatchEngine(
-    "statement type:if iftype:if exprsize:-1\n" +
-    " exprent position:head type:if\n" +
-    "  exprent type:function functype:eq\n" +
-    "   exprent type:field name:$fieldname$\n" +
-    "   exprent type:constant consttype:null\n" +
-    " statement type:basicblock\n" +
-    "  exprent position:-1 type:assignment ret:$assignfield$\n" +
-    "   exprent type:var index:$var$\n" +
-    "   exprent type:field name:$fieldname$\n" +
-    " statement type:sequence statsize:2\n" +
-    "  statement type:trycatch\n" +
-    "   statement type:basicblock exprsize:1\n" +
-    "    exprent type:assignment\n" +
-    "     exprent type:var index:$var$\n" +
-    "     exprent type:invocation invclass:java/lang/Class signature:forName(Ljava/lang/String;)Ljava/lang/Class;\n" +
-    "      exprent position:0 type:constant consttype:string constvalue:$classname$\n" +
-    "   statement type:basicblock exprsize:1\n" +
-    "    exprent type:exit exittype:throw\n" +
-    "  statement type:basicblock exprsize:1\n" +
-    "   exprent type:assignment\n" +
-    "    exprent type:field name:$fieldname$ ret:$field$\n" +
-    "    exprent type:var index:$var$");
+    """
+      statement type:if iftype:if exprsize:-1
+       exprent position:head type:if
+        exprent type:function functype:eq
+         exprent type:field name:$fieldname$
+         exprent type:constant consttype:null
+       statement type:basicblock
+        exprent position:-1 type:assignment ret:$assignfield$
+         exprent type:var index:$var$
+         exprent type:field name:$fieldname$
+       statement type:sequence statsize:2
+        statement type:trycatch
+         statement type:basicblock exprsize:1
+          exprent type:assignment
+           exprent type:var index:$var$
+           exprent type:invocation invclass:java/lang/Class signature:forName(Ljava/lang/String;)Ljava/lang/Class;
+            exprent position:0 type:constant consttype:string constvalue:$classname$
+         statement type:basicblock exprsize:1
+          exprent type:exit exittype:throw
+        statement type:basicblock exprsize:1
+         exprent type:assignment
+          exprent type:field name:$fieldname$ ret:$field$
+          exprent type:var index:$var$""");
 
   private final boolean firstInvocation;
 

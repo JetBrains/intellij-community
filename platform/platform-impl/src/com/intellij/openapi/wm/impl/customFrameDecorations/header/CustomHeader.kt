@@ -33,6 +33,7 @@ import javax.swing.border.Border
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
+
 internal abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
   companion object {
     private val LOGGER = logger<CustomHeader>()
@@ -47,12 +48,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       get() = JBUI.Borders.empty(V, 0)
 
     fun create(window: Window): CustomHeader {
-      return if (window is JFrame) {
-        DefaultFrameHeader(window)
-      }
-      else {
-        DialogHeader(window)
-      }
+      return if (window is JFrame) DefaultFrameHeader(window) else DialogHeader(window)
     }
 
     private val windowBorderThicknessInPhysicalPx: Int = run {
@@ -193,7 +189,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       if (height == 0) return
       val toList = getHitTestSpots().map { java.util.Map.entry(it.first.getRectangleOn(window), it.second) }.toList()
       decor.setCustomDecorationHitTestSpots(window, toList)
-      decor.setCustomDecorationTitleBarHeight(window, height)
+      decor.setCustomDecorationTitleBarHeight(window, height + window.insets.top)
     }
   }
 

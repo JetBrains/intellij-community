@@ -3,7 +3,7 @@ package org.jetbrains.uast.test.java
 
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import junit.framework.TestCase
 import org.jetbrains.uast.*
 
@@ -118,7 +118,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
     val lambda = JavaPsiFacade.getElementFactory(project).createExpressionFromText("() -> 10", null)
                    .toUElementOfType<ULambdaExpression>() ?: fail("cannot create lambda")
 
-    val returnExpr = (lambda.body as? UBlockExpression)?.expressions?.singleOrNull()?.castSafelyTo<UReturnExpression>()
+    val returnExpr = (lambda.body as? UBlockExpression)?.expressions?.singleOrNull()?.asSafely<UReturnExpression>()
     TestCase.assertEquals((returnExpr as? UJumpExpression)?.jumpTarget, lambda)
   }
 

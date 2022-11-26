@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/gen" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/compatibilityResources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/xpath-lang/testData" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

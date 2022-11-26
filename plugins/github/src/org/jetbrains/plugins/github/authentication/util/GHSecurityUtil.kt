@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.authentication.util
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.Url
 import com.intellij.util.Urls.newUrl
 import org.jetbrains.plugins.github.api.*
@@ -17,10 +18,10 @@ object GHSecurityUtil {
 
   @JvmStatic
   internal fun loadCurrentUserWithScopes(executor: GithubApiRequestExecutor,
-                                         progressIndicator: ProgressIndicator,
                                          server: GithubServerPath): Pair<GithubAuthenticatedUser, String?> {
     var scopes: String? = null
-    val details = executor.execute(progressIndicator,
+    val indicator = ProgressManager.getInstance().progressIndicator
+    val details = executor.execute(indicator,
                                    object : GithubApiRequest.Get.Json<GithubAuthenticatedUser>(
                                      GithubApiRequests.getUrl(server,
                                                               GithubApiRequests.CurrentUser.urlSuffix),

@@ -250,7 +250,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(jdk);
     mySdks.remove(jdk);
-    if (jdk instanceof Disposable) {
+    if (jdk instanceof Disposable && !mySdks.contains(jdk)) {
       Disposer.dispose((Disposable)jdk);
     }
   }

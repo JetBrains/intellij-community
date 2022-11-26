@@ -34,7 +34,7 @@ abstract class WrappingSettingMapping<Outer, Inner>(val wrappee: SettingMapping<
 
 class ConvertingSettingMapping<External, Internal>(
   wrappee: SettingMapping<Internal>,
-  val convertor: Convertor<External, Internal>
+  private val convertor: Convertor<External, Internal>
 ) : WrappingSettingMapping<External, Internal>(wrappee) {
   override fun export(): External = convertor.convertOutgoing(wrappee.export())
 

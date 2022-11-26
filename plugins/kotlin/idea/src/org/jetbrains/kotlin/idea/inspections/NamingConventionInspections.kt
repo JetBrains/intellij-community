@@ -12,10 +12,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.*
 import com.intellij.ui.EditorTextField
 import com.siyeh.ig.BaseGlobalInspection
 import com.siyeh.ig.psiutils.TestUtils
@@ -34,7 +31,12 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.typeUtil.supertypes
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.BorderLayout
 import java.util.regex.PatternSyntaxException
 import javax.swing.JPanel
@@ -224,23 +226,22 @@ class FunctionNameInspection : NamingConventionInspection(
                 return@namedFunctionVisitor
             }
             if (!TestUtils.isInTestSourceContent(function)) {
-                verifyName(function, holder) {
-                    val functionName = function.name
-                    val typeReference = function.typeReference
-                    if (typeReference != null) {
-                        typeReference.text != functionName
-                    } else {
-                        function.resolveToDescriptorIfAny()
-                            ?.returnType
-                            ?.fqName
-                            ?.takeUnless(FqName::isRoot)
-                            ?.shortName()
-                            ?.asString() != functionName
-                    }
-                }
+                verifyName(function, holder) { !function.isFactoryFunction() }
             }
         }
     }
+
+    private fun KtNamedFunction.isFactoryFunction(): Boolean {
+        val functionName = this.name ?: return false
+        val typeElement = typeReference?.typeElement
+        if (typeElement != null) {
+            return typeElement.unwrapNullability().safeAs<KtUserType>()?.referencedName == functionName
+        }
+        val returnType = resolveToDescriptorIfAny()?.returnType ?: return false
+        return returnType.shortName() == functionName || returnType.supertypes().any { it.shortName() == functionName }
+    }
+
+    private fun KotlinType.shortName(): String? = fqName?.takeUnless(FqName::isRoot)?.shortName()?.asString()
 }
 
 class TestFunctionNameInspection : NamingConventionInspection(
@@ -268,32 +269,58 @@ abstract class PropertyNameInspectionBase protected constructor(
     defaultNamePattern: String
 ) : NamingConventionInspection(entityName, defaultNamePattern) {
 
-    protected enum class PropertyKind { NORMAL, PRIVATE, OBJECT_OR_TOP_LEVEL, CONST, LOCAL }
+    protected enum class PropertyKind { NORMAL, OBJECT_PRIVATE, PRIVATE, OBJECT_OR_TOP_LEVEL, CONST, LOCAL }
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return propertyVisitor { property ->
-            if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                return@propertyVisitor
-            }
-
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
+        override fun visitProperty(property: KtProperty) {
+            if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
             if (property.getKind() == kind) {
                 verifyName(property, holder)
             }
         }
+
+        override fun visitParameter(parameter: KtParameter) {
+            if (parameter.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
+            if (parameter.isSingleUnderscore) return
+            if (parameter.getKind() == kind) {
+                verifyName(parameter, holder)
+            }
+        }
+
+        override fun visitDestructuringDeclarationEntry(multiDeclarationEntry: KtDestructuringDeclarationEntry) {
+            if (multiDeclarationEntry.isSingleUnderscore) return
+            if (kind == PropertyKind.LOCAL) {
+                verifyName(multiDeclarationEntry, holder)
+            }
+        }
     }
 
-    private fun KtProperty.getKind(): PropertyKind = when {
-        isLocal -> PropertyKind.LOCAL
+    private val PsiNamedElement.isSingleUnderscore: Boolean
+        get() = name == "_"
 
-        containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_OR_TOP_LEVEL
+    private fun KtProperty.getKind(): PropertyKind {
+        val private = visibilityModifierType() == KtTokens.PRIVATE_KEYWORD
+        return when {
+            isLocal -> PropertyKind.LOCAL
 
-        isTopLevel -> PropertyKind.OBJECT_OR_TOP_LEVEL
+            private && containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_PRIVATE
 
-        hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
+            !private && (containingClassOrObject is KtObjectDeclaration || isTopLevel) -> PropertyKind.OBJECT_OR_TOP_LEVEL
 
-        visibilityModifierType() == KtTokens.PRIVATE_KEYWORD -> PropertyKind.PRIVATE
+            hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
 
-        else -> PropertyKind.NORMAL
+            private -> PropertyKind.PRIVATE
+
+            else -> PropertyKind.NORMAL
+        }
+    }
+
+    private fun KtParameter.getKind(): PropertyKind = when {
+        isPrivate() -> PropertyKind.PRIVATE
+
+        hasValOrVar() -> PropertyKind.NORMAL
+
+        else -> PropertyKind.LOCAL
     }
 }
 
@@ -311,6 +338,15 @@ class ObjectPropertyNameInspection : PropertyNameInspectionBase(
     "[A-Za-z][_A-Za-z\\d]*",
 ) {
     override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+}
+
+class ObjectPrivatePropertyNameInspection : PropertyNameInspectionBase(
+    PropertyKind.OBJECT_PRIVATE,
+    KotlinBundle.message("object.private.property"),
+    "_?[A-Za-z][_A-Za-z\\d]*",
+) {
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_BAD_CHARACTERS_OR_UNDERSCORE)
+
 }
 
 class PrivatePropertyNameInspection : PropertyNameInspectionBase(

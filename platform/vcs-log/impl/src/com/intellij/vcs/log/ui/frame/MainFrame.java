@@ -34,6 +34,7 @@ import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
@@ -111,7 +112,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myDetailsPanel = new CommitDetailsListPanel(logData.getProject(), this, () -> {
       return new CommitDetailsPanel(commit -> {
-        logUi.getVcsLog().jumpToCommit(commit.getHash(), commit.getRoot());
+        VcsLogNavigationUtil.jumpToCommit(logUi, commit.getHash(), commit.getRoot(), false, true);
         return Unit.INSTANCE;
       });
     });
@@ -149,7 +150,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     toolbars.add(myNotificationLabel, BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
-    toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
+    int border = ExperimentalUI.isNewUI() ? SideBorder.NONE : SideBorder.TOP;
+    toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, border),
                                                       myLogData, logUi.getId(), this), BorderLayout.CENTER);
 
     myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
@@ -212,28 +214,26 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private JComponent createActionsToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
 
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.copyFromGroup((DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP));
+    DefaultActionGroup toolbarGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP);
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP));
-    mainGroup.add(new Separator());
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
-    toolbar.setTargetComponent(myGraphTable);
+    toolbar.setTargetComponent(this);
 
     Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
     textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
 
-    DefaultActionGroup rightCornerGroup = new DefaultActionGroup();
-    rightCornerGroup.copyFromGroup((DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
-    addIntelliSortAction(rightCornerGroup);
+    DefaultActionGroup presentationSettingsGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
+    configureIntelliSortAction(presentationSettingsGroup);
+
+    DefaultActionGroup rightCornerGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP);
     ActionToolbar rightCornerToolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, rightCornerGroup, true);
-    rightCornerToolbar.setTargetComponent(myGraphTable);
+    rightCornerToolbar.setTargetComponent(this);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
 
     JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[pref:pref, right]", "center"));
@@ -244,17 +244,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return panel;
   }
 
-  private static void addIntelliSortAction(@NotNull DefaultActionGroup toolbarGroup) {
+  private static void configureIntelliSortAction(@NotNull DefaultActionGroup group) {
+    AnAction intelliSortAction = ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_INTELLI_SORT_ACTION);
     if (BekUtil.isBekEnabled()) {
-      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
       if (BekUtil.isLinearBekEnabled()) {
-        toolbarGroup.add(new IntelliSortChooserPopupAction(), constraint);
-        // can not register both of the actions in xml file, choosing to register an action for the "outer world"
-        // I can of course if linear bek is enabled replace the action on start but why bother
+        group.replaceAction(intelliSortAction, new IntelliSortChooserPopupAction());
       }
-      else {
-        toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_INTELLI_SORT_ACTION), constraint);
-      }
+    }
+    else {
+      // drop together with com.intellij.vcs.log.util.BekUtil.isBekEnabled
+      group.remove(intelliSortAction);
     }
   }
 
@@ -419,7 +418,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     protected List<Component> getOrderedComponents() {
       return ContainerUtil.newArrayList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(),
                                         myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
-                                        myFilterUi.getTextFilterComponent().getTextEditor());
+                                        myFilterUi.getTextFilterComponent());
     }
   }
 

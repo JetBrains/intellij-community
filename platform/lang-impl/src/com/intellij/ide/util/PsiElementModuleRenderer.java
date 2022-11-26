@@ -2,6 +2,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.util.TextWithIcon;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -63,6 +64,6 @@ public /*final*/ class PsiElementModuleRenderer extends DefaultListCellRenderer 
     setHorizontalTextPosition(SwingConstants.LEFT);
     setHorizontalAlignment(SwingConstants.RIGHT); // align icon to the right
     setBackground(selected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground());
-    setForeground(selected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+    setForeground(selected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
   }
 }

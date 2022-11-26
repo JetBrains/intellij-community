@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
@@ -103,6 +104,8 @@ class HighlightingBenchmarkAction : AnAction() {
 
     companion object {
         private const val SUCCESS = "Success"
+
+        private val LOG = Logger.getInstance(HighlightingBenchmarkAction::class.java)
     }
 
     private fun showSettingsDialog(): Settings? {
@@ -152,6 +155,7 @@ class HighlightingBenchmarkAction : AnAction() {
     }
 
     private suspend fun openFileAndMeasureTimeToHighlight(file: KtFile, project: Project, finishListener: DaemonFinishListener): Result {
+        LOG.warn("Processing file " + file.virtualFilePath)
 
         NavigationUtil.openFileWithPsiElement(file.navigationElement, true, true)
         val location = file.virtualFile.path

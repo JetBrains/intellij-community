@@ -123,13 +123,10 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
   @NotNull
   private static QuickMergeContentsVariants toMergeVariant(int exitCode) {
-    switch (exitCode) {
-      case MERGE_ALL_CODE:
-        return QuickMergeContentsVariants.all;
-      case OK_EXIT_CODE:
-        return QuickMergeContentsVariants.select;
-      default:
-        return QuickMergeContentsVariants.cancel;
-    }
+    return switch (exitCode) {
+      case MERGE_ALL_CODE -> QuickMergeContentsVariants.all;
+      case OK_EXIT_CODE -> QuickMergeContentsVariants.select;
+      default -> QuickMergeContentsVariants.cancel;
+    };
   }
 }

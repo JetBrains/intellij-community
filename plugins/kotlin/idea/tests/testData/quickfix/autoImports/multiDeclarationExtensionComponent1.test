@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'Some.component1'" "true"
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
 /* IGNORE_FIR */
 
@@ -26,7 +26,7 @@ operator fun Some.component2() = 3
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'Some.component1'" "true"
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
 /* IGNORE_FIR */
 

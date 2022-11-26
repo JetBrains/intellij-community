@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsAllWitherTest {
 
@@ -20,7 +20,7 @@ public class LombokUtilsAllWitherTest {
     lombokResult.clear();
     result.clear();
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.EMPTY;
+    final AccessorsInfo accessorsInfo = AccessorsInfo.DEFAULT;
     lombokResult.addAll(LombokHandlerUtil.toAllWitherNames(accessorsInfo, fieldName, isBoolean));
     result.addAll(LombokUtils.toAllWitherNames(accessorsInfo, fieldName, isBoolean));
 

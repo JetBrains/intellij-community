@@ -84,7 +84,7 @@
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.MavenCoroutinesDeprecationInspection"
                      groupPath="Kotlin,Migration"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
-                     enabledByDefault="true"
+                     enabledByDefault="false"
                      language="XML"
                      hasStaticDescription="true"
                      level="ERROR" key="inspection.maven.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
@@ -105,6 +105,13 @@
             implementation="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenUnresolvedReferenceQuickFixProvider" />
 
     <moduleService serviceImplementation="org.jetbrains.kotlin.idea.maven.KotlinImporterComponent"/>
+
+    <notificationGroup
+            id="Kotlin/JS compiler Maven"
+            displayType="STICKY_BALLOON"
+            key="notification.text.kotlin.js.compiler.maven.notification.group.name"
+            bundle="messages.KotlinMavenBundle"
+    />
   </extensions>
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.maven.KotlinMavenImportListener"

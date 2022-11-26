@@ -13,7 +13,8 @@ public class GetterLazyInvocationProduceNPE {
       }
     }
 
-    private Bar <warning descr="Field 'bar' may be 'final'">bar</warning>;
+    // no warning descr="Field 'bar' may be 'final'" any more?
+    private Bar bar;
     private Car car;
 
     public GetterLazyInvocationProduceNPE(Bar bar, Car car) {

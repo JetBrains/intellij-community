@@ -89,12 +89,8 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
         String value = entry.getValue();
 
         switch (columnIndex) {
-            case 0:
-                key = (String)aValue;
-                break;
-            case 1:
-                value = (String)aValue;
-                break;
+          case 0 -> key = (String)aValue;
+          case 1 -> value = (String)aValue;
         }
 
         Map<String, String> map = new HashMap<>();

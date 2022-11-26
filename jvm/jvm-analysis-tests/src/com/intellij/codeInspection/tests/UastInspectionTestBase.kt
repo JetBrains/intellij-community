@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.tests
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ex.QuickFixWrapper
@@ -45,20 +46,63 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   /**
-   * Runs all quickfixes in [hints] on [before] at the cursor position marked with <caret> and compares it with [after].
+   * Checks whether preview matches [preview] specified by the quickfix [hint] at the cursor position marked with <caret> in [code].
+   */
+  protected fun JavaCodeInsightTestFixture.testPreview(
+    lang: ULanguage,
+    code: String,
+    preview: String,
+    hint: String,
+    fileName: String = generateFileName()
+  ) {
+    configureByText("$fileName${lang.ext}", code)
+    testPreview(preview, hint)
+  }
+
+  private fun JavaCodeInsightTestFixture.testPreview(expectedPreview: String, hint: String) {
+    val actualPreview = getIntentionPreviewText(getIntention(hint))
+    assertEquals(expectedPreview, actualPreview)
+  }
+
+  /**
+   * Run the [hint] quickfix on [before] at the cursor position marked with <caret> and compares it with [after].
    */
   protected fun JavaCodeInsightTestFixture.testQuickFix(
     lang: ULanguage,
     before: String,
     after: String,
+    hint: String = InspectionsBundle.message(
+      "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+    ),
+    testPreview: Boolean = false,
+    fileName: String = generateFileName(),
+  ) {
+    configureByText("$fileName${lang.ext}", before)
+    if (testPreview) testPreview(lang, before, after, hint, fileName)
+    runQuickFix(hint)
+    checkResult(after)
+  }
+
+  /**
+   * Runs all quickfixes in [hints] on [before] and execute [test] when the exception is thrown.
+   */
+  protected inline fun <reified E : Throwable> JavaCodeInsightTestFixture.testQuickFixException(
+    lang: ULanguage,
+    before: String,
     vararg hints: String = arrayOf(InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
     )),
-    fileName: String = generateFileName()
+    fileName: String = generateFileName(),
+    test: (E) -> Unit
   ) {
     configureByText("$fileName${lang.ext}", before)
-    hints.forEach { runQuickFix(it) }
-    checkResult(after)
+    try {
+      hints.forEach { runQuickFix(it) }
+      fail("Expected exception ${E::class} to be but nothing was thrown")
+    } catch (e: Throwable) {
+      if (e !is E) fail("Expected exception ${E::class} but was ${e::class}")
+      test(e as E)
+    }
   }
 
   /**
@@ -88,9 +132,13 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     checkResultByFile(file.replace(".", ".after."))
   }
 
-  private fun JavaCodeInsightTestFixture.runQuickFix(hint: String) {
-    val action = getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
+  protected fun JavaCodeInsightTestFixture.runQuickFix(hint: String) {
+    val action = getIntention(hint)
     launchAction(action)
+  }
+
+  protected fun JavaCodeInsightTestFixture.getIntention(hint: String): IntentionAction {
+    return getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available")
   }
 
   protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(
@@ -102,17 +150,17 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     fileName: String = generateFileName()
   ) {
     configureByText("$fileName${lang.ext}", text)
-    assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
+    assertEmpty("Quickfix '$hint' is available but should not", myFixture.filterAvailableIntentions(hint))
   }
 
   protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(file: String, hint: String = InspectionsBundle.message(
     "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
   )) {
     configureByFile(file)
-    assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
+    assertEmpty("Quickfix '$hint' is available but should not", myFixture.filterAvailableIntentions(hint))
   }
 
-  private fun generateFileName() = getTestName(false).replace("[^a-zA-Z0-9\\.\\-]", "_")
+  protected fun generateFileName() = getTestName(false).replace("[^a-zA-Z0-9\\.\\-]", "_")
 
   override fun tearDown() {
     try {

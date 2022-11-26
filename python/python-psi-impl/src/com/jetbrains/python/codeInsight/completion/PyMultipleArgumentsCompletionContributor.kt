@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.PlatformIcons
+import com.intellij.ui.IconManager
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
@@ -71,7 +71,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor(), DumbAwa
 
     private fun createParametersLookupElement(variables: List<String>, call: PyCallExpression): LookupElement {
       return LookupElementBuilder.create(variables.joinToString(", "))
-        .withIcon(PlatformIcons.VARIABLE_ICON)
+        .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable))
         .withInsertHandler(PyMultipleArgumentsInsertHandler(call))
         .apply {
           putUserData(MULTIPLE_ARGUMENTS_VARIANT_KEY, true)

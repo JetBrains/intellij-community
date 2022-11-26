@@ -3,4 +3,8 @@
     name='org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils java.lang.String readString(com.amazon.ion.IonReader, java.lang.String)'>
     <annotation name='com.intellij.openapi.util.NlsSafe'/>
   </item>
+  <item
+    name='org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils java.lang.String readString(com.amazon.ion.IonReader, java.lang.String, java.util.concurrent.ConcurrentMap)'>
+    <annotation name='com.intellij.openapi.util.NlsSafe'/>
+  </item>
 </root>

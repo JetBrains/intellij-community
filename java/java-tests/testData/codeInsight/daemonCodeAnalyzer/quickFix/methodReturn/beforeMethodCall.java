@@ -1,4 +1,4 @@
-// "Make 'getNumber' return 'java.lang.String'" "true-preview"
+// "Make 'getNumber()' return 'java.lang.String'" "true-preview"
 public class Test {
   int number;
 

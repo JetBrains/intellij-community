@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomRootInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance(DomRootInvocationHandler.class);
   private final DomFileElementImpl<?> myParent;

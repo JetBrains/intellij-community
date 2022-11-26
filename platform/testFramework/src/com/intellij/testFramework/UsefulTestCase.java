@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,10 +71,14 @@ import static com.intellij.testFramework.common.TestEnvironmentKt.initializeTest
 import static org.junit.Assume.assumeTrue;
 
 /**
- * This class is compatible with both JUnit 3 and JUnit 4. To use JUnit 4, just annotate your test subclass
- * with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}), and you are all set.
+ * This class is compatible with both JUnit 3 and JUnit 4,
+ * but not JUnit 5 (see the module intellij.platform.testFramework.junit5 instead).
  * <p>
- * Don't annotate the JUnit 3 {@linkplain #setUp()}/{@linkplain #tearDown()} methods as {@code @Before}/{@code @After}, and don't call them from other {@code @Before}/{@code @After} methods.
+ * To use JUnit 4, annotate your test subclass with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}),
+ * and you are all set.
+ * <p>
+ * Don't annotate the JUnit 3 {@linkplain #setUp()}/{@linkplain #tearDown()} methods as {@code @Before}/{@code @After},
+ * and don't call them from other {@code @Before}/{@code @After} methods.
  * <p>
  * Don't define {@code @Rule}s calling {@linkplain #runBare()}, just subclassing this class (directly or indirectly) is enough.
  * <p>
@@ -166,7 +171,7 @@ public abstract class UsefulTestCase extends TestCase {
    *     try {
    *       doTearDowns();
    *     }
-   *     catch(Exception e) {
+   *     catch (Exception e) {
    *       addSuppressedException(e);
    *     }
    *     finally {
@@ -183,6 +188,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     list.add(e);
   }
+
   private List<Throwable> mySuppressedExceptions;
 
   public UsefulTestCase() { }
@@ -203,6 +209,8 @@ public abstract class UsefulTestCase extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    GlobalState.checkSystemStreams();
+
     setupTempDir();
 
     boolean isStressTest = isStressTest();
@@ -215,7 +223,7 @@ public abstract class UsefulTestCase extends TestCase {
     Disposer.setDebugMode(!isStressTest);
 
     if (isIconRequired()) {
-      // ensure that IconLoader will use dummy empty icon
+      // ensure that IconLoader will not use dummy empty icon
       try {
         IconManager.activate(new CoreIconManager());
       }
@@ -286,6 +294,7 @@ public abstract class UsefulTestCase extends TestCase {
         }
       },
       () -> disposeRootDisposable(),
+      () -> GlobalState.checkSystemStreams(),
       () -> cleanupSwingDataStructures(),
       () -> Disposer.setDebugMode(true),
       () -> {
@@ -295,7 +304,7 @@ public abstract class UsefulTestCase extends TestCase {
             removeGlobalTempDirectory(myTempDir);
           }
           catch (Throwable e) {
-            printThreadDump();
+            ThreadUtil.printThreadDump();
             throw e;
           }
         }
@@ -328,8 +337,9 @@ public abstract class UsefulTestCase extends TestCase {
     return false;
   }
 
-  static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) {
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+  static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
+                                       @NotNull CodeStyleSettings currentCodeStyleSettings) {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
@@ -439,9 +449,9 @@ public abstract class UsefulTestCase extends TestCase {
   private void logPerClassCost(int cost, @NotNull ObjectIntMap<String> costMap, @NotNull ObjectIntMap<String> countMap) {
     String name = getClass().getSuperclass().getName();
     int storedCost = costMap.get(name);
-    costMap.put(name, (storedCost == -1 ? 0 : storedCost)+cost);
+    costMap.put(name, (storedCost == -1 ? 0 : storedCost) + cost);
     int storedCount = countMap.get(name);
-    countMap.put(name, storedCount == -1 ? 1 : storedCount+1);
+    countMap.put(name, storedCount == -1 ? 1 : storedCount + 1);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -477,7 +487,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    var wrappedRunnable = wrapTestRunnable(testRunnable);
+    ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
     if (runInDispatchThread()) {
       UITestUtil.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
@@ -488,7 +498,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
-    var testDescription = Description.createTestDescription(getClass(), getName());
+    Description testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
       TestLoggerFactory.onTestStarted();
@@ -640,7 +650,9 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
-  public static <T> void assertSameElements(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
+  public static <T> void assertSameElements(@NotNull String message,
+                                            @NotNull Collection<? extends T> actual,
+                                            @NotNull Collection<? extends T> expected) {
     if (actual.size() != expected.size() || !new LinkedHashSet<>(expected).equals(new LinkedHashSet<T>(actual))) {
       Assert.assertEquals(message, new LinkedHashSet<>(expected), new LinkedHashSet<T>(actual));
     }
@@ -699,7 +711,7 @@ public abstract class UsefulTestCase extends TestCase {
     Collections.sort(list);
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
-    for (final String o : list) {
+    for (String o : list) {
       if (flag) {
         builder.append(separator);
       }
@@ -715,7 +727,7 @@ public abstract class UsefulTestCase extends TestCase {
       Assert.fail(toString(collection));
     }
     int i = 0;
-    for (final T actual : collection) {
+    for (T actual : collection) {
       try {
         checkers[i].consume(actual);
       }
@@ -741,9 +753,9 @@ public abstract class UsefulTestCase extends TestCase {
     Set<Consumer<? super T>> checkerSet = ContainerUtil.set(checkers);
     int i = 0;
     Throwable lastError = null;
-    for (final T actual : collection) {
+    for (T actual : collection) {
       boolean flag = true;
-      for (final Consumer<? super T> condition : checkerSet) {
+      for (Consumer<? super T> condition : checkerSet) {
         Throwable error = accepts(condition, actual);
         if (error == null) {
           checkerSet.remove(condition);
@@ -763,7 +775,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, final T actual) {
+  private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, T actual) {
     try {
       condition.consume(actual);
       return null;
@@ -782,12 +794,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
-    Assert.assertEquals(collection.toString(), 1, collection.size());
+    if (collection.size() != 1) {
+      Assert.assertEquals(collection.toString(), 1, collection.size());
+    }
     return collection.iterator().next();
   }
 
   public static <T> T assertOneElement(T @NotNull [] ts) {
-    Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
+    if (ts.length != 1) {
+      Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
+    }
     return ts[0];
   }
 
@@ -801,26 +817,19 @@ public abstract class UsefulTestCase extends TestCase {
     Assert.fail(value + " should be equal to one of " + Arrays.toString(values));
   }
 
-  /**
-   * @deprecated moved to {@link ThreadUtil#printThreadDump()}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  public static void printThreadDump() {
-    ThreadUtil.printThreadDump();
-  }
-
   public static void assertEmpty(Object @NotNull [] array) {
     assertOrderedEquals(array);
   }
 
-  public static void assertNotEmpty(final Collection<?> collection) {
+  public static void assertNotEmpty(Collection<?> collection) {
     assertNotNull(collection);
     assertFalse(collection.isEmpty());
   }
 
   public static void assertEmpty(@NotNull Collection<?> collection) {
-    assertEmpty(collection.toString(), collection);
+    if (!collection.isEmpty()) {
+      assertEmpty(collection.toString(), collection);
+    }
   }
 
   public static void assertNullOrEmpty(@Nullable Collection<?> collection) {
@@ -828,7 +837,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertEmpty("", collection);
   }
 
-  public static void assertEmpty(final String s) {
+  public static void assertEmpty(String s) {
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
@@ -863,11 +872,11 @@ public abstract class UsefulTestCase extends TestCase {
     Assert.assertEquals(message, expectedText, actualText);
   }
 
-  public static void assertExists(@NotNull File file){
+  public static void assertExists(@NotNull File file) {
     assertTrue("File should exist " + file, file.exists());
   }
 
-  public static void assertDoesntExist(@NotNull File file){
+  public static void assertDoesntExist(@NotNull File file) {
     assertFalse("File should not exist " + file, file.exists());
   }
 
@@ -887,7 +896,9 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameLinesWithFile(filePath, actualText, true);
   }
 
-  public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, @NotNull Supplier<String> messageProducer) {
+  public static void assertSameLinesWithFile(@NotNull String filePath,
+                                             @NotNull String actualText,
+                                             @NotNull Supplier<String> messageProducer) {
     assertSameLinesWithFile(filePath, actualText, true, messageProducer);
   }
 
@@ -897,8 +908,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull File ioFile) throws IOException {
     fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
-    if (!ioFile.getCanonicalPath().endsWith(fullOrRelativePath)) {
-      throw new RuntimeException("Queried for: " + fullOrRelativePath + "; but found: " + ioFile.getCanonicalPath());
+    var canonicalPath = ioFile.getCanonicalPath();
+    if (!canonicalPath.endsWith(fullOrRelativePath) && StringUtil.endsWithIgnoreCase(canonicalPath, fullOrRelativePath)) {
+      throw new RuntimeException("Queried for: " + fullOrRelativePath + "; but found: " + canonicalPath);
     }
   }
 
@@ -931,6 +943,16 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public static void assertTextEquals(@NotNull String expectedText, @NotNull String actualText) {
+    assertTextEquals(null, expectedText, actualText);
+  }
+
+  public static void assertTextEquals(@Nullable String message, @NotNull String expectedText, @NotNull String actualText) {
+    if (!expectedText.equals(actualText)) {
+      throw new FileComparisonFailure(Strings.notNullize(message), expectedText, actualText, null);
+    }
+  }
+
   protected static void clearFields(@NotNull Object test) throws IllegalAccessException {
     Class<?> aClass = test.getClass();
     while (aClass != null) {
@@ -940,10 +962,10 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void clearDeclaredFields(@NotNull Object test, @NotNull Class<?> aClass) throws IllegalAccessException {
-    for (final Field field : aClass.getDeclaredFields()) {
-      final String name = field.getDeclaringClass().getName();
+    for (Field field : aClass.getDeclaredFields()) {
+      String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
-        final int modifiers = field.getModifiers();
+        int modifiers = field.getModifiers();
         if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
           field.setAccessible(true);
           field.set(test, null);
@@ -978,7 +1000,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
-   * Such test should avoid performing expensive consistency checks, e.g. data structure consistency complex validations.
+   * Such test should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
    * For example: {@code public void testHighlightingPerformance()}
    */
@@ -988,12 +1010,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations <b>and</b> does care about the correctness of operations it performs.
-   * Such test should typically avoid performing expensive checks, e.g. data structure consistency complex validations.
+   * Such test should typically avoid performing expensive checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
   public final boolean isStressTest() {
-    String testName = getName(), className = getClass().getSimpleName();
+    String testName = getName();
+    String className = getClass().getSimpleName();
     return TestFrameworkUtil.isPerformanceTest(testName, className) ||
            containsStressWords(testName) ||
            containsStressWords(className);
@@ -1045,12 +1068,13 @@ public abstract class UsefulTestCase extends TestCase {
     }
     finally {
       if (!wasThrown) {
-        fail(exceptionClass + " must be thrown.");
+        fail("'" + exceptionClass.getName() + "' must have been thrown, but the computation completed successfully instead");
       }
     }
   }
 
-  protected static <T extends Throwable> void assertNoException(@NotNull Class<? extends Throwable> exceptionClass, @NotNull ThrowableRunnable<T> runnable) throws T {
+  protected static <T extends Throwable> void assertNoException(@NotNull Class<? extends Throwable> exceptionClass,
+                                                                @NotNull ThrowableRunnable<T> runnable) throws T {
     try {
       runnable.run();
     }
@@ -1118,11 +1142,11 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  public static VirtualFile refreshAndFindFile(final @NotNull File file) {
+  public static VirtualFile refreshAndFindFile(@NotNull File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
-  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
     EdtTestUtil.runInEdtAndWait(() -> {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
@@ -1159,9 +1183,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void allowAccessToDirsIfExists(@NotNull String @NotNull ... dirNames) {
     for (String dirName : dirNames) {
-      final Path usrShareDir = Paths.get(dirName);
+      Path usrShareDir = Paths.get(dirName);
       if (Files.exists(usrShareDir)) {
-        final String absolutePath = usrShareDir.toAbsolutePath().toString();
+        String absolutePath = usrShareDir.toAbsolutePath().toString();
         LOG.debug(usrShareDir.toString(), " exists, adding to the list of allowed root: ", absolutePath);
         VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
       }

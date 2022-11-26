@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -11,15 +11,16 @@ import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBInsets;
@@ -403,7 +404,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected void installSpeedSearch() {
-    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, path -> {
+    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, false, path -> {
       final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
       if (lastPathComponent == null) return null;
       String text = lastPathComponent.getDelegate().getText();
@@ -822,7 +823,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected ShowContainersAction getShowContainersAction() {
-    return new ShowContainersAction(IdeBundle.messagePointer("action.show.classes"), PlatformIcons.CLASS_ICON);
+    return new ShowContainersAction(IdeBundle.messagePointer("action.show.classes"),
+                                    IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class));
   }
 
   protected class ShowContainersAction extends ToggleAction {

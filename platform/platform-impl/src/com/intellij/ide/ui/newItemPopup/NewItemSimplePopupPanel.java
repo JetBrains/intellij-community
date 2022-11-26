@@ -34,7 +34,7 @@ import java.util.function.Predicate;
 public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   protected final ExtendableTextField myTextField;
 
-  private JBPopup myErrorPopup;
+  protected JBPopup myErrorPopup;
   protected RelativePoint myErrorShowPoint;
 
   protected Consumer<? super InputEvent> myApplyAction;
@@ -72,8 +72,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
       Point point = new Point(0, insets.top - JBUIScale.scale(6) - hintSize.height);
       myErrorShowPoint = new RelativePoint(myTextField, point);
     }).setCancelOnWindowDeactivation(false)
-      .setCancelOnClickOutside(true)
-      .addUserData("SIMPLE_WINDOW");
+      .setCancelOnClickOutside(true);
 
     myErrorPopup = popupBuilder.createPopup();
     myErrorPopup.show(myErrorShowPoint);

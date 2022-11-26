@@ -63,21 +63,13 @@ public class ChangelistConflictDialog extends DialogWrapper {
     mySwitchToChangelistRadioButton.setText(VcsBundle.message("switch.to.changelist", changeLists.iterator().next().getName()));
     myMoveChangesToActiveRadioButton.setText(VcsBundle.message("move.to.changelist", defaultChangeList.getName()));
 
-    switch (resolution) {
-
-      case SHELVE:
-        myShelveChangesRadioButton.setSelected(true);
-        break;
-      case MOVE:
-        myMoveChangesToActiveRadioButton.setSelected(true);
-        break;
-      case SWITCH:
-        mySwitchToChangelistRadioButton.setSelected(true) ;
-        break;
-      case IGNORE:
-        myIgnoreRadioButton.setSelected(true);
-        break;
-    }
+    JRadioButton radioButton = switch (resolution) {
+      case SHELVE -> myShelveChangesRadioButton;
+      case MOVE -> myMoveChangesToActiveRadioButton;
+      case SWITCH -> mySwitchToChangelistRadioButton;
+      case IGNORE -> myIgnoreRadioButton;
+    };
+    radioButton.setSelected(true);
     init();
   }
 

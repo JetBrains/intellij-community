@@ -15,16 +15,10 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 final class SmartStepIntoAction extends XDebuggerActionBase {
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
-
   @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {

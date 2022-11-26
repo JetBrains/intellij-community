@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.function.UnaryOperator;
 
 /**
  * Utility class to help interpreting the Java DFA
@@ -35,15 +36,10 @@ public class JavaDfaHelpers {
       return value;
     }
     DfaVariableValue var = (DfaVariableValue)value;
-    DfType dfType = state.getDfType(var);
-    if (dfType instanceof DfReferenceType) {
-      state.setDfType(var, ((DfReferenceType)dfType).dropLocality());
-    }
+    UnaryOperator<@NotNull DfType> updater = dfType -> dfType instanceof DfReferenceType refType ? refType.dropLocality() : dfType;
+    state.updateDfType(var, updater);
     for (DfaVariableValue v : new ArrayList<>(var.getDependentVariables())) {
-      dfType = state.getDfType(v);
-      if (dfType instanceof DfReferenceType) {
-        state.setDfType(v, ((DfReferenceType)dfType).dropLocality());
-      }
+      state.updateDfType(v, updater);
     }
     return value;
   }

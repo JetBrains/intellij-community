@@ -10,6 +10,7 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.junit.Before;
@@ -28,7 +29,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.diagnostic.ThreadDumper.dumpThreadsToString;
-import static com.intellij.util.ui.tree.TreeUtil.expandAll;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.*;
 
@@ -112,7 +112,7 @@ public final class AsyncTreeModelTest {
   public void testChildrenUpdate() {
     ArrayList<TreePath> list = new ArrayList<>();
     testAsync(AsyncTreeModelTest::createMutableRoot, test
-      -> expandAll(test.tree, ()
+      -> TreeUtil.expandAll(test.tree, ()
       -> testPathState(test.tree, "   +'root'\n" + MUTABLE_CHILDREN, ()
       -> collectTreePaths(test.tree, list, ()
       -> test.updateModelAndWait(model -> ((DefaultTreeModel)model).setRoot(createMutableRoot()), ()
@@ -157,14 +157,16 @@ public final class AsyncTreeModelTest {
   }
 
   private static final String MUTABLE_CHILDREN
-    = "     +'color'\n" +
-      "        'red'\n" +
-      "        'green'\n" +
-      "        'blue'\n" +
-      "     +'greek'\n" +
-      "        'alpha'\n" +
-      "        'beta'\n" +
-      "        'gamma'\n";
+    = """
+         +'color'
+            'red'
+            'green'
+            'blue'
+         +'greek'
+            'alpha'
+            'beta'
+            'gamma'
+    """;
 
   @Test
   public void testChildren() {
@@ -194,28 +196,34 @@ public final class AsyncTreeModelTest {
   }
 
   private static final String CHILDREN
-    = "      'color'\n" +
-      "      'digit'\n" +
-      "      'greek'\n";
+    = """
+          'color'
+          'digit'
+          'greek'
+    """;
   private static final String CHILDREN_COLOR
-    = "     +'color'\n" +
-      "        'red'\n" +
-      "        'green'\n" +
-      "        'blue'\n" +
-      "      'digit'\n" +
-      "      'greek'\n";
+    = """
+         +'color'
+            'red'
+            'green'
+            'blue'
+          'digit'
+          'greek'
+    """;
   private static final String CHILDREN_COLOR_GREEK
-    = "     +'color'\n" +
-      "        'red'\n" +
-      "        'green'\n" +
-      "        'blue'\n" +
-      "      'digit'\n" +
-      "     +'greek'\n" +
-      "        'alpha'\n" +
-      "        'beta'\n" +
-      "        'gamma'\n" +
-      "        'delta'\n" +
-      "        'epsilon'\n";
+    = """
+         +'color'
+            'red'
+            'green'
+            'blue'
+          'digit'
+         +'greek'
+            'alpha'
+            'beta'
+            'gamma'
+            'delta'
+            'epsilon'
+    """;
 
   @Test
   public void testChildrenResolve() {

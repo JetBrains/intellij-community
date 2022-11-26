@@ -92,6 +92,7 @@ internal class JKPrinter(
                 is JKVarianceTypeParameterType -> {
                     renderType(wildcard.boundType, owner)
                 }
+
                 is JKStarProjectionType -> {
                     type.renderTypeInfo()
                     this.print("Any?")
@@ -104,11 +105,14 @@ internal class JKPrinter(
             is JKClassType -> {
                 renderSymbol(type.classReference, owner)
             }
+
             is JKContextType -> return
             is JKStarProjectionType ->
                 this.print("*")
+
             is JKTypeParameterType ->
                 this.print(type.identifier.name)
+
             is JKVarianceTypeParameterType -> {
                 when (type.variance) {
                     JKVarianceTypeParameterType.Variance.IN -> this.print("in ")
@@ -116,6 +120,7 @@ internal class JKPrinter(
                 }
                 renderType(type.boundType)
             }
+
             else -> this.print("Unit /* TODO: ${type::class} */")
         }
         if (type is JKParametrizedType && type.parameters.isNotEmpty()) {

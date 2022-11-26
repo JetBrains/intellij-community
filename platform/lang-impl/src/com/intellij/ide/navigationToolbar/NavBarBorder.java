@@ -36,7 +36,9 @@ public class NavBarBorder implements Border {
 
   @Override
   public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-    if (UISettings.getInstance().getShowMainToolbar()) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() && uiSettings.getNavBarLocation() == NavBarLocation.TOP
+        || !ExperimentalUI.isNewUI() && uiSettings.getShowMainToolbar()) {
       g.setColor(BORDER_COLOR);
       g.fillRect(x, y, width, BW.get());
     }

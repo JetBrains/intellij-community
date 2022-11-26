@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -108,6 +110,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String NOT_REQUIRED = "typing.NotRequired";
   public static final String NOT_REQUIRED_EXT = "typing_extensions.NotRequired";
 
+  public static final String SELF = "typing.Self";
+  public static final String SELF_EXT = "typing_extensions.Self";
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
@@ -192,7 +196,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(TYPE_ALIAS, TYPE_ALIAS_EXT)
     .add(REQUIRED, REQUIRED_EXT)
     .add(NOT_REQUIRED, NOT_REQUIRED_EXT)
+    .add(SELF, SELF_EXT)
     .build();
+
+  private static final Key<PsiElement> FRAGMENT_OWNER = Key.create("PY_FRAGMENT_OWNER");
 
   @Nullable
   @Override
@@ -680,6 +687,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
     final Iterable<QualifiedName> allBaseClassesQNames;
     final List<PySubscriptionExpression> subscriptedBaseClasses = PyClassElementType.getSubscriptedSuperClassesStubLike(pyClass);
+    for (PySubscriptionExpression subscrExpr : subscriptedBaseClasses) {
+      PsiFile containingFile = subscrExpr.getContainingFile();
+      if (containingFile instanceof PyExpressionCodeFragment) {
+        containingFile.putUserData(FRAGMENT_OWNER, pyClass);
+      }
+    }
     final Map<QualifiedName, PySubscriptionExpression> baseClassQNameToExpr = new HashMap<>();
     if (classStub == null) {
       allBaseClassesQNames = PyClassElementType.getSuperClassQNames(pyClass).keySet();
@@ -753,20 +766,26 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
-    final List<PyType> members = new ArrayList<>();
-    boolean foundAny = false;
-    for (Pair<PyTargetExpression, PsiElement> pair : tryResolvingWithAliases(expression, context.getTypeContext())) {
-      final Ref<PyType> typeRef = getTypeForResolvedElement(pair.getFirst(), pair.getSecond(), context);
-      if (typeRef != null) {
-        final PyType type = typeRef.get();
-        if (type == null) {
-          foundAny = true;
+    context.getExpressionStack().push(expression);
+    try {
+      final List<PyType> members = new ArrayList<>();
+      boolean foundAny = false;
+      for (Pair<PyTargetExpression, PsiElement> pair : tryResolvingWithAliases(expression, context.getTypeContext())) {
+        final Ref<PyType> typeRef = getTypeForResolvedElement(pair.getFirst(), pair.getSecond(), context);
+        if (typeRef != null) {
+          final PyType type = typeRef.get();
+          if (type == null) {
+            foundAny = true;
+          }
+          members.add(type);
         }
-        members.add(type);
       }
+      final PyType union = PyUnionType.union(members);
+      return union != null || foundAny ? Ref.create(union) : null;
     }
-    final PyType union = PyUnionType.union(members);
-    return union != null || foundAny ? Ref.create(union) : null;
+    finally {
+      context.getExpressionStack().pop();
+    }
   }
 
   @Nullable
@@ -830,6 +849,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
       context.getExpressionCache().add(alias);
     }
+    context.getExpressionStack().push(resolved);
     try {
       final Ref<PyType> typeFromParenthesizedExpression = getTypeFromParenthesizedExpression(resolved, context);
       if (typeFromParenthesizedExpression != null) {
@@ -924,13 +944,37 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (unionTypeFromBinaryOr != null) {
         return unionTypeFromBinaryOr;
       }
+      final Ref<PyType> selfType = getSelfType(resolved, context);
+      if (selfType != null) {
+        return selfType;
+      }
       return null;
     }
     finally {
+      context.getExpressionStack().pop();
       if (alias != null) {
         context.getExpressionCache().remove(alias);
       }
     }
+  }
+
+  private static Ref<PyType> getSelfType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyQualifiedNameOwner &&
+        (SELF.equals(((PyQualifiedNameOwner)resolved).getQualifiedName()) ||
+         SELF_EXT.equals(((PyQualifiedNameOwner)resolved).getQualifiedName()))) {
+      PsiElement lastTypeHintExpr = context.getExpressionStack().get(0);
+      PsiElement typeHintContext = getStubRetainedTypeHintContext(lastTypeHintExpr);
+
+      PyClass containingClass = typeHintContext instanceof PyClass ? (PyClass)typeHintContext
+                                                                   : PsiTreeUtil.getStubOrPsiParentOfType(typeHintContext, PyClass.class);
+      if (containingClass == null) return null;
+
+      PyClassLikeType scopeClassType = containingClass.getType(context.getTypeContext());
+      if (scopeClassType == null) return null;
+
+      return Ref.create(new PySelfType(scopeClassType));
+    }
+    return null;
   }
 
   @Nullable
@@ -1227,7 +1271,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static PyExpression toExpression(@NotNull String contents, @NotNull PsiElement anchor) {
     final PsiFile file = FileContextUtil.getContextFile(anchor);
     if (file == null) return null;
-    return PyUtil.createExpressionFromFragment(contents, file);
+    PyExpression fragment = PyUtil.createExpressionFromFragment(contents, file);
+    if (fragment != null) {
+      fragment.getContainingFile().putUserData(FRAGMENT_OWNER, anchor);
+    }
+    return fragment;
   }
 
   @Nullable
@@ -1496,6 +1544,22 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
+  }
+
+  @NotNull
+  private static PsiElement getStubRetainedTypeHintContext(@NotNull PsiElement typeHintExpression) {
+    // Values from PSI stubs and regular type comments
+    PsiElement fragmentOwner = typeHintExpression.getContainingFile().getUserData(FRAGMENT_OWNER);
+    if (fragmentOwner != null) {
+      return fragmentOwner;
+    }
+    // Values from function type comments
+    else if (typeHintExpression.getContainingFile() instanceof PyFunctionTypeAnnotationFile) {
+      return PyPsiUtils.getRealContext(typeHintExpression);
+    }
+    else {
+      return typeHintExpression;
+    }
   }
 
   @Nullable
@@ -1830,6 +1894,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     @NotNull private final TypeEvalContext myContext;
     @NotNull private final Set<PsiElement> myCache = new HashSet<>();
 
+    @NotNull private final Stack<PsiElement> myExpressionStack = new Stack<>();
+
     Context(@NotNull TypeEvalContext context) {
       myContext = context;
     }
@@ -1842,6 +1908,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     @NotNull
     public Set<PsiElement> getExpressionCache() {
       return myCache;
+    }
+
+    @NotNull
+    Stack<PsiElement> getExpressionStack() {
+      return myExpressionStack;
     }
   }
 }

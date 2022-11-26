@@ -4,8 +4,10 @@ package com.intellij.openapi.application
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -13,6 +15,7 @@ import kotlin.coroutines.CoroutineContext
  * runs the [action] holding the lock **without** preventing write actions.
  * See [constrainedReadAction] for semantic details.
  *
+ * @see readActionUndispatched
  * @see readActionBlocking
  */
 suspend fun <T> readAction(action: () -> T): T {
@@ -45,10 +48,35 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  *
  * The [action] is dispatched to [Dispatchers.Default], because a read action is expected to be a CPU-bound task.
  *
+ * @see constrainedReadActionUndispatched
  * @see constrainedReadActionBlocking
  */
 suspend fun <T> constrainedReadAction(vararg constraints: ReadConstraint, action: () -> T): T {
-  return readActionSupport().executeReadAction(constraints.toList(), blocking = false, action)
+  return readActionSupport().executeReadAction(constraints.toList(), action = action)
+}
+
+/**
+ * See [constrainedReadActionUndispatched] for semantic details.
+ *
+ * @see readAction
+ */
+@IntellijInternalApi
+@Internal
+suspend fun <T> readActionUndispatched(action: () -> T): T {
+  return constrainedReadActionUndispatched(action = action)
+}
+
+/**
+ * Has same semantics as [constrainedReadAction],
+ * except it runs the given [action] in the original [CoroutineDispatcher]
+ * without dispatching it to [Dispatchers.Default].
+ *
+ * Use with care. This method should not be used to compute CPU-heavy stuff.
+ */
+@IntellijInternalApi
+@Internal
+suspend fun <T> constrainedReadActionUndispatched(vararg constraints: ReadConstraint, action: () -> T): T {
+  return readActionSupport().executeReadAction(constraints.toList(), undispatched = true, action = action)
 }
 
 /**
@@ -90,7 +118,7 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
  * @see constrainedReadAction
  */
 suspend fun <T> constrainedReadActionBlocking(vararg constraints: ReadConstraint, action: () -> T): T {
-  return readActionSupport().executeReadAction(constraints.toList(), blocking = true, action)
+  return readActionSupport().executeReadAction(constraints.toList(), blocking = true, action = action)
 }
 
 /**
@@ -118,11 +146,9 @@ suspend fun <T> writeAction(action: () -> T): T {
 
 private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
 
-/**
- * The code within [ModalityState.any] context modality state must only perform pure UI operations,
- * it must not access any PSI, VFS, project model, or indexes. It also must not show any modal dialogs.
- */
-fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
+@Suppress("CONFLICTING_OVERLOADS")
+@Deprecated("Moved to modality.kt", level = DeprecationLevel.HIDDEN)
+fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
 
 /**
  * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].

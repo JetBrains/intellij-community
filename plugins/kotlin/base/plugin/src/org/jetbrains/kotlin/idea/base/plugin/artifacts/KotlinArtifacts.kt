@@ -112,5 +112,8 @@ object KotlinArtifacts {
     val samWithReceiverCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.SAM_WITH_RECEIVER_COMPILER_PLUGIN)
 
     @JvmStatic
+    val assignmentCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.ASSIGNMENT_COMPILER_PLUGIN)
+
+    @JvmStatic
     val kotlinxSerializationCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
 }

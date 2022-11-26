@@ -24,12 +24,13 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 
 public class EditorSearchTest extends BasePlatformTestCase {
-  private static final String THE_CODE = "public class A {\n" +
-                                   "  //First comment ABC, ABCD, abc\n" +
-                                   "  int ABC = 3;\n" +
-                                   "  int abcde = 4;\n" +
-                                   "  String literalString = \"ABC, ABCD, abc\";\n" +
-                                   "}";
+  private static final String THE_CODE = """
+    public class A {
+      //First comment ABC, ABCD, abc
+      int ABC = 3;
+      int abcde = 4;
+      String literalString = "ABC, ABCD, abc";
+    }""";
 
   public void testSearchFieldSelection() {
     myFixture.configureByText("a.java", THE_CODE);

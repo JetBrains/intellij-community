@@ -3,7 +3,6 @@ package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value
-import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.beans.addIfDiffers
@@ -13,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
@@ -106,7 +106,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
-    val projectLog = VcsProjectLog.getInstance(project) ?: return
+    val projectLog = project.serviceIfCreated<VcsProjectLog>() ?: return
     val ui = projectLog.mainLogUi ?: return
 
     addPropertyMetricIfDiffers(metrics, ui, SHOW_GIT_BRANCHES_LOG_PROPERTY, SHOW_GIT_BRANCHES_IN_LOG)

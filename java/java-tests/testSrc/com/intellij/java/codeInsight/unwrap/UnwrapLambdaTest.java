@@ -5,99 +5,123 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapLambdaTest extends UnwrapTestCase {
   public void testUnwrap() {
-    assertUnwrapped("{\n" +
-                    "    Runnable r = () -> {\n" +
-                    "       Sys<caret>tem.gc();\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          Runnable r = () -> {
+                             Sys<caret>tem.gc();
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n");
+                    """
+                      {
+                          Sys<caret>tem.gc();
+                      }
+                      """);
   }
 
   public void testUnwrapNestedLambda() {
-    assertUnwrapped("{\n" +
-                    "    bar(() -> bar(() -> Sys<caret>tem.gc()));\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          bar(() -> bar(() -> Sys<caret>tem.gc()));
+                      }
+                      """,
 
-                    "{\n" +
-                    "    bar(() -> Sys<caret>tem.gc());\n" +
-                    "}\n", 1);
+                    """
+                      {
+                          bar(() -> Sys<caret>tem.gc());
+                      }
+                      """, 1);
   }
   
   public void testUnwrapNestedLambda2() {
-    assertUnwrapped("{\n" +
-                    "    bar(() -> bar(() -> {\n" +
-                    "                         Sys<caret>tem.gc();\n" +
-                    "                         System.gc();\n" +
-                    "                         }));\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          bar(() -> bar(() -> {
+                                               Sys<caret>tem.gc();
+                                               System.gc();
+                                               }));
+                      }
+                      """,
 
-                    "{\n" +
-                    "    bar(() -> {\n" +
-                    "                         System.gc();\n" +
-                    "                         System.gc();\n" +
-                    "                         });\n" +
-                    "}\n", 1);
+                    """
+                      {
+                          bar(() -> {
+                                               System.gc();
+                                               System.gc();
+                                               });
+                      }
+                      """, 1);
   }
   
   public void testUnwrapExpressionDeclaration() {
-    assertUnwrapped("{\n" +
-                    "    interface I {int get();}" +
-                    "    I i = () -> <caret>1;\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          interface I {int get();}    I i = () -> <caret>1;
+                      }
+                      """,
 
-                    "{\n" +
-                    "    interface I {int get();}" +
-                    "    I i = 1;\n" +
-                    "}\n");
+                    """
+                      {
+                          interface I {int get();}    I i = 1;
+                      }
+                      """);
   }
 
   public void testUnwrapBlockDeclaration() {
-    assertUnwrapped("{\n" +
-                    "    interface I {int get();}" +
-                    "    I i = () -> { return <caret>1;};\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          interface I {int get();}    I i = () -> { return <caret>1;};
+                      }
+                      """,
 
-                    "{\n" +
-                    "    interface I {int get();}" +
-                    "    I i = 1;\n" +
-                    "}\n");
+                    """
+                      {
+                          interface I {int get();}    I i = 1;
+                      }
+                      """);
   }
 
   public void testUnwrapAssignment() {
-    assertUnwrapped("{\n" +
-                    "    interface I {int get();}" +
-                    "    void bar(I i) {}" +
-                    "    I i = bar(() -> 1<caret>1);\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          interface I {int get();}    void bar(I i) {}    I i = bar(() -> 1<caret>1);
+                      }
+                      """,
 
-                    "{\n" +
-                    "    interface I {int get();}" +
-                    "    void bar(I i) {}" +
-                    "    I i = 11;\n" +
-                    "}\n", 1);
+                    """
+                      {
+                          interface I {int get();}    void bar(I i) {}    I i = 11;
+                      }
+                      """, 1);
   }
 
   public void testUnwrapAssignmentWithCodeBlock() {
-    assertUnwrapped("{\n" +
-                    "    Runnable r = () -> {in<caret>t i = 0;};\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          Runnable r = () -> {in<caret>t i = 0;};
+                      }
+                      """,
 
-                    "{\n" +
-                    "    int i = 0;\n" +
-                    "}\n");
+                    """
+                      {
+                          int i = 0;
+                      }
+                      """);
   }
 
   public void testUnwrapUnresolved() {
-    assertUnwrapped("{\n" +
-                    "    () -> <caret>null;\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          () -> <caret>null;
+                      }
+                      """,
 
-                    "{\n" +
-                    "    null;\n" +
-                    "}\n");
+                    """
+                      {
+                          null;
+                      }
+                      """);
   }
 
   @Override

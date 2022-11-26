@@ -16,8 +16,8 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -502,9 +502,9 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public Icon getIcon(final int flags) {
     if (isQualified() || PsiTreeUtil.getStubOrPsiParentOfType(this, PyDocStringOwner.class) instanceof PyClass) {
-      return PlatformIcons.FIELD_ICON;
+      return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field);
     }
-    return PlatformIcons.VARIABLE_ICON;
+    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
   }
 
   @Override
@@ -690,7 +690,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public PyStringLiteralExpression getDocStringExpression() {
     final PsiElement parent = getParent();
-    if (parent instanceof PyAssignmentStatement) {
+    if (parent instanceof PyAssignmentStatement || parent instanceof PyTypeDeclarationStatement) {
       final PsiElement nextSibling = PyPsiUtils.getNextNonCommentSibling(parent, true);
       if (nextSibling instanceof PyExpressionStatement) {
         final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();

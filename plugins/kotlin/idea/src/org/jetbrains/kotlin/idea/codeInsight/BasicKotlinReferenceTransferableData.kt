@@ -20,10 +20,6 @@ class BasicKotlinReferenceTransferableData(
     val locationFqName: String?
 ) : TextBlockTransferableData, Cloneable, Serializable {
     override fun getFlavor() = dataFlavor
-    override fun getOffsetCount() = 0
-
-    override fun getOffsets(offsets: IntArray?, index: Int) = index
-    override fun setOffsets(offsets: IntArray?, index: Int) = index
 
     public override fun clone(): BasicKotlinReferenceTransferableData {
         try {

@@ -3,9 +3,9 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,14 +28,15 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
     //  sure we are interested only in libraries used in project, but in case registered library is downloaded
     // no change in dependencies happen, only Added event on LibraryEntity.
     // For debug see com.intellij.roots.libraries.LibraryTest
-    return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getPersistentId(), false);
+    return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getSymbolicId(), false);
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull LibraryEntity oldEntity,
-                                                                                                   @NotNull LibraryEntity newEntity) {
+                                                                                                   @NotNull LibraryEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (hasSomethingToIndex(oldEntity, newEntity)) {
-      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(newEntity.getPersistentId(), false);
+      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(newEntity.getSymbolicId(), false);
     }
     else {
       return Collections.emptyList();
@@ -49,9 +50,9 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
     for (LibraryRoot root : newEntity.getRoots()) {
       if (!oldEntityRoots.contains(root)) return true;
     }
-    List<VirtualFileUrl> newEntityExcludedRoots = newEntity.getExcludedRoots();
-    for (VirtualFileUrl excludedRoot : oldEntity.getExcludedRoots()) {
-      if (!newEntityExcludedRoots.contains(excludedRoot)) return true;
+    List<ExcludeUrlEntity> newEntityExcludedRoots = newEntity.getExcludedRoots();
+    for (ExcludeUrlEntity excludedRoot : oldEntity.getExcludedRoots()) {
+      if (!newEntityExcludedRoots.contains(excludedRoot.getUrl())) return true;
     }
     return false;
   }

@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author peter
- */
 final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
   LiveVariablesAnalyzer(ControlFlow flow) {
     super(flow);

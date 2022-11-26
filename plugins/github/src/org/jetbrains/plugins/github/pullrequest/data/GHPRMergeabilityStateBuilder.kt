@@ -59,6 +59,8 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
       when (suite.status) {
         GHCommitCheckSuiteStatusState.IN_PROGRESS,
         GHCommitCheckSuiteStatusState.QUEUED,
+        GHCommitCheckSuiteStatusState.PENDING,
+        GHCommitCheckSuiteStatusState.WAITING,
         GHCommitCheckSuiteStatusState.REQUESTED -> pendingChecks++
         GHCommitCheckSuiteStatusState.COMPLETED -> {
           when (suite.conclusion) {

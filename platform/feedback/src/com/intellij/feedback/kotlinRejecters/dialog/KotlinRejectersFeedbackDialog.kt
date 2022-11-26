@@ -4,6 +4,7 @@ package com.intellij.feedback.kotlinRejecters.dialog
 import com.intellij.feedback.common.*
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.adjustBehaviourForFeedbackForm
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.kotlinRejecters.bundle.KotlinRejectersFeedbackBundle
 import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
@@ -22,8 +23,6 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
 import java.util.function.Predicate
 import javax.swing.JComponent
 
@@ -266,21 +265,7 @@ class KotlinRejectersFeedbackDialog(
           .rows(textAreaRowSize)
           .columns(textAreaOverallFeedbackColumnSize)
           .applyToComponent {
-            wrapStyleWord = true
-            lineWrap = true
-            addKeyListener(object : KeyAdapter() {
-              override fun keyPressed(e: KeyEvent) {
-                if (e.keyCode == KeyEvent.VK_TAB) {
-                  if ((e.modifiersEx and KeyEvent.SHIFT_DOWN_MASK) != 0) {
-                    transferFocusBackward()
-                  }
-                  else {
-                    transferFocus()
-                  }
-                  e.consume()
-                }
-              }
-            })
+            adjustBehaviourForFeedbackForm()
           }
       }.bottomGap(BottomGap.MEDIUM)
 
@@ -311,9 +296,9 @@ class KotlinRejectersFeedbackDialog(
       }
 
       row {
-        cell(createFeedbackAgreementComponent(project) {
+        feedbackAgreement(project) {
           showFeedbackSystemInfoDialog(project, commonSystemInfoData.value)
-        })
+        }
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
 
     }.also { dialog ->

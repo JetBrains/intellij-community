@@ -5,10 +5,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntEnumRenderer extends LabelPropertyRenderer<Integer> {
   private final IntEnumEditor.Pair[] myPairs;
 

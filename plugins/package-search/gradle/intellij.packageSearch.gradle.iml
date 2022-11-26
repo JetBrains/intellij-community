@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -opt-in=kotlinx.coroutines.FlowPreview -opt-in=kotlin.time.ExperimentalTime" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -opt-in=kotlinx.coroutines.FlowPreview -opt-in=kotlin.time.ExperimentalTime -opt-in=kotlinx.serialization.ExperimentalSerializationApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -41,5 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.packageSearch.gradle.tooling" />
+    <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
   </component>
 </module>

@@ -15,11 +15,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.openPreview
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.registerEscapeHandler
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.content.Content
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.CommonUiProperties
@@ -29,6 +30,8 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.Component
+import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import kotlin.math.roundToInt
 
@@ -109,14 +112,8 @@ abstract class EditorDiffPreview(protected val project: Project,
   }
 
   override fun openPreview(requestFocus: Boolean): Boolean {
-    val currentFocusOwner = IdeFocusManager.getInstance(project).focusOwner
-    val escapeHandler = Runnable {
-      closePreview()
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-      toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(currentFocusOwner, true) }, false)
-    }
-
-    registerEscapeHandler(previewFile, escapeHandler)
+    val oldToolWindowFocus = getCurrentToolWindowFocus()
+    registerEscapeHandler(file = previewFile, handler = MyEscapeHandler(oldToolWindowFocus))
     openPreview(project, previewFile, requestFocus)
     return true
   }
@@ -132,6 +129,34 @@ abstract class EditorDiffPreview(protected val project: Project,
   abstract fun getOwnerComponent(): JComponent
 
   abstract fun addSelectionListener(listener: () -> Unit)
+
+  private fun getCurrentToolWindowFocus(): ToolWindowFocus? {
+    val focusOwner = IdeFocusManager.getInstance(project).focusOwner ?: return null
+    val toolWindowId = InternalDecoratorImpl.findTopLevelDecorator(focusOwner)?.toolWindowId ?: return null
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId) ?: return null
+    val selectedContent = toolWindow.contentManagerIfCreated?.selectedContent ?: return null
+    return ToolWindowFocus(focusOwner, toolWindowId, selectedContent)
+  }
+
+  private fun restoreToolWindowFocus(oldToolWindowFocus: ToolWindowFocus?) {
+    if (oldToolWindowFocus == null) return
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(oldToolWindowFocus.toolWindowId) ?: return
+    val contentManager = toolWindow.contentManagerIfCreated ?: return
+    if (contentManager.getIndexOfContent(oldToolWindowFocus.content) < 0) return
+    contentManager.setSelectedContent(oldToolWindowFocus.content)
+    toolWindow.activate({ IdeFocusManager.getInstance(project).requestFocus(oldToolWindowFocus.component, true) }, false)
+  }
+
+  private inner class MyEscapeHandler(oldToolWindowFocus: ToolWindowFocus?) : Runnable {
+    val oldToolWindowFocus: WeakReference<ToolWindowFocus> = WeakReference(oldToolWindowFocus)
+
+    override fun run() {
+      closePreview()
+      restoreToolWindowFocus(oldToolWindowFocus.get())
+    }
+  }
+
+  private class ToolWindowFocus(val component: Component, val toolWindowId: String, val content: Content)
 }
 
 class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsLogChangesBrowser) :

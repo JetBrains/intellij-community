@@ -329,14 +329,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public RowType getRowType() {
       GraphNodeType nodeType = myGraphController.getCompiledGraph().getGraphNode(myVisibleRow).getType();
-      switch (nodeType) {
-        case USUAL:
-          return RowType.NORMAL;
-        case UNMATCHED:
-          return RowType.UNMATCHED;
-        default:
-          throw new UnsupportedOperationException("Unsupported node type: " + nodeType);
-      }
+      return switch (nodeType) {
+        case USUAL -> RowType.NORMAL;
+        case UNMATCHED -> RowType.UNMATCHED;
+        default -> throw new UnsupportedOperationException("Unsupported node type: " + nodeType);
+      };
     }
 
     @NotNull

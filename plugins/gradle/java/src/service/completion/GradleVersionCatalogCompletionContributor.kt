@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor.Companion.DEPENDENCY_NOTATION
@@ -33,7 +33,7 @@ class GradleVersionCatalogCompletionContributor {
     if (containingFile !is GroovyFileBase || !containingFile.name.endsWith(GradleConstants.EXTENSION)) {
       return
     }
-    val resolvedQualifier = position.parent.castSafelyTo<GrReferenceExpression>()?.qualifier?.castSafelyTo<GrReferenceElement<*>>()?.resolve() ?: return
+    val resolvedQualifier = position.parent.asSafely<GrReferenceExpression>()?.qualifier?.asSafely<GrReferenceElement<*>>()?.resolve() ?: return
     val longNames = when (resolvedQualifier) {
       is GradleExtensionProperty -> {
         val type = resolvedQualifier.propertyType as? PsiClassType ?: return
@@ -76,7 +76,7 @@ class GradleVersionCatalogCompletionContributor {
       is PsiClass -> when (guessCompletionContext(position)) {
         CompletionContext.LIBRARY_DEPENDENCY -> {
           val methodCollector = mutableListOf<Dependency>()
-          val bundlesMethod = root.findMethodsByName("getBundles").singleOrNull().castSafelyTo<PsiMethod>() ?: return emptyList()
+          val bundlesMethod = root.findMethodsByName("getBundles").singleOrNull().asSafely<PsiMethod>() ?: return emptyList()
           methodCollector.addAll(concatMethodsDeep(bundlesMethod))
           for (method in root.methods) {
             if (method.returnType?.canonicalText?.endsWith("LibraryAccessors") == true) {
@@ -86,7 +86,7 @@ class GradleVersionCatalogCompletionContributor {
           methodCollector
         }
         CompletionContext.PLUGIN -> {
-          val pluginMethod = root.findMethodsByName("getPlugins").singleOrNull().castSafelyTo<PsiMethod>() ?: return emptyList()
+          val pluginMethod = root.findMethodsByName("getPlugins").singleOrNull().asSafely<PsiMethod>() ?: return emptyList()
           concatMethodsDeep(pluginMethod)
         }
         null -> emptyList()

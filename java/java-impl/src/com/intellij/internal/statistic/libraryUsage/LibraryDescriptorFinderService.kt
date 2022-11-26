@@ -2,30 +2,39 @@
 package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.openapi.components.Service
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 
 @Service(Service.Level.APP)
 internal class LibraryDescriptorFinderService {
-  private val lock = ReentrantReadWriteLock()
-  private var libraryDescriptorFinder: LibraryDescriptorFinder? = null
+  private val libraryDescriptorFinder: LibraryLayer = LibraryLayer.create(downloadLibraryDescriptors())
 
-  @RequiresBackgroundThread
-  fun libraryDescriptorFinder(): LibraryDescriptorFinder? {
-    cachedLibraryDescriptorFinder()?.let { return it }
+  private fun downloadLibraryDescriptors(): List<LibraryDescriptor> {
+    val url = LibraryDescriptor::class.java.getResource("/com/intellij/internal/statistic/libraryUsage/library-usage-statistics.xml")!!
 
-    lock.write {
-      if (libraryDescriptorFinder != null) return libraryDescriptorFinder
-
-      val descriptors = downloadLibraryDescriptors() ?: return null
-
-      libraryDescriptorFinder = LibraryLayer.create(descriptors)
-      return libraryDescriptorFinder
-    }
+    return XmlSerializer.deserialize(url, TechnologyDescriptors::class.java)
+      .descriptors
+      .map { LibraryDescriptor(it.name!!, it.root!!) }
   }
-  
-  fun cachedLibraryDescriptorFinder(): LibraryDescriptorFinder? = lock.read { libraryDescriptorFinder }
+
+  fun findSuitableLibrary(packageQualifier: String): String? = libraryDescriptorFinder.findSuitableLibrary(packageQualifier)
 }
 
+@Tag("technologies")
+private class TechnologyDescriptors {
+  @get:Property(surroundWithTag = false)
+  @get:XCollection(elementTypes = [TechnologyDescriptor::class], elementName = "technology")
+  val descriptors: MutableList<TechnologyDescriptor> = mutableListOf()
+}
+
+@Tag("technology")
+private class TechnologyDescriptor {
+  @get:Attribute("name")
+  var name: String? = null
+
+  @get:Attribute("root")
+  var root: String? = null
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -46,7 +46,7 @@ public class PsiTreeUtil {
    *
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether to return {@code true} if ancestor and parent are the same.
+   * @param strict   whether to start search from element ({@code true}) or from element's parent ({@code false}).
    * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract("null, _, _ -> false")
@@ -74,7 +74,7 @@ public class PsiTreeUtil {
    *
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether to return {@code true} if ancestor and parent are the same.
+   * @param strict   whether to start search from element ({@code true}) or from element's parent ({@code false}).
    * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract("null, _, _ -> false")
@@ -933,7 +933,7 @@ public class PsiTreeUtil {
   }
 
   public static boolean processElements(@NotNull PsiElementProcessor<? super PsiElement> processor, PsiElement @Nullable ... elements) {
-    if (elements != null && elements.length != 0) {
+    if (elements != null) {
       for (PsiElement element : elements) {
         if (!processElements(element, processor)) {
           return false;

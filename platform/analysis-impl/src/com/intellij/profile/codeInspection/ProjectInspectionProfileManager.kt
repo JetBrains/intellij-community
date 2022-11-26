@@ -18,14 +18,13 @@ import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
-import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Function
 
 private const val VERSION = "1.0"
-private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
+const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
 private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionProjectProfileManager">
   <profile version="1.0">
@@ -33,10 +32,11 @@ private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionPr
   </profile>
 </component>""").digest()
 
-const val PROFILE_DIR = "inspectionProfiles"
+const val PROFILE_DIR: String = "inspectionProfiles"
+const val PROFILES_SETTINGS: String = "profiles_settings.xml"
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
-open class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element>, Disposable {
+open class ProjectInspectionProfileManager(override val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element>, ProjectBasedInspectionProfileManager, Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionProfileManager {
@@ -46,7 +46,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
 
   private var state = ProjectInspectionProfileManagerState()
 
-  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
+  protected val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
   override val schemeManager = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
@@ -58,7 +58,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
       return profile
     }
 
-    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, PROFILES_SETTINGS)
 
     override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
       return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest.contentEquals(defaultSchemeDigest)

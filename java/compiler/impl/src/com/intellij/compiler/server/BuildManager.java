@@ -3,7 +3,6 @@ package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ProjectTopics;
-import com.intellij.application.options.RegistryManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -62,6 +61,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -95,7 +95,7 @@ import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -122,8 +122,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -223,7 +222,7 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    private boolean shouldSaveDocuments() {
+    private static boolean shouldSaveDocuments() {
       final Project contextProject = getCurrentContextProject();
       return contextProject != null && canStartAutoMake(contextProject);
     }
@@ -308,7 +307,7 @@ public final class BuildManager implements Disposable {
     }
 
     MessageBusConnection connection = application.getMessageBus().connect(this);
-    connection.subscribe(ProjectManager.TOPIC, new ProjectWatcher());
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectWatcher());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -344,7 +343,7 @@ public final class BuildManager implements Disposable {
         }
       }
 
-      private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
+      private static boolean shouldTriggerMake(List<? extends VFileEvent> events) {
         if (PowerSaveMode.isEnabled()) {
           return false;
         }
@@ -741,15 +740,17 @@ public final class BuildManager implements Disposable {
       return openProjects.get(0);
     }
 
-    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (window == null) {
-      window = ComponentUtil.getActiveWindow();
-    }
-
-    final Component comp = ComponentUtil.findUltimateParent(window);
     Project project = null;
-    if (comp instanceof IdeFrame) {
-      project = ((IdeFrame)comp).getProject();
+    if (!GraphicsEnvironment.isHeadless()) {
+      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (window == null) {
+        window = ComponentUtil.getActiveWindow();
+      }
+
+      Component component = ComponentUtil.findUltimateParent(window);
+      if (component instanceof IdeFrame) {
+        project = ((IdeFrame)component).getProject();
+      }
     }
 
     return isValidProject(project)? project : null;
@@ -1183,11 +1184,11 @@ public final class BuildManager implements Disposable {
         STDERR_OUTPUT.set(processHandler, errors);
 
         processHandler.startNotify();
-        return Pair.create(future, processHandler);
+        return new Pair<>(future, processHandler);
       }
       catch (Throwable e) {
         handleProcessExecutionFailure(future.getRequestID(), e);
-        throw e instanceof Exception? (Exception)e : new RuntimeException(e);
+        throw e instanceof Exception ? (Exception)e : new RuntimeException(e);
       }
     });
   }
@@ -1302,6 +1303,15 @@ public final class BuildManager implements Disposable {
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
+
+    String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
+    if (jnaBootLibraryPath != null) {
+      //noinspection SpellCheckingInspection
+      cmdLine.addParameter("-Djna.boot.library.path=" + jnaBootLibraryPath);
+      //noinspection SpellCheckingInspection
+      cmdLine.addParameter("-Djna.nounpack=true");
+    }
+
     if (sdkVersion != null) {
       if (sdkVersion.compareTo(JavaSdkVersion.JDK_1_9) < 0) {
         //-Djava.endorsed.dirs is not supported in JDK 9+, may result in abnormal process termination
@@ -1504,7 +1514,7 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter(cmdLine.getWorkingDirectory());
 
     boolean lowPriority = AdvancedSettings.getBoolean("compiler.lower.process.priority");
-    if (SystemInfo.isUnix && lowPriority) {
+    if (SystemInfoRt.isUnix && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
     }
 
@@ -1547,9 +1557,14 @@ public final class BuildManager implements Disposable {
       processHandler.putUserData(COMPILER_PROCESS_DEBUG_PORT, debugPort);
     }
 
-    if (SystemInfo.isWindows && lowPriority) {
-      final WinProcess winProcess = new WinProcess(OSProcessUtil.getProcessID(processHandler.getProcess()));
-      winProcess.setPriority(Priority.IDLE);
+    if (SystemInfoRt.isWindows && lowPriority) {
+      try {
+        WinProcess winProcess = new WinProcess((int)processHandler.getProcess().pid());
+        winProcess.setPriority(Priority.IDLE);
+      }
+      catch (Throwable e) {
+        LOG.error("Cannot set priority", e);
+      }
     }
 
     return processHandler;
@@ -1884,7 +1899,7 @@ public final class BuildManager implements Disposable {
       }
       final MessageBusConnection connection = project.getMessageBus().connect();
       if (!project.isDefault()) {
-        WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, new WorkspaceModelChangeListener() {
+        connection.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
           @Override
           public void changed(@NotNull VersionedStorageChange event) {
             boolean needFSRescan = false;
@@ -1906,7 +1921,8 @@ public final class BuildManager implements Disposable {
             }
           }
 
-          private @NotNull <T extends WorkspaceEntity> Pair<T, EntityStorage> getEntityAndStorage(@NotNull VersionedStorageChange event, EntityChange<T> change) {
+          private static @NotNull <T extends WorkspaceEntity> Pair<T, EntityStorage> getEntityAndStorage(@NotNull VersionedStorageChange event,
+                                                                                                         EntityChange<T> change) {
             final T entity = change.getNewEntity();
             return entity != null? Pair.create(entity, event.getStorageAfter()) : Pair.create(change.getOldEntity(), event.getStorageBefore());
           }
@@ -2046,7 +2062,7 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private final class ProjectWatcher implements ProjectManagerListener {
+  private final class ProjectWatcher implements ProjectCloseListener {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
 
     @Override

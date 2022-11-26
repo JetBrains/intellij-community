@@ -5,15 +5,15 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.BitUtil;
-import com.intellij.util.Functions;
-import com.intellij.util.ObjectUtils;
+import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -51,19 +51,33 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * 4. If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
  * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
  *
- * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}, any access to it will throw {@link InvalidVirtualFileAccessException}
+ * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
  * Dead ids won't be reused in the same session of the IDE.
- *
- * @author peter
  */
 public final class VfsData {
+  @TestOnly
+  public static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
   private static final Logger LOG = Logger.getInstance(VfsData.class);
+  private static volatile Boolean isIsIndexedFlagDisabled = null;
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
 
   private static final short NULL_INDEXING_STAMP = 0;
   private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
+
+  public static boolean isIsIndexedFlagDisabled() {
+    if (isIsIndexedFlagDisabled == null) {
+      Boolean enable;
+      if (ApplicationManager.getApplication().isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
+        isIsIndexedFlagDisabled = !enable;
+      }
+      else {
+        isIsIndexedFlagDisabled = Registry.is("indexing.disable.virtual.file.system.entry.is.file.indexed", true);
+      }
+    }
+    return isIsIndexedFlagDisabled;
+  }
 
   @ApiStatus.Internal
   static void markAllFilesAsUnindexed() {
@@ -242,10 +256,16 @@ public final class VfsData {
     }
 
     boolean isIndexed(int fileId) {
+      if (isIsIndexedFlagDisabled()) {
+        return false;
+      }
       return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
     }
 
     void setIndexed(int fileId, boolean indexed) {
+      if (isIsIndexedFlagDisabled()) {
+        return;
+      }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
       int stamp = indexed ? ourIndexingStamp.intValue() : NULL_INDEXING_STAMP;
       myIntArray.set(getOffset(fileId) * 3 + 2, stamp);

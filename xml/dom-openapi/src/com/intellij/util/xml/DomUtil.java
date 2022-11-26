@@ -31,9 +31,6 @@ import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public class DomUtil {
   public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = GenericValue.class.getTypeParameters()[0];
   private static final Class<Void> DUMMY = void.class;

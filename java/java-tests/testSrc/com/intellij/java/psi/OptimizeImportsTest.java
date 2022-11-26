@@ -35,14 +35,16 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testStaticImportsToOptimizeMixed() { doTest(); }
   public void testStaticImportsToOptimize2() { doTest(); }
   public void testStaticImportsToPreserve() {
-    myFixture.addClass("package pack.sample;\n" +
-                       "\n" +
-                       "public interface Sample {\n" +
-                       "    String Foo = \"FOO\";\n" +
-                       "    enum Type {\n" +
-                       "        T\n" +
-                       "    }\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         package pack.sample;
+
+                         public interface Sample {
+                             String Foo = "FOO";
+                             enum Type {
+                                 T
+                             }
+                         }
+                         """);
     doTest();
   }
   public void testEmptyImportList() { doTest(); }
@@ -95,11 +97,12 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     VirtualFile scratch =
       ScratchRootType.getInstance()
         .createScratchFile(getProject(), PathUtil.makeFileName("scratch", "java"), JavaLanguage.INSTANCE,
-                           "import java.util.List;\n" +
-                           "import java.util.List;\n" +
-                           "import java.util.List;\n" +
-                           "\n" +
-                           "class Scratch { }", ScratchFileService.Option.create_if_missing);
+                           """
+                             import java.util.List;
+                             import java.util.List;
+                             import java.util.List;
+
+                             class Scratch { }""", ScratchFileService.Option.create_if_missing);
     assertNotNull(scratch);
     myFixture.configureFromExistingVirtualFile(scratch);
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
@@ -118,25 +121,31 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   public void testNoStubPsiMismatchOnRecordInsideImportList() {
     myFixture.enableInspections(new UnusedImportInspection());
-    myFixture.configureByText("a.java", "import java.ut<caret>il.List;\n" +
-                                        "record foo.bar.Goo;\n" +
-                                        "import java.util.Collection;\n\n" +
-                                        "class Foo {}");
+    myFixture.configureByText("a.java", """
+      import java.ut<caret>il.List;
+      record foo.bar.Goo;
+      import java.util.Collection;
+
+      class Foo {}""");
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
 
     // whatever: main thing it didn't throw
-    myFixture.checkResult("record foo.bar.Goo;\n" +
-                          "import java.util.Collection;\n\n" +
-                          "class Foo {}");
+    myFixture.checkResult("""
+                            record foo.bar.Goo;
+                            import java.util.Collection;
+
+                            class Foo {}""");
   }
 
   public void testNoStubPsiMismatchOnRecordInsideImportList2() {
     myFixture.enableInspections(new UnusedImportInspection());
-    myFixture.configureByText("a.java", "" +
-                                        "import java.ut<caret>il.Set;record \n" +
-                                        "import x java.util.Map;\n\n" +
-                                        "import java.util.Map;\n\n" +
-                                        "class Foo {}");
+    myFixture.configureByText("a.java", """
+      import java.ut<caret>il.Set;record\s
+      import x java.util.Map;
+
+      import java.util.Map;
+
+      class Foo {}""");
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
 
     // whatever: main thing it didn't throw
@@ -145,9 +154,13 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   public void testRemovingAllUnusedImports() {
     myFixture.enableInspections(new UnusedImportInspection());
-    myFixture.configureByText("a.java", "package p;\n\n" +
-                                        "import java.<caret>util.Set;\n" +
-                                        "import java.util.Map;\n\n");
+    myFixture.configureByText("a.java", """
+      package p;
+
+      import java.<caret>util.Set;
+      import java.util.Map;
+
+      """);
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
     myFixture.checkResult("package p;\n\n");
   }

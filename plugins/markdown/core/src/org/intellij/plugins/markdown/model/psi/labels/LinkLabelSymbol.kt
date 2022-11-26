@@ -3,9 +3,12 @@ package org.intellij.plugins.markdown.model.psi.labels
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
-import com.intellij.navigation.*
+import com.intellij.navigation.NavigatableSymbol
+import com.intellij.navigation.NavigationTarget
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
@@ -18,7 +21,9 @@ import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownShortReferenceLink
+import org.intellij.plugins.markdown.model.psi.MarkdownSourceNavigationTarget
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
+import org.intellij.plugins.markdown.model.psi.withLocationIn
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -26,7 +31,7 @@ data class LinkLabelSymbol(
   override val file: PsiFile,
   override val range: TextRange,
   val text: String
-): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol, NavigationTarget {
+): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol {
   override fun createPointer(): Pointer<out LinkLabelSymbol> {
     val project = file.project
     val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
@@ -47,26 +52,26 @@ data class LinkLabelSymbol(
   override val maximalSearchScope: SearchScope?
     get() = GlobalSearchScope.fileScope(file)
 
-  override val presentation: TargetPresentation
-    get() = targetPresentation
-
-  override val usageHandler: UsageHandler<*>
+  override val usageHandler: UsageHandler
     get() = UsageHandler.createEmptyUsageHandler(text)
 
   override val searchText: String
     get() = text
 
-  override fun getTargetPresentation(): TargetPresentation {
-    return TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Link).presentation()
-  }
-
-  override fun navigationRequest(): NavigationRequest? {
-    val virtualFile = file.virtualFile?.takeIf { it.isValid } ?: return null
-    return NavigationService.instance().sourceNavigationRequest(virtualFile, range.startOffset)
+  override fun presentation(): TargetPresentation {
+    val builder = TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Link)
+    return builder.withLocationIn(file).presentation()
   }
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {
-    return listOf(this)
+    val virtualFile = file.virtualFile ?: return emptyList()
+    return listOf(LinkNavigationTarget(virtualFile, range.startOffset))
+  }
+
+  private inner class LinkNavigationTarget(file: VirtualFile, offset: Int): MarkdownSourceNavigationTarget(file, offset) {
+    override fun presentation(): TargetPresentation {
+      return this@LinkLabelSymbol.presentation()
+    }
   }
 
   companion object {

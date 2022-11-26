@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -24,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceEntityBase() {
+open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEntityData) : SimpleChildAbstractEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTINLIST_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeAbstractEntity::class.java,
@@ -40,11 +39,15 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
   override val parentInList: CompositeAbstractEntity
     get() = snapshot.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: SimpleChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity>(), SimpleChildAbstractEntity.Builder {
+  class Builder(result: SimpleChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity, SimpleChildAbstractEntityData>(
+    result), SimpleChildAbstractEntity.Builder {
     constructor() : this(SimpleChildAbstractEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +65,9 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -92,9 +98,12 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimpleChildAbstractEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        val parentInListNew = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        if ((this.parentInList as WorkspaceEntityBase).id != (parentInListNew as WorkspaceEntityBase).id) {
+          this.parentInList = parentInListNew
+        }
       }
     }
 
@@ -103,7 +112,7 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -122,21 +131,21 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractManyParentOfChild(PARENTINLIST_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] = data
           }
@@ -147,7 +156,6 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
         changedProperty.add("parentInList")
       }
 
-    override fun getEntityData(): SimpleChildAbstractEntityData = result ?: super.getEntityData() as SimpleChildAbstractEntityData
     override fun getEntityClass(): Class<SimpleChildAbstractEntity> = SimpleChildAbstractEntity::class.java
   }
 }
@@ -155,24 +163,21 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
 class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SimpleChildAbstractEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleChildAbstractEntity> {
     val modifiable = SimpleChildAbstractEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): SimpleChildAbstractEntity {
-    val entity = SimpleChildAbstractEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SimpleChildAbstractEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -199,7 +204,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimpleChildAbstractEntityData
 
@@ -209,7 +214,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimpleChildAbstractEntityData
 

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -79,15 +80,15 @@ public final class OriginsAnalysis {
    */
   public static boolean @NotNull [] resultOrigins(Frame<? extends Value>[] frames, InsnList instructions, ControlFlowGraph graph)
     throws AnalyzerException {
-    TIntArrayList[] backTransitions = new TIntArrayList[instructions.size()];
+    IntArrayList[] backTransitions = new IntArrayList[instructions.size()];
     for (int i = 0; i < backTransitions.length; i++) {
-      backTransitions[i] = new TIntArrayList();
+      backTransitions[i] = new IntArrayList();
     }
     LinkedList<InsnLocation> queue = new LinkedList<>();
     HashSet<InsnLocation> queued = new HashSet<>();
     for (int from = 0; from < instructions.size(); from++) {
       for (int to : graph.transitions[from]) {
-        TIntArrayList froms = backTransitions[to];
+        IntList froms = backTransitions[to];
         froms.add(from);
         int opcode = instructions.get(to).getOpcode();
         if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.ARETURN) {
@@ -114,9 +115,9 @@ public final class OriginsAnalysis {
         }
       }
       else {
-        TIntArrayList froms = backTransitions[insnIndex];
+        IntList froms = backTransitions[insnIndex];
         for (int i = 0; i < froms.size(); i++) {
-          InsnLocation preILoc = new InsnLocation(preLocation.local, froms.getQuick(i), preLocation.slot);
+          InsnLocation preILoc = new InsnLocation(preLocation.local, froms.getInt(i), preLocation.slot);
           if (queued.add(preILoc)) {
             queue.push(preILoc);
           }

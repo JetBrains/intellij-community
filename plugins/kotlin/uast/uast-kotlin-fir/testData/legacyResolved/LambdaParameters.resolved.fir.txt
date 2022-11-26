@@ -1,5 +1,5 @@
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = buildString) -> FUN: buildString
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = buildString) -> FUN: buildString
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = append) -> Decompiled_Method: append
-    UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = let) -> FUN: let
+    UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: let
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = let) -> FUN: let
         UReturnExpression -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it

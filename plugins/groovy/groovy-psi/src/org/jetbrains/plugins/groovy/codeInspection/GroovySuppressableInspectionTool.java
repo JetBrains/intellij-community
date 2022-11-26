@@ -29,9 +29,6 @@ import java.util.regex.Matcher;
 
 import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
 
-/**
- * @author peter
- */
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
 
   /**

@@ -133,9 +133,10 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     }
 
-    String currentConfigurationName = getConfigurationName();
+    String currentConfigurationName = computeConfigurationName();
     if (oldSessionData == null || !oldSessionData.getConfigurationName().equals(currentConfigurationName)) {
-      oldSessionData = new XDebugSessionData(getWatchExpressions(), currentConfigurationName);
+      List<XExpression> watchExpressions = myDebuggerManager.getWatchesManager().getWatches(currentConfigurationName);
+      oldSessionData = new XDebugSessionData(watchExpressions, currentConfigurationName);
     }
     mySessionData = oldSessionData;
   }
@@ -1082,8 +1083,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  @NotNull
-  private String getConfigurationName() {
+  private @NotNull String computeConfigurationName() {
     if (myEnvironment != null) {
       RunProfile profile = myEnvironment.getRunProfile();
       if (profile instanceof RunConfiguration) {
@@ -1092,16 +1092,6 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
     return getSessionName();
   }
-
-  public void setWatchExpressions(@NotNull List<XExpression> watchExpressions) {
-    mySessionData.setWatchExpressions(watchExpressions);
-    myDebuggerManager.getWatchesManager().setWatches(getConfigurationName(), watchExpressions);
-  }
-
-  List<XExpression> getWatchExpressions() {
-    return myDebuggerManager.getWatchesManager().getWatches(getConfigurationName());
-  }
-
 
   @Nullable
   public ExecutionEnvironment getExecutionEnvironment() {

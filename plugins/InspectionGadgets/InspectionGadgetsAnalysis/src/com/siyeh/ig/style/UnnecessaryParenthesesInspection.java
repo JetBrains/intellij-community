@@ -33,10 +33,10 @@ import java.util.Objects;
 
 public class UnnecessaryParenthesesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreClarifyingParentheses = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreParenthesesOnConditionals = false;
 
   @SuppressWarnings("PublicField")
@@ -72,16 +72,15 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiParameterList) {
+      if (element instanceof PsiParameterList parameterList) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-        final PsiParameterList parameterList = (PsiParameterList)element;
         final String text = Objects.requireNonNull(parameterList.getParameter(0)).getName() + "->{}";
         final PsiLambdaExpression expression = (PsiLambdaExpression)factory.createExpressionFromText(text, element);
         element.replace(expression.getParameterList());
       } else {
-        ParenthesesUtils.removeParentheses((PsiExpression)element, ignoreClarifyingParentheses);
+        ParenthesesUtils.removeParentheses((PsiCaseLabelElement)element, ignoreClarifyingParentheses);
       }
     }
   }
@@ -104,13 +103,24 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     }
 
     @Override
+    public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
+      final PsiElement parent = pattern.getParent();
+      if (parent instanceof PsiParenthesizedPattern) {
+        return;
+      }
+      if (!ErrorUtil.containsDeepError(pattern)) {
+        registerError(pattern);
+      }
+      super.visitParenthesizedPattern(pattern);
+    }
+
+    @Override
     public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
-      if (ignoreParenthesesOnConditionals && parent instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+      if (ignoreParenthesesOnConditionals && parent instanceof PsiConditionalExpression conditionalExpression) {
         final PsiExpression condition = conditionalExpression.getCondition();
         if (expression == condition) {
           return;

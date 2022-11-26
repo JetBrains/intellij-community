@@ -3,6 +3,7 @@ package com.intellij.diff.tools.simple
 
 import com.intellij.diff.tools.simple.SimpleAlignedDiffModel.ChangeIntersection.*
 import com.intellij.diff.util.*
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorEx
@@ -38,7 +39,9 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
   init {
     val inlayListener = MyInlayModelListener()
-    editor1.inlayModel.addListener(inlayListener, viewer)
+    if (editor1 !is EditorWindow) {
+      editor1.inlayModel.addListener(inlayListener, viewer)
+    }
     editor2.inlayModel.addListener(inlayListener, viewer)
 
     val softWrapListener = MySoftWrapModelListener()
@@ -393,14 +396,14 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     return softWrapModel.getSoftWrapsForRange(startOffset, endOffset).size
   }
 
-  fun Document.getLineEndOffsetSafe(line: Int): Int {
+  private fun Document.getLineEndOffsetSafe(line: Int): Int {
     if (line < 0) return 0
     if (line >= DiffUtil.getLineCount(this)) return textLength
 
     return getLineEndOffset(line)
   }
 
-  fun Document.getLineStartOffsetSafe(line: Int): Int {
+  private fun Document.getLineStartOffsetSafe(line: Int): Int {
     if (line < 0) return 0
     if (line >= DiffUtil.getLineCount(this)) return textLength
 

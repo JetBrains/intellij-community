@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'MyDelegate.getValue'" "true"
 // WITH_STDLIB
 // ERROR: Type 'MyDelegate<TypeVariable(T)>' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
 

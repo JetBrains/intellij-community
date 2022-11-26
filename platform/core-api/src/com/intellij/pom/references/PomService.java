@@ -7,9 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTarget;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class PomService {
 
   private static PomService getInstance(Project project) {

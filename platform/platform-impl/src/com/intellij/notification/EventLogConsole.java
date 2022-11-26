@@ -44,9 +44,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class EventLogConsole {
   private static final Key<String> GROUP_ID = Key.create("GROUP_ID");
   private static final Key<String> NOTIFICATION_ID = Key.create("NOTIFICATION_ID");

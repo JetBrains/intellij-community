@@ -1078,13 +1078,11 @@ public class ExtractMethodProcessor implements MatchProvider {
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
       NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       switch (myNullability) {
-        case NOT_NULL:
+        case NOT_NULL ->
           updateAnnotations(newMethod, nullManager.getNullables(), nullManager.getDefaultNotNull(), nullManager.getNotNulls());
-          break;
-        case NULLABLE:
+        case NULLABLE ->
           updateAnnotations(newMethod, nullManager.getNotNulls(), nullManager.getDefaultNullable(), nullManager.getNullables());
-          break;
-        default:
+        default -> { }
       }
     }
 
@@ -2213,7 +2211,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                      .orElse(true);
     }
     return new SignatureSuggesterPreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
-                                               myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
+                                               myMethodCall, myParametrizedDuplicates.getParametrizedCall(), 0,
                                                myParametrizedDuplicates.getSize()).showAndGet();
   }
 

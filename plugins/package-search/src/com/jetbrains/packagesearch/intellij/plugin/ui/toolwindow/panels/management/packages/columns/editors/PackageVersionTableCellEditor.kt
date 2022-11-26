@@ -18,11 +18,13 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.AbstractTableCellEditor
+import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.ComboBoxTableCellEditorComponent
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PopupMenuListItemCellRenderer
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.computeColors
+import java.awt.Color
 import java.awt.Component
 import javax.swing.JTable
 
@@ -48,7 +50,8 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
 
         val editor = createComboBoxEditor(table, versionViewModels, viewModel.selectedVersion.originalVersion)
             .apply {
-                table.colors.applyTo(this, isSelected = true)
+                val colors = computeColors(isSelected = true, isHover = false, isSearchResult = viewModel is UiPackageModel.SearchResult)
+                colors.applyTo(this)
                 setCell(row, column)
             }
 
@@ -64,12 +67,12 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
         require(table is JBTable) { "The packages list table is expected to be a JBTable, but was a ${table::class.qualifiedName}" }
 
         val selectedViewModel = versionViewModels.find { it.selectedVersion == selectedVersion }
-        val cellRenderer = PopupMenuListItemCellRenderer(selectedViewModel, table.colors) { it.selectedVersion.displayName }
+        val cellRenderer = PopupMenuListItemCellRenderer(selectedViewModel) { it.selectedVersion.displayName }
 
         return ComboBoxTableCellEditorComponent(table, cellRenderer).apply {
             isShowBelowCell = false
             isForcePopupMatchCellWidth = false
-            options = versionViewModels
+            setOptions(*versionViewModels.toTypedArray())
             value = selectedViewModel
         }
     }

@@ -8,6 +8,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,13 +29,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 @SkipSlowTestLocally
 public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
+    Disposer.setDebugMode(false);
     super.setUp();
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
   }
@@ -71,7 +70,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject());
+    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE);
   }
 
   public void testPreserveComments() {

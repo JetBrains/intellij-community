@@ -39,7 +39,7 @@ class RemoveSingleExpressionStringTemplateIntention : SelfTargetingOffsetIndepen
         val newElement = if (KotlinBuiltIns.isString(type))
             expression
         else
-            KtPsiFactory(element).createExpressionByPattern("$0.$1()", expression, "toString")
+            KtPsiFactory(element.project).createExpressionByPattern("$0.$1()", expression, "toString")
 
         element.replace(newElement)
     }

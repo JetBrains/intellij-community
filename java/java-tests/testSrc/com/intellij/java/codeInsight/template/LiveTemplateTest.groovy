@@ -18,9 +18,10 @@ import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.codeInsight.template.macro.ConcatMacro
 import com.intellij.codeInsight.template.macro.FilePathMacroBase
 import com.intellij.codeInsight.template.macro.SplitWordsMacro
+import com.intellij.ide.DataManager
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbServiceImpl
@@ -38,7 +39,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author spleaner
  */
@@ -1260,7 +1260,7 @@ class Foo {
     CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
     myFixture.configureByText 'a.java', '//a <selection><caret>foo_bar</selection> b'
-    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, [] as Set)
+    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, new HashSet())
     def action = group.find { it.templatePresentation.text.contains(template.key) }
     (action as InvokeTemplateAction).perform()
     myFixture.checkResult('//a foobar+x b')
@@ -1296,5 +1296,31 @@ class Foo {
     def logEvent = events.find { it.group.id == "live.templates" }
     assert logEvent
     assert logEvent.event.id == "started"
+  }
+
+  void "test additional actions"() {
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    TemplateImpl template = (TemplateImpl)manager.createTemplate('doubleparen', 'user', '(($END$$SELECTION$))')
+    TemplateContextType contextType = contextType(JavaCodeContextType.class)
+    template.getTemplateContext().setEnabled(contextType, true)
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable())
+    myFixture.configureByText("a.java", "class X {{<selection>hello</selection>}}")
+    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, new HashSet<Character>())
+    def action = group.find { it.templateText == "doubleparen" }
+    assert action instanceof ActionGroup
+    final Presentation presentation = new Presentation()
+    final DataContext context = DataManager.getInstance().getDataContext()
+    final AnActionEvent event = new AnActionEvent(null, context, "", presentation, ActionManager.getInstance(), 0);
+    assert !presentation.performGroup
+    assert !presentation.popupGroup
+    action.update(event)
+    assert presentation.performGroup
+    assert presentation.popupGroup
+    def children = (action as ActionGroup).getChildren(event)
+    assert children[0].templateText == "Edit live template settings"
+    assert children[1].templateText == "Disable 'doubleparen' template"
+    assert !template.isDeactivated()
+    children[1].actionPerformed(event)
+    assert template.isDeactivated()
   }
 }

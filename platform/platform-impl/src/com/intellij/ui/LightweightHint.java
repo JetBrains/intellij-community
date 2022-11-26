@@ -138,15 +138,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     }
 
     switch (mode) {
-      case AWT_TOOLTIP:
-        showAwtTooltip(hintHint);
-        break;
-      case LAYERED_PANE:
-        showLayeredPaneTooltip(parentComponent, point, layeredPane);
-        break;
-      case REAL_POPUP:
-        showRealPopup(point, hintHint);
-        break;
+      case AWT_TOOLTIP -> showAwtTooltip(hintHint);
+      case LAYERED_PANE -> showLayeredPaneTooltip(parentComponent, point, layeredPane);
+      case REAL_POPUP -> showRealPopup(point, hintHint);
     }
   }
 
@@ -266,18 +260,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     Balloon.Position position = myHintHint.getPreferredPosition();
     int shift = BalloonImpl.getPointerLength(position, false);
     switch (position) {
-      case below:
-        actualPoint.y += shift;
-        break;
-      case above:
-        actualPoint.y -= (shift + size.height);
-        break;
-      case atLeft:
-        actualPoint.x -= (shift + size.width);
-        break;
-      case atRight:
-        actualPoint.y += shift;
-        break;
+      case below -> actualPoint.y += shift;
+      case above -> actualPoint.y -= (shift + size.height);
+      case atLeft -> actualPoint.x -= (shift + size.width);
+      case atRight -> actualPoint.y += shift;
     }
   }
 
@@ -465,7 +451,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   @Override
   public void setLocation(@NotNull RelativePoint point) {
     if (isRealPopup()) {
-      myPopup.setLocation(point.getScreenPoint());
+      if (myPopup != null) {
+        myPopup.setLocation(point.getScreenPoint());
+      }
     }
     else {
       if (myCurrentIdeTooltip != null) {

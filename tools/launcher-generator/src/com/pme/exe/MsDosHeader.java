@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 
 package com.pme.exe;
 
-import java.io.IOException;
 import java.io.DataInput;
+import java.io.IOException;
 
 /**
  * @author Sergey Zhulin
@@ -26,9 +26,13 @@ import java.io.DataInput;
  * Time: 2:10:01 PM
  */
 public class MsDosHeader extends Bin.Structure {
+  private final Word myMagic;
+  private final DWord myPEHeaderOffset;
+
+  @SuppressWarnings("SpellCheckingInspection")
   public MsDosHeader() {
     super("MSDOS Header");
-    addMember( new Word( "magic" ), "Magic number" );
+    myMagic = addMember( new Word( "magic" ), "Magic number" );
     addMember( new Word( "cblp" ), "Bytes on last page of file" );
     addMember( new Word( "cp" ), "Pages in file" );
     addMember( new Word( "crlc" ), "Relocations" );
@@ -42,18 +46,23 @@ public class MsDosHeader extends Bin.Structure {
     addMember( new Word( "cs" ), "Initial (relative) CS value" );
     addMember( new Word( "lfarlc" ), "File address of relocation table" );
     addMember( new Word( "ovno" ), "Overlay number" );
-    addMember( new ArrayOfBins( "res", Word.class,4 ), "Reserved words" );
+    addMember( new ArrayOfBins<>( "res", Word.class,4 ), "Reserved words" );
     addMember( new Word( "oemid" ), "OEM identifier (for e_oeminfo)" );
     addMember( new Word( "oeminfo" ), "OEM information; e_oemid specific" );
-    addMember( new ArrayOfBins( "res2", Word.class, 10 ), "Reserved words" );
-    addMember( new DWord( "lfanew" ), "File address of new exe header" );
+    addMember( new ArrayOfBins<>( "res2", Word.class, 10 ), "Reserved words" );
+    myPEHeaderOffset = addMember( new DWord( "lfanew" ), "File address of new exe header" );
   }
 
+  @Override
   public void read(DataInput stream) throws IOException {
     super.read( stream );
-    long magic = getValue( "magic" );
+    long magic = myMagic.getValue();
     if (magic != 0x5a4d) {
       throw new InvalidMsDosHeaderException("First two chars in exe file must be 'MZ'");
     }
+  }
+
+  public DWord getPEHeaderOffset() {
+    return myPEHeaderOffset;
   }
 }

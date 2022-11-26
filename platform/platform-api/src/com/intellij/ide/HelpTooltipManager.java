@@ -17,8 +17,8 @@ public final class HelpTooltipManager extends HelpTooltip {
   }
 
   public void showTooltip(@NotNull JComponent component, @NotNull MouseEvent event) {
-    initPopupBuilder(new HelpTooltip().setTitle(component.getToolTipText(event)).
-      setShortcut((String)component.getClientProperty(SHORTCUT_PROPERTY)));
+    setTitle(component.getToolTipText(event));
+    setShortcut((String)component.getClientProperty(SHORTCUT_PROPERTY));
 
     if (event.getID() == MouseEvent.MOUSE_ENTERED) {
       myMouseListener.mouseEntered(event);
@@ -30,6 +30,5 @@ public final class HelpTooltipManager extends HelpTooltip {
 
   public void hideTooltip() {
     hidePopup(true);
-    myPopupBuilder = null;
   }
 }

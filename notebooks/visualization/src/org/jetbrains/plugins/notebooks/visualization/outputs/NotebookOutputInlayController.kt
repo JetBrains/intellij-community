@@ -5,17 +5,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.messages.Topic
-import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
-import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
-import org.jetbrains.plugins.notebooks.visualization.SwingClientProperty
-import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
@@ -38,10 +37,10 @@ interface OutputListener {
 val OUTPUT_LISTENER: Topic<OutputListener> = Topic.create("OutputAdded", OutputListener::class.java)
 
 val EditorCustomElementRenderer.notebookInlayOutputComponent: JComponent?
-  get() = castSafelyTo<JComponent>()?.components?.firstOrNull()?.castSafelyTo<SurroundingComponent>()
+  get() = asSafely<JComponent>()?.components?.firstOrNull()?.asSafely<SurroundingComponent>()
 
 val EditorCustomElementRenderer.notebookCellOutputComponents: List<JComponent>?
-  get() = notebookInlayOutputComponent?.components?.firstOrNull()?.castSafelyTo<JComponent>()?.components?.map { it as JComponent }
+  get() = notebookInlayOutputComponent?.components?.firstOrNull()?.asSafely<JComponent>()?.components?.map { it as JComponent }
 
 /**
  * Shows outputs for intervals using [NotebookOutputDataKeyExtractor] and [NotebookOutputComponentFactory].
@@ -72,7 +71,7 @@ class NotebookOutputInlayController private constructor(
       isRelatedToPrecedingText = true,
       showAbove = false,
       priority = editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY,
-      offset = editor.document.getLineEndOffset(lines.last),
+      offset = computeInlayOffset(editor.document, lines),
     )
 
   init {
@@ -90,7 +89,10 @@ class NotebookOutputInlayController private constructor(
     }
   }
 
-  override fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, intervalIterator: ListIterator<NotebookCellLines.Interval>) {
+  override fun paintGutter(editor: EditorImpl,
+                           g: Graphics,
+                           r: Rectangle,
+                           interval: NotebookCellLines.Interval) {
     val yOffset = innerComponent.yOffsetFromEditor(editor) ?: return
     val bounds = Rectangle()
     val oldClip = g.clipBounds
@@ -111,6 +113,7 @@ class NotebookOutputInlayController private constructor(
   }
 
   private fun rankCompatibility(outputDataKeys: List<NotebookOutputDataKey>): Int =
+    @Suppress("DEPRECATION") // for sumBy, see KT-46360
     getComponentsWithFactories().zip(outputDataKeys).sumBy { (pair, outputDataKey) ->
       val (component, factory) = pair
       when (factory.matchWithTypes(component, outputDataKey)) {
@@ -160,7 +163,7 @@ class NotebookOutputInlayController private constructor(
           NotebookOutputComponentFactory.Match.COMPATIBLE -> {
             @Suppress("UNCHECKED_CAST") (oldFactory as NotebookOutputComponentFactory<JComponent, NotebookOutputDataKey>)
             oldFactory.updateComponent(editor, oldComponent, newDataKey)
-            oldComponent.parent.castSafelyTo<CollapsingComponent>()?.updateStubIfCollapsed()
+            oldComponent.parent.asSafely<CollapsingComponent>()?.updateStubIfCollapsed()
             true
           }
           NotebookOutputComponentFactory.Match.SAME -> true
@@ -247,9 +250,11 @@ class NotebookOutputInlayController private constructor(
           ?.takeIf { it.isNotEmpty() }
         ?: return null
 
+      val expectedOffset = computeInlayOffset(editor.document, interval.lines)
       val controller =
         currentControllers
           .filterIsInstance<NotebookOutputInlayController>()
+          .filter { it.inlay.offset == expectedOffset } // see DS-3445, may occur when external program changes file
           .maxByOrNull { it.rankCompatibility(outputDataKeys) }
         ?: NotebookOutputInlayController(this, editor, interval.lines)
       return controller.takeIf { it.updateData(outputDataKeys) }
@@ -315,3 +320,6 @@ private fun <A, B> Iterator<A>.zip(other: Iterator<B>): Iterator<Pair<A, B>> = o
 }
 
 private var JComponent.outputComponentFactory: NotebookOutputComponentFactory<*, *>? by SwingClientProperty("outputComponentFactory")
+
+private fun computeInlayOffset(document: Document, lines: IntRange): Int =
+  document.getLineEndOffset(lines.last)

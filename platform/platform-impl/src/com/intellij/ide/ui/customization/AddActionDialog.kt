@@ -10,10 +10,11 @@ import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Pair
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -39,8 +40,8 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
 
   private val selectedIcon: ActionIconInfo?
     get() = browseComboBox.selectedItem as? ActionIconInfo
-  private val selectedTreePath: TreePath?
-    get() = actionsTree.selectionPath
+  private val selectedTreePaths: Array<TreePath>
+    get() = actionsTree.selectionPaths ?: emptyArray()
 
   init {
     title = IdeBundle.message("action.choose.actions.to.add")
@@ -52,18 +53,26 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     val panel: DialogPanel = panel {
       row {
         cell(filterComponent)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
+        resizableRow()
         scrollCell(actionsTree)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(Align.FILL)
       }
       row(IdeBundle.message("label.icon.path")) {
         cell(browseComboBox)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .customize(Gaps.EMPTY)
+          .enabledIf(object : ComponentPredicate() {
+            override fun invoke(): Boolean = selectedTreePaths.size < 2
+
+            override fun addListener(listener: (Boolean) -> Unit) {
+              actionsTree.addTreeSelectionListener { listener(selectedTreePaths.size < 2) }
+            }
+          })
       }
-      row(EMPTY_LABEL) {
+      row("") {
         label(IdeBundle.message("browse.custom.icon.hint"))
           .applyToComponent {
             font = JBUI.Fonts.smallFont()
@@ -86,24 +95,30 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
       }
     }
 
-    val iconInfo = selectedIcon
-    val selectedNode = selectedTreePath?.lastPathComponent as? DefaultMutableTreeNode
-    if (iconInfo != null && selectedNode != null) {
-      CustomizableActionsPanel.setCustomIcon(customActionsSchema, selectedNode, iconInfo, contentPane)
-      val userObj = selectedNode.userObject
-      if (userObj is Pair<*, *>) {
-        val action = ActionManager.getInstance().getAction(userObj.first as String)
-        action.templatePresentation.icon = iconInfo.icon
-        action.isDefaultIcon = iconInfo.icon == null
+    val selectedPaths = selectedTreePaths
+    if (selectedPaths.size == 1) {
+      val iconInfo = selectedIcon
+      val selectedNode = selectedPaths[0].lastPathComponent as? DefaultMutableTreeNode
+      if (iconInfo != null && selectedNode != null) {
+        CustomizableActionsPanel.setCustomIcon(customActionsSchema, selectedNode, iconInfo, contentPane)
+        if (selectedNode.userObject is Pair<*, *>) {
+          val actionId = CustomizableActionsPanel.getActionId(selectedNode)
+          if (actionId != null) {
+            val action = ActionManager.getInstance().getAction(actionId)
+            action.templatePresentation.icon = iconInfo.icon
+            action.isDefaultIcon = iconInfo.icon == null
+          }
+        }
       }
     }
     super.doOKAction()
   }
 
-  fun getAddedActionInfo(): Any? {
-    val iconInfo = selectedIcon
-    val selectedNode = selectedTreePath?.lastPathComponent as? DefaultMutableTreeNode
-    return selectedNode?.userObject?.takeIf { iconInfo != null }
+  fun getAddedActions(): List<Any?> {
+    return selectedTreePaths.mapNotNull { path ->
+      val node = path.lastPathComponent as? DefaultMutableTreeNode
+      node?.userObject?.let { if (it is Pair<*, *>) it.first else it }
+    }
   }
 
   override fun getDimensionServiceKey() = "#com.intellij.ide.ui.customization.CustomizableActionsPanel.FindAvailableActionsDialog"

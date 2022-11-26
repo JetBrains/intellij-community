@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.impl.FrameBoundsConverter;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -23,7 +24,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public final class SplashManager {
   private static volatile JFrame PROJECT_FRAME;
@@ -62,7 +62,7 @@ public final class SplashManager {
   }
 
   private static @Nullable Runnable createFrameIfPossible() throws IOException {
-    Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
+    Path infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo");
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
       buffer = ByteBuffer.allocate((int)channel.size());
@@ -87,7 +87,12 @@ public final class SplashManager {
     boolean isFullScreen = buffer.get() == 1;
     int extendedState = buffer.getInt();
     return () -> {
-      PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
+      try {
+        PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
+      }
+      catch (Throwable e) {
+        Logger.getInstance(SplashManager.class).error(e);
+      }
     };
   }
 
@@ -96,7 +101,7 @@ public final class SplashManager {
     frame.setAutoRequestFocus(false);
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-    frame.setBounds(FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds));
+    frame.setBounds(FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds).getFirst());
     frame.setExtendedState(extendedState);
 
     frame.setMinimumSize(new Dimension(340, (int)frame.getMinimumSize().getHeight()));

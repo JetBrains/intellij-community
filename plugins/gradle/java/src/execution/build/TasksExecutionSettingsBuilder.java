@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -40,14 +40,15 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.resolvePro
 public class TasksExecutionSettingsBuilder {
   @SuppressWarnings({"GrUnresolvedAccess", "GroovyAssignabilityCheck"})
   @Language("Groovy")
-  private static final String FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE = "projectsEvaluated { \n" +
-                                                                         "  rootProject.findProject('%s')?.tasks?.withType(AbstractCompile) {  \n" +
-                                                                         "    outputs.upToDateWhen { false } \n" +
-                                                                         "  } \n" +
-                                                                         "}\n";
+  private static final String FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE = """
+    projectsEvaluated {\s
+      rootProject.findProject('%s')?.tasks?.withType(AbstractCompile) { \s
+        outputs.upToDateWhen { false }\s
+      }\s
+    }
+    """;
 
   private final MultiMap<String, String> buildTasksMap = MultiMap.createLinkedSet();
-  private final MultiMap<String, String> cleanTasksMap = MultiMap.createLinkedSet();
   private final MultiMap<String, String> initScripts = MultiMap.createLinkedSet();
   private final MultiMap<String, VersionSpecificInitScript> versionedInitScripts = MultiMap.createLinkedSet();
 
@@ -60,10 +61,11 @@ public class TasksExecutionSettingsBuilder {
   public TasksExecutionSettingsBuilder(@NotNull Project project, ProjectTask @NotNull ... tasks) {
     gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(Arrays.asList(tasks));
-    modulesToBuild = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts);
-    modulesOfResourcesToBuild = addModulesBuildTasks(taskMap.get(ModuleResourcesBuildTask.class), buildTasksMap, initScripts);
-    modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
-    addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap, versionedInitScripts);
+    modulesToBuild = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts, versionedInitScripts);
+    modulesOfResourcesToBuild =
+      addModulesBuildTasks(taskMap.get(ModuleResourcesBuildTask.class), buildTasksMap, initScripts, versionedInitScripts);
+    modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts, versionedInitScripts);
+    addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), buildTasksMap, versionedInitScripts);
   }
 
   public Set<String> getRootPaths() {
@@ -112,14 +114,13 @@ public class TasksExecutionSettingsBuilder {
   }
 
   private Iterable<String> getTasksToExecute(String rootProjectPath) {
-    Collection<String> buildTasks = buildTasksMap.get(rootProjectPath);
-    Collection<String> cleanTasks = cleanTasksMap.get(rootProjectPath);
-    return ContainerUtil.concat(cleanTasks, buildTasks);
+    return buildTasksMap.get(rootProjectPath);
   }
 
   private static List<Module> addModulesBuildTasks(@Nullable Collection<? extends ProjectTask> projectTasks,
                                                    @NotNull MultiMap<String, String> buildTasksMap,
-                                                   @NotNull MultiMap<String, String> initScripts) {
+                                                   @NotNull MultiMap<String, String> initScripts,
+                                                   @NotNull MultiMap<String, VersionSpecificInitScript> versionedInitScripts) {
     if (ContainerUtil.isEmpty(projectTasks)) return Collections.emptyList();
 
     List<Module> affectedModules = new SmartList<>();
@@ -155,7 +156,7 @@ public class TasksExecutionSettingsBuilder {
       String gradlePath = gradleModuleData.getGradlePath();
       List<TaskData> taskDataList =
         ContainerUtil.mapNotNull(gradleModuleData.findAll(ProjectKeys.TASK), taskData -> taskData.isInherited() ? null : taskData);
-      if (projectTasks.isEmpty()) continue;
+      if (taskDataList.isEmpty()) continue;
 
       String taskPathPrefix = trimEnd(gradleModuleData.getFullGradlePath(), ":") + ":";
       List<String> gradleModuleTasks = ContainerUtil.map(taskDataList, data -> trimStart(data.getName(), taskPathPrefix));
@@ -168,7 +169,7 @@ public class TasksExecutionSettingsBuilder {
         projectInitScripts.add(String.format(FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE, gradlePath));
       }
       if (moduleBuildTask.isIncludeRuntimeDependencies()) {
-         // if runtime deps are required, force Gradle to process all resources
+        // if runtime deps are required, force Gradle to process all resources
         projectInitScripts.add("System.setProperty('org.gradle.java.compile-classpath-packaging', 'true')\n");
       }
 
@@ -181,7 +182,16 @@ public class TasksExecutionSettingsBuilder {
         String gradleTask = getTaskName(buildTaskPrefix, buildTaskSuffix, sourceSetName);
         if (!addIfContains(taskPathPrefix, gradleTask, gradleModuleTasks, buildRootTasks) &&
             ("main".equals(sourceSetName) || "test".equals(sourceSetName))) {
-          buildRootTasks.add(taskPathPrefix + assembleTask);
+            buildRootTasks.add(taskPathPrefix + assembleTask);
+        }
+        for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
+          if (buildTasksProvider.isApplicable(moduleBuildTask)) {
+            buildTasksProvider.addBuildTasks(
+              moduleBuildTask,
+              task -> buildTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName()),
+              (String path, VersionSpecificInitScript script) -> versionedInitScripts.putValue(path, script)
+            );
+          }
         }
       }
       else {
@@ -205,7 +215,6 @@ public class TasksExecutionSettingsBuilder {
   }
 
   private static void addArtifactsBuildTasks(@Nullable Collection<? extends ProjectTask> tasks,
-                                             @NotNull MultiMap<String, String> cleanTasksMap,
                                              @NotNull MultiMap<String, String> buildTasksMap,
                                              @NotNull MultiMap<String, VersionSpecificInitScript> versionedInitScripts) {
     if (ContainerUtil.isEmpty(tasks)) return;
@@ -218,7 +227,6 @@ public class TasksExecutionSettingsBuilder {
         if (buildTasksProvider.isApplicable(projectModelBuildTask)) {
           buildTasksProvider.addBuildTasks(
             projectModelBuildTask,
-            task -> cleanTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName()),
             task -> buildTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName()),
             (String path, VersionSpecificInitScript script) -> versionedInitScripts.putValue(path, script)
           );

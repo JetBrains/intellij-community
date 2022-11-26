@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeEmptyArgumentListIfApplicable
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isInsideOfCallerBody
@@ -66,7 +66,7 @@ class KotlinFunctionCallUsage(
         if (element.valueArgumentList == null && changeInfo.isParameterSetOrOrderChanged && element.lambdaArguments.isNotEmpty()) {
             val anchor = element.typeArgumentList ?: element.calleeExpression
             if (anchor != null) {
-                element.addAfter(KtPsiFactory(element).createCallArguments("()"), anchor)
+                element.addAfter(KtPsiFactory(element.project).createCallArguments("()"), anchor)
             }
         }
         if (element.valueArgumentList != null) {
@@ -469,7 +469,7 @@ class KotlinFunctionCallUsage(
         }
 
         if (!skipRedundantArgumentList) {
-            newCallExpression?.valueArgumentList?.let(RemoveEmptyParenthesesFromLambdaCallIntention::applyToIfApplicable)
+            newCallExpression?.valueArgumentList?.let(::removeEmptyArgumentListIfApplicable)
         }
 
         newElement.flushElementsForShorteningToWaitList()

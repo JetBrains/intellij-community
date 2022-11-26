@@ -7,11 +7,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
@@ -35,6 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class SearchUtil {
+  public static final Key<List<@Nls String>> ADDITIONAL_SEARCH_LABELS_KEY = Key.create("ADDITIONAL_SEARCH_LABELS");
   private static final String DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
@@ -114,7 +117,7 @@ public final class SearchUtil {
     return configurable;
   }
 
-  private static void processComponent(SearchableConfigurable configurable, Set<OptionDescription> configurableOptions, JComponent component, boolean i18n) {
+  private static void processComponent(SearchableConfigurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component, boolean i18n) {
     if (component != null) {
       for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeComponent(configurable, component, configurableOptions);
@@ -129,9 +132,15 @@ public final class SearchUtil {
     }
   }
 
-  private static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path, boolean i18n) {
+  private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path, boolean i18n) {
     if (component instanceof SkipSelfSearchComponent) {
       return;
+    }
+    List<String> additional = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY);
+    if (additional != null) {
+      for (String each : additional) {
+        processUILabel(each, configurableOptions, path, i18n);
+      }
     }
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {
@@ -141,9 +150,11 @@ public final class SearchUtil {
         processUILabel(title, configurableOptions, path, i18n);
       }
     }
-    String label = getLabelFromComponent(component);
-    if (label != null) {
-      processUILabel(label, configurableOptions, path,  i18n);
+    List<String> label = getLabelsFromComponent(component);
+    if (!label.isEmpty()) {
+      for (String each : label) {
+        processUILabel(each, configurableOptions, path,  i18n);
+      }
     }
     else if (component instanceof JComboBox) {
       List<String> labels = getItemsFromComboBox((JComboBox<?>)component);
@@ -219,8 +230,7 @@ public final class SearchUtil {
     return text;
   }
 
-  @Nullable
-  private static String getLabelFromComponent(@Nullable Component component) {
+  private static List<String> getLabelsFromComponent(@Nullable Component component) {
     String label = null;
     if (component instanceof JLabel) {
       label = getLabelFromComponent((JLabel)component);
@@ -234,7 +244,21 @@ public final class SearchUtil {
     else if (component instanceof JButton) {
       label = getLabelFromComponent((JButton)component);
     }
-    return Strings.nullize(label, true);
+    label = Strings.nullize(label, true);
+
+    List<String> labels = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY);
+    if (labels != null) {
+      ArrayList<String> al = new ArrayList<>(labels);
+      if (label != null) {
+        al.add(label);
+      }
+      return al;
+    }
+    if (label == null) {
+      return new SmartList<>();
+    }
+
+    return new SmartList<>(label);
   }
 
   private static @NotNull List<String> getItemsFromComboBox(@NotNull JComboBox<?> comboBox) {
@@ -253,16 +277,14 @@ public final class SearchUtil {
     for (int i = 0; i < count; i++) {
       Object value = comboBox.getItemAt(i);
       Component labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false);
-      String label = getLabelFromComponent(labelComponent);
-      if (label != null) {
-        result.add(label);
-      }
+      List<String> label = getLabelsFromComponent(labelComponent);
+      result.addAll(label);
     }
 
     return result;
   }
 
-  private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path,  boolean i18n) {
+  private static void processUILabel(String title, Set<? super OptionDescription> configurableOptions, String path, boolean i18n) {
     int headStart = title.indexOf("<head>");
     int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
     if (headEnd > headStart) {
@@ -320,11 +342,13 @@ public final class SearchUtil {
     if (option == null || option.trim().length() == 0) {
       return false;
     }
-    String label = getLabelFromComponent(rootComponent);
-    if (label != null) {
-      if (isComponentHighlighted(label, option, force, configurable)) {
-        highlightComponent(rootComponent, option);
-        return true; // do not visit children of highlighted component
+    List<String> label = getLabelsFromComponent(rootComponent);
+    if (!label.isEmpty()) {
+      for (String each : label) {
+        if (isComponentHighlighted(each, option, force, configurable)) {
+          highlightComponent(rootComponent, option);
+          return true; // do not visit children of highlighted component
+        }
       }
     }
     else if (rootComponent instanceof JComboBox) {

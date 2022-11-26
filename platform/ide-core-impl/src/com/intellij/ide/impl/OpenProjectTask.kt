@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.util.function.Consumer
 import java.util.function.Predicate
 
 data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean,
@@ -42,8 +41,7 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
                                                 val preparedToOpen: (suspend (Module) -> Unit)?,
                                                 val preventIprLookup: Boolean,
                                                 val processorChooser: ((List<Any>) -> Any)?,
-                                                val implOptions: Any?,
-                                                val showFrameAsap: Boolean) {
+                                                val implOptions: Any?,) {
   @Internal
   constructor(forceOpenInNewFrame: Boolean = false,
               projectToClose: Project? = null,
@@ -78,19 +76,11 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
     processorChooser = null,
 
     implOptions = null,
-    showFrameAsap = false,
   )
 
   companion object {
     @JvmStatic
     fun build(): OpenProjectTask = OpenProjectTask()
-
-    @JvmStatic
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @Deprecated("Use build(), withProjectToClose(), withForceOpenInNewFrame()", level = DeprecationLevel.ERROR)
-    fun withProjectToClose(projectToClose: Project?, forceOpenInNewFrame: Boolean): OpenProjectTask {
-      return OpenProjectTask(projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame)
-    }
   }
 
   fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean) = copy(forceOpenInNewFrame = forceOpenInNewFrame)
@@ -105,8 +95,6 @@ class OpenProjectTaskBuilder internal constructor() {
   var projectName: String? = null
 
   var forceOpenInNewFrame: Boolean = false
-  @Internal
-  var showFrameAsap: Boolean = false
 
   var isNewProject: Boolean = false
   var useDefaultProjectAsTemplate: Boolean? = null
@@ -143,11 +131,6 @@ class OpenProjectTaskBuilder internal constructor() {
   var line: Int = -1
   var column: Int = -1
 
-  /** Shim for Java clients */
-  fun withPreparedToOpen(callback: Consumer<Module>) {
-    preparedToOpen = { callback.accept(it) }
-  }
-
   /**  Shim for Java clients  */
   fun withBeforeOpenCallback(callback: Predicate<Project>) {
     beforeOpen = { callback.test(it) }
@@ -162,7 +145,6 @@ class OpenProjectTaskBuilder internal constructor() {
     builder()
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
-      showFrameAsap = showFrameAsap,
       preloadServices = preloadServices,
 
       projectToClose = projectToClose,

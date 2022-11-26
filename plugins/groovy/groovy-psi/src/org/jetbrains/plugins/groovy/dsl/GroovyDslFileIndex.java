@@ -53,9 +53,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-/**
- * @author peter
- */
 public final class GroovyDslFileIndex {
   private static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
   private static final Key<CachedValue<List<GroovyDslScript>>> SCRIPTS_CACHE = Key.create("GdslScriptCache");
@@ -444,7 +441,7 @@ public final class GroovyDslFileIndex {
       for (VFileEvent event : events) {
         if (event instanceof VFileContentChangeEvent && !event.isFromRefresh()) {
           VirtualFile file = event.getFile();
-          if (file == null || !GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
+          if (!GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
             continue;
           }
 

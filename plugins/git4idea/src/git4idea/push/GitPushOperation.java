@@ -452,14 +452,11 @@ public class GitPushOperation {
 
   @NotNull
   private static UpdateMethod convertUpdateMethodFromDialogExitCode(PushRejectedExitCode exitCode) {
-    switch (exitCode) {
-      case MERGE:
-        return UpdateMethod.MERGE;
-      case REBASE:
-        return UpdateMethod.REBASE;
-      default:
-        throw new IllegalStateException("Unexpected exit code: " + exitCode);
-    }
+    return switch (exitCode) {
+      case MERGE -> UpdateMethod.MERGE;
+      case REBASE -> UpdateMethod.REBASE;
+      default -> throw new IllegalStateException("Unexpected exit code: " + exitCode);
+    };
   }
 
   @NotNull

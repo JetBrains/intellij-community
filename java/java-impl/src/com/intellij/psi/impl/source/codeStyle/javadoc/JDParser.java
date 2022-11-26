@@ -392,14 +392,13 @@ public class JDParser {
     for (int i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
       switch (c) {
-        case ' ':
-        case '\t':
-          indentWhitespaces++;
-          break;
-        case '\n':
+        case ' ', '\t' -> indentWhitespaces++;
+        case '\n' -> {
           return Integer.MAX_VALUE;
-        default:
+        }
+        default -> {
           return indentWhitespaces;
+        }
       }
     }
     return Integer.MAX_VALUE;
@@ -870,19 +869,7 @@ public class JDParser {
     return false;
   }
 
-  private static class CommentInfo {
-    public final PsiDocComment docComment;
-    public final PsiElement commentOwner;
-    public final String commentHeader;
-    public final String comment;
-    public final String commentFooter;
-
-    CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment, String commentFooter) {
-      this.docComment = docComment;
-      this.commentOwner = commentOwner;
-      this.commentHeader = commentHeader;
-      this.comment = comment;
-      this.commentFooter = commentFooter;
-    }
+  private record CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment,
+                             String commentFooter) {
   }
 }

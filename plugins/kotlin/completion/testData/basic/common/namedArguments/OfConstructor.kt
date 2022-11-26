@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 package test
 
 class Foo(pFirst: String? = null, val pSecond: Int = 1) { }

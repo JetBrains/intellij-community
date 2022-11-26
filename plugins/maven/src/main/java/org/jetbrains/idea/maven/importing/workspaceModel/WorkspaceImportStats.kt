@@ -24,14 +24,27 @@ internal class WorkspaceImportStats private constructor(private val project: Pro
     }
   }
 
-  fun <T> recordPhase(phase: IdeActivityDefinition, block: () -> T): T {
+  fun <T> recordPhase(phase: IdeActivityDefinition, block: (phaseActivity: StructuredIdeActivity) -> T): T {
     val phaseActivity = phase.startedWithParent(project, activity)
     try {
-      return block()
+      return block(phaseActivity)
     }
     finally {
       phaseActivity.finished()
     }
+  }
+
+  fun recordCommitPhaseStats(durationInBackgroundNano: Long,
+                             durationInWriteActionNano: Long,
+                             durationOfWorkspaceUpdateCallNano: Long, attempts: Int) {
+    MavenImportCollector.WORKSPACE_COMMIT_STATS.log(
+      listOf(MavenImportCollector.ACTIVITY_ID.with(activity),
+             MavenImportCollector.DURATION_BACKGROUND_MS.with(durationInBackgroundNano.toMillis()),
+             MavenImportCollector.DURATION_WRITE_ACTION_MS.with(durationInWriteActionNano.toMillis()),
+             MavenImportCollector.DURATION_OF_WORKSPACE_UPDATE_CALL_MS.with(durationOfWorkspaceUpdateCallNano.toMillis()),
+             MavenImportCollector.ATTEMPTS.with(attempts)
+      )
+    )
   }
 
   fun <T> recordConfigurator(configurator: MavenWorkspaceConfigurator,
@@ -58,6 +71,7 @@ internal class WorkspaceImportStats private constructor(private val project: Pro
       logPairs.add(MavenImportCollector.TOTAL_DURATION_MS.with(totalNano.toMillis()))
       logPairs.add(MavenImportCollector.CONFIGURATOR_CLASS.with(clazz))
       logPairs.add(MavenImportCollector.NUMBER_OF_MODULES.with(numberOfModules))
+      logPairs.add(MavenImportCollector.ACTIVITY_ID.with(activity))
 
       MavenImportCollector.CONFIGURATOR_RUN.log(project, logPairs)
     }

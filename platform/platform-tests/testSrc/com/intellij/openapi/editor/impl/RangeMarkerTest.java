@@ -19,10 +19,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentListener;
@@ -378,10 +375,11 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   public void testDocSynchronizerPrefersLineBoundaryChanges() {
-    String text = "import java.awt.List;\n" +
-                    "[import java.util.ArrayList;\n]" +
-                    "import java.util.HashMap;\n" +
-                    "import java.util.Map;";
+    String text = """
+      import java.awt.List;
+      [import java.util.ArrayList;
+      ]import java.util.HashMap;
+      import java.util.Map;""";
     RangeMarker marker = createMarker(text);
     WriteAction.run(() -> {
       synchronizer.startTransaction(getProject(), document, psiFile);
@@ -1585,7 +1583,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       Random random = new Random();
       while (!t.isTimedOut()) {
         int s = random.nextInt(len - 1);
-        marker.setRange(TextRange.toScalarRange(s, s + 1));
+        marker.setRange(TextRangeScalarUtil.toScalarRange(s, s + 1));
       }
     });
     while (!t.isTimedOut()) {

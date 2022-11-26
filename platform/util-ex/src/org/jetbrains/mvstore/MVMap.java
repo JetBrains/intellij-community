@@ -1593,84 +1593,85 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
                 Decision decision = decisionMaker.decide(result, value, tip);
 
                 switch (decision) {
-                    case REPEAT:
+                    case REPEAT -> {
+                      decisionMaker.reset();
+                      continue;
+                    }
+                    case ABORT -> {
+                      if (!locked && rootReference != getRoot()) {
                         decisionMaker.reset();
                         continue;
-                    case ABORT:
-                        if(!locked && rootReference != getRoot()) {
-                            decisionMaker.reset();
-                            continue;
-                        }
-                        return result;
-                    case REMOVE: {
-                        if (index < 0) {
-                            if(!locked && rootReference != getRoot()) {
-                                decisionMaker.reset();
-                                continue;
-                            }
-                            return null;
-                        }
-
-                        if (page.getTotalCount() == 1 && cursorPosition != null) {
-                            int keyCount;
-                            do {
-                                page = cursorPosition.page;
-                                index = cursorPosition.index;
-                                cursorPosition = cursorPosition.parent;
-                                keyCount = page.getKeyCount();
-                                // condition below should always be false, but older
-                                // versions (up to 1.4.197) may create
-                                // single-childed (with no keys) internal nodes,
-                                // which we skip here
-                            } while (keyCount == 0 && cursorPosition != null);
-
-                            if (keyCount <= 1) {
-                                if (keyCount == 1) {
-                                    assert index <= 1;
-                                    page = page.getChildPage(1 - index);
-                                } else {
-                                    // if root happens to be such single-childed
-                                    // (with no keys) internal node, then just
-                                    // replace it with empty leaf
-                                    page = Page.createEmptyLeaf(this);
-                                }
-                                break;
-                            }
-                        }
-                        page = page.remove(index);
-                        break;
+                      }
+                      return result;
                     }
-                    case PUT: {
-                        value = decisionMaker.selectValue(result, value);
-                        if (index < 0) {
-                            page = LeafPage.add((LeafPage<K, V>)page, -index - 1, key, value);
-                            int keyCount = page.getKeyCount();
-                            while (isSplitNeeded(page, keyCount)) {
-                                long totalCount = page.getTotalCount();
-                                int at = keyCount >> 1;
-                                K k = page.getKey(at);
-                                KeyManager<K> keyManagerAt = cursorPosition == null ? page.keyManager.copy(at, at + 1, this) : null;
-
-                                Page<K, V> nextSiblingPage = page.split(at, false);
-                                page = page.split(at, true);
-                                unsavedMemoryHolder.value += page.getMemory() + nextSiblingPage.getMemory();
-                                if (cursorPosition == null) {
-                                    @SuppressWarnings("unchecked")
-                                    PageReference<K,V>[] children = (PageReference<K, V>[])new PageReference[]{new PageReference<>(page), new PageReference<>(nextSiblingPage)};
-                                    page = new NonLeafPage<>(this, keyManagerAt, NonLeafPage.calculateSerializedDataSize(children.length), children, totalCount);
-                                    break;
-                                }
-
-                                NonLeafPage<K, V> parentPage = (NonLeafPage<K, V>)cursorPosition.page;
-                                index = cursorPosition.index;
-                                cursorPosition = cursorPosition.parent;
-                                page = NonLeafPage.replaceSplitChild(parentPage, index, k, page, nextSiblingPage);
-                                keyCount = page.getKeyCount();
-                            }
-                        } else {
-                            page = LeafPage.replaceValue((LeafPage<K, V>)page, index, value);
+                    case REMOVE -> {
+                      if (index < 0) {
+                        if (!locked && rootReference != getRoot()) {
+                          decisionMaker.reset();
+                          continue;
                         }
-                        break;
+                        return null;
+                      }
+
+                      if (page.getTotalCount() == 1 && cursorPosition != null) {
+                        int keyCount;
+                        do {
+                          page = cursorPosition.page;
+                          index = cursorPosition.index;
+                          cursorPosition = cursorPosition.parent;
+                          keyCount = page.getKeyCount();
+                          // condition below should always be false, but older
+                          // versions (up to 1.4.197) may create
+                          // single-childed (with no keys) internal nodes,
+                          // which we skip here
+                        } while (keyCount == 0 && cursorPosition != null);
+
+                        if (keyCount <= 1) {
+                          if (keyCount == 1) {
+                            assert index <= 1;
+                            page = page.getChildPage(1 - index);
+                          } else {
+                            // if root happens to be such single-childed
+                            // (with no keys) internal node, then just
+                            // replace it with empty leaf
+                            page = Page.createEmptyLeaf(this);
+                          }
+                          break;
+                        }
+                      }
+                      page = page.remove(index);
+                    }
+                    case PUT -> {
+                      value = decisionMaker.selectValue(result, value);
+                      if (index < 0) {
+                        page = LeafPage.add((LeafPage<K, V>)page, -index - 1, key, value);
+                        int keyCount = page.getKeyCount();
+                        while (isSplitNeeded(page, keyCount)) {
+                          long totalCount = page.getTotalCount();
+                          int at = keyCount >> 1;
+                          K k = page.getKey(at);
+                          KeyManager<K> keyManagerAt = cursorPosition == null ? page.keyManager.copy(at, at + 1, this) : null;
+
+                          Page<K, V> nextSiblingPage = page.split(at, false);
+                          page = page.split(at, true);
+                          unsavedMemoryHolder.value += page.getMemory() + nextSiblingPage.getMemory();
+                          if (cursorPosition == null) {
+                            @SuppressWarnings("unchecked")
+                            PageReference<K, V>[] children = (PageReference<K, V>[])new PageReference[]{new PageReference<>(page), new PageReference<>(nextSiblingPage)};
+                            page = new NonLeafPage<>(this, keyManagerAt, NonLeafPage.calculateSerializedDataSize(children.length), children, totalCount);
+                            break;
+                          }
+
+                          NonLeafPage<K, V> parentPage = (NonLeafPage<K, V>)cursorPosition.page;
+                          index = cursorPosition.index;
+                          cursorPosition = cursorPosition.parent;
+                          page = NonLeafPage.replaceSplitChild(parentPage, index, k, page, nextSiblingPage);
+                          keyCount = page.getKeyCount();
+                        }
+                      }
+                      else {
+                        page = LeafPage.replaceValue((LeafPage<K, V>)page, index, value);
+                      }
                     }
                 }
                 rootPage = replacePage(cursorPosition, page, unsavedMemoryHolder);

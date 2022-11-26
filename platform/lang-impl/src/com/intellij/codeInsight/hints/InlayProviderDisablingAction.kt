@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
+import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -83,7 +83,7 @@ internal class ConfigureInlayHintsProviderAction(
   override fun actionPerformed(e: AnActionEvent) {
     val file = e.getData(PSI_FILE) ?: return
 
-    InlayHintsConfigurable.showSettingsDialogForLanguage(file.project, file.language) { it.id == providerKey.id }
+    showInlaySettings(file.project, file.language) { it.id == providerKey.id }
   }
 }
 
@@ -92,5 +92,4 @@ private fun disableInlayHintsProvider(key: SettingsKey<*>, language: Language) =
 
 private fun refreshHints() {
   InlayHintsPassFactory.forceHintsUpdateOnNextPass()
-  InlayHintsConfigurable.updateInlayHintsUI()
 }

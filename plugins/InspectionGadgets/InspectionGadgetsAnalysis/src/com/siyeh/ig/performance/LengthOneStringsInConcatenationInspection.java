@@ -19,7 +19,8 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -43,9 +44,7 @@ public class LengthOneStringsInConcatenationInspection extends BaseInspection im
   public String buildErrorString(Object... infos) {
     final String string = (String)infos[0];
     final String escapedString = StringUtil.escapeStringCharacters(string);
-    return InspectionGadgetsBundle.message(
-      "expression.can.be.replaced.problem.descriptor",
-      escapedString);
+    return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor", escapedString);
   }
 
   @Override
@@ -53,24 +52,24 @@ public class LengthOneStringsInConcatenationInspection extends BaseInspection im
     return new ReplaceStringsWithCharsFix();
   }
 
-  private static class ReplaceStringsWithCharsFix
-    extends InspectionGadgetsFix {
+  private static class ReplaceStringsWithCharsFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "length.one.strings.in.concatenation.replace.quickfix");
+      return InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiLiteralExpression expression = (PsiLiteralExpression)descriptor.getPsiElement();
       if (ExpressionUtils.isConversionToStringNecessary(expression, false)) {
         return;
       }
-      final String text = expression.getText();
-      final String charLiteral = PsiLiteralUtil.charLiteralForCharString(text);
+      final String charLiteral = PsiLiteralUtil.charLiteralString(expression);
+      if (charLiteral == null) {
+        return;
+      }
       PsiReplacementUtil.replaceExpression(expression, charLiteral);
     }
   }
@@ -80,8 +79,7 @@ public class LengthOneStringsInConcatenationInspection extends BaseInspection im
     return new LengthOneStringsInConcatenationVisitor();
   }
 
-  private static class LengthOneStringsInConcatenationVisitor
-    extends BaseInspectionVisitor {
+  private static class LengthOneStringsInConcatenationVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {

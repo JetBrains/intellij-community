@@ -2,7 +2,6 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -13,6 +12,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
@@ -61,6 +61,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.actions.CommandQueueListener;
+import com.jetbrains.python.console.completion.ConsolePandasColumnNameCompletionContributor;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
@@ -184,12 +185,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
         @Override
         public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            myCommandQueuePanel.addCommand(command);
+          myCommandQueuePanel.addCommand(command);
         }
 
         @Override
         public void removeAll() {
-            myCommandQueuePanel.removeAllCommands();
+          myCommandQueuePanel.removeAllCommands();
         }
 
         @Override
@@ -241,6 +242,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void setExecutionHandler(@NotNull PythonConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
+    if (myExecuteActionHandler.getConsoleCommunication() instanceof PydevConsoleCommunication pydevConsoleCommunication) {
+      pydevConsoleCommunication.addFrameListener(ConsolePandasColumnNameCompletionContributor.Companion.getConsoleListener());
+    }
   }
 
   public PythonConsoleExecuteActionHandler getExecuteActionHandler() {
@@ -723,5 +727,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       return counterMap.getOrDefault(counter, null);
     }
     return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
@@ -22,33 +22,29 @@ import java.util.function.Function;
 /**
  * @author Danila Ponomarenko
  */
-public final class SdkSetupNotificationProvider implements EditorNotificationProvider,
-                                                           DumbAware {
-
+public final class SdkSetupNotificationProvider implements EditorNotificationProvider, DumbAware {
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                                @NotNull VirtualFile file) {
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                 @NotNull VirtualFile file) {
     if (!UnknownSdkEditorNotification.getInstance(project).allowProjectSdkNotifications()) {
-      return CONST_NULL;
+      return null;
     }
 
     for (ProjectSdkSetupValidator validator : ProjectSdkSetupValidator.EP_NAME.getExtensionList()) {
       if (validator.isApplicableFor(project, file)) {
         String errorMessage = validator.getErrorMessage(project, file);
-        return errorMessage != null ?
-               fileEditor -> createPanel(errorMessage, fileEditor, validator.getFixHandler(project, file)) :
-               CONST_NULL;
+        return errorMessage == null ? null : fileEditor -> createPanel(errorMessage, fileEditor, validator.getFixHandler(project, file));
       }
     }
 
-    return CONST_NULL;
+    return null;
   }
 
   @RequiresEdt
   private static @NotNull EditorNotificationPanel createPanel(@NotNull @NlsContexts.LinkLabel String message,
                                                               @NotNull FileEditor fileEditor,
                                                               @NotNull ActionHandler fix) {
-    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Error);
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);
     panel.setText(message);
     panel.createActionLabel(ProjectBundle.message("project.sdk.setup"), fix, true);
     return panel;

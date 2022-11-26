@@ -186,6 +186,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
     val filterTable = object : DumbAwareToggleAction(VisualizationBundle.message("inlay.table.filter.text"),
                                                      VisualizationBundle.message("inlay.table.filter.description"),
                                                      AllIcons.Actions.Find) {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
       override fun isSelected(e: AnActionEvent): Boolean {
         return filterHeader != null
@@ -205,6 +206,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
     val paginateTable = object : DumbAwareToggleAction(VisualizationBundle.message("inlay.table.pagination.text"),
                                                        VisualizationBundle.message("inlay.table.pagination.description"),
                                                        VisualisationIcons.Table.Pagination) {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
       override fun isSelected(e: AnActionEvent): Boolean {
         return paginator != null

@@ -43,7 +43,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -118,9 +118,6 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         if (file == null) continue;
         boolean isDirectory = file.isDirectory();
         List<FilePropertyPusher<?>> pushers = isDirectory ? FilePropertyPusher.EP_NAME.getExtensionList() : filePushers;
-        for (FilePropertyPusher<?> pusher : pushers) {
-          file.putUserData(pusher.getFileDataKey(), null);
-        }
         ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers));
       }
     }
@@ -167,7 +164,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     });
   }
 
-  public static void applyScannersToFile(@NotNull VirtualFile fileOrDir, List<IndexableFileScanner.IndexableFileVisitor> sessions) {
+  public static void applyScannersToFile(@NotNull VirtualFile fileOrDir, List<? extends IndexableFileScanner.IndexableFileVisitor> sessions) {
     for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
       try {
         session.visitFile(fileOrDir);
@@ -199,7 +196,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   }
 
   private void doPushRecursively(@NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                 @NotNull List<IndexableFileScanner> scanners,
+                                 @NotNull List<? extends IndexableFileScanner> scanners,
                                  @NotNull IndexableFilesIterator indexableFilesIterator) {
     List<IndexableFileScanner.IndexableFileVisitor> sessions =
       ContainerUtil.mapNotNull(scanners, visitor -> visitor.startSession(myProject).createVisitor(indexableFilesIterator.getOrigin()));
@@ -208,6 +205,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       applyScannersToFile(fileOrDir, sessions);
       return true;
     }, IndexableFilesDeduplicateFilter.create());
+    finishVisitors(sessions);
+  }
+
+  public static void finishVisitors(List<? extends IndexableFileScanner.IndexableFileVisitor> sessions) {
+    for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
+      session.visitingFinished();
+    }
   }
 
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
@@ -291,7 +295,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private static <T> T findNewPusherValueFromParent(Project project, VirtualFile fileOrDir, FilePropertyPusher<? extends T> pusher) {
     final VirtualFile parent = fileOrDir.getParent();
     if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) {
-      final T userValue = parent.getUserData(pusher.getFileDataKey());
+      final T userValue = pusher.getFileDataKey().getPersistentValue(parent);
       if (userValue != null) return userValue;
       return findNewPusherValue(project, parent, pusher, null);
     }
@@ -324,7 +328,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     return moduleValues;
   }
 
-  public static Object @NotNull [] getImmediateValuesEx(@NotNull List<FilePropertyPusherEx<?>> pushers,
+  public static Object @NotNull [] getImmediateValuesEx(@NotNull List<? extends FilePropertyPusherEx<?>> pushers,
                                                         @NotNull IndexableSetOrigin origin) {
     final Object[] moduleValues;
     moduleValues = new Object[pushers.size()];
@@ -337,8 +341,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   public static void scanProject(@NotNull Project project,
                                  @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Stream<Runnable> tasksStream;
-    //noinspection deprecation
-    if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
+    if (StandardContributorsKt.shouldIndexProjectBasedOnIndexableEntityProviders()) {
       Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
                                                                     WorkspaceModel.getInstance(project).getEntityStorage().
                                                                       getCurrent().entities(ModuleEntity.class));
@@ -436,15 +439,11 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   @Override
   public <T> void findAndUpdateValue(@NotNull VirtualFile fileOrDir, @NotNull FilePropertyPusher<T> pusher, @Nullable T moduleValue) {
     T newValue = findNewPusherValue(myProject, fileOrDir, pusher, moduleValue);
-    T oldValue = fileOrDir.getUserData(pusher.getFileDataKey());
-    if (newValue != oldValue) {
-      fileOrDir.putUserData(pusher.getFileDataKey(), newValue);
-      try {
-        pusher.persistAttribute(myProject, fileOrDir, newValue);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    try {
+      pusher.persistAttribute(myProject, fileOrDir, newValue);
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 

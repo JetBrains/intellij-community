@@ -113,8 +113,8 @@ data class ArtifactBasedLibraryDependencyIR(
 
 
 abstract class KotlinLibraryDependencyIR(
-    val artifactName: String,
-    override val dependencyType: DependencyType
+  private val artifactName: String,
+  override val dependencyType: DependencyType
 ) : LibraryDependencyIR {
     abstract val kotlinVersion: WizardKotlinVersion
     final override val version: Version get() = kotlinVersion.version
@@ -122,7 +122,7 @@ abstract class KotlinLibraryDependencyIR(
 
     override val artifact: LibraryArtifact
         get() = MavenArtifact(
-            kotlinVersion.repository,
+            kotlinVersion.repositories,
             "org.jetbrains.kotlin",
             "kotlin-$artifactName"
         )

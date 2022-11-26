@@ -200,14 +200,11 @@ public class GeneralCommandLine implements UserDataHolder {
    * @see #getEffectiveEnvironment()
    */
   public @NotNull Map<String, String> getParentEnvironment() {
-    switch (myParentEnvironmentType) {
-      case SYSTEM:
-        return System.getenv();
-      case CONSOLE:
-        return EnvironmentUtil.getEnvironmentMap();
-      default:
-        return Collections.emptyMap();
-    }
+    return switch (myParentEnvironmentType) {
+      case SYSTEM -> System.getenv();
+      case CONSOLE -> EnvironmentUtil.getEnvironmentMap();
+      default -> Collections.emptyMap();
+    };
   }
 
   /**

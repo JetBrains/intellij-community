@@ -23,14 +23,15 @@ public class KotlinBlockingCallDetectionTest extends JavaCodeInsightFixtureTestC
     myFixture.addClass("package org.jetbrains.annotations;\n" +
                        "public @interface NonBlocking {}");
     myFixture.addFileToProject("/TestKotlinAnnotationDetection.kt",
-                               "import org.jetbrains.annotations.Blocking\n" +
-                               "import org.jetbrains.annotations.NonBlocking\n" +
-                               "@NonBlocking\n" +
-                               "fun nonBlockingFunction() {\n" +
-                               "  <warning descr=\"Possibly blocking call in non-blocking context could lead to thread starvation\">blockingFunction</warning>();\n" +
-                               "}\n" +
-                               "@Blocking\n" +
-                               "fun blockingFunction() {}");
+                               """
+                                 import org.jetbrains.annotations.Blocking
+                                 import org.jetbrains.annotations.NonBlocking
+                                 @NonBlocking
+                                 fun nonBlockingFunction() {
+                                   <warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">blockingFunction</warning>();
+                                 }
+                                 @Blocking
+                                 fun blockingFunction() {}""");
 
     myFixture.testHighlighting(true, false, true, "TestKotlinAnnotationDetection.kt");
   }
@@ -40,15 +41,16 @@ public class KotlinBlockingCallDetectionTest extends JavaCodeInsightFixtureTestC
                        "public @interface NonBlocking {}");
 
     myFixture.configureByText("/TestKotlinThrowsTypeDetection.kt",
-                              "import org.jetbrains.annotations.NonBlocking\n" +
-                              "import java.net.URL\n" +
-                              "\n" +
-                              "@NonBlocking\n" +
-                              "fun nonBlockingFunction() {\n" +
-                              "  Thread.<warning descr=\"Possibly blocking call in non-blocking context could lead to thread starvation\">sleep</warning>(111);\n" +
-                              "  \n" +
-                              "  URL(\"https://example.com\")\n" +
-                              "}");
+                              """
+                                import org.jetbrains.annotations.NonBlocking
+                                import java.net.URL
+
+                                @NonBlocking
+                                fun nonBlockingFunction() {
+                                  Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(111);
+                                 \s
+                                  URL("https://example.com")
+                                }""");
 
     myFixture.checkHighlighting(true, false, true);
   }

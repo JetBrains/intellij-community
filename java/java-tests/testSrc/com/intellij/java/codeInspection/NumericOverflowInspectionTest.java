@@ -39,11 +39,11 @@ public class NumericOverflowInspectionTest extends LightJavaCodeInsightFixtureTe
   }
 
   public void testUpdatesOnTyping() {
-    String text = "class My {\n" +
-                  "void d(long lower) {\n" +
-                  "        long upper =  lower + 1000<caret> * 31536000;\n" +
-                  "    }" +
-                  "}";
+    String text = """
+      class My {
+      void d(long lower) {
+              long upper =  lower + 1000<caret> * 31536000;
+          }}""";
     myFixture.configureByText("My.java", text);
     assertOneElement(myFixture.doHighlighting(HighlightSeverity.WARNING));
     myFixture.type('L');

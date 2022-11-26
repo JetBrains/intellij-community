@@ -84,7 +84,7 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
   }
 
   @Override
-  public PsiReference findReferenceAt(final int offset) {
+  public PsiReference findReferenceAt(int offset) {
     return SharedPsiElementImplUtil.findReferenceAt(getPsi(getBaseLanguage()), offset);
   }
 
@@ -96,13 +96,13 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
 
   @NotNull
   @Override
-  public FileViewProvider createCopy(@NotNull final VirtualFile copy) {
+  public FileViewProvider createCopy(@NotNull VirtualFile copy) {
     throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
   }
 
   @Override
-  public PsiElement findElementAt(final int offset) {
-    final LeafElement element = myHolder.calcTreeElement().findLeafElementAt(offset);
+  public PsiElement findElementAt(int offset) {
+    LeafElement element = myHolder.calcTreeElement().findLeafElementAt(offset);
     return element != null ? element.getPsi() : null;
   }
 }

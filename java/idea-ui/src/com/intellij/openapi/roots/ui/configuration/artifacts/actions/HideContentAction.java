@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -48,6 +49,11 @@ public class HideContentAction extends DumbAwareAction {
       }
     }
     e.getPresentation().setVisible(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -135,12 +135,8 @@ public abstract class ColorPipetteBase implements ColorPipette {
       @Override
       public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
-          case KeyEvent.VK_ESCAPE:
-            cancelPipette();
-            break;
-          case KeyEvent.VK_ENTER:
-            pickAndClose();
-            break;
+          case KeyEvent.VK_ESCAPE -> cancelPipette();
+          case KeyEvent.VK_ENTER -> pickAndClose();
         }
       }
     });

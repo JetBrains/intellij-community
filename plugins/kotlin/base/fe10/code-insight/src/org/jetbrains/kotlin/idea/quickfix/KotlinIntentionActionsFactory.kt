@@ -12,11 +12,13 @@ abstract class KotlinIntentionActionsFactory : QuickFixFactory {
 
     protected abstract fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction>
 
+    open fun areActionsAvailable(diagnostic: Diagnostic): Boolean = createActions(diagnostic).isNotEmpty()
+
     protected open fun doCreateActionsForAllProblems(
         sameTypeDiagnostics: Collection<Diagnostic>
     ): List<IntentionAction> = emptyList()
 
-    fun createActions(diagnostic: Diagnostic): List<IntentionAction> = createActions(listOfNotNull(diagnostic), false)
+    fun createActions(diagnostic: Diagnostic): List<IntentionAction> = createActions(listOf(diagnostic), false)
 
     fun createActionsForAllProblems(sameTypeDiagnostics: Collection<Diagnostic>): List<IntentionAction> =
         createActions(sameTypeDiagnostics, true)

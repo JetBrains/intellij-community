@@ -30,7 +30,6 @@
     <orderEntry type="module" module-name="kotlin.base.facet" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.klib" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" scope="RUNTIME" />
@@ -64,6 +63,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.impl-shared" scope="RUNTIME" />
@@ -81,6 +83,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="RUNTIME" />
@@ -114,6 +117,7 @@
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.idea-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="RUNTIME" />
@@ -140,5 +144,11 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="kotlin.searching.base" />
+    <orderEntry type="module" module-name="kotlin.j2k.old.post-processing" scope="RUNTIME" />
   </component>
 </module>

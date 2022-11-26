@@ -15,9 +15,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public interface Query<Result> extends Iterable<Result> {
-
   /**
-   * Get all of the results in the {@link Collection}
+   * Get all the results in the {@link Collection}
    *
    * @return results in a collection or empty collection if no results found.
    */
@@ -44,8 +43,11 @@ public interface Query<Result> extends Iterable<Result> {
    */
   boolean forEach(@NotNull Processor<? super Result> consumer);
 
-  @NotNull
-  default AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer) {
+  /**
+   * @deprecated use {@link #forEach(Processor)} instead
+   */
+  @Deprecated
+  default @NotNull AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer) {
     return AsyncUtil.wrapBoolean(forEach(consumer));
   }
 
@@ -92,8 +94,7 @@ public interface Query<Result> extends Iterable<Result> {
    * @param mapper pure function
    */
   @Experimental
-  @NotNull
-  default <R> Query<R> mapping(@NotNull Function<? super Result, ? extends R> mapper) {
+  default @NotNull <R> Query<R> mapping(@NotNull Function<? super Result, ? extends R> mapper) {
     return transforming(value -> Collections.singletonList(mapper.apply(value)));
   }
 
@@ -101,8 +102,7 @@ public interface Query<Result> extends Iterable<Result> {
    * @param predicate pure function
    */
   @Experimental
-  @NotNull
-  default Query<Result> filtering(@NotNull Predicate<? super Result> predicate) {
+  default @NotNull Query<Result> filtering(@NotNull Predicate<? super Result> predicate) {
     return transforming(value -> predicate.test(value) ? Collections.singletonList(value) : Collections.emptyList());
   }
 
@@ -110,17 +110,15 @@ public interface Query<Result> extends Iterable<Result> {
    * @param mapper pure function
    */
   @Experimental
-  @NotNull
-  default <R> Query<R> flatMapping(@NotNull Function<? super Result, ? extends Query<? extends R>> mapper) {
+  default @NotNull <R> Query<R> flatMapping(@NotNull Function<? super Result, ? extends Query<? extends R>> mapper) {
     return Queries.getInstance().flatMapping(this, mapper);
   }
 
   /**
    * @return an equivalent query whose {@link #forEach} accepts thread-safe consumers, so it may call the consumer in parallel.
    */
-  @NotNull
   @Contract(pure = true)
-  default Query<Result> allowParallelProcessing() {
+  default @NotNull Query<Result> allowParallelProcessing() {
     return this;
   }
 
@@ -130,8 +128,7 @@ public interface Query<Result> extends Iterable<Result> {
   }
 
   @Experimental
-  @NotNull
-  default Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
+  default @NotNull Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
     Query<Result> query = this;
     return new AbstractQuery<Result>() {
       @Override

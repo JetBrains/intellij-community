@@ -41,7 +41,7 @@ internal class DefaultBackgroundExecutor(
         const val PROGRESS_INDICATOR_MIN_QUEUE = 3
     }
 
-    val rootsManager get() = manager.updater
+    private val rootsManager get() = manager.updater
     private val work = Any()
     private val queue: Queue<LoadTask> = HashSetQueue()
 

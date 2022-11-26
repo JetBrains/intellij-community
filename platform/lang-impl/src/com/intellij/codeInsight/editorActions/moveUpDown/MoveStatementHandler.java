@@ -4,8 +4,11 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.DependentLanguage;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -18,6 +21,15 @@ class MoveStatementHandler extends BaseMoveHandler {
 
   MoveStatementHandler(boolean down) {
     super(down);
+  }
+
+  @Override
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    super.executeWriteAction(editor, caret, dataContext);
+
+    if (editor.getCaretModel().getPrimaryCaret() == caret) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    }
   }
 
   @Override

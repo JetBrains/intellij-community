@@ -42,7 +42,7 @@ abstract class AssignToVariableResultTransformation(
     override val commentSavingRange = PsiChildRange(initialization.initializationStatement, loop.unwrapIfLabeled())
 
     override fun generateExpressionToReplaceLoopAndCheckErrors(resultCallChain: KtExpression): KtExpression {
-        val psiFactory = KtPsiFactory(resultCallChain)
+        val psiFactory = KtPsiFactory(resultCallChain.project)
         val initializationStatement = initialization.initializationStatement
         return if (initializationStatement is KtVariableDeclaration) {
             val resolutionScope = loop.getResolutionScope()
@@ -69,9 +69,11 @@ abstract class AssignToVariableResultTransformation(
     override fun convertLoop(resultCallChain: KtExpression, commentSavingRangeHolder: CommentSavingRangeHolder): KtExpression {
         initialization.initializer.replace(resultCallChain)
 
+        val psiFactory = KtPsiFactory(loop.project)
+
         val variable = initialization.variable
         if (variable.isVar && variable.countWriteUsages() == variable.countWriteUsages(loop)) { // change variable to 'val' if possible
-            variable.valOrVarKeyword.replace(KtPsiFactory(variable).createValKeyword())
+            variable.valOrVarKeyword.replace(psiFactory.createValKeyword())
         }
 
         val loopUnwrapped = loop.unwrapIfLabeled()
@@ -82,7 +84,7 @@ abstract class AssignToVariableResultTransformation(
             val block = loopUnwrapped.parent
             assert(block is KtBlockExpression)
             val movedInitializationStatement = block.addBefore(initializationStatement, loopUnwrapped) as KtExpression
-            block.addBefore(KtPsiFactory(block).createNewLine(), loopUnwrapped)
+            block.addBefore(psiFactory.createNewLine(), loopUnwrapped)
 
             commentSavingRangeHolder.remove(initializationStatement)
 

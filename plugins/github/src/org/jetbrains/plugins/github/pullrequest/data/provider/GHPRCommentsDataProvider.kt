@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.GithubIssueCommentWithHtml
 import java.util.concurrent.CompletableFuture
@@ -13,7 +14,7 @@ interface GHPRCommentsDataProvider {
     : CompletableFuture<GithubIssueCommentWithHtml>
 
   @RequiresEdt
-  fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String): CompletableFuture<String>
+  fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String): CompletableFuture<@NlsSafe String>
 
   @RequiresEdt
   fun deleteComment(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<out Any?>

@@ -1,73 +1,58 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Consumer;
-
-final class DumbServiceGuiTaskQueue {
-  private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
-
-  private final Project myProject;
-  private final DumbServiceMergingTaskQueue myTaskQueue;
-
-  /**
-   * Per-task progress indicators. Modified from EDT only.
-   * The task is removed from this map after it's finished or when the project is disposed.
-   */
+final class DumbServiceGuiTaskQueue extends MergingQueueGuiExecutor<DumbModeTask> {
+  private final DumbServiceHeavyActivities myHeavyActivities;
+  private StructuredIdeActivity activity;
 
   DumbServiceGuiTaskQueue(@NotNull Project project,
-                          @NotNull DumbServiceMergingTaskQueue queue) {
-    myProject = project;
-    myTaskQueue = queue;
+                          @NotNull DumbServiceMergingTaskQueue queue,
+                          @NotNull DumbServiceHeavyActivities heavyActivities,
+                          @NotNull DumbTaskListener listener) {
+    super(project, queue, listener);
+    myHeavyActivities = heavyActivities;
   }
 
-  void processTasksWithProgress(@NotNull StructuredIdeActivity activity,
-                                @NotNull Consumer<? super ProgressIndicatorEx> bindProgress,
-                                @NotNull Consumer<? super ProgressIndicatorEx> unbindProgress) {
-    while (true) {
-      //we do jump in EDT to
-      if (myProject.isDisposed()) break;
+  @Override
+  protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
+                                          @NotNull ProgressIndicator visibleIndicator) {
+    Project project = getProject();
+    activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(project);
+    try {
+      DumbServiceAppIconProgress.registerForProgress(project, (ProgressIndicatorEx)visibleIndicator);
+      DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator);
+      myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
 
-      try (QueuedDumbModeTask pair = myTaskQueue.extractNextTask()) {
-        if (pair == null) break;
-
-        bindProgress.accept(pair.getIndicator());
-        pair.registerStageStarted(activity);
-
-        try {
-          HeavyProcessLatch.INSTANCE
-            .performOperation(HeavyProcessLatch.Type.Indexing, IdeBundle.message("progress.performing.indexing.tasks"), () -> runSingleTask(pair));
-        }
-        finally {
-          unbindProgress.accept(pair.getIndicator());
-        }
-      }
+      super.processTasksWithProgress(suspender, visibleIndicator);
+    }
+    finally {
+      // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
+      // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
+      // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
+      // previously installed.
+      myHeavyActivities.resetCurrentSuspender();
+      IndexingStatisticsCollector.logProcessFinished(activity, suspender.isClosed()
+                                                               ? IndexingStatisticsCollector.IndexingFinishType.TERMINATED
+                                                               : IndexingStatisticsCollector.IndexingFinishType.FINISHED);
+      activity = null;
+      DumbModeProgressTitle.getInstance(project).removeDumpModeProgress(visibleIndicator);
     }
   }
 
-  private static void runSingleTask(@NotNull final QueuedDumbModeTask task) {
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task.getInfoString());
-
-    // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
-    ProgressManager.getInstance().runProcess(() -> {
-      try {
-        task.executeTask();
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-      catch (Throwable unexpected) {
-        LOG.error("Failed to execute task " + task + ". " + unexpected.getMessage(), unexpected);
-      }
-    }, task.getIndicator());
+  @Override
+  protected void runSingleTask(@NotNull MergingTaskQueue.QueuedTask<DumbModeTask> task) {
+    ((QueuedDumbModeTask)task).registerStageStarted(activity);
+    HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Indexing,
+                                                IdeBundle.message("progress.performing.indexing.tasks"),
+                                                () -> super.runSingleTask(task));
   }
 }

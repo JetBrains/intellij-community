@@ -95,39 +95,81 @@ public final class PluginManagerMain {
     @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
     @NotNull final ModalityState modalityState,
     @Nullable Consumer<? super Boolean> function) throws IOException {
+    return downloadPluginsImpl(
+      plugins,
+      customPlugins,
+      allowInstallWithoutRestart,
+      onSuccess,
+      pluginEnabler,
+      function,
+      modalityState,
+      true
+    );
+  }
+
+  public static boolean downloadPluginsModal(
+    @NotNull List<PluginNode> plugins,
+    @NotNull Collection<PluginNode> customPlugins,
+    boolean allowInstallWithoutRestart,
+    @Nullable Runnable onSuccess,
+    @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+    @NotNull final ModalityState modalityState,
+    @Nullable Consumer<? super Boolean> function) throws IOException {
+    return downloadPluginsImpl(
+      plugins,
+      customPlugins,
+      allowInstallWithoutRestart,
+      onSuccess,
+      pluginEnabler,
+      function,
+      modalityState,
+      false
+    );
+  }
+
+  private static boolean downloadPluginsImpl(
+    @NotNull List<PluginNode> plugins,
+    @NotNull Collection<PluginNode> customPlugins,
+    boolean allowInstallWithoutRestart,
+    @Nullable Runnable onSuccess,
+    @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+    @Nullable Consumer<? super Boolean> function,
+    @NotNull final ModalityState modalityState,
+    boolean inBackground) throws IOException {
+
     try {
       boolean[] result = new boolean[1];
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
-            PluginInstallOperation operation = new PluginInstallOperation(plugins, customPlugins, pluginEnabler, indicator);
-            operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
-            operation.run();
 
-            boolean success = operation.isSuccess();
-            result[0] = success;
-            if (success) {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                if (allowInstallWithoutRestart) {
-                  for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
-                    result[0] &= PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), install.getPluginDescriptor());
-                  }
+      Consumer<ProgressIndicator> downloading = (ProgressIndicator indicator) -> {
+        try {
+          //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
+          PluginInstallOperation operation = new PluginInstallOperation(plugins, customPlugins, pluginEnabler, indicator);
+          operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
+          operation.run();
+
+          boolean success = operation.isSuccess();
+          result[0] = success;
+          if (success) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (allowInstallWithoutRestart) {
+                for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
+                  result[0] &= PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), install.getPluginDescriptor());
                 }
-                if (onSuccess != null) {
-                  onSuccess.run();
-                }
-              }, modalityState);
-            }
-          }
-          finally {
-            if (function != null) {
-              ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]), ModalityState.any());
-            }
+              }
+              if (onSuccess != null) {
+                onSuccess.run();
+              }
+            }, modalityState);
           }
         }
-      });
+        finally {
+          if (function != null) {
+            ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]), ModalityState.any());
+          }
+        }
+      };
+
+      ProgressManager.getInstance().run(createTask(downloading, inBackground));
       return result[0];
     }
     catch (RuntimeException e) {
@@ -138,6 +180,24 @@ public final class PluginManagerMain {
       else {
         throw e;
       }
+    }
+  }
+
+  private static Task createTask(Consumer<ProgressIndicator> f, boolean inBackground) {
+    if (inBackground) {
+      return new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          f.accept(indicator);
+        }
+      };
+    } else {
+      return new Task.Modal(null, IdeBundle.message("progress.download.plugins"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          f.accept(indicator);
+        }
+      };
     }
   }
 
@@ -283,18 +343,16 @@ public final class PluginManagerMain {
   @ApiStatus.Internal
   public static void onEvent(String description) {
     switch (description) {
-      case PluginManagerCore.DISABLE:
-        PluginManagerCore.onEnable(false);
-        break;
-      case PluginManagerCore.ENABLE:
+      case PluginManagerCore.DISABLE -> PluginManagerCore.onEnable(false);
+      case PluginManagerCore.ENABLE -> {
         if (PluginManagerCore.onEnable(true)) {
           notifyPluginsUpdated(null);
         }
-        break;
-      case PluginManagerCore.EDIT:
+      }
+      case PluginManagerCore.EDIT -> {
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(null);
         PluginManagerConfigurable.showPluginConfigurable(frame != null ? frame.getComponent() : null, null, List.of());
-        break;
+      }
     }
   }
 

@@ -167,15 +167,14 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
           long end = System.currentTimeMillis();
           long interruptTime = end - now;
           interruptTimes[finalI] = interruptTime;
-          assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
+          assertTrue(codeAnalyzer.getUpdateProgress().values().iterator().next().isCanceled());
           System.out.println(interruptTime);
           throw new ProcessCanceledException();
         };
         long hiStart = System.currentTimeMillis();
-        codeAnalyzer
-          .runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
+        codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
         long hiEnd = System.currentTimeMillis();
-        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress();
+        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress().values().iterator().next();
         String message = "Should have been interrupted: " + progress + "; Elapsed: " + (hiEnd - hiStart) + "ms";
         dumpThreadsToConsole();
         throw new RuntimeException(message);
@@ -196,7 +195,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     assertTrue(ave < 300);
   }
 
-  public static void dumpThreadsToConsole() {
+  static void dumpThreadsToConsole() {
     System.err.println("----all threads---");
     for (Thread thread : Thread.getAllStackTraces().keySet()) {
 
@@ -254,7 +253,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         finished.set(true);
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
-        assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
+        assertTrue(codeAnalyzer.getUpdateProgress().values().iterator().next().isCanceled());
         throw new ProcessCanceledException();
       };
       try {
@@ -264,8 +263,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        codeAnalyzer
-          .runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
+        codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
 
         throw new RuntimeException("should have been interrupted");
       }
@@ -310,7 +308,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
         Runnable callbackWhileWaiting = () -> type(' ');
-        codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
+        codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
       }
       catch (ProcessCanceledException ignored) {
         codeAnalyzer.waitForTermination();

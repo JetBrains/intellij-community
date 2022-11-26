@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
-/**
- * @author peter
- */
 public class RelaxNGReferenceContributor extends PsiReferenceContributor {
   private static class Holder {
     private static final XmlNamedElementPattern RNG_TAG_PATTERN = xmlTag().withNamespace(RelaxNgMetaDataContributor.RNG_NAMESPACE);

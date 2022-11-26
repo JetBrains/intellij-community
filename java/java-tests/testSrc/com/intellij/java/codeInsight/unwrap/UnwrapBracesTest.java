@@ -5,50 +5,64 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapBracesTest extends UnwrapTestCase {
   public void testBraces() {
-    assertUnwrapped("{\n" +
-                    "    int i;<caret>\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          int i;<caret>
+                      }
+                      """,
 
                     "int i;<caret>\n");
   }
 
   public void testEmptyBraces() {
-    assertUnwrapped("{\n" +
-                    "    {<caret>}\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          {<caret>}
+                      }
+                      """,
 
-                    "{\n" +
-                    "<caret>}\n");
+                    """
+                      {
+                      <caret>}
+                      """);
   }
 
   public void testBracesWithComments() {
-    assertUnwrapped("{\n" +
-                    "    // a <caret>comment\n" +
-                    "    int i = 0;\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          // a <caret>comment
+                          int i = 0;
+                      }
+                      """,
 
-                    "// a <caret>comment\n" +
-                    "int i = 0;\n");
+                    """
+                      // a <caret>comment
+                      int i = 0;
+                      """);
   }
 
   public void testTrimmingTheLeadingAndTrailingWhileSpaces() {
-    assertUnwrapped("{\n" +
-                    "    \n" +
-                    "    \n" +
-                    "    int i<caret> = 0;\n" +
-                    "    \n" +
-                    "    \n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                         \s
+                         \s
+                          int i<caret> = 0;
+                         \s
+                         \s
+                      }
+                      """,
 
                     "int i<caret> = 0;\n");
   }
 
   public void testBracesOptions() {
-    assertOptions("{\n" +
-                  "    {\n" +
-                  "        int i;<caret>\n" +
-                  "    }\n" +
-                  "}\n",
+    assertOptions("""
+                    {
+                        {
+                            int i;<caret>
+                        }
+                    }
+                    """,
 
                   "Unwrap braces",
                   "Unwrap braces");

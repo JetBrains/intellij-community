@@ -2,14 +2,12 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.MultiRangeReference
 import com.intellij.psi.PsiElement
@@ -19,8 +17,8 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 
@@ -31,61 +29,16 @@ internal class ElementAnnotator(
     fun registerDiagnosticsAnnotations(
         holder: HighlightInfoHolder,
         diagnostics: Collection<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>?,
-        highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>?,
-        noFixes: Boolean,
-        calculatingInProgress: Boolean
+        diagnosticHighlighted: MutableSet<Diagnostic>
     ) = diagnostics.groupBy { it.factory }
         .forEach {
-            registerSameFactoryDiagnosticsAnnotations(
-                holder,
-                it.value,
-                highlightInfoByDiagnostic,
-                highlightInfoByTextRange,
-                noFixes,
-                calculatingInProgress
-            )
+            val sameTypeDiagnostics = it.value
+            val presentationInfo = presentationInfo(sameTypeDiagnostics)
+            if (presentationInfo != null) {
+                val fixesMap = createFixesMap(sameTypeDiagnostics)
+                presentationInfo.processDiagnostics(holder, sameTypeDiagnostics, diagnosticHighlighted, fixesMap)
+            }
         }
-
-    private fun registerSameFactoryDiagnosticsAnnotations(
-        holder: HighlightInfoHolder,
-        diagnostics: Collection<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>?,
-        highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>?,
-        noFixes: Boolean,
-        calculatingInProgress: Boolean
-    ) {
-        val presentationInfo = presentationInfo(diagnostics) ?: return
-        setUpAnnotations(
-            holder,
-            diagnostics,
-            presentationInfo,
-            highlightInfoByDiagnostic,
-            highlightInfoByTextRange,
-            noFixes,
-            calculatingInProgress
-        )
-    }
-
-    fun registerDiagnosticsQuickFixes(
-        diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
-    ) = diagnostics.groupBy { it.factory }
-        .forEach { registerDiagnosticsSameFactoryQuickFixes(it.value, highlightInfoByDiagnostic) }
-
-    private fun registerDiagnosticsSameFactoryQuickFixes(
-        diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
-    ) {
-        val presentationInfo = presentationInfo(diagnostics) ?: return
-        val fixesMap = createFixesMap(diagnostics) ?: return
-
-        diagnostics.forEach {
-            val highlightInfo = highlightInfoByDiagnostic[it] ?: return
-
-            presentationInfo.applyFixes(fixesMap, it, highlightInfo)
-        }
-    }
 
     private fun presentationInfo(diagnostics: Collection<Diagnostic>): AnnotationPresentationInfo? {
         if (diagnostics.isEmpty() || !diagnostics.any { it.isValid }) return null
@@ -128,14 +81,21 @@ internal class ElementAnnotator(
                     else -> {
                         AnnotationPresentationInfo(
                             ranges,
-                            highlightType = if (factory == Errors.INVISIBLE_REFERENCE)
-                                ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-                            else
-                                null
+                            highlightType =
+                            when (factory) {
+                                Errors.INVISIBLE_REFERENCE, Errors.DELEGATE_SPECIAL_FUNCTION_MISSING, Errors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE, Errors.TOO_MANY_ARGUMENTS -> ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                                else -> null
+                            },
+                            textAttributes =
+                            when (factory) {
+                                Errors.DELEGATE_SPECIAL_FUNCTION_MISSING, Errors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE, Errors.TOO_MANY_ARGUMENTS -> CodeInsightColors.ERRORS_ATTRIBUTES
+                                else -> null
+                            },
                         )
                     }
                 }
             }
+
             Severity.WARNING -> {
                 if (factory == Errors.UNUSED_PARAMETER && shouldSuppressUnusedParameter(element as KtParameter)) {
                     return null
@@ -151,47 +111,28 @@ internal class ElementAnnotator(
                     highlightType = when (factory) {
                         in Errors.UNUSED_ELEMENT_DIAGNOSTICS, Errors.UNUSED_DESTRUCTURED_PARAMETER_ENTRY ->
                             ProblemHighlightType.LIKE_UNUSED_SYMBOL
+
                         Errors.UNUSED_ANONYMOUS_PARAMETER -> ProblemHighlightType.WEAK_WARNING
                         else -> null
                     }
                 )
             }
+
             Severity.INFO -> AnnotationPresentationInfo(ranges, highlightType = ProblemHighlightType.INFORMATION)
         }
         return presentationInfo
     }
 
-    private fun setUpAnnotations(
-        holder: HighlightInfoHolder,
-        diagnostics: Collection<Diagnostic>,
-        data: AnnotationPresentationInfo,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>?,
-        highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>?,
-        noFixes: Boolean,
-        calculatingInProgress: Boolean
-    ) {
-        val fixesMap = createFixesMap(diagnostics, noFixes)
-        data.processDiagnostics(holder, diagnostics, highlightInfoByDiagnostic, highlightInfoByTextRange, fixesMap, calculatingInProgress)
-    }
-
-    private fun createFixesMap(
-        diagnostics: Collection<Diagnostic>,
-        noFixes: Boolean = false
-    ): MultiMap<Diagnostic, IntentionAction>? {
-        return if (noFixes) {
-            null
-        } else {
-            try {
-                Fe10QuickFixProvider.getInstance(element.project).createQuickFixes(diagnostics)
-            } catch (e: Exception) {
-                if (e is ControlFlowException) {
-                    throw e
-                }
-                LOG.error(e)
-                MultiMap()
+    private fun createFixesMap(sameTypeDiagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction> =
+        try {
+            Fe10QuickFixProvider.getInstance(element.project).createQuickFixes(sameTypeDiagnostics)
+        } catch (e: Exception) {
+            if (e is ControlFlowException) {
+                throw e
             }
+            LOG.error(e)
+            MultiMap()
         }
-    }
 
     private fun isUnstableAbiClassDiagnosticForModulesWithEnabledUnstableAbi(diagnostic: Diagnostic): Boolean {
         val factory = diagnostic.factory
@@ -203,8 +144,10 @@ internal class ElementAnnotator(
             Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS ->
                 moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useIR) &&
                         !moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useOldBackend)
+
             Errors.FIR_COMPILED_CLASS ->
                 moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useK2)
+
             else -> error(factory)
         }
     }

@@ -8,7 +8,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
@@ -23,7 +23,7 @@ class GradleForeignDelegateInspection : GradleBaseInspection() {
 
   override fun buildGroovyVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): GroovyElementVisitor = object : GroovyElementVisitor() {
     override fun visitMethodCall(call: GrMethodCall) {
-      val callQualifier = call.invokedExpression.castSafelyTo<GrReferenceExpression>()
+      val callQualifier = call.invokedExpression.asSafely<GrReferenceExpression>()
       if (callQualifier != null && callQualifier.qualifierExpression != null) {
         return
       }
@@ -34,9 +34,9 @@ class GradleForeignDelegateInspection : GradleBaseInspection() {
       if (definingCaller == null || definingCaller == hierarchy.list.firstOrNull()?.first) {
         return
       }
-      val refExpr = call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement ?: return
-      val callerRefExpr = definingCaller.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement ?: return
-      val enclosingRefCall = hierarchy.list.first().first.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement
+      val refExpr = call.invokedExpression.asSafely<GrReferenceExpression>()?.referenceNameElement ?: return
+      val callerRefExpr = definingCaller.invokedExpression.asSafely<GrReferenceExpression>()?.referenceNameElement ?: return
+      val enclosingRefCall = hierarchy.list.first().first.invokedExpression.asSafely<GrReferenceExpression>()?.referenceNameElement
                              ?: return
       holder.registerProblem(refExpr, GradleInspectionBundle.message("inspection.message.0.defined.by.1.but.used.within.2", refExpr.text,
                                                                      callerRefExpr.text, enclosingRefCall.text),
@@ -47,9 +47,9 @@ class GradleForeignDelegateInspection : GradleBaseInspection() {
 
   companion object {
     fun getDelegationSourceCaller(hierarchy: DelegationHierarchy, resolved: PsiElement): GrMethodCall? {
-      val psiClass = resolved.containingFile.castSafelyTo<PsiClassOwner>()?.classes?.singleOrNull()?.takeIf {
+      val psiClass = resolved.containingFile.asSafely<PsiClassOwner>()?.classes?.singleOrNull()?.takeIf {
         val qualifiedName = it.qualifiedName ?: return@takeIf false
-        val returnType = resolved.castSafelyTo<PsiMethod>()?.returnType?.resolve()
+        val returnType = resolved.asSafely<PsiMethod>()?.returnType?.resolve()
 
         qualifiedName.startsWith("org.gradle") &&
         qualifiedName != GradleCommonClassNames.GRADLE_API_PROJECT &&
@@ -88,7 +88,7 @@ class GradleForeignDelegateInspection : GradleBaseInspection() {
       if (!info.admitsDelegate()) {
         return null
       }
-      return info.typeToDelegate?.castSafelyTo<PsiClassType>()?.resolve()
+      return info.typeToDelegate?.asSafely<PsiClassType>()?.resolve()
     }
 
     private fun retrievedFromDelegate(first: PsiClass, name: @NlsSafe String) =

@@ -799,15 +799,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * @deprecated use {@link #sort(Comparator)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public final @NotNull JBIterable<E> sorted(@NotNull Comparator<? super E> comparator) {
-    return sort(comparator);
-  }
-
-  /**
    * Collects all items into an immutable {@code List} and returns it.
    */
   public final @NotNull List<E> toList() {

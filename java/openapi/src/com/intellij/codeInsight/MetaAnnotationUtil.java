@@ -5,7 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -34,7 +33,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.psi.search.GlobalSearchScope.*;
 import static com.intellij.psi.search.GlobalSearchScopesCore.projectProductionScope;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
@@ -195,7 +193,7 @@ public abstract class MetaAnnotationUtil {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       GlobalSearchScope projectScope = module.getModuleWithDependenciesScope();
       GlobalSearchScope javaScope =
-        filesScope(module.getProject(), newHashSet(getJavaAnnotationInheritorIds(module.getProject(), projectScope)));
+        filesScope(module.getProject(), ContainerUtil.newHashSet(getJavaAnnotationInheritorIds(module.getProject(), projectScope)));
       GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(module.getProject(), projectScope);
       return Result.createSingleDependency(
         javaScope.uniteWith(otherScope),
@@ -282,6 +280,24 @@ public abstract class MetaAnnotationUtil {
       }
     }
     return false;
+  }
+
+  public static Stream<PsiAnnotation> findMetaAnnotationsInHierarchy(
+    @NotNull PsiModifierListOwner listOwner,
+    @NotNull Collection<String> annotations
+  ) {
+    Stream<PsiAnnotation> stream = findMetaAnnotations(listOwner, annotations);
+    if (listOwner instanceof PsiClass) {
+      for (PsiClass superClass : ((PsiClass)listOwner).getSupers()) {
+        stream = Stream.concat(stream, findMetaAnnotations(superClass, annotations));
+      }
+    }
+    else if (listOwner instanceof PsiMethod) {
+      for (PsiMethod method : ((PsiMethod)listOwner).findSuperMethods()) {
+        stream = Stream.concat(stream, findMetaAnnotations(method, annotations));
+      }
+    }
+    return stream;
   }
 
   @Nullable

@@ -6,10 +6,6 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
   private final StringBuffer myBuffer;
 

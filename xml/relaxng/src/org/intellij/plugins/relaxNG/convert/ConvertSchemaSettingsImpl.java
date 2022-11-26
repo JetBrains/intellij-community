@@ -79,33 +79,34 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
 
     final FileType type;
     switch (inputType) {
-      case RNG:
+      case RNG -> {
         myOutputRng.setVisible(false);
         myOutputXsd.setSelected(true);
         type = XmlFileType.INSTANCE;
-        break;
-      case RNC:
+      }
+      case RNC -> {
         myOutputRnc.setVisible(false);
         myOutputRng.setSelected(true);
         type = RncFileType.getInstance();
-        break;
-      case XSD:
+      }
+      case XSD -> {
         myOutputXsd.setVisible(false);
         myOutputRng.setSelected(true);
         type = XmlFileType.INSTANCE;
-        break;
-      case DTD:
+      }
+      case DTD -> {
         myOutputDtd.setVisible(false);
         myOutputRng.setSelected(true);
         type = DTDFileType.INSTANCE;
-        break;
-      case XML:
+      }
+      case XML -> {
         myOutputRng.setSelected(true);
         type = XmlFileType.INSTANCE;
-        break;
-      default:
+      }
+      default -> {
         assert false;
         type = null;
+      }
     }
 
     final Charset[] charsets = CharsetToolkit.getAvailableCharsets();

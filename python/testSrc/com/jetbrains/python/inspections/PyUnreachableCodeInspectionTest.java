@@ -36,30 +36,31 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   // PY-7420, PY-16419, PY-26417
   public void testWithNotSuppressedExceptions() {
     doTestByText(
-      "class C(object):\n" +
-      "    def __enter__(self):\n" +
-      "        return self\n" +
-      "\n" +
-      "    def __exit__(self, exc, value, traceback):\n" +
-      "        return False\n" +
-      "\n" +
-      "def f1():\n" +
-      "    with C():\n" +
-      "        raise Exception()\n" +
-      "    print(1) #pass\n" +
-      "\n" +
-      "def g2():\n" +
-      "    raise Exception()\n" +
-      "\n" +
-      "def f2():\n" +
-      "    with C():\n" +
-      "        return g2()\n" +
-      "    <warning descr=\"This code is unreachable\">print(1) #pass</warning>\n" +
-      "\n" +
-      "def f3():\n" +
-      "    with C():\n" +
-      "        g2()\n" +
-      "    print(1) #pass"
+      """
+        class C(object):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc, value, traceback):
+                return False
+
+        def f1():
+            with C():
+                raise Exception()
+            print(1) #pass
+
+        def g2():
+            raise Exception()
+
+        def f2():
+            with C():
+                return g2()
+            <warning descr="This code is unreachable">print(1) #pass</warning>
+
+        def f3():
+            with C():
+                g2()
+            print(1) #pass"""
     );
   }
 
@@ -76,107 +77,117 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   // PY-24750
   public void testIfFalse() {
     doTestByText(
-      "if False:\n" +
-      "    <warning descr=\"This code is unreachable\">a = 1</warning>\n" +
-      "\n" +
-      "if False:\n" +
-      "    <warning descr=\"This code is unreachable\">b = 1</warning>\n" +
-      "else:\n" +
-      "    pass\n" +
-      "\n" +
-      "if False:\n" +
-      "    <warning descr=\"This code is unreachable\">c = 1</warning>\n" +
-      "elif d:\n" +
-      "    pass\n" +
-      "else:\n" +
-      "    pass\n"
+      """
+        if False:
+            <warning descr="This code is unreachable">a = 1</warning>
+
+        if False:
+            <warning descr="This code is unreachable">b = 1</warning>
+        else:
+            pass
+
+        if False:
+            <warning descr="This code is unreachable">c = 1</warning>
+        elif d:
+            pass
+        else:
+            pass
+        """
     );
   }
 
   // PY-24750
   public void testIfTrue() {
     doTestByText(
-      "if True:\n" +
-      "    pass\n" +
-      "\n" +
-      "if True:\n" +
-      "    pass\n" +
-      "else:\n" +
-      "    <warning descr=\"This code is unreachable\">b = 1</warning>\n" +
-      "\n" +
-      "if True:\n" +
-      "    pass\n" +
-      "elif c:\n" +
-      "    <warning descr=\"This code is unreachable\">d = 1</warning>\n" +
-      "else:\n" +
-      "    <warning descr=\"This code is unreachable\">e = 1</warning>\n"
+      """
+        if True:
+            pass
+
+        if True:
+            pass
+        else:
+            <warning descr="This code is unreachable">b = 1</warning>
+
+        if True:
+            pass
+        elif c:
+            <warning descr="This code is unreachable">d = 1</warning>
+        else:
+            <warning descr="This code is unreachable">e = 1</warning>
+        """
     );
   }
 
   // PY-24750
   public void testIfElifTrue() {
     doTestByText(
-      "if c:\n" +
-      "    pass\n" +
-      "elif True:\n" +
-      "    pass\n" +
-      "\n" +
-      "if d:\n" +
-      "    pass\n" +
-      "elif True:\n" +
-      "    pass\n" +
-      "else:\n" +
-      "    <warning descr=\"This code is unreachable\">e = 1</warning>\n"
+      """
+        if c:
+            pass
+        elif True:
+            pass
+
+        if d:
+            pass
+        elif True:
+            pass
+        else:
+            <warning descr="This code is unreachable">e = 1</warning>
+        """
     );
   }
 
   // PY-24750
   public void testIfElifFalse() {
     doTestByText(
-      "if c:\n" +
-      "    pass\n" +
-      "elif False:\n" +
-      "    <warning descr=\"This code is unreachable\">a = 1</warning>\n" +
-      "\n" +
-      "if d:\n" +
-      "    pass\n" +
-      "elif False:\n" +
-      "    <warning descr=\"This code is unreachable\">b = 1</warning>\n" +
-      "else:\n" +
-      "    pass"
+      """
+        if c:
+            pass
+        elif False:
+            <warning descr="This code is unreachable">a = 1</warning>
+
+        if d:
+            pass
+        elif False:
+            <warning descr="This code is unreachable">b = 1</warning>
+        else:
+            pass"""
     );
   }
 
   // PY-28972
   public void testWhileTrueElse() {
     doTestByText(
-      "while True:\n" +
-      "    pass\n" +
-      "else:\n" +
-      "    <warning descr=\"This code is unreachable\">print(\"ok\")</warning>"
+      """
+        while True:
+            pass
+        else:
+            <warning descr="This code is unreachable">print("ok")</warning>"""
     );
   }
 
   // PY-29435
   public void testNoInspectionIfDunderDebug() {
     doTestByText(
-      "if __debug__:\n" +
-      "    print('why not?')\n" +
-      "else:\n" +
-      "    x = 42"
+      """
+        if __debug__:
+            print('why not?')
+        else:
+            x = 42"""
     );
   }
 
   // PY-29767
   public void testContinueInPositiveIterationWithExitPoint() {
     doTestByText(
-      "import sys\n" +
-      "\n" +
-      "for s in \"abc\":\n" +
-      "    if len(s) == 1:\n" +
-      "        continue\n" +
-      "    sys.exit(0)\n" +
-      "raise Exception(\"the end\")"
+      """
+        import sys
+
+        for s in "abc":
+            if len(s) == 1:
+                continue
+            sys.exit(0)
+        raise Exception("the end")"""
     );
   }
 
@@ -202,6 +213,25 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
 
   // PY-48760
   public void testUnreachablePatternAfterIrrefutableOrPatternAlternative() {
+    doTest();
+  }
+
+  // PY-7758
+  public void testUnreachableCodeReportedAfterBuiltinExit() {
+    doTest();
+  }
+
+  // PY-23859
+  public void testUnreachableCodeReportedAfterSelfFailInClassContainingTestInName() {
+    doTest();
+  }
+
+  // PY-23859
+  public void testCodeNotReportedAsUnreachableAfterSelfFailInClassNotContainingTestInName() {
+    doTest();
+  }
+
+  public void testUnreachableCodeReportedAfterPytestFail() {
     doTest();
   }
 

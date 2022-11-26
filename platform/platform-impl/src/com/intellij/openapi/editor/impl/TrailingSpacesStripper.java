@@ -231,11 +231,11 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     return !markAsNeedsStrippingLater;
   }
 
-  private static void runBatchCaretOperation(@NotNull List<Editor> editors, @NotNull Runnable runnable) {
+  private static void runBatchCaretOperation(@NotNull List<? extends Editor> editors, @NotNull Runnable runnable) {
     runBatchCaretOperation(editors, 0, runnable);
   }
 
-  private static void runBatchCaretOperation(@NotNull List<Editor> editors, int startIndex, @NotNull Runnable runnable) {
+  private static void runBatchCaretOperation(@NotNull List<? extends Editor> editors, int startIndex, @NotNull Runnable runnable) {
     if (startIndex >= editors.size()) {
       runnable.run();
       return;
@@ -246,7 +246,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
   }
 
   @Nullable
-  private static Project getProject(@NotNull Document document, @NotNull List<Editor> editors) {
+  private static Project getProject(@NotNull Document document, @NotNull List<? extends Editor> editors) {
     for (Editor editor : editors) {
       Project project = editor.getProject();
       if (project != null) {

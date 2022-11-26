@@ -97,7 +97,7 @@ internal fun createDialogWrapper(
 
 private fun peerFactory(window: Window, lightPopup: Boolean): Function<DialogWrapper, DialogWrapperPeer> {
   return java.util.function.Function { dialogWrapper ->
-    if (lightPopup && System.getProperty("vintage.progress") == null) {
+    if (lightPopup) {
       try {
         GlassPaneDialogWrapperPeer(dialogWrapper, window)
       }

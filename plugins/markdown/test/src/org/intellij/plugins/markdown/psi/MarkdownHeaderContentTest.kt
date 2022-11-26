@@ -8,7 +8,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 
 class MarkdownHeaderContentTest: LightPlatformCodeInsightTestCase() {
   private val firstElement
-    get() = file.firstChild?.firstChild!!
+    get() = file.firstChild!!
 
   fun `test content element can be obtained for atx header`() {
     // language=Markdown

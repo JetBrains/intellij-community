@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 
 class EntityTracingLogger {
   /** specifies ID of an entity which changes should be printed to the log */
@@ -27,7 +27,7 @@ class EntityTracingLogger {
 
   fun subscribe(project: Project) {
     if (entityToTrace != null) {
-      WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), EntityTracingListener(entityToTrace))
+      project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, EntityTracingListener(entityToTrace))
     }
   }
 
@@ -37,7 +37,7 @@ class EntityTracingLogger {
     }
   }
 
-  private class EntityTracingListener(private val entityId: PersistentEntityId<*>) : WorkspaceModelChangeListener {
+  private class EntityTracingListener(private val entityId: SymbolicEntityId<*>) : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
       event.getAllChanges().forEach {
         when (it) {
@@ -52,7 +52,7 @@ class EntityTracingLogger {
     }
 
     private fun printInfo(action: String, entity: WorkspaceEntity) {
-      if ((entity as? WorkspaceEntityWithPersistentId)?.persistentId == entityId) {
+      if ((entity as? WorkspaceEntityWithSymbolicId)?.symbolicId == entityId) {
         LOG.info("$action: ${entity.toDebugString()}", Throwable())
       }
     }

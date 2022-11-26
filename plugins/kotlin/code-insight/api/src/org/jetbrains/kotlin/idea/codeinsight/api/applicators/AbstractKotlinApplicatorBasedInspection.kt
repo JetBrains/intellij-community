@@ -8,15 +8,18 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import kotlin.reflect.KClass
 
+@Deprecated("Please don't use this for new inspections. Use `KotlinApplicableInspection` or `KotlinApplicableInspectionWithContext` instead.")
 abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : KotlinApplicatorInput>(
     val elementType: KClass<PSI>
 ) : AbstractKotlinInspection() {
@@ -100,12 +103,16 @@ private fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> KotlinApplicator<P
 ): LocalQuickFix = object : LocalQuickFix {
     override fun startInWriteAction() = false
 
+    override fun getElementToMakeWritable(currentFile: PsiFile) = currentFile
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         @Suppress("UNCHECKED_CAST")
         val element = descriptor.psiElement as PSI
 
         if (isApplicableByPsi(element, project) && input.isValidFor(element)) {
-            applyTo(element, input, project, element.findExistingEditor())
+             runWriteActionIfPhysical(element) {
+                applyTo(element, input, project, element.findExistingEditor())
+            }
         }
     }
 

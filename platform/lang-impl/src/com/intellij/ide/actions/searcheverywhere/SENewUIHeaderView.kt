@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.util.function.Function
@@ -26,7 +26,6 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
     panel = panel {
       row {
         tabbedPane = tabbedPaneHeader()
-          .verticalAlign(VerticalAlign.BOTTOM)
           .customize(Gaps.EMPTY)
           .applyToComponent {
             font = JBFont.regular()
@@ -34,13 +33,15 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
             isFocusable = false
           }
           .component
+        toolbar.putClientProperty(ActionToolbarImpl.USE_BASELINE_KEY, true)
         cell(toolbar)
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.RIGHT)
+          .align(AlignX.RIGHT)
       }
     }
 
     val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
+    @Suppress("UseDPIAwareBorders")
     panel.border = JBUI.Borders.compound(
       JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
       EmptyBorder(0, headerInsets.left, 0, headerInsets.right))

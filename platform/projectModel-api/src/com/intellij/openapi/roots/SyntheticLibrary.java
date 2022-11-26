@@ -100,17 +100,30 @@ public abstract class SyntheticLibrary {
    * <p>
    * NOTE 3: Non-null value blocks from incremental rescanning of library changes. Consider switching to constantExcludeCondition and
    * providing non-null comparisonId in constructor.
+   * <p>
+   * @deprecated Use {@link SyntheticLibrary#getUnitedExcludeCondition()} to get filtering condition,
+   * and {@link SyntheticLibrary#myConstantExcludeCondition} to provide it, as it allows incremental rescan of the library.
    */
   @Nullable
+  @Deprecated
   public Condition<VirtualFile> getExcludeFileCondition() {
     return null;
   }
 
   @Nullable
-  public final Condition<VirtualFile> getConstantExcludeConditionAsCondition() {
+  private Condition<VirtualFile> getConstantExcludeConditionAsCondition() {
     if (myConstantExcludeCondition == null) return null;
     Collection<VirtualFile> allRoots = getAllRoots();
     return myConstantExcludeCondition.transformToCondition(allRoots);
+  }
+
+  @Nullable
+  public final Condition<VirtualFile> getUnitedExcludeCondition() {
+    Condition<VirtualFile> condition = getExcludeFileCondition();
+    if (condition == null) return getConstantExcludeConditionAsCondition();
+    Condition<VirtualFile> otherCondition = getConstantExcludeConditionAsCondition();
+    if (otherCondition == null) return condition;
+    return file -> condition.value(file) || otherCondition.value(file);
   }
 
   public boolean isShowInExternalLibrariesNode() {
@@ -235,14 +248,6 @@ public abstract class SyntheticLibrary {
   @NotNull
   private static List<? extends VirtualFile> asList(@NotNull Collection<? extends VirtualFile> collection) {
     return collection instanceof List ? (List<? extends VirtualFile>)collection : new ArrayList<>(collection);
-  }
-
-  public final boolean isExcludedByConditions(@NotNull VirtualFile file) {
-    Condition<VirtualFile> condition = getExcludeFileCondition();
-    if (condition != null && condition.value(file)) return true;
-    Condition<VirtualFile> constantCondition = getConstantExcludeConditionAsCondition();
-    if (constantCondition != null && constantCondition.value(file)) return true;
-    return false;
   }
 
   public interface ExcludeFileCondition {

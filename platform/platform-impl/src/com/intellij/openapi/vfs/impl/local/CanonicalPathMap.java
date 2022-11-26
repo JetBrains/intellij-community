@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -11,10 +12,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.PathUtil.getParentPath;
 
 /**
@@ -27,12 +28,12 @@ final class CanonicalPathMap {
 
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots;
   private final NavigableSet<String> myOptimizedFlatWatchRoots;
-  private Collection<Pair<String, String>> myInitialPathMappings;
+  private @NotNull Collection<? extends Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
   CanonicalPathMap(@NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
                    @NotNull NavigableSet<String> optimizedFlatWatchRoots,
-                   @NotNull Collection<Pair<String, String>> initialPathMappings) {
+                   @NotNull Collection<? extends Pair<String, String>> initialPathMappings) {
     myOptimizedRecursiveWatchRoots = optimizedRecursiveWatchRoots;
     myOptimizedFlatWatchRoots = optimizedFlatWatchRoots;
     myInitialPathMappings = initialPathMappings;
@@ -41,19 +42,21 @@ final class CanonicalPathMap {
 
   @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
     initializeMappings();
-    Map<String, String> canonicalPathMappings = new ConcurrentHashMap<>();
-    Stream.concat(myOptimizedRecursiveWatchRoots.stream(), myOptimizedFlatWatchRoots.stream())
-      .parallel()
-      .forEach(root -> {
-        String canonicalRoot = FileSystemUtil.resolveSymLink(root);
+
+    var canonicalPathMappings = new ConcurrentHashMap<String, String>();
+    var futures = Stream.concat(myOptimizedRecursiveWatchRoots.stream(), myOptimizedFlatWatchRoots.stream())
+      .map(root -> CompletableFuture.runAsync(() -> {
+        var canonicalRoot = FileSystemUtil.resolveSymLink(root);
         if (canonicalRoot != null && OSAgnosticPathUtil.COMPARATOR.compare(canonicalRoot, root) != 0) {
           canonicalPathMappings.put(root, canonicalRoot);
         }
-      });
+      }, ProcessIOExecutorService.INSTANCE))
+      .toArray(CompletableFuture[]::new);
+    CompletableFuture.allOf(futures).join();
 
-    NavigableSet<String> canonicalRecursiveRoots = WatchRootsUtil.createFileNavigableSet();
-    for (String root : myOptimizedRecursiveWatchRoots) {
-      String canonical = canonicalPathMappings.get(root);
+    var canonicalRecursiveRoots = WatchRootsUtil.createFileNavigableSet();
+    for (var root : myOptimizedRecursiveWatchRoots) {
+      var canonical = canonicalPathMappings.get(root);
       if (canonical != null) {
         myPathMappings.putValue(canonical, root);
       }
@@ -63,9 +66,9 @@ final class CanonicalPathMap {
       WatchRootsUtil.insertRecursivePath(canonicalRecursiveRoots, canonical);
     }
 
-    Set<String> canonicalFlatRoots = new HashSet<>();
-    for (String root : myOptimizedFlatWatchRoots) {
-      String canonical = canonicalPathMappings.get(root);
+    var canonicalFlatRoots = new HashSet<String>();
+    for (var root : myOptimizedFlatWatchRoots) {
+      var canonical = canonicalPathMappings.get(root);
       if (canonical != null) {
         myPathMappings.putValue(canonical, root);
       }
@@ -77,16 +80,16 @@ final class CanonicalPathMap {
       }
     }
 
-    return pair(new ArrayList<>(canonicalRecursiveRoots), new ArrayList<>(canonicalFlatRoots));
+    return new Pair<>(new ArrayList<>(canonicalRecursiveRoots), new ArrayList<>(canonicalFlatRoots));
   }
 
   private void initializeMappings() {
-    String lastMapping = "";
-    Collection<String> lastCollection = null;
-    for (Pair<String, String> mapping: myInitialPathMappings) {
-      String currentMapping = mapping.first;
-      // If mappings are sorted, below check should improve performance by avoiding
-      // unnecessary gets from the concurrent multi map.
+    var lastMapping = "";
+    var lastCollection = (Collection<String>)null;
+
+    for (var mapping: myInitialPathMappings) {
+      var currentMapping = mapping.first;
+      // If mappings are sorted, below check should improve performance by avoiding unnecessary gets from the concurrent multimap.
       if (!currentMapping.equals(lastMapping) || lastCollection == null) {
         lastMapping = mapping.first;
         lastCollection = myPathMappings.getModifiable(lastMapping);
@@ -98,15 +101,15 @@ final class CanonicalPathMap {
   }
 
   void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
-    for (Pair<String, String> pair : mapping) {
-      String from = pair.first;
-      String to = pair.second;
+    for (var pair : mapping) {
+      var from = pair.first;
+      var to = pair.second;
 
       // See if we are adding a mapping that itself should be mapped to a different path
       // Example: /foo/real_path -> /foo/symlink, /foo/remapped_path -> /foo/real_path
       // In this case, if the file watcher returns /foo/remapped_path/file.txt, we want to report /foo/symlink/file.txt back to IntelliJ.
-      Collection<String> preRemapPathToWatchedPaths = applyMapping(to);
-      for (String realWatchedPath : preRemapPathToWatchedPaths) {
+      var preRemapPathToWatchedPaths = applyMapping(to);
+      for (var realWatchedPath : preRemapPathToWatchedPaths) {
         myPathMappings.putValue(from, realWatchedPath);
       }
 
@@ -117,9 +120,9 @@ final class CanonicalPathMap {
   }
 
   boolean belongsToWatchRoots(@NotNull String reportedPath, boolean isFile) {
-    return WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, reportedPath)
-           || myOptimizedFlatWatchRoots.contains(reportedPath)
-           || (isFile && myOptimizedFlatWatchRoots.contains(getParentPath(reportedPath)));
+    return WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, reportedPath) ||
+           myOptimizedFlatWatchRoots.contains(reportedPath) ||
+           (isFile && myOptimizedFlatWatchRoots.contains(getParentPath(reportedPath)));
   }
 
   /**
@@ -130,7 +133,7 @@ final class CanonicalPathMap {
    * Some watchers (notable the native one on OS X) report a parent directory as dirty instead of the "exact" file path.
    * <p>
    * For flat roots, it means that if and only if the exact dirty file path is returned, we should compare the parent to the flat roots,
-   * otherwise we should compare to path given to us because it is already the parent of the actual dirty path.
+   * otherwise we should compare to a path given to us because it is already the parent of the actual dirty path.
    * <p>
    * For recursive roots, if the path given to us is already the parent of the actual dirty path, we need to compare the path to the parent
    * of the recursive root because if the root itself was changed, we need to know about it.
@@ -138,13 +141,13 @@ final class CanonicalPathMap {
   @NotNull Collection<String> mapToOriginalWatchRoots(@NotNull String reportedPath, boolean isExact) {
     if (myOptimizedFlatWatchRoots.isEmpty() && myOptimizedRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
-    Collection<String> affectedPaths = applyMapping(reportedPath);
-    Collection<String> changedPaths = new HashSet<>();
+    var affectedPaths = applyMapping(reportedPath);
+    var changedPaths = new HashSet<String>();
 
-    for (String affectedPath : affectedPaths) {
-      if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, affectedPath)
-          || myOptimizedFlatWatchRoots.contains(affectedPath)
-          || (isExact && myOptimizedFlatWatchRoots.contains(getParentPath(affectedPath)))) {
+    for (var affectedPath : affectedPaths) {
+      if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, affectedPath) ||
+          myOptimizedFlatWatchRoots.contains(affectedPath) ||
+          (isExact && myOptimizedFlatWatchRoots.contains(getParentPath(affectedPath)))) {
         changedPaths.add(affectedPath);
       }
       else if (!isExact) {
@@ -156,26 +159,24 @@ final class CanonicalPathMap {
     return changedPaths;
   }
 
-  private @NotNull Collection<String> applyMapping(@NotNull String reportedPath) {
+  private Collection<String> applyMapping(String reportedPath) {
     if (myPathMappings.isEmpty()) {
-      return Collections.singletonList(reportedPath);
+      return List.of(reportedPath);
     }
-    List<String> results = new SmartList<>(reportedPath);
+
+    var results = new SmartList<>(reportedPath);
     WatchRootsUtil.forEachPathSegment(reportedPath, File.separatorChar, path -> {
-      Collection<String> mappedPaths = myPathMappings.get(path);
-      for (String mappedPath : mappedPaths) {
-        results.add(mappedPath + reportedPath.substring(path.length()));
-      }
+      myPathMappings.get(path).forEach(mapped -> results.add(mapped + reportedPath.substring(path.length())));
       return true;
     });
     return results;
   }
 
-  private static void addPrefixedPaths(@NotNull NavigableSet<String> paths, @NotNull String prefix, @NotNull Collection<? super String> result) {
-    String possibleRoot = paths.ceiling(prefix);
+  private static void addPrefixedPaths(NavigableSet<String> paths, String prefix, Collection<? super String> result) {
+    var possibleRoot = paths.ceiling(prefix);
     if (possibleRoot != null && FileUtil.startsWith(possibleRoot, prefix)) {
       // It's worth going for the set and iterator
-      for (String root : paths.tailSet(prefix, false)) {
+      for (var root : paths.tailSet(prefix, false)) {
         if (FileUtil.startsWith(root, prefix)) {
           result.add(root);
         }

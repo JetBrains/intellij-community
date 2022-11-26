@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -246,11 +247,11 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
                                                             boolean forClassReference) {
     UElement parent = sourceClass.getUastParent();
     if (parent instanceof UObjectLiteralExpression) {
-      if (((UCallExpression)parent).getValueArguments().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
+      if (ContainerUtil.exists(((UCallExpression)parent).getValueArguments(), it -> UastUtils.isPsiAncestor(it, sourceNode))) {
         return true;
       }
     }
-    return forClassReference && sourceClass.getUastSuperTypes().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode));
+    return forClassReference && ContainerUtil.exists(sourceClass.getUastSuperTypes(), it -> UastUtils.isPsiAncestor(it, sourceNode));
   }
 
   @Tag("modules-set")

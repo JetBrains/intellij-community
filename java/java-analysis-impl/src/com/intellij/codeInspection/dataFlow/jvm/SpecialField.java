@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -34,7 +35,7 @@ import static com.intellij.psi.CommonClassNames.*;
 public enum SpecialField implements DerivedVariableDescriptor {
   ARRAY_LENGTH("length", "special.field.array.length", true) {
     @Override
-    boolean isMyQualifierType(DfType type) {
+    public boolean isMyQualifierType(DfType type) {
       return TypeConstraint.fromDfType(type).isArray();
     }
 
@@ -77,7 +78,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     }
 
     @Override
-    boolean isMyQualifierType(DfType type) {
+    public boolean isMyQualifierType(DfType type) {
       return TypeConstraint.fromDfType(type).isExact(JAVA_LANG_STRING);
     }
 
@@ -97,10 +98,12 @@ public enum SpecialField implements DerivedVariableDescriptor {
     }
   },
   COLLECTION_SIZE("size", "special.field.collection.size", false) {
-    private final CallMatcher SIZE_METHODS = CallMatcher.anyOf(CallMatcher.instanceCall(JAVA_UTIL_COLLECTION, "size").parameterCount(0),
-                                                               CallMatcher.instanceCall(JAVA_UTIL_MAP, "size").parameterCount(0));
+    private static final CallMatcher SIZE_METHODS =
+      CallMatcher.anyOf(CallMatcher.instanceCall(JAVA_UTIL_COLLECTION, "size").parameterCount(0),
+                        CallMatcher.instanceCall(JAVA_UTIL_MAP, "size").parameterCount(0));
+
     @Override
-    boolean isMyQualifierType(DfType type) {
+    public boolean isMyQualifierType(DfType type) {
       TypeConstraint constraint = TypeConstraint.fromDfType(type);
       return constraint.isSubtypeOf(JAVA_UTIL_MAP) || constraint.isSubtypeOf(JAVA_UTIL_COLLECTION);
     }
@@ -120,7 +123,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     }
   },
   UNBOX("value", "special.field.unboxed.value", true) {
-    private final CallMatcher UNBOXING_CALL = CallMatcher.anyOf(
+    private static final CallMatcher UNBOXING_CALL = CallMatcher.anyOf(
       CallMatcher.exactInstanceCall(JAVA_LANG_INTEGER, "intValue").parameterCount(0),
       CallMatcher.exactInstanceCall(JAVA_LANG_LONG, "longValue").parameterCount(0),
       CallMatcher.exactInstanceCall(JAVA_LANG_SHORT, "shortValue").parameterCount(0),
@@ -155,7 +158,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     }
 
     @Override
-    boolean isMyQualifierType(DfType type) {
+    public boolean isMyQualifierType(DfType type) {
       return TypeConstraint.fromDfType(type).isPrimitiveWrapper();
     }
 
@@ -204,7 +207,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     }
 
     @Override
-    boolean isMyQualifierType(DfType type) {
+    public boolean isMyQualifierType(DfType type) {
       TypeConstraint constraint = TypeConstraint.fromDfType(type);
       return constraint.isExact(JAVA_UTIL_OPTIONAL) ||
              constraint.isExact(OptionalUtil.OPTIONAL_DOUBLE) ||
@@ -230,7 +233,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     }
   },
   ENUM_ORDINAL("ordinal", "special.field.enum.ordinal", true) {
-    private final CallMatcher ENUM_ORDINAL_METHOD = CallMatcher.instanceCall(JAVA_LANG_ENUM, "ordinal").parameterCount(0);
+    private static final CallMatcher ENUM_ORDINAL_METHOD = CallMatcher.instanceCall(JAVA_LANG_ENUM, "ordinal").parameterCount(0);
 
     @Override
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
@@ -267,7 +270,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     }
 
     @Override
-    boolean isMyQualifierType(DfType type) {
+    public boolean isMyQualifierType(DfType type) {
       TypeConstraint constraint = TypeConstraint.fromDfType(type);
       return constraint.isEnum();
     }
@@ -275,6 +278,23 @@ public enum SpecialField implements DerivedVariableDescriptor {
     @Override
     boolean isMyAccessor(PsiMember accessor) {
       return accessor instanceof PsiMethod && ENUM_ORDINAL_METHOD.methodMatches((PsiMethod)accessor);
+    }
+  },
+  CONSUMED_STREAM("linkedOrConsumed", "special.field.consumed.stream", false) {
+    @Override
+    public boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isSubtypeOf(JAVA_UTIL_STREAM_BASE_STREAM);
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return false;
+    }
+
+    @Override
+    public @NotNull DfType getDefaultValue() {
+      return DfStreamStateType.UNKNOWN;
     }
   };
 
@@ -294,7 +314,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     return myFinal;
   }
 
-  abstract boolean isMyQualifierType(DfType type);
+  public abstract boolean isMyQualifierType(DfType type);
 
   /**
    * Checks whether supplied accessor (field or method) can be used to read this special field
@@ -329,26 +349,6 @@ public enum SpecialField implements DerivedVariableDescriptor {
     return null;
   }
 
-  /**
-   * Returns a DfaValue which represents this special field
-   *
-   * @param factory a factory to create new values if necessary
-   * @param qualifier a known qualifier value
-   * @return a DfaValue which represents this special field
-   */
-  @Override
-  @NotNull
-  public final DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
-    if (qualifier instanceof DfaWrappedValue && ((DfaWrappedValue)qualifier).getSpecialField() == this) {
-      return ((DfaWrappedValue)qualifier).getWrappedValue();
-    }
-    if (qualifier instanceof DfaVariableValue) {
-      return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
-    }
-    DfType dfType = qualifier == null ? DfType.TOP : getFromQualifier(qualifier.getDfType());
-    return factory.fromDfType(dfType.meet(getDefaultValue()));
-  }
-
   @NotNull
   static DfType fromInitializer(@NotNull DfaVariableValue thisValue,
                                 @Nullable PsiElement context,
@@ -369,11 +369,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
     return DfType.TOP;
   }
 
-  /**
-   * Returns a dfType that describes any possible value this special field may have
-   *
-   * @return a dfType for the default value
-   */
+  @Override
   @NotNull
   public DfType getDefaultValue() {
     return DfTypes.intRange(JvmPsiRangeSetUtil.indexRange());
@@ -390,7 +386,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
   }
 
   /**
-   * @return a array of method contracts which equivalent to checking this special field for zero
+   * @return an array of method contracts which equivalent to checking this special field for zero
    */
   public MethodContract[] getEmptyContracts() {
     ContractValue thisValue = ContractValue.qualifier().specialField(this);
@@ -453,17 +449,6 @@ public enum SpecialField implements DerivedVariableDescriptor {
       }
     }
     return null;
-  }
-
-  /**
-   * Returns a special field which corresponds to given qualifier
-   *
-   * @param value a qualifier value
-   * @return a special field; null if no special field is detected to be related to given qualifier
-   */
-  @Nullable
-  public static SpecialField fromQualifier(@NotNull DfaValue value) {
-    return fromQualifierType(value.getDfType());
   }
 
   public @NotNull @Nls String getPresentationName() {

@@ -1,33 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +35,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance(CreateFromUsageBaseFix.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -110,28 +104,6 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
     renderer.installSpeedSearch(builder);
     builder.createPopup().showInBestPositionFor(editor);
-  }
-
-  @Nullable("null means unable to open the editor")
-  public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
-    TextRange range = element.getTextRange();
-    LOG.assertTrue(range != null, element.getClass());
-    int textOffset = range.getStartOffset();
-    if (IntentionPreviewUtils.isPreviewElement(targetFile)) {
-      Editor editor = IntentionPreviewUtils.getPreviewEditor();
-      if (editor != null) {
-        editor.getCaretModel().moveToOffset(textOffset);
-      }
-      return editor;
-    }
-    VirtualFile file = targetFile.getVirtualFile();
-    if (file == null) {
-      file = PsiUtilCore.getVirtualFile(element);
-      if (file == null) return null;
-    }
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, textOffset);
-    descriptor.setScrollType(ScrollType.MAKE_VISIBLE); // avoid centering caret in editor if it's already visible
-    return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
   protected void setupVisibility(PsiClass parentClass, @NotNull PsiClass targetClass, PsiModifierList list) throws IncorrectOperationException {
@@ -433,5 +405,17 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         }
       }
     }
+  }
+
+  public static void startTemplate(@NotNull Project project, @NotNull PsiClass aClass, @NotNull Template template, @NotNull String text) {
+    aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
+    template.setToReformat(true);
+
+    final Editor editor = CodeInsightUtil.positionCursor(project, Objects.requireNonNull(aClass).getContainingFile(), aClass);
+    if (editor == null) return;
+
+    Segment textRange = aClass.getTextRange();
+    editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+    startTemplate(editor, template, project, null, text);
   }
 }

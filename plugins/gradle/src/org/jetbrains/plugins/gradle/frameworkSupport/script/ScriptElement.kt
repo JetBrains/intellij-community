@@ -7,7 +7,7 @@ sealed class ScriptElement {
   sealed class Statement : ScriptElement() {
     object NewLineElement : Statement()
     data class PropertyElement(val name: String, val value: Expression) : Statement()
-    data class AssignElement(val name: String, val value: Expression) : Statement()
+    data class AssignElement(val left: Expression, val right: Expression) : Statement()
     data class PlusAssignElement(val name: String, val value: Expression) : Statement()
     sealed class Expression : Statement() {
       data class IntElement(val value: Int) : Expression()

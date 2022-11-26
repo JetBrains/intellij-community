@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -39,6 +39,9 @@ import java.util.List;
  */
 @Deprecated
 public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
+  /**
+   * {@link InjectedLanguageManager#FRANKENSTEIN_INJECTION}
+   */
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
 
   private static final Comparator<PsiFile> LONGEST_INJECTION_HOST_RANGE_COMPARATOR = Comparator.comparing(
@@ -146,7 +149,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor,
                                                         @Nullable Caret hostCaret,
                                                         @Nullable final PsiFile injectedFile) {
-    if (injectedFile == null || hostEditor instanceof EditorWindow || hostEditor.isDisposed()) return hostEditor;
+    if (injectedFile == null || !(hostEditor instanceof EditorImpl) || hostEditor.isDisposed()) return hostEditor;
     Project project = hostEditor.getProject();
     if (project == null) project = injectedFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(injectedFile);
@@ -166,7 +169,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
       return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
     }
     EditorWindowTrackerImpl tracker = (EditorWindowTrackerImpl)ApplicationManager.getApplication().getService(EditorWindowTracker.class);
-    return tracker.createEditor(documentWindow, (EditorImpl)hostEditor, injectedFile);
+    return tracker.createEditor(documentWindow, hostEditor, injectedFile);
   }
 
   public static Editor openEditorFor(@NotNull PsiFile file, @NotNull Project project) {
@@ -183,7 +186,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     if (editor == null || editor instanceof EditorWindow || editor.isDisposed()) return editor;
     if (document instanceof DocumentWindowImpl) {
       EditorWindowTrackerImpl tracker = (EditorWindowTrackerImpl)ApplicationManager.getApplication().getService(EditorWindowTracker.class);
-      return tracker.createEditor((DocumentWindowImpl)document, (EditorImpl)editor, file);
+      return tracker.createEditor((DocumentWindowImpl)document, editor, file);
     }
     return editor;
   }

@@ -14,11 +14,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public abstract class ChangeListTodosPanel extends TodoPanel{
+public abstract class ChangeListTodosPanel extends TodoPanel {
+
   private final Alarm myAlarm;
 
-  public ChangeListTodosPanel(Project project, TodoPanelSettings settings, Content content){
-    super(project,settings,false,content);
+  public ChangeListTodosPanel(@NotNull Project project,
+                              @NotNull TodoPanelSettings settings,
+                              @NotNull Content content) {
+    super(project, settings, false, content);
+
     ChangeListManager.getInstance(project).addChangeListListener(new MyChangeListManagerListener(), this);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   }
@@ -36,7 +40,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     }
 
     @Override
-    public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+    public void changesMoved(final Collection<? extends Change> changes, final ChangeList fromList, final ChangeList toList) {
       rebuildWithAlarm(myAlarm);
     }
 
@@ -47,7 +51,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
 
     private void updateTabName() {
       AppUIUtil.invokeOnEdt(() -> {
-        if (myProject != null) setDisplayName(getTabName(myProject));
+        setDisplayName(getTabName(myProject));
       });
     }
   }

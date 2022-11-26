@@ -10,7 +10,6 @@ import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -131,9 +130,7 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = "$path/$name"
-      if (gitData?.git == true) {
-        addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
-      }
+      addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
     }
   }
 }

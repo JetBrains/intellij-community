@@ -21,7 +21,6 @@ class EditorConfigParserDefinition : ParserDefinition {
   override fun createParser(project: Project): PsiParser = EditorConfigParser()
 
   override fun getCommentTokens(): TokenSet = EditorConfigTokenSets.COMMENTS
-  override fun getWhitespaceTokens(): TokenSet = TokenSet.WHITE_SPACE
   override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
   override fun getFileNodeType() = FILE
 

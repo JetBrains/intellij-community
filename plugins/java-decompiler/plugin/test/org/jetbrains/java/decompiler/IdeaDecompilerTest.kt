@@ -44,6 +44,9 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
       FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
       EditorHistoryManager.getInstance(project).removeAllFiles()
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

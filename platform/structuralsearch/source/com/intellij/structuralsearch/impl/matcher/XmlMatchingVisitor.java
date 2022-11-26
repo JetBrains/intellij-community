@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.*;
-import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.XmlMatchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ListNodeIterator;
@@ -24,7 +24,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     myMatchingVisitor = matchingVisitor;
   }
 
-  @Override public void visitXmlAttribute(XmlAttribute attribute) {
+  @Override public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
     final XmlAttribute another = (XmlAttribute)myMatchingVisitor.getElement();
     myMatchingVisitor.getMatchContext().pushResult();
     final XmlElement name = attribute.getNameElement();
@@ -38,7 +38,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     }
   }
 
-  @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
+  @Override public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
     final XmlAttributeValue another = (XmlAttributeValue)myMatchingVisitor.getElement();
     final PsiElement pattern = XmlMatchUtil.getElementToMatch(value);
     final PsiElement match = XmlMatchUtil.getElementToMatch(another);
@@ -59,7 +59,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     }
   }
 
-  @Override public void visitXmlTag(XmlTag tag) {
+  @Override public void visitXmlTag(@NotNull XmlTag tag) {
     final XmlTag another = myMatchingVisitor.getElement(XmlTag.class);
     if (another == null) return;
     final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
@@ -93,13 +93,13 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
   }
 
   @Override
-  public void visitXmlText(XmlText text) {
+  public void visitXmlText(@NotNull XmlText text) {
     myMatchingVisitor.setResult(myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text)
                                 ? myMatchingVisitor.handleTypedElement(text, myMatchingVisitor.getElement())
                                 : myMatchingVisitor.matchSequentially(text.getFirstChild(), myMatchingVisitor.getElement().getFirstChild()));
   }
 
-  @Override public void visitXmlToken(XmlToken token) {
+  @Override public void visitXmlToken(@NotNull XmlToken token) {
     if (token.getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
       final String text = token.getText();
 
@@ -110,7 +110,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
   }
 
   @Override
-  public void visitXmlComment(XmlComment comment) {
+  public void visitXmlComment(@NotNull XmlComment comment) {
     super.visitXmlComment(comment);
     final PsiElement element = myMatchingVisitor.getElement();
     if (!(element instanceof XmlComment)) return;
@@ -125,8 +125,8 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
                                                  myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(text.getText()),
-                                                              StructuralSearchUtil.normalize(other.getCommentText())));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchText(MatchUtil.normalize(text.getText()),
+                                                              MatchUtil.normalize(other.getCommentText())));
     }
   }
 }

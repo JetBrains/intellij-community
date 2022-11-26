@@ -306,26 +306,22 @@ private fun showSystemData(project: Project?,
 
 private fun createLikenessPanel(): Pair<NonOpaquePanel, () -> FeedbackLikenessAnswer> {
   val votePanel = NonOpaquePanel()
-  val likeIcon = getLikenessIcon(AllIcons.Ide.Like)
-  val dislikeIcon = getLikenessIcon(AllIcons.Ide.Dislike)
   votePanel.layout = BoxLayout(votePanel, BoxLayout.X_AXIS)
-  val likeAnswer = FeedbackOption(likeIcon)
+  val likeAnswer = FeedbackOption(AllIcons.Ide.Like, AllIcons.Ide.LikeSelected)
   votePanel.add(likeAnswer)
-  val dislikeAnswer = FeedbackOption(dislikeIcon)
+  val dislikeAnswer = FeedbackOption(AllIcons.Ide.Dislike, AllIcons.Ide.DislikeSelected)
   votePanel.add(dislikeAnswer)
   likeAnswer.addActionListener {
     // the listener is triggered before the actual field change
-    if (!likeAnswer.isChosen) {
-      dislikeAnswer.isChosen = false
-      dislikeAnswer.repaint()
+    if (dislikeAnswer.isChosen) {
+      dislikeAnswer.action?.actionPerformed(null)
     }
   }
 
   dislikeAnswer.addActionListener {
     // the listener is triggered before the actual field change
-    if (!dislikeAnswer.isChosen) {
-      likeAnswer.isChosen = false
-      likeAnswer.repaint()
+    if (likeAnswer.isChosen) {
+      likeAnswer.action?.actionPerformed(null)
     }
   }
 
@@ -354,18 +350,23 @@ private fun installSubPanelLogic(feedbackOption: FeedbackOption, feedbackSubPane
 
 private fun getLikenessIcon(icon: Icon): Icon = IndentedIcon(icon, JBUI.insets(6))
 
-private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JButton() {
+private class FeedbackOption(@NlsContexts.Label text: String?, unselectedIcon: Icon?, selectedIcon: Icon?) : JButton() {
   var isChosen = false
 
-  constructor(@NlsContexts.Label text: String) : this(text, null)
-  constructor(icon: Icon?) : this(null, icon)
+  constructor(@NlsContexts.Label text: String) : this(text, null, null)
+  constructor(unselectedIcon: Icon, selectedIcon: Icon) : this(null, getLikenessIcon(unselectedIcon), getLikenessIcon(selectedIcon))
 
   init {
     putClientProperty("styleTag", true)
     isFocusable = false
-    action = object : AbstractAction(text, icon) {
+    action = object : AbstractAction(text, unselectedIcon) {
       override fun actionPerformed(e: ActionEvent?) {
         isChosen = !isChosen
+        if (isChosen) {
+          icon = selectedIcon
+        } else {
+          icon = unselectedIcon
+        }
       }
     }
   }
@@ -374,7 +375,7 @@ private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JB
     // These colors are hardcoded because there are no corresponding keys
     // But the feedback dialog should appear for the newcomers, and it is expected they will not significantly customize IDE at that moment
     val hoverBackgroundColor = JBColor(Color(0xDFDFDF), Color(0x4C5052))
-    val selectedBackgroundColor = JBColor(Color(0xD5D5D5), Color(0x5C6164))
+    val selectedBackgroundColor = JBColor(Color(0xFFFFFF), Color(0x313335))
     val unselectedForeground = JBColor(Color(0x000000), Color(0xBBBBBB))
     val selectedForeground = JBColor(Color(0x000000), Color(0xFEFEFE))
 

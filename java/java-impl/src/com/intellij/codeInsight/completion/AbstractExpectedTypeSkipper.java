@@ -24,9 +24,6 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
-/**
- * @author peter
- */
 public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
 
   private enum Result {

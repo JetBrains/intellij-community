@@ -25,12 +25,12 @@ public final class ExtensionPointUtil {
     return createExtensionDisposable(extensionObject, extensionPointName.getPoint());
   }
 
-  public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<T> extensionPoint) {
+  public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<@NotNull T> extensionPoint) {
     return createExtensionDisposable(extensionObject, extensionPoint, removed -> removed == extensionObject);
   }
 
   public static @NotNull <T, U> Disposable createExtensionDisposable(@NotNull T extensionObject,
-                                                                     @NotNull ExtensionPoint<U> extensionPoint,
+                                                                     @NotNull ExtensionPoint<@NotNull U> extensionPoint,
                                                                      @NotNull Predicate<? super U> removePredicate) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<U>() {
@@ -45,7 +45,7 @@ public final class ExtensionPointUtil {
   }
 
   public static @NotNull <T> Disposable createKeyedExtensionDisposable(@NotNull T extensionObject,
-                                                                       @NotNull ExtensionPoint<KeyedLazyInstance<T>> extensionPoint) {
+                                                                       @NotNull ExtensionPoint<@NotNull KeyedLazyInstance<T>> extensionPoint) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
       @Override

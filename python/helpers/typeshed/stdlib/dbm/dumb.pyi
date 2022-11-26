@@ -1,11 +1,12 @@
 from _typeshed import Self
+from collections.abc import Iterator, MutableMapping
 from types import TracebackType
-from typing import Iterator, MutableMapping, Union
+from typing_extensions import TypeAlias
 
 __all__ = ["error", "open"]
 
-_KeyType = Union[str, bytes]
-_ValueType = Union[str, bytes]
+_KeyType: TypeAlias = str | bytes
+_ValueType: TypeAlias = str | bytes
 
 error = OSError
 

@@ -1,0 +1,11 @@
+$schema: https://json.schemastore.org/idea-inspection-profile-1.0.json
+
+name: Custom name
+
+inspections:
+  - inspection: TodoComment
+    enabled: true
+    severity: ERROR
+    ignore:
+      - "!file:*.*"
+      - "file:*.java"

@@ -574,7 +574,7 @@ public final class ReflectionUtil {
   public static <T> boolean comparePublicNonFinalFields(
     @NotNull T first,
     @NotNull T second,
-    @Nullable Predicate<Field> acceptPredicate
+    @Nullable Predicate<? super Field> acceptPredicate
   ) {
     Class<?> defaultClass = first.getClass();
     Field[] fields = defaultClass.getDeclaredFields();

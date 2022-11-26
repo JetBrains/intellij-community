@@ -9,30 +9,29 @@ class _DummyCffiHasher:
     salt_len: int
     hash_len: int
 
-class _Argon2Common(  # type: ignore
+class _Argon2Common(  # type: ignore[misc]
     uh.SubclassBackendMixin, uh.ParallelismMixin, uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler
 ):
-    name: str
-    setting_kwds: Any
-    checksum_size: Any
+    name: ClassVar[str]
+    checksum_size: ClassVar[int]
     default_salt_size: ClassVar[int]
-    min_salt_size: int
-    max_salt_size: Any
-    default_rounds: Any
-    min_rounds: int
-    max_rounds: Any
-    rounds_cost: str
-    max_parallelism: Any
-    max_version: Any
-    min_desired_version: Any
-    min_memory_cost: int
-    max_threads: int
-    pure_use_threads: bool
+    min_salt_size: ClassVar[int]
+    max_salt_size: ClassVar[int]
+    default_rounds: ClassVar[int]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
+    max_parallelism: ClassVar[int]
+    max_version: ClassVar[int]
+    min_desired_version: ClassVar[int | None]
+    min_memory_cost: ClassVar[int]
+    max_threads: ClassVar[int]
+    pure_use_threads: ClassVar[bool]
     def type_values(cls): ...  # type: ignore
-    type: Any
-    parallelism: Any
-    version: Any
-    memory_cost: Any
+    type: str
+    parallelism: int
+    version: int
+    memory_cost: int
     @property
     def type_d(self): ...
     data: Any
@@ -53,7 +52,6 @@ class _Argon2Common(  # type: ignore
     def identify(cls, hash): ...
     @classmethod
     def from_string(cls, hash): ...
-    def to_string(self): ...
     def __init__(
         self,
         type: Any | None = ...,
@@ -82,5 +80,5 @@ class _CffiBackend(_Argon2Common):
 
 class _PureBackend(_Argon2Common): ...
 
-class argon2(_NoBackend, _Argon2Common):  # type: ignore
-    backends: Any
+class argon2(_NoBackend, _Argon2Common):  # type: ignore[misc]
+    backends: ClassVar[tuple[str, ...]]

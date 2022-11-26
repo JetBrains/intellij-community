@@ -15,10 +15,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -80,7 +77,7 @@ public final class VcsProjectLog implements Disposable {
     myErrorHandler = new VcsProjectLogErrorHandler(this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
-    myProject.getMessageBus().connect(myDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myProject.getMessageBus().connect(myDisposable).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myProject == project) {
@@ -371,7 +368,7 @@ public final class VcsProjectLog implements Disposable {
     @Nullable
     @RequiresEdt
     public VcsLogManager dropValue() {
-      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsDispatchThread();
       if (myValue != null) {
         VcsLogManager oldValue = myValue;
         myValue = null;

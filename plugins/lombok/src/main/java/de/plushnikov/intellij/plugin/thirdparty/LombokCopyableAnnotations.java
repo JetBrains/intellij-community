@@ -1,11 +1,17 @@
 package de.plushnikov.intellij.plugin.thirdparty;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
+import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
+import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public enum LombokCopyableAnnotations {
   BASE_COPYABLE(LombokUtils.BASE_COPYABLE_ANNOTATIONS),
@@ -22,7 +28,71 @@ public enum LombokCopyableAnnotations {
       shortNames.computeIfAbsent(shortName, __ -> new HashSet<>(5)).add(fqn);
     }
   }
+
   public Map<String, Set<String>> getShortNames() {
     return shortNames;
+  }
+
+  public static void copyOnXAnnotations(@Nullable PsiAnnotation processedAnnotation,
+                                        @NotNull PsiModifierList modifierList,
+                                        @NotNull String onXParameterName) {
+    if (processedAnnotation == null) {
+      return;
+    }
+
+    Iterable<String> annotationsToAdd = LombokProcessorUtil.getOnX(processedAnnotation, onXParameterName);
+    annotationsToAdd.forEach(modifierList::addAnnotation);
+  }
+
+  public static @NotNull <T extends PsiModifierListOwner & PsiMember> List<PsiAnnotation> collectCopyableAnnotations(@NotNull T psiFromElement,
+                                                                                                                     @NotNull LombokCopyableAnnotations copyableAnnotations) {
+    final PsiAnnotation[] fieldAnnotations = psiFromElement.getAnnotations();
+    if (0 == fieldAnnotations.length) {
+      // nothing to copy if no annotations defined
+      return Collections.emptyList();
+    }
+
+    final Set<String> annotationNames = new HashSet<>();
+    final Collection<String> existedShortAnnotationNames = ContainerUtil.map2Set(fieldAnnotations, PsiAnnotationSearchUtil::getShortNameOf);
+
+    final Map<String, Set<String>> shortNames = copyableAnnotations.getShortNames();
+    for (String shortName : existedShortAnnotationNames) {
+      Set<String> fqns = shortNames.get(shortName);
+      if (fqns != null) {
+        annotationNames.addAll(fqns);
+      }
+    }
+
+    final PsiClass containingClass = psiFromElement.getContainingClass();
+    // append only for BASE_COPYABLE
+    if (BASE_COPYABLE.equals(copyableAnnotations) && null != containingClass) {
+      Collection<String> configuredCopyableAnnotations =
+        ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
+
+      for (String fqn : configuredCopyableAnnotations) {
+        if (existedShortAnnotationNames.contains(StringUtil.getShortName(fqn))) {
+          annotationNames.add(fqn);
+        }
+      }
+    }
+
+    if (annotationNames.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<PsiAnnotation> result = new ArrayList<>();
+    for (PsiAnnotation annotation : fieldAnnotations) {
+      if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName)) {
+        result.add(annotation);
+      }
+    }
+    return result;
+  }
+
+  public static <T extends PsiModifierListOwner & PsiMember> void copyCopyableAnnotations(@NotNull T fromPsiElement,
+                                                                                          @NotNull LombokLightModifierList toModifierList,
+                                                                                          @NotNull LombokCopyableAnnotations copyableAnnotations) {
+    List<PsiAnnotation> annotationsToAdd = collectCopyableAnnotations(fromPsiElement, copyableAnnotations);
+    annotationsToAdd.forEach(toModifierList::withAnnotation);
   }
 }

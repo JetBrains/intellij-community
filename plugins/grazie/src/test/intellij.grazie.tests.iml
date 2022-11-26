@@ -11,25 +11,35 @@
     <orderEntry type="module" module-name="intellij.grazie" exported="" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
-    <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-ru:5.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:5.7" />
+    <orderEntry type="module-library">
+      <library name="org.languagetool:languagetool-core" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.8" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/5.7/language-ru-5.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.8/languagetool-core-5.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-de:5.7" type="repository">
-        <properties maven-id="org.languagetool:language-de:5.7">
+      <library name="org.languagetool:language-ru" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:5.8" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/5.8/language-ru-5.8.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.languagetool:language-de" type="repository">
+        <properties maven-id="org.languagetool:language-de:5.8">
           <exclude>
             <dependency maven-id="org.languagetool:languagetool-core" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.7/language-de-5.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.8/language-de-5.8.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.2/german-pos-dict-1.2.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
@@ -40,10 +50,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-it:5.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:5.7" />
+      <library name="org.languagetool:language-it" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:5.8" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/5.7/language-it-5.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/5.8/language-it-5.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

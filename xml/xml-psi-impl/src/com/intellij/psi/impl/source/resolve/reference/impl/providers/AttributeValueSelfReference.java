@@ -19,9 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 public class AttributeValueSelfReference extends BasicAttributeValueReference {
   public AttributeValueSelfReference(final PsiElement element) {
     super(element);

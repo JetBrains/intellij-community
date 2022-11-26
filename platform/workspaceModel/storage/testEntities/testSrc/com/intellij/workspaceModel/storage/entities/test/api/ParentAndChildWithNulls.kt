@@ -1,12 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -20,13 +23,16 @@ interface ParentWithNulls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentWithNulls, ModifiableWorkspaceEntity<ParentWithNulls>, ObjBuilder<ParentWithNulls> {
+  interface Builder : ParentWithNulls, WorkspaceEntity.Builder<ParentWithNulls>, ObjBuilder<ParentWithNulls> {
     override var entitySource: EntitySource
     override var parentData: String
     override var child: ChildWithNulls?
   }
 
   companion object : Type<ParentWithNulls, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentWithNulls {
       val builder = builder()
       builder.parentData = parentData
@@ -49,12 +55,15 @@ interface ChildWithNulls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWithNulls, ModifiableWorkspaceEntity<ChildWithNulls>, ObjBuilder<ChildWithNulls> {
+  interface Builder : ChildWithNulls, WorkspaceEntity.Builder<ChildWithNulls>, ObjBuilder<ChildWithNulls> {
     override var entitySource: EntitySource
     override var childData: String
   }
 
   companion object : Type<ChildWithNulls, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildWithNulls {
       val builder = builder()
       builder.childData = childData

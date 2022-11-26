@@ -368,16 +368,12 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case NotificationsTreeTable.ID_COLUMN:
-          return IdeBundle.message("notifications.configurable.column.group");
-        case NotificationsTreeTable.LOG_COLUMN:
-          return IdeBundle.message("notifications.configurable.column.log");
-        case NotificationsTreeTable.READ_ALOUD_COLUMN:
-          return IdeBundle.message("notifications.configurable.column.read.aloud");
-        default:
-          return IdeBundle.message("notifications.configurable.column.popup");
-      }
+      return IdeBundle.message(switch (column) {
+        case NotificationsTreeTable.ID_COLUMN -> "notifications.configurable.column.group";
+        case NotificationsTreeTable.LOG_COLUMN -> "notifications.configurable.column.log";
+        case NotificationsTreeTable.READ_ALOUD_COLUMN -> "notifications.configurable.column.read.aloud";
+        default -> "notifications.configurable.column.popup";
+      });
     }
 
     @Override
@@ -412,15 +408,12 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       }
 
       NotificationSettingsWrapper wrapper = (NotificationSettingsWrapper)object;
-      switch (column) {
-        case NotificationsTreeTable.LOG_COLUMN:
-          return wrapper.isShouldLog();
-        case NotificationsTreeTable.READ_ALOUD_COLUMN:
-          return wrapper.isShouldReadAloud();
-        case NotificationsTreeTable.DISPLAY_TYPE_COLUMN:
-        default:
-          return wrapper.getDisplayType();
-      }
+      return switch (column) {
+        case NotificationsTreeTable.LOG_COLUMN -> wrapper.isShouldLog();
+        case NotificationsTreeTable.READ_ALOUD_COLUMN -> wrapper.isShouldReadAloud();
+        //case NotificationsTreeTable.DISPLAY_TYPE_COLUMN,
+        default -> wrapper.getDisplayType();
+      };
     }
 
     @Override
@@ -428,15 +421,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       NotificationSettingsWrapper wrapper = (NotificationSettingsWrapper)((DefaultMutableTreeNode)node).getUserObject();
 
       switch (column) {
-        case NotificationsTreeTable.DISPLAY_TYPE_COLUMN:
-          wrapper.setDisplayType((NotificationDisplayType)value);
-          break;
-        case NotificationsTreeTable.LOG_COLUMN:
-          wrapper.setShouldLog((Boolean)value);
-          break;
-        case NotificationsTreeTable.READ_ALOUD_COLUMN:
-          wrapper.setShouldReadAloud((Boolean)value);
-          break;
+        case NotificationsTreeTable.DISPLAY_TYPE_COLUMN -> wrapper.setDisplayType((NotificationDisplayType)value);
+        case NotificationsTreeTable.LOG_COLUMN -> wrapper.setShouldLog((Boolean)value);
+        case NotificationsTreeTable.READ_ALOUD_COLUMN -> wrapper.setShouldReadAloud((Boolean)value);
       }
     }
 

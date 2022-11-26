@@ -23,10 +23,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ErrorInfo {
   public static final ErrorInfo[] EMPTY_ARRAY = new ErrorInfo[0];
 

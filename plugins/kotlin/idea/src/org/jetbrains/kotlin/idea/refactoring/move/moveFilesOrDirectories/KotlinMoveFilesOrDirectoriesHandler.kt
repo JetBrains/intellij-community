@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories
 
@@ -12,7 +12,6 @@ import com.intellij.refactoring.move.MoveHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.idea.refactoring.move.logFusForMoveRefactoring
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesModel
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -70,17 +69,7 @@ class KotlinMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
             ).run {
                 project.executeCommand(MoveHandler.getRefactoringName()) {
                     with(computeModelResult()) {
-                        if (!isTestUnitMode) {
-                            logFusForMoveRefactoring(
-                                elementsCount,
-                                entityToMove,
-                                destination,
-                                true,
-                                processor
-                            )
-                        } else {
-                            processor.run()
-                        }
+                        processor.run()
                     }
                 }
             }

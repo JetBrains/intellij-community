@@ -60,32 +60,43 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
   @Override
   public @NotNull JComponent createOptionsPanel() {
-    Disposable disposable = Disposer.newDisposable();
-    InspectionOptionsPanel panel = new InspectionOptionsPanel() {
+    InspectionOptionsPanel panel = new InspectionOptionsPanel();
+    panel.add(new JBLabel(PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches")));
+    JBTextField textField = new JBTextField(fileNameMask) {
+      Disposable disposable = null;
+      @Override
+      public void addNotify() {
+        super.addNotify();
+        if (disposable != null) {
+          throw new IllegalStateException();
+        }
+        disposable = Disposer.newDisposable();
+        ComponentValidator validator = new ComponentValidator(disposable).withValidator(() -> {
+          String text = getText();
+          fileNameMask = text.isEmpty() ? ".*" : text;
+          String errorMessage = null;
+          try {
+            Pattern.compile(text);
+          }
+          catch (PatternSyntaxException ex) {
+            errorMessage = StringUtil.substringBefore(ex.getMessage(), "\n");
+          }
+          boolean hasError = StringUtil.isNotEmpty(errorMessage);
+          return hasError ? new ValidationInfo(errorMessage, this) : null;
+        }).andRegisterOnDocumentListener(this).installOn(this);
+        validator.revalidate();
+      }
+
       @Override
       public void removeNotify() {
         super.removeNotify();
-        Disposer.dispose(disposable);
+        if (disposable != null) {
+          Disposer.dispose(disposable);
+          disposable = null;
+        }
       }
     };
-    panel.add(new JBLabel(PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches")));
-    JBTextField textField = new JBTextField(fileNameMask);
     panel.add(textField, "growx");
-    
-    ComponentValidator validator = new ComponentValidator(disposable).withValidator(() -> {
-      String text = textField.getText();
-      fileNameMask = text.isEmpty() ? ".*" : text;
-      String errorMessage = null;
-      try {
-        Pattern.compile(text);
-      }
-      catch (PatternSyntaxException ex) {
-        errorMessage = StringUtil.substringBefore(ex.getMessage(), "\n");
-      }
-      boolean hasError = StringUtil.isNotEmpty(errorMessage);
-      return hasError ? new ValidationInfo(errorMessage, textField) : null;
-    }).andRegisterOnDocumentListener(textField).installOn(textField);
-    validator.revalidate();
     return panel;
   }
 

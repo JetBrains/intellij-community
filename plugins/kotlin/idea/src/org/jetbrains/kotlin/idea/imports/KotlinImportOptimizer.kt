@@ -4,27 +4,26 @@ package org.jetbrains.kotlin.idea.imports
 
 import com.intellij.lang.ImportOptimizer
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.references.fe10.Fe10SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.references.*
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.references.fe10.Fe10SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -95,22 +94,7 @@ class KotlinImportOptimizer : ImportOptimizer {
 
     private data class OptimizeInformation(val add: Int, val remove: Int, val imports: List<ImportPath>)
 
-    private class CollectUsedDescriptorsVisitor(file: KtFile, val progressIndicator: ProgressIndicator? = null) : KtVisitorVoid() {
-        //private val elementsSize: Int = if (progressIndicator != null) {
-        //    var size = 0
-        //    file.accept(object : KtVisitorVoid() {
-        //        override fun visitElement(element: PsiElement) {
-        //            size += 1
-        //            element.acceptChildren(this)
-        //        }
-        //    })
-        //
-        //    size
-        //} else {
-        //    0
-        //}
-
-        private var elementProgress: Int = 0
+    private class CollectUsedDescriptorsVisitor(file: KtFile) : KtVisitorVoid() {
         private val currentPackageName = file.packageFqName
         private val aliases: Map<FqName, List<Name>> = file.importDirectives
             .asSequence()
@@ -133,21 +117,12 @@ class KotlinImportOptimizer : ImportOptimizer {
 
         override fun visitElement(element: PsiElement) {
             ProgressIndicatorProvider.checkCanceled()
-            elementProgress += 1
-            //progressIndicator?.apply {
-            //    if (elementsSize != 0) {
-            //        fraction = elementProgress / elementsSize.toDouble()
-            //    }
-            //}
-
             element.acceptChildren(this)
         }
 
-        override fun visitImportList(importList: KtImportList) {
-        }
+        override fun visitImportList(importList: KtImportList) {}
 
-        override fun visitPackageDirective(directive: KtPackageDirective) {
-        }
+        override fun visitPackageDirective(directive: KtPackageDirective) {}
 
         override fun visitKtElement(element: KtElement) {
             super.visitKtElement(element)
@@ -176,6 +151,7 @@ class KotlinImportOptimizer : ImportOptimizer {
 
                     if (target !is PackageViewDescriptor && parentFqName == currentPackageName && (importableFqName !in aliases)) continue
 
+                    ProgressIndicatorProvider.checkCanceled()
                     if (!reference.canBeResolvedViaImport(target, bindingContext)) continue
 
                     if (importableDescriptor.name in names && isAccessibleAsMember(importableDescriptor, element, bindingContext)) {
@@ -193,6 +169,8 @@ class KotlinImportOptimizer : ImportOptimizer {
             if (target.containingDeclaration !is ClassDescriptor) return false
 
             fun isInScope(scope: HierarchicalScope): Boolean {
+                ProgressIndicatorProvider.checkCanceled()
+
                 return when (target) {
                     is FunctionDescriptor ->
                         scope.findFunction(target.name, NoLookupLocation.FROM_IDE) { it == target } != null
@@ -257,9 +235,9 @@ class KotlinImportOptimizer : ImportOptimizer {
         fun collectDescriptorsToImport(file: KtFile, inProgressBar: Boolean = false): OptimizedImportsBuilder.InputData {
             val progressIndicator = if (inProgressBar) ProgressIndicatorProvider.getInstance().progressIndicator else null
             progressIndicator?.text = KotlinBundle.message("import.optimizer.progress.indicator.text.collect.imports.for", file.name)
-            progressIndicator?.isIndeterminate = false
+            progressIndicator?.isIndeterminate = true
 
-            val visitor = CollectUsedDescriptorsVisitor(file, progressIndicator)
+            val visitor = CollectUsedDescriptorsVisitor(file)
             file.accept(visitor)
             return visitor.data
         }

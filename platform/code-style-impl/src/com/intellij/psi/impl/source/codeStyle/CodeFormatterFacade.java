@@ -149,7 +149,7 @@ public class CodeFormatterFacade {
     final Project project = file.getProject();
     Document document = file.getViewProvider().getDocument();
     final List<FormatTextRange> textRanges = ranges.getRanges();
-    if (document instanceof DocumentWindow) {
+    if (document instanceof DocumentWindow && InjectedFormattingOptionsService.getInstance().shouldDelegateToTopLevel(file)) {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       final DocumentWindow documentWindow = (DocumentWindow)document;
       for (FormatTextRange range : textRanges) {

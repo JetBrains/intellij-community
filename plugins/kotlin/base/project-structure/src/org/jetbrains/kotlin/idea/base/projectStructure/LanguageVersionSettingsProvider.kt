@@ -2,6 +2,8 @@
 @file:JvmName("LanguageVersionSettingsProviderUtils")
 package org.jetbrains.kotlin.idea.base.projectStructure
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
@@ -17,7 +19,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.JavaTypeEnhancementStateParser
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
@@ -33,6 +34,8 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.util.merge
 import java.util.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 
 private typealias LanguageFeatureMap = Map<LanguageFeature, LanguageFeature.State>
 private typealias AnalysisFlagMap = Map<AnalysisFlag<*>, Any>
@@ -57,24 +60,42 @@ val Project.languageVersionSettings: LanguageVersionSettings
 val PsiElement.languageVersionSettings: LanguageVersionSettings
     get() = if (project.serviceOrNull<ProjectFileIndex>() == null) {
         LanguageVersionSettingsImpl.DEFAULT
-    } else {
+    } else runReadAction {
         IDELanguageSettingsProvider.getLanguageVersionSettings(this.moduleInfo, project)
     }
 
 @Service(Service.Level.PROJECT)
-class LanguageVersionSettingsProvider(private val project: Project) {
+class LanguageVersionSettingsProvider(private val project: Project) : Disposable {
+    init {
+        project.messageBus.connect(this)
+            .subscribe(KotlinCompilerSettingsListener.TOPIC, object : KotlinCompilerSettingsListener {
+                override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
+                    _commonSettings = null
+                    _librarySettings = null
+                }
+            })
+    }
+
     companion object {
         fun getInstance(project: Project): LanguageVersionSettingsProvider = project.service()
     }
 
+    @Volatile
+    private var _commonSettings: LanguageVersionSettings? = null
+
+    @Volatile
+    private var _librarySettings: LanguageVersionSettings? = null
+
     val commonSettings: LanguageVersionSettings
-        get() = project.cacheInvalidatingOnRootModifications {
-            computeProjectLanguageVersionSettings(useCommonFacetSettings = false)
+        get() {
+            _commonSettings?.let { return it }
+            return computeProjectLanguageVersionSettings(useCommonFacetSettings = false).also { _commonSettings = it }
         }
 
     val librarySettings: LanguageVersionSettings
-        get() = project.cacheInvalidatingOnRootModifications {
-            computeProjectLanguageVersionSettings(useCommonFacetSettings = true)
+        get() {
+            _librarySettings?.let { return it }
+            return computeProjectLanguageVersionSettings(useCommonFacetSettings = true).also { _librarySettings = it }
         }
 
     fun get(module: Module): LanguageVersionSettings {
@@ -87,6 +108,7 @@ class LanguageVersionSettingsProvider(private val project: Project) {
                 computeModuleLanguageVersionSettings(module),
                 KotlinCompilerSettingsTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project),
+                KotlinFacetModificationTracker.getInstance(project),
             )
         }
     }
@@ -223,4 +245,6 @@ class LanguageVersionSettingsProvider(private val project: Project) {
             set(AnalysisFlags.ideMode, true)
         }
     }
+
+    override fun dispose() {}
 }

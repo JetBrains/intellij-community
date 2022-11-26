@@ -35,7 +35,7 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
     }
 
     protected open fun testAction(action: AnAction, forced: Boolean): Presentation {
-        val e = TestActionEvent(action)
+        val e = TestActionEvent.createTestEvent(action)
         if (ActionUtil.lastUpdateAndCheckDumb(action, e, true) || forced) {
             ActionUtil.performActionDumbAwareWithCallbacks(action,e)
         }
@@ -106,5 +106,5 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

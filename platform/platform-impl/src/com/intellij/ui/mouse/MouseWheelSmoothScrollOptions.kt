@@ -13,14 +13,11 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.dialog
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindIntValue
-import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.not
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.JBAnimatorHelper
 import com.intellij.util.animation.animation
@@ -66,8 +63,7 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
         }
         row {
           cell(myBezierPainter)
-            .horizontalAlign(HorizontalAlign.FILL)
-            .verticalAlign(VerticalAlign.FILL)
+            .align(Align.FILL)
             .enabledIf(c.selected.and(isPlaying.not()))
         }
         row {

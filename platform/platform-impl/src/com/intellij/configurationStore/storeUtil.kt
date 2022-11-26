@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runBlockingUnderModalProgress
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.NotificationGroupManager
@@ -44,7 +45,7 @@ object StoreUtil {
   @CalledInAny
   fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
     runInAutoSaveDisabledMode {
-      runBlockingUnderModalProgress {
+      runUnderModalProgressIfIsEdt {
         com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
       }
     }

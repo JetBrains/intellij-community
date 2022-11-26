@@ -6,9 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -18,7 +16,6 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * Represents a group of actions.
  *
  * @see com.intellij.openapi.actionSystem.DefaultActionGroup
- * @see com.intellij.openapi.actionSystem.ComputableActionGroup
  * @see com.intellij.openapi.actionSystem.CheckedActionGroup
  * @see com.intellij.openapi.actionSystem.CompactActionGroup
  */
@@ -155,9 +152,9 @@ public abstract class ActionGroup extends AnAction {
    */
   @NotNull
   @ApiStatus.Experimental
-  public List<AnAction> postProcessVisibleChildren(@NotNull List<AnAction> visibleChildren,
+  public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
                                                    @NotNull UpdateSession updateSession) {
-    return visibleChildren;
+    return Collections.unmodifiableList(visibleChildren);
   }
 
   public final boolean isPrimary(@NotNull AnAction action) {

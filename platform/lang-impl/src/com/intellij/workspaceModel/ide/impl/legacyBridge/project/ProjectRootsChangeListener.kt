@@ -4,17 +4,18 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.RootsChangeRescanningInfo
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.util.indexing.EntityIndexingServiceEx
+import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.roots.IndexableEntityProvider
+import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class ProjectRootsChangeListener(private val project: Project) {
   fun beforeChanged(event: VersionedStorageChange) {
@@ -29,11 +30,15 @@ internal class ProjectRootsChangeListener(private val project: Project) {
   fun changed(event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+    (ModuleDependencyIndex.getInstance(project) as ModuleDependencyIndexImpl).workspaceModelChanged(event);
+    if (IndexableFilesIndex.shouldBeUsed()) {
+      IndexableFilesIndexImpl.getInstanceImpl(project).workspaceModelChanged(event)
+    }
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)
     if (performUpdate) {
-      val rootsChangeInfo = WorkspaceEventRescanningInfo(event.getAllChanges().toList(), true)
+      val rootsChangeInfo = EntityIndexingServiceEx.getInstanceEx().createWorkspaceChangedEventInfo(event.getAllChanges().toList())
       projectRootManager.rootsChanged.rootsChanged(rootsChangeInfo)
     }
   }
@@ -85,10 +90,24 @@ internal class ProjectRootsChangeListener(private val project: Project) {
 
     internal fun shouldFireRootsChanged(entity: WorkspaceEntity, project: Project): Boolean {
       return when (entity) {
-        // Library changes should not fire any events if the library is not included in any of order entries
-        is LibraryEntity -> libraryHasOrderEntry(entity, project)
-        is LibraryPropertiesEntity -> libraryHasOrderEntry(entity.library, project)
+        // Library changes should not fire any events if no modules depend on it
+        is LibraryEntity -> hasDependencyOn(entity, project)
+        is LibraryPropertiesEntity -> hasDependencyOn(entity.library, project)
         is ModuleGroupPathEntity, is CustomSourceRootPropertiesEntity -> true
+        is ExcludeUrlEntity -> {
+          val library = entity.library
+          val contentRoot = entity.contentRoot
+          if (library != null) {
+            hasDependencyOn(library, project)
+          }
+          else if (contentRoot != null) {
+            val entityClass = contentRoot::class.java
+            customEntitiesToFireRootsChanged.find { it.isAssignableFrom(entityClass) } != null
+          }
+          else {
+            false
+          }
+        }
         else -> {
           val entityClass = entity::class.java
           customEntitiesToFireRootsChanged.find { it.isAssignableFrom(entityClass) } != null
@@ -96,19 +115,8 @@ internal class ProjectRootsChangeListener(private val project: Project) {
       }
     }
 
-    private fun libraryHasOrderEntry(library: LibraryEntity, project: Project): Boolean {
-      if (library.tableId is LibraryTableId.ModuleLibraryTableId) {
-        return true
-      }
-      val libraryName = library.name
-      ModuleManager.getInstance(project).modules.forEach { module ->
-        val exists = ModuleRootManager.getInstance(module).orderEntries.any { it is LibraryOrderEntry && it.libraryName == libraryName }
-        if (exists) return true
-      }
-      return false
+    private fun hasDependencyOn(library: LibraryEntity, project: Project): Boolean {
+      return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.symbolicId)
     }
   }
-
-  class WorkspaceEventRescanningInfo(val events: List<EntityChange<*>>,
-                                     val isFromWorkspaceModelEvent: Boolean) : RootsChangeRescanningInfo
 }

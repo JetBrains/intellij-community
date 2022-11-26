@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -24,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntityBase() {
+open class ChildSingleSecondEntityImpl(val dataSource: ChildSingleSecondEntityData) : ChildSingleSecondEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSingleAbEntity::class.java,
@@ -37,24 +36,24 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
 
   }
 
-  @JvmField
-  var _commonData: String? = null
   override val commonData: String
-    get() = _commonData!!
+    get() = dataSource.commonData
 
   override val parentEntity: ParentSingleAbEntity
     get() = snapshot.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _secondData: String? = null
   override val secondData: String
-    get() = _secondData!!
+    get() = dataSource.secondData
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ChildSingleSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSingleSecondEntity>(), ChildSingleSecondEntity.Builder {
+  class Builder(result: ChildSingleSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSingleSecondEntity, ChildSingleSecondEntityData>(
+    result), ChildSingleSecondEntity.Builder {
     constructor() : this(ChildSingleSecondEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -72,6 +71,9 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -108,11 +110,14 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildSingleSecondEntity
-      this.entitySource = dataSource.entitySource
-      this.commonData = dataSource.commonData
-      this.secondData = dataSource.secondData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.commonData != dataSource.commonData) this.commonData = dataSource.commonData
+      if (this.secondData != dataSource.secondData) this.secondData = dataSource.secondData
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<ParentSingleAbEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<ParentSingleAbEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -121,7 +126,7 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -130,7 +135,7 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
       get() = getEntityData().commonData
       set(value) {
         checkModificationAllowed()
-        getEntityData().commonData = value
+        getEntityData(true).commonData = value
         changedProperty.add("commonData")
       }
 
@@ -148,18 +153,18 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -173,11 +178,10 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
       get() = getEntityData().secondData
       set(value) {
         checkModificationAllowed()
-        getEntityData().secondData = value
+        getEntityData(true).secondData = value
         changedProperty.add("secondData")
       }
 
-    override fun getEntityData(): ChildSingleSecondEntityData = result ?: super.getEntityData() as ChildSingleSecondEntityData
     override fun getEntityClass(): Class<ChildSingleSecondEntity> = ChildSingleSecondEntity::class.java
   }
 }
@@ -189,26 +193,21 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
   fun isCommonDataInitialized(): Boolean = ::commonData.isInitialized
   fun isSecondDataInitialized(): Boolean = ::secondData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildSingleSecondEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildSingleSecondEntity> {
     val modifiable = ChildSingleSecondEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ChildSingleSecondEntity {
-    val entity = ChildSingleSecondEntityImpl()
-    entity._commonData = commonData
-    entity._secondData = secondData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ChildSingleSecondEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -235,7 +234,7 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildSingleSecondEntityData
 
@@ -247,7 +246,7 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildSingleSecondEntityData
 

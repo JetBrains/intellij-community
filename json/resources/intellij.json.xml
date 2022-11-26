@@ -19,6 +19,12 @@
     </action>
   </actions>
 
+  <actions resource-bundle="messages.JsonBundle">
+    <action id="ConsoleView.ShowAsJsonAction" class="com.intellij.json.actions.ShowAsJsonAction">
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="ConsoleView.FoldLinesLikeThis"/>
+    </action>
+  </actions>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="JSON" extensions="har;json" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
     <fileType name="JSON5" extensions="json5" implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE" language="JSON5"/>
@@ -31,7 +37,8 @@
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
     <outerLanguageRangePatcher language="JSON" implementationClass="com.intellij.psi.templateLanguages.DefaultOuterLanguagePatcher"/>
-    <statusBarWidgetFactory implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory" order="after codeStyleWidget, before readOnlyWidget"/>
+    <statusBarWidgetFactory id="JSONSchemaSelector" implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory"
+                            order="after CodeStyleStatusBarWidget, before ReadOnlyAttribute"/>
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
 
     <!-- Code style and formatting -->

@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
 
 package testing
@@ -6,3 +6,4 @@ package testing
 fun testing() {
   <caret>Some.test()
 }
+/* IGNORE_FIR */

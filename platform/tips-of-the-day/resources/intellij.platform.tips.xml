@@ -1,0 +1,49 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="tipAndTrickPromotionFactory" interface="com.intellij.ide.util.TipAndTrickPromotionFactory" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <backgroundPostStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoValidationRule"/>
+
+    <registryKey key="tips.of.the.day.feedback"
+                 description="Where to send like/dislike feedback from Tips of the Day (nowhere, staging, production)."
+                 defaultValue="nowhere"
+                 restartRequired="false"/>
+    <registryKey key="tips.of.the.day.show.group.label"
+                 description="Whether to show group name of the tip in Tips of the Day dialog."
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.ide.util.TipsUsageManager$TipsUsageListener"
+              activeInTestMode="false"
+              topic="com.intellij.featureStatistics.FeaturesRegistryListener"/>
+  </projectListeners>
+
+  <actions>
+    <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction">
+      <add-to-group group-id="WelcomeScreen.Documentation" relative-to-action="About" anchor="after"/>
+      <add-to-group group-id="WelcomeScreen.LearnIdeHelp" relative-to-action="Help.KeymapReference" anchor="after"/>
+    </action>
+
+    <group id="ProductivityFeatures">
+      <reference ref="ShowTips"/>
+      <separator/>
+      <action id="ProductivityGuide" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
+      <add-to-group group-id="HelpMenu" relative-to-action="Help.KeymapReference" anchor="after"/>
+    </group>
+
+    <group id="TipsAndFeatures" internal="true" popup="true">
+      <action id="SelectAndShowTip" internal="true" class="com.intellij.ide.actions.SelectAndShowTipAction"/>
+      <action id="DumpFeaturesAndTips" internal="true" class="com.intellij.featureStatistics.actions.DumpFeaturesAndTipsAction"/>
+      <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
+      <action id="SelectAndDumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.SelectAndDumpInvalidTipsAction"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+  </actions>
+</idea-plugin>

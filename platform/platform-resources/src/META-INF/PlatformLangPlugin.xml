@@ -26,10 +26,17 @@
   <xi:include href="/META-INF/Inspect.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/WebSymbols.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/WebSymbolsExtensionPoints.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/xml.xml">
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="/META-INF/IdeCore.xml"/>
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
   <xi:include href="/META-INF/Refactoring.xml"/>
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
@@ -40,6 +47,7 @@
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
   <xi:include href="intellij.platform.feedback.xml"/>
+  <xi:include href="intellij.platform.tips.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
@@ -57,10 +65,7 @@
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
     <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
-    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification"/>
-    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
@@ -129,6 +134,9 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/collaboration-tools.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
 

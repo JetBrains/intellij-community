@@ -140,16 +140,32 @@ public abstract class ActionButtonLook {
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
+    Point iconPos = getIconPosition(actionButton, icon);
+    paintIcon(g, actionButton, icon, iconPos.x, iconPos.y);
+  }
+
+  public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
+    icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
+  }
+
+  /**
+   * @param originalIcon the same icon that was passed to {@link ActionButtonLook#paintIcon(Graphics, ActionButtonComponent, Icon)}.
+   *                     It is used to calculate position for arrow icon.
+   */
+  public void paintDownArrow(Graphics g, ActionButtonComponent actionButton, Icon originalIcon, Icon arrowIcon) {
+    Point iconPos = getIconPosition(actionButton, originalIcon);
+    int arrowIconX = iconPos.x + 1 + (originalIcon.getIconWidth() - arrowIcon.getIconWidth());
+    int arrowIconY = iconPos.y + 1 + (originalIcon.getIconHeight() - arrowIcon.getIconHeight());
+    arrowIcon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, arrowIconX, arrowIconY);
+  }
+
+  private static Point getIconPosition(ActionButtonComponent actionButton, Icon icon) {
     Rectangle rect = new Rectangle(actionButton.getWidth(), actionButton.getHeight());
     Insets i = actionButton.getInsets();
     JBInsets.removeFrom(rect, i);
 
     int x = i.left + (rect.width - icon.getIconWidth()) / 2;
     int y = i.top + (rect.height - icon.getIconHeight()) / 2;
-    paintIcon(g, actionButton, icon, x, y);
-  }
-
-  public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
-    icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
+    return new Point(x, y);
   }
 }

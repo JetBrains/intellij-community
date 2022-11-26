@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -29,18 +14,19 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
+public final class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
   implements PsiLambdaExpression {
 
   private static final ControlFlowPolicy ourPolicy = new ControlFlowPolicy() {
-    @Nullable
     @Override
-    public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
+    public @Nullable PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
       return null;
     }
 
@@ -63,9 +49,8 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     super(node);
   }
 
-  @NotNull
   @Override
-  public PsiParameterList getParameterList() {
+  public @NotNull PsiParameterList getParameterList() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiParameterList.class);
   }
 
@@ -76,9 +61,8 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
 
-  @Nullable
   @Override
-  public PsiType getFunctionalInterfaceType() {
+  public @Nullable PsiType getFunctionalInterfaceType() {
     return getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
   }
 
@@ -132,7 +116,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(final @NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitLambdaExpression(this);
     }
@@ -142,10 +126,10 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState state,
                                      final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
+                                     final @NotNull PsiElement place) {
     return PsiImplUtil.processDeclarationsInLambda(this, processor, state, lastParent, place);
   }
 
@@ -248,23 +232,20 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
   }
 
-  @Nullable
   @Override
-  public PsiType getGroundTargetType(PsiType functionalInterfaceType) {
+  public @Nullable PsiType getGroundTargetType(PsiType functionalInterfaceType) {
     return FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType, this);
   }
 
-  @NotNull
-  private static PsiType toArray(@NotNull PsiType paramType) {
+  private static @NotNull PsiType toArray(@NotNull PsiType paramType) {
     if (paramType instanceof PsiEllipsisType) {
       return ((PsiEllipsisType)paramType).toArrayType();
     }
     return paramType;
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(int flags) {
-    return AllIcons.Nodes.Lambda;
+  public @NotNull Icon getIcon(int flags) {
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Lambda);
   }
 }

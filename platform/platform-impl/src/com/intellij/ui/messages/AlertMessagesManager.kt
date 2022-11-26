@@ -2,9 +2,11 @@
 package com.intellij.ui.messages
 
 import com.intellij.BundleBase
+import com.intellij.diagnostic.LoadingState
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DoNotAskOption
@@ -13,6 +15,7 @@ import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -40,14 +43,17 @@ import kotlin.math.min
 @Service
 @ApiStatus.Internal
 internal class AlertMessagesManager {
+
   companion object {
-    @JvmStatic
-    fun isEnabled(): Boolean =
-      ApplicationManager.getApplication() != null && Registry.`is`("ide.message.dialogs.as.swing.alert", true)
 
     @JvmStatic
-    fun instance(): AlertMessagesManager =
-      ApplicationManager.getApplication().getService(AlertMessagesManager::class.java)
+    fun getInstanceIfPossible(): AlertMessagesManager? {
+      return if (LoadingState.COMPONENTS_LOADED.isOccurred
+                 && RegistryManager.getInstance().`is`("ide.message.dialogs.as.swing.alert"))
+        ApplicationManager.getApplication().service<AlertMessagesManager>()
+      else
+        null
+    }
   }
 
   fun showMessageDialog(project: Project?,
@@ -107,6 +113,7 @@ private class AlertDialog(project: Project?,
   private val myCloseButton: JComponent?
   private val myButtons = ArrayList<JButton>()
   private var myHelpButton: JButton? = null
+  private var myInitSize: Dimension? = null
 
   init {
     title = myTitle
@@ -207,9 +214,39 @@ private class AlertDialog(project: Project?,
         }
       }.start()
     }
+
+    if (WindowRoundedCornersManager.isAvailable()) {
+      if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+        WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true))
+        rootPane.border = PopupBorder.Factory.createEmpty()
+      }
+      else {
+        WindowRoundedCornersManager.setRoundedCorners(window)
+      }
+    }
+  }
+
+  override fun beforeShowCallback() {
+    if (SystemInfoRt.isMac) {
+      val initSize = myInitSize!!
+      if (!size.equals(initSize)) {
+        setSize(initSize.width, initSize.height)
+        val location = initialLocation
+        if (location != null) {
+          setLocation(location.x, location.y)
+        }
+      }
+    }
   }
 
   override fun getInitialSize(): Dimension {
+    if (myInitSize == null) {
+      myInitSize = calculateInitialSize()
+    }
+    return myInitSize!!
+  }
+
+  private fun calculateInitialSize(): Dimension {
     val buttonsWidth = myButtonsPanel.preferredSize.width
 
     if (buttonsWidth > JBUI.scale(348)) {
@@ -309,7 +346,7 @@ private class AlertDialog(project: Project?,
       val title = UIUtil.replaceMnemonicAmpersand(myTitle!!).replace(BundleBase.MNEMONIC_STRING, "")
       val titleComponent = createTextComponent(JEditorPane(), StringUtil.trimLog(title, 100))
       titleComponent.font = JBFont.h4()
-      textPanel.add(titleComponent, BorderLayout.NORTH)
+      textPanel.add(wrapWithMinWidth(titleComponent), BorderLayout.NORTH)
       singleSelectionHandler.add(titleComponent, false)
     }
 
@@ -336,11 +373,7 @@ private class AlertDialog(project: Project?,
         scrollPane.isOpaque = false
         scrollPane.viewport.isOpaque = false
       }
-      textPanel.add(object : Wrapper(scrollPane) {
-        override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-          super.setBounds(x, y, min(width, JBUI.scale(450)), height)
-        }
-      })
+      textPanel.add(wrapWithMinWidth(scrollPane))
     }
 
     textPanel.add(mySouthPanel, BorderLayout.SOUTH)
@@ -390,6 +423,12 @@ private class AlertDialog(project: Project?,
     singleSelectionHandler.start()
 
     return dialogPanel
+  }
+
+  private fun wrapWithMinWidth(scrollPane: JComponent) = object : Wrapper(scrollPane) {
+    override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+      super.setBounds(x, y, min(width, JBUI.scale(450)), height)
+    }
   }
 
   private fun createTextComponent(component: JEditorPane, message: @Nls String?): JEditorPane {

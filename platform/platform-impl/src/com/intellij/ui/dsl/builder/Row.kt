@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.icons.AllIcons
@@ -88,6 +88,7 @@ enum class BottomGap {
 
 @ApiStatus.NonExtendable
 @LayoutDslMarker
+@JvmDefaultWithCompatibility
 interface Row {
 
   /**
@@ -100,16 +101,11 @@ interface Row {
    * Marks the row as resizable: the row occupies all extra vertical space in parent (for example in [Panel.group] or [Panel.panel])
    * and changes size together with parent. When resizable is needed in whole [DialogPanel] all row parents should be marked
    * as [resizableRow] as well. It's possible to have several resizable rows, which means extra space is shared between them.
-   * Note that vertical size and placement of components in the row are managed by [Cell.verticalAlign]
+   * Note that alignment inside the cell is managed by [CellBase.align]  method
    *
    * @see [Grid.resizableRows]
    */
   fun resizableRow(): Row
-
-  @Deprecated("Use overloaded rowComment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun rowComment(@NlsContexts.DetailedDescription comment: String,
-                 maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Row
 
   /**
    * Adds comment after the row with appropriate color and font size (macOS and Linux use smaller font).
@@ -193,16 +189,12 @@ interface Row {
 
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
-  @Deprecated("Use overloaded radioButton(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
-
   /**
    * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
    * If there is a binding [ButtonsGroup.bind] for the buttons group then:
    * * [value] must be provided with correspondent to binding type for all radio buttons in the group
-   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true, such button will be selected by default in case
-   * initial bound variable value is not equal to values of radio button in the group
+   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true. Such button will be selected by default in case
+   * initial value of bound variable doesn't equal any values of radio buttons in the group
    *
    * If there is no binding, then values of all radio buttons in the group must be null
    */
@@ -248,17 +240,13 @@ interface Row {
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
-  @Deprecated("Use text(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun labelHtml(@NlsContexts.Label text: String,
-                action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
-
   /**
    * Adds text
    * * [text] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
+   * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL, with other horizontal aligns word wrap is not supported
    *
    * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
    *
@@ -269,16 +257,13 @@ interface Row {
   fun text(@NlsContexts.Label text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
-  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP): Cell<JLabel>
-
   /**
    * Adds comment with appropriate color and font size (macOS and Linux use smaller font).
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
+   * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL, with other horizontal aligns word wrap is not supported
    *
    * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP
@@ -286,15 +271,6 @@ interface Row {
    */
   fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun commentHtml(@NlsContexts.DetailedDescription text: String,
-                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
    * Creates focusable link with text inside. Should not be used with html in [text]
@@ -326,10 +302,13 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
-  fun textFieldWithBrowseButton(@NlsContexts.DialogTitle browseDialogTitle: String? = null,
-                                project: Project? = null,
-                                fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-                                fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
+  fun textFieldWithBrowseButton(
+    @NlsContexts.DialogTitle browseDialogTitle: String? = null,
+    project: Project? = null,
+    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+  ): Cell<TextFieldWithBrowseButton>
+
   /**
    * Creates password field with [columns] set to [COLUMNS_SHORT]
    */

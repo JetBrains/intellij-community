@@ -70,6 +70,8 @@
       implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
       implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Clipboard"/>
+    <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
+      implementation="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
@@ -117,14 +119,15 @@
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
             use-shortcut-of="QuickJavaDoc"/>
-    <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction" id="Vcs.Log.EnableFilterByRegexAction"/>
-    <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction" id="Vcs.Log.MatchCaseAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction"
+            id="Vcs.Log.EnableFilterByRegexAction"
+            icon="AllIcons.Actions.Regex"/>
+    <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction"
+            id="Vcs.Log.MatchCaseAction"
+            icon="AllIcons.Actions.MatchCase"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
     <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
             use-shortcut-of="Vcs.OpenRepositoryVersion"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
-            use-shortcut-of="Vcs.GetVersion"
-            icon="AllIcons.Actions.Download"/>
     <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
             use-shortcut-of="Annotate"
             icon="AllIcons.Actions.Annotate"/>
@@ -152,11 +155,12 @@
       <reference id="Vcs.Log.HighlightersActionGroup"/>
       <separator/>
       <separator key="action.vcs.log.branches.separator"/>
+      <reference ref="Vcs.Log.IntelliSortChooser"/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
     </group>
-    <group id="Vcs.Log.TextFilterSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.General.GearPlain" popup="true">
+    <group id="Vcs.Log.TextFilterSettings"
+           icon="AllIcons.General.GearPlain">
       <reference id="Vcs.Log.EnableFilterByRegexAction"/>
       <reference id="Vcs.Log.MatchCaseAction"/>
     </group>
@@ -212,7 +216,7 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <separator/>
-      <reference id="Vcs.Log.GetVersion"/>
+      <reference id="Vcs.GetVersion"/>
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="Diff.ShowDiff"/>
@@ -257,8 +261,6 @@
       <reference ref="Vcs.Log.FocusTextFilter"/>
       <reference ref="Vcs.Log.TextFilterSettings"/>
       <separator/>
-      <reference ref="Vcs.Log.IntelliSortChooser"/>
-      <separator/>
       <reference ref="Vcs.Log.PresentationSettings"/>
       <separator/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
@@ -279,7 +281,6 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
-      <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
       <reference id="Vcs.CopyRevisionNumberAction"/>

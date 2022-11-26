@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
 
 class CommentHolder(val leadingComments: List<CommentNode>, val trailingComments: List<CommentNode>) {
     fun restoreComments(element: PsiElement) {
-        val factory = KtPsiFactory(element)
+        val factory = KtPsiFactory(element.project)
         for (leadingComment in leadingComments) {
             addComment(factory, leadingComment, element, true)
         }
@@ -63,7 +63,7 @@ class CommentHolder(val leadingComments: List<CommentNode>, val trailingComments
             }
         }
 
-        fun Sequence<PsiElement>.collectComments(): List<CommentNode> = this.filterIsInstance<PsiComment>()
+        private fun Sequence<PsiElement>.collectComments(): List<CommentNode> = this.filterIsInstance<PsiComment>()
             .map { CommentNode.create(it) }
             .toList()
     }

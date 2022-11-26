@@ -5,9 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.InspectionEngine;
-import com.intellij.lang.Language;
-import com.intellij.lang.MetaLanguage;
+import com.intellij.codeInspection.ex.ToolLanguageUtil;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
@@ -22,21 +20,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
-
-import static java.util.Collections.emptySet;
 
 public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
                                                      Comparable<IntentionAction> {
   private final IntentionActionBean extension;
-  private final Set<String> applicableToLanguages;
   private String fullFamilyName;
+
+  private volatile Set<String> applicableToLanguages;  // lazy initialized
 
   public IntentionActionWrapper(@NotNull IntentionActionBean extension) {
     this.extension = extension;
-    this.applicableToLanguages = getLanguageWithDialects(extension.language);
   }
 
   public @NotNull String getDescriptionDirectoryName() {
@@ -57,30 +51,29 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return getDelegate().getFamilyName();
   }
 
-  public @NotNull Set<String> getLanguages() {
-    return applicableToLanguages;
+  public boolean isApplicable(Collection<String> fileLanguageIds) {
+    String language = extension.language;
+    if (language == null
+        || "any".equals(language)
+        || language.isBlank()) {
+      return true;
+    }
+
+    Set<String> languages = applicableToLanguages;
+    if (languages == null) {
+      applicableToLanguages = languages = getLanguageWithDialects(language);
+    }
+
+    if (languages.isEmpty()) return true;
+
+    for (String fileLanguage : fileLanguageIds) {
+      if (languages.contains(fileLanguage)) return true;
+    }
+    return false;
   }
 
-  private static @NotNull Set<String> getLanguageWithDialects(@Nullable String langId) {
-    if (langId == null || "any".equals(langId) || langId.isBlank()) return emptySet();
-
-    Language language = Language.findLanguageByID(langId);
-    Set<String> result;
-    if (language == null) {
-      // unknown language in plugin.xml, ignore
-      result = Collections.singleton(langId);
-    }
-    else if (language instanceof MetaLanguage) {
-      Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
-      result = new HashSet<>();
-      for (Language matchingLanguage : matchingLanguages) {
-        result.addAll(InspectionEngine.getLanguageWithDialects(matchingLanguage, true));
-      }
-    }
-    else {
-      result = InspectionEngine.getLanguageWithDialects(language, true);
-    }
-    return Set.copyOf(result);
+  private static @NotNull Set<String> getLanguageWithDialects(@NotNull String langId) {
+    return ToolLanguageUtil.getAllMatchingLanguages(langId, true);
   }
 
   @Override

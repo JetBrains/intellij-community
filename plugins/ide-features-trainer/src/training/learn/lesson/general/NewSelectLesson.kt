@@ -98,8 +98,6 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
     return selection.toString().trim() == needSelection.trim()
   }
 
-  override val suitableTips = listOf("smart_selection", "CtrlW")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("selection.help.select.code.constructs"),
          LessonUtil.getHelpLink("working-with-source-code.html#editor_code_selection")),

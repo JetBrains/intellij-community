@@ -18,7 +18,7 @@ object BranchedUnfoldingUtils {
         val thenExpr = newIfExpression.then!!.lastBlockStatementOrThis()
         val elseExpr = newIfExpression.`else`!!.lastBlockStatementOrThis()
 
-        val psiFactory = KtPsiFactory(assignment)
+        val psiFactory = KtPsiFactory(assignment.project)
         thenExpr.replace(psiFactory.createExpressionByPattern("$0 $1 $2", left, op, thenExpr))
         elseExpr.replace(psiFactory.createExpressionByPattern("$0 $1 $2", left, op, elseExpr))
 
@@ -34,9 +34,11 @@ object BranchedUnfoldingUtils {
 
         val newWhenExpression = whenExpression.copied()
 
+        val psiFactory = KtPsiFactory(assignment.project)
+
         for (entry in newWhenExpression.entries) {
             val expr = entry.expression!!.lastBlockStatementOrThis()
-            expr.replace(KtPsiFactory(assignment).createExpressionByPattern("$0 $1 $2", left, op, expr))
+            expr.replace(psiFactory.createExpressionByPattern("$0 $1 $2", left, op, expr))
         }
 
         val resultWhen = assignment.replace(newWhenExpression)

@@ -29,7 +29,7 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
     @NotNull Project project,
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
     @NotNull DocumentationImageResolver imageResolver,
-    @NotNull Function<@NotNull String, @Nullable Icon> iconResolver
+    @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver
   ) {
     super(keyboardActions, imageResolver, iconResolver);
     myProject = project;

@@ -73,6 +73,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/allOpenSimple/inspectionData/inspections.test");
         }
 
+        @TestMetadata("ambiguousExpressionInWhenBranchMigration1_7/inspectionData/inspections.test")
+        public void testAmbiguousExpressionInWhenBranchMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/ambiguousExpressionInWhenBranchMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("ambiguousExpressionInWhenBranchMigration_1_8/inspectionData/inspections.test")
+        public void testAmbiguousExpressionInWhenBranchMigration_1_8_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/ambiguousExpressionInWhenBranchMigration_1_8/inspectionData/inspections.test");
+        }
+
         @TestMetadata("arrayInDataClass/inspectionData/inspections.test")
         public void testArrayInDataClass_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/arrayInDataClass/inspectionData/inspections.test");
@@ -91,6 +101,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("canBeVal/inspectionData/inspections.test")
         public void testCanBeVal_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/canBeVal/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("castDueToProgressionResolutionChangeMigration1_7/inspectionData/inspections.test")
+        public void testCastDueToProgressionResolutionChangeMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/castDueToProgressionResolutionChangeMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("castDueToProgressionResolutionChangeMigration1_8/inspectionData/inspections.test")
+        public void testCastDueToProgressionResolutionChangeMigration1_8_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/castDueToProgressionResolutionChangeMigration1_8/inspectionData/inspections.test");
         }
 
         @TestMetadata("conflictingExtensionProperty/inspectionData/inspections.test")
@@ -123,6 +143,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/coroutines/asyncResultUnused/inspectionData/inspections.test");
         }
 
+        @TestMetadata("declaringClassMigration1_7/inspectionData/inspections.test")
+        public void testDeclaringClassMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/declaringClassMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("declaringClassMigration1_9/inspectionData/inspections.test")
+        public void testDeclaringClassMigration1_9_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/declaringClassMigration1_9/inspectionData/inspections.test");
+        }
+
         @TestMetadata("destructuringWrongName/inspectionData/inspections.test")
         public void testDestructuringWrongName_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/destructuringWrongName/inspectionData/inspections.test");
@@ -136,6 +166,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("emptyRange/inspectionData/inspections.test")
         public void testEmptyRange_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/emptyRange/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("enumValuesSoftDeprecateMigration/inspectionData/inspections.test")
+        public void testEnumValuesSoftDeprecateMigration_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/enumValuesSoftDeprecateMigration/inspectionData/inspections.test");
         }
 
         @TestMetadata("equalsAndHashCode/inspectionData/inspections.test")
@@ -156,6 +191,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("hasPlatformType/inspectionData/inspections.test")
         public void testHasPlatformType_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/hasPlatformType/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("inlineClassDeprecatedMigration/inspectionData/inspections.test")
+        public void testInlineClassDeprecatedMigration_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/inlineClassDeprecatedMigration/inspectionData/inspections.test");
         }
 
         @TestMetadata("javaCollectionsStaticMethodOnImmutableList/inspectionData/inspections.test")
@@ -196,6 +236,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("naming/function/inspectionData/inspections.test")
         public void testNaming_function_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/naming/function/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("naming/localVariable/inspectionData/inspections.test")
+        public void testNaming_localVariable_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/localVariable/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("naming/objectPrivateProperty/inspectionData/inspections.test")
+        public void testNaming_objectPrivateProperty_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/objectPrivateProperty/inspectionData/inspections.test");
         }
 
         @TestMetadata("naming/objectProperty/inspectionData/inspections.test")
@@ -263,11 +313,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
         }
 
-        @TestMetadata("redundantSemicolon/inspectionData/inspections.test")
-        public void testRedundantSemicolon_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantSemicolon/inspectionData/inspections.test");
-        }
-
         @TestMetadata("redundantSuspendModifier/inspectionData/inspections.test")
         public void testRedundantSuspendModifier_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantSuspendModifier/inspectionData/inspections.test");
@@ -291,11 +336,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("redundantWith/inspectionData/inspections.test")
         public void testRedundantWith_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantWith/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("removeSetterParameterType/inspectionData/inspections.test")
-        public void testRemoveSetterParameterType_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/removeSetterParameterType/inspectionData/inspections.test");
         }
 
         @TestMetadata("removeSingleExpressionStringTemplate/inspectionData/inspections.test")
@@ -336,16 +376,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("suspiciousEqualsCombination/inspectionData/inspections.test")
         public void testSuspiciousEqualsCombination_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/suspiciousEqualsCombination/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("trailingCommaOff/inspectionData/inspections.test")
-        public void testTrailingCommaOff_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/trailingCommaOff/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("trailingCommaOn/inspectionData/inspections.test")
-        public void testTrailingCommaOn_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/trailingCommaOn/inspectionData/inspections.test");
         }
 
         @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")
@@ -422,11 +452,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         public void testUnusedSymbol_typeParameter_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/unusedSymbol/typeParameter/inspectionData/inspections.test");
         }
-
-        @TestMetadata("wrapUnaryOperator/inspectionData/inspections.test")
-        public void testWrapUnaryOperator_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/wrapUnaryOperator/inspectionData/inspections.test");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -454,11 +479,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("deprecatedCallableAddReplaceWith/inspectionData/inspections.test")
         public void testDeprecatedCallableAddReplaceWith_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspectionsLocal/deprecatedCallableAddReplaceWith/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("simplifyNegatedBinaryExpression/inspectionData/inspections.test")
-        public void testSimplifyNegatedBinaryExpression_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData/inspections.test");
         }
     }
 }

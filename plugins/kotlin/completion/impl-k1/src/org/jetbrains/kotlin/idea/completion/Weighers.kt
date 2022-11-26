@@ -9,7 +9,12 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.proximity.PsiProximityComparator
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.codeInsight.ENUM_VALUES_METHOD_NAME
+import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.implCommon.weighers.SoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.smart.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
@@ -19,8 +24,8 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.toFuzzyType
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
@@ -228,17 +233,29 @@ object DeprecatedWeigher : LookupElementWeigher("kotlin.deprecated") {
     }
 }
 
-/**
- * This weigher is designed to "sink down" specific elements in completion.
- *
- * For now it only works on "Flow.collect" member method (see [https://youtrack.jetbrains.com/issue/KT-36808] for details).
- */
-object KotlinUnwantedLookupElementWeigher : LookupElementWeigher("kotlin.unwantedElement") {
-    private val flowCollectFqName = FqName("kotlinx.coroutines.flow.Flow.collect")
+object K1SoftDeprecationWeigher : LookupElementWeigher(SoftDeprecationWeigher.WEIGHER_ID) {
+    override fun weigh(element: LookupElement): Boolean {
+        val declarationLookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return false
+        val descriptor = declarationLookupObject.descriptor ?: return false
+        val languageVersionSettings = declarationLookupObject.psiElement?.languageVersionSettings ?: return false
+        return SoftDeprecationWeigher.isSoftDeprecatedFqName(descriptor.fqNameSafe, languageVersionSettings)
+                || isEnumValuesSoftDeprecatedMethod(declarationLookupObject, descriptor, languageVersionSettings)
+    }
 
-    override fun weigh(element: LookupElement): Int {
-        val descriptor = (element.`object` as? DescriptorBasedDeclarationLookupObject)?.descriptor ?: return 0
-        return if (descriptor.fqNameSafe == flowCollectFqName) 1 else 0
+    /**
+     * Lower soft-deprecated `Enum.values()` method in completion.
+     * See [KT-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
+     */
+    private fun isEnumValuesSoftDeprecatedMethod(
+        declarationLookupObject: DescriptorBasedDeclarationLookupObject,
+        descriptor: DeclarationDescriptor,
+        languageVersionSettings: LanguageVersionSettings
+    ): Boolean {
+        return languageVersionSettings.isEnumValuesSoftDeprecateEnabled() &&
+                isEnumClass(descriptor.containingDeclaration) &&
+                ENUM_VALUES_METHOD_NAME == declarationLookupObject.name &&
+                // Don't touch user-declared methods with the name "values"
+                (descriptor as? CallableMemberDescriptor)?.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
     }
 }
 

@@ -29,7 +29,6 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.history.browser.SHAHash;
-import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -303,19 +302,6 @@ public final class GitHistoryUtils {
     String output = result.getOutputAsJoinedString().trim();
     if (output.length() == 0) return null;
     return GitRevisionNumber.resolve(project, root, output);
-  }
-
-  public static long getAuthorTime(@NotNull Project project, @NotNull VirtualFile root, @NotNull String commitsId) throws VcsException {
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.SHOW);
-    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, AUTHOR_TIME);
-    h.setSilent(true);
-    h.addParameters("-s", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(commitsId);
-
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    GitLogRecord logRecord = parser.parseOneRecord(output);
-    if (logRecord == null) throw new VcsException(GitBundle.message("log.parser.exception.message.could.not.parse.output", output));
-    return logRecord.getAuthorTimeStamp();
   }
 
   /**

@@ -3,6 +3,10 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.testFramework.createBuildContext
 import org.jetbrains.intellij.build.testFramework.runTestBuild
 import org.junit.jupiter.api.Test
@@ -16,10 +20,10 @@ class IdeaCommunityBuildTest {
     runTestBuild(
       homePath = homePath,
       communityHomePath = communityHomePath,
-      productProperties = IdeaCommunityProperties(communityHomePath),
+      productProperties = IdeaCommunityProperties(communityHomePath.communityRoot),
     ) {
-      it.projectClassesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
-                                         ?: "$homePath/out/classes"
+      it.classesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
+                                  ?: "$homePath/out/classes"
     }
   }
 
@@ -27,18 +31,23 @@ class IdeaCommunityBuildTest {
   fun jpsStandalone(testInfo: TestInfo) {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    val context = createBuildContext(
-      homePath = homePath,
-      productProperties = IdeaCommunityProperties(communityHome),
-      skipDependencySetup = true,
-      communityHomePath = communityHome,
-    )
-    val outDir = context.paths.buildOutputDir
-    try {
-      buildCommunityStandaloneJpsBuilder(targetDir = context.paths.artifactDir.resolve("jps"), context = context)
-    }
-    finally {
-      NioFiles.deleteRecursively(outDir)
+    runBlocking(Dispatchers.Default) {
+      val context = createBuildContext(
+        homePath = homePath,
+        productProperties = IdeaCommunityProperties(communityHome.communityRoot),
+        skipDependencySetup = true,
+        communityHomePath = communityHome,
+      )
+      val outDir = context.paths.buildOutputDir
+
+      try {
+        buildCommunityStandaloneJpsBuilder(targetDir = context.paths.artifactDir.resolve("jps"), context = context)
+      }
+      finally {
+        withContext(Dispatchers.IO + NonCancellable) {
+          NioFiles.deleteRecursively(outDir)
+        }
+      }
     }
   }
 }

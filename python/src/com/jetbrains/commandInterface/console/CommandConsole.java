@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.EditorSettings;
@@ -89,8 +90,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * {@link CommandModeConsumer} or {@link ProcessModeConsumer} to delegate execution to.
    * It also may be null if exection is not available.
    */
-  @Nullable
-  private Consumer<String> myCurrentConsumer;
+  private @Nullable Consumer<? super String> myCurrentConsumer;
   /**
    * One to sync action access to consumer field because it may be changed by callback when process is terminated
    */
@@ -252,7 +252,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param newConsumer new consumer to register to delegate execution to
    *                    or null if just reset consumer
    */
-  private void resetConsumer(@Nullable final Consumer<String> newConsumer) {
+  private void resetConsumer(final @Nullable Consumer<? super String> newConsumer) {
     synchronized (myConsumerSemaphore) {
       myCurrentConsumer = newConsumer;
     }
@@ -274,6 +274,11 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
         myCurrentConsumer.consume(t);
       }
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   /**

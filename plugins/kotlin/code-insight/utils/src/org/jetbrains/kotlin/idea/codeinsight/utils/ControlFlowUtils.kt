@@ -19,6 +19,7 @@ tailrec fun KtCallableDeclaration.isExplicitTypeReferenceNeededForTypeInference(
     return when (typeElement) {
         is KtFunctionType -> {
             if (typeElement.receiver != null) return true
+            if (typeElement.returnTypeReference?.typeElement?.typeArgumentsAsTypes?.isNotEmpty() == true) return true
             if (typeElement.parameters.isEmpty()) return false
             val valueParameters = when (initializer) {
                 is KtLambdaExpression -> initializer.valueParameters

@@ -60,7 +60,7 @@ abstract class AbstractJvmDecompiledTextTest : AbstractDecompiledTextTest("/deco
 fun findTestLibraryRoot(module: Module): VirtualFile? {
     for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
         if (orderEntry is LibraryOrderEntry) {
-            return orderEntry.getFiles(OrderRootType.CLASSES)[0]
+            return orderEntry.getRootFiles(OrderRootType.CLASSES)[0]
         }
     }
     return null

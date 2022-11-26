@@ -1,4 +1,4 @@
-// "Make 'a.f' return 'int'" "true-preview"
+// "Make 'a.f()' return 'int'" "true-preview"
 class a {
  int f() {
      return <selection><caret>0</selection>;

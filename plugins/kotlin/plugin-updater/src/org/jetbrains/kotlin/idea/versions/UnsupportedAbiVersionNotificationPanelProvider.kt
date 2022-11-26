@@ -3,11 +3,12 @@
 package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
@@ -18,7 +19,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,7 +27,6 @@ import com.intellij.ui.EditorNotificationProvider.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -35,12 +34,9 @@ import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppres
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.updateLibraries
 import org.jetbrains.kotlin.idea.update.KotlinPluginUpdaterBundle
-import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
-import org.jetbrains.kotlin.platform.js.isJs
-import org.jetbrains.kotlin.platform.jvm.isJvm
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.function.Function
@@ -215,9 +211,9 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         }
     }
 
-    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (!file.isKotlinFileType()) {
-            return CONST_NULL
+            return null
         }
         try {
             if (
@@ -226,14 +222,14 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
                 || CompilerManager.getInstance(project).isExcludedFromCompilation(file)
                 || KotlinNotConfiguredSuppressedModulesState.isSuppressed(project)
             ) {
-                return CONST_NULL
+                return null
             }
 
-            val module = ModuleUtilCore.findModuleForFile(file, project) ?: return CONST_NULL
+            val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
 
             val badRoots: Collection<BinaryVersionedFile<BinaryVersion>> = getLibraryRootsWithIncompatibleAbi(module)
                 .takeUnless(Collection<BinaryVersionedFile<BinaryVersion>>::isEmpty)
-                ?: return CONST_NULL
+                ?: return null
 
             return Function { doCreate(it, project, badRoots) }
         } catch (e: ProcessCanceledException) {
@@ -242,7 +238,7 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
             DumbService.getInstance(project).runWhenSmart { updateNotifications(project) }
         }
 
-        return CONST_NULL
+        return null
     }
 
     private fun findBadRootsInRuntimeLibraries(

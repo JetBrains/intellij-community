@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -13,12 +14,11 @@ import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.RendererModifier
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -302,16 +302,11 @@ abstract class KtGenerateMembersHandler(
     }
 
     companion object {
-        val renderOption = KtDeclarationRendererOptions(
-            modifiers = setOf(RendererModifier.OVERRIDE, RendererModifier.ANNOTATIONS),
-            renderDeclarationHeader = false,
-            renderUnitReturnType = true,
-            typeRendererOptions = KtTypeRendererOptions(
-                shortQualifiedNames = true,
-                renderFunctionType = true,
-                renderUnresolvedTypeAsResolved = true,
-            )
-        )
+        val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+         modifiersRenderer = modifiersRenderer.with {
+             modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
+         }
+        }
     }
 
     /** A block of code (represented as a list of Kotlin declarations) that should be inserted at a given anchor. */

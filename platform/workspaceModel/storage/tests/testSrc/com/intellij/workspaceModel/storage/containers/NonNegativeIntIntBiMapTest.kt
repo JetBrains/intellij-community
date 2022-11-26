@@ -2,9 +2,9 @@
 package com.intellij.workspaceModel.storage.containers
 
 import com.intellij.workspaceModel.storage.impl.containers.MutableNonNegativeIntIntBiMap
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class NonNegativeIntIntBiMapTest {
   @Test
@@ -29,5 +29,14 @@ class NonNegativeIntIntBiMapTest {
 
     assertEquals(10, map.get(1))
     assertEquals(10, map.get(2))
+  }
+
+  @Test
+  fun `add different keys with the same value 3`() {
+    val map = MutableNonNegativeIntIntBiMap()
+
+    map.putAll(intArrayOf(1, 1), 10)
+
+    assertEquals(10, map.get(1))
   }
 }

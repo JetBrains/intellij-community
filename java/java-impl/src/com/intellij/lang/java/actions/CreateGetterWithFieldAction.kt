@@ -29,7 +29,7 @@ internal class CreateGetterWithFieldAction(target: PsiClass, request: CreateMeth
     return message("create.read.only.property.from.usage.full.text", getPropertyName(), getNameForClass(target, false))
   }
 
-  override fun createRenderer(project: Project) = object : PropertyRenderer(project, target, request, propertyInfo) {
+  override fun createRenderer(project: Project, targetClass: PsiClass) = object : PropertyRenderer(project, targetClass, request, propertyInfo) {
 
     override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression? {
       val prototypeField = generatePrototypeField()

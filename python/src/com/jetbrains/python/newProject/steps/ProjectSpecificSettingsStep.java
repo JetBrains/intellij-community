@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.newProject.steps;
 
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
@@ -30,6 +31,7 @@ import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
@@ -168,11 +170,22 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       return false;
     }
 
+    var interpreterPanel = myInterpreterPanel;
     final Map<Boolean, List<String>> errorsAndWarnings = StreamEx
-      .of(myInterpreterPanel == null ? Collections.emptyList() : myInterpreterPanel.validateAll())
+      .of(interpreterPanel == null ? Collections.emptyList() : interpreterPanel.validateAll())
       .groupingBy(it -> it.warning, Collectors.mapping(it -> it.message, Collectors.toList()));
-    final List<String> validationErrors = errorsAndWarnings.getOrDefault(false, Collections.emptyList());
+    List<String> validationErrors = errorsAndWarnings.getOrDefault(false, Collections.emptyList());
     final List<String> validationWarnings = errorsAndWarnings.getOrDefault(true, Collections.emptyList());
+
+    if (validationErrors.isEmpty()) {
+      // Once can't create anything on immutable SDK
+      var sdk = (interpreterPanel != null) ?  interpreterPanel.getSdk() : null;
+      if (sdk != null && isImmutableSdk(sdk)) {
+        validationErrors = List.of(
+          PyBundle.message("python.unknown.project.synchronizer.this.interpreter.type.does.not.support.remote.project.creation"));
+      }
+    }
+
     if (!validationErrors.isEmpty()) {
       setErrorText(StringUtil.join(validationErrors, "\n"));
       return false;
@@ -234,6 +247,17 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return true;
   }
 
+  /**
+   * See {@link PythonInterpreterTargetEnvironmentFactory#isMutable(TargetEnvironmentConfiguration)}
+   */
+  private static boolean isImmutableSdk(@NotNull Sdk sdk) {
+    var targetConfig = PySdkExtKt.getTargetEnvConfiguration(sdk);
+    if (targetConfig == null) {
+      return false;
+    }
+    return !PythonInterpreterTargetEnvironmentFactory.Companion.isMutable(targetConfig);
+  }
+
   private static @Nls String validateFrameworkSupportsPython3(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
     final String frameworkName = generator.getFrameworkTitle();
     final boolean isPy3k = PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
@@ -248,7 +272,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     if (!generator.isFrameworkInstalled(sdk)) {
       final String frameworkName = generator.getFrameworkTitle();
       String message = PyBundle.message("python.package.installation.notification.message", frameworkName);
-      if (PyPackageUtil.packageManagementEnabled(sdk)) {
+      if (PyPackageUtil.packageManagementEnabled(sdk, false, false)) {
         installFramework = true;
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
         if (!PyPackageUtil.hasManagement(packages)) {
@@ -321,7 +345,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return decoratorPanel;
   }
 
-  private void addLocationChangeListener(@NotNull Consumer<DocumentEvent> listener) {
+  private void addLocationChangeListener(@NotNull Consumer<? super DocumentEvent> listener) {
     final TextFieldWithBrowseButton field = myLocationField;
     if (field == null) return;
     field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -362,7 +386,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   public static List<Sdk> getValidPythonSdks(@NotNull List<Sdk> existingSdks) {
     return StreamEx
       .of(existingSdks)
-      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkUtil.isInvalid(sdk))
+      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && PySdkExtKt.getSdkSeemsValid(sdk))
       .sorted(new PreferredSdkComparator())
       .toList();
   }

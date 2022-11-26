@@ -454,7 +454,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     return infos;
   }
 
-  private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
+  private static VcsTaskHandler.TaskInfo fromBranches(List<? extends BranchInfo> branches) {
     if (branches.isEmpty()) return new VcsTaskHandler.TaskInfo(null, Collections.emptyList());
     MultiMap<String, String> map = new MultiMap<>();
     for (BranchInfo branch : branches) {
@@ -1072,7 +1072,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
   }
 
-  private static class Activity implements StartupActivity.DumbAware {
+  private static final class Activity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       ((TaskManagerImpl)TaskManager.getManager(project)).projectOpened();

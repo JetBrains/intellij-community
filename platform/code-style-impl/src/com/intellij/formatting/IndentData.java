@@ -76,7 +76,7 @@ public class IndentData {
     for (int i = startOffset; i < Math.min(chars.length(), endOffset); i ++) {
       char c = chars.charAt(i);
       switch (c) {
-        case ' ':
+        case ' ' -> {
           if (hasTabs) {
             isInAlignmentArea = true;
             alignment++;
@@ -84,8 +84,8 @@ public class IndentData {
           else {
             indent++;
           }
-          break;
-        case '\t':
+        }
+        case '\t' -> {
           if (isInAlignmentArea) {
             alignment = (alignment / tabSize + 1) * tabSize;
           }
@@ -93,9 +93,8 @@ public class IndentData {
             hasTabs = true;
             indent += tabSize;
           }
-          break;
-        default:
-          throw new InvalidDataException("Unexpected indent character: '" + c + "'");
+        }
+        default -> throw new InvalidDataException("Unexpected indent character: '" + c + "'");
       }
     }
     return new IndentData(indent, alignment);

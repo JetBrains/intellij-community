@@ -33,7 +33,7 @@ fun createIntentionFactory(
 
 fun KtPrimaryConstructor.addConstructorKeyword(): PsiElement? {
     val modifierList = this.modifierList ?:  return null
-    val psiFactory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
     val constructor = if (valueParameterList == null) {
         psiFactory.createPrimaryConstructor("constructor()")
     } else {

@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable" />
+          <option name="additionalArguments" value="-Xjvm-default=all" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -63,6 +63,7 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="imageio-tiff" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.dependenciesToolwindow" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
@@ -87,13 +88,13 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
     <orderEntry type="module-library">
       <library name="byte-buddy-agent" type="repository">
-        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.12.12" />
+        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.12.17" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.12/byte-buddy-agent-1.12.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.17/byte-buddy-agent-1.12.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.12/byte-buddy-agent-1.12.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.17/byte-buddy-agent-1.12.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -139,5 +140,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.tips" scope="RUNTIME" />
+    <orderEntry type="library" name="HdrHistogram" level="project" />
   </component>
 </module>

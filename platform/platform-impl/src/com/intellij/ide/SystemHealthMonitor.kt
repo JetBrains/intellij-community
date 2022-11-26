@@ -371,6 +371,7 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
           .setTitle(IdeBundle.message("low.disk.space.title"))
           .whenExpired { monitorDiskSpace(scope, dir, store, initialDelay = 5) }
           .notify(null)
+        return@launch
       }
       else {
         delay(((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS).coerceIn(5, 3600))

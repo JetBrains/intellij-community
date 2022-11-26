@@ -23,7 +23,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +57,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
-    UIUtil.addAwtListener(e -> {
+    StartupUiUtil.addAwtListener(e -> {
       if (e instanceof FocusEvent) {
         final FocusEvent fe = (FocusEvent)e;
         final Component c = fe.getComponent();
@@ -70,15 +70,15 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
         }
       }
       else if (e instanceof WindowEvent) {
-        Window window = ((WindowEvent)e).getWindow();
+        Window window1 = ((WindowEvent)e).getWindow();
         if (e.getID() == WindowEvent.WINDOW_CLOSED) {
-          if (window instanceof IdeFrame) {
-            myLastFocused.remove(window);
-            myLastFocusedAtDeactivation.remove(window);
+          if (window1 instanceof IdeFrame) {
+            myLastFocused.remove(window1);
+            myLastFocusedAtDeactivation.remove(window1);
           }
         }
       }
-    }, AWTEvent.FOCUS_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK,this);
+    }, AWTEvent.FOCUS_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK, this);
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusedWindow", event -> {
       Object value = event.getNewValue();
@@ -208,7 +208,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
         result = permOwner;
       }
 
-      if (UIUtil.isMeaninglessFocusOwner(result)) {
+      if (ComponentUtil.isMeaninglessFocusOwner(result)) {
         result = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       }
     }
@@ -272,8 +272,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     @Override
     public void delayedApplicationDeactivated(@NotNull Window ideFrame) {
       Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      Component parent = UIUtil.findUltimateParent(owner);
-      if (parent == ideFrame) {
+      if (owner != null && ComponentUtil.findUltimateParent(owner) == ideFrame) {
         myLastFocusedAtDeactivation.put(ideFrame, owner);
       }
     }

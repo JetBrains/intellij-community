@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.intentions.declarations
 
+import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -19,17 +21,12 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
-import org.jetbrains.kotlin.idea.refactoring.withExpectedActuals
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.idea.util.actualsForExpected
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.isExpectDeclaration
-import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -65,6 +62,8 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
     //TODO: local class
 
     override fun applyTo(element: KtCallableDeclaration, editor: Editor?) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
+
         var allowExpected = true
 
         element.liftToExpected()?.actualsForExpected()?.let {
@@ -73,9 +72,9 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
             }
         }
 
-        runWriteAction {
-            val (extension, bodyTypeToSelect) = createExtensionCallableAndPrepareBodyToSelect(element, allowExpected)
+        val (extension, bodyTypeToSelect) = createExtensionCallableAndPrepareBodyToSelect(element, allowExpected)
 
+        runWriteAction {
             editor?.apply {
                 unblockDocument()
 
@@ -97,7 +96,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
                             val endOffset = lastSibling?.endOffset ?: range.endOffset
                             selectionModel.setSelection(range.startOffset, endOffset)
                         } else {
-                            LOG.error("Extension created with new method body for $bodyToSelect but this body was not found after document commit. Extension text: \"${extension.text}\"")
+                            LOG.error("Extension created with new method body but this body was not found after document commit. Extension text: \"${extension.text}\"")
                             moveCaret(extension.textOffset, ScrollType.CENTER)
                         }
                     } else {
@@ -164,87 +163,92 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
 
         val typeParameterList = newTypeParameterList(element)
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
 
-        val extension = file.addAfter(element, outermostParent) as KtCallableDeclaration
-        file.addAfter(psiFactory.createNewLine(), outermostParent)
-        file.addAfter(psiFactory.createNewLine(), outermostParent)
-        element.delete()
+        val (extension, bodyTypeToSelect) =
+            runWriteAction {
+                val extension = file.addAfter(element, outermostParent) as KtCallableDeclaration
+                file.addAfter(psiFactory.createNewLine(), outermostParent)
+                file.addAfter(psiFactory.createNewLine(), outermostParent)
+                element.delete()
 
-        extension.setReceiverType(containingClass.defaultType)
+                extension.setReceiverType(containingClass.defaultType)
 
-        if (typeParameterList != null) {
-            if (extension.typeParameterList != null) {
-                extension.typeParameterList!!.replace(typeParameterList)
-            } else {
-                extension.addBefore(typeParameterList, extension.receiverTypeReference)
-                extension.addBefore(psiFactory.createWhiteSpace(), extension.receiverTypeReference)
-            }
-        }
-
-        extension.modifierList?.getModifier(KtTokens.PROTECTED_KEYWORD)?.delete()
-        extension.modifierList?.getModifier(KtTokens.ABSTRACT_KEYWORD)?.delete()
-        extension.modifierList?.getModifier(KtTokens.OPEN_KEYWORD)?.delete()
-        extension.modifierList?.getModifier(KtTokens.FINAL_KEYWORD)?.delete()
-
-        if (isEffectivelyExpected && !extension.hasExpectModifier()) {
-            extension.addModifier(KtTokens.EXPECT_KEYWORD)
-        }
-
-        var bodyTypeToSelect = GeneratedBodyType.NOTHING
-
-        val bodyText = getFunctionBodyTextFromTemplate(
-            project,
-            if (extension is KtFunction) TemplateKind.FUNCTION else TemplateKind.PROPERTY_INITIALIZER,
-            extension.name,
-            extension.getReturnTypeReference()?.text ?: "Unit",
-            extension.containingClassOrObject?.fqName
-        )
-
-        when (extension) {
-            is KtFunction -> {
-                if (!extension.hasBody() && !isEffectivelyExpected) {
-                    //TODO: methods in PSI for setBody
-                    extension.add(psiFactory.createBlock(bodyText))
-                    bodyTypeToSelect = GeneratedBodyType.FUNCTION
+                if (typeParameterList != null) {
+                    if (extension.typeParameterList != null) {
+                        extension.typeParameterList!!.replace(typeParameterList)
+                    } else {
+                        extension.addBefore(typeParameterList, extension.receiverTypeReference)
+                        extension.addBefore(psiFactory.createWhiteSpace(), extension.receiverTypeReference)
+                    }
                 }
-            }
 
-            is KtProperty -> {
-                val templateProperty = psiFactory.createDeclaration<KtProperty>("var v: Any\nget()=$bodyText\nset(value){\n$bodyText\n}")
+                extension.modifierList?.getModifier(KtTokens.PROTECTED_KEYWORD)?.delete()
+                extension.modifierList?.getModifier(KtTokens.ABSTRACT_KEYWORD)?.delete()
+                extension.modifierList?.getModifier(KtTokens.OPEN_KEYWORD)?.delete()
+                extension.modifierList?.getModifier(KtTokens.FINAL_KEYWORD)?.delete()
 
-                if (!isEffectivelyExpected) {
-                    val templateGetter = templateProperty.getter!!
-                    val templateSetter = templateProperty.setter!!
+                if (isEffectivelyExpected && !extension.hasExpectModifier()) {
+                    extension.addModifier(KtTokens.EXPECT_KEYWORD)
+                }
 
-                    var getter = extension.getter
-                    if (getter == null) {
-                        getter = extension.addAfter(templateGetter, extension.typeReference) as KtPropertyAccessor
-                        extension.addBefore(psiFactory.createNewLine(), getter)
-                        bodyTypeToSelect = GeneratedBodyType.GETTER
-                    } else if (!getter.hasBody()) {
-                        getter = getter.replace(templateGetter) as KtPropertyAccessor
-                        bodyTypeToSelect = GeneratedBodyType.GETTER
+                var bodyTypeToSelect = GeneratedBodyType.NOTHING
+
+                val bodyText = getFunctionBodyTextFromTemplate(
+                    project,
+                    if (extension is KtFunction) TemplateKind.FUNCTION else TemplateKind.PROPERTY_INITIALIZER,
+                    extension.name,
+                    extension.getReturnTypeReference()?.text ?: "Unit",
+                    extension.containingClassOrObject?.fqName
+                )
+
+                when (extension) {
+                    is KtFunction -> {
+                        if (!extension.hasBody() && !isEffectivelyExpected) {
+                            //TODO: methods in PSI for setBody
+                            extension.add(psiFactory.createBlock(bodyText))
+                            bodyTypeToSelect = GeneratedBodyType.FUNCTION
+                        }
                     }
 
-                    if (extension.isVar) {
-                        var setter = extension.setter
-                        if (setter == null) {
-                            setter = extension.addAfter(templateSetter, getter) as KtPropertyAccessor
-                            extension.addBefore(psiFactory.createNewLine(), setter)
-                            if (bodyTypeToSelect == GeneratedBodyType.NOTHING) {
-                                bodyTypeToSelect = GeneratedBodyType.SETTER
+                    is KtProperty -> {
+                        val templateProperty =
+                            psiFactory.createDeclaration<KtProperty>("var v: Any\nget()=$bodyText\nset(value){\n$bodyText\n}")
+
+                        if (!isEffectivelyExpected) {
+                            val templateGetter = templateProperty.getter!!
+                            val templateSetter = templateProperty.setter!!
+
+                            var getter = extension.getter
+                            if (getter == null) {
+                                getter = extension.addAfter(templateGetter, extension.typeReference) as KtPropertyAccessor
+                                extension.addBefore(psiFactory.createNewLine(), getter)
+                                bodyTypeToSelect = GeneratedBodyType.GETTER
+                            } else if (!getter.hasBody()) {
+                                getter = getter.replace(templateGetter) as KtPropertyAccessor
+                                bodyTypeToSelect = GeneratedBodyType.GETTER
                             }
-                        } else if (!setter.hasBody()) {
-                            setter.replace(templateSetter) as KtPropertyAccessor
-                            if (bodyTypeToSelect == GeneratedBodyType.NOTHING) {
-                                bodyTypeToSelect = GeneratedBodyType.SETTER
+
+                            if (extension.isVar) {
+                                var setter = extension.setter
+                                if (setter == null) {
+                                    setter = extension.addAfter(templateSetter, getter) as KtPropertyAccessor
+                                    extension.addBefore(psiFactory.createNewLine(), setter)
+                                    if (bodyTypeToSelect == GeneratedBodyType.NOTHING) {
+                                        bodyTypeToSelect = GeneratedBodyType.SETTER
+                                    }
+                                } else if (!setter.hasBody()) {
+                                    setter.replace(templateSetter) as KtPropertyAccessor
+                                    if (bodyTypeToSelect == GeneratedBodyType.NOTHING) {
+                                        bodyTypeToSelect = GeneratedBodyType.SETTER
+                                    }
+                                }
                             }
                         }
                     }
                 }
+                extension to bodyTypeToSelect
             }
-        }
 
         if (ktFilesToAddImports.isNotEmpty()) {
             val newDescriptor = extension.unsafeResolveToDescriptor()
@@ -298,7 +302,9 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         val classVisibility = element.containingClass()?.visibilityModifierType()
         val (extension, bodyTypeToSelect) = processSingleDeclaration(element, allowExpected)
         if (classVisibility != null && extension.visibilityModifier() == null) {
-            extension.addModifier(classVisibility)
+            runWriteAction {
+                extension.addModifier(classVisibility)
+            }
         }
 
         return extension to bodyTypeToSelect
@@ -310,7 +316,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         if (classParams.isEmpty()) return null
         val allTypeParameters = classParams + member.typeParameters
         val text = allTypeParameters.joinToString(",", "<", ">") { it.textWithoutVariance() }
-        return KtPsiFactory(member).createDeclaration<KtFunction>("fun $text foo()").typeParameterList
+        return KtPsiFactory(member.project).createDeclaration<KtFunction>("fun $text foo()").typeParameterList
     }
 
     private fun KtTypeParameter.textWithoutVariance(): String {

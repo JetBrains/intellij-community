@@ -52,7 +52,8 @@ public class RealFetchTest extends BasePlatformTestCase {
     }
     catch (Throwable e) {
       Throwable cause = ExceptionUtil.getRootCause(e);
-      if (cause.getMessage().startsWith(XmlBundle.message("xml.intention.fetch.error.fetching.title"))) {
+      if (cause.getMessage().startsWith(XmlBundle.message("xml.intention.fetch.error.fetching.title")) ||
+          cause.getMessage().startsWith("Could not fetch")) {
         ExternalResourcesChecker.reportUnavailability(url, cause);
       }
       throw new RuntimeException(e);
@@ -63,12 +64,13 @@ public class RealFetchTest extends BasePlatformTestCase {
     final String url = "https://community.rti.com/schema/6.0.0/rti_dds_qos_profiles.xsd";
     assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
     myFixture.configureByText(XmlFileType.INSTANCE,
-                              "<dds xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"https://community.rti.com/schema/6.0.0/rti_dds_qos_pr<caret>ofiles.xsd\">\n" +
-                              "    <qos_library name=\"MyLibrary\">\n" +
-                              "        <qos_profile name=\"MyProfile\" base_name=\"BuiltinQosLib::Baseline.6.0.0\">\n" +
-                              "        </qos_profile>\n" +
-                              "    </qos_library>\n" +
-                              "</dds>");
+                              """
+                                <dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://community.rti.com/schema/6.0.0/rti_dds_qos_pr<caret>ofiles.xsd">
+                                    <qos_library name="MyLibrary">
+                                        <qos_profile name="MyProfile" base_name="BuiltinQosLib::Baseline.6.0.0">
+                                        </qos_profile>
+                                    </qos_library>
+                                </dds>""");
     invokeFetchIntention(url);
     myFixture.testHighlighting();
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
@@ -78,14 +80,15 @@ public class RealFetchTest extends BasePlatformTestCase {
     final String url = "https://community.rti.com/schema/6.0.0/rti_dds_profiles.xsd";
     assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
     myFixture.configureByText(XmlFileType.INSTANCE,
-                              "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
-                              "<dds xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                              "     xsi:noNamespaceSchemaLocation=\"https://community.rti.com/schema/6.0.0/rti_dd<caret>s_profiles.xsd\">\n" +
-                              "\n" +
-                              "  <types/>\n" +
-                              "  <domain_library name=\"xxx\"/>\n" +
-                              "  <domain_participant_library name=\"ffff\"/>\n" +
-                              "</dds>");
+                              """
+                                <?xml version="1.0" encoding="UTF-8" ?>
+                                <dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                     xsi:noNamespaceSchemaLocation="https://community.rti.com/schema/6.0.0/rti_dd<caret>s_profiles.xsd">
+
+                                  <types/>
+                                  <domain_library name="xxx"/>
+                                  <domain_participant_library name="ffff"/>
+                                </dds>""");
     invokeFetchIntention(url);
 
     myFixture.testHighlighting();
@@ -102,10 +105,11 @@ public class RealFetchTest extends BasePlatformTestCase {
   public void testAbsolutePath() {
     String url = "https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd";
     myFixture.configureByText(XmlFileType.INSTANCE,
-                              "<Benchmark xmlns=\"http://checklists.nist.gov/xccdf/1.2\"\n" +
-                              "           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                              "           xsi:schemaLocation=\"http://checklists.nist.gov/xccdf/1.2 https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd\" id=\"xccdf_N_benchmark_S\">\n" +
-                              "</Benchmark>");
+                              """
+                                <Benchmark xmlns="http://checklists.nist.gov/xccdf/1.2"
+                                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                           xsi:schemaLocation="http://checklists.nist.gov/xccdf/1.2 https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd" id="xccdf_N_benchmark_S">
+                                </Benchmark>""");
     invokeFetchIntention(url.replace("<caret>", ""));
     myFixture.testHighlighting();
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
@@ -116,9 +120,10 @@ public class RealFetchTest extends BasePlatformTestCase {
     VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
     ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
 
-    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE preferences SYSTEM \"<error descr=\"Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)\">http://java.sun.com/dtd/prefe<caret>rences.dtd</error>\"><preferences>\n" +
-                                                    "  <root type=\"system\"><map/></root>\n" +
-                                                    "</preferences>");
+    myFixture.configureByText(XmlFileType.INSTANCE, """
+      <!DOCTYPE preferences SYSTEM "<error descr="Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)">http://java.sun.com/dtd/prefe<caret>rences.dtd</error>"><preferences>
+        <root type="system"><map/></root>
+      </preferences>""");
     myFixture.testHighlighting();
     invokeFetchIntention(url);
     List<HighlightInfo> infos = myFixture.doHighlighting();

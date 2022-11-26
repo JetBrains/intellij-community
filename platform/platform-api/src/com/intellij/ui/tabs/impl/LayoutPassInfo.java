@@ -28,4 +28,6 @@ public abstract class LayoutPassInfo {
   public abstract int getRowCount();
 
   public abstract Rectangle getHeaderRectangle();
+
+  public abstract int getRequiredLength();
 }

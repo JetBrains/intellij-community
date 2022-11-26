@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.util.TextRange
@@ -52,6 +51,6 @@ object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
         }
 
         @Suppress("UNCHECKED_CAST")
-        return OrderEntryFix.registerFixes(QuickFixActionRegistrar.IGNORE_ALL, reference) as List<IntentionAction>? ?: emptyList()
+        return OrderEntryFix.registerFixes(reference, mutableListOf()) as List<IntentionAction>? ?: emptyList()
     }
 }

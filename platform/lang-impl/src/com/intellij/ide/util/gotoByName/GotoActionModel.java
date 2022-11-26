@@ -38,10 +38,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
@@ -95,7 +92,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   @NotNull
   private UpdateSession newUpdateSession() {
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, myDataContext);
-    return Utils.getOrCreateUpdateSession(event);
+    Utils.initUpdateSession(event);
+    return event.getUpdateSession();
   }
 
   void buildGroupMappings() {
@@ -339,8 +337,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   public static Color defaultActionForeground(boolean isSelected, boolean hasFocus, @Nullable Presentation presentation) {
-    if (isSelected) return UIUtil.getListSelectionForeground(hasFocus);
-    if (presentation != null && !presentation.isEnabledAndVisible()) return UIUtil.getInactiveTextColor();
+    if (isSelected) return NamedColorUtil.getListSelectionForeground(hasFocus);
+    if (presentation != null && !presentation.isEnabledAndVisible()) return NamedColorUtil.getInactiveTextColor();
     return UIUtil.getListForeground();
   }
 
@@ -780,7 +778,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         return panel;
       }
 
-      Color groupFg = isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor();
+      Color groupFg;
+      groupFg = isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor();
 
       Object value = ((MatchedValue)matchedValue).value;
       String pattern = ((MatchedValue)matchedValue).pattern;
@@ -805,19 +804,14 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         }
 
         if (toggle) {
-          DataContext dataContext = actionWithParentGroup.myModel.getDataContext();
-          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-          boolean selected = ((ToggleAction)anAction).isSelected(event);
-          addOnOffButton(panel, selected);
+          addOnOffButton(panel, Toggleable.isSelected(presentation));
         }
-        else {
-          if (groupName != null) {
-            JLabel groupLabel = new JLabel(groupName);
-            groupLabel.setBackground(bg);
-            groupLabel.setBorder(eastBorder);
-            groupLabel.setForeground(groupFg);
-            panel.setRight(groupLabel);
-          }
+        else if (groupName != null) {
+          JLabel groupLabel = new JLabel(groupName);
+          groupLabel.setBackground(bg);
+          groupLabel.setBorder(eastBorder);
+          groupLabel.setForeground(groupFg);
+          panel.setRight(groupLabel);
         }
 
         panel.setToolTipText(presentation.getDescription());

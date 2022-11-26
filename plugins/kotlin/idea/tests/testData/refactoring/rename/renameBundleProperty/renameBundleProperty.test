@@ -2,5 +2,6 @@
   "type": "BUNDLE_PROPERTY",
   "file": "TestBundle.properties",
   "oldName": "foo.bar",
-  "newName": "bar.foo"
+  "newName": "bar.foo",
+  "enabledInK2": true
 }

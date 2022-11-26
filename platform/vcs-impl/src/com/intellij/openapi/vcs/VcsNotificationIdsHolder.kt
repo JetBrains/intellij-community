@@ -17,6 +17,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       COMMIT_FINISHED_WITH_WARNINGS,
       COMMIT_CHECKS_FAILED,
       COMMIT_CHECKS_ONLY_FAILED,
+      POST_COMMIT_CHECKS_FAILED,
       COMPARE_FAILED,
       COULD_NOT_COMPARE_WITH_BRANCH,
       INACTIVE_RANGES_DAMAGED,
@@ -42,7 +43,8 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       UNCOMMITTED_CHANGES_SAVING_ERROR,
       CANNOT_LOAD_ANNOTATIONS,
       SUGGESTED_PLUGIN_INSTALL_FAILED,
-      OBSOLETE_PLUGIN_UNBUNDLED
+      OBSOLETE_PLUGIN_UNBUNDLED,
+      ADD_UNVERSIONED_ERROR
     )
   }
 
@@ -57,6 +59,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val COMMIT_FINISHED = "vcs.commit.finished"
     const val COMMIT_FINISHED_WITH_WARNINGS = "vcs.commit.finished.with.warnings"
     const val COMMIT_CHECKS_FAILED = "vcs.commit.checks.failed"
+    const val POST_COMMIT_CHECKS_FAILED = "vcs.commit.checks.failed"
     const val COMMIT_CHECKS_ONLY_FAILED = "vcs.commit.checks.only.failed"
     const val COMPARE_FAILED = "vcs.compare.failed"
     const val COULD_NOT_COMPARE_WITH_BRANCH = "vcs.could.not.compare.with.branch"
@@ -84,6 +87,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val CANNOT_LOAD_ANNOTATIONS = "vcs.cannot.load.annotations"
     const val SUGGESTED_PLUGIN_INSTALL_FAILED = "vcs.suggested.plugin.install.failed"
     const val OBSOLETE_PLUGIN_UNBUNDLED = "vcs.obsolete.plugin.unbundled"
+    const val ADD_UNVERSIONED_ERROR = "vcs.add.unversioned.error"
   }
 }
 

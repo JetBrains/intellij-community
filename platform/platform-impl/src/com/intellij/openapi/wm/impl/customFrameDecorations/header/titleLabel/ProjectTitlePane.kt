@@ -28,7 +28,7 @@ internal class ProjectTitlePane : ShrinkingTitlePart {
       updatePath()
     }
 
-  fun updatePath() {
+  private fun updatePath() {
     project?.let {
       if (it.isDisposed) {
         return@let

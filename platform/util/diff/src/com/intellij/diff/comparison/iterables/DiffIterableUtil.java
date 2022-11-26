@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison.iterables;
 
 import com.intellij.diff.comparison.CancellationChecker;
@@ -62,7 +62,9 @@ public final class DiffIterableUtil {
    * Compare two lists, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1, @NotNull List<? extends T> objects2, @NotNull CancellationChecker indicator)
+  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1,
+                                          @NotNull List<? extends T> objects2,
+                                          @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     // TODO: compare lists instead of arrays in Diff
     return diff(objects1.toArray(), objects2.toArray(), indicator);
@@ -131,8 +133,11 @@ public final class DiffIterableUtil {
   // Misc
   //
 
+  /**
+   * Iterate both changed and unchanged ranges one-by-one.
+   */
   @NotNull
-  public static Iterable<Pair<Range, Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
+  public static Iterable<Pair<Range, /* isUnchanged */ Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
     return () -> new Iterator<Pair<Range, Boolean>>() {
       @NotNull private final Iterator<Range> myChanges = iterable.changes();
       @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();
@@ -175,6 +180,12 @@ public final class DiffIterableUtil {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  public static int getRangeDelta(@NotNull Range range) {
+    int deleted = range.end1 - range.start1;
+    int inserted = range.end2 - range.start2;
+    return inserted - deleted;
   }
 
   //

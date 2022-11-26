@@ -26,7 +26,7 @@ public interface TargetValue<T> {
     return new MapTargetValue<>(originalValue, mapper);
   }
 
-  static <T, V> TargetValue<V> composite(@NotNull Collection<TargetValue<T>> values, @NotNull Function<? super Collection<T>, ? extends V> joiner) {
+  static <T, V> TargetValue<V> composite(@NotNull Collection<? extends TargetValue<T>> values, @NotNull Function<? super Collection<T>, ? extends V> joiner) {
     return new CompositeTargetValue<>(values, joiner);
   }
 

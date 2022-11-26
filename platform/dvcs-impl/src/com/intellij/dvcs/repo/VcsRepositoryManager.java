@@ -320,10 +320,12 @@ public final class VcsRepositoryManager implements Disposable {
 
       if (checkedRoot != null && repositories.containsKey(checkedRoot)) return;
 
-      Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.values());
-      repositories.keySet().removeAll(invalidRoots);
-      Map<VirtualFile, Repository> newRoots = findNewRoots(repositories.keySet());
-      repositories.putAll(newRoots);
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+        Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.values());
+        repositories.keySet().removeAll(invalidRoots);
+        Map<VirtualFile, Repository> newRoots = findNewRoots(repositories.keySet());
+        repositories.putAll(newRoots);
+      });
 
       REPO_LOCK.writeLock().lock();
       try {
@@ -366,7 +368,7 @@ public final class VcsRepositoryManager implements Disposable {
     return newRootsMap;
   }
 
-  private @NotNull Collection<VirtualFile> findInvalidRoots(@NotNull Collection<Repository> repositories) {
+  private @NotNull Collection<VirtualFile> findInvalidRoots(@NotNull Collection<? extends Repository> repositories) {
     List<VirtualFile> invalidRepos = new ArrayList<>();
     for (Repository repo : repositories) {
       VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(repo.getRoot());

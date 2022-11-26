@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl
 
+import com.intellij.openapi.rd.paint2DLine
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.tabs.JBTabsBorder
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.TabInfo
@@ -10,6 +12,7 @@ import com.intellij.ui.tabs.TabsListener
 import com.intellij.util.animation.Easing
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.animation
+import com.intellij.util.ui.JBUI
 import java.awt.*
 
 class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
@@ -66,32 +69,39 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     g as Graphics2D
 
-    tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
-    if(tabs.isEmptyVisible || tabs.isHideTabs) return
+    if (ExperimentalUI.isNewUI()) {
+      g.paint2DLine(Point(x, y), Point(x + width, y), LinePainter2D.StrokeType.INSIDE,
+                    thickness.toDouble(), JBUI.CurrentTheme.EditorTabs.borderColor())
+    }
+    else tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
+
+    if (tabs.isEmptyVisible || tabs.isHideTabs) return
 
     val myInfo2Label = tabs.myInfo2Label
     val firstLabel = myInfo2Label[tabs.visibleInfos[0]] ?: return
 
     val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
 
-    when(tabs.position) {
+    when (tabs.position) {
       JBTabsPosition.top -> {
-        if (!ExperimentalUI.isNewUI()) {
-          for (eachRow in 0..tabs.lastLayoutPass.rowCount) {
-            val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
-            tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
-          }
+        val startRow = if (ExperimentalUI.isNewUI()) 1 else 0
+        val lastRow = tabs.lastLayoutPass.rowCount
+        for (eachRow in startRow until lastRow) {
+          val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
+          tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
+        }
+        if (!ExperimentalUI.isNewUI() || (tabs as? JBEditorTabs)?.shouldPaintBottomBorder() == true) {
+          val yl = lastRow * tabs.myHeaderFitSize.height + startY
+          tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }
       }
       JBTabsPosition.bottom -> {
         tabs.tabPainter.paintBorderLine(g, thickness, Point(x, startY), Point(x + width, startY))
-        tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
       }
       JBTabsPosition.right -> {
         val lx = firstLabel.x
         tabs.tabPainter.paintBorderLine(g, thickness, Point(lx, y), Point(lx, y + height))
       }
-
       JBTabsPosition.left -> {
         val bounds = firstLabel.bounds
         val i = bounds.x + bounds.width - thickness
@@ -103,11 +113,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       tabs.tabPainter.paintUnderline(tabs.position, calcRectangle() ?: return, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
     } else {
       val selectedLabel = tabs.selectedLabel ?: return
-      val rect = Rectangle(selectedLabel.bounds)
-      if (ExperimentalUI.isNewUI() && rect.width > 0) {
-        rect.width += 2
-      }
-      tabs.tabPainter.paintUnderline(tabs.position, rect, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
+      tabs.tabPainter.paintUnderline(tabs.position, selectedLabel.bounds, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
     }
   }
 

@@ -6,16 +6,12 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMemberImpl
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
@@ -26,7 +22,6 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
@@ -142,7 +137,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val valueParameters = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
             if (includeExplicitParameters && valueParameters.isEmpty()) {
                 val expectedType = ktLambdaExpression.getExpectedType() as? KtFunctionalType
-                val lambdaImplicitReceiverType = expectedType?.typeArguments?.get(0)?.type?.asPsiType(
+                val lambdaImplicitReceiverType = expectedType?.ownTypeArguments?.get(0)?.type?.asPsiType(
                     ktLambdaExpression,
                     KtTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
@@ -188,6 +183,22 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {
         return psiElement.annotations
+    }
+
+    override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
+        analyzeForUast(ktExpression) {
+            return ktExpression.collectCallCandidates().asSequence().mapNotNull {
+                when (val candidate = it.candidate) {
+                    is KtFunctionCall<*> -> {
+                        toPsiMethod(candidate.partiallyAppliedSymbol.symbol, ktExpression)
+                    }
+                    is KtCompoundAccessCall -> {
+                        toPsiMethod(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol, ktExpression)
+                    }
+                    else -> null
+                }
+            }
+        }
     }
 
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
@@ -332,7 +343,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolveSyntheticJavaPropertyAccessorCall(ktExpression)
         }
 
-        val resolvedTargetElement = resolvedTargetSymbol.psiForUast(ktExpression.project)
+        val resolvedTargetElement = analyzeForUast(ktExpression) {
+            psiForUast(resolvedTargetSymbol, ktExpression.project)
+        }
 
         // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
         //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
@@ -363,7 +376,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                             buildClassType(enumClassId)
                         }
                     else ->
-                        buildClassType(classOrObject.getClassOrObjectSymbol())
+                        classOrObject.getClassOrObjectSymbol()?.let(::buildClassType)
                 } ?: return null
                 val psiClass = toPsiClass(ktType, source = null, classOrObject, classOrObject.typeOwnerKind)
                 return when (classOrObject) {
@@ -422,7 +435,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType? {
         analyzeForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
-            if (ktType is KtClassErrorType) return null
+            if (ktType is KtErrorType) return null
             return toPsiType(ktType, source, ktTypeReference, ktTypeReference.typeOwnerKind, boxed)
         }
     }
@@ -430,7 +443,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
         analyzeForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
-            if (ktType is KtClassErrorType) return null
+            if (ktType is KtErrorType) return null
             return toPsiType(ktType, containingLightDeclaration, ktTypeReference, ktTypeReference.typeOwnerKind)
         }
     }
@@ -485,7 +498,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
+    override fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType? {
+        if (ktFunction is KtConstructor<*>) return null
         analyzeForUast(ktFunction) {
             return toPsiType(ktFunction.getFunctionalType(), source, ktFunction, ktFunction.typeOwnerKind)
         }
@@ -495,7 +509,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val sourcePsi = uLambdaExpression.sourcePsi
         analyzeForUast(sourcePsi) {
             val samType = sourcePsi.getExpectedType()
-                ?.takeIf { it !is KtClassErrorType && it.isFunctionalInterfaceType }
+                ?.takeIf { it !is KtErrorType && it.isFunctionalInterfaceType }
                 ?.lowerBoundIfFlexible()
                 ?: return null
             return toPsiType(samType, uLambdaExpression, sourcePsi, sourcePsi.typeOwnerKind)
@@ -509,37 +523,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
         }
         if (psiElement is KtCallableDeclaration) {
-            psiElement.typeReference?.let { typeReference ->
-                analyzeForUast(typeReference) {
-                    nullability(typeReference.getKtType())?.let { return it }
-                }
+            analyzeForUast(psiElement) {
+                nullability(psiElement)?.let { return it }
             }
         }
-        if (psiElement is KtProperty) {
-            psiElement.initializer?.let { propertyInitializer ->
-                analyzeForUast(propertyInitializer) {
-                    nullability(propertyInitializer.getKtType())?.let { return it }
-                }
-            }
-            psiElement.delegateExpression?.let { delegatedExpression ->
-                analyzeForUast(delegatedExpression) {
-                    val typeArgument = (delegatedExpression.getKtType() as? KtNonErrorClassType)?.typeArguments?.firstOrNull()
-                    nullability((typeArgument as? KtTypeArgumentWithVariance)?.type)?.let { return it }
-                }
+        if (psiElement is KtDestructuringDeclaration) {
+            analyzeForUast(psiElement) {
+                nullability(psiElement)?.let { return it }
             }
         }
-        psiElement.getParentOfType<KtProperty>(false)?.let { property ->
-            property.typeReference?.let { typeReference ->
-                analyzeForUast(typeReference) {
-                    nullability(typeReference.getKtType())
-                }
-            } ?:
-            property.initializer?.let { propertyInitializer ->
-                analyzeForUast(propertyInitializer) {
-                    nullability(propertyInitializer.getKtType())
-                }
-            }
-        }?.let { return it }
         return null
     }
 

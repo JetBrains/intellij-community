@@ -80,17 +80,18 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
   }
 
   public void testPropertyTest() {
-    String props = "property.lowercase=hello world\n" +
-                   "property.titlecase=Hello World\n" +
-                   "property.titlecase.html=<html><b>Hello</b> World</html>\n" +
-                   "property.parameterized=Hello {0}\n" +
-                   "property.choice.title=Hello {0,choice,0#World|1#Universe}\n" +
-                   "property.choice.mixed=Hello {0,choice,0#World|1#universe}\n" +
-                   "property.choice.lower=Hello {0,choice,0#world|1#universe}\n" +
-                   "property.choice.sentence.start={0,choice,0#No|1#{0}} {0,choice,0#occurrences|1#occurrence|2#occurrences} found so far\n" +
-                   "property.sentence.with.quote='return' is not allowed here\n" +
-                   "property.with.underscore.mnemonic=Subm_it\n" +
-                   "property.icu4j.title=Generate Code with {0, plural, one {Foo} other {Bar}}";
+    String props = """
+      property.lowercase=hello world
+      property.titlecase=Hello World
+      property.titlecase.html=<html><b>Hello</b> World</html>
+      property.parameterized=Hello {0}
+      property.choice.title=Hello {0,choice,0#World|1#Universe}
+      property.choice.mixed=Hello {0,choice,0#World|1#universe}
+      property.choice.lower=Hello {0,choice,0#world|1#universe}
+      property.choice.sentence.start={0,choice,0#No|1#{0}} {0,choice,0#occurrences|1#occurrence|2#occurrences} found so far
+      property.sentence.with.quote='return' is not allowed here
+      property.with.underscore.mnemonic=Subm_it
+      property.icu4j.title=Generate Code with {0, plural, one {Foo} other {Bar}}""";
     myFixture.addFileToProject("MyBundle.properties", props);
     doTest(false);
   }

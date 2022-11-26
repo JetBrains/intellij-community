@@ -63,7 +63,7 @@ public abstract class FileHistoryModel {
     VisiblePack visiblePack = getVisiblePack();
     List<Integer> parentRows;
     if (rows.length == 1) {
-      if (FileHistoryFilterer.NO_PARENTS_INFO.get(visiblePack, false) &&
+      if (VisiblePack.NO_GRAPH_INFORMATION.get(visiblePack, false) &&
           row + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
         parentRows = Collections.singletonList(row + 1);
       }

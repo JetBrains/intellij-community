@@ -3,6 +3,9 @@ package com.intellij.maven.testFramework;
 
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -56,11 +59,13 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class MavenTestCase extends UsefulTestCase {
-  protected static final String MAVEN_COMPILER_PROPERTIES = "<properties>\n" +
-                                                            "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n" +
-                                                            "        <maven.compiler.source>1.7</maven.compiler.source>\n" +
-                                                            "        <maven.compiler.target>1.7</maven.compiler.target>\n" +
-                                                            "</properties>\n";
+  protected static final String MAVEN_COMPILER_PROPERTIES = """
+    <properties>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            <maven.compiler.source>1.7</maven.compiler.source>
+            <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
+    """;
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   private MavenProgressIndicator myProgressIndicator;
   private MavenEmbeddersManager myEmbeddersManager;
@@ -234,16 +239,23 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected void setUpFixtures() throws Exception {
     String wslMsId = System.getProperty("wsl.distribution.name");
+
+    boolean isDirectoryBasedProject = useDirectoryBasedProjectFormat();
     if (wslMsId != null) {
       Path path = TemporaryDirectory
         .generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false), Paths.get("\\\\wsl$\\" + wslMsId + "\\tmp"));
-      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName(), path, false).getFixture();
+      myTestFixture =
+        IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName(), path, isDirectoryBasedProject).getFixture();
     }
     else {
-      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
+      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName(), isDirectoryBasedProject).getFixture();
     }
 
     myTestFixture.setUp();
+  }
+
+  protected boolean useDirectoryBasedProjectFormat() {
+    return false;
   }
 
   protected void setUpInWriteAction() throws Exception {
@@ -666,6 +678,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   private static String getTestMavenHome() {
     return System.getProperty("idea.maven.test.home");
+  }
+
+  protected DataContext createTestDataContext(VirtualFile pomFile) {
+    final DataContext defaultContext = DataManager.getInstance().getDataContext();
+    return dataId -> {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myProject;
+      }
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        return new VirtualFile[]{pomFile};
+      }
+      return defaultContext.getData(dataId);
+    };
   }
 
   private static class SetWithToString<T> extends AbstractSet<T> {

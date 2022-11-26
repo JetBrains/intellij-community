@@ -166,8 +166,6 @@ class PythonQuickFixesRefactoringLesson
     }
   }
 
-  override val suitableTips = listOf("QuickFixRightArrow")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(PythonLessonsBundle.message("python.quick.fix.refactoring.help.link"),
          LessonUtil.getHelpLink("change-signature.html")),

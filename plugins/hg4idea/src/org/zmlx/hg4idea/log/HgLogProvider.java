@@ -49,7 +49,7 @@ public final class HgLogProvider implements VcsLogProvider {
 
   public HgLogProvider(@NotNull Project project) {
     myProject = project;
-    myRefSorter = new HgRefManager(project, getHgRepoManager(project));
+    myRefSorter = new HgRefManager(project);
     myVcsObjectsFactory = project.getService(VcsLogObjectsFactory.class);
   }
 

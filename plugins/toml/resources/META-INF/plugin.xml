@@ -68,5 +68,6 @@
         </intentionAction>
 
         <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
+        <iconMapper mappingFile="TomlIconMappings.json"/>
     </extensions>
 </idea-plugin>

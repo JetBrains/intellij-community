@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiBinaryFile;
@@ -799,7 +800,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         try {
           if (!RebuildStatus.isOk(indexId)) {
             if (getCurrentDumbModeAccessType_NoDumbChecks() == null) {
-              throw new ServiceNotReadyException();
+              throw new ServiceNotReadyException("index " + indexId + " has status " + RebuildStatus.getStatus(indexId));
             }
             return false;
           }
@@ -899,7 +900,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static void scheduleIndexRescanningForAllProjects(@NotNull String reason) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      new UnindexedFilesUpdater(project, reason).queue(project);
+      new UnindexedFilesUpdater(project, reason).queue();
     }
   }
 
@@ -1034,10 +1035,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
   }
 
+  @ApiStatus.Internal
   @NotNull
-  private static DocumentContent findLatestContent(@NotNull Document document, @Nullable PsiFile dominantContentFile) {
-    // TODO seems we should choose the source with highest stamp!
-    return dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()
+  public static DocumentContent findLatestContent(@NotNull Document document, @Nullable PsiFile dominantContentFile) {
+    return dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() > document.getModificationStamp()
            ? new PsiContent(document, dominantContentFile)
            : new AuthenticContent(document);
   }
@@ -1158,7 +1159,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public @Nullable VirtualFile findFileById(int id) {
-    return PersistentFS.getInstance().findFileByIdIfCached(id);
+    return PersistentFS.getInstance().findFileById(id);
   }
 
   @Override
@@ -2035,6 +2036,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
+    if (VfsData.isIsIndexedFlagDisabled()) {
+      return false;
+    }
     if (!file.isValid() ||
         !(file instanceof VirtualFileSystemEntry) ||
         !(((VirtualFileSystemEntry)file).isFileIndexed())) {

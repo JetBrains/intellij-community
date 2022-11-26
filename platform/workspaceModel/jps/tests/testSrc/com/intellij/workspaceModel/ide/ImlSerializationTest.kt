@@ -22,7 +22,7 @@ import kotlin.system.measureTimeMillis
 class ImlSerializationTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
@@ -46,18 +46,12 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               "v40" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
+               "v44" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
   }
 
   @Test
   fun communityProject() {
     val projectDir = File(PathManagerEx.getCommunityHomePath())
-    loadProjectAndCheck(projectDir)
-  }
-
-  @Test
-  fun ultimateProject() {
-    val projectDir = File("/Users/Alex.Plate/Develop/Work/intellij")
     loadProjectAndCheck(projectDir)
   }
 

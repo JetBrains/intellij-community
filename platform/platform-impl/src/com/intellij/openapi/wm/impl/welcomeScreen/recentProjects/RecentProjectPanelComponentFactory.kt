@@ -13,16 +13,17 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.WelcomeScreenCloneCollector
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Alarm
+import com.intellij.util.containers.JBTreeTraverser
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import javax.swing.tree.TreeNode
 
 internal object RecentProjectPanelComponentFactory {
   private const val UPDATE_INTERVAL = 50 // 50ms -- 20 frames per second
 
   @JvmStatic
   fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>): RecentProjectFilteringTree {
-    ProjectDetector.runDetectors {} // Run detectors that will add projects to the RecentProjectsManagerBase
-
     val tree = Tree()
     val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
       installSearchField()
@@ -32,7 +33,9 @@ internal object RecentProjectPanelComponentFactory {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).apply {
       subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
         override fun change() {
-          filteringTree.updateTree()
+          ApplicationManager.getApplication().invokeLater {
+            filteringTree.updateTree()
+          }
         }
       })
       subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
@@ -62,15 +65,27 @@ internal object RecentProjectPanelComponentFactory {
       })
     }
 
+    // Run detectors that will add projects to the RecentProjectsManagerBase
+    ProjectDetector.runDetectors {}
+
     val updateQueue = MergingUpdateQueue("Welcome screen UI updater", UPDATE_INTERVAL, true, null,
                                          parentDisposable, tree, Alarm.ThreadToUse.SWING_THREAD)
-    updateQueue.queue(Update.create(filteringTree, Runnable { updateProgressBars(updateQueue, filteringTree) }))
+    updateQueue.queue(Update.create(filteringTree, Runnable { repaintProgressBars(updateQueue, filteringTree) }))
 
     return filteringTree
   }
 
-  private fun updateProgressBars(updateQueue: MergingUpdateQueue, filteringTree: RecentProjectFilteringTree) {
-    filteringTree.component.repaint()
-    updateQueue.queue(Update.create(filteringTree, Runnable { updateProgressBars(updateQueue, filteringTree) }))
+  private fun repaintProgressBars(updateQueue: MergingUpdateQueue, filteringTree: RecentProjectFilteringTree) {
+    val cloneableProjectsService = CloneableProjectsService.getInstance()
+    if (cloneableProjectsService.isCloneActive()) {
+      val model = filteringTree.searchModel
+      JBTreeTraverser.from<TreeNode> { node -> TreeUtil.nodeChildren(node) }
+        .withRoot(model.root)
+        .traverse()
+        .filter { node -> TreeUtil.getUserObject(CloneableProjectItem::class.java, node) != null }
+        .forEach { node -> model.nodeChanged(node) }
+    }
+
+    updateQueue.queue(Update.create(filteringTree, Runnable { repaintProgressBars(updateQueue, filteringTree) }))
   }
 }

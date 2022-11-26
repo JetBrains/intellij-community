@@ -24,9 +24,12 @@ import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.border.CompoundBorder
 
-open class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesProvider<*>>,
-                          isVertical: Boolean, isEditorDiffPreview: Boolean,
-                          focusMainUi: (Component?) -> Unit, disposable: Disposable) :
+open class SavedPatchesUi(project: Project,
+                          private val providers: List<SavedPatchesProvider<*>>,
+                          private val isVertical: () -> Boolean,
+                          private val isEditorDiffPreview: () -> Boolean,
+                          focusMainUi: (Component?) -> Unit,
+                          disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
   protected val tree: SavedPatchesTree
@@ -52,7 +55,7 @@ open class SavedPatchesUi(project: Project, private val providers: List<SavedPat
     val treePanel = JPanel(BorderLayout())
     treePanel.add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
 
-    treeChangesSplitter = TwoKeySplitter(isVertical,
+    treeChangesSplitter = TwoKeySplitter(isVertical(),
                                          ProportionKey("vcs.saved.patches.changes.splitter.vertical", 0.5f,
                                                        "vcs.saved.patches.changes.splitter.horizontal", 0.5f))
     treeChangesSplitter.firstComponent = treePanel
@@ -70,7 +73,7 @@ open class SavedPatchesUi(project: Project, private val providers: List<SavedPat
     treeDiffSplitter = OnePixelSplitter("vcs.saved.patches.diff.splitter", 0.5f)
     treeDiffSplitter.firstComponent = treeChangesSplitter
 
-    updateLayout(isVertical, isEditorDiffPreview, forceDiffPreview = true)
+    updateLayout(isInitial = true)
 
     add(treeDiffSplitter, BorderLayout.CENTER)
 
@@ -111,19 +114,26 @@ open class SavedPatchesUi(project: Project, private val providers: List<SavedPat
     return toolbar
   }
 
-  fun updateLayout(isVertical: Boolean, canUseEditorDiffPreview: Boolean, forceDiffPreview: Boolean = false) {
-    val isEditorDiffPreview = canUseEditorDiffPreview || isVertical
-    val isChangesSplitterVertical = isVertical || !isEditorDiffPreview
+  fun updateLayout() {
+    updateLayout(isInitial = false)
+  }
+
+  private fun updateLayout(isInitial: Boolean) {
+    val isVertical = isVertical()
+    val isEditorDiffPreview = isEditorDiffPreview()
+    val isInEditor = isEditorDiffPreview || isVertical
+    val isChangesSplitterVertical = !isEditorDiffPreview || isVertical
     if (treeChangesSplitter.orientation != isChangesSplitterVertical) {
       treeChangesSplitter.orientation = isChangesSplitterVertical
     }
-    setDiffPreviewInEditor(isEditorDiffPreview, forceDiffPreview)
+    setDiffPreviewInEditor(isInEditor, isInitial)
   }
 
-  private fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
-    if (!force && (isInEditor == (changesBrowser.editorTabPreview != null))) return
+  private fun setDiffPreviewInEditor(isInEditor: Boolean, isInitial: Boolean) {
+    val needUpdatePreviews = isInEditor != (changesBrowser.editorTabPreview != null)
+    if (!isInitial && !needUpdatePreviews) return
 
-    val diffPreviewProcessor = changesBrowser.setDiffPreviewInEditor(isInEditor)
+    val diffPreviewProcessor = changesBrowser.installDiffPreview(isInEditor)
     if (isInEditor) {
       treeDiffSplitter.secondComponent = null
     }
@@ -142,7 +152,7 @@ open class SavedPatchesUi(project: Project, private val providers: List<SavedPat
     return null
   }
 
-  internal fun selectedPatchObjectOrNull() = tree.selectedPatchObjects().findAny().orNull()
+  private fun selectedPatchObjectOrNull() = tree.selectedPatchObjects().findAny().orNull()
 
   private fun selectedProvider(): SavedPatchesProvider<*> {
     val selectedPatch = selectedPatchObjectOrNull() ?: return providers.first()

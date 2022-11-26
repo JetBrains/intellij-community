@@ -32,7 +32,7 @@ public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter 
   public Result preprocessEnter(@NotNull final PsiFile file,
                                 @NotNull Editor editor,
                                 @NotNull final Ref<Integer> caretOffsetRef,
-                                @NotNull final Ref<Integer> caretAdvance,
+                                final @NotNull Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {

@@ -71,10 +71,11 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
 
   public void testInitialization() {
     assertResolvesTo(
-      "class Foo:\n" +
-      "  pass\n" +
-      "Foo()\n" +
-      " <ref>",
+      """
+        class Foo:
+          pass
+        Foo()
+         <ref>""",
       PyClass.class,
       "Foo"
     );
@@ -82,11 +83,12 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
 
   public void testInitializationWithDunderInit() {
     assertResolvesTo(
-      "class Foo:\n" +
-      "  def __init__(self):\n" +
-      "    pass\n" +
-      "Foo()\n" +
-      " <ref>",
+      """
+        class Foo:
+          def __init__(self):
+            pass
+        Foo()
+         <ref>""",
       PyClass.class,
       "Foo"
     );
@@ -95,15 +97,16 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   // PY-17877
   public void testInitializationWithMetaclassDunderCall() {
     assertResolvesTo(
-      "class MyMeta(type):\n" +
-      "    def __call__(cls, p1, p2):\n" +
-      "        pass\n" +
-      "\n" +
-      "class MyClass(metaclass=MyMeta):\n" +
-      "    pass\n" +
-      "\n" +
-      "MyClass()\n" +
-      "  <ref>",
+      """
+        class MyMeta(type):
+            def __call__(cls, p1, p2):
+                pass
+
+        class MyClass(metaclass=MyMeta):
+            pass
+
+        MyClass()
+          <ref>""",
       PyClass.class,
       "MyClass"
     );
@@ -111,15 +114,16 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
 
   public void testInitializationWithDunderInitAndMetaclassDunderCall() {
     assertResolvesTo(
-      "class MyMeta(type):\n" +
-      "    def __call__(cls, p1, p2):\n" +
-      "        pass\n" +
-      "\n" +
-      "class MyClass(metaclass=MyMeta):\n" +
-      "    def __init__(self): pass\n" +
-      "\n" +
-      "MyClass()\n" +
-      "  <ref>",
+      """
+        class MyMeta(type):
+            def __call__(cls, p1, p2):
+                pass
+
+        class MyClass(metaclass=MyMeta):
+            def __init__(self): pass
+
+        MyClass()
+          <ref>""",
       PyClass.class,
       "MyClass"
     );
@@ -128,15 +132,16 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   // PY-17877, PY-41380
   public void testInitializationWithMetaclassSelfArgsKwargsDunderCall() {
     assertResolvesTo(
-      "class MyMeta(type):\n" +
-      "    def __call__(cls, *args, **kwargs):\n" +
-      "        pass\n" +
-      "\n" +
-      "class MyClass(metaclass=MyMeta):\n" +
-      "    pass\n" +
-      "\n" +
-      "MyClass()\n" +
-      "  <ref>",
+      """
+        class MyMeta(type):
+            def __call__(cls, *args, **kwargs):
+                pass
+
+        class MyClass(metaclass=MyMeta):
+            pass
+
+        MyClass()
+          <ref>""",
       PyClass.class,
       "MyClass"
     );
@@ -1439,9 +1444,10 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   // PY-33886
   public void testAssignmentExpressions() {
     assertResolvesTo(
-      "if a := b:\n" +
-      "    print(a)\n" +
-      "          <ref>",
+      """
+        if a := b:
+            print(a)
+                  <ref>""",
       PyTargetExpression.class,
       "a"
     );
@@ -1461,9 +1467,10 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     );
 
     assertResolvesTo(
-      "len(lines := [])\n" +
-      "print(lines)\n" +
-      "       <ref>",
+      """
+        len(lines := [])
+        print(lines)
+               <ref>""",
       PyTargetExpression.class,
       "lines"
     );
@@ -1472,19 +1479,21 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   // PY-33886
   public void testAssignmentExpressionGoesToOuterScope() {
     assertResolvesTo(
-      "if any({(comment := line).startswith('#') for line in lines}):\n" +
-      "    print(\"First comment:\", comment)\n" +
-      "                             <ref>",
+      """
+        if any({(comment := line).startswith('#') for line in lines}):
+            print("First comment:", comment)
+                                     <ref>""",
       PyTargetExpression.class,
       "comment"
     );
 
     assertResolvesTo(
-      "if all((nonblank := line).strip() == '' for line in lines):\n" +
-      "    pass\n" +
-      "else:\n" +
-      "    print(\"First non-blank line:\", nonblank)\n" +
-      "                                     <ref>",
+      """
+        if all((nonblank := line).strip() == '' for line in lines):
+            pass
+        else:
+            print("First non-blank line:", nonblank)
+                                             <ref>""",
       PyTargetExpression.class,
       "nonblank"
     );
@@ -1539,5 +1548,153 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "__name__");
     assertEquals("ModuleType", target.getContainingClass().getName());
     assertEquals("types.pyi", target.getContainingFile().getName());
+  }
+
+  // PY-16760
+  public void testGoogleDocstringAttributeNameResolvesToClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-16760
+  public void testGoogleDocstringAttributeNameResolvesToInstanceAttributeOverClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "attr1");
+      assertTrue(PyUtil.isInstanceAttribute(definition));
+    });
+  }
+
+  // PY-16760
+  public void testGoogleDocstringAttributeNameResolvesToInstanceAttributeOverInitParameter() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-16760
+  public void testNumpyDocstringAttributeNameResolvesToClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-28549
+  public void testGoogleDocstringAttributeNameResolvesToDataclassClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-28549
+  public void testNumpyDocstringAttributeNameResolvesToDataclassClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-28549
+  public void testNumpyDocstringParameterNameResolvesToDataclassClassAttributeWithoutInit() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-28549
+  public void testNumpyDocstringParameterNameUnresolvedWithInit() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertUnresolved());
+  }
+
+  // PY-28549
+  public void testNumpyDocstringParameterNameResolvesToDataclassInitParameterOverClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyNamedParameter.class, "attr1"));
+  }
+
+  // PY-35743
+  public void testGoogleDocstringAttributeNameResolvesToNamedTupleClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-35743
+  public void testNumpyDocstringAttributeNameResolvesToNamedTupleClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-55609
+  public void testRestDocstringVarNameResolvesToInstanceAttributeOverInitParameter() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isInstanceAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringVarNameResolvesToInstanceAttributeOverClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isInstanceAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringIvarNameResolvesToInstanceAttributeOverInitParameter() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isInstanceAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringCvarNameResolvesToClassAttributeOverInitParameter() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isClassAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringCvarNameResolvesToClassAttributeOverInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isClassAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringVarNameResolvesToClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "var1"));
+  }
+
+  // PY-55609
+  public void testRestDocstringTypeOwnerNameResolvesToInitParameterOverClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyNamedParameter.class, "p"));
+  }
+
+  // PY-55609
+  public void testRestDocstringTypeOwnerNameResolvesToInitParameterOverInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyNamedParameter.class, "p"));
+  }
+
+  // PY-46654
+  public void testRestDocstringIvarNameResolvesToDataClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "var1"));
+  }
+
+  // PY-50788
+  public void testRestDocstringIvarNameResolvesToInheritedInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
+  // PY-50788
+  public void testRestDocstringVarNameResolvesToInheritedInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
+  // PY-50788
+  public void testRestDocstringVarNameResolvesToInheritedClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
+  // PY-50788
+  public void testRestDocstringCvarNameResolvesToInheritedClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
+  // PY-50788
+  public void testNumpyDocstringAttributeNameResolvesToInheritedInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "bar"));
+  }
+
+  // PY-50788
+  public void testNumpyDocstringAttributeNameResolvesToInheritedClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "bar"));
   }
 }

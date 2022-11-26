@@ -48,7 +48,6 @@ private open class AesEncryptionSupport(private val key: Key) : EncryptionSuppor
 
     private fun decrypt(data: ByteArray, key: Key): ByteArray {
       val byteBuffer = ByteBuffer.wrap(data)
-      @Suppress("UsePropertyAccessSyntax")
       val ivLength = byteBuffer.getInt()
       val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
       cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(data, byteBuffer.position(), ivLength))

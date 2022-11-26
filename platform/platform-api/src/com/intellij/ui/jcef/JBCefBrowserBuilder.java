@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.util.registry.RegistryManager;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ public class JBCefBrowserBuilder {
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
-  boolean myIsOffScreenRendering;
+  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
 

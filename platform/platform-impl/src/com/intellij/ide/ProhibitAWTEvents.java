@@ -14,8 +14,6 @@ import java.util.function.Function;
 
 /**
  * Use to assert that no AWT events are pumped during some activity (e.g. action update, write operations, etc)
- *
- * @author peter
  */
 public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance(ProhibitAWTEvents.class);

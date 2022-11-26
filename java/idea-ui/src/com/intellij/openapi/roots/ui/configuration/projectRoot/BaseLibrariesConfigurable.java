@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -382,6 +383,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       } else {
         e.getPresentation().setEnabled(getSelectedObject() instanceof LibraryEx);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

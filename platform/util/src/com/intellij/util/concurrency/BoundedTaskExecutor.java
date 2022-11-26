@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
  */
 public final class BoundedTaskExecutor extends AbstractExecutorService {
-
   private volatile boolean myShutdown;
   @NotNull
   private final String myName;
@@ -42,9 +41,6 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   BoundedTaskExecutor(@NotNull @NonNls String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
     this(name, backendExecutor, maxThreads, changeThreadName, new LinkedBlockingQueue<>());
-    if (name.isEmpty() || !Character.isUpperCase(name.charAt(0))) {
-      Logger.getInstance(getClass()).warn("Pool name must be capitalized but got: '" + name + "'", new IllegalArgumentException());
-    }
   }
 
   BoundedTaskExecutor(@NotNull @NonNls String name,
@@ -52,6 +48,9 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
                       int maxThreads,
                       boolean changeThreadName,
                       @NotNull BlockingQueue<Runnable> queue) {
+    if (name.isEmpty() || !Character.isUpperCase(name.charAt(0))) {
+      Logger.getInstance(getClass()).warn("Pool name must be capitalized but got: '" + name + "'", new IllegalArgumentException());
+    }
     myName = name;
     myBackendExecutor = backendExecutor;
     if (maxThreads < 1) {
@@ -323,9 +322,9 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public String toString() {
-    List<Runnable> queued = new ArrayList<>(myTaskQueue);
+    int size = myTaskQueue.size();
     return "BoundedExecutor(" + myMaxThreads + ")" + (isShutdown() ? " SHUTDOWN " : "") +
-           "; inProgress: " + getTasksInProgress(myStatus.get()) + (queued.isEmpty() ? "" : "; queue: " + queued.size()) +
+           "; inProgress: " + getTasksInProgress(myStatus.get()) + (size == 0 ? "" : "; queue: " + size) +
            "; name: " + myName;
   }
 }

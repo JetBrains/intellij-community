@@ -41,6 +41,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     setMinimumButtonSize(Dimension(0, 0))
     layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true)
 
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {

@@ -28,10 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ErrorAnalyzer {
   private static final Logger LOG = Logger.getInstance(ErrorAnalyzer.class);
 

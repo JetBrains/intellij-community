@@ -41,6 +41,9 @@ class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() 
       } else {
         println("Project SDK not configured")
         val sdkHomePath = System.getenv("EVALUATION_PYTHON") ?: System.getenv("PYTHONPATH")
+        if (sdkHomePath == null) {
+          println("Project SDK path was not provided. Setup `EVALUATION_PYTHON` or `PYTHONPATH` env variable")
+        }
         val sdkHome = WriteAction.compute<VirtualFile, RuntimeException> {
           LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkHomePath)
         }

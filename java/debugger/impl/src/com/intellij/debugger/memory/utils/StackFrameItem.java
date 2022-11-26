@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -21,8 +21,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.XSourcePosition;
@@ -208,7 +208,8 @@ public class StackFrameItem {
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
       String type = DebuggerSettings.getInstance().SHOW_TYPES ? classRenderer.renderTypeName(myType) : null;
-      Icon icon = myVarType == VariableItem.VarType.PARAM ? PlatformIcons.PARAMETER_ICON : AllIcons.Debugger.Value;
+      Icon icon = myVarType == VariableItem.VarType.PARAM ? IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter)
+                                                          : AllIcons.Debugger.Value;
       if (myType != null && myType.startsWith(CommonClassNames.JAVA_LANG_STRING + "@")) {
         node.setPresentation(icon, new XStringValuePresentation(myValue) {
           @Nullable

@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 
 public class ProjectDescriptorWithStdlibSources extends KotlinWithJdkAndRuntimeLightProjectDescriptor {
     @NotNull
-    public static final ProjectDescriptorWithStdlibSources INSTANCE = new ProjectDescriptorWithStdlibSources();
+    public static ProjectDescriptorWithStdlibSources getInstanceWithStdlibSources() {
+        return new ProjectDescriptorWithStdlibSources();
+    }
 
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model) {

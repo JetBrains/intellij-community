@@ -201,6 +201,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/autoPopup/AutopopupInFunExtensionReceiver.kt");
             }
 
+            @TestMetadata("FunInterface.kt")
+            public void testFunInterface() throws Exception {
+                runTest("../testData/basic/common/autoPopup/FunInterface.kt");
+            }
+
             @TestMetadata("GenericExtensionFunTypeArgument.kt")
             public void testGenericExtensionFunTypeArgument() throws Exception {
                 runTest("../testData/basic/common/autoPopup/GenericExtensionFunTypeArgument.kt");
@@ -1247,6 +1252,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/namedArguments/OnlyNamedArguments.kt");
             }
 
+            @TestMetadata("ParamsFromSingleUnapplicableOverload.kt")
+            public void testParamsFromSingleUnapplicableOverload() throws Exception {
+                runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
+            }
+
             @TestMetadata("WithParameterExpression.kt")
             public void testWithParameterExpression() throws Exception {
                 runTest("../testData/basic/common/namedArguments/WithParameterExpression.kt");
@@ -2247,6 +2257,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("EnumItemsThroughSingleTypeAlias.kt")
             public void testEnumItemsThroughSingleTypeAlias() throws Exception {
                 runTest("../testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
+            }
+
+            @TestMetadata("EnumValuesMethodLowerPriority.kt")
+            public void testEnumValuesMethodLowerPriority() throws Exception {
+                runTest("../testData/basic/common/EnumValuesMethodLowerPriority.kt");
+            }
+
+            @TestMetadata("EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt")
+            public void testEnumValuesMethodUsualPriorityWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt");
             }
 
             @TestMetadata("ExtendClassName.kt")

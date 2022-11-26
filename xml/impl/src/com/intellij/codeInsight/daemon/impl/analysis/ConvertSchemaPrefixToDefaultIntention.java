@@ -70,7 +70,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
     final ArrayList<XmlAttribute> attrs = new ArrayList<>();
     xmlns.getParent().accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         if (ns.equals(tag.getNamespacePrefix())) {
           tags.add(tag);
         }
@@ -78,7 +78,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
       }
 
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         if (value.getValue().startsWith(ns + ":")) {
           for (PsiReference ref : value.getReferences()) {
             if (ref instanceof SchemaPrefixReference && ref.isReferenceTo(prefix)) {

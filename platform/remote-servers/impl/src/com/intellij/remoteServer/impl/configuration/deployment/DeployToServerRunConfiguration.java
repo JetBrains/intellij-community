@@ -21,7 +21,6 @@ import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.AnySource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.LockedSource;
-import com.intellij.remoteServer.impl.runtime.DeployToServerState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -113,7 +112,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       throw new ExecutionException(CloudBundle.message("DeployToServerRunConfiguration.error.deployment.not.selected"));
     }
 
-    return new DeployToServerState<>(server, myDeploymentSource, myDeploymentConfiguration, env);
+    return DeployToServerStateProvider.getFirstNotNullState(server, executor, env, myDeploymentSource, myDeploymentConfiguration);
   }
 
   @Override

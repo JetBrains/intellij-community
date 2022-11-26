@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.ide.DataManager
@@ -121,8 +120,8 @@ open class DraggablePane : JPanel() {
   }
 }
 
-class RunWidgetResizePane: DraggablePane() {
-  var resizeController: RunWidgetResizeController? = null
+internal class RunWidgetResizePane: DraggablePane() {
+  private var resizeController: RunWidgetResizeController? = null
 
   private val listener = object : DragListener {
     override fun dragStarted(locationOnScreen: Point) {

@@ -241,13 +241,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
             @Override
             public void visitInsn(int opcode) {
               switch (opcode) {
-                case Opcodes.RETURN:
-                case Opcodes.IRETURN:
-                case Opcodes.FRETURN:
-                case Opcodes.ARETURN:
-                case Opcodes.LRETURN:
-                case Opcodes.DRETURN:
-                //case Opcodes.ATHROW:
+                case Opcodes.RETURN, Opcodes.IRETURN, Opcodes.FRETURN, Opcodes.ARETURN, Opcodes.LRETURN, Opcodes.DRETURN ->
                   allLineLocations.stream()
                     .filter(l -> l.lineNumber() == myLastLine)
                     .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));

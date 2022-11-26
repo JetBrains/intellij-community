@@ -1,4 +1,4 @@
-// "Import static method 'java.util.Collections.emptyList'" "true-preview"
+// "Import static method 'java.util.Collections.emptyList()'" "true-preview"
 import java.util.List;
 public class X {
     String emptyList = "";

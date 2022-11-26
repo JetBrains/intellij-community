@@ -241,6 +241,11 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
             runTest("../testData/stepping/stepInto/inlineOnly.kt");
         }
 
+        @TestMetadata("interfaces.kt")
+        public void testInterfaces() throws Exception {
+            runTest("../testData/stepping/stepInto/interfaces.kt");
+        }
+
         @TestMetadata("oneLineSuspendFunWithInline.kt")
         public void testOneLineSuspendFunWithInline() throws Exception {
             runTest("../testData/stepping/stepInto/oneLineSuspendFunWithInline.kt");
@@ -314,11 +319,6 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
         @TestMetadata("syntheticMethodsSkip.kt")
         public void testSyntheticMethodsSkip() throws Exception {
             runTest("../testData/stepping/stepInto/syntheticMethodsSkip.kt");
-        }
-
-        @TestMetadata("traits.kt")
-        public void testTraits() throws Exception {
-            runTest("../testData/stepping/stepInto/traits.kt");
         }
 
         @TestMetadata("whenExpr.kt")
@@ -426,6 +426,11 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
             @TestMetadata("asIterableInFor.kt")
             public void testAsIterableInFor() throws Exception {
                 runTest("../testData/stepping/stepOver/asIterableInFor.kt");
+            }
+
+            @TestMetadata("breakpointOnMultilineLambda.kt")
+            public void testBreakpointOnMultilineLambda() throws Exception {
+                runTest("../testData/stepping/stepOver/breakpointOnMultilineLambda.kt");
             }
 
             @TestMetadata("ifCapturedVariableKt9118.kt")
@@ -1365,6 +1370,11 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
             runTest("../testData/stepping/custom/smartStepIntoInterfaceImpl.kt");
         }
 
+        @TestMetadata("smartStepIntoLambdaWithparametersDestructuring.kt")
+        public void testSmartStepIntoLambdaWithparametersDestructuring() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoLambdaWithparametersDestructuring.kt");
+        }
+
         @TestMetadata("smartStepIntoLambdasOnManyLines.kt")
         public void testSmartStepIntoLambdasOnManyLines() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoLambdasOnManyLines.kt");
@@ -1408,6 +1418,16 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
         @TestMetadata("smartStepIntoSubClass.kt")
         public void testSmartStepIntoSubClass() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoSubClass.kt");
+        }
+
+        @TestMetadata("smartStepIntoSuspendFunInterface.kt")
+        public void testSmartStepIntoSuspendFunInterface() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoSuspendFunInterface.kt");
+        }
+
+        @TestMetadata("smartStepIntoSuspendLambda.kt")
+        public void testSmartStepIntoSuspendLambda() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoSuspendLambda.kt");
         }
 
         @TestMetadata("smartStepIntoToLambdaParameter.kt")

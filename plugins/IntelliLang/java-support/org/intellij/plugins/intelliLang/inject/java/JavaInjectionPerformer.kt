@@ -4,8 +4,6 @@ package org.intellij.plugins.intelliLang.inject.java
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.lang.injection.general.Injection
 import com.intellij.lang.injection.general.LanguageInjectionPerformer
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.ElementManipulators
@@ -15,6 +13,7 @@ import com.intellij.psi.impl.source.tree.injected.JavaConcatenationToInjectorAda
 import com.intellij.util.SmartList
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
+import org.intellij.plugins.intelliLang.inject.InjectorUtils.InjectionInfo
 
 class JavaInjectionPerformer : LanguageInjectionPerformer {
   override fun isPrimary(): Boolean = true
@@ -32,7 +31,7 @@ class JavaInjectionPerformer : LanguageInjectionPerformer {
 
     val language = injectedLanguage.language ?: return false
 
-    val trinities = SmartList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>()
+    val infos = SmartList<InjectionInfo>()
     var pendingPrefix = injectedLanguage.prefix
     for (operand in operands.slice(0 until operands.size - 1)) {
       if (operand !is PsiLanguageInjectionHost) continue
@@ -40,17 +39,17 @@ class JavaInjectionPerformer : LanguageInjectionPerformer {
                                                   pendingPrefix,
                                                   null, false) ?: continue
       pendingPrefix = ""
-      trinities.add(Trinity.create(operand, injectionPart, ElementManipulators.getValueTextRange(operand)))
+      infos.add(InjectionInfo(operand, injectionPart, ElementManipulators.getValueTextRange(operand)))
     }
 
     InjectedLanguage.create(injection.injectedLanguageId,
                             pendingPrefix,
                             injectedLanguage.suffix, false)?.let { injectionPart ->
       val operand = operands.last() as? PsiLanguageInjectionHost ?: return@let
-      trinities.add(Trinity.create(operand, injectionPart, ElementManipulators.getValueTextRange(operand)))
+      infos.add(InjectionInfo(operand, injectionPart, ElementManipulators.getValueTextRange(operand)))
     }
 
-    InjectorUtils.registerInjection(language, trinities, containingFile, registrar)
+    InjectorUtils.registerInjection(language, containingFile, infos, registrar)
 
     injection.supportId?.let { InjectorUtils.findInjectionSupport(it) }?.let {
       InjectorUtils.registerSupport(it, false, context, language)

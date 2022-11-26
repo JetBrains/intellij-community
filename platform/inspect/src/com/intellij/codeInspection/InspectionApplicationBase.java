@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionListener;
@@ -65,6 +66,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.yaml.snakeyaml.parser.ParserException;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
@@ -373,7 +375,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private static void waitAllStartupActivitiesPassed(@NotNull Project project) throws InterruptedException, ExecutionException {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     LOG.info("Waiting for startup activities");
     int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
     try {
@@ -559,7 +561,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     );
     context.setReportedProblemFilter(
       (element, descriptors) -> {
-        List<ProblemDescriptorBase> problemDescriptors = StreamEx.of(descriptors).select(ProblemDescriptorBase.class).toList();
+        List<ProblemDescriptorBase> problemDescriptors = ContainerUtil.filterIsInstance(descriptors, ProblemDescriptorBase.class);
         if (!problemDescriptors.isEmpty()) {
           ProblemDescriptorBase problemDescriptor = problemDescriptors.get(0);
           VirtualFile file = problemDescriptor.getContainingFile();
@@ -588,7 +590,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     );
     context.setReportedProblemFilter(
       (element, descriptors) -> {
-        List<ProblemDescriptorBase> any = StreamEx.of(descriptors).select(ProblemDescriptorBase.class).toList();
+        List<ProblemDescriptorBase> any = ContainerUtil.filterIsInstance(descriptors, ProblemDescriptorBase.class);
         if (!any.isEmpty()) {
           ProblemDescriptorBase problemDescriptor = any.get(0);
           String text = problemDescriptor.toString();
@@ -742,6 +744,19 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
 
     if (profilePath != null && !profilePath.isEmpty()) {
+      if (YamlInspectionProfileImpl.isYamlFile(profilePath)) {
+        if (!new File(profilePath).isFile()) {
+          throw new InspectionApplicationException("Inspection profile '" + profilePath + "' does not exist");
+        }
+        try {
+          return YamlInspectionProfileImpl.loadFrom(project, profilePath).buildEffectiveProfile();
+        }
+        catch (ParserException e) {
+          // snakeyaml doesn't provide any information about where the YAML stream comes from,
+          // its StreamReader constructor hardcodes the name to "'reader'".
+          throw new InspectionApplicationException("Parse error in '" + profilePath + "': " + e);
+        }
+      }
       InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
       if (inspectionProfile == null) {
         onFailure(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));

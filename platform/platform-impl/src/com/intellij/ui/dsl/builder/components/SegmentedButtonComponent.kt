@@ -22,6 +22,7 @@ import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -71,6 +72,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     isFocusable = true
     border = SegmentedButtonBorder()
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true)
 
     this.items = items
     addFocusListener(object : FocusListener {
@@ -133,7 +135,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     for (item in items) {
       val action = SegmentedButtonAction(this, item, renderer.invoke(item))
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
-      builder.cell(button)
+      builder.cell(button, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
     }
 
     for (listener in listenerList.getListeners(ModelListener::class.java)) {

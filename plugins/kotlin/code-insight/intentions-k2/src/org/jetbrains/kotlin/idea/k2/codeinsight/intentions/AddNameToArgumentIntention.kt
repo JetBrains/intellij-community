@@ -2,71 +2,63 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentName
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtContainerNode
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.*
 
 internal class AddNameToArgumentIntention :
-    AbstractKotlinApplicatorBasedIntention<KtValueArgument, AddArgumentNamesApplicators.SingleArgumentInput>(KtValueArgument::class),
+    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
-    override fun getApplicator() = AddArgumentNamesApplicators.singleArgumentApplicator
+
+    class Context(val argumentName: Name)
+
+    override fun getFamilyName(): String = KotlinBundle.message("add.name.to.argument")
+
+    override fun getActionName(element: KtValueArgument, context: Context): String =
+        KotlinBundle.message("add.0.to.argument", context.argumentName)
 
     override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
-    override fun getInputProvider() = inputProvider { element: KtValueArgument ->
-        val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
-        val shouldBeLastUnnamed =
-            !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
-        if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return@inputProvider null
+    override fun isApplicableByPsi(element: KtValueArgument): Boolean {
+        if (element.isNamed()) return false
 
-        val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null
-        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return@inputProvider null
+        // Not applicable when lambda is trailing lambda after argument list (e.g., `run {  }`); element is a KtLambdaArgument.
+        // Note: IS applicable when lambda is inside an argument list (e.g., `run({  })`); element is a KtValueArgument in this case.
+        if (element is KtLambdaArgument) return false
+
+        // Either mixed named arguments must be allowed or the element must be the last unnamed argument.
+        val argumentList = element.parent as? KtValueArgumentList ?: return false
+        return element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition) ||
+                element == argumentList.arguments.last { !it.isNamed() }
+    }
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtValueArgument): Context? {
+        val callElement = element.parent.parent as? KtCallElement ?: return null
+        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return null
 
         if (!resolvedCall.symbol.hasStableParameterNames) {
-            return@inputProvider null
-        }
-
-        getArgumentNameIfCanBeUsedForCalls(element, resolvedCall)?.let(AddArgumentNamesApplicators::SingleArgumentInput)
-    }
-
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement) = element is KtValueArgumentList ||
-            element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)
-
-}
-
-fun KtAnalysisSession.getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtFunctionCall<*>): Name? {
-    val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return null
-    if (valueParameterSymbol.isVararg) {
-        if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
-            !argument.isSpread
-        ) {
             return null
         }
 
-        // We can only add the parameter name for an argument for a vararg parameter if it's the ONLY argument for the parameter. E.g.,
-        //
-        //   fun foo(vararg i: Int) {}
-        //
-        //   foo(1, 2) // Can NOT add `i = ` to either argument
-        //   foo(1)    // Can change to `i = 1`
-        val varargArgumentCount = resolvedCall.argumentMapping.values.count { it.symbol == valueParameterSymbol }
-        if (varargArgumentCount != 1) {
-            return null
-        }
+        return getArgumentNameIfCanBeUsedForCalls(element, resolvedCall)?.let { Context(it) }
     }
 
-    return valueParameterSymbol.name
+    override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
+        addArgumentName(element, context.argumentName)
+
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
+        element is KtValueArgumentList || element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)
 }

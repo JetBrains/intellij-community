@@ -27,7 +27,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
   private val asyncSettingsSavingComponents = SynchronizedClearableLazy {
     val result = mutableListOf<SettingsSavingComponent>()
-    serviceContainer.processInitializedComponentsAndServices {
+    serviceContainer.processComponentsAndServices(createIfNeeded = false) {
       if (it is SettingsSavingComponent) {
         result.add(it)
       }
@@ -90,7 +90,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   }
 
   internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
-    for (bean in OBSOLETE_STORAGE_EP.iterable) {
+    for (bean in OBSOLETE_STORAGE_EP.lazySequence()) {
       if (bean.isProjectLevel != isProjectLevel) {
         continue
       }

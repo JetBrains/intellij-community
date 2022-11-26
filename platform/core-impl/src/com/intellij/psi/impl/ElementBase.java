@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -22,10 +21,10 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.PsiIconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +45,16 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return icon;
   };
 
-  private static final NotNullLazyValue<Icon> VISIBILITY_ICON_PLACEHOLDER = NotNullLazyValue.createValue(() -> IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON));
+  private static final NotNullLazyValue<Icon> VISIBILITY_ICON_PLACEHOLDER = NotNullLazyValue.createValue(() -> {
+    IconManager iconManager = IconManager.getInstance();
+    return iconManager.createEmptyIcon(iconManager.getPlatformIcon(PlatformIcons.Public));
+  });
 
   @Override
-  @Nullable
-  public Icon getIcon(int flags) {
-    if (!(this instanceof PsiElement)) return null;
+  public @Nullable Icon getIcon(int flags) {
+    if (!(this instanceof PsiElement)) {
+      return null;
+    }
 
     try {
       return computeIcon(flags);
@@ -85,7 +88,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   private static Icon doComputeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
-    final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
+    Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       if (providersIcon instanceof RowIcon) {
         return providersIcon;
@@ -127,7 +130,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         }
       }
     }
-    return AllIcons.Nodes.NodePlaceholder;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.NodePlaceholder);
   }
 
   public static boolean isNativeFileType(FileType fileType) {
@@ -145,8 +148,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return false;
   }
 
-  @NotNull
-  public static RowIcon buildRowIcon(Icon baseIcon, Icon visibilityIcon) {
+  public static @NotNull RowIcon buildRowIcon(Icon baseIcon, Icon visibilityIcon) {
     return IconManager.getInstance().createRowIcon(baseIcon, visibilityIcon);
   }
 
@@ -224,7 +226,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   public static int transformFlags(PsiElement element, @IconFlags int _flags) {
     int flags = BitUtil.clear(_flags, ICON_FLAG_READ_STATUS);
-    final boolean isLocked = BitUtil.isSet(_flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
+    boolean isLocked = BitUtil.isSet(_flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;
     return flags;
   }

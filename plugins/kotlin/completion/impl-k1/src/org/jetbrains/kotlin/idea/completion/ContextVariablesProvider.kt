@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.util.FuzzyType
 import org.jetbrains.kotlin.idea.util.fuzzyReturnType
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import java.util.*
 
@@ -35,7 +36,7 @@ class RealContextVariablesProvider(
             contextElement,
             CallTypeAndReceiver.DEFAULT,
             descriptorFilter,
-            nameFilter = { true }).map { it as VariableDescriptor }
+            nameFilter = MemberScope.ALL_NAME_FILTER).map { it as VariableDescriptor }
     }
 
     override fun functionTypeVariables(requiredType: FuzzyType): Collection<Pair<VariableDescriptor, TypeSubstitutor>> {

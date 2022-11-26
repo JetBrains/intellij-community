@@ -57,6 +57,7 @@ package org.jdom.util;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.Namespace;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -178,7 +179,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
     }
 
     @Override
-    public Iterator<Namespace> iterator() {
+    public @NotNull Iterator<Namespace> iterator() {
       return forward ? new ForwardWalker(namespaces)
                      : new BackwardWalker(namespaces);
     }
@@ -350,7 +351,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
    * @return The revised version of 'in-scope' if the scope has changed. If
    * there is no modification then the same input scope will be returned.
    */
-  private static Namespace[] checkNamespace(List<Namespace> store,
+  private static Namespace[] checkNamespace(List<? super Namespace> store,
                                             Namespace namespace, Namespace[] scope) {
     // Scope is always sorted as the primary namespace first, then the
     // rest are in prefix order.
@@ -425,7 +426,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
 
     // how many times do you add more than 8 namespaces in one go...
     // we can add more if we need to...
-    final List<Namespace> toadd = new ArrayList<Namespace>(8);
+    final List<Namespace> toadd = new ArrayList<>(8);
     final Namespace mns = element.getNamespace();
     // check to see whether the Namespace is new-to-scope.
     Namespace[] newscope = checkNamespace(toadd, mns, scope[depth]);
@@ -463,7 +464,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
    * @param att The attribute to contribute to the namespace scope.
    */
   public void push(Attribute att) {
-    final List<Namespace> toadd = new ArrayList<Namespace>(1);
+    final List<Namespace> toadd = new ArrayList<>(1);
     final Namespace mns = att.getNamespace();
     // check to see whether the Namespace is new-to-scope.
     Namespace[] newscope = checkNamespace(toadd, mns, scope[depth]);
@@ -560,7 +561,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
    * @see #push(Element) for the details on the data order.
    */
   @Override
-  public Iterator<Namespace> iterator() {
+  public @NotNull Iterator<Namespace> iterator() {
     return new ForwardWalker(scope[depth]);
   }
 

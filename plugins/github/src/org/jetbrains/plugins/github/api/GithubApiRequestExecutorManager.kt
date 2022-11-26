@@ -1,62 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.*
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
-import java.awt.Component
+import org.jetbrains.plugins.github.util.GHCompatibilityUtil
 
 /**
  * Allows to acquire API executor without exposing the auth token to external code
  */
-class GithubApiRequestExecutorManager : Disposable {
-  private val executors = mutableMapOf<GithubAccount, GithubApiRequestExecutor.WithTokenAuth>()
+@Deprecated("Use org.jetbrains.plugins.github.api.GithubApiRequestExecutor.Factory.Companion directly")
+class GithubApiRequestExecutorManager {
 
   companion object {
     @JvmStatic
     fun getInstance(): GithubApiRequestExecutorManager = service()
   }
 
-  init {
-    val accountManager = service<GHAccountManager>()
-    accountManager.addListener(this, object : AccountsListener<GithubAccount> {
-      override fun onAccountCredentialsChanged(account: GithubAccount) {
-        val token = accountManager.findCredentials(account)
-        if (token == null) executors.remove(account)
-        else executors[account]?.token = token
-      }
-    })
-  }
-
-  @RequiresEdt
+  @Deprecated("One-time use executor should not be persisted")
+  @RequiresBackgroundThread
   fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor? {
-    return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, project) }
+    val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return null
+    return Factory.getInstance().create(token)
   }
-
-  @RequiresEdt
-  fun getExecutor(account: GithubAccount, parentComponent: Component): GithubApiRequestExecutor? {
-    return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, null, parentComponent) }
-  }
-
-  @Throws(GithubMissingTokenException::class)
-  fun getExecutor(account: GithubAccount): GithubApiRequestExecutor {
-    return getOrTryToCreateExecutor(account) { throw GithubMissingTokenException(account) }!!
-  }
-
-  private fun getOrTryToCreateExecutor(account: GithubAccount,
-                                       missingTokenHandler: () -> String?): GithubApiRequestExecutor? {
-
-    return executors.getOrPut(account) {
-      (GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: missingTokenHandler())
-        ?.let(GithubApiRequestExecutor.Factory.getInstance()::create) ?: return null
-    }
-  }
-
-  override fun dispose() = Unit
 }

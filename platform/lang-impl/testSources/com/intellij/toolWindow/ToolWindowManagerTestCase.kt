@@ -2,7 +2,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -12,6 +12,7 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
@@ -33,18 +34,19 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
       project.replaceService(ToolWindowManager::class.java, manager!!, testRootDisposable)
 
       val frame = withContext(Dispatchers.EDT) {
-        val frame = ProjectFrameHelper(IdeFrameImpl(), null)
+        val frame = ProjectFrameHelper(IdeFrameImpl())
         frame.init()
         frame
       }
 
-      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), FileEditorManagerEx.getInstanceEx(project).component)
+      val reopeningEditorsJob = Job().also { it.complete() }
+      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), reopeningEditorsJob, taskListDeferred = null)
     }
   }
 
   public override fun tearDown() {
     try {
-      manager!!.projectClosed()
+      manager?.let { Disposer.dispose(it) }
       manager = null
     }
     catch (e: Throwable) {

@@ -33,7 +33,7 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
                                         @Nullable Sdk sdk,
                                         @NotNull PyConsoleType consoleType,
                                         @NotNull @NlsContexts.TabTitle String title,
-                                        @Nullable String workingDir,
+                                        @Nullable Function<TargetEnvironment, String> workingDir,
                                         @NotNull Map<String, String> environmentVariables,
                                         @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                         @NotNull PythonRunConfiguration config,

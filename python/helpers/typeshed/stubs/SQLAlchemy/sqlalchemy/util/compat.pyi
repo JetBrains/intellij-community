@@ -35,7 +35,7 @@ arm: Any
 has_refcount_gc: Any
 contextmanager = contextlib.contextmanager
 dottedgetter = operator.attrgetter
-namedtuple = collections.namedtuple  # noqa Y024
+namedtuple = collections.namedtuple  # noqa: Y024
 next = builtins.next
 
 class FullArgSpec(NamedTuple):

@@ -16,6 +16,8 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache"/>
 
@@ -49,16 +51,13 @@
 
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache"/>
 
-    <!-- just in case flag to be able to switch to an original (or close) to original behaviour -->
-    <registryKey
-            key="kotlin.caches.fine.grained.invalidation"
-            description="Allow a fine grained caches invalidation"
-            defaultValue="true"
-            restartRequired="true"/>
     <registryKey
             key="kotlin.caches.fine.grained.entity.validation"
             description="Allow a fine grained cache entity validation"
-            defaultValue="true"/>
+            defaultValue="true"
+            restartRequired="true"
+    />
+
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.project.ModulePlatformCache"/>
   </extensions>

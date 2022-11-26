@@ -5,6 +5,7 @@ import com.intellij.configurationStore.serialize
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.packaging.artifacts.ArtifactProperties
@@ -15,13 +16,12 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.ArtifactLoadingErrorDescription
-import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.FEATURE_TYPE
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
 import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.Nls
 
 internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: MutableEntityStorage) {
@@ -63,16 +63,24 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
                                  JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
   }
 
-  return ArtifactBridge(it.persistentId, entityStorage, project, null, null)
+  return ArtifactBridge(it.symbolicId, entityStorage, project, null, null)
 }
 
 private fun createInvalidArtifact(it: ArtifactEntity,
                                   entityStorage: VersionedEntityStorage,
                                   project: Project,
                                   @Nls message: String): InvalidArtifactBridge {
-  val invalidArtifactBridge = InvalidArtifactBridge(it.persistentId, entityStorage, project, null, message)
-  ProjectLoadingErrorsNotifier.getInstance(project).registerError(ArtifactLoadingErrorDescription(project, invalidArtifactBridge));
-  UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(FEATURE_TYPE, it.artifactType, JavaCompilerBundle.message("plugins.advertiser.feature.artifact"));
+  val invalidArtifactBridge = InvalidArtifactBridge(it.symbolicId, entityStorage, project, null, message)
+
+  val errorDescription = ArtifactLoadingErrorDescription(project, invalidArtifactBridge)
+  ProjectLoadingErrorsNotifier.getInstance(project).registerError(errorDescription)
+
+  UnknownFeaturesCollector.getInstance(project)
+    .registerUnknownFeature(UnknownFeature(
+      errorDescription.errorType.featureType,
+      JavaCompilerBundle.message("plugins.advertiser.feature.artifact"),
+      it.artifactType,
+    ))
   return invalidArtifactBridge
 }
 

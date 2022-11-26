@@ -9,13 +9,13 @@ import com.intellij.remoterobot.stepsProcessing.step
 import com.intellij.remoterobot.utils.waitFor
 import java.time.Duration
 
-internal fun RemoteRobot.idea(function: IdeaFrameFixture.() -> Unit) {
+fun RemoteRobot.idea(function: IdeaFrameFixture.() -> Unit) {
   find<IdeaFrameFixture>(timeout = Duration.ofSeconds(10)).apply(function)
 }
 
 @FixtureName("Idea frame")
 @DefaultXpath("IdeFrameImpl type", "//div[@class='IdeFrameImpl']")
-internal class IdeaFrameFixture(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : CommonContainerFixture(remoteRobot, remoteComponent) {
+class IdeaFrameFixture(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : CommonContainerFixture(remoteRobot, remoteComponent) {
 
   val projectViewTree
     get() = find<ContainerFixture>(byXpath("ProjectViewTree", "//div[@class='ProjectViewTree']"))

@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class JUnit5EventsTest {
@@ -38,8 +39,18 @@ public class JUnit5EventsTest {
     }
 
     @Override
+    public <T> Optional<T> get(String key, Function<String, T> transformer) {
+      return ConfigurationParameters.super.get(key, transformer);
+    }
+
+    @Override
     public int size() {
       return 0;
+    }
+
+    @Override
+    public Set<String> keySet() {
+      return null;
     }
   };
   private JUnit5TestExecutionListener myExecutionListener;
@@ -87,14 +98,14 @@ public class JUnit5EventsTest {
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor), EMPTY_PARAMETER);
     //run from class
     myExecutionListener.setRootName("testClass");
-
     myExecutionListener.testPlanExecutionStarted(testPlan);
+    myExecutionListener.setPresentableName("testClass");
 
     //engine
     myExecutionListener.executionStarted(TestIdentifier.from(engineDescriptor));
     //class
     myExecutionListener.executionStarted(TestIdentifier.from(c));
-    
+
     myExecutionListener.executionStarted(identifier);
     MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors", Arrays.asList
       (new AssertionFailedError("message1", "expected1", "actual1"),
@@ -115,8 +126,8 @@ public class JUnit5EventsTest {
                             "##teamcity[rootName name = 'testClass' location = 'java:suite://testClass']\n" +
                             "##teamcity[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/test1' metainfo='']\n" +
                             "##teamcity[testStdOut id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' out = 'timestamp = " + reportEntry.getTimestamp() +", key1 = value1, stdout = out1|n']\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message1|nComparison Failure: ' expected='expected1' actual='actual1' details='']\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message2|nComparison Failure: ' expected='expected2' actual='actual2' details='']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message1|nComparison Failure: ' expected='expected1' actual='actual1' details='TRACE']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message2|nComparison Failure: ' expected='expected2' actual='actual2' details='TRACE']\n" +
                             "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='2 errors (2 failures)|n\torg.opentest4j.AssertionFailedError: message1|n\torg.opentest4j.AssertionFailedError: message2' details='TRACE']\n" +
                             "##teamcity[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0']\n",
                             lineSeparators);
@@ -136,29 +147,32 @@ public class JUnit5EventsTest {
                                                                       jupiterConfiguration);
     engineDescriptor.addChild(classTestDescriptor);
     TestDescriptor testDescriptor = new TestFactoryTestDescriptor(classId.append("method", "testMethod"), TestClass.class,
-                                                                  TestClass.class.getDeclaredMethod("brokenStream"), 
+                                                                  TestClass.class.getDeclaredMethod("brokenStream"),
                                                                   jupiterConfiguration);
     classTestDescriptor.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
-    
+
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor), EMPTY_PARAMETER);
     myExecutionListener.setRootName("testMethod");
     myExecutionListener.setSendTree();
     myExecutionListener.testPlanExecutionStarted(testPlan);
+    myExecutionListener.setPresentableName("testMethod");
     myExecutionListener.executionStarted(identifier);
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(new IllegalStateException()));
 
-    Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
-                            "##teamcity[suiteTreeStarted id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']\n" +
-                            "##teamcity[suiteTreeEnded id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0']\n" +
-                            "##teamcity[treeEnded]\n" +
-                            "##teamcity[rootName name = 'testMethod' location = 'java:suite://testMethod']\n" +
-                            "##teamcity[testStarted  name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]'  ]\n" +
-                            "##teamcity[testFailed name='Class Configuration' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' error='true' message='' details='TRACE']\n" +
-                            "##teamcity[testFinished name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' ]\n" +
-                            "##teamcity[testSuiteFinished  id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
-  } 
-  
+    Assertions.assertEquals("""
+          ##teamcity[enteredTheMatrix]
+          ##teamcity[suiteTreeStarted id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']
+          ##teamcity[suiteTreeEnded id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0']
+          ##teamcity[treeEnded]
+          ##teamcity[rootName name = 'testMethod' location = 'java:suite://testMethod']
+          ##teamcity[testStarted  name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]'  ]
+          ##teamcity[testFailed name='Class Configuration' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' error='true' message='' details='TRACE']
+          ##teamcity[testFinished name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' ]
+          ##teamcity[testSuiteFinished  id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']
+          """, StringUtil.convertLineSeparators(myBuf.toString()));
+  }
+
   @Test
   void nestedEngines() {
     UniqueId engineId = UniqueId.forEngine("engine");
@@ -174,7 +188,7 @@ public class JUnit5EventsTest {
 
     ClassTestDescriptor testDescriptor = new ClassTestDescriptor(nestedEngineId.append("class", "testClass"), TestClass.class, jupiterConfiguration);
     nestedEngine.addChild(testDescriptor);
-    
+
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor), EMPTY_PARAMETER);
     myExecutionListener.setSendTree();
     myExecutionListener.testPlanExecutionStarted(testPlan);
@@ -182,16 +196,18 @@ public class JUnit5EventsTest {
     myExecutionListener.executionStarted(testIdentifier);
     myExecutionListener.executionFinished(testIdentifier, TestExecutionResult.successful());
 
-    Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
-                            "##teamcity[suiteTreeStarted id='|[engine:engine|]/|[suite:suiteClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[suite:suiteClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']\n" +
-                            "##teamcity[suiteTreeStarted id='|[engine:secondEngine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']\n" +
-                            "##teamcity[suiteTreeEnded id='|[engine:secondEngine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]']\n" +
-                            "##teamcity[suiteTreeEnded id='|[engine:engine|]/|[suite:suiteClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[suite:suiteClass|]' parentNodeId='0']\n" +
-                            "##teamcity[treeEnded]\n" +
-                            "##teamcity[testSuiteStarted id='|[engine:secondEngine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]'locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']\n" +
-                            "##teamcity[testSuiteFinished  id='|[engine:secondEngine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
+    Assertions.assertEquals("""
+                              ##teamcity[enteredTheMatrix]
+                              ##teamcity[suiteTreeStarted id='|[engine:engine|]/|[suite:suiteClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[suite:suiteClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']
+                              ##teamcity[suiteTreeStarted id='|[engine:secondEngine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']
+                              ##teamcity[suiteTreeEnded id='|[engine:secondEngine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]']
+                              ##teamcity[suiteTreeEnded id='|[engine:engine|]/|[suite:suiteClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[suite:suiteClass|]' parentNodeId='0']
+                              ##teamcity[treeEnded]
+                              ##teamcity[testSuiteStarted id='|[engine:secondEngine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]'locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']
+                              ##teamcity[testSuiteFinished  id='|[engine:secondEngine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]']
+                              """, StringUtil.convertLineSeparators(myBuf.toString()));
   }
-  
+
   @Test
   void containerDisabled() throws Exception {
     UniqueId engineId = UniqueId.forEngine("engine");
@@ -202,26 +218,28 @@ public class JUnit5EventsTest {
                                                                       jupiterConfiguration);
     engineDescriptor.addChild(classTestDescriptor);
     TestDescriptor testDescriptor = new TestFactoryTestDescriptor(classId.append("method", "testMethod"), TestClass.class,
-                                                                  TestClass.class.getDeclaredMethod("brokenStream"), 
+                                                                  TestClass.class.getDeclaredMethod("brokenStream"),
                                                                   jupiterConfiguration);
     classTestDescriptor.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
-    
+
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor), EMPTY_PARAMETER);
     myExecutionListener.setSendTree();
     myExecutionListener.testPlanExecutionStarted(testPlan);
     myExecutionListener.executionStarted(identifier);
     myExecutionListener.executionFinished(identifier, TestExecutionResult.aborted(null));
 
-    Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
-                            "##teamcity[suiteTreeStarted id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']\n" +
-                            "##teamcity[suiteTreeStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/brokenStream' metainfo='']\n" +
-                            "##teamcity[suiteTreeEnded id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']\n" +
-                            "##teamcity[suiteTreeEnded id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0']\n" +
-                            "##teamcity[treeEnded]\n" +
-                            "##teamcity[testSuiteStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]'locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/brokenStream' metainfo='']\n" +
-                            "##teamcity[testIgnored name='brokenStream()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']\n" +
-                            "##teamcity[testSuiteFinished  id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']\n", 
+    Assertions.assertEquals("""
+                              ##teamcity[enteredTheMatrix]
+                              ##teamcity[suiteTreeStarted id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']
+                              ##teamcity[suiteTreeStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/brokenStream' metainfo='']
+                              ##teamcity[suiteTreeEnded id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']
+                              ##teamcity[suiteTreeEnded id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0']
+                              ##teamcity[treeEnded]
+                              ##teamcity[testSuiteStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]'locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/brokenStream' metainfo='']
+                              ##teamcity[testIgnored name='brokenStream()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']
+                              ##teamcity[testSuiteFinished  id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']
+                              """,
                             StringUtil.convertLineSeparators(myBuf.toString()));
   }
 

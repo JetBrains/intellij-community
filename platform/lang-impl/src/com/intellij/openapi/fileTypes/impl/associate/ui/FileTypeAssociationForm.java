@@ -156,14 +156,14 @@ public class FileTypeAssociationForm {
   }
 
   private static boolean splitExtensions(@NotNull FileType fileType, int extCount) {
-    if (fileType instanceof OSFileIdeAssociation) {
-      OSFileIdeAssociation.ExtensionMode explicitMode = ((OSFileIdeAssociation)fileType).getExtensionMode();
-      switch (explicitMode) {
-        case Selected: return true;
-        case All: return false;
-      }
-    }
-    return extCount > DEFAULT_EXTENSION_SPLIT_THRESHOLD;
+    var extensionMode = fileType instanceof OSFileIdeAssociation type ?
+                        type.getExtensionMode() :
+                        OSFileIdeAssociation.ExtensionMode.Default;
+    return switch (extensionMode) {
+      case Selected -> true;
+      case All -> false;
+      default -> extCount > DEFAULT_EXTENSION_SPLIT_THRESHOLD;
+    };
   }
 
   private static boolean isSupported(@NotNull FileType fileType) {

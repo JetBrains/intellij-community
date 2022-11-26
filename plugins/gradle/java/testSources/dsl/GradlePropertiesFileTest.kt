@@ -66,14 +66,15 @@ class GradlePropertiesFileTest : GradleCodeInsightTestCase() {
 
   companion object {
     val PROPERTIES_FIXTURE = GradleTestFixtureBuilder.create("GradlePropertiesFileTest") {
-      withSettingsFile { setProjectName("GradlePropertiesFileTest") }
-      withBuildFile("")
+      withSettingsFile {
+        setProjectName("GradlePropertiesFileTest")
+      }
+      withBuildFile(content = "")
       withFile("gradle.properties",  /* language=properties */  """
         foo=1
         foobar=2
         foo.bar=3
-      """.trimIndent()
-      )
+      """.trimIndent())
     }
   }
 }

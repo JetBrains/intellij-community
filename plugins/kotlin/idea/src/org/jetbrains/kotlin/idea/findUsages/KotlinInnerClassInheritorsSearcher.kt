@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.java.indexing.JavaIndexingBundle
 import com.intellij.openapi.application.QueryExecutorBase
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.psi.PsiClass
@@ -13,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs

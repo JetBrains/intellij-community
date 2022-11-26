@@ -21,12 +21,10 @@ public class SaveJavaAsTemplateHandler implements SaveFileAsTemplateHandler {
       }
       PsiClass[] classes = javaFile.getClasses();
       PsiClass psiClass = null;
-      if((classes.length > 0)){
-        for (PsiClass aClass : classes) {
-          if (nameWithoutExtension.equals(aClass.getName())) {
-            psiClass = aClass;
-            break;
-          }
+      for (PsiClass aClass : classes) {
+        if (nameWithoutExtension.equals(aClass.getName())) {
+          psiClass = aClass;
+          break;
         }
       }
       if(psiClass != null){

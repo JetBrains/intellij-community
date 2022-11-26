@@ -12,8 +12,8 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.application
 import com.intellij.util.ui.VcsExecutablePathSelector
 import git4idea.GitVcs
@@ -49,7 +49,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
 
   private fun Panel.createRow() = row {
     cell(pathSelector.mainPanel)
-      .horizontalAlign(HorizontalAlign.FILL)
+      .align(AlignX.FILL)
       .onReset {
         resetPathSelector()
       }

@@ -54,6 +54,9 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
                     interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.flavourProvider"
+                    interface="org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -325,6 +328,8 @@ Includes the following features:</p>
     <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
+    <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>
+
     <intentionAction>
       <language>Markdown</language>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
@@ -346,13 +351,21 @@ Includes the following features:</p>
                      enabledByDefault="true"
                      implementationClass="org.intellij.plugins.markdown.editor.toc.OutdatedTableOfContentsInspection"/>
 
+    <localInspection language="Markdown"
+                     shortName="MarkdownLinkDestinationWithSpaces"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.link.destination.with.spaces.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection"/>
+
     <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 
     <registryKey key="markdown.clear.cache.interval"
                  defaultValue="600000"
                  description="Interval in milliseconds defining how often Markdown plugin caches (e.g. PlantUML diagrams) should be cleared"/>
     <registryKey key="markdown.plantuml.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2021.12-3.jar"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2022.7-5.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
     <registryKey key="markdown.mermaid.download.link"
                  defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-9.1.3-6.js"
@@ -397,7 +410,7 @@ Includes the following features:</p>
                               Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
 
     <registryKey key="markdown.experimental.frontmatter.support.enable"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enables experimental front matter support"
                  restartRequired="true"/>
 
@@ -411,6 +424,7 @@ Includes the following features:</p>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
+    <iconMapper mappingFile="MarkdownCoreIconMappings.json"/>
   </extensions>
 
   <applicationListeners>
@@ -433,17 +447,21 @@ Includes the following features:</p>
     <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
 
     <!--suppress PluginXmlValidity -->
-    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+    <fenceGeneratingProvider order="last"
+                             implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
 
-    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
-    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
+    <fenceLanguageProvider id="DefaultMermaidCodeFenceLanguageProvider"
+                           implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
+    <browserPreviewExtensionProvider id="DefaultMermaidBrowserExtensionProvider"
+                                     implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
     <!--suppress PluginXmlValidity -->
-    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+    <fenceGeneratingProvider id="DefaultMermaidCodeGeneratingProviderExtension"
+                             implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
 

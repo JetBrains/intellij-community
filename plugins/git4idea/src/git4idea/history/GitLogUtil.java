@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
-import com.intellij.diagnostic.opentelemetry.TraceManager;
-import com.intellij.diagnostic.telemetry.TraceKt;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -23,8 +22,6 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.util.*;
 
+import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal
@@ -173,13 +171,13 @@ public final class GitLogUtil {
       handler.addParameters("--decorate=full");
       handler.endOptions();
 
-      Span span =
-        TraceManager.INSTANCE.getTracer("vcs").spanBuilder("loading commit metadata").setAttribute("rootName", root.getName()).startSpan();
-      GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);
-      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
-      handlerListener.reportErrors();
+      runWithSpanThrows(TraceManager.INSTANCE.getTracer("vcs"), "loading commit metadata", span -> {
+        span.setAttribute("rootName", root.getName());
 
-      span.end();
+        GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);
+        Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
+        handlerListener.reportErrors();
+      });
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {

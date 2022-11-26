@@ -8,6 +8,10 @@
     <extensionPoint
             qualifiedName="com.intellij.newProjectWizard.kotlin.buildSystem"
             interface="org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard" dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.projectTemplatesProvider"
+            interface="org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

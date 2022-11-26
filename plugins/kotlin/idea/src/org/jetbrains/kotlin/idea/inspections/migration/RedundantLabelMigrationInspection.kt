@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -23,7 +24,7 @@ class RedundantLabelMigrationInspection :
 
     override fun descriptionMessage(): String = KotlinBundle.message("inspection.redundant.label.text")
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtElement, *>
-        get() = Errors.REDUNDANT_LABEL_WARNING
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtElement, *> =
+        Errors.REDUNDANT_LABEL_WARNING
 }
 

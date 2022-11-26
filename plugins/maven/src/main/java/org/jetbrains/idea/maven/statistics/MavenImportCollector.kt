@@ -4,10 +4,12 @@ package org.jetbrains.idea.maven.statistics
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MavenImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("maven.import", 4)
+    val GROUP = EventLogGroup("maven.import", 8)
 
     @JvmField
     val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
@@ -36,6 +38,9 @@ class MavenImportCollector : CounterUsagesCollector() {
     val LEGACY_IMPORTERS_PHASE = GROUP.registerIdeActivity("importers", parentActivity = LEGACY_IMPORT)
     // <<< Legacy import phases
 
+    @JvmField
+    val ACTIVITY_ID = EventFields.IdeActivityIdField
+
     // >>> Workspace import phases
     @JvmField
     val WORKSPACE_IMPORT = GROUP.registerIdeActivity("workspace_import",
@@ -47,6 +52,22 @@ class MavenImportCollector : CounterUsagesCollector() {
 
     @JvmField
     val WORKSPACE_POPULATE_PHASE = GROUP.registerIdeActivity("populate", parentActivity = WORKSPACE_IMPORT)
+
+    @JvmField
+    val DURATION_BACKGROUND_MS = EventFields.Long("duration_in_background_ms")
+
+    @JvmField
+    val DURATION_WRITE_ACTION_MS = EventFields.Long("duration_in_write_action_ms")
+
+    @JvmField
+    val DURATION_OF_WORKSPACE_UPDATE_CALL_MS = EventFields.Long("duration_of_workspace_update_call_ms")
+
+    @JvmField
+    val ATTEMPTS = EventFields.Int("attempts")
+
+    @JvmField
+    val WORKSPACE_COMMIT_STATS = GROUP.registerVarargEvent("workspace_commit", ACTIVITY_ID, DURATION_BACKGROUND_MS,
+                                                           DURATION_WRITE_ACTION_MS, DURATION_OF_WORKSPACE_UPDATE_CALL_MS, ATTEMPTS)
 
     @JvmField
     val WORKSPACE_COMMIT_PHASE = GROUP.registerIdeActivity("commit", parentActivity = WORKSPACE_IMPORT)
@@ -74,13 +95,14 @@ class MavenImportCollector : CounterUsagesCollector() {
     val IMPORTER_CLASS = EventFields.Class("importer_class")
 
     @JvmField
-    val IMPORTER_RUN = GROUP.registerEvent("importer_run", IMPORTER_CLASS, NUMBER_OF_MODULES, TOTAL_DURATION_MS)
+    val IMPORTER_RUN = GROUP.registerVarargEvent("importer_run", ACTIVITY_ID, IMPORTER_CLASS, NUMBER_OF_MODULES, TOTAL_DURATION_MS)
 
     @JvmField
     val CONFIGURATOR_CLASS = EventFields.Class("configurator_class")
 
     @JvmField
     val CONFIGURATOR_RUN = GROUP.registerVarargEvent("workspace_import.configurator_run",
+                                                     ACTIVITY_ID,
                                                      CONFIGURATOR_CLASS,
                                                      NUMBER_OF_MODULES,
                                                      TOTAL_DURATION_MS,

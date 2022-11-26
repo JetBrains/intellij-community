@@ -1,11 +1,13 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -17,13 +19,16 @@ interface MainEntityToParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MainEntityToParent, ModifiableWorkspaceEntity<MainEntityToParent>, ObjBuilder<MainEntityToParent> {
+  interface Builder : MainEntityToParent, WorkspaceEntity.Builder<MainEntityToParent>, ObjBuilder<MainEntityToParent> {
     override var entitySource: EntitySource
     override var child: AttachedEntityToParent?
     override var x: String
   }
 
   companion object : Type<MainEntityToParent, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntityToParent {
       val builder = builder()
       builder.x = x
@@ -46,12 +51,15 @@ interface AttachedEntityToParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AttachedEntityToParent, ModifiableWorkspaceEntity<AttachedEntityToParent>, ObjBuilder<AttachedEntityToParent> {
+  interface Builder : AttachedEntityToParent, WorkspaceEntity.Builder<AttachedEntityToParent>, ObjBuilder<AttachedEntityToParent> {
     override var entitySource: EntitySource
     override var data: String
   }
 
   companion object : Type<AttachedEntityToParent, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntityToParent {
       val builder = builder()
       builder.data = data

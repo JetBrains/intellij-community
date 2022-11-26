@@ -6,18 +6,21 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Companion.invertSelectorFunction
+import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
@@ -44,9 +47,10 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         val defaultRange =
             TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
         if (newName != null && (notNullType || safeExpression != null)) {
-            val fixes = listOf(RenameUselessCallFix(newName)) + listOfNotNull(safeExpression?.let {
-                IntentionWrapper(ReplaceWithDotCallFix(safeExpression))
-            })
+            val fixes = listOfNotNull(
+                createRenameUselessCallFix(expression, newName, context),
+                safeExpression?.let { IntentionWrapper(ReplaceWithDotCallFix(safeExpression)) }
+            )
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
                 defaultRange,
@@ -82,6 +86,27 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         val dataFlowValue = dataFlowValueFactory.createDataFlowValue(this, type, context, findModuleDescriptor())
         val stableNullability = context.getDataFlowInfoBefore(this).getStableNullability(dataFlowValue)
         return !stableNullability.canBeNull()
+    }
+
+    private fun createRenameUselessCallFix(
+        expression: KtQualifiedExpression,
+        newFunctionName: String,
+        context: BindingContext
+    ): RenameUselessCallFix {
+        if (expression.parent.safeAs<KtPrefixExpression>()?.operationToken != KtTokens.EXCL) {
+            return RenameUselessCallFix(newFunctionName, invert = false)
+        }
+
+        val copy = expression.copy().safeAs<KtQualifiedExpression>()?.apply {
+            callExpression?.calleeExpression?.replace(KtPsiFactory(expression.project).createExpression(newFunctionName))
+        }
+        val newContext = copy?.analyzeAsReplacement(expression, context)
+        val invertedName = copy?.invertSelectorFunction(newContext)?.callExpression?.calleeExpression?.text
+        return if (invertedName != null) {
+            RenameUselessCallFix(invertedName, invert = true)
+        } else {
+            RenameUselessCallFix(newFunctionName, invert = false)
+        }
     }
 }
 

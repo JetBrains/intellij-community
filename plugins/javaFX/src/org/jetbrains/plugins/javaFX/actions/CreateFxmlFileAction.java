@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -80,7 +81,7 @@ public final class CreateFxmlFileAction extends CreateFromTemplateActionBase {
         VirtualFile vDirectory = psiDirectory.getVirtualFile();
         ProjectFileIndex index = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
         if (index.isInSourceContent(vDirectory)) {
-          return index.getPackageNameByDirectory(vDirectory);
+          return PackageIndex.getInstance(file.getProject()).getPackageNameByDirectory(vDirectory);
         }
       }
       return null;

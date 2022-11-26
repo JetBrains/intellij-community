@@ -22,9 +22,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 
-/**
- * @author peter
- */
 public class LangIndentSelectionAction extends IndentSelectionAction {
 
   @Override

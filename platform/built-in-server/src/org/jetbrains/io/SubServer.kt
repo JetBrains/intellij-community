@@ -4,7 +4,6 @@ package org.jetbrains.io
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.io.serverBootstrap
 import com.intellij.util.net.loopbackSocketAddress
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandler
@@ -17,7 +16,8 @@ import org.jetbrains.ide.CustomPortServerManager
 import org.jetbrains.ide.XmlRpcServerImpl
 import java.net.InetSocketAddress
 
-internal class SubServer(private val user: CustomPortServerManager, private val server: BuiltInServer) : CustomPortServerManager.CustomPortService, Disposable {
+internal class SubServer(private val user: CustomPortServerManager,
+                         private val server: BuiltInServer) : CustomPortServerManager.CustomPortService, Disposable {
   private var channelRegistrar: ChannelRegistrar? = null
 
   override val isBound: Boolean
@@ -37,7 +37,7 @@ internal class SubServer(private val user: CustomPortServerManager, private val 
       channelRegistrar = ChannelRegistrar()
     }
 
-    val bootstrap = serverBootstrap(server.eventLoopGroup)
+    val bootstrap = server.createServerBootstrap()
     val xmlRpcHandlers = user.createXmlRpcHandlers()
     if (xmlRpcHandlers == null) {
       BuiltInServer.configureChildHandler(bootstrap, channelRegistrar!!, null)
@@ -85,13 +85,13 @@ internal class SubServer(private val user: CustomPortServerManager, private val 
 }
 
 @ChannelHandler.Sharable
-private class XmlRpcDelegatingHttpRequestHandler internal constructor(private val handlers: Map<String, Any>) : DelegatingHttpRequestHandlerBase() {
+private class XmlRpcDelegatingHttpRequestHandler(private val handlers: Map<String, Any>) : DelegatingHttpRequestHandlerBase() {
   override fun process(context: ChannelHandlerContext, request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
     if (handlers.isEmpty()) {
       // not yet initialized, for example, P2PTransport could add handlers after we bound.
       return false
     }
 
-    return request.method() === HttpMethod.POST && XmlRpcServerImpl.getInstance().process(urlDecoder.path(), request, context, handlers)
+    return request.method() == HttpMethod.POST && XmlRpcServerImpl.getInstance().process(urlDecoder.path(), request, context, handlers)
   }
 }

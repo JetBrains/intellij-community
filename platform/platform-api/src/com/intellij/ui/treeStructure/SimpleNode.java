@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
@@ -22,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class SimpleNode extends PresentableNodeDescriptor implements ComparableObject, LeafState.Supplier {
+public abstract class SimpleNode extends PresentableNodeDescriptor<Object> implements ComparableObject, LeafState.Supplier {
 
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
 
@@ -40,7 +39,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   @Override
-  public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+  public SimpleNode getChildToHighlightAt(int index) {
     return getChildAt(index);
   }
 
@@ -48,6 +47,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     super(null, null);
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -63,10 +63,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
 
   protected SimpleTextAttributes getPlainAttributes() {
     return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor());
-  }
-
-  private FileStatus getFileStatus() {
-    return FileStatus.NOT_CHANGED;
   }
 
   @Nullable
@@ -88,7 +84,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     List<ColoredFragment> oldFragments = new ArrayList<>(presentation.getColoredText());
 
     myColor = UIUtil.getTreeForeground();
-    updateFileStatus();
 
     doUpdate();
 
@@ -102,20 +97,11 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     presentation.setIcon(getIcon());
   }
 
-  protected void updateFileStatus() {
-    assert getFileStatus() != null : getClass().getName() + ' ' + toString();
-
-    Color fileStatusColor = getFileStatus().getColor();
-    if (fileStatusColor != null) {
-      myColor = fileStatusColor;
-    }
-  }
-
   /**
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void setNodeText(String text, String tooltip, boolean hasError) {
     clearColoredText();
     SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
@@ -126,18 +112,9 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void setPlainText(String aText) {
     clearColoredText();
-    addPlainText(aText);
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated(forRemoval = true)
-  public final void addPlainText(String aText) {
     getTemplatePresentation().addText(new ColoredFragment(aText, getPlainAttributes()));
   }
 
@@ -145,7 +122,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void clearColoredText() {
     getTemplatePresentation().clearText();
   }
@@ -154,7 +131,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
     addColoredFragment(aText, null, aAttributes);
   }
@@ -163,7 +140,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
     getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
   }
@@ -191,10 +168,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   public abstract SimpleNode @NotNull [] getChildren();
-
-  public void accept(@NotNull SimpleNodeVisitor visitor) {
-    visitor.accept(this);
-  }
 
   public void handleSelection(SimpleTree tree) {
   }
@@ -248,11 +221,12 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return getChildren()[i];
   }
 
-
+  @Override
   public final boolean equals(Object o) {
     return ComparableObjectCheck.equals(this, o);
   }
 
+  @Override
   public final int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }

@@ -9,12 +9,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentsOfType
+import com.intellij.util.asSafely
 import com.intellij.util.text.CharArrayUtil
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -23,6 +29,17 @@ val KtClassOrObject.classIdIfNonLocal: ClassId?
         val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
         if (classesNames.any { it == null }) return null
         return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
+    }
+
+val KtCallableDeclaration.callableIdIfNotLocal: CallableId?
+    get() {
+        val callableName = this.nameAsName ?: return null
+        if (isTopLevelInFileOrScript(this)) {
+            return CallableId(containingKtFile.packageFqName, callableName)
+        }
+
+        val classId = containingClassOrObject?.classIdIfNonLocal ?: return null
+        return CallableId(classId, callableName)
     }
 
 fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int): PsiElement? {
@@ -134,3 +151,69 @@ fun KtPropertyAccessor.deleteBody() {
     val leftParenthesis = leftParenthesis ?: return
     deleteChildRange(leftParenthesis, lastChild)
 }
+
+fun KtDeclarationWithBody.singleExpressionBody(): KtExpression? =
+    when (val body = bodyExpression) {
+        is KtBlockExpression -> body.statements.singleOrNull()?.asSafely<KtReturnExpression>()?.returnedExpression
+        else -> body
+    }
+
+fun KtNamedDeclaration.isConstructorDeclaredProperty(): Boolean =
+    this is KtParameter && ownerFunction is KtPrimaryConstructor && hasValOrVar()
+
+fun KtExpression.getCallChain(): List<KtExpression> =
+    generateSequence(this) { (it as? KtDotQualifiedExpression)?.receiverExpression }
+        .map { (it as? KtDotQualifiedExpression)?.selectorExpression ?: it }
+        .toList()
+        .reversed()
+
+fun KtCallExpression.getContainingValueArgument(expression: KtExpression): KtValueArgument? {
+    fun KtElement.deparenthesizeStructurally(): KtElement? {
+        val deparenthesized = if (this is KtExpression) KtPsiUtil.deparenthesizeOnce(this) else this
+        return when {
+            deparenthesized != this -> deparenthesized
+            this is KtLambdaExpression -> this.functionLiteral
+            this is KtFunctionLiteral -> this.bodyExpression
+            else -> null
+        }
+    }
+
+    for (valueArgument in valueArguments) {
+        val argumentExpression = valueArgument.getArgumentExpression() ?: continue
+        val candidates = generateSequence<KtElement>(argumentExpression) { it.deparenthesizeStructurally() }
+        if (expression in candidates) {
+            return valueArgument
+        }
+    }
+
+    return null
+}
+
+fun KtClass.mustHaveNonEmptyPrimaryConstructor(): Boolean =
+    isData() || isInlineOrValue()
+
+fun KtClass.mustHaveOnlyPropertiesInPrimaryConstructor(): Boolean =
+    isData() || isAnnotation() || isInlineOrValue()
+
+fun KtClass.mustHaveOnlyValPropertiesInPrimaryConstructor(): Boolean =
+    isAnnotation() || isInlineOrValue()
+
+fun KtClass.isInlineOrValue(): Boolean =
+    isInline() || isValue()
+
+fun KtModifierListOwner.hasInlineModifier(): Boolean =
+    hasModifier(KtTokens.INLINE_KEYWORD)
+
+fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
+    containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
+
+fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
+    sequence {
+        suspend fun SequenceScope<PsiElement>.visit(element: PsiElement) {
+            element.children.forEach { visit(it) }
+            yield(element)
+        }
+        visit(this@childrenDfsSequence)
+    }
+
+fun KtExpression.isAnnotationArgument(): Boolean = this.parents.any { it is KtAnnotationEntry }

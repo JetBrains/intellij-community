@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -9,35 +9,29 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackagesPaneSelectInTarget;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
-import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +39,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 
-public class PackageViewPane extends AbstractProjectViewPSIPane {
+public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   @NonNls public static final String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
@@ -117,26 +113,29 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return super.getSlowDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   @Override
-  public PsiDirectory @NotNull [] getSelectedDirectories() {
+  protected PsiDirectory @NotNull [] getSelectedDirectories(Object @NotNull[] objects) {
     List<PsiDirectory> directories = new ArrayList<>();
-    for (PackageElementNode node : getSelectedNodes(PackageElementNode.class)) {
-      PackageElement packageElement = node.getValue();
-      PsiPackage aPackage = packageElement != null ? packageElement.getPackage() : null;
-      final Module module = packageElement != null ? packageElement.getModule() : null;
-      if (aPackage != null && module != null) {
-        GlobalSearchScope scope = GlobalSearchScope.moduleScope(module);
-        Collections.addAll(directories, aPackage.getDirectories(scope));
-
-        if (Registry.is("projectView.choose.directory.on.compacted.middle.packages")) {
-          Object parentValue = node.getParent().getValue();
-          PsiPackage parentNodePackage = parentValue instanceof PackageElement ? ((PackageElement)parentValue).getPackage() : null;
-          while (true) {
-            aPackage = aPackage.getParentPackage();
-            if (aPackage == null || aPackage.getQualifiedName().isEmpty() || aPackage.equals(parentNodePackage)) {
-              break;
+    for (Object obj : objects) {
+      PackageElementNode node = ObjectUtils.tryCast(obj, PackageElementNode.class);
+      if (node != null) {
+        PackageElement packageElement = node.getValue();
+        PsiPackage aPackage = packageElement != null ? packageElement.getPackage() : null;
+        final Module module = packageElement != null ? packageElement.getModule() : null;
+        if (aPackage != null && module != null) {
+          GlobalSearchScope scope = GlobalSearchScope.moduleScope(module);
+          Collections.addAll(directories, aPackage.getDirectories(scope));
+          if (Registry.is("projectView.choose.directory.on.compacted.middle.packages")) {
+            Object parentValue = node.getParent().getValue();
+            PsiPackage parentNodePackage = parentValue instanceof PackageElement ? ((PackageElement)parentValue).getPackage() : null;
+            while (true) {
+              aPackage = aPackage.getParentPackage();
+              if (aPackage == null || aPackage.getQualifiedName().isEmpty() || aPackage.equals(parentNodePackage)) {
+                break;
+              }
+              Collections.addAll(directories, aPackage.getDirectories(scope));
             }
-            Collections.addAll(directories, aPackage.getDirectories(scope));
           }
         }
       }
@@ -144,14 +143,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     if (!directories.isEmpty()) {
       return directories.toArray(PsiDirectory.EMPTY_ARRAY);
     }
-
-    return super.getSelectedDirectories();
-  }
-
-  @NotNull
-  @Override
-  protected AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder) {
-    return new PackageViewTreeUpdater(treeBuilder);
+    return super.getSelectedDirectories(objects);
   }
 
   @NotNull
@@ -200,95 +192,27 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return myProject;
   }
 
-  private final class PackageViewTreeUpdater extends AbstractTreeUpdater {
-    private PackageViewTreeUpdater(final AbstractTreeBuilder treeBuilder) {
-      super(treeBuilder);
-    }
-
-    @Override
-    public boolean addSubtreeToUpdateByElement(@NotNull Object element) {
-      // should convert PsiDirectories into PackageElements
-      if (element instanceof PsiDirectory) {
-        PsiDirectory dir = (PsiDirectory)element;
-        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-        if (ProjectView.getInstance(getProject()).isShowModules(getId())) {
-          Module[] modules = getModulesFor(dir);
-          boolean rv = false;
-          for (Module module : modules) {
-            rv |= addPackageElementToUpdate(aPackage, module);
-          }
-          return rv;
-        }
-        else {
-          return addPackageElementToUpdate(aPackage, null);
-        }
-      }
-
-      return super.addSubtreeToUpdateByElement(element);
-    }
-
-    private boolean addPackageElementToUpdate(final PsiPackage aPackage, Module module) {
-      final ProjectTreeStructure packageTreeStructure = (ProjectTreeStructure)getTreeStructure();
-      PsiPackage packageToUpdateFrom = aPackage;
-      if (!packageTreeStructure.isFlattenPackages() && packageTreeStructure.isHideEmptyMiddlePackages()) {
-        // optimization: this check makes sense only if flattenPackages == false && HideEmptyMiddle == true
-        while (packageToUpdateFrom != null && packageToUpdateFrom.isValid() && PackageUtil.isPackageEmpty(packageToUpdateFrom, module, true, false)) {
-          packageToUpdateFrom = packageToUpdateFrom.getParentPackage();
-        }
-      }
-      boolean addedOk;
-      while (!(addedOk = super.addSubtreeToUpdateByElement(getTreeElementToUpdateFrom(packageToUpdateFrom, module)))) {
-        if (packageToUpdateFrom == null) {
-          break;
-        }
-        packageToUpdateFrom = packageToUpdateFrom.getParentPackage();
-      }
-      return addedOk;
-    }
-
-    @NotNull
-    private Object getTreeElementToUpdateFrom(PsiPackage packageToUpdateFrom, Module module) {
-      if (packageToUpdateFrom == null || !packageToUpdateFrom.isValid() || packageToUpdateFrom.getQualifiedName().isEmpty()) {
-        return module == null ? getTreeStructure().getRootElement() : module;
-      }
-      else {
-        return new PackageElement(module, packageToUpdateFrom, false);
-      }
-    }
-
-    private Module[] getModulesFor(PsiDirectory dir) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-      final VirtualFile vFile = dir.getVirtualFile();
-      final Set<Module> modules = new HashSet<>();
-      final Module module = fileIndex.getModuleForFile(vFile);
-      if (module != null) {
-        modules.add(module);
-      }
-      if (fileIndex.isInLibrary(vFile)) {
-        final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-        if (orderEntries.isEmpty()) {
-          return Module.EMPTY_ARRAY;
-        }
-        for (OrderEntry entry : orderEntries) {
-          modules.add(entry.getOwnerModule());
-        }
-      }
-      return modules.toArray(Module.EMPTY_ARRAY);
-    }
-  }
-
   private final class MyDeletePSIElementProvider implements DeleteProvider {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      for (PsiDirectory directory : getSelectedDirectories()) {
-        if (!directory.getManager().isInProject(directory)) return false;
+      Object[] objs = PlatformCoreDataKeys.SELECTED_ITEMS.getData(dataContext);
+      if (objs != null && objs.length > 0) {
+        for (PsiDirectory directory : getSelectedDirectories(objs)) {
+          if (!directory.getManager().isInProject(directory)) return false;
+        }
       }
       return true;
     }
 
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      PsiDirectory[] allElements = getSelectedDirectories();
+      Object[] objs = PlatformCoreDataKeys.SELECTED_ITEMS.getData(dataContext);
+      PsiDirectory[] allElements = objs != null ? getSelectedDirectories(objs) : PsiDirectory.EMPTY_ARRAY;
       List<PsiElement> validElements = new ArrayList<>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
@@ -303,11 +227,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
         a.finish();
       }
     }
-  }
-
-  @Override
-  protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel model) {
-    return null;
   }
 
   @Override

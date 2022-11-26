@@ -2,7 +2,6 @@
 // WITH_STDLIB
 // ERROR: JvmField has no effect on a private property
 // ACTION: Convert to lazy property
-// ACTION: Add 'const' modifier
 // ACTION: Make internal
 // ACTION: Make public
 // ACTION: Specify type explicitly

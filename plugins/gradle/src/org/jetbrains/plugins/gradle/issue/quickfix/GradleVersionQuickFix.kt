@@ -27,7 +27,6 @@ import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import org.gradle.internal.impldep.com.google.common.base.Charsets
 import org.gradle.internal.util.PropertiesUtils
-import org.gradle.util.GUtil
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperExecutor
 import org.jetbrains.annotations.ApiStatus
@@ -101,8 +100,9 @@ class GradleVersionQuickFix(private val projectPath: String,
         wrapperProperties[WrapperExecutor.ZIP_STORE_PATH_PROPERTY] = "wrapper/dists"
       }
       else {
-        val inputStream = wrapperPropertiesFile.inputStream()
-        wrapperProperties = GUtil.loadProperties(inputStream)
+        wrapperProperties = wrapperPropertiesFile.inputStream().use { stream ->
+          Properties().also { it.load(stream) }
+        }
         wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
       }
 

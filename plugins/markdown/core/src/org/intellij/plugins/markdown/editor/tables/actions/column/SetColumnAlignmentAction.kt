@@ -10,6 +10,7 @@ import com.intellij.openapi.command.executeCommand
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.updateColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 internal abstract class SetColumnAlignmentAction(private val alignment: MarkdownTableSeparatorRow.CellAlignment): ToggleAction() {
@@ -20,10 +21,15 @@ internal abstract class SetColumnAlignmentAction(private val alignment: Markdown
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
     val offset = event.getData(CommonDataKeys.CARET)?.offset
-    if (editor == null || file == null || offset == null) {
+
+    if (editor == null
+        || file == null
+        || offset == null
+        || !file.language.isMarkdownLanguage()) {
       event.presentation.isEnabledAndVisible = false
       return false
     }
+
     val document = editor.document
     val (table, columnIndex) = ColumnBasedTableAction.findTableAndIndex(event, file, document, offset)
     event.presentation.isEnabledAndVisible = table?.hasCorrectBorders() == true

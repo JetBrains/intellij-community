@@ -78,9 +78,24 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../completion/testData/basic/multifile/EntriesOfNotImportedEnumFromKotlin/");
     }
 
+    @TestMetadata("EnumCompanionMethods")
+    public void testEnumCompanionMethods() throws Exception {
+        runTest("../completion/testData/basic/multifile/EnumCompanionMethods/");
+    }
+
     @TestMetadata("EnumEntry")
     public void testEnumEntry() throws Exception {
         runTest("../completion/testData/basic/multifile/EnumEntry/");
+    }
+
+    @TestMetadata("EnumValuesMethodJavaUsualPriorityWhenFeatureDisabled")
+    public void testEnumValuesMethodJavaUsualPriorityWhenFeatureDisabled() throws Exception {
+        runTest("../completion/testData/basic/multifile/EnumValuesMethodJavaUsualPriorityWhenFeatureDisabled/");
+    }
+
+    @TestMetadata("EnumValuesMethodLowerPriorityJava")
+    public void testEnumValuesMethodLowerPriorityJava() throws Exception {
+        runTest("../completion/testData/basic/multifile/EnumValuesMethodLowerPriorityJava/");
     }
 
     @TestMetadata("ExactMatchPreferImported")

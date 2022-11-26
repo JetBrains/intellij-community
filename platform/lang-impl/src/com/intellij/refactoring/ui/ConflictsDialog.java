@@ -75,7 +75,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
   /**
    * @deprecated use other CTORs
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
     myProject = project;

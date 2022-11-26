@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer;
  * <li>override {@link #dispose()} method in your implementation and place your cleanup logic there</li>
  * <li>register the instance in {@link Disposer}</li>
  * </ul>
- * After that, when the parent {@link Disposable} object is disposed (e.g., the project is closed or a window hidden), the {@link #dispose()} method in your impementation will be called automatically by the platform.
+ * After that, when the parent {@link Disposable} object is disposed (e.g., the project is closed or a window hidden), the {@link #dispose()} method in your implementation will be called automatically by the platform.
  * <p>
  * As a general policy, you shouldn't call the {@link #dispose()} method directly,
  * Instead, register your object in the {@link Disposer} hierarchy of disposable objects via
@@ -31,6 +31,12 @@ public interface Disposable {
    * Usually not invoked directly, see class javadoc.
    */
   void dispose();
+
+  interface Default extends Disposable {
+
+    @Override
+    default void dispose() { }
+  }
 
   interface Parent extends Disposable {
     /**

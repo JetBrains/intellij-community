@@ -14,9 +14,9 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader
@@ -55,8 +55,8 @@ internal fun convertToJavadocUrl(originalPath: String,
       if (jarJavadocPath.startsWith(EclipseXml.PLATFORM_PROTOCOL)) {
         val relativeToPlatform = jarJavadocPath.substring(EclipseXml.PLATFORM_PROTOCOL.length + "resource".length) // starts with leading /
         val currentRoot = moduleEntity.mainContentRoot?.url?.virtualFile
-        val basePath = currentRoot?.parent?.path ?:
-                       JpsPathUtil.urlToPath((moduleEntity.entitySource as EclipseProjectFile).internalSource.projectLocation.baseDirectoryUrl.url)
+        val basePath = currentRoot?.parent?.path ?: JpsPathUtil.urlToPath(
+          (moduleEntity.entitySource as EclipseProjectFile).internalSource.projectLocation.baseDirectoryUrl.url)
         val currentModulePath = basePath + relativeToPlatform
         if (EJavadocUtil.isJarFileExist(currentModulePath)) {
           return virtualUrlManager.fromUrl(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, currentModulePath))

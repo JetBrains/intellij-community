@@ -1,11 +1,11 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::{mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
 use log::{debug, error, info};
-use crate::{err_from_string, errors};
-use crate::errors::{LauncherError, Result};
+use anyhow::{bail, Context, Result};
 
 #[cfg(target_os = "linux")] use {
     std::thread::sleep,
@@ -18,8 +18,7 @@ use crate::errors::{LauncherError, Result};
 };
 
 #[cfg(target_os = "windows")] use {
-    crate::utils::canonical_non_unc,
-    crate::utils::PathExt,
+    utils::{canonical_non_unc, PathExt},
     std::env
 };
 
@@ -110,7 +109,16 @@ unsafe fn prepare_jni_env(
     };
     debug!("Create VM result={create_jvm_result}");
 
-    errors::JniError::check_result(create_jvm_result)?;
+    match create_jvm_result {
+        jni_sys::JNI_OK => { debug!("JNI_OK: succesfully created JNI env") }
+        jni_sys::JNI_ERR => bail!("JNI_ERR: unknown error"),
+        jni_sys::JNI_EDETACHED => bail!("JNI_EDETACHED: thread is not attached to JVM"),
+        jni_sys::JNI_EVERSION => bail!("JNI_EVERSION: wrong JNI version"),
+        jni_sys::JNI_ENOMEM => bail!("JNI_ENOMEM: no enought memory"),
+        jni_sys::JNI_EEXIST => bail!("JNI_EEXIST: JVM already exists"),
+        jni_sys::JNI_EINVAL => bail!("JNI_EINVAL? invalid arguments"),
+        i => bail!("Other: {i}"),
+    }
 
     let jni_env = unsafe {
         jni::JNIEnv::from_raw(jni_env)?
@@ -134,16 +142,18 @@ pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result
 
     let method_call_args = vec![JValue::from(main_args)];
 
-    debug!("Calling IntelliJ main");
+    let args_string = args.join(", ");
+    debug!("Calling IntelliJ main, args: {args_string}");
     match jni_env.call_static_method("com/intellij/idea/Main", "main", "([Ljava/lang/String;)V", &method_call_args) {
         Ok(_) => {}
         Err(e) => {
             match e {
                 Error::JavaException => {
                     jni_env.exception_describe()?;
+                    Err(e)
                 }
-                _ => { return Err(LauncherError::JniRsError(e)) }
-            }
+                _ => Err(e)
+            }?;
         }
     };
 
@@ -164,23 +174,17 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
 
     // using UNC for libjvm leads to crash when trying to resolve jimage
     // classloader.cpp:   guarantee(name != NULL, "jimage file name is null");
-    let load_path = canonical_non_unc(&libjvm_path)?;
+    let load_path = canonical_non_unc(&libjvm_path).context("Failed to get canonical path for libjvm from {libjvm_path:?}")?;
     debug!("Loading libvjm by path {load_path:?}");
 
     unsafe {
-        match libloading::Library::new(load_path) {
-            Ok(l) => { Ok(l) }
-            Err(e) => { Err(LauncherError::LibloadingError(e)) }
-        }
+        libloading::Library::new(load_path).context("Failed to load libjvm by path {load_path:?}")
     }
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
-    match unsafe { libloading::Library::new(libjvm_path.as_os_str()) } {
-        Ok(l) => { Ok(l)}
-        Err(e) => { Err(LauncherError::LibloadingError(e))}
-    }
+    unsafe { libloading::Library::new(libjvm_path.as_os_str()) }.context("Failed to load libjvm")
 }
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<jni_sys::JavaVMInitArgs> {
@@ -207,8 +211,7 @@ fn get_libjvm(java_home: &Path) -> Result<PathBuf> {
 
     let libjvm = get_libjvm_path(java_home);
     if !libjvm.exists() {
-        let message = format!("libvjm not found at path {libjvm:?}");
-        return err_from_string(message);
+        bail!("libvjm not found at path {libjvm:?}");
     }
     debug!("Found libjvm at {libjvm:?}");
 

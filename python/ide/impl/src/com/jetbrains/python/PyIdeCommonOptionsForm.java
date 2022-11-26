@@ -1,10 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.application.options.ModulesComboBox;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.execution.util.PathMappingsComponent;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -13,18 +9,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.HideableDecorator;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
-import com.jetbrains.python.configuration.PyConfigureInterpretersLinkPanel;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
@@ -42,20 +31,9 @@ import java.util.function.Consumer;
 
 
 public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
-  private JPanel myMainPanel;
-  private EnvironmentVariablesComponent myEnvsComponent;
-  private RawCommandLineEditor myInterpreterOptionsTextField;
-  private TextFieldWithBrowseButton myWorkingDirectoryTextField;
-  private JComboBox myInterpreterComboBox;
-  private JBLabel myPythonInterpreterJBLabel;
-  private JLabel myProjectLabel;
-  private ModulesComboBox myModuleCombo;
-  private JPanel myConfigureInterpretersPanel;
+  private final PyIdeCommonOptionsPanel content;
   private String mySelectedSdkHome = null;
-  private PathMappingsComponent myPathMappingsComponent;
-  private JPanel myHideablePanel;
-  private JBCheckBox myAddContentRootsCheckbox;
-  private JBCheckBox myAddSourceRootsCheckbox;
+  private Sdk mySelectedSdk = null;
 
   private JComponent labelAnchor;
   private final Project myProject;
@@ -67,39 +45,29 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {
     myProject = data.getProject();
-    myWorkingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
-                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
-
     myPythonSdks = new ArrayList<>(PythonSdkUtil.getAllSdks());
     myPythonSdks.add(0, null);
+    Module[] modules = ModuleManager.getInstance(data.getProject()).getModules();
+    boolean showModules = modules.length != 1;
+    content = new PyIdeCommonOptionsPanel(data, showModules, myPythonSdks);
 
-    myInterpreterComboBox.setModel(new CollectionComboBoxModel(myPythonSdks, null));
-
-    final Module[] modules = ModuleManager.getInstance(data.getProject()).getModules();
-    if (modules.length == 1) {
+    content.workingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
+                                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    if (!showModules) {
       setModule(modules[0]);
-      myProjectLabel.setVisible(false);
-      myModuleCombo.setVisible(false);
     }
     else {
       final List<Module> validModules = data.getValidModules();
       Module selection = validModules.size() > 0 ? validModules.get(0) : null;
-      myModuleCombo.setModules(validModules);
-      myModuleCombo.setSelectedModule(selection);
-      myModuleCombo.addActionListener(new ActionListener() {
+      content.moduleCombo.setModules(validModules);
+      content.moduleCombo.setSelectedModule(selection);
+      content.moduleCombo.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          updateDefaultInterpreter(myModuleCombo.getSelectedModule());
+          updateDefaultInterpreter(content.moduleCombo.getSelectedModule());
         }
       });
-      updateDefaultInterpreter(myModuleCombo.getSelectedModule());
-    }
-
-    setAnchor(myEnvsComponent.getLabel());
-    myPathMappingsComponent.setAnchor(myEnvsComponent.getLabel());
-
-    if (data.showConfigureInterpretersLink()) {
-      myConfigureInterpretersPanel.add(new PyConfigureInterpretersLinkPanel(myMainPanel));
+      updateDefaultInterpreter(content.moduleCombo.getSelectedModule());
     }
 
     addInterpreterComboBoxActionListener(new ActionListener() {
@@ -112,36 +80,14 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
     updateRemoteInterpreterMode();
 
-    final HideableDecorator decorator =
-      new HideableDecorator(myHideablePanel, PyBundle.message("python.sdk.common.options.environment"), false) {
-        @Override
-        protected void on() {
-          super.on();
-          storeState();
-        }
-
-        @Override
-        protected void off() {
-          super.off();
-          storeState();
-        }
-
-        private void storeState() {
-          PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
-        }
-      };
-    decorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
-    decorator.setContentComponent(myMainPanel);
-
-
     addInterpreterModeListener((b) ->
-                                 myPathMappingsComponent.setVisible(b)
+                                 content.pathMappingsComponent.setVisible(b)
     );
   }
 
   @Override
   public JComponent getMainPanel() {
-    return myHideablePanel;
+    return content.panel;
   }
 
   @Override
@@ -160,33 +106,31 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void setAnchor(JComponent anchor) {
     labelAnchor = anchor;
-    myEnvsComponent.setAnchor(anchor);
-    myPythonInterpreterJBLabel.setAnchor(anchor);
   }
 
   @Override
   public String getInterpreterOptions() {
-    return myInterpreterOptionsTextField.getText().trim();
+    return content.interpreterOptionsTextField.getText().trim();
   }
 
   @Override
   public void setInterpreterOptions(String interpreterOptions) {
-    myInterpreterOptionsTextField.setText(interpreterOptions);
+    content.interpreterOptionsTextField.setText(interpreterOptions);
   }
 
   @Override
   public String getWorkingDirectory() {
-    return FileUtil.toSystemIndependentName(myWorkingDirectoryTextField.getText().trim());
+    return FileUtil.toSystemIndependentName(content.workingDirectoryTextField.getText().trim());
   }
 
   @Override
   public void setWorkingDirectory(String workingDirectory) {
-    myWorkingDirectoryTextField.setText(workingDirectory == null ? "" : FileUtil.toSystemDependentName(workingDirectory));
+    content.workingDirectoryTextField.setText(workingDirectory == null ? "" : FileUtil.toSystemDependentName(workingDirectory));
   }
 
   @Override
   public String getSdkHome() {
-    final Sdk selectedSdk = (Sdk)myInterpreterComboBox.getSelectedItem();
+    Sdk selectedSdk = (Sdk)content.interpreterComboBox.getSelectedItem();
     return selectedSdk == null ? null : selectedSdk.getHomePath();
   }
 
@@ -195,10 +139,20 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     mySelectedSdkHome = sdkHome;
   }
 
+  @Override
+  public @Nullable Sdk getSdk() {
+    return (Sdk)content.interpreterComboBox.getSelectedItem();
+  }
+
+  @Override
+  public void setSdk(@Nullable Sdk sdk) {
+    mySelectedSdk = sdk;
+  }
+
   @Nullable
   @Override
   public Module getModule() {
-    final Module selectedItem = myModuleCombo.getSelectedModule();
+    final Module selectedItem = content.moduleCombo.getSelectedModule();
     if (selectedItem != null) {
       return selectedItem;
     }
@@ -211,13 +165,13 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void setModule(Module module) {
-    myModuleCombo.setSelectedModule(module);
+    content.moduleCombo.setSelectedModule(module);
     updateDefaultInterpreter(module);
   }
 
   private void updateDefaultInterpreter(Module module) {
     final Sdk sdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
-    myInterpreterComboBox.setRenderer(
+    content.interpreterComboBox.setRenderer(
       sdk == null
       ? new PySdkListCellRenderer()
       : new PySdkListCellRenderer(PyBundle.message("python.sdk.rendering.project.default.0", sdk.getName()), sdk)
@@ -225,50 +179,54 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public void updateSdkList(boolean preserveSelection, PyConfigurableInterpreterList myInterpreterList) {
-    myPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
-    Sdk selection = preserveSelection ? (Sdk)myInterpreterComboBox.getSelectedItem() : null;
+    myPythonSdks = myInterpreterList.getAllPythonSdks(myProject, null);
+    Sdk selection = preserveSelection ? (Sdk)content.interpreterComboBox.getSelectedItem() : null;
     if (!myPythonSdks.contains(selection)) {
       selection = null;
     }
     myPythonSdks.add(0, null);
-    myInterpreterComboBox.setModel(new CollectionComboBoxModel(myPythonSdks, selection));
+    content.interpreterComboBox.setModel(new CollectionComboBoxModel(myPythonSdks, selection));
   }
 
   @Override
   public boolean isUseModuleSdk() {
-    return myInterpreterComboBox.getSelectedItem() == null;
+    return content.interpreterComboBox.getSelectedItem() == null;
   }
 
   @Override
   public void setUseModuleSdk(boolean useModuleSdk) {
-    myInterpreterComboBox.setSelectedItem(useModuleSdk ? null : PythonSdkUtil.findSdkByPath(myPythonSdks, mySelectedSdkHome));
+    if (mySelectedSdk != null) {
+      content.interpreterComboBox.setSelectedItem(useModuleSdk ? null : mySelectedSdk);
+      return;
+    }
+    content.interpreterComboBox.setSelectedItem(useModuleSdk ? null : PythonSdkUtil.findSdkByPath(myPythonSdks, mySelectedSdkHome));
   }
 
   @Override
   public boolean isPassParentEnvs() {
-    return myEnvsComponent.isPassParentEnvs();
+    return content.envsComponent.isPassParentEnvs();
   }
 
   @Override
   public void setPassParentEnvs(boolean passParentEnvs) {
-    myEnvsComponent.setPassParentEnvs(passParentEnvs);
+    content.envsComponent.setPassParentEnvs(passParentEnvs);
   }
 
   @Override
   public Map<String, String> getEnvs() {
-    return myEnvsComponent.getEnvs();
+    return content.envsComponent.getEnvs();
   }
 
   @Override
   public void setEnvs(Map<String, String> envs) {
-    myEnvsComponent.setEnvs(envs);
+    content.envsComponent.setEnvs(envs);
   }
 
   @Override
   @Nullable
   public PathMappingSettings getMappingSettings() {
     if (myInterpreterRemote) {
-      return myPathMappingsComponent.getMappingSettings();
+      return content.pathMappingsComponent.getMappingSettings();
     }
     else {
       return new PathMappingSettings();
@@ -277,31 +235,27 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void setMappingSettings(@Nullable PathMappingSettings mappingSettings) {
-    myPathMappingsComponent.setMappingSettings(mappingSettings);
+    content.pathMappingsComponent.setMappingSettings(mappingSettings);
   }
 
   @Override
   public boolean shouldAddContentRoots() {
-    return myAddContentRootsCheckbox.isSelected();
+    return content.addContentRootsCheckbox.isSelected();
   }
 
   @Override
   public boolean shouldAddSourceRoots() {
-    return myAddSourceRootsCheckbox.isSelected();
+    return content.addSourceRootsCheckbox.isSelected();
   }
 
   @Override
   public void setAddContentRoots(boolean flag) {
-    myAddContentRootsCheckbox.setSelected(flag);
+    content.addContentRootsCheckbox.setSelected(flag);
   }
 
   @Override
   public void setAddSourceRoots(boolean flag) {
-    myAddSourceRootsCheckbox.setSelected(flag);
-  }
-
-  private void createUIComponents() {
-    myInterpreterComboBox = new ComboBox(100);
+    content.addSourceRootsCheckbox.setSelected(flag);
   }
 
   private void setRemoteInterpreterMode(boolean isInterpreterRemote) {
@@ -330,12 +284,12 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void addInterpreterComboBoxActionListener(ActionListener listener) {
-    myInterpreterComboBox.addActionListener(listener);
+    content.interpreterComboBox.addActionListener(listener);
   }
 
   @Override
   public void removeInterpreterComboBoxActionListener(ActionListener listener) {
-    myInterpreterComboBox.removeActionListener(listener);
+    content.interpreterComboBox.removeActionListener(listener);
   }
 
   private static class MyListener implements SdkModel.Listener {

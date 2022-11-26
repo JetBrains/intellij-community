@@ -89,9 +89,8 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   private fun importProjects(project: Project) {
     if (!GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) {
-      Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(false)
+      AutoImportProjectTracker.onceIgnoreDisableAutoReloadRegistry()
       AutoImportProjectTracker.getInstance(project).scheduleProjectRefresh()
-      Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(true)
     }
   }
 
@@ -162,7 +161,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
           future.complete(id)
         }
 
-        override fun onImportFailed(projectPath: String?) {
+        override fun onImportFailed(projectPath: String?, t: Throwable) {
           LOG.info("Gradle import failure: ${id.ideProjectId}")
           val future = externalSystemState[id] ?: return
           future.completeExceptionally(IllegalStateException("Gradle project ${id.ideProjectId} import failed."))

@@ -8,5 +8,5 @@ fun test(p: I, fooI: I.() -> Unit, fooJ: J.() -> Unit) {
     }
 }
 
-// EXIST: { lookupString: "fooI", itemText: "fooI", tailText: "()", typeText: "Unit", attributes: "bold", icon: "nodes/parameter.svg"}
-// EXIST: { lookupString: "fooJ", itemText: "fooJ", tailText: "()", typeText: "Unit", attributes: "bold", icon: "nodes/parameter.svg"}
+// EXIST: { lookupString: "fooI", itemText: "fooI", tailText: "()", typeText: "Unit", attributes: "bold", icon: "Parameter"}
+// EXIST: { lookupString: "fooJ", itemText: "fooJ", tailText: "()", typeText: "Unit", attributes: "bold", icon: "Parameter"}

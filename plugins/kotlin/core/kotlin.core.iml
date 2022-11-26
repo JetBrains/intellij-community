@@ -66,5 +66,6 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" />
   </component>
 </module>

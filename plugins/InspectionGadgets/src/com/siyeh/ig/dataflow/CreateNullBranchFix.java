@@ -58,7 +58,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     List<PsiElement> branches = SwitchUtils.getSwitchBranches(switchBlock);
     for (PsiElement branch : branches) {
       // just for the case if we already contain null or total pattern, there is no need to apply the fix
-      if (branch instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)branch).getType())) return;
+      if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
       if (branch instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)branch), selectorType)) return;
     }
     PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);

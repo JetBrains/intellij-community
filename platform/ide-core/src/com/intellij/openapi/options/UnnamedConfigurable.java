@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.Nullable;
@@ -14,10 +14,10 @@ import javax.swing.*;
  */
 public interface UnnamedConfigurable {
   /**
-   * Creates new Swing form that enables user to configure the settings.
+   * Creates a new Swing form that enables the user to configure the settings.
    * Usually this method is called on the EDT, so it should not take a long time.
    * <p>
-   * Also this place is designed to allocate resources (subscriptions/listeners etc.)
+   * Also, this place is designed to allocate resources (subscriptions/listeners etc.)
    *
    * @return new Swing form to show, or {@code null} if it cannot be created
    * @see #disposeUIResources

@@ -9,16 +9,16 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.getOrCreateExternalSystemModuleOptions
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 private val MODULE_OPTIONS_TO_CHECK = setOf(
   "externalSystemModuleVersion", "linkedProjectPath", "linkedProjectId", "rootProjectPath", "externalSystemModuleGroup",
@@ -110,8 +110,8 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override fun createExternalEntitySource(externalSystemId: String) =
     JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
 
-  override fun createFacetSerializer(): FacetEntitiesSerializer {
-    return FacetEntitiesSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true)
+  override fun createFacetSerializer(): FacetsSerializer {
+    return FacetsSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true)
   }
 
   override fun getBaseDirPath(): String {
@@ -160,6 +160,7 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
       writer.saveComponent(fileUrl, "ExternalSystem", null)
       writer.saveComponent(fileUrl, "ExternalFacetManager", null)
       writer.saveComponent(fileUrl, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
+      writer.saveComponent(fileUrl, TEST_MODULE_PROPERTIES_COMPONENT_NAME, null)
     }
   }
 

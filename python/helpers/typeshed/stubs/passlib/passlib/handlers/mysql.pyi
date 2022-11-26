@@ -1,16 +1,15 @@
-from typing import Any
+from typing import ClassVar
 
 import passlib.utils.handlers as uh
 
+__all__ = ["mysql323"]
+
 class mysql323(uh.StaticHandler):
-    name: str
-    checksum_size: int
-    checksum_chars: Any
+    name: ClassVar[str]
+    checksum_size: ClassVar[int]
+    checksum_chars: ClassVar[str]
 
 class mysql41(uh.StaticHandler):
-    name: str
-    checksum_chars: Any
-    checksum_size: int
-
-# Names in __all__ with no definition:
-#   mysq41
+    name: ClassVar[str]
+    checksum_chars: ClassVar[str]
+    checksum_size: ClassVar[int]

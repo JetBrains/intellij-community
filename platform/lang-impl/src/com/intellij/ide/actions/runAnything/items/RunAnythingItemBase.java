@@ -14,6 +14,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -117,6 +118,6 @@ public class RunAnythingItemBase extends RunAnythingItem {
 
   @NotNull
   private static SimpleTextAttributes getDescriptionAttributes(boolean isSelected) {
-    return new SimpleTextAttributes(STYLE_PLAIN, isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+    return new SimpleTextAttributes(STYLE_PLAIN, isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
   }
 }

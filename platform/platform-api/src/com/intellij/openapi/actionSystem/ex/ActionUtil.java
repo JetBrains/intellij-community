@@ -1,10 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +26,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +51,8 @@ public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
 
   public static final Key<Boolean> ALLOW_PlAIN_LETTER_SHORTCUTS = Key.create("ALLOW_PlAIN_LETTER_SHORTCUTS");
+  @ApiStatus.Internal
+  public static final Key<Boolean> ALLOW_ACTION_PERFORM_WHEN_HIDDEN = Key.create("ALLOW_ACTION_PERFORM_WHEN_HIDDEN");
 
   private static final Key<Boolean> WAS_ENABLED_BEFORE_DUMB = Key.create("WAS_ENABLED_BEFORE_DUMB");
   @ApiStatus.Internal
@@ -134,6 +139,9 @@ public final class ActionUtil {
 
     action.applyTextOverride(e);
     try {
+      if (beforeActionPerformed && e.getUpdateSession() == UpdateSession.EMPTY) {
+        IdeUiService.getInstance().initUpdateSession(e);
+      }
       Runnable runnable = () -> {
         // init group flags from deprecated methods
         boolean isGroup = action instanceof ActionGroup;
@@ -195,8 +203,8 @@ public final class ActionUtil {
     return false;
   }
 
-  static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
-                                                         boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
+  private static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
+                                                                 boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
     boolean warnPopup = wasPopup != group.isPopup(event.getPlace());
     boolean warnHide = wasHideIfEmpty != group.hideIfNoVisibleChildren();
     boolean warnDisable = wasDisableIfEmpty != group.disableIfNoVisibleChildren();
@@ -204,18 +212,21 @@ public final class ActionUtil {
     String operationName = group.getClass().getSimpleName() + "#update (" + group.getClass().getName() + ")";
     if (warnPopup) {
       event.getPresentation().setPopupGroup(!wasPopup); // keep the old logic for a while
-      LOG.error("Calling `setPopup()` in " + operationName + ". " +
-               "Please use `event.getPresentation().setPopupGroup()` instead.");
+      String message = "Calling `setPopup()` in " + operationName + ". " +
+                       "Please use `event.getPresentation().setPopupGroup()` instead.";
+      LOG.error(PluginException.createByClass(message, null, group.getClass()));
     }
     if (warnHide) {
       event.getPresentation().setHideGroupIfEmpty(!wasHideIfEmpty); // keep the old logic for a while
-      LOG.error("Changing `hideIfNoVisibleChildren()` result in " + operationName + ". " +
-               "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.");
+      String message = "Changing `hideIfNoVisibleChildren()` result in " + operationName + ". " +
+                       "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.";
+      LOG.error(PluginException.createByClass(message, null, group.getClass()));
     }
     if (warnHide) {
       event.getPresentation().setDisableGroupIfEmpty(!wasDisableIfEmpty); // keep the old logic for a while
-      LOG.error("Changing `disableIfNoVisibleChildren()` result in " + operationName + ". " +
-               "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.");
+      String message = "Changing `disableIfNoVisibleChildren()` result in " + operationName + ". " +
+                       "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.";
+      LOG.error(PluginException.createByClass(message, null, group.getClass()));
     }
   }
 
@@ -259,7 +270,9 @@ public final class ActionUtil {
   public static boolean lastUpdateAndCheckDumb(@NotNull AnAction action, @NotNull AnActionEvent e, boolean visibilityMatters) {
     Project project = e.getProject();
     if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      }
     }
     performDumbAwareUpdate(action, e, true);
 
@@ -284,7 +297,7 @@ public final class ActionUtil {
   /**
    * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
     LOG.assertTrue(e.getDataContext() == context, "event context does not match the argument");
     performActionDumbAwareWithCallbacks(action, e);
@@ -295,7 +308,9 @@ public final class ActionUtil {
   }
 
   @ApiStatus.Internal
-  public static void doPerformActionOrShowPopup(@NotNull AnAction action, @NotNull AnActionEvent e, @Nullable Consumer<? super JBPopup> popupShow) {
+  public static void doPerformActionOrShowPopup(@NotNull AnAction action,
+                                                @NotNull AnActionEvent e,
+                                                @Nullable Consumer<? super JBPopup> popupShow) {
     if (action instanceof ActionGroup && !e.getPresentation().isPerformGroup()) {
       DataContext dataContext = e.getDataContext();
       ActionGroup group = (ActionGroup)action;
@@ -304,7 +319,11 @@ public final class ActionUtil {
         e.getPresentation().getText(), group, dataContext,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
         false, null, -1, null, place);
-      if (popupShow != null) {
+      var toolbarPopupLocation = CommonActionsPanel.getPreferredPopupPoint(action, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+      if (toolbarPopupLocation != null) {
+        popup.show(toolbarPopupLocation);
+      }
+      else if (popupShow != null) {
         popupShow.accept(popup);
       }
       else {
@@ -325,7 +344,8 @@ public final class ActionUtil {
     manager.fireBeforeActionPerformed(action, event);
     Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component != null && !UIUtil.isShowing(component) &&
-        !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) {
+        !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
+        !Boolean.TRUE.equals(ClientProperty.get(component, ALLOW_ACTION_PERFORM_WHEN_HIDDEN))) {
       String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
       LOG.warn("Action is not performed because target component is not showing: " +
                "action=" + id + ", component=" + component.getClass().getName());
@@ -406,11 +426,11 @@ public final class ActionUtil {
   }
 
   public static @NotNull List<AnAction> getActions(@NotNull JComponent component) {
-    return ContainerUtil.notNullize(ComponentUtil.getClientProperty(component, AnAction.ACTIONS_KEY));
+    return ContainerUtil.notNullize(ClientProperty.get(component, AnAction.ACTIONS_KEY));
   }
 
   public static void clearActions(@NotNull JComponent component) {
-    ComponentUtil.putClientProperty(component, AnAction.ACTIONS_KEY, null);
+    ClientProperty.put(component, AnAction.ACTIONS_KEY, null);
   }
 
   public static void copyRegisteredShortcuts(@NotNull JComponent to, @NotNull JComponent from) {
@@ -563,6 +583,27 @@ public final class ActionUtil {
     if (ids.length == 1) return getActionGroup(ids[0]);
     List<AnAction> actions = ContainerUtil.mapNotNull(ids, ActionUtil::getAction);
     return actions.isEmpty() ? null : new DefaultActionGroup(actions);
+  }
+
+  public static @NotNull Object getDelegateChainRoot(@NotNull AnAction action) {
+    Object delegate = action;
+    while (delegate instanceof ActionWithDelegate<?>) {
+      delegate = ((ActionWithDelegate<?>)delegate).getDelegate();
+    }
+    return delegate;
+  }
+
+  public static @NotNull AnAction getDelegateChainRootAction(@NotNull AnAction action) {
+    while (action instanceof ActionWithDelegate<?>) {
+      Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
+      if (delegate instanceof AnAction) {
+        action = (AnAction)delegate;
+      }
+      else {
+        return action;
+      }
+    }
+    return action;
   }
 
   @ApiStatus.Experimental

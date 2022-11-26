@@ -15,12 +15,6 @@ import java.util.List;
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.IntFunction;
 
-/**
- * Generator of a hybrid MPHF. It is guaranteed to use linear space, because
- * large buckets are encoded using an alternative algorithm.
- *
- * @param <T> the type
- */
 @SuppressWarnings("DuplicatedCode")
 public final class RecSplitGenerator<T> {
   public static final int MAX_FILL = 8;
@@ -209,7 +203,7 @@ public final class RecSplitGenerator<T> {
    * @param collection the collection
    * @return the hash function description
    */
-  public ByteBuffer generate(Collection<T> collection, IntFunction<? extends ByteBuffer> byteBufferAllocator) {
+  public ByteBuffer generate(Collection<? extends T> collection, IntFunction<? extends ByteBuffer> byteBufferAllocator) {
     int keyCount = collection.size();
     int averageBucketSize = settings.getAverageBucketSize();
     int bucketCount = RecSplitSettings.getBucketCount(keyCount, averageBucketSize);
@@ -304,7 +298,7 @@ public final class RecSplitGenerator<T> {
         throw new IllegalStateException("Hash has a poor quality, use another one");
       }
 
-      @SuppressWarnings({"unchecked", "SSBasedInspection"})
+      @SuppressWarnings({"unchecked"})
       T[] data = (T[])list.toArray(new Object[0]);
       list = null;
       long[] hashes = new long[size];

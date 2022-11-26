@@ -30,9 +30,6 @@ import java.awt.*;
 
 /**
  * This is utility for serialization of component hierarchy.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class XmlWriter{
   private static final int INDENT = 2;

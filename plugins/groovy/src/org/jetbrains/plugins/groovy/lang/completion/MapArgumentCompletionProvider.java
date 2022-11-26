@@ -4,13 +4,14 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +35,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
 final class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   // @formatter:off
@@ -101,7 +99,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
         }
       }
       else {
-        lookup = lookup.withIcon(AllIcons.Nodes.Property);
+        lookup = lookup.withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Property));
       }
 
       LookupElement customized = entry.getValue().customizeLookupElement(lookup);

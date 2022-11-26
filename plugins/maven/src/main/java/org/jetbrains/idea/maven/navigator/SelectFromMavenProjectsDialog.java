@@ -19,16 +19,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleNodeVisitor;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 public class SelectFromMavenProjectsDialog extends DialogWrapper {
@@ -78,12 +81,13 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
 
     if (mySelector != null) {
       final SimpleNode[] selection = new SimpleNode[]{null};
-      treeStructure.accept(new SimpleNodeVisitor() {
+      treeStructure.accept(new TreeVisitor() {
         @Override
-        public boolean accept(SimpleNode each) {
-          if (!mySelector.shouldSelect(each)) return false;
-          selection[0] = each;
-          return true;
+        public @NotNull Action visit(@NotNull TreePath path) {
+          SimpleNode node = (SimpleNode)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+          if (!mySelector.shouldSelect(node)) return Action.CONTINUE;
+          selection[0] = node;
+          return Action.INTERRUPT;
         }
       });
       if (selection[0] != null) {

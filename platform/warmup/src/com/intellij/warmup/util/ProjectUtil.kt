@@ -85,16 +85,6 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: Pr
     yieldAndWaitForDumbModeEnd(project)
   }
 
-  LOG.info("Finishing project open...")
-  val modulesCount = readAction {
-    val modules = ModuleManager.getInstance(project).modules
-    if (modules.isEmpty()) {
-      LOG.warn("Project contains 0 modules. There is nothing to index")
-    }
-
-    modules.size
-  }
-
   runTaskAndLogTime("check project roots") {
     val errors = TreeSet<String>()
     val missingSDKs = TreeSet<String>()
@@ -124,7 +114,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: Pr
     errors.forEach { LOG.warn(it) }
   }
 
-  LOG.info("Project with $modulesCount module(s) is ready for the import")
+  LOG.info("Project is ready for the import")
   return project
 }
 

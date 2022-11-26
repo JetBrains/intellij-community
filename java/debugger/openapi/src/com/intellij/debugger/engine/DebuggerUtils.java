@@ -319,6 +319,11 @@ public abstract class DebuggerUtils {
       return true;
     }
 
+    if (subType instanceof ArrayType &&
+        (CommonClassNames.JAVA_LANG_CLONEABLE.equals(superType) || CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superType))) {
+      return true;
+    }
+
     return getSuperTypeInt(subType, superType) != null;
   }
 

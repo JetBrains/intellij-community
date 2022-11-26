@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +35,7 @@ public class Touchbar {
   //
 
   public static void setActions(@NotNull JComponent component, @Nullable ActionGroup group) {
-    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null) return;
+    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return;
     ComponentUtil.putClientProperty(component, ACTION_GROUP_KEY, group);
   }
   public static void setActions(@NotNull JComponent component, @Nullable AnAction action) {
@@ -44,7 +45,7 @@ public class Touchbar {
     setActions(component, ActionManager.getInstance().getAction(actionId));
   }
   public static void addActions(@NotNull JComponent component, @Nullable ActionGroup group) {
-    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null) return;
+    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return;
     ActionGroup old = ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
     if (old == null) {
       setActions(component, group);
@@ -63,18 +64,18 @@ public class Touchbar {
   public static void setButtonActions(@NotNull JComponent component, JButton[] buttons) {
     setButtonActions(component, Arrays.asList(buttons));
   }
-  public static void setButtonActions(@NotNull JComponent component, Collection<JButton> buttons) {
+  public static void setButtonActions(@NotNull JComponent component, Collection<? extends JButton> buttons) {
     setButtonActions(component, buttons, null, null);
   }
-  public static void setButtonActions(@NotNull JComponent component, Collection<JButton> buttons, Collection<JButton> principal, JButton defaultButton) {
+  public static void setButtonActions(@NotNull JComponent component, Collection<? extends JButton> buttons, Collection<? extends JButton> principal, JButton defaultButton) {
     setButtonActions(component, buttons, principal, defaultButton, null);
   }
   public static void setButtonActions(@NotNull JComponent component,
-                                      Collection<JButton> buttons,
-                                      Collection<JButton> principal,
+                                      Collection<? extends JButton> buttons,
+                                      Collection<? extends JButton> principal,
                                       JButton defaultButton,
                                       @Nullable ActionGroup extraActions) {
-    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null) return;
+    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return;
 
     ActionManagerEx.doWithLazyActionManager(instance -> {
       DefaultActionGroup result = new DefaultActionGroup();
@@ -92,7 +93,7 @@ public class Touchbar {
     });
   }
   public static void addButtonAction(@NotNull JComponent component, JButton button) {
-    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null) return;
+    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return;
     ActionGroup old = ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
     if (old == null) {
       setButtonActions(component, button);
@@ -110,7 +111,7 @@ public class Touchbar {
   private static final Key<ActionGroup> ACTION_GROUP_KEY = Key.create("Touchbar.ActionGroup.key");
   private static final boolean EXPAND_OPTION_BUTTONS = Boolean.getBoolean("Touchbar.expand.option.button");
 
-  private static @NotNull DefaultActionGroup buildActionsFromButtons(Collection<JButton> buttons,
+  private static @NotNull DefaultActionGroup buildActionsFromButtons(Collection<? extends JButton> buttons,
                                                                      JButton defaultButton,
                                                                      boolean isPrincipal) {
     final DefaultActionGroup result = new DefaultActionGroup();

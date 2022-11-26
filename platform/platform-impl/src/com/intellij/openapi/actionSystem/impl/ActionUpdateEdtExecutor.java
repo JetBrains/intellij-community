@@ -65,23 +65,25 @@ public final class ActionUpdateEdtExecutor {
     else {
       ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
     }
-    FList<Throwable> prevTraces = initialTraces, nextTraces = FList.emptyList();
+    FList<Throwable> curTraces = FList.emptyList();
+    boolean started = false;
     long start = System.nanoTime();
     while (!semaphore.waitFor(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)) {
       ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
-      long elapsed = TimeoutUtil.getDurationMillis(start);
-      if (ourEDTExecTraces.compareAndSet(prevTraces, nextTraces)) {
-        // execution started
-        prevTraces = nextTraces;
-        int prevSize = prevTraces.size();
-        if (prevSize < MAX_TRACES && elapsed > (prevSize + 1) * TRACE_DELTA_MS) {
-          Throwable throwable = new Throwable("EDT-" + elapsed + "-ms");
-          throwable.setStackTrace(EDT.getEventDispatchThread().getStackTrace());
-          nextTraces = prevTraces.prepend(throwable);
-        }
+      if (!started && ourEDTExecTraces.compareAndSet(initialTraces, curTraces)) {
+        started = true;
+        start = System.nanoTime();
       }
-      else {
-        // the wait continues
+      else if (started) {
+        long elapsed = TimeoutUtil.getDurationMillis(start);
+        int size = curTraces.size();
+        if (size < MAX_TRACES && elapsed > (size + 1) * TRACE_DELTA_MS) {
+          Throwable throwable = new Throwable("EDT-trace-at-" + elapsed + "-ms");
+          throwable.setStackTrace(EDT.getEventDispatchThread().getStackTrace());
+          FList<Throwable> nextTraces = curTraces.prepend(throwable);
+          ourEDTExecTraces.compareAndSet(curTraces, nextTraces);
+          curTraces = nextTraces;
+        }
       }
     }
     ExceptionUtil.rethrowAllAsUnchecked(result.get().second);
@@ -91,9 +93,9 @@ public final class ActionUpdateEdtExecutor {
     return result.get().first;
   }
 
-  private static final int MAX_TRACES = 3;
+  private static final int MAX_TRACES = 5;
   private static final int TRACE_DELTA_MS = 100;
-  private static final Throwable EMPTY_THROWABLE = new Throwable("EDT-unknown-ms");
+  private static final Throwable EMPTY_THROWABLE = new Throwable("EDT-trace-unknown");
   static final AtomicReference<FList<Throwable>> ourEDTExecTraces = new AtomicReference<>();
   static {
     EMPTY_THROWABLE.setStackTrace(new StackTraceElement[0]);

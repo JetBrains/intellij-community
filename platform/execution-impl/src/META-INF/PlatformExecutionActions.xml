@@ -10,6 +10,10 @@
 
     <action id="RunToolbarWidgetAction" class="com.intellij.execution.runToolbar.RunToolbarWidgetAction"/>
 
+    <action id="ExecutionTargets" class="com.intellij.execution.actions.ExecutionTargetComboBoxAction"/>
+
+    <group id="ExecutionTargets.Additional" searchable="false"/>
+
     <group id="RunToolbarSlotContextMenuGroup" popup="false">
       <action id="RunToolbarMoveToTopAction" class="com.intellij.execution.runToolbar.RunToolbarMoveToTopAction" icon="AllIcons.Toolbar.Pin"/>
       <action id="RunToolbarEditConfigurationAction" class="com.intellij.execution.runToolbar.RunToolbarEditConfigurationAction"/>
@@ -44,29 +48,27 @@
       </group>
     </group>
 
+    <action id="RunToolbarRollbackToPrevious" class="com.intellij.execution.runToolbar.RunToolbarRollbackToPrevious"/>
+
   </actions>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSlotManager"/>
-    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunWidgetResizeController"/>
-    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunWidgetWidthHelper"/>
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
-    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSettings"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
                     serviceImplementation="com.intellij.ide.ui.experimental.toolbar.BaseRunWidgetAvailabilityManager"/>
-    <projectToolbarWidget implementation="com.intellij.execution.ui.RunToolbarWidgetFactory" id="runToolbarWidget"/>
-    <projectService serviceImplementation="com.intellij.execution.ui.RunConfigurationStartHistory"/>
     <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunToolbarWidgetCustomizableActionGroupProvider"/>
     <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
     <registryKey key="ide.experimental.ui.redesigned.run.widget"
                  description="Use redesigned run widget"
-                 defaultValue="FALSE"
+                 defaultValue="TRUE"
                  restartRequired="false"/>
+    <registryKey key="ide.experimental.ui.redesigned.run.popup"
+                 description="Use redesigned run popup"
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
+
+    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarComponentService" preload="await" />
+    <backgroundPostStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService" order="last"/>
   </extensions>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.execution.runToolbar.RunToolbarComponentService</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class PyPySdkFlavor extends PythonSdkFlavor {
+public final class PyPySdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
+
+
   public static PyPySdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(PyPySdkFlavor.class);
   }
@@ -27,6 +29,11 @@ public final class PyPySdkFlavor extends PythonSdkFlavor {
   private static final Pattern VERSION_STRING_RE = Pattern.compile("PyPy (\\S+)( \\[Python (\\S+)\\])?");
 
   private PyPySdkFlavor() {
+  }
+
+  @Override
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
   }
 
   @Override

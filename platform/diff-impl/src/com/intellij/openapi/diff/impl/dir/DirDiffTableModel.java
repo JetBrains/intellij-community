@@ -363,7 +363,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     });
   }
 
-  private void fillElements(DTree tree, List<DirDiffElementImpl> elements) {
+  private void fillElements(DTree tree, List<? super DirDiffElementImpl> elements) {
     if (!myUpdating.get()) return;
     boolean separatorAdded = tree.getParent() == null;
     text.set(prepareText(tree.getPath()));
@@ -541,33 +541,23 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     if (column > count) {
       column = getColumnCount() - 1 - column;
     }
-    switch (column) {
-      case 0:
-        return ColumnType.NAME;
-      case 1:
-        return mySettings.showSize ? ColumnType.SIZE : ColumnType.DATE;
-      case 2:
-        return ColumnType.DATE;
-      default:
-        throw new IllegalArgumentException(String.valueOf(column));
-    }
+    return switch (column) {
+      case 0 -> ColumnType.NAME;
+      case 1 -> mySettings.showSize ? ColumnType.SIZE : ColumnType.DATE;
+      case 2 -> ColumnType.DATE;
+      default -> throw new IllegalArgumentException(String.valueOf(column));
+    };
   }
 
   @Override
   public String getColumnName(int column) {
     ColumnType type = getColumnType(column);
-    switch (type) {
-      case OPERATION:
-        return "*"; // NON-NLS
-      case NAME:
-        return DiffBundle.message("column.dirdiff.name");
-      case SIZE:
-        return DiffBundle.message("column.dirdiff.size");
-      case DATE:
-        return DiffBundle.message("column.dirdiff.date");
-      default:
-        throw new IllegalArgumentException(type.name());
-    }
+    return switch (type) {
+      case OPERATION -> "*"; // NON-NLS
+      case NAME -> DiffBundle.message("column.dirdiff.name");
+      case SIZE -> DiffBundle.message("column.dirdiff.size");
+      case DATE -> DiffBundle.message("column.dirdiff.date");
+    };
   }
 
   @Nullable

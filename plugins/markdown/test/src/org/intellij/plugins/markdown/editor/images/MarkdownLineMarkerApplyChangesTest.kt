@@ -24,7 +24,7 @@ class MarkdownLineMarkerApplyChangesTest: LightPlatformCodeInsightTestCase() {
       shouldConvertToHtml = false
     )
     markerProvider.applyChanges(imageElement, data)
-    val image = file.firstChild.firstChild.firstChild as MarkdownImage
+    val image = file.firstChild.firstChild as MarkdownImage
     assertEquals(data.path, image.linkDestination?.text)
     assertEquals(data.title, image.collectLinkTitleText() ?: "")
     assertEquals(data.description, image.collectLinkDescriptionText() ?: "")
@@ -65,7 +65,7 @@ class MarkdownLineMarkerApplyChangesTest: LightPlatformCodeInsightTestCase() {
       shouldConvertToHtml = false
     )
     markerProvider.applyChanges(tag, data)
-    val image = file.firstChild.firstChild.firstChild as MarkdownImage
+    val image = file.firstChild.firstChild as MarkdownImage
     assertEquals(data.path, image.linkDestination?.text)
     assertEquals(data.description, image.collectLinkDescriptionText())
     assertEquals(data.title, image.collectLinkTitleText())
@@ -84,7 +84,7 @@ class MarkdownLineMarkerApplyChangesTest: LightPlatformCodeInsightTestCase() {
       shouldConvertToHtml = false
     )
     markerProvider.applyChanges(tag, data)
-    val image = file.firstChild.firstChild.firstChild as MarkdownImage
+    val image = file.firstChild.firstChild as MarkdownImage
     assertEquals(data.path, image.linkDestination?.text)
     assertEquals(data.description, image.collectLinkDescriptionText())
   }

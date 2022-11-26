@@ -5,10 +5,10 @@ import com.intellij.execution.target.*
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toMutableProperty
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.idea.maven.execution.RunnerBundle.message
 import java.util.function.Supplier
 
@@ -26,20 +26,20 @@ class MavenRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val confi
                                           project,
                                           message("maven.target.configurable.home.path.title"),
                                           config::homePath.toMutableProperty())
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .comment(message("maven.target.configurable.home.path.comment"))
         }
         else {
           textField()
             .bindText(config::homePath)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .comment(message("maven.target.configurable.home.path.comment"))
         }
       }
       row(message("maven.target.configurable.version.label")) {
         textField()
           .bindText(config::versionString)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
   }

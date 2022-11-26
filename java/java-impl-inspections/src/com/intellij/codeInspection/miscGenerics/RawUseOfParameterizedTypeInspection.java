@@ -350,7 +350,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiJavaCodeReferenceElement element = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element == null) return;
       PsiReferenceParameterList parameterList = element.getParameterList();
@@ -378,7 +378,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiTypeElement cast = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiTypeElement.class);
       if (cast == null) return;
       CodeStyleManager.getInstance(project).reformat(new CommentTracker().replace(cast, myTargetType));
@@ -410,7 +410,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement().getParent();
       if (element instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)element;

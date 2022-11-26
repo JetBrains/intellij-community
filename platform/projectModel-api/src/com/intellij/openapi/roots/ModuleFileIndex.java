@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ public interface ModuleFileIndex extends FileIndex {
    * @return the order entry to which the file or directory belongs, or null if
    * it does not belong to any order entry.
    */
+  @RequiresReadLock
   @Nullable
   OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir);
 
@@ -49,5 +51,6 @@ public interface ModuleFileIndex extends FileIndex {
    * @param fileOrDir the file or directory to check.
    * @return the list of order entries to which the file or directory belongs.
    */
+  @RequiresReadLock
   @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir);
 }

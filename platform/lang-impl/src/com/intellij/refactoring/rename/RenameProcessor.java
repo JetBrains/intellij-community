@@ -36,7 +36,6 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
@@ -465,7 +464,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void afterRename(List<Runnable> postRenameCallbacks,
+  private void afterRename(List<? extends Runnable> postRenameCallbacks,
                            MultiMap<RefactoringElementListener, SmartPsiElementPointer<PsiElement>> renameEvents,
                            @Nullable ModelBranch branch) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -519,7 +518,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return myCommandName;
   }
 
-  public static MultiMap<PsiElement, UsageInfo> classifyUsages(Collection<? extends PsiElement> elements, Collection<UsageInfo> usages) {
+  public static MultiMap<PsiElement, UsageInfo> classifyUsages(Collection<? extends PsiElement> elements, Collection<? extends UsageInfo> usages) {
     final MultiMap<PsiElement, UsageInfo> result = new MultiMap<>();
     for (UsageInfo usage : usages) {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);

@@ -46,12 +46,12 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testAllowStaticImportWhenAlreadyImported() {
-    myFixture.addClass("package foo; " +
-                       "public class Clazz {\n" +
-                       "      public  enum Foo{\n" +
-                       "        Const_1, Const_2\n" +
-                       "    }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package foo; public class Clazz {
+                               public  enum Foo{
+                                 Const_1, Const_2
+                             }
+                         }""");
     doTest("Add import for 'foo.Clazz.Foo'");
   }
 
@@ -102,8 +102,11 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testInvalidInput() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class X {\n  Character.\n" +
-                                                     "            Sub<caret>set\n}");
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class X {
+        Character.
+                  Sub<caret>set
+      }""");
     myFixture.getAvailableIntentions();
   }
 
@@ -140,10 +143,11 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   public void testInaccessibleClassReferencedInsideJavadocLink() {
     myFixture.addClass("package foo; class Foo {static class Baz {}}");
     myFixture.configureByText("a.java",
-                              "/**\n" +
-                       " * {@link foo.Foo.Baz<caret>}\n" +
-                       " */\n" +
-                       " class InaccessibleClassReferencedInsideJavadocLink { }");
+                              """
+                                /**
+                                 * {@link foo.Foo.Baz<caret>}
+                                 */
+                                 class InaccessibleClassReferencedInsideJavadocLink { }""");
     IntentionAction intention = myFixture.getAvailableIntention("Add import for 'foo.Foo.Baz'");
     assertNull(intention);
   }

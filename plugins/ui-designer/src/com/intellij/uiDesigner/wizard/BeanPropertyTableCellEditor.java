@@ -5,10 +5,6 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class BeanPropertyTableCellEditor extends AbstractCellEditor implements TableCellEditor{
   private final JTextField myEditorComponent;
 

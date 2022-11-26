@@ -159,7 +159,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   protected final InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
     InputData<Key, Value> data;
     boolean containsSnapshotData = true;
-    boolean isPhysical = content instanceof FileContentImpl && ((FileContentImpl)content).isPhysicalContent();
+    boolean isPhysical = content instanceof FileContentImpl && !((FileContentImpl)content).isTransientContent();
     if (mySnapshotInputMappings != null && isPhysical) {
       try {
         data = mySnapshotInputMappings.readData(content);
@@ -202,7 +202,11 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   public FileCachedData getFileIndexMetaData(@NotNull IndexedFile file) {
     if (mySubIndexerRetriever != null) {
       try {
-        return (FileCachedData)ProgressManager.getInstance().computeInNonCancelableSection(() -> new IndexerIdHolder(mySubIndexerRetriever.getFileIndexerId(file)));
+        IndexerIdHolder holder = ProgressManager.getInstance()
+          .computeInNonCancelableSection(() -> new IndexerIdHolder(mySubIndexerRetriever.getFileIndexerId(file)));
+        LOG.assertTrue(holder != null,
+                       "getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
+        return (FileCachedData)holder;
       }
       catch (IOException e) {
         LOG.error(e);
@@ -211,11 +215,38 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     return null;
   }
 
+  /**
+   * @return value < 0 means that no sub indexer id corresponds to the specified file
+   */
+  protected int getStoredFileSubIndexerId(int fileId) {
+    if (mySubIndexerRetriever == null) throw new IllegalStateException("not a composite indexer");
+    try {
+      return mySubIndexerRetriever.getStoredFileIndexerId(fileId);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return -4;
+    }
+  }
+
+  public <SubIndexerVersion> @Nullable SubIndexerVersion getStoredSubIndexerVersion(int fileId) {
+    int indexerId = getStoredFileSubIndexerId(fileId);
+    if (indexerId < 0) return null;
+    try {
+      return (SubIndexerVersion)mySubIndexerRetriever.getVersionByIndexerId(indexerId);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
   @Override
   public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileCachedData fileData) {
     IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
     if (mySubIndexerRetriever != null) {
-      LOG.assertTrue(fileData != null, "getFileIndexMetaData() shouldn't have returned null.");
+      LOG.assertTrue(fileData != null,
+                     "getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
       try {
         mySubIndexerRetriever.setFileIndexerId(fileId, fileData.indexerId);
       }

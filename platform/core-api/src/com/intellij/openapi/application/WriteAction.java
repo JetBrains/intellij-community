@@ -7,6 +7,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,8 +80,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Executes {@code action} inside write action.
-   * Must be called from the EDT.
    */
+  @RequiresEdt
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, E>)() -> {
       action.run();
@@ -90,8 +91,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Executes {@code action} inside write action and returns the result.
-   * Must be called from the EDT.
    */
+  @RequiresEdt
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runWriteAction(action);
   }

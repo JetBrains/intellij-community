@@ -1,4 +1,4 @@
-// "Make 'value' return 'X.MyAnnotation3'" "true-preview"
+// "Make 'value()' return 'X.MyAnnotation3'" "true-preview"
 class X {
   @interface MyAnnotation1 { }
 

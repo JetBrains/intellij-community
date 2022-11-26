@@ -79,7 +79,7 @@ public class CheckBoxListModelEditor<T> {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         int[] indices = list.getSelectedIndices();
-        if (indices == null || indices.length == 0) {
+        if (indices == null) {
           return;
         }
 

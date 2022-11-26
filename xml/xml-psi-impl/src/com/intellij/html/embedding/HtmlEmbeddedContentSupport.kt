@@ -22,10 +22,8 @@ import java.util.stream.Stream
  * @see HtmlScriptContentProvider
  */
 interface HtmlEmbeddedContentSupport {
-  @JvmDefault
   fun isEnabled(lexer: BaseHtmlLexer): Boolean = true
 
-  @JvmDefault
   fun createEmbeddedContentProviders(lexer: BaseHtmlLexer): List<HtmlEmbeddedContentProvider> = emptyList()
 
   companion object {

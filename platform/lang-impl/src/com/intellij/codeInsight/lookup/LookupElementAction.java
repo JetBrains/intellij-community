@@ -8,9 +8,6 @@ import javax.swing.*;
 
 import static com.intellij.openapi.util.NlsContexts.ListItem;
 
-/**
- * @author peter
- */
 public abstract class LookupElementAction {
   private final Icon myIcon;
   private final @ListItem String myText;

@@ -72,7 +72,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiBinaryExpression ||
             element instanceof PsiMethodCallExpression ||

@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
+import org.jetbrains.kotlin.descriptors.SourceElement
 
 interface WorkspaceMetaModelProvider {
   companion object {
@@ -12,4 +13,10 @@ interface WorkspaceMetaModelProvider {
   }
 
   fun getObjModule(packageName: String, module: Module): CompiledObjModule
+}
+
+class IncorrectObjInterfaceException(errorMessage: String): RuntimeException(errorMessage)
+
+interface ObjMetaElementWithSource {
+  val sourceElement: SourceElement
 }

@@ -1,12 +1,16 @@
 package com.intellij.workspaceModel.codegen.fields
 
-import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.getRefType
+import com.intellij.workspaceModel.codegen.isRefType
+import com.intellij.workspaceModel.codegen.refsFields
 import com.intellij.workspaceModel.codegen.utils.fqn1
 import com.intellij.workspaceModel.codegen.utils.fqn2
 import com.intellij.workspaceModel.codegen.utils.toQualifiedName
-import com.intellij.workspaceModel.codegen.writer.*
+import com.intellij.workspaceModel.codegen.writer.hasSetter
+import com.intellij.workspaceModel.codegen.writer.isOverride
+import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 
@@ -18,7 +22,7 @@ val ObjProperty<*, *>.implWsEntityFieldCode: String
       }
       else append(implWsBlockingCode)
     } else {
-      append("override var $javaName: ${valueType.javaType} = super<${receiver.javaFullName}>.$javaName\n")
+      append("override var $javaName: ${valueType.javaType} = dataSource.$javaName\n")
     }
   }
 
@@ -27,12 +31,11 @@ private val ObjProperty<*, *>.implWsBlockingCode: String
 
 internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, optionalSuffix: String = ""): String {
   return when (fieldType) {
-    ValueType.Int -> "override var $name: ${fieldType.javaType} = 0"
-    ValueType.Boolean -> "override var $name: ${fieldType.javaType} = false"
+    ValueType.Int -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
+    ValueType.Boolean -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
     ValueType.String -> """            
-            @JvmField var $implFieldName: String? = null
             override val $name: ${fieldType.javaType}${optionalSuffix}
-                get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
+                get() = dataSource.$name
                                 
         """.trimIndent()
     is ValueType.ObjRef -> {
@@ -63,11 +66,9 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
         }
       }
       else {
-        val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
         """
-                @JvmField var $implFieldName: ${fieldType.javaType}? = null
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = $implFieldName$notNullAssertion   
+                    get() = dataSource.$name
                 
                 """.trimIndent()
       }
@@ -77,28 +78,24 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
         error("Set of references is not supported")
       }
       else {
-        val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
         """
-                @JvmField var $implFieldName: ${fieldType.javaType}? = null
                 override val $javaName: ${fieldType.javaType}$optionalSuffix
-                    get() = $implFieldName$notNullAssertion   
+                    get() = dataSource.$name
                 
                 """.trimIndent()
       }
     }
     is ValueType.Map<*, *> -> """
-            @JvmField var $implFieldName: ${fieldType.javaType}? = null
             override val $name: ${fieldType.javaType}$optionalSuffix
-                get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
+                get() = dataSource.$name
         """.trimIndent()
     is ValueType.Optional<*> -> when (fieldType.type) {
-      ValueType.Int, ValueType.Boolean -> "override var $name: ${fieldType.javaType} = null"
+      ValueType.Int, ValueType.Boolean -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
       else -> implWsBlockCode(fieldType.type, name, "?")
     }
     is ValueType.JvmClass -> """            
-            @JvmField var $implFieldName: ${fieldType.javaClassName.toQualifiedName()}? = null
             override val $name: ${fieldType.javaClassName.toQualifiedName()}$optionalSuffix
-                get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
+                get() = dataSource.$name
                                 
         """.trimIndent()
     else -> error("Unsupported field type: $this")

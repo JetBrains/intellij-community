@@ -25,52 +25,46 @@ public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
 
   @Test
   public void testDoNotHighlightSourceDirectoryInParentPom() {
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
-
-                  "<packaging>pom</packaging>\n" +
-                  "<build>\n" +
-                  "<sourceDirectory>dsfsfd/sdfsdf</sourceDirectory>\n" +
-                  "<testSourceDirectory>qwqwq/weqweqw</testSourceDirectory>\n" +
-                  "<scriptSourceDirectory>dfsdf/fsdf</scriptSourceDirectory>\n" +
-                  "</build>\n" +
-                  "");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <build>
+                    <sourceDirectory>dsfsfd/sdfsdf</sourceDirectory>
+                    <testSourceDirectory>qwqwq/weqweqw</testSourceDirectory>
+                    <scriptSourceDirectory>dfsdf/fsdf</scriptSourceDirectory>
+                    </build>
+                    """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightSourceDirectory() {
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>jar</packaging>
+                    <build>
+                    <sourceDirectory>foo1</sourceDirectory>
+                    <testSourceDirectory>foo2</testSourceDirectory>
+                    <scriptSourceDirectory>foo3</scriptSourceDirectory>
+                    </build>
+                    """);
 
-                  "<packaging>jar</packaging>\n" +
-
-                  "<build>\n" +
-                  "<sourceDirectory>foo1</sourceDirectory>\n" +
-                  "<testSourceDirectory>foo2</testSourceDirectory>\n" +
-                  "<scriptSourceDirectory>foo3</scriptSourceDirectory>\n" +
-                  "</build>\n" +
-                  "");
-
-    createProjectPom("<groupId>test</groupId>\n" +
-                 "<artifactId>project</artifactId>\n" +
-                 "<version>1</version>\n" +
-
-                 "<packaging>jar</packaging>\n" +
-
-                 "<build>\n" +
-                 //"<sourceDirectory><error descr=\"Cannot resolve file 'foo1'\">foo1</error></sourceDirectory>\n" +
-                 //"<testSourceDirectory><error descr=\"Cannot resolve file 'foo2'\">foo2</error></testSourceDirectory>\n" +
-                 //"<scriptSourceDirectory><error descr=\"Cannot resolve file 'foo3'\">foo3</error></scriptSourceDirectory>\n" +
-
-                 "<sourceDirectory><error>foo1</error></sourceDirectory>\n" +
-                 "<testSourceDirectory><error>foo2</error></testSourceDirectory>\n" +
-                 "<scriptSourceDirectory><error>foo3</error></scriptSourceDirectory>\n" +
-                 "</build>\n" +
-                 "");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>jar</packaging>
+                       <build>
+                       <sourceDirectory><error>foo1</error></sourceDirectory>
+                       <testSourceDirectory><error>foo2</error></testSourceDirectory>
+                       <scriptSourceDirectory><error>foo3</error></scriptSourceDirectory>
+                       </build>
+                       """);
 
     checkHighlighting();
   }

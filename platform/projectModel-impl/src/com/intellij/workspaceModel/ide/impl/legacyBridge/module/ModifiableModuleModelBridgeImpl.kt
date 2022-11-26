@@ -20,14 +20,11 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.io.IOException
 import java.nio.file.Path
@@ -60,7 +57,7 @@ internal class ModifiableModuleModelBridgeImpl(
       source = NonPersistentEntitySource
     )
 
-    val module = moduleManager.createModule(moduleEntity.persistentId, moduleName, null, entityStorageOnDiff, diff)
+    val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff)
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     myModulesToAdd[moduleName] = module
     currentModulesSet.add(module)
@@ -188,7 +185,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
     myNewNameToModule.removeValue(module)
     myModulesToDispose[module.name] = module
-    val moduleEntity = diff.findModuleEntity(module)
+    val moduleEntity = module.findModuleEntity(diff)
     if (moduleEntity == null) {
       LOG.error("Could not find module entity to remove by $module")
       return
@@ -242,7 +239,7 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun commit() {
     val diff = collectChanges()
 
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel("Module model commit") {
       it.addDiff(diff)
     }
   }
@@ -277,7 +274,7 @@ internal class ModifiableModuleModelBridgeImpl(
       else {
         myNewNameToModule[newName] = module
       }
-      val entity = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Unable to find module entity for $module")
+      val entity = module.findModuleEntity(entityStorageOnDiff.current) ?: error("Unable to find module entity for $module")
       diff.modifyEntity(entity) {
         name = newName
       }
@@ -299,7 +296,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
   override fun setModuleGroupPath(module: Module, groupPath: Array<out String>?) {
     val storage = entityStorageOnDiff.current
-    val moduleEntity = storage.findModuleEntity(module as ModuleBridge) ?: error("Could not resolve module entity for $module")
+    val moduleEntity = (module as ModuleBridge).findModuleEntity(storage) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
     val groupPathList = groupPath?.toMutableList()
 

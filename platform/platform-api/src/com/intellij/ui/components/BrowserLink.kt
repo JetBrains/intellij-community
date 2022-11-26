@@ -14,13 +14,13 @@ import org.jetbrains.annotations.NonNls
 import java.awt.datatransfer.StringSelection
 import javax.swing.Icon
 
-class BrowserLink(icon: Icon?, @Nls text: String?, @Nls tooltip: String?, @NonNls val url: String) : ActionLink() {
+class BrowserLink(icon: Icon?, text: @Nls String?, tooltip: @Nls String?, val url: @NonNls String) : ActionLink() {
 
-  constructor(@NonNls url: String) : this(null, url, null, url) // NON-NLS
+  constructor(url: @NonNls String) : this(null, url, null, url) // NON-NLS
 
-  constructor(@Nls text: String, @NonNls url: String) : this(AllIcons.Ide.External_link_arrow, text, null, url)
+  constructor(text: @Nls String, url: @NonNls String) : this(AllIcons.Ide.External_link_arrow, text, null, url)
 
-  constructor(icon: Icon, @Nls tooltip: String, @NonNls url: String) : this(icon, null, tooltip, url)
+  constructor(icon: Icon, tooltip: @Nls String, url: @NonNls String) : this(icon, null, tooltip, url)
 
   init {
     addActionListener { browse(url) }

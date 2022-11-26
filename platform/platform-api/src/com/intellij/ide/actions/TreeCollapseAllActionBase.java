@@ -28,7 +28,7 @@ public abstract class TreeCollapseAllActionBase extends DumbAwareAction {
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     TreeExpander expander = getExpander(event.getDataContext());
-    presentation.setVisible(expander == null || (expander.isCollapseAllVisible() && expander.isVisible(event)));
+    presentation.setVisible(expander == null || expander.isCollapseAllVisible());
     presentation.setEnabled(expander != null && expander.canCollapse());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.SyncScrollSupport;
@@ -133,7 +133,10 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
         public void applyDefaults(@NotNull List<? extends Editor> editors) {
           if (!myTextSettings.isUseSoftWraps()) {
             for (Editor editor : editors) {
-              myForcedSoftWrap = myForcedSoftWrap || ((EditorImpl)editor).getSoftWrapModel().shouldSoftWrapsBeForced();
+              if (editor instanceof EditorImpl editorImpl &&
+                  editorImpl.getSoftWrapModel().shouldSoftWrapsBeForced()) {
+                myForcedSoftWrap = true;
+              }
             }
           }
           super.applyDefaults(editors);
@@ -194,6 +197,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return isSelected();
     }
@@ -240,7 +248,9 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     private void apply(@NotNull HighlightingLevel layer) {
       for (Editor editor : myEditors.get()) {
-        ((EditorImpl)editor).setHighlightingPredicate(layer.getCondition());
+        if (editor instanceof EditorImpl editorImpl) {
+          editorImpl.setHighlightingPredicate(layer.getCondition());
+        }
       }
     }
 
@@ -250,6 +260,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       OptionAction(@NotNull HighlightingLevel layer) {
         super(layer.getText(), null, layer.getIcon());
         myLayer = layer;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -289,6 +304,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       OptionAction(@NotNull BreadcrumbsPlacement option) {
         ActionUtil.copyFrom(this, option.getActionId());
         myOption = option;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

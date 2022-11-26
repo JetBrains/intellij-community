@@ -19,7 +19,7 @@ object KotlinMavenUtils {
      * Deducts main binary artifact version in a given IntelliJ IDEA project library.
      * This function works only when the IDE is run from sources (for instance, in tests), as in production there is no '.idea' directory.
      */
-    fun findLibraryVersion(libraryFileName: String): String? {
+    fun findLibraryVersion(libraryFileName: String): String {
         val librariesDir = Paths.get(PathManager.getHomePath(), ".idea/libraries")
         val libraryFile = librariesDir.resolve(libraryFileName)
         val libraryDocument = JDOMUtil.load(libraryFile)
@@ -53,7 +53,7 @@ object KotlinMavenUtils {
             }
         }
 
-        return null
+        error("Can't get '$libraryFileName' version")
     }
 
     /**
@@ -74,7 +74,7 @@ object KotlinMavenUtils {
     }
 }
 
-private abstract class KotlinMavenArtifactFinder {
+internal abstract class KotlinMavenArtifactFinder {
     companion object {
         val instance: KotlinMavenArtifactFinder
             get() = when {

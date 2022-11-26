@@ -4,7 +4,7 @@
   <category>Build Tools</category>
   <vendor>JetBrains</vendor>
   <description>
-      <![CDATA[
+    <![CDATA[
       Provides integration with <a href="https://www.gradle.org">Gradle</a> for automation of building, testing, publishing, and deployment of software packages.
       <ul>
       <li>Create a new Gradle project or import an existing Gradle project.</li>
@@ -43,6 +43,8 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.targetEnvironmentAware" interface="org.jetbrains.plugins.gradle.execution.target.GradleTargetEnvironmentAware"
                     dynamic="true"/>
     <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskResultListener" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskResultListener"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.operationHelperExtension" interface="org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -103,7 +105,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager"
-      serviceImplementation="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl"/>
+                        serviceImplementation="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper$SystemPropertiesAdjuster"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
@@ -139,7 +141,7 @@
 
     <externalSystem.runConfigurationEx implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationExtension"/>
     <externalSystem.runConfigurationImporter
-        implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
+      implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
 
     <externalSystemDependencyAnalyzer implementation="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerExtension"/>
 
@@ -168,6 +170,7 @@
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder"/>
+    <iconMapper mappingFile="GradleIconMappings.json"/>
   </extensions>
 
   <actions>

@@ -81,14 +81,14 @@ public final class ChangelistConflictTracker {
       }
 
       @Override
-      public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+      public void changesMoved(Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {
         if (((LocalChangeList)toList).isDefault() || ((LocalChangeList)fromList).isDefault()) {
           clearChanges(changes);
         }
       }
 
       @Override
-      public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
+      public void changesRemoved(Collection<? extends Change> changes, ChangeList fromList) {
         clearChanges(changes);
       }
 

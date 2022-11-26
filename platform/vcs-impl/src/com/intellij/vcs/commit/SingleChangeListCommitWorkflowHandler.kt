@@ -71,6 +71,10 @@ class SingleChangeListCommitWorkflowHandler(
     updateCommitOptions()
   }
 
+  override fun updateDefaultCommitActionName() {
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
+  }
+
   override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
     super.beforeCommitChecksEnded(sessionInfo, result)
     if (result.shouldCommit) {

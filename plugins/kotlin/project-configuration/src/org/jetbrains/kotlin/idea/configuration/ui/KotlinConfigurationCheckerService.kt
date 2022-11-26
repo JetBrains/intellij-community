@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.configuration.ui
 
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationsConfiguration
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.IntellijInternalApi
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -65,6 +64,7 @@ class KotlinConfigurationCheckerService(val project: Project) {
                 }
 
                 indicator.isIndeterminate = false
+                val writeActionContinuations = mutableListOf<() -> Unit>()
                 for ((idx, module) in ktModules.withIndex()) {
                     indicator.checkCanceled()
                     if (project.isDisposed) return
@@ -72,7 +72,14 @@ class KotlinConfigurationCheckerService(val project: Project) {
                     runReadAction {
                         if (module.isDisposed) return@runReadAction
                         indicator.text2 = KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings.0.module", module.name)
-                        getAndCacheLanguageLevelByDependencies(module)
+                        getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
+                    }
+                }
+                if (writeActionContinuations.isNotEmpty()) {
+                    runInEdt {
+                        runWriteAction {
+                            writeActionContinuations.forEach { it.invoke() }
+                        }
                     }
                 }
             }
@@ -81,22 +88,27 @@ class KotlinConfigurationCheckerService(val project: Project) {
     }
 
     @IntellijInternalApi
-    @TestOnly
-    fun getAndCacheLanguageLevelByDependencies(module: Module) {
+    fun getAndCacheLanguageLevelByDependencies(module: Module, writeActionContinuations: MutableList<() -> Unit>) {
         val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(module) ?: return
         val newLanguageLevel = getLibraryLanguageLevel(module, null, facetSettings.targetPlatform?.idePlatformKind)
 
         // Preserve inferred version in facet/project settings
         if (facetSettings.useProjectSettings) {
-            KotlinCommonCompilerArgumentsHolder.getInstance(project).takeUnless { isKotlinLanguageVersionConfigured(it) }?.update {
-                if (languageVersion == null) {
-                    languageVersion = newLanguageLevel.versionString
-                }
+            KotlinCommonCompilerArgumentsHolder.getInstance(project).takeUnless { isKotlinLanguageVersionConfigured(it) }
+                ?.let { compilerArgumentsHolder ->
+                    writeActionContinuations += {
+                        compilerArgumentsHolder.update {
+                            if (languageVersion == null) {
+                                languageVersion = newLanguageLevel.versionString
+                            }
 
-                if (apiVersion == null) {
-                    apiVersion = newLanguageLevel.versionString
+                            if (apiVersion == null) {
+                                apiVersion = newLanguageLevel.versionString
+                            }
+                        }
+
+                    }
                 }
-            }
         } else {
             with(facetSettings) {
                 if (languageLevel == null) {

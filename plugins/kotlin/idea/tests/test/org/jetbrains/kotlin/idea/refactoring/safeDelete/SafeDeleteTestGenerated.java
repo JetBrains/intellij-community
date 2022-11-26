@@ -55,6 +55,16 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/enumEntry.kt");
         }
 
+        @TestMetadata("interface1.kt")
+        public void testInterface1() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/interface1.kt");
+        }
+
+        @TestMetadata("interface2.kt")
+        public void testInterface2() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/interface2.kt");
+        }
+
         @TestMetadata("localClass1.kt")
         public void testLocalClass1() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/localClass1.kt");
@@ -78,16 +88,6 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/noUsages.kt");
-        }
-
-        @TestMetadata("trait1.kt")
-        public void testTrait1() throws Exception {
-            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/trait1.kt");
-        }
-
-        @TestMetadata("trait2.kt")
-        public void testTrait2() throws Exception {
-            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/trait2.kt");
         }
 
         @TestMetadata("unsafeImport.kt")
@@ -167,11 +167,6 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("nestedObject2.kt")
         public void testNestedObject2() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteObject/kotlinObject/nestedObject2.kt");
-        }
-
-        @TestMetadata("nestedObject3.kt")
-        public void testNestedObject3() throws Exception {
-            runTest("testData/refactoring/safeDelete/deleteObject/kotlinObject/nestedObject3.kt");
         }
 
         @TestMetadata("noUsages.kt")

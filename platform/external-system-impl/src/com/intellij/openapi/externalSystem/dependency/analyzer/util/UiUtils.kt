@@ -6,7 +6,8 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.observable.operations.ObservableOperationTrace
+import com.intellij.openapi.observable.operation.core.*
+import com.intellij.openapi.observable.properties.ObservableBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.bind
@@ -91,15 +92,18 @@ internal fun <T, C : CardLayoutPanel<T, *, *>> C.bind(property: ObservableProper
   property.afterChange { select(it, true) }
 }
 
-internal fun <C : JBLoadingPanel> C.bind(operation: ObservableOperationTrace): C = apply {
-  if (operation.isOperationCompleted()) {
-    stopLoading()
-  }
-  else {
+internal fun <C : JBLoadingPanel> C.bind(operation: ObservableOperationTrace): C =
+  bind(operation.getOperationInProgressProperty())
+
+internal fun <C : JBLoadingPanel> C.bind(property: ObservableBooleanProperty): C = apply {
+  if (property.get()) {
     startLoading()
   }
-  operation.beforeOperation { startLoading() }
-  operation.afterOperation { stopLoading() }
+  else {
+    stopLoading()
+  }
+  property.afterSet { startLoading() }
+  property.afterReset { stopLoading() }
 }
 
 internal fun <C : JBLoadingPanel> C.bindLoadingText(property: ObservableProperty<@Nls String>): C = apply {
@@ -111,6 +115,7 @@ internal fun toggleAction(property: ObservableMutableProperty<Boolean>): ToggleA
   object : ToggleAction(), DumbAware {
     override fun isSelected(e: AnActionEvent) = property.get()
     override fun setSelected(e: AnActionEvent, state: Boolean) = property.set(state)
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
 internal fun action(action: (AnActionEvent) -> Unit): AnAction =

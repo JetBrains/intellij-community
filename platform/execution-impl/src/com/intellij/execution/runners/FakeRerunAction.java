@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,9 @@ public class FakeRerunAction extends AnAction {
     if (environment != null) {
       presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
                                                           StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
-      presentation.setIcon(
-        ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || ExecutionManagerImpl.isProcessRunning(getDescriptor(event)) ?
-        AllIcons.Actions.Restart : environment.getExecutor().getIcon());
+      Icon rerunIcon = ExperimentalUI.isNewUI() ? environment.getExecutor().getRerunIcon() : environment.getExecutor().getIcon();
+      boolean isRestart = ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || ExecutionManagerImpl.isProcessRunning(getDescriptor(event));
+      presentation.setIcon(isRestart && !ExperimentalUI.isNewUI() ? AllIcons.Actions.Restart : rerunIcon);
       presentation.setEnabled(isEnabled(event));
       return;
     }

@@ -1,14 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,10 +25,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static com.intellij.util.io.PersistentHashMapValueStorage.*;
+import static java.util.Comparator.comparing;
 
 // todo rewrite: it's an app service for now but its lifecycle should be synchronized with stub index.
 @ApiStatus.Internal
@@ -92,19 +104,12 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     if (myOpenFile == null) {
       return new InMemoryDataEnumerator<>();
     }
-    Boolean lastValue = null;
-    if (myUnmodifiable) {
-      lastValue = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
-      PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(Boolean.TRUE);
-    }
-    try {
-      return new PersistentStringEnumerator(myOpenFile, true);
-    }
-    finally {
-      if (myUnmodifiable) {
-        PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(lastValue);
-      }
-    }
+
+    return CreationTimeOptions.threadLocalOptions()
+      .readOnly(myUnmodifiable)
+      .with(() -> {
+        return new PersistentStringEnumerator(myOpenFile, /*cacheLastMapping: */ true);
+      });
   }
 
   @ApiStatus.Internal
@@ -234,15 +239,29 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   @Override
   protected void initSerializers() {
+    if (mySerializersLoaded) return;
     //noinspection SynchronizeOnThis
     synchronized (this) {
       if (mySerializersLoaded) {
         return;
       }
 
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        instantiateElementTypesFromFields();
+        StubIndexEx.initExtensions();
+      });
+
       registerSerializer(PsiFileStubImpl.TYPE);
-      List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
+
+      final List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
+
       final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
+      Arrays.sort(
+        stubElementTypes,         
+        comparing((IElementType type) -> type.getLanguage().getID())
+          //TODO RC: not sure .debugName is enough for stable sorting. Maybe use .getClass() instead?
+          .thenComparing(type -> type.getDebugName())
+      );
       for (IElementType type : stubElementTypes) {
         if (type instanceof StubFileElementType &&
             StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType<?>)type).getExternalId())) {
@@ -251,7 +270,13 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
         registerSerializer((StubSerializer<?>)type);
       }
-      for (StubFieldAccessor lazySerializer : lazySerializers) {
+
+      final List<StubFieldAccessor> sortedLazySerializers = lazySerializers.stream()
+        //TODO RC: is .externalId enough for stable sorting? Seems like .myField is also important,
+        //         but it should also be dependent on .externalId...
+        .sorted(comparing(sfa -> sfa.externalId))
+        .toList();
+      for (StubFieldAccessor lazySerializer : sortedLazySerializers) {
         registerSerializer(lazySerializer.externalId, lazySerializer);
       }
       mySerializersLoaded = true;
@@ -281,6 +306,22 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
         nameStorageCrashed();
       }
       mySerializersLoaded = false;
+    }
+  }
+
+  private static void instantiateElementTypesFromFields() {
+    // load stub serializers before usage
+    FileTypeRegistry.getInstance().getRegisteredFileTypes();
+    getExtensions(BinaryFileStubBuilders.INSTANCE, builder -> {});
+    getExtensions(LanguageParserDefinitions.INSTANCE, ParserDefinition::getFileNodeType);
+  }
+
+  private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
+    ExtensionPointImpl<@NotNull KeyedLazyInstance<T>> point = (ExtensionPointImpl<@NotNull KeyedLazyInstance<T>>)collector.getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<T> instance : point) {
+        consumer.accept(instance.getInstance());
+      }
     }
   }
 }

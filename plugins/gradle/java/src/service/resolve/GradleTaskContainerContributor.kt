@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
-import org.jetbrains.plugins.gradle.service.resolve.staticModel.impl.getStaticPluginModel
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -40,16 +39,9 @@ class GradleTaskContainerContributor : NonCodeMembersContributor() {
       return
     }
     val tasks = if (name == null) data.tasksMap.values else listOfNotNull(data.tasksMap[name])
-    val taskNames = tasks.map { it.name }
-
-    val staticTasks = getStaticPluginModel(file).tasks.filter { if (name == null) it.name !in taskNames else it.name == name }
 
     for (task in tasks) {
       if (!processTask(task.name, task.description, task.typeFqn, file, processProperties, processor, state, processMethods)) return
-    }
-
-    for (task in staticTasks) {
-      if (!processTask(task.name, task.description, "java.lang.Object", file, processProperties, processor, state, processMethods)) return
     }
   }
 
@@ -69,11 +61,16 @@ class GradleTaskContainerContributor : NonCodeMembersContributor() {
     }
     if (processMethods) {
       val method = GrLightMethodBuilder(file.manager, name).apply {
+        originInfo = GRADLE_TASK_INFO
         returnType = taskType
         addParameter("configuration", closureType)
       }
       return processor.execute(method, state)
     }
     return true
+  }
+
+  companion object {
+    internal const val GRADLE_TASK_INFO = "by Gradle tasks"
   }
 }

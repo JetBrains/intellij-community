@@ -22,9 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorProvider {
   @Override
   @NotNull

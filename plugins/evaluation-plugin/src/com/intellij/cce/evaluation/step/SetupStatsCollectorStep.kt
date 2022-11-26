@@ -84,7 +84,13 @@ class SetupStatsCollectorStep(private val project: Project,
     val experimentStatus = object : ExperimentStatus {
       // it allows to collect logs from all sessions (need a more explicit solution in stats-collector)
       override fun forLanguage(language: Language): ExperimentInfo =
-        ExperimentInfo(true, version = experimentGroup ?: 0, shouldRank = false, shouldShowArrows = false, shouldCalculateFeatures = true)
+        ExperimentInfo(true,
+                       version = experimentGroup ?: 0,
+                       shouldRank = false,
+                       shouldShowArrows = false,
+                       shouldCalculateFeatures = true,
+                       shouldLogElementFeatures = true)
+
       // it allows to ignore experiment info during ranking
       override fun isDisabled(): Boolean = true
       override fun disable() = Unit

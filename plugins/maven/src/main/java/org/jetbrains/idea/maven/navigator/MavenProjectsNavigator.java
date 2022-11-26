@@ -279,6 +279,11 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   void initToolWindow() {
     initTree();
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    toolWindowManager.invokeLater(() -> initializeToolWindow(toolWindowManager));
+  }
+
+  private void initializeToolWindow(ToolWindowManager toolWindowManager) {
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     AnAction removeAction = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration"));
@@ -286,7 +291,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
       builder.icon = MavenIcons.ToolWindowMaven;
       builder.anchor = ToolWindowAnchor.RIGHT;
@@ -303,7 +307,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     ContentManager contentManager = toolWindow.getContentManager();
     Disposer.register(this, () -> {
       // fire content removed events, so subscribers could clean up caches
-      contentManager.removeAllContents(true);
+      if (!myProject.isDisposed()) {
+        contentManager.removeAllContents(true);
+      }
       Disposer.dispose(contentManager);
       if (!myProject.isDisposed()) {
         toolWindow.remove();
@@ -319,7 +325,10 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        if (toolWindow.isDisposed()) return;
+        if (toolWindow.isDisposed()) {
+          return;
+        }
+
         boolean visible = ((ToolWindowManagerEx)toolWindowManager).shouldUpdateToolWindowContent(toolWindow);
         if (!visible || wasVisible) {
           return;

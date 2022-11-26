@@ -8,10 +8,10 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
-import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -39,7 +39,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
         private val sdkProperty = propertyGraph.property<Sdk?>(null)
         private val addSampleCodeProperty = propertyGraph.property(true)
-            .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+            .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
         private val sdk by sdkProperty
         private val addSampleCode by addSampleCodeProperty
@@ -76,9 +76,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
     private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
         override fun setupAssets(project: Project) {
             outputDirectory = "$path/$name"
-            if (gitData?.git == true) {
-                addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
-            }
+            addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
         }
     }
 }

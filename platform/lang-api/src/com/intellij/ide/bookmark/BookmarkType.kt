@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.ui.IconReplacer
 import com.intellij.ui.IconWrapperWithToolTip
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.RegionPaintIcon
@@ -74,12 +75,21 @@ private class MnemonicPainter(val icon: Icon, val mnemonic: String) : RegionPain
   }
 }
 
-class BookmarkIcon internal constructor(
-  val mnemonic: Char,
-  size: IconSize,
-) : IconWrapperWithToolTip(createBookmarkIcon(mnemonic, size),
-                           LangBundle.messagePointer("tooltip.bookmarked")) {
+class BookmarkIcon : IconWrapperWithToolTip {
+  val mnemonic: Char
+
+  internal constructor(mnemonic: Char, size: IconSize) : this(mnemonic, createBookmarkIcon(mnemonic, size))
+
+  private constructor(mnemonic: Char, icon: Icon)  : super(icon, LangBundle.messagePointer("tooltip.bookmarked")) {
+    this.mnemonic = mnemonic
+  }
+
+  override fun replaceBy(replacer: IconReplacer): BookmarkIcon {
+    return BookmarkIcon(mnemonic, replacer.replaceIcon(retrieveIcon()))
+  }
+
   companion object {
+    @JvmStatic
     private fun createBookmarkIcon(mnemonic: Char, size: IconSize): Icon {
       if (mnemonic == 0.toChar()) {
         return when (size) {

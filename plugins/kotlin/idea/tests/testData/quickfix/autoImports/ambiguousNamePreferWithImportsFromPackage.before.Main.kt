@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'XXX'" "true"
 // ERROR: Unresolved reference: XXX
 
 import dependency2.YYY

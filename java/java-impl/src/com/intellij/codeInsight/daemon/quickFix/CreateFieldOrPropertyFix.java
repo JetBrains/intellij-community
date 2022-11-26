@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
-*/
 public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(CreateFieldOrPropertyFix.class);
 

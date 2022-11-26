@@ -54,13 +54,10 @@ class EclipseAnnotationSupport implements AnnotationPackageSupport {
 
   @Override
   public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Collections.singletonList("org.eclipse.jdt.annotation.NonNull");
-      case NULLABLE:
-        return Collections.singletonList("org.eclipse.jdt.annotation.Nullable");
-      default:
-        return Collections.emptyList();
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Collections.singletonList("org.eclipse.jdt.annotation.NonNull");
+      case NULLABLE -> Collections.singletonList("org.eclipse.jdt.annotation.Nullable");
+      default -> Collections.emptyList();
+    };
   }
 }

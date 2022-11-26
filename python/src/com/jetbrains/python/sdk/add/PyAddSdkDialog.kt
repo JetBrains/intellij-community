@@ -61,7 +61,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   override fun createCenterPanel(): JComponent {
     val sdks = existingSdks
-      .filter { it.sdkType is PythonSdkType && !PythonSdkUtil.isInvalid(it) }
+      .filter { it.sdkType is PythonSdkType && it.sdkSeemsValid }
       .sortedWith(PreferredSdkComparator())
     val panels = createPanels(sdks).toMutableList()
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
@@ -177,6 +177,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
           }
         }
         addListSelectionListener {
+          // Only last even must be processed. Other events may leave UI in inconsistent state
+          if (it.valueIsAdjusting) return@addListSelectionListener
           selectedPanel = selectedValue
           cardLayout.show(cardPanel, selectedValue.panelName)
 
@@ -347,7 +349,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     private fun PyAddSdkProvider.safeCreateView(project: Project?,
                                                 module: Module?,
                                                 existingSdks: List<Sdk>,
-                                                context:UserDataHolder): PyAddSdkView? {
+                                                context: UserDataHolder): PyAddSdkView? {
       try {
         return createView(project, module, null, existingSdks, context)
       }

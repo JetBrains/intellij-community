@@ -31,6 +31,8 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.SwingUndoUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -320,8 +322,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public void resetUndoRedoActions() {
-    UIUtil.resetUndoRedoActions(mySearchTextComponent);
-    UIUtil.resetUndoRedoActions(myReplaceTextComponent);
+    SwingUndoUtil.resetUndoRedoActions(mySearchTextComponent);
+    SwingUndoUtil.resetUndoRedoActions(myReplaceTextComponent);
   }
 
   @Override
@@ -375,7 +377,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   public void setNotFoundBackground() {
     mySearchTextComponent.setForeground(JBColor.namedColor("SearchField.errorForeground", JBColor.RED));
-    myStatusColor = UIUtil.getErrorForeground();
+    myStatusColor = NamedColorUtil.getErrorForeground();
   }
 
   @Nullable
@@ -594,7 +596,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
     }
 
-    UIUtil.addUndoRedoActions(innerTextComponent);
+    SwingUndoUtil.addUndoRedoActions(innerTextComponent);
     wrapper.setContent(outerComponent);
 
     if (search) {

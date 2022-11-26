@@ -123,7 +123,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     if (wasReady) {
-      ChangeListManager.getInstance(myProject).scheduleUpdate();
+      ChangeListManagerImpl.getInstanceImpl(myProject).scheduleUpdateImpl();
       if (ongoingRefresh != null) ongoingRefresh.setRejected();
     }
   }
@@ -186,7 +186,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     if (hasSomethingDirty) {
-      ChangeListManager.getInstance(myProject).scheduleUpdate();
+      ChangeListManagerImpl.getInstanceImpl(myProject).scheduleUpdateImpl();
     }
   }
 

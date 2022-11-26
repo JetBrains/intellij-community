@@ -5,9 +5,6 @@ import org.jdom.Element;
 
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class LwIntroRectangleProperty extends LwIntrospectedProperty{
   LwIntroRectangleProperty(final String name){
     super(name, "java.awt.Rectangle");

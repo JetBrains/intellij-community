@@ -2,10 +2,19 @@
 package org.jetbrains.idea.maven.starters
 
 import com.intellij.ide.starters.StarterModuleImporter
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemProjectSetupExtension
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+
+
+internal class MavenStarterProjectConfigurator : ExternalSystemProjectSetupExtension {
+  override fun setupCreatedProject(project: Project) {
+    MavenProjectsManager.setupCreatedMavenProject(project)
+  }
+}
 
 internal class MavenStarterModuleImporter : StarterModuleImporter {
   override val id: String = "maven"

@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'A.extension'" "true"
 // WITH_STDLIB
 package p
 

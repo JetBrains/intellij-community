@@ -5,18 +5,24 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.Language
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.fileTypes.UnknownFileType
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
 
 class PlantUMLCodeFenceLanguageProvider: CodeFenceLanguageProvider {
   override fun getLanguageByInfoString(infoString: String): Language? {
     return when {
-      infoString in aliases -> PlantUMLLanguage.INSTANCE
+      isPlantUmlInfoString(infoString) -> obtainPlantUmlLanguage()
       else -> null
     }
   }
 
   override fun getCompletionVariantsForInfoString(parameters: CompletionParameters): List<LookupElement> {
-    return aliases.map { LookupElementBuilder.create(it) }
+    val language = obtainPlantUmlLanguage()
+    val icon = language.associatedFileType?.icon
+    return aliases.map { LookupElementBuilder.create(it).withIcon(icon) }
   }
 
   companion object {
@@ -24,5 +30,18 @@ class PlantUMLCodeFenceLanguageProvider: CodeFenceLanguageProvider {
       "plantuml",
       "puml"
     )
+
+    internal fun isPlantUmlInfoString(infoString: String): Boolean {
+      return infoString.lowercase() in aliases
+    }
+
+    internal fun obtainPlantUmlLanguage(): Language {
+      val registry = FileTypeRegistry.getInstance()
+      val fileType = aliases.asSequence().map(registry::getFileTypeByExtension).filterIsInstance<LanguageFileType>().firstOrNull()
+      if (fileType != null && fileType != UnknownFileType.INSTANCE) {
+        return fileType.language
+      }
+      return PlainTextLanguage.INSTANCE
+    }
   }
 }

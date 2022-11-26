@@ -124,7 +124,7 @@ internal fun checkRedeclarations(
                 typeParameters.filterTo(this) { it.name.asString() == newName }
                 val containingDeclaration = (containingDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi() as? KtDeclaration
                     ?: return emptyList()
-                val dummyVar = KtPsiFactory(containingDeclaration).createProperty("val foo: $newName")
+                val dummyVar = KtPsiFactory(containingDeclaration.project).createProperty("val foo: $newName")
                 val outerScope = containingDeclaration.getResolutionScope()
                 val context = dummyVar.analyzeInContext(outerScope, containingDeclaration)
                 addIfNotNull(context[BindingContext.VARIABLE, dummyVar]?.type?.constructor?.declarationDescriptor)
@@ -231,7 +231,7 @@ private fun checkUsagesRetargeting(
             if (Fe10KotlinNewDeclarationNameValidator(refElement.parent, refElement, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE)(name)) continue
         }
 
-        val psiFactory = KtPsiFactory(declaration)
+        val psiFactory = KtPsiFactory(declaration.project)
 
         val resolvedCall = refElement.getResolvedCall(context)
         if (resolvedCall == null) {

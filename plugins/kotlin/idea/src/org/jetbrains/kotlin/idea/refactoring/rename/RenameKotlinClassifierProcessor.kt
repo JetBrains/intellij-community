@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.withExpectedActuals
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.util.withExpectedActuals
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -45,8 +45,9 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
         super.prepareRenaming(element, newName, allRenames)
 
         val classOrObject = getClassOrObject(element) as? KtClassOrObject ?: return
+        val topLevelClassifiers = classOrObject.withExpectedActuals().filter { it.parent is KtFile }
 
-        classOrObject.withExpectedActuals().forEach {
+        topLevelClassifiers.forEach {
             val file = it.containingKtFile
             val virtualFile = file.virtualFile
             if (virtualFile != null) {
@@ -60,7 +61,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
         }
     }
 
-    protected fun processFoundReferences(
+    private fun processFoundReferences(
         element: PsiElement,
         references: Collection<PsiReference>
     ): Collection<PsiReference> {

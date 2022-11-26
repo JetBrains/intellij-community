@@ -16,11 +16,13 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,7 +31,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.raw;
 import static com.intellij.openapi.util.text.HtmlChunk.text;
 
 
-public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
+public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
 
   private static final Logger LOGGER = Logger.getInstance(MacPythonSdkFlavor.class);
 
@@ -41,9 +43,13 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
     return SystemInfo.isMac;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<String> candidates = new HashSet<>();
     collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
     collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);
@@ -52,7 +58,7 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
     if (areCommandLineDeveloperToolsAvailable()) {
       UnixPythonSdkFlavor.collectUnixPythons("/usr/bin", candidates);
     }
-    return candidates;
+    return ContainerUtil.map(candidates, Path::of);
   }
 
   private static void collectPythonInstallations(String pythonPath, Set<String> candidates) {

@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -28,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBase() {
+open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) : ContentRootTestEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, ContentRootTestEntity::class.java,
@@ -57,11 +56,15 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
   override val sourceRoots: List<SourceRootTestEntity>
     get() = snapshot.extractOneToManyChildren<SourceRootTestEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ContentRootTestEntityData?) : ModifiableWorkspaceEntityBase<ContentRootTestEntity>(), ContentRootTestEntity.Builder {
+  class Builder(result: ContentRootTestEntityData?) : ModifiableWorkspaceEntityBase<ContentRootTestEntity, ContentRootTestEntityData>(
+    result), ContentRootTestEntity.Builder {
     constructor() : this(ContentRootTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -79,6 +82,9 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -120,9 +126,12 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ContentRootTestEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleTestEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
@@ -131,7 +140,7 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -150,21 +159,21 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
@@ -189,18 +198,18 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(SOURCEROOTORDER_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -230,7 +239,13 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
+                item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -238,7 +253,7 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -249,7 +264,6 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
         changedProperty.add("sourceRoots")
       }
 
-    override fun getEntityData(): ContentRootTestEntityData = result ?: super.getEntityData() as ContentRootTestEntityData
     override fun getEntityClass(): Class<ContentRootTestEntity> = ContentRootTestEntity::class.java
   }
 }
@@ -257,24 +271,21 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
 class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ContentRootTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ContentRootTestEntity> {
     val modifiable = ContentRootTestEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ContentRootTestEntity {
-    val entity = ContentRootTestEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ContentRootTestEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -301,7 +312,7 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ContentRootTestEntityData
 
@@ -311,7 +322,7 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ContentRootTestEntityData
 

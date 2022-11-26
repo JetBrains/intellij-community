@@ -5,6 +5,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.similarity.bag.Bag;
 import org.jetbrains.annotations.NotNull;
@@ -14,11 +15,21 @@ import java.util.Arrays;
 
 public class UsageSimilarityFeaturesRecorder {
   private final @NotNull Bag myFeatures;
-  private final @Nullable PsiElement myInitialElement;
+  private final @Nullable PsiElement myInitialContext;
+  private final @NotNull PsiElement myUsage;
 
-  public UsageSimilarityFeaturesRecorder(@Nullable PsiElement initialContext) {
+  public UsageSimilarityFeaturesRecorder(@Nullable PsiElement initialContext, @NotNull PsiElement usage) {
+    myUsage = usage;
     myFeatures = new Bag();
-    myInitialElement = initialContext;
+    myInitialContext = initialContext;
+  }
+
+  private boolean isInSameTreeAsUsage(@NotNull PsiElement expression) {
+    return PsiTreeUtil.findFirstParent(
+      expression,
+      false, element -> element == myUsage || element == myInitialContext) == myUsage || PsiTreeUtil.findFirstParent(
+      myUsage,
+      false, element -> element == expression || element == myInitialContext) == expression;
   }
 
   public @NotNull Bag getFeatures() {
@@ -30,26 +41,31 @@ public class UsageSimilarityFeaturesRecorder {
   }
 
   public void addAllFeatures(@NotNull PsiElement element, @Nullable String tokenFeature) {
-    if (tokenFeature != null) {
-      myFeatures.add(tokenFeature);
-      if (element != myInitialElement) {
-        addStructuralFeatures(element, tokenFeature);
-      }
+    if (tokenFeature == null) {
+      tokenFeature = PsiUtilCore.getElementType(element).toString();
     }
+    if (Registry.is("similarity.distinguish.usages.in.one.statement")) {
+      tokenFeature = (isInSameTreeAsUsage(element) ? "USAGE: " : "CONTEXT: ") + tokenFeature;
+    }
+    myFeatures.add(tokenFeature);
+    if (element == myInitialContext) {
+      return;
+    }
+    PsiElement parent = element.getParent();
+    if (parent != myInitialContext) {
+      addParentFeatures(parent, tokenFeature, "GP:");
+    }
+    addParentFeatures(element, tokenFeature, "P:");
+    addSiblingFeatures(element, tokenFeature);
   }
 
-  private void addParentFeatures(@NotNull PsiElement element, @Nullable String tokenFeature) {
+  private void addParentFeatures(@NotNull PsiElement element, @Nullable String tokenFeature, @NotNull String prefix) {
     if (!Registry.is("similarity.find.usages.use.parent.features")) {
       return;
     }
     PsiElement parent = element.getParent();
-    PsiElement grandParent;
     if (parent != null) {
-      grandParent = parent.getParent();
-      myFeatures.add("P:" + tokenFeature + " " + PsiUtilCore.getElementType(parent) + " " + getChildNumber(parent, element));
-      if (grandParent != null) {
-        myFeatures.add("GP:" + tokenFeature + " " + PsiUtilCore.getElementType(grandParent) + " " + getChildNumber(grandParent, parent));
-      }
+      myFeatures.add(tokenFeature + " " + prefix + " " + PsiUtilCore.getElementType(parent) + " " + getChildNumber(parent, element));
     }
   }
 
@@ -57,13 +73,8 @@ public class UsageSimilarityFeaturesRecorder {
     if (!Registry.is("similarity.find.usages.use.sibling.features")) {
       return;
     }
-    myFeatures.add("PREV: " + getPrevMeaningfulSibling(element) + " " + tokenFeature);
-    myFeatures.add("NEXT: " + tokenFeature + " " + getNextMeaningfulSibling(element));
-  }
-
-  public void addStructuralFeatures(@NotNull PsiElement element, @NotNull String tokenFeature) {
-    addParentFeatures(element, tokenFeature);
-    addSiblingFeatures(element, tokenFeature);
+    myFeatures.add(tokenFeature + " PREV: " + getPrevMeaningfulSibling(element));
+    myFeatures.add(tokenFeature + " NEXT: " + getNextMeaningfulSibling(element));
   }
 
   private static int getChildNumber(@NotNull PsiElement parent, @NotNull PsiElement child) {

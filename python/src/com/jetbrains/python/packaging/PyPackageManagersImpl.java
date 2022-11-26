@@ -8,11 +8,9 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
-import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -51,7 +49,6 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       manager = myProvidedManagers.get(key);
     }
     if (manager == null) {
-      final VirtualFile homeDirectory = sdk.getHomeDirectory();
       final Map<String, PyPackageManager> cache;
       PyPackageManager customPackageManager = PyCustomPackageManagers.tryCreateCustomPackageManager(sdk);
       if (customPackageManager != null) {
@@ -60,19 +57,20 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       }
       else {
         cache = myStandardManagers;
-        if (PySdkExtKt.isTargetBased(sdk)) {
-          manager = new PyTargetEnvironmentPackageManager(sdk);
-        }
-        else if (PythonSdkUtil.isRemote(sdk)) {
-          manager = new PyUnsupportedPackageManager(sdk);
-        }
-        else if (PythonSdkUtil.isConda(sdk) &&
-                 homeDirectory != null &&
-                 PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
+        // TODO:
+        // * There should be no difference between local and "Remote" package manager
+        // * But python flavor makes the difference.
+        // So one must check flavor and execute appropriate command on SDK target
+        // (be it localRequest or target request)
+
+        // This is a temporary solution to support local conda
+        if (PythonSdkUtil.isConda(sdk) &&
+            sdk.getHomePath() != null &&
+            PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
           manager = new PyCondaPackageManagerImpl(sdk);
         }
         else {
-          manager = new PyPackageManagerImpl(sdk);
+          manager = new PyTargetEnvironmentPackageManager(sdk);
         }
       }
       cache.put(key, manager);

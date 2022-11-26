@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.toolbar
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 
 abstract class RunWidgetAvailabilityManager {
-  companion object{
-    fun getInstance(project: Project): RunWidgetAvailabilityManager = project.getService(RunWidgetAvailabilityManager::class.java)
+  companion object {
+    fun getInstance(project: Project): RunWidgetAvailabilityManager = project.service()
   }
 
   private val listeners = mutableListOf<RunWidgetAvailabilityListener>()

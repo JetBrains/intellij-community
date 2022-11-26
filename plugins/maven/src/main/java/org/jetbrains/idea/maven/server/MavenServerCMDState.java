@@ -13,6 +13,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,10 +24,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
+import org.jetbrains.idea.maven.MavenVersionSupportUtil;
+import org.jetbrains.idea.maven.buildtool.quickfix.InstallMaven2BuildIssue;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
 import org.slf4j.impl.JDK14LoggerFactory;
 
+import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -112,7 +118,7 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
-    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
+    params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(myDistribution));
 
     Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
     for (String s : classPath) {
@@ -144,6 +150,25 @@ public class MavenServerCMDState extends CommandLineState {
 
     setupMainExt(params);
     return params;
+  }
+
+  public static @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
+    if (!distribution.isValid()) {
+      MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
+      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not valid");
+    }
+
+    MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(distribution);
+
+
+    if (extension == null) {
+      if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3") < 0) {
+        throw new BuildIssueException(new InstallMaven2BuildIssue());
+      }
+      throw new IllegalStateException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not supported");
+    }
+    MavenLog.LOG.info("Using extension " + extension + " to start MavenServer");
+    return extension.collectClassPathAndLibsFolder(distribution);
   }
 
   private void setupMainExt(SimpleJavaParameters params) {

@@ -14,11 +14,13 @@ import org.jetbrains.annotations.NotNull;
 public class LombokTestUtil {
 
   public static final String LOMBOK_MAVEN_COORDINATES = "org.projectlombok:lombok:" + Version.LAST_LOMBOK_VERSION;
+  private static final String JACKSON_MAVEN_COORDINATES = "com.fasterxml.jackson.core:jackson-databind:2.12.7.1";
 
   public static final DefaultLightProjectDescriptor LOMBOK_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES);
+      MavenDependencyUtil.addFromMaven(model, JACKSON_MAVEN_COORDINATES);
       MavenDependencyUtil.addFromMaven(model, "com.google.guava:guava:27.0.1-jre");
       MavenDependencyUtil.addFromMaven(model, "org.slf4j:slf4j-api:1.7.30");
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
@@ -34,11 +36,10 @@ public class LombokTestUtil {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES);
+      MavenDependencyUtil.addFromMaven(model, JACKSON_MAVEN_COORDINATES);
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.HIGHEST);
     }
   };
-
-
 
   public static final DefaultLightProjectDescriptor LOMBOK_OLD_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override

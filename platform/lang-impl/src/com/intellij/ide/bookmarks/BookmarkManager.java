@@ -16,7 +16,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,7 +28,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -43,18 +47,23 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class BookmarkManager implements PersistentStateComponent<Element> {
+  private record BookmarkInfo(Bookmark bookmark, int line, String text) {
+  }
+
+  private record DeletedDocumentBookmarkKey(VirtualFile file, int line, String text) {
+  }
+
   private final static Logger LOG = Logger.getInstance(BookmarkManager.class);
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private final MultiMap<VirtualFile, Bookmark> myBookmarks = MultiMap.createConcurrentSet();
-  private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks = new HashMap<>();
-  private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();
+  private final Map<DeletedDocumentBookmarkKey, Bookmark> myDeletedDocumentBookmarks = new HashMap<>();
+  private final Map<Document, List<BookmarkInfo>> myBeforeChangeData = new HashMap<>();
 
   private final Project myProject;
 
@@ -71,7 +80,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     connection.subscribe(EditorColorsManager.TOPIC, __ -> colorsChanged());
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
-    multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
 
     mySortedState = UISettings.getInstance().getSortBookmarks();
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
@@ -152,18 +160,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     if (description != null) {
       setDescription(bookmark, description);
     }
-  }
-
-  public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    Document document = editor.getDocument();
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (psiFile == null) return;
-
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return;
-
-    addTextBookmark(virtualFile, lineIndex, getAutoDescription(editor, lineIndex));
   }
 
   @NotNull
@@ -502,29 +498,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  private class MyEditorMouseListener implements EditorMouseListener {
-    @Override
-    public void mouseClicked(@NotNull final EditorMouseEvent e) {
-      if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;
-      if (e.getMouseEvent().isPopupTrigger()) return;
-      if ((e.getMouseEvent().getModifiers() & (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)) == 0) return;
-
-      Editor editor = e.getEditor();
-      int line = e.getLogicalPosition().line;
-
-      Document document = editor.getDocument();
-
-      Bookmark bookmark = findEditorBookmark(document, line);
-      if (bookmark == null) {
-        addEditorBookmark(editor, line);
-      }
-      else {
-        removeBookmark(bookmark);
-      }
-      e.consume();
-    }
-  }
-
   private final class MyDocumentListener implements DocumentListener {
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent e) {
@@ -533,11 +506,11 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
       if (file != null) {
         for (Bookmark bookmark : myBookmarks.get(file)) {
           if (bookmark.getLine() == -1) continue;
-          List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.computeIfAbsent(doc, __ -> new ArrayList<>());
-          list.add(new Trinity<>(bookmark,
-                                 bookmark.getLine(),
-                                 doc.getText(new TextRange(doc.getLineStartOffset(bookmark.getLine()),
-                                                           doc.getLineEndOffset(bookmark.getLine())))));
+          List<BookmarkInfo> list = myBeforeChangeData.computeIfAbsent(doc, __ -> new ArrayList<>());
+          list.add(new BookmarkInfo(bookmark,
+                                    bookmark.getLine(),
+                                    doc.getText(new TextRange(doc.getLineStartOffset(bookmark.getLine()),
+                                                              doc.getLineEndOffset(bookmark.getLine())))));
         }
       }
     }
@@ -568,11 +541,11 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
 
       myBeforeChangeData.remove(e.getDocument());
 
-      for (Iterator<Map.Entry<Trinity<VirtualFile, Integer, String>, Bookmark>> iterator = myDeletedDocumentBookmarks.entrySet().iterator();
+      for (Iterator<Map.Entry<DeletedDocumentBookmarkKey, Bookmark>> iterator = myDeletedDocumentBookmarks.entrySet().iterator();
            iterator.hasNext(); ) {
-        Map.Entry<Trinity<VirtualFile, Integer, String>, Bookmark> entry = iterator.next();
+        Map.Entry<DeletedDocumentBookmarkKey, Bookmark> entry = iterator.next();
 
-        VirtualFile virtualFile = entry.getKey().first;
+        VirtualFile virtualFile = entry.getKey().file;
         if (!virtualFile.isValid()) {
           iterator.remove();
           continue;
@@ -583,14 +556,14 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
         if (document == null || !bookmark.getFile().equals(virtualFile)) {
           continue;
         }
-        Integer line = entry.getKey().second;
+        int line = entry.getKey().line;
         if (document.getLineCount() <= line) {
           continue;
         }
 
         String lineContent = getLineContent(document, line);
 
-        String bookmarkedText = entry.getKey().third;
+        String bookmarkedText = entry.getKey().text;
         //'move statement up' action kills line bookmark: fix for single line movement up/down
         if (!bookmarkedText.equals(lineContent)
             && line > 1
@@ -625,13 +598,13 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
 
     private void moveToDeleted(Bookmark bookmark) {
-      List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.get(bookmark.getCachedDocument());
+      List<BookmarkInfo> list = myBeforeChangeData.get(bookmark.getCachedDocument());
 
       if (list != null) {
-        for (Trinity<Bookmark, Integer, String> trinity : list) {
-          if (trinity.first == bookmark) {
+        for (BookmarkInfo bookmarkInfo : list) {
+          if (bookmarkInfo.bookmark == bookmark) {
             removeBookmark(bookmark);
-            myDeletedDocumentBookmarks.put(new Trinity<>(bookmark.getFile(), trinity.second, trinity.third), bookmark);
+            myDeletedDocumentBookmarks.put(new DeletedDocumentBookmarkKey(bookmark.getFile(), bookmarkInfo.line, bookmarkInfo.text), bookmark);
             break;
           }
         }

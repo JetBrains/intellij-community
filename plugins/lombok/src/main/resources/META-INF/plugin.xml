@@ -39,7 +39,7 @@
   <li>Refactoring actions (lombok and delombok)</li>
 </ul>
 <br/>]]></description>
-  <category>Tools Integration</category>
+  <category>JVM Frameworks</category>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
@@ -119,7 +119,8 @@
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor"/>
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.CleanupProcessor"/>
-    <!--    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.SynchronizedProcessor"/>-->
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.SynchronizedProcessor"/>
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.JacksonizedProcessor"/>
     <!-- END of lombok Processors-->
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>
@@ -137,6 +138,8 @@
     <lang.structureViewExtension implementation="de.plushnikov.intellij.plugin.extension.LombokStructureViewExtension"/>
 
     <daemon.highlightInfoFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
+
+    <lang.inferredAnnotationProvider implementation="de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider"/>
 
     <fileType implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigFileType" name="LOMBOK_CONFIG"
               language="Lombok.Config"

@@ -18,18 +18,22 @@ public class SourceToSinkFlowInspectionTest extends LightJavaCodeInsightFixtureT
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("      package org.checkerframework.checker.tainting.qual;\n" +
-                       "      import java.lang.annotation.ElementType;\n" +
-                       "      import java.lang.annotation.Target;\n" +
-                       "      @Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})\n" +
-                       "      public @interface Tainted {\n" +
-                       "      }");
-    myFixture.addClass("      package org.checkerframework.checker.tainting.qual;\n" +
-                       "      import java.lang.annotation.ElementType;\n" +
-                       "      import java.lang.annotation.Target;\n" +
-                       "      @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})\n" +
-                       "      public @interface Untainted {\n" +
-                       "      }");
+    myFixture.addClass("""
+                               package org.checkerframework.checker.tainting.qual;
+                               import java.lang.annotation.ElementType;
+                               import java.lang.annotation.Target;
+                               @Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})
+                               public @interface Tainted {
+                               }\
+                         """);
+    myFixture.addClass("""
+                               package org.checkerframework.checker.tainting.qual;
+                               import java.lang.annotation.ElementType;
+                               import java.lang.annotation.Target;
+                               @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
+                               public @interface Untainted {
+                               }\
+                         """);
     myFixture.enableInspections(new SourceToSinkFlowInspection());
   }
 

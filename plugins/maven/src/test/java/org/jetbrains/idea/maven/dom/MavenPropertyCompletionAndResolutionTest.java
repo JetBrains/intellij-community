@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.maven.testFramework.MavenDomTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -24,6 +25,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   @Override
@@ -812,29 +814,28 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
   @Test
   public void testHighlightUnresolvedProperties() {
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>child</artifactId>\n" +
-                     "<version>1</version>\n" +
-                     "<name>${<error>xxx</error>}</name>\n" +
-
-                     "<properties>\n" +
-                     "  <foo>\n" +
-                     "${<error>zzz</error>}\n" +
-                     "${<error>pom.maven.build.timestamp</error>}\n" +
-                     "${<error>project.maven.build.timestamp</error>}\n" +
-                     "${<error>parent.maven.build.timestamp</error>}\n" +
-                     "${<error>baseUri</error>}\n" +
-                     "${<error>unknownProperty</error>}\n" +
-                     "${<error>project.version.bar</error>}\n" +
-
-                     "${maven.build.timestamp}\n" +
-                     "${project.parentFile.name}\n" +
-                     "${<error>project.parentFile.nameXxx</error>}\n" +
-                     "${pom.compileArtifacts.empty}\n" +
-                     "${modules.empty}\n" +
-                     "${projectDirectory}\n" +
-                     "</foo>\n" +
-                     "</properties>"
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>child</artifactId>
+                       <version>1</version>
+                       <name>${<error>xxx</error>}</name>
+                       <properties>
+                         <foo>
+                       ${<error>zzz</error>}
+                       ${<error>pom.maven.build.timestamp</error>}
+                       ${<error>project.maven.build.timestamp</error>}
+                       ${<error>parent.maven.build.timestamp</error>}
+                       ${<error>baseUri</error>}
+                       ${<error>unknownProperty</error>}
+                       ${<error>project.version.bar</error>}
+                       ${maven.build.timestamp}
+                       ${project.parentFile.name}
+                       ${<error>project.parentFile.nameXxx</error>}
+                       ${pom.compileArtifacts.empty}
+                       ${modules.empty}
+                       ${projectDirectory}
+                       </foo>
+                       </properties>"""
     );
 
     checkHighlighting();
@@ -999,7 +1000,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsDoNotInclude(myProjectPom, "project.groupId");
   }
 
-  private void readWithProfiles(String... profiles) {
+  private void readWithProfiles(String... profiles) throws Exception {
     if (isNewImportingProcess) {
       readWithProfilesViaImportFlow(profiles);
     }
@@ -1010,11 +1011,11 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   @Override
-  protected void readProjects() {
+  protected void readProjects() throws Exception {
     readWithProfiles();
   }
 
-  private void readWithProfilesViaImportFlow(String... profiles) {
+  private void readWithProfilesViaImportFlow(String... profiles) throws Exception {
     MavenImportFlow flow = new MavenImportFlow();
     MavenInitialImportContext initialImportContext =
       flow.prepareNewImport(myProject,
@@ -1024,7 +1025,9 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                             Arrays.asList(profiles),
                             Collections.emptyList());
     myProjectsManager.initForTests();
-    myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
-    myProjectsManager.setProjectsTree(myReadContext.getProjectsTree());
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      myProjectsManager.setProjectsTree(myReadContext.getProjectsTree());
+    }).get(10, TimeUnit.SECONDS);
   }
 }

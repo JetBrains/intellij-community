@@ -764,9 +764,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindInUserFileType() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-    String text = "\"done done\"; 'done'; // done\n" +
-                  "/* done\n" +
-                  "done */";
+    String text = """
+      "done done"; 'done'; // done
+      /* done
+      done */""";
     FindManagerTestUtils.runFindInCommentsAndLiterals(myFindManager, findModel, text, "cs");
   }
 
@@ -971,8 +972,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRegExpSOEWhenMatch() {
-    String text = "package com.intellij.demo;\n" +
-                  "\n";
+    String text = """
+      package com.intellij.demo;
+
+      """;
     for(int i = 0; i < 10; ++i) text += text;
 
     FindModel findModel = FindManagerTestUtils.configureFindModel(";((?:\\n|.)*export default )(?:DS.Model)(.extend((?:\\n|.)*assets: DS.attr(?:\\n|.)*});)");
@@ -983,8 +986,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRegExpSOEWhenMatch2() {
-    String text = "package com.intellij.demo;\n" +
-                  "\n";
+    String text = """
+      package com.intellij.demo;
+
+      """;
     for(int i = 0; i < 10; ++i) text += text;
     text += "public class Foo {}";
 
@@ -1023,8 +1028,12 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindMultilineWithLeadingSpaces() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("System.currentTimeMillis();\n   System.currentTimeMillis();");
     findModel.setMultiline(true);
-    String fileContent = "System.currentTimeMillis();\n   System.currentTimeMillis();\n\n" +
-                  "        System.currentTimeMillis();\n   System.currentTimeMillis();";
+    String fileContent = """
+      System.currentTimeMillis();
+         System.currentTimeMillis();
+
+              System.currentTimeMillis();
+         System.currentTimeMillis();""";
     FindResult findResult = myFindManager.findString(fileContent, 0, findModel, null);
     assertTrue(findResult.isStringFound());
     findResult = myFindManager.findString(fileContent, findResult.getEndOffset(), findModel, null);

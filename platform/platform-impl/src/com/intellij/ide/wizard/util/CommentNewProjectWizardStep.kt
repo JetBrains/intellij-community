@@ -21,7 +21,7 @@ abstract class CommentNewProjectWizardStep(parent: NewProjectWizardStep) : Abstr
     with(builder) {
       val row = when (isFullWidth) {
         true -> row(init = ::setupCommentUi)
-        else -> row(EMPTY_LABEL, init = ::setupCommentUi)
+        else -> row("", init = ::setupCommentUi)
       }
       row.bottomGap(BottomGap.SMALL)
     }

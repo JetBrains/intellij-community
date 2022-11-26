@@ -99,7 +99,7 @@ internal class TestTooltipsAction : DumbAwareAction() {
     }
     return pane
   }
-  fun getDocumentationPaneDefaultCssRules(): List<String> {
+  private fun getDocumentationPaneDefaultCssRules(): List<String> {
     val leftPadding = 8
     val definitionTopPadding = 4
     val linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED)

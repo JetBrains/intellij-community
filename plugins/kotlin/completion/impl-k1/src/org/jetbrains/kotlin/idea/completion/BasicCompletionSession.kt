@@ -17,6 +17,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
 import org.jetbrains.kotlin.idea.completion.smart.*
@@ -37,6 +39,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -208,6 +211,13 @@ class BasicCompletionSession(
                                     prefixMatcher.prefix.let { it.isEmpty() || it[0].isLowerCase() /* function name usually starts with lower case letter */ }
                             )
                 ) {
+                    if (declaration is KtNamedFunction &&
+                        declaration.modifierList?.allChildren.orEmpty()
+                            .map { it.node.elementType }
+                            .none { it is KtModifierKeywordToken && it !in KtTokens.VISIBILITY_MODIFIERS }
+                    ) {
+                        KEYWORDS_ONLY.doComplete()
+                    }
                     return
                 }
             }
@@ -674,6 +684,19 @@ class BasicCompletionSession(
                         }
 
                         collector.addElement(lookupElement)
+                    }
+
+                    "break", "continue" -> {
+                        if (expression != null) {
+                            analyze(expression) {
+                                val ktKeywordToken = when (keyword) {
+                                    "break" -> KtTokens.BREAK_KEYWORD
+                                    "continue" -> KtTokens.CONTINUE_KEYWORD
+                                    else -> error("'$keyword' can only be 'break' or 'continue'")
+                                }
+                                collector.addElements(BreakContinueKeywordHandler(ktKeywordToken).createLookups(this, expression))
+                            }
+                        }
                     }
 
                     else -> collector.addElement(lookupElement)

@@ -62,14 +62,8 @@ public final class HorizontalLayout implements LayoutManager2 {
   public HorizontalLayout(@NotNull JBValue gap, int alignment) {
     myGap = gap;
     switch (alignment) {
-      case FILL:
-      case SwingConstants.TOP:
-      case SwingConstants.BOTTOM:
-      case SwingConstants.CENTER:
-        myAlignment = alignment;
-        break;
-      default:
-        throw new IllegalArgumentException("unsupported alignment: " + alignment);
+      case FILL, SwingConstants.TOP, SwingConstants.BOTTOM, SwingConstants.CENTER -> myAlignment = alignment;
+      default -> throw new IllegalArgumentException("unsupported alignment: " + alignment);
     }
   }
 

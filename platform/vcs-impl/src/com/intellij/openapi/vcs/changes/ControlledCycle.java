@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-@SomeQueue
 public final class ControlledCycle {
   private static final Logger LOG = Logger.getInstance(ControlledCycle.class);
 

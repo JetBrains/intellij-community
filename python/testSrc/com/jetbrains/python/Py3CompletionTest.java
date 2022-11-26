@@ -50,10 +50,14 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-13157
   public void testMetaClass() {
-    doTestByText("class C(meta<caret>):\n" +
-                 "    pass\n");
-    myFixture.checkResult("class C(metaclass=):\n" +
-                          "    pass\n");
+    doTestByText("""
+                   class C(meta<caret>):
+                       pass
+                   """);
+    myFixture.checkResult("""
+                            class C(metaclass=):
+                                pass
+                            """);
   }
 
   private void doTest() {
@@ -207,16 +211,18 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-20279
   public void testImplicitDunderClass() {
-    final List<String> inClassMethod = doTestByText("class First:\n" +
-                                                    "    def foo(self):\n" +
-                                                    "        print(__cl<caret>)");
+    final List<String> inClassMethod = doTestByText("""
+                                                      class First:
+                                                          def foo(self):
+                                                              print(__cl<caret>)""");
     assertNotNull(inClassMethod);
     assertContainsElements(inClassMethod, PyNames.__CLASS__);
 
-    final List<String> inStaticMethod = doTestByText("class First:\n" +
-                                                     "    @staticmethod\n" +
-                                                     "    def foo():\n" +
-                                                     "        print(__cl<caret>)");
+    final List<String> inStaticMethod = doTestByText("""
+                                                       class First:
+                                                           @staticmethod
+                                                           def foo():
+                                                               print(__cl<caret>)""");
     assertNotNull(inStaticMethod);
     assertContainsElements(inStaticMethod, PyNames.__CLASS__);
 
@@ -262,13 +268,14 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-19702
   public void testMetaclassAttributeOnDefinition() {
-    final List<String> suggested = doTestByText("class Meta(type):\n" +
-                                                "    def __init__(self, what, bases, dict):\n" +
-                                                "        self.meta_attr = \"attr\"\n" +
-                                                "        super().__init__(what, bases, dict)\n" +
-                                                "class A(metaclass=Meta):\n" +
-                                                "    pass\n" +
-                                                "print(A.<caret>)");
+    final List<String> suggested = doTestByText("""
+                                                  class Meta(type):
+                                                      def __init__(self, what, bases, dict):
+                                                          self.meta_attr = "attr"
+                                                          super().__init__(what, bases, dict)
+                                                  class A(metaclass=Meta):
+                                                      pass
+                                                  print(A.<caret>)""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "meta_attr");
@@ -276,37 +283,40 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-19702
   public void testMetaclassAttributeOnInstance() {
-    final List<String> suggested = doTestByText("class Meta(type):\n" +
-                                                "    def __init__(self, what, bases, dict):\n" +
-                                                "        self.meta_attr = \"attr\"\n" +
-                                                "        super().__init__(what, bases, dict)\n" +
-                                                "class A(metaclass=Meta):\n" +
-                                                "    pass\n" +
-                                                "print(A().<caret>)");
+    final List<String> suggested = doTestByText("""
+                                                  class Meta(type):
+                                                      def __init__(self, what, bases, dict):
+                                                          self.meta_attr = "attr"
+                                                          super().__init__(what, bases, dict)
+                                                  class A(metaclass=Meta):
+                                                      pass
+                                                  print(A().<caret>)""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "meta_attr");
   }
 
   public void testMetaclassMethodOnDefinition() {
-    final List<String> suggested = doTestByText("class Meta(type):\n" +
-                                                "    def meta_method(cls):\n" +
-                                                "        pass\n" +
-                                                "class A(metaclass=Meta):\n" +
-                                                "    pass\n" +
-                                                "print(A.<caret>)");
+    final List<String> suggested = doTestByText("""
+                                                  class Meta(type):
+                                                      def meta_method(cls):
+                                                          pass
+                                                  class A(metaclass=Meta):
+                                                      pass
+                                                  print(A.<caret>)""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "meta_method");
   }
 
   public void testMetaclassMethodOnInstance() {
-    final List<String> suggested = doTestByText("class Meta(type):\n" +
-                                                "    def meta_method(cls):\n" +
-                                                "        pass\n" +
-                                                "class A(metaclass=Meta):\n" +
-                                                "    pass\n" +
-                                                "print(A().<caret>)");
+    final List<String> suggested = doTestByText("""
+                                                  class Meta(type):
+                                                      def meta_method(cls):
+                                                          pass
+                                                  class A(metaclass=Meta):
+                                                      pass
+                                                  print(A().<caret>)""");
 
     assertNotNull(suggested);
     assertDoesntContain(suggested, "meta_method");
@@ -333,25 +343,27 @@ public class Py3CompletionTest extends PyTestCase {
       "../packages",
       () -> {
         doTestByText(
-          "import attr\n" +
-          "\n" +
-          "@attr.s\n" +
-          "class C:\n" +
-          "    x = attr.ib()\n" +
-          "    y = attr.ib(init=False)\n" +
-          "\n" +
-          "    def __attrs_<caret>"
+          """
+            import attr
+
+            @attr.s
+            class C:
+                x = attr.ib()
+                y = attr.ib(init=False)
+
+                def __attrs_<caret>"""
         );
 
         myFixture.checkResult(
-          "import attr\n" +
-          "\n" +
-          "@attr.s\n" +
-          "class C:\n" +
-          "    x = attr.ib()\n" +
-          "    y = attr.ib(init=False)\n" +
-          "\n" +
-          "    def __attrs_post_init__(self):"
+          """
+            import attr
+
+            @attr.s
+            class C:
+                x = attr.ib()
+                y = attr.ib(init=False)
+
+                def __attrs_post_init__(self):"""
         );
       }
     );
@@ -363,14 +375,15 @@ public class Py3CompletionTest extends PyTestCase {
       "../packages",
       () -> assertEmpty(
         doTestByText(
-          "import attr\n" +
-          "\n" +
-          "@attr.s(init=False)\n" +
-          "class C:\n" +
-          "    x = attr.ib()\n" +
-          "    y = attr.ib(init=False)\n" +
-          "\n" +
-          "    def __attrs_<caret>"
+          """
+            import attr
+
+            @attr.s(init=False)
+            class C:
+                x = attr.ib()
+                y = attr.ib(init=False)
+
+                def __attrs_<caret>"""
         )
       )
     );
@@ -401,11 +414,12 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-27148
   public void testNamedTupleSpecial() {
-    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
-                                                "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
-                                                "    pass\n" +
-                                                "c1 = Cat1(\"name\", 5)\n" +
-                                                "c1.<caret>");
+    final List<String> suggested = doTestByText("""
+                                                  from collections import namedtuple
+                                                  class Cat1(namedtuple("Cat", "name age")):
+                                                      pass
+                                                  c1 = Cat1("name", 5)
+                                                  c1.<caret>""");
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
   }
@@ -642,6 +656,39 @@ public class Py3CompletionTest extends PyTestCase {
   public void testTabCompletionOverridesSpacesAroundEqualSignInKeywordPatternIfEnabled() {
     getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
     doTabTest();
+  }
+
+  // PY-53104
+  public void testOnSelf() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnListSelf() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnListSelfInNestedClass() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnSelfInsideClassFunction() {
+    doTestVariants("x", "foo");
+  }
+
+  // PY-53104
+  public void testOnSelfInsideClassFunctionNestedFunction() {
+    doTestVariants("x", "foo");
+  }
+
+  private void doTestVariants(String @NotNull ... expected) {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, expected);
   }
 
   private @NotNull PyCodeStyleSettings getPythonCodeStyleSettings() {

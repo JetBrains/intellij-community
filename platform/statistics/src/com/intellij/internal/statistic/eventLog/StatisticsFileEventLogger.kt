@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
@@ -23,7 +23,8 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val recorderVersion: String,
                                      private val writer: StatisticsEventLogWriter,
                                      private val systemEventIdProvider: StatisticsSystemEventIdProvider,
-                                     private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet())
+                                     private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
+                                     private val ideMode: String? = null
 ) : StatisticsEventLogger, Disposable {
   protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId", 1)
 
@@ -42,13 +43,14 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     }
   }
 
-  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
+  override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
     group.validateEventId(eventId)
     return try {
       CompletableFuture.runAsync(Runnable {
         val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
         if (!validator.isGroupAllowed(group)) return@Runnable
+        val data = dataProvider() ?: return@Runnable
         val event = LogEvent(sessionId, build, bucket, eventTime,
           LogEventGroup(group.id, group.version.toString()),
           recorderVersion,
@@ -63,6 +65,13 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       //executor is shutdown
       CompletableFuture<Void>().also { it.completeExceptionally(e) }
     }
+  }
+
+  override fun logAsync(group: EventLogGroup,
+                        eventId: String,
+                        data: Map<String, Any>,
+                        isState: Boolean): CompletableFuture<Void> {
+    return logAsync(group, eventId, { data }, isState)
   }
 
   private fun log(event: LogEvent, createdTime: Long, rawEventId: String, rawData: Map<String, Any>) {
@@ -98,6 +107,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       if (headless) {
         event.data["system_headless"] = true
       }
+      ideMode?.let { event.data["ide_mode"] = ideMode }
       writer.log(it.validatedEvent)
       ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
         .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData)

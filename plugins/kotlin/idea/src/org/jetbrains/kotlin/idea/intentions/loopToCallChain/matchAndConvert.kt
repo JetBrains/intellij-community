@@ -95,9 +95,9 @@ fun match(loop: KtForExpression, useLazySequence: Boolean, reformat: Boolean): M
                         }
 
                         if (restContainsEmbeddedBreakOrContinue && !matcher.embeddedBreakOrContinuePossible) {
-                            val countBefore = state.statements.sumBy { it.countEmbeddedBreaksAndContinues() }
-                            val countAfter = newState.statements.sumBy { it.countEmbeddedBreaksAndContinues() }
-                            if (countAfter != countBefore) continue@MatchersLoop // some embedded break or continue in the matched part
+                          val countBefore = state.statements.sumOf { it.countEmbeddedBreaksAndContinues() }
+                          val countAfter = newState.statements.sumOf { it.countEmbeddedBreaksAndContinues() }
+                          if (countAfter != countBefore) continue@MatchersLoop // some embedded break or continue in the matched part
                         }
 
                         state.previousTransformations += match.sequenceTransformations
@@ -312,12 +312,12 @@ private fun MatchResult.generateCallChain(loop: KtForExpression, reformat: Boole
         sequenceTransformations = sequenceTransformations.dropLast(1)
     }
 
-    val chainCallCount = sequenceTransformations.sumBy { it.chainCallCount } + resultTransformation.chainCallCount
+    val chainCallCount = sequenceTransformations.sumOf { it.chainCallCount } + resultTransformation.chainCallCount
     val lineBreak = if (chainCallCount > 1) "\n" else ""
 
     var callChain = sequenceExpression
 
-    val psiFactory = KtPsiFactory(loop)
+    val psiFactory = KtPsiFactory(loop.project)
     val chainedCallGenerator = object : ChainedCallGenerator {
         override val receiver: KtExpression
             get() = callChain
@@ -375,7 +375,7 @@ fun matchIndexToIntroduce(loop: KtForExpression, reformat: Boolean): IntroduceIn
     val (inputVariable, indexVariable) = extractLoopData(loop) ?: return null
     if (indexVariable != null) return null // loop is already with "withIndex"
 
-    val state = createInitialMatchingState(loop, inputVariable, indexVariable, useLazySequence = false, reformat = reformat)?.unwrapBlock()
+    val state = createInitialMatchingState(loop, inputVariable, indexVariable = null, useLazySequence = false, reformat = reformat)?.unwrapBlock()
         ?: return null
 
     val match = IntroduceIndexMatcher.match(state) ?: return null

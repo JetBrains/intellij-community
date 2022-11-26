@@ -206,16 +206,14 @@ abstract class ContractAnalysis extends Analysis<Result> {
 
   private Frame<BasicValue> execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
     interpreter.deReferenced = false;
-    switch (insnNode.getType()) {
-      case AbstractInsnNode.LABEL:
-      case AbstractInsnNode.LINE:
-      case AbstractInsnNode.FRAME:
-        return frame;
-      default:
+    return switch (insnNode.getType()) {
+      case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME -> frame;
+      default -> {
         Frame<BasicValue> nextFrame = new Frame<>(frame);
         nextFrame.execute(insnNode, interpreter);
-        return nextFrame;
-    }
+        yield nextFrame;
+      }
+    };
   }
 
   private Conf generalize(Conf conf) {
@@ -262,13 +260,8 @@ class InOutAnalysis extends ContractAnalysis {
     if (interpreter.deReferenced) {
       return true;
     }
-    switch (opcode) {
-      case ARETURN:
-      case IRETURN:
-      case LRETURN:
-      case FRETURN:
-      case DRETURN:
-      case RETURN:
+    return switch (opcode) {
+      case ARETURN, IRETURN, LRETURN, FRETURN, DRETURN, RETURN -> {
         BasicValue stackTop = popValue(frame);
         Result subResult;
         if (FalseValue == stackTop) {
@@ -287,24 +280,23 @@ class InOutAnalysis extends ContractAnalysis {
           subResult = inValue;
         }
         else if (stackTop instanceof CallResultValue) {
-          Set<EKey> keys = ((CallResultValue) stackTop).inters;
-          subResult = new Pending(new Component[] {new Component(Value.Top, keys)});
+          Set<EKey> keys = ((CallResultValue)stackTop).inters;
+          subResult = new Pending(new Component[]{new Component(Value.Top, keys)});
         }
         else {
           earlyResult = Value.Top;
-          return true;
+          yield true;
         }
         internalResult = checkLimit(resultUtil.join(internalResult, subResult));
         unsureOnly &= unsure;
         if (!unsure && internalResult == Value.Top) {
           earlyResult = internalResult;
         }
-        return true;
-      case ATHROW:
-        return true;
-      default:
-    }
-    return false;
+        yield true;
+      }
+      case ATHROW -> true;
+      default -> false;
+    };
   }
 }
 
@@ -393,28 +385,22 @@ class InThrowAnalysis extends ContractAnalysis {
       subResult = Value.Top;
     } else {
       switch (opcode) {
-        case ARETURN:
-        case IRETURN:
-        case LRETURN:
-        case FRETURN:
-        case DRETURN:
+        case ARETURN, IRETURN, LRETURN, FRETURN, DRETURN -> {
           BasicValue value = frame.pop();
           if (!(value instanceof NthParamValue) && value != NullValue && value != TrueValue && value != FalseValue ||
-             myReturnValue != null && !myReturnValue.equals(value)) {
+              myReturnValue != null && !myReturnValue.equals(value)) {
             myHasNonTrivialReturn = true;
-          } else {
+          }
+          else {
             myReturnValue = value;
           }
           subResult = Value.Top;
-          break;
-        case RETURN:
-          subResult = Value.Top;
-          break;
-        case ATHROW:
-          subResult = Value.Fail;
-          break;
-        default:
+        }
+        case RETURN -> subResult = Value.Top;
+        case ATHROW -> subResult = Value.Fail;
+        default -> {
           return false;
+        }
       }
     }
     internalResult = resultUtil.join(internalResult, subResult);
@@ -453,13 +439,16 @@ class InOutInterpreter extends BasicInterpreter {
     boolean propagate = resultOrigins[insns.indexOf(insn)];
     if (propagate || isThrowAnalysis()) {
       switch (insn.getOpcode()) {
-        case ICONST_0:
+        case ICONST_0 -> {
           return FalseValue;
-        case ICONST_1:
+        }
+        case ICONST_1 -> {
           return TrueValue;
-        case ACONST_NULL:
+        }
+        case ACONST_NULL -> {
           return NullValue;
-        case LDC:
+        }
+        case LDC -> {
           Object cst = ((LdcInsnNode)insn).cst;
           if (cst instanceof Type) {
             Type type = (Type)cst;
@@ -476,10 +465,12 @@ class InOutInterpreter extends BasicInterpreter {
           else if (cst instanceof Handle) {
             return METHOD_HANDLE_VALUE;
           }
-          break;
-        case NEW:
+        }
+        case NEW -> {
           return new NotNullValue(Type.getObjectType(((TypeInsnNode)insn).desc));
-        default:
+        }
+        default -> {
+        }
       }
     }
     return super.newOperation(insn);
@@ -489,30 +480,29 @@ class InOutInterpreter extends BasicInterpreter {
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
     boolean propagate = resultOrigins[insns.indexOf(insn)];
     switch (insn.getOpcode()) {
-      case GETFIELD:
-      case ARRAYLENGTH:
-      case MONITORENTER:
+      case GETFIELD, ARRAYLENGTH, MONITORENTER -> {
         if (nullAnalysis && value instanceof ParamValue) {
           deReferenced = true;
         }
         return super.unaryOperation(insn, value);
-      case CHECKCAST:
+      }
+      case CHECKCAST -> {
         if (value instanceof ParamValue) {
           return new ParamValue(Type.getObjectType(((TypeInsnNode)insn).desc));
         }
-        break;
-      case INSTANCEOF:
+      }
+      case INSTANCEOF -> {
         if (value instanceof ParamValue) {
           return InstanceOfCheckValue;
         }
-        break;
-      case NEWARRAY:
-      case ANEWARRAY:
+      }
+      case NEWARRAY, ANEWARRAY -> {
         if (propagate) {
           return new NotNullValue(super.unaryOperation(insn, value).getType());
         }
-        break;
-      default:
+      }
+      default -> {
+      }
     }
     return super.unaryOperation(insn, value);
   }
@@ -520,20 +510,13 @@ class InOutInterpreter extends BasicInterpreter {
   @Override
   public BasicValue binaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case IALOAD:
-      case LALOAD:
-      case FALOAD:
-      case DALOAD:
-      case AALOAD:
-      case BALOAD:
-      case CALOAD:
-      case SALOAD:
-      case PUTFIELD:
+      case IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD, PUTFIELD -> {
         if (nullAnalysis && value1 instanceof ParamValue) {
           deReferenced = true;
         }
-        break;
-      default:
+      }
+      default -> {
+      }
     }
     return super.binaryOperation(insn, value1, value2);
   }
@@ -541,14 +524,7 @@ class InOutInterpreter extends BasicInterpreter {
   @Override
   public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     switch (insn.getOpcode()) {
-      case IASTORE:
-      case LASTORE:
-      case FASTORE:
-      case DASTORE:
-      case AASTORE:
-      case BASTORE:
-      case CASTORE:
-      case SASTORE:
+      case IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE:
         if (nullAnalysis && value1 instanceof ParamValue) {
           deReferenced = true;
         }
@@ -563,22 +539,18 @@ class InOutInterpreter extends BasicInterpreter {
     int shift = opCode == INVOKESTATIC ? 0 : 1;
 
     switch (opCode) {
-      case INVOKESPECIAL:
-      case INVOKEINTERFACE:
-      case INVOKEVIRTUAL:
+      case INVOKESPECIAL, INVOKEINTERFACE, INVOKEVIRTUAL -> {
         if (nullAnalysis && values.get(0) instanceof ParamValue) {
           deReferenced = true;
           return super.naryOperation(insn, values);
         }
+      }
     }
 
     boolean propagate = resultOrigins[insns.indexOf(insn)];
     if (propagate || isThrowAnalysis()) {
       switch (opCode) {
-        case INVOKESTATIC:
-        case INVOKESPECIAL:
-        case INVOKEVIRTUAL:
-        case INVOKEINTERFACE:
+        case INVOKESTATIC, INVOKESPECIAL, INVOKEVIRTUAL, INVOKEINTERFACE -> {
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = (MethodInsnNode)insn;
           Member method = new Member(mNode.owner, mNode.name, mNode.desc);
@@ -617,17 +589,19 @@ class InOutInterpreter extends BasicInterpreter {
               return new CallResultValue(retType, Collections.singleton(new EKey(method, Out, stable)));
             }
           }
-          break;
-        case INVOKEDYNAMIC:
+        }
+        case INVOKEDYNAMIC -> {
           InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
           if (LambdaIndy.from(indy) != null || ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
             // indy producing lambda or string concatenation is never null
             return new NotNullValue(Type.getReturnType(indy.desc));
           }
-          break;
-        case MULTIANEWARRAY:
+        }
+        case MULTIANEWARRAY -> {
           return new NotNullValue(super.naryOperation(insn, values).getType());
-        default:
+        }
+        default -> {
+        }
       }
     }
     return super.naryOperation(insn, values);

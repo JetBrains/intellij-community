@@ -73,7 +73,7 @@ public class BooleanConstructorInspection extends BaseInspection implements Clea
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
       if (!(element instanceof PsiNewExpression)) {
         return;

@@ -1,3 +1,4 @@
+[LibraryNestedClassSecondaryConstructorUsages.0.kt] Constructor delegation reference 11 constructor() : super()
 [LibraryNestedClassSecondaryConstructorUsages.0.kt] New instance creation 17 val a: A.T = A.T()
 [LibraryNestedClassSecondaryConstructorUsages.0.kt] Supertype 14 class Y() : A.T()
 [LibraryNestedClassSecondaryConstructorUsages.1.java] New instance creation 14 A.T a = new A.T();

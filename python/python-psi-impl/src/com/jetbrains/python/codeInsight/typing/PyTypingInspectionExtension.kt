@@ -36,23 +36,28 @@ class PyTypingInspectionExtension : PyInspectionExtension() {
       val operand = node.operand
       val type = context.getType(operand)
 
-      if (type is PyClassLikeType && type.isDefinition && isGenericItselfOrDescendant(type, context)) {
-        // `true` is not returned for the cases like `typing.List[int]`
-        // because these types contain builtins as a class
-        if (!isBuiltin(type)) return true
+      if (type is PyClassLikeType && type.isDefinition) {
+        if (isGenericItselfOrDescendant(type, context)) {
+          // `true` is not returned for the cases like `typing.List[int]`
+          // because these types contain builtins as a class
+          if (!isBuiltin(type)) return true
 
-        // here is the check that current element is like `typing.List[int]`
-        // but be careful: builtin collections inherit `typing.Generic` in typeshed
-        if (operand is PyReferenceExpression) {
-          val resolveContext = PyResolveContext.defaultContext(context)
-          val resolveResults = operand.getReference(resolveContext).multiResolve(false)
+          // here is the check that current element is like `typing.List[int]`
+          // but be careful: builtin collections inherit `typing.Generic` in typeshed
+          if (operand is PyReferenceExpression) {
+            val resolveContext = PyResolveContext.defaultContext(context)
+            val resolveResults = operand.getReference(resolveContext).multiResolve(false)
 
-          if (resolveResults
-            .asSequence()
-            .map { it.element }
-            .any { it is PyTargetExpression && PyTypingTypeProvider.BUILTIN_COLLECTION_CLASSES.containsKey(it.qualifiedName) }) {
-            return true
+            if (resolveResults
+                .asSequence()
+                .map { it.element }
+                .any { it is PyTargetExpression && PyTypingTypeProvider.BUILTIN_COLLECTION_CLASSES.containsKey(it.qualifiedName) }) {
+              return true
+            }
           }
+        }
+        if (PyBuiltinCache.getInstance(operand).typeType?.toClass() == type) {
+          return true
         }
       }
     }

@@ -320,7 +320,7 @@ sealed class UNaNConstant(type: UNumericType = UNumericType.DOUBLE) : UFloatCons
 class UCharConstant(override val value: Char, override val source: ULiteralExpression? = null) : UAbstractConstant() {
   override fun plus(other: UValue): UValue = when (other) {
     is UIntConstant -> UCharConstant(value + other.value)
-    is UCharConstant -> UCharConstant(value + other.value.toInt())
+    is UCharConstant -> UCharConstant(value + other.value.code)
     else -> super.plus(other)
   }
 

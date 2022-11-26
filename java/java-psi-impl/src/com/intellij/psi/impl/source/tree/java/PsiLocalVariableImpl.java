@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -18,10 +18,10 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,16 +49,14 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  @NotNull
-  public final PsiIdentifier getNameIdentifier() {
+  public final @NotNull PsiIdentifier getNameIdentifier() {
     final PsiElement element = findChildByRoleAsPsiElement(ChildRole.NAME);
     assert element instanceof PsiIdentifier : getText();
     return (PsiIdentifier)element;
   }
 
   @Override
-  @NotNull
-  public final String getName() {
+  public final @NotNull String getName() {
     String cachedName = myCachedName;
     if (cachedName == null){
       myCachedName = cachedName = getNameIdentifier().getText();
@@ -78,14 +76,12 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  @NotNull
-  public final PsiType getType() {
+  public final @NotNull PsiType getType() {
     return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement getTypeElement() {
+  public @NotNull PsiTypeElement getTypeElement() {
     PsiTypeElement typeElement = PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
     if (typeElement != null) return typeElement;
 
@@ -308,8 +304,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     final PsiElement parentElement = getParent();
     if (parentElement instanceof PsiDeclarationStatement) {
       return new LocalSearchScope(parentElement.getParent());
@@ -319,8 +314,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @Override
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Variable),
+                                                     ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

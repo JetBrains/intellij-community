@@ -35,6 +35,21 @@ public interface MavenRemoteProcessSupportFactory {
                                    Project project,
                                    Integer debugPort);
 
+  /**
+   * create remote process for indexer
+   * @param jdk - jdk data.
+   * @param vmOptions - vm command line options.
+   * @param distribution - maven distribution data (version, maven home).
+   * @param debugPort - port for remote debugging.
+   * @return remote maven process.
+   */
+  default MavenRemoteProcessSupport createIndexerSupport(Sdk jdk,
+                                                         String vmOptions,
+                                                         MavenDistribution distribution,
+                                                         Integer debugPort) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   static MavenRemoteProcessSupportFactory forProject(@NotNull Project project) {
     MavenRemoteProcessSupportFactory applicable = MAVEN_SERVER_SUPPORT_EP_NAME.findFirstSafe(factory -> factory.isApplicable(project));
@@ -44,12 +59,18 @@ public interface MavenRemoteProcessSupportFactory {
     return applicable;
   }
 
+  @NotNull
+  static MavenRemoteProcessSupportFactory forIndexer() {
+    return new LocalMavenRemoteProcessSupportFactory();
+  }
+
   boolean isApplicable(Project project);
 
-  abstract class MavenRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object>{
+  abstract class MavenRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object> {
     public MavenRemoteProcessSupport(@NotNull Class<MavenServer> valueClass) {
       super(valueClass);
     }
+
     public abstract String type();
 
     public abstract void onTerminate(Consumer<ProcessEvent> onTerminate);

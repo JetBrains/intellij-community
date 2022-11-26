@@ -36,28 +36,22 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
   OrderEntry[] EMPTY_ARRAY = new OrderEntry[0];
 
   /**
-   * Returns list of root {@link VirtualFile}s of given type for this entry.
-   * Those files should be traversed in order they are returned in.
-   * Note that actual OrderEntry (as seen in UI) may also contain invalid roots.
-   * If you want to get list of all roots, use {@link #getUrls(OrderRootType)} method. <br>
-   *
-   * Note that list of roots is project dependent.
-   *
-   * @param type  required root type.
-   * @return array of virtual files.
-   * @see #getUrls(OrderRootType)
+   * Returns the list of root {@link VirtualFile}s of the given type for this entry.
+   * @deprecated the meaning of this method is unclear. 
+   * If this instance represents dependency on a library or an SDK, use {@link LibraryOrSdkOrderEntry#getRootFiles(OrderRootType)} instead.
+   * In other cases, use {@link OrderEnumerator} and specify what files from dependencies of a module you want to get.
    */
+  @Deprecated
   VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type);
 
   /**
-   * Returns list of roots of given type for this entry. To validate returned roots,
-   * use {@link com.intellij.openapi.vfs.VirtualFileManager#findFileByUrl(String)} <br>
+   * Returns the list of roots of the given type for this entry.
    *
-   * Note that list of roots is project-dependent.
-   *
-   * @param rootType the type of roots which should be returned.
-   * @return the array of roots of the specified type.
+   * @deprecated the meaning of this method is unclear.
+   * If this instance represents dependency on a library or an SDK, use {@link LibraryOrSdkOrderEntry#getRootUrls(OrderRootType)} instead.
+   * In other cases, use {@link OrderEnumerator} and specify what files from dependencies of a module you want to get.
    */
+  @Deprecated
   String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
   /**

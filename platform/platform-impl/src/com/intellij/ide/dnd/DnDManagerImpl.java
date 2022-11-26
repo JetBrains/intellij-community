@@ -139,6 +139,10 @@ public final class DnDManagerImpl extends DnDManager {
     new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
   }
 
+  public DropTargetListener getDropTargetListener() {
+    return myDropTargetListener;
+  }
+
   @Override
   public void registerTarget(@NotNull DnDTarget target, @NotNull JComponent component, @NotNull Disposable parentDisposable) {
     registerTarget(target, component);
@@ -157,6 +161,16 @@ public final class DnDManagerImpl extends DnDManager {
     cleanup(target, component);
   }
 
+  public void updateCurrentEvent() {
+    if (myCurrentEvent == null) return;
+    updateCurrentEvent(
+      myCurrentEvent.getCurrentOverComponent(),
+      myCurrentEvent.getPoint(),
+      myCurrentEvent.getAction().getActionId(),
+      myCurrentEvent.getTransferDataFlavors(),
+      myCurrentEvent
+    );
+  }
   private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, DataFlavor @Nullable [] flavors, @Nullable Transferable transferable) {
     LOG.debug("updateCurrentEvent: " + aComponentOverDragging);
 
@@ -194,7 +208,7 @@ public final class DnDManagerImpl extends DnDManager {
     LOG.debug("updateCurrentEvent: point:" + aPoint);
     LOG.debug("updateCurrentEvent: action:" + nativeAction);
 
-    if (samePoint && sameComponent && sameAction) {
+    if (samePoint && sameComponent && sameAction && transferable != myCurrentEvent) {
       return currentEvent;
     }
 
@@ -585,23 +599,14 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   private static DnDAction getDnDActionForPlatformAction(int platformAction) {
-    DnDAction action = null;
     boolean altOnly = UISettings.getInstance().getDndWithPressedAltOnly();
-    switch (platformAction) {
-      case DnDConstants.ACTION_COPY:
-        action = altOnly ? DnDAction.MOVE : DnDAction.COPY;
-        break;
-      case DnDConstants.ACTION_MOVE:
-        action = altOnly? DnDAction.COPY : DnDAction.MOVE;
-        break;
-      case DnDConstants.ACTION_LINK:
-        action = DnDAction.LINK;
-        break;
-      default:
-        break;
-    }
 
-    return action;
+    return switch (platformAction) {
+      case DnDConstants.ACTION_COPY -> altOnly ? DnDAction.MOVE : DnDAction.COPY;
+      case DnDConstants.ACTION_MOVE -> altOnly ? DnDAction.COPY : DnDAction.MOVE;
+      case DnDConstants.ACTION_LINK -> DnDAction.LINK;
+      default -> null;
+    };
   }
 
   private class MyDragSourceListener implements DragSourceListener {

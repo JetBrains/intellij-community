@@ -47,6 +47,17 @@ abstract class LibraryTableTestCase {
   }
 
   @Test
+  fun `rename library`() {
+    val library = createLibrary("a")
+    assertThat(libraryTable.getLibraryByName("a")).isSameAs(library)
+    
+    projectModel.renameLibrary(library, "b")
+    assertThat(libraryTable.libraries.single()).isSameAs(library)
+    assertThat(libraryTable.getLibraryByName("a")).isNull()
+    assertThat(libraryTable.getLibraryByName("b")).isSameAs(library)
+  }
+
+  @Test
   fun listener() {
     val events = ArrayList<String>()
     libraryTable.addListener(object : LibraryTable.Listener {

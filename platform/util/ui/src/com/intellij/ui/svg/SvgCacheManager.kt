@@ -26,19 +26,27 @@ private const val IMAGE_KEY_SIZE = java.lang.Long.BYTES + 3
 private fun getLogger() = Logger.getInstance(SvgCacheManager::class.java)
 
 @ApiStatus.Internal
+data class SvgCacheMapper(@JvmField internal val scale: Float,
+                          @JvmField internal val isDark: Boolean,
+                          @JvmField internal val isStroke: Boolean) {
+  constructor(scale: Float) : this(scale, false, false)
+  val key = scale + (if (isDark) 10000 else 0) + (if (isStroke) 100000 else 0)
+  val name = "icons@" + scale + (if (isDark) "_d" else "") + (if (isStroke) "_s" else "")
+}
+
+@ApiStatus.Internal
 class SvgCacheManager(dbFile: Path) {
   private val store: MVStore
   private val scaleToMap: MutableMap<Float, MVMap<ByteArray, ImageValue>> = ConcurrentHashMap(2, 0.75f, 2)
   private val mapBuilder: MVMap.Builder<ByteArray, ImageValue>
 
   companion object {
-    fun <K, V> getMap(scale: Float,
-                      isDark: Boolean,
+    fun <K, V> getMap(mapper: SvgCacheMapper,
                       scaleToMap: MutableMap<Float, MVMap<K, V>>,
                       store: MVStore,
                       mapBuilder: MVMap.MapBuilder<MVMap<K, V>, K, V>): MVMap<K, V> {
-      return scaleToMap.computeIfAbsent(scale + if (isDark) 10000 else 0) {
-        store.openMap("icons@" + scale + if (isDark) "_d" else "", mapBuilder)
+      return scaleToMap.computeIfAbsent(mapper.key) {
+        store.openMap(mapper.name, mapBuilder)
       }
     }
 
@@ -95,16 +103,15 @@ class SvgCacheManager(dbFile: Path) {
 
   fun loadFromCache(themeDigest: ByteArray,
                     imageBytes: ByteArray,
-                    scale: Float,
-                    isDark: Boolean,
+                    mapper: SvgCacheMapper,
                     docSize: ImageLoader.Dimension2DDouble?): Image? {
     val key = getCacheKey(themeDigest, imageBytes)
-    val map = getMap(scale, isDark, scaleToMap, store, mapBuilder)
+    val map = getMap(mapper, scaleToMap, store, mapBuilder)
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
       val data = map.get(key) ?: return null
       val image = readImage(data)
-      docSize?.setSize((data.w / scale).toDouble(), (data.h / scale).toDouble())
+      docSize?.setSize((data.w / mapper.scale).toDouble(), (data.h / mapper.scale).toDouble())
       IconLoadMeasurer.svgCacheRead.end(start)
       return image
     }
@@ -120,9 +127,9 @@ class SvgCacheManager(dbFile: Path) {
     }
   }
 
-  fun storeLoadedImage(themeDigest: ByteArray, imageBytes: ByteArray, scale: Float, image: BufferedImage) {
+  fun storeLoadedImage(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper, image: BufferedImage) {
     val key = getCacheKey(themeDigest, imageBytes)
-    getMap(scale, false, scaleToMap, store, mapBuilder).put(key, writeImage(image))
+    getMap(mapper, scaleToMap, store, mapBuilder).put(key, writeImage(image))
   }
 }
 

@@ -1,0 +1,4 @@
+// "Create actual class for module testModule_JVM (JVM)" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
+
+expect value class IC(val i: Int)

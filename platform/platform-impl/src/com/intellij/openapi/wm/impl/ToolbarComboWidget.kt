@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.ui.JBColor
-import com.intellij.ui.hover.HoverStateListener
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.awt.Component
+import java.awt.Point
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import javax.swing.Icon
@@ -17,9 +19,12 @@ abstract class ToolbarComboWidget: JComponent() {
 
   val pressListeners = mutableListOf<ActionListener>()
 
-  var text: String? by Delegates.observable("", this::fireUpdateEvents)
+  var text: @Nls String? by Delegates.observable("", this::fireUpdateEvents)
+
   var leftIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var rightIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
+  var leftIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)
+  var rightIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)
   var hoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
 
   init {
@@ -27,7 +32,9 @@ abstract class ToolbarComboWidget: JComponent() {
     isOpaque = false
   }
 
-  abstract fun doExpand(e: InputEvent)
+  open fun updateWidget() {}
+
+  abstract fun doExpand(e: InputEvent?)
 
   override fun getUIClassID(): String {
     return "ToolbarComboWidgetUI"

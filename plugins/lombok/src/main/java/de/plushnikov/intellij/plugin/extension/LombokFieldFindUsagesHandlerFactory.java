@@ -40,9 +40,8 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
   @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
     return new FindUsagesHandler(element) {
-      @NotNull
       @Override
-      public PsiElement[] getSecondaryElements() {
+      public PsiElement @NotNull [] getSecondaryElements() {
         final PsiField psiField = (PsiField) getPsiElement();
         final PsiClass containingClass = psiField.getContainingClass();
         if (containingClass != null) {
@@ -58,19 +57,19 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
         return PsiElement.EMPTY_ARRAY;
       }
 
-      private void processClass(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
+      private static void processClass(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
         processClassMethods(containingClass, refPsiField, collector);
         processClassFields(containingClass, refPsiField, collector);
       }
 
-      private void processClassFields(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
+      private static void processClassFields(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
         Arrays.stream(containingClass.getFields())
           .filter(LombokLightFieldBuilder.class::isInstance)
           .filter(psiField -> psiField.getNavigationElement() == refPsiField)
           .forEach(collector::add);
       }
 
-      private void processClassMethods(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
+      private static void processClassMethods(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
         Arrays.stream(containingClass.getMethods())
           .filter(LombokLightMethodBuilder.class::isInstance)
           .filter(psiMethod -> psiMethod.getNavigationElement() == refPsiField)

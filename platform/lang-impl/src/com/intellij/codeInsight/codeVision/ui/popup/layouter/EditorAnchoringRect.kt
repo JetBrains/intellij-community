@@ -39,7 +39,7 @@ class EditorAnchoringRect(
         it.horizontalSmartClip(visibleArea)
     }
 
-    fun smartClipDelegate(editor: Editor): (Rectangle) -> Rectangle? = {
+    private fun smartClipDelegate(editor: Editor): (Rectangle) -> Rectangle? = {
       val visibleArea = editor.scrollingModel.visibleArea
       it.smartClip(visibleArea)
     }

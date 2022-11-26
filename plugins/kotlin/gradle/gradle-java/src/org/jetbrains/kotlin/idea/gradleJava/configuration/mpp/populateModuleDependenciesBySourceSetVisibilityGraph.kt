@@ -2,35 +2,35 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesBySourceSetVisibilityGraph(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
-    for (sourceSet in sourceSetVisibilityGraph.nodes()) {
+    for (sourceSet in mppModel.sourceSetsByName.values) {
         if (shouldDelegateToOtherPlugin(sourceSet)) continue
 
-        val visibleSourceSets = sourceSetVisibilityGraph.successors(sourceSet) - sourceSet
-        val fromDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
+        val dependsOnSourceSets = mppModel.resolveAllDependsOnSourceSets(sourceSet)
+        val additionalVisibleSourceSets = sourceSet.additionalVisibleSourceSets.mapNotNull(mppModel.sourceSetsByName::get)
+
+        val visibleSourceSets = dependsOnSourceSets + additionalVisibleSourceSets - sourceSet
+
+        val fromDataNode = getSiblingKotlinModuleData(sourceSet, gradleIdeaModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
             ?: continue
 
         /* Add dependencies from current sourceSet to all visible source sets (dependsOn, test to production, ...)*/
         for (visibleSourceSet in visibleSourceSets) {
-            val toDataNode = getSiblingKotlinModuleData(visibleSourceSet, gradleModule, ideModule, resolverCtx) ?: continue
+            val toDataNode = getSiblingKotlinModuleData(visibleSourceSet, gradleIdeaModule, ideModule, resolverCtx) ?: continue
             addDependency(fromDataNode, toDataNode, visibleSourceSet.isTestComponent)
         }
 
-        if (!processedModuleIds.add(getKotlinModuleId(gradleModule, sourceSet, resolverCtx))) continue
+        if (!processedModuleIds.add(getKotlinModuleId(gradleIdeaModule, sourceSet, resolverCtx))) continue
         val directDependencies = getDependencies(sourceSet).toSet()
         val directIntransitiveDependencies = getIntransitiveDependencies(sourceSet).toSet()
         val dependenciesFromVisibleSourceSets = getDependenciesFromVisibleSourceSets(visibleSourceSets)

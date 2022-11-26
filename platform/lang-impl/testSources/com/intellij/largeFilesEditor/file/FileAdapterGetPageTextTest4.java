@@ -180,7 +180,10 @@ public class FileAdapterGetPageTextTest4 {
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00"}
       },
       { // case number 14
-        "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00" + "1\nstr2\n",
+        """
+\uD840\uDC00\uD840\uDC00\uD840\uDC001
+str2
+""",
         StandardCharsets.UTF_16BE, false,
         8, 0,
         new String[]{
@@ -215,7 +218,10 @@ public class FileAdapterGetPageTextTest4 {
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00"}
       },
       { // case number 19
-        "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00" + "1\nstr2\n",
+        """
+\uD840\uDC00\uD840\uDC00\uD840\uDC001
+str2
+""",
         StandardCharsets.UTF_16LE, false,
         8, 0,
         new String[]{

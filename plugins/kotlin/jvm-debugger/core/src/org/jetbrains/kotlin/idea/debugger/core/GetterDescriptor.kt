@@ -13,6 +13,8 @@ import com.intellij.debugger.ui.tree.render.OnDemandRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiExpression
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
@@ -36,7 +38,7 @@ class GetterDescriptor(
         val returnTypeName = type?.name()
         setOnDemandPresentationProvider { node ->
             node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(KotlinDebuggerCoreBundle.message("message.variables.property.get")))
-            node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", returnTypeName, " "), false)
+            node.setPresentation(IconManager.getInstance().getPlatformIcon(PlatformIcons.Property), XRegularValuePresentation("", returnTypeName, " "), false)
         }
     }
 

@@ -2,22 +2,19 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.ui.scale.TestScaleHelper
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils.runWithChangedSettings
+import com.intellij.testFramework.RegistryKeyRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
-  override fun tearDown() {
-    try {
-      TestScaleHelper.restoreRegistryProperties()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
+  @get:Rule
+  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
 
+  @Test
   fun `test single tab forward`() {
     // language=Markdown
     val before = """
@@ -34,6 +31,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after)
   }
 
+  @Test
   fun `test multiple tabs forward`() {
     // language=Markdown
     val before = """
@@ -50,6 +48,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 2)
   }
 
+  @Test
   fun `test multiple tabs forward to next row`() {
     // language=Markdown
     val before = """
@@ -68,6 +67,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 5)
   }
 
+  @Test
   fun `test single tab backward`() {
     // language=Markdown
     val before = """
@@ -84,6 +84,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, forward = false)
   }
 
+  @Test
   fun `test multiple tabs backward`() {
     // language=Markdown
     val before = """
@@ -100,6 +101,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 2, forward = false)
   }
 
+  @Test
   fun `test multiple tabs backward to previous row`() {
     // language=Markdown
     val before = """
@@ -119,8 +121,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
   }
 
   private fun doTest(content: String, expected: String, count: Int = 1, forward: Boolean = true) {
-    TestScaleHelper.setRegistryProperty("markdown.tables.editing.support.enable", "true")
-    runWithChangedSettings(project) {
+    TableTestUtils.runWithChangedSettings(project) {
       configureFromFileText("some.md", content)
       repeat(count) {
         when {

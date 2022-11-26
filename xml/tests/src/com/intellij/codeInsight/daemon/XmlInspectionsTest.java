@@ -44,22 +44,24 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
 
   public void testHtmlFromRncSchema() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
-    myFixture.configureByText(HtmlFileType.INSTANCE, "<!DOCTYPE html>\n" +
-                                                     "<html lang=\"en\">\n" +
-                                                     "<head>\n" +
-                                                     "    <meta charset=\"UTF-8\">\n" +
-                                                     "    <title>Title</title>\n" +
-                                                     "</head>\n" +
-                                                     "<body>\n" +
-                                                     "<form action=\"index.php\">\n" +
-                                                     "    <input type=\"hidden\" name=\"name_1\" value=\"val_1\">\n" +
-                                                     "    <input type=\"hidden\" name=\"name_2\" value=\"val_2\">\n" +
-                                                     "    <button type=\"button\">Proper js button</button>\n" +
-                                                     "    <button type=\"submit\">Proper submit button</button>\n" +
-                                                     "    <button>Behave as submit when missing type=\"button\"</button>\n" +
-                                                     "</form>\n" +
-                                                     "</body>\n" +
-                                                     "</html>\n");
+    myFixture.configureByText(HtmlFileType.INSTANCE, """
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <title>Title</title>
+      </head>
+      <body>
+      <form action="index.php">
+          <input type="hidden" name="name_1" value="val_1">
+          <input type="hidden" name="name_2" value="val_2">
+          <button type="button">Proper js button</button>
+          <button type="submit">Proper submit button</button>
+          <button>Behave as submit when missing type="button"</button>
+      </form>
+      </body>
+      </html>
+      """);
     myFixture.checkHighlighting();
   }
 
@@ -76,13 +78,14 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
 
   public void testEmptyDefaultAttributeValue() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
-    myFixture.addFileToProject("foo.xsd", "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"def/attr\">\n" +
-                                          "  <element name=\"foo\">\n" +
-                                          "    <complexType>\n" +
-                                          "      <attribute name=\"bar\" default=\"\"/>\n" +
-                                          "    </complexType>\n" +
-                                          "  </element>\n" +
-                                          "</schema>");
+    myFixture.addFileToProject("foo.xsd", """
+      <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="def/attr">
+        <element name="foo">
+          <complexType>
+            <attribute name="bar" default=""/>
+          </complexType>
+        </element>
+      </schema>""");
     myFixture.configureByText("foo.xml", "<foo xmlns=\"def/attr\" bar=/>");
     myFixture.doHighlighting();
   }
@@ -90,6 +93,14 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
   public void testDeprecations() {
     myFixture.enableInspections(new XmlDeprecatedElementInspection());
     myFixture.testHighlighting("deprecated.xml", "deprecated.xsd");
+  }
+
+  public void testCDataEndHighlightingXml() {
+    myFixture.testHighlighting("cdataEndHighlighting.xml");
+  }
+
+  public void testCDataEndHighlightingHtml() {
+    myFixture.testHighlighting("cdataEndHighlighting.html");
   }
 
   @Override

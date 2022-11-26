@@ -252,7 +252,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
   private static class IfStatementMissingBreakInLoopFix extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiIfStatement ifStatement = tryCast(descriptor.getPsiElement().getParent(), PsiIfStatement.class);
       if (ifStatement == null || ifStatement.getElseBranch() != null) return;
       PsiStatement thenBranch = ifStatement.getThenBranch();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir
 
@@ -9,10 +9,10 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 
-class AndroidPluginIncompatibilityCheckerStartupActivity : StartupActivity.DumbAware {
-    override fun runActivity(project: Project) {
+private class AndroidPluginIncompatibilityCheckerStartupActivity : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
         NotificationsConfiguration.getNotificationsConfiguration()
             .register(
                 AndroidPluginWarningNotification.ID,

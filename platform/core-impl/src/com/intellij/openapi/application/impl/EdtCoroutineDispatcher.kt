@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.Runnable

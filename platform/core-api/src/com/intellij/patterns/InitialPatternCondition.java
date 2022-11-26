@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 public abstract class InitialPatternCondition<T> {
   private final Class<T> myAcceptedClass;
 

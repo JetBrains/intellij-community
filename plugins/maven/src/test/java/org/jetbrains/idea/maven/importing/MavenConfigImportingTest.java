@@ -21,9 +21,10 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
   @Test
   public void testResolveJvmConfigProperty() throws IOException {
     createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=1");
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>${ver}</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>${ver}</version>""");
 
     MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
@@ -32,9 +33,10 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
   @Test
   public void testResolveMavenConfigProperty() throws IOException {
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>${ver}</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>${ver}</version>""");
 
     MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
@@ -44,13 +46,12 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
   public void testResolvePropertyPriority() throws IOException {
     createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=ignore");
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>${ver}</version>\n" +
-
-                  "<properties>\n" +
-                  "  <ver>ignore</ver>" +
-                  "</properties>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>${ver}</version>
+                    <properties>
+                      <ver>ignore</ver></properties>""");
 
     MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
@@ -61,22 +62,22 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     assumeVersionMoreThan("3.3.1");
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1 -DmoduleName=m1");
 
-    createModulePom("m1", "<artifactId>${moduleName}</artifactId>\n" +
-                          "<version>${ver}</version>\n" +
-                          "<parent>\n" +
-                          "  <groupId>test</groupId>\n" +
-                          "  <artifactId>project</artifactId>\n" +
-                          "  <version>${ver}</version>\n" +
-                          "</parent>");
+    createModulePom("m1", """
+      <artifactId>${moduleName}</artifactId>
+      <version>${ver}</version>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>${ver}</version>
+      </parent>""");
 
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>${ver}</version>\n" +
-                  "<packaging>pom</packaging>\n" +
-
-                  "<modules>\n" +
-                  "  <module>${moduleName}</module>" +
-                  "</modules>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>${ver}</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>${moduleName}</module></modules>""");
 
     MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
@@ -91,13 +92,15 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
   @Test
   public void testMavenConfigCompletion() throws Exception {
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dconfig.version=1");
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>""");
 
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>${config.<caret></version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>${config.<caret></version>""");
 
     assertCompletionVariants(myProjectPom, "config.version");
   }
@@ -105,9 +108,10 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
   @Test
   public void testMavenConfigReferenceResolving() throws IOException {
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dconfig.version=1");
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>${config.version}</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>${config.version}</version>""");
 
     PsiElement resolvedReference = getReference(myProjectPom, "config.version", 0).resolve();
     assertNotNull(resolvedReference);
@@ -119,9 +123,10 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
   @Test
   public void testReimportOnConfigChange() throws IOException {
     VirtualFile configFile = createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>${ver}</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>${ver}</version>""");
 
     MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
@@ -132,7 +137,6 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     });
     configConfirmationForYesAnswer();
     importProject();
-    myProjectsManager.performScheduledImportInTests();
 
     mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("2", mavenProject.getMavenId().getVersion());

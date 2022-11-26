@@ -66,6 +66,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
             runTest("../idea/tests/testData/highlighter/deprecated/Inc.kt");
         }
 
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            runTest("../idea/tests/testData/highlighter/deprecated/Interface.kt");
+        }
+
         @TestMetadata("Invalid.kt")
         public void testInvalid() throws Exception {
             runTest("../idea/tests/testData/highlighter/deprecated/Invalid.kt");
@@ -104,11 +109,6 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         @TestMetadata("SuperCall.kt")
         public void testSuperCall() throws Exception {
             runTest("../idea/tests/testData/highlighter/deprecated/SuperCall.kt");
-        }
-
-        @TestMetadata("Trait.kt")
-        public void testTrait() throws Exception {
-            runTest("../idea/tests/testData/highlighter/deprecated/Trait.kt");
         }
     }
 
@@ -175,6 +175,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         @TestMetadata("DefinitelyNonNullableType.kt")
         public void testDefinitelyNonNullableType() throws Exception {
             runTest("../idea/tests/testData/highlighter/DefinitelyNonNullableType.kt");
+        }
+
+        @TestMetadata("DelegateFunctionMissing.kt")
+        public void testDelegateFunctionMissing() throws Exception {
+            runTest("../idea/tests/testData/highlighter/DelegateFunctionMissing.kt");
         }
 
         @TestMetadata("DelegatingCtor.kt")
@@ -280,6 +285,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         @TestMetadata("Todo.kt")
         public void testTodo() throws Exception {
             runTest("../idea/tests/testData/highlighter/Todo.kt");
+        }
+
+        @TestMetadata("TooManyArguments.kt")
+        public void testTooManyArguments() throws Exception {
+            runTest("../idea/tests/testData/highlighter/TooManyArguments.kt");
         }
 
         @TestMetadata("TopLevelDestructuring.kt")

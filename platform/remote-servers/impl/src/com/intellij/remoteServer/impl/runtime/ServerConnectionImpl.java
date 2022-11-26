@@ -5,8 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class ServerConnectionImpl<D extends DeploymentConfiguration> implements ServerConnection<D> {
   private static final Logger LOG = Logger.getInstance(ServerConnectionImpl.class);
@@ -80,7 +78,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
    * @deprecated Workaround fpr CWM-3308, in general, the runtime instance is internal and should not be exposed
    */
   @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @Nullable
   public ServerRuntimeInstance<D> getServerRuntimeInstance() {
     return myRuntimeInstance;
@@ -312,7 +310,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private void setupProjectListener() {
     if (myMessageBusConnection == null) {
       myMessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
-      myMessageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      myMessageBusConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
         public void projectClosed(@NotNull Project project) {
           onProjectClosed(project);
@@ -513,7 +511,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       }
     }
 
-    public void replaceRemotesWith(@NotNull Collection<DeploymentImpl> newDeployments) {
+    public void replaceRemotesWith(@NotNull Collection<? extends DeploymentImpl> newDeployments) {
       synchronized (myLock) {
         myRemoteDeployments.clear();
         myCachedAllDeployments = null;

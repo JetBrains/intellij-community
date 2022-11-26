@@ -45,8 +45,6 @@ import java.util.Objects;
  * This is high performance Swing component which represents an icon
  * with a colored text. The text consists of fragments. Each
  * text fragment has its own color (foreground) and font style.
- *
- * @author Vladimir Kondratyev
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
@@ -460,7 +458,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return area;
   }
 
-  private float computeTextWidth(@NotNull Font font, final boolean mainTextOnly) {
+  private float computeTextWidth(@NotNull Font font, boolean mainTextOnly) {
     float result = 0;
     int baseSize = font.getSize();
     boolean wasSmaller = false;
@@ -473,7 +471,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
 
-      result += computeStringWidth(fragment, font);
+      result += computeStringWidth(fragment, i, font);
 
       final int fixedWidth = fragment.padding;
       if (fixedWidth > 0 && result < fixedWidth) {
@@ -485,7 +483,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   @NotNull
-  private Font getBaseFont() {
+  protected Font getBaseFont() {
     Font font = getFont();
     if (font == null) font = StartupUiUtil.getLabelFont();
     return font;
@@ -510,10 +508,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     fragment.getAndCacheRenderer(font, frc).draw(g, x, y);
   }
 
-  private float computeStringWidth(@NotNull ColoredFragment fragment, Font font) {
+  private float computeStringWidth(@NotNull ColoredFragment fragment, int index, Font font) {
     if (StringUtil.isEmpty(fragment.text)) return 0;
-    int index = myFragments.indexOf(fragment);
-    ColoredFragment nextFragment = index != -1 && index < myFragments.size() - 1 ? myFragments.get(index + 1) : null;
+    if (myFragments.get(index) != fragment) {
+      return 0; // assertion?
+    }
+    ColoredFragment nextFragment = index < myFragments.size() - 1 ? myFragments.get(index + 1) : null;
     FontRenderContext frc = getFontRenderContext(font);
     if (!SystemInfo.isMacOSCatalina
         || !fragment.attributes.isSearchMatch()
@@ -530,7 +530,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static float getFragmentWidth(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
-    WidthKey key = new WidthKey(fragment.text, fragment.attributes, font, frc);
+    WidthKey key = new WidthKey(fragment.text, font, frc, fragment.attributes.getStyle());
     Float result;
     synchronized (ourWidthCache) {
       result = ourWidthCache.get(key);
@@ -614,7 +614,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         }
         wasSmaller = isSmaller;
 
-        final float curWidth = computeStringWidth(fragment, font);
+        float curWidth = computeStringWidth(fragment, i, font);
         if (x >= curX && x < curX + curWidth) {
           return i;
         }
@@ -838,7 +838,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         g.setFont(font);
         final FontMetrics metrics = g.getFontMetrics(font);
 
-        final float fragmentWidth = computeStringWidth(fragment, font);
+        float fragmentWidth = computeStringWidth(fragment, i, font);
 
         final int fragmentPadding = fragment.padding;
 
@@ -848,7 +848,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
           doPaintFragmentBackground(g, i, bgColor, (int)offset, 0, (int)fragmentWidth, height);
         }
 
-        Color color = isEnabled() ? getActiveTextColor(attributes.getFgColor()) : UIUtil.getInactiveTextColor();
+        Color color;
+        color = isEnabled() ? getActiveTextColor(attributes.getFgColor()) : NamedColorUtil.getInactiveTextColor();
         g.setColor(color);
 
         final int fragmentAlignment = fragment.alignment;
@@ -954,9 +955,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       try {
         clippedGraphics.setClip(new Rectangle2D.Float(x1, 0, x2 - x1, getHeight()));
 
-        if (prevFragment != null) x1 -= computeStringWidth(prevFragment, font);
+        if (prevFragment != null) x1 -= computeStringWidth(prevFragment, index - 1, font);
         clippedGraphics.drawString(mergedText, x1, baseline);
-      } finally {
+      }
+      finally {
         clippedGraphics.dispose();
       }
       return true;
@@ -1106,7 +1108,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @NotNull
   private String logSwingPath() {
-    //noinspection HardCodedStringLiteral
     final StringBuilder buffer = new StringBuilder("Components hierarchy:\n");
     for (Container c = this; c != null; c = c.getParent()) {
       buffer.append('\n');
@@ -1416,46 +1417,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  private static class WidthKey {
-    private final String text;
-    private final Font font;
-    private final FontRenderContext frc;
-    private final int style;
-
-    private WidthKey(@NotNull String text,
-                     @NotNull SimpleTextAttributes attributes,
-                     Font font,
-                     FontRenderContext frc) {
-      this.text = text;
-      this.font = font;
-      this.frc = frc;
-      // colors in attributes are mutable, ignore them since they don't affect text width
-      this.style = attributes.getStyle();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      WidthKey key = (WidthKey)o;
-      return style == key.style &&
-             Objects.equals(text, key.text) &&
-             Objects.equals(font, key.font) &&
-             Objects.equals(frc, key.frc);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(text, font, frc, style);
-    }
-
-    @Override
-    public String toString() {
-      return "WidthKey{text='" + text + '\'' +
-             ", font=" + font +
-             ", frc=" + frc +
-             ", style=" + style +
-             '}';
-    }
+  private record WidthKey(@NotNull String text,
+                          Font font,
+                          FontRenderContext frc,
+                          int style) {
   }
 }

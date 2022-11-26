@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -30,7 +31,7 @@ class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenc
     override fun startInWriteAction(): Boolean = false
 
     override fun applyTo(element: KtNameReferenceExpression, editor: Editor?) {
-        if (editor == null) return
+        if (editor == null || !FileModificationService.getInstance().preparePsiElementsForWrite(element)) return
         val project = element.project
         KotlinIntroduceImportAliasHandler.doRefactoring(project, editor, element)
     }

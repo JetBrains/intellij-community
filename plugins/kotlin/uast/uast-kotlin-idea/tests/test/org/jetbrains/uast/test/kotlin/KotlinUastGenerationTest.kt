@@ -12,6 +12,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -33,7 +34,7 @@ import kotlin.test.fail as kfail
 class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
 
     private val psiFactory
@@ -85,9 +86,9 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         TestCase.assertEquals("""
             UBinaryExpression (operator = &&)
                 UBinaryExpression (operator = &&)
-                    ULiteralExpression (value = null)
-                    ULiteralExpression (value = null)
-                ULiteralExpression (value = null)
+                    ULiteralExpression (value = true)
+                    ULiteralExpression (value = false)
+                ULiteralExpression (value = false)
         """.trimIndent(), expression.asRecursiveLogString().trim())
     }
 
@@ -334,17 +335,14 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                         UIdentifier (Identifier (f))
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         USimpleNameReferenceExpression (identifier = a)
-                    ULiteralExpression (value = null)
+                    ULiteralExpression (value = 1)
         """.trimIndent(), variable.asRecursiveLogString().trim())
     }
 
     fun `test method call generation with receiver`() {
-        val receiver = psiFactory.createExpression(""""10"""").toUElementOfType<UExpression>()
-            ?: kfail("cannot create receiver")
-        val arg1 = psiFactory.createExpression("1").toUElementOfType<UExpression>()
-            ?: kfail("cannot create arg1")
-        val arg2 = psiFactory.createExpression("2").toUElementOfType<UExpression>()
-            ?: kfail("cannot create arg2")
+        val receiver = myFixture.configureByKotlinExpression("receiver.kt", "\"10\"")
+        val arg1 = myFixture.configureByKotlinExpression("arg1.kt", "1")
+        val arg2 = myFixture.configureByKotlinExpression("arg2.kt", "2")
         val methodCall = uastElementFactory.createCallExpression(
             receiver,
             "substring",
@@ -367,10 +365,8 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test method call generation without receiver`() {
-        val arg1 = psiFactory.createExpression("1").toUElementOfType<UExpression>()
-            ?: kfail("cannot create arg1")
-        val arg2 = psiFactory.createExpression("2").toUElementOfType<UExpression>()
-            ?: kfail("cannot create arg2")
+        val arg1 = myFixture.configureByKotlinExpression("arg1.kt", "1")
+        val arg2 = myFixture.configureByKotlinExpression("arg2.kt", "2")
         val methodCall = uastElementFactory.createCallExpression(
             null,
             "substring",
@@ -431,14 +427,12 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun dummyContextFile(): KtFile = myFixture.configureByText("file.kt", "fun foo() {}") as KtFile
 
     fun `test method call generation with generics restoring 1 parameter with 1 existing`() {
-        val a = psiFactory.createExpression("A").toUElementOfType<UExpression>()
-            ?: kfail("cannot create a receiver")
-        val param = psiFactory.createExpression("\"a\"").toUElementOfType<UExpression>()
-            ?: kfail("cannot create a parameter")
+        val receiver = myFixture.configureByKotlinExpression("receiver.kt", "A")
+        val arg = myFixture.configureByKotlinExpression("arg.kt", "\"a\"")
         val methodCall = uastElementFactory.createCallExpression(
-            a,
+            receiver,
             "kek",
-            listOf(param),
+            listOf(arg),
             createTypeFromText(
                 "java.util.Map<java.lang.String, java.lang.Integer>",
                 null
@@ -564,7 +558,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val callExpression = uastElementFactory.createCallExpression(
             reference,
             "method",
-            listOf(uastElementFactory.createIntLiteral(1, null)),
+            listOf(uastElementFactory.createIntLiteral(1, file)),
             createTypeFromText(
                 "java.util.List<java.lang.Integer>",
                 null
@@ -1041,10 +1035,192 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun `test initialize field`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class {
+                var field: String?
+                fun method(value: String) {
+                }
+            }
+        """.trimIndent())
+
+        val uClass =
+          myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+          ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.name == "method"}?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass {
+                var field: String?
+                fun method(value: String) {
+                    field = value
+                }
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
+    fun `test initialize field with same name`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class {
+                var field: String?
+                fun method(field: String) {
+                }
+            }
+        """.trimIndent())
+
+        val uClass =
+          myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+          ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.name == "method"}?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass {
+                var field: String?
+                fun method(field: String) {
+                    this.field = field
+                }
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
+    fun `test initialize field in constructor`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class() {
+                constructor(value: String): this() {
+                }
+                var field: String?
+            }
+        """.trimIndent())
+
+        val uClass =
+          myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+          ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.isConstructor && it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull()
+                         ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass() {
+                constructor(value: String): this() {
+                    field = value
+                }
+                var field: String?
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
+    fun `test initialize field in primary constructor`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class(value: String) {
+                val field: String
+            }
+        """.trimIndent())
+
+        val uClass =
+          myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+          ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass(value: String) {
+                val field: String = value
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
+    fun `test initialize field in primary constructor with same name`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class(field: String) {
+                private val field: String
+            }
+        """.trimIndent())
+
+        val uClass =
+          myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+          ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass(private val field: String) {
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
+    fun `test initialize field in primary constructor with same name and class body`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class(field: String) {
+                private val field: String
+
+                public fun test() {
+                    val i = 0
+                }
+            }
+        """.trimIndent())
+
+        val uClass =
+            myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+                ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass(private val field: String) {
+                public fun test() {
+                    val i = 0
+                }
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
+    fun `test initialize field in primary constructor with leading blank line`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class(field: String) {
+
+                private val field: String
+
+                public fun test() {
+                    val i = 0
+                }
+            }
+        """.trimIndent())
+
+        val uClass =
+            myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+                ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass(private val field: String) {
+
+                public fun test() {
+                    val i = 0
+                }
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
     private fun createTypeFromText(s: String, newClass: PsiElement?): PsiType {
         return JavaPsiFacade.getElementFactory(myFixture.project).createTypeFromText(s, newClass)
     }
 
+    private fun JavaCodeInsightTestFixture.configureByKotlinExpression(fileName: String, text: String): UExpression {
+        val file = configureByText(fileName, "private val x = $text") as KtFile
+        val property = file.declarations.singleOrNull() as? KtProperty ?: error("Property 'x' is not found in $file")
+        val initializer = property.initializer ?: error("Property initializer not found in $file")
+        return initializer.toUElementOfType() ?: error("Initializer '$initializer' is not convertable to UAST")
+    }
 }
 
 // it is a copy of org.jetbrains.uast.UastUtils.asRecursiveLogString with `appendLine` instead of `appendln` to avoid windows related issues

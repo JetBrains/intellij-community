@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,5 +28,9 @@ public class ProcessCanceledException extends RuntimeException implements Contro
     if (cause instanceof ProcessCanceledException) {
       throw new IllegalArgumentException("Must not self-wrap ProcessCanceledException: ", cause);
     }
+  }
+
+  protected ProcessCanceledException(@NotNull String message) {
+    super(message);
   }
 }

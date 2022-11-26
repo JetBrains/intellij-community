@@ -15,10 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.Pair.pair;
-
-public class JavaEditorFileSwapper extends EditorFileSwapper {
-
+public final class JavaEditorFileSwapper extends EditorFileSwapper {
   @Deprecated
   @Override
   public @Nullable Pair<VirtualFile, Integer> getFileToSwapTo(Project project,
@@ -34,7 +31,7 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
 
     Integer position = null;
 
-    TextEditorImpl oldEditor = findSinglePsiAwareEditor(composite.getEditors());
+    TextEditorImpl oldEditor = findSinglePsiAwareEditor(composite.getAllEditors());
     if (oldEditor != null) {
       PsiCompiledFile clsFile = (PsiCompiledFile)PsiManager.getInstance(project).findFile(file);
       assert clsFile != null;
@@ -50,11 +47,10 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
       }
     }
 
-    return pair(sourceFile, position);
+    return new Pair<>(sourceFile, position);
   }
 
-  @Nullable
-  public static VirtualFile findSourceFile(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @Nullable VirtualFile findSourceFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile instanceof PsiCompiledFile && psiFile instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();

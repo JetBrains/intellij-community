@@ -22,9 +22,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public final class ModelMergerImpl implements ModelMerger {
   private final List<Pair<InvocationStrategy, Class<?>>> myInvocationStrategies = new ArrayList<>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<>();

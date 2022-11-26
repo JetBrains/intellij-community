@@ -31,6 +31,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule
 
 private const val FUS_ENABLED = true
 

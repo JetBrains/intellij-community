@@ -11,10 +11,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
@@ -115,7 +112,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return TextRange.EMPTY_RANGE;
     }
     int delta = node.computeDeltaUpToRoot();
-    return TextRange.create(TextRange.deltaScalarRange(node.toScalarRange(), delta, delta));
+    return TextRangeScalarUtil.create(TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta));
   }
 
   void invalidate(@NotNull final Object reason) {
@@ -228,7 +225,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return;
     }
 
-    setRange(newRange.toScalarRange());
+    setRange(TextRangeScalarUtil.toScalarRange(newRange));
   }
 
   protected void persistentHighlighterUpdate(@NotNull DocumentEvent e, boolean wholeLineRange) {
@@ -251,14 +248,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
         line = getDocument().getLineNumber(startOffset);
         int endLine = getDocument().getLineNumber(getEndOffset());
         if (endLine != line) {
-          setRange(TextRange.toScalarRange(startOffset, getDocument().getLineEndOffset(line)));
+          setRange(TextRangeScalarUtil.toScalarRange(startOffset, getDocument().getLineEndOffset(line)));
         }
       }
     }
     if (isValid() && wholeLineRange) {
       int newStart = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), line);
       int newEnd = getDocument().getLineEndOffset(line);
-      setRange(TextRange.toScalarRange(newStart, newEnd));
+      setRange(TextRangeScalarUtil.toScalarRange(newStart, newEnd));
     }
   }
 
@@ -269,7 +266,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
     else {
       DocumentEx document = getDocument();
-      setRange(TextRange.toScalarRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
+      setRange(TextRangeScalarUtil.toScalarRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
     }
     return line;
   }

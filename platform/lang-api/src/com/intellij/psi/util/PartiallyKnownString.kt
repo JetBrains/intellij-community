@@ -179,7 +179,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
    *
    * NOTE: currently supports only single-segment [rangeInPks]
    */
-  fun mapRangeToHostRange(host: PsiElement, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
+  private fun mapRangeToHostRange(host: PsiElement, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
 
     fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
       if (host is PsiLanguageInjectionHost) {

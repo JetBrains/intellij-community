@@ -919,6 +919,14 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         if (caseValue instanceof PsiExpression) {
           generateExpressionInstructions((PsiExpression)caseValue);
         }
+        else if (caseValue instanceof PsiPatternGuard) {
+          PsiPatternGuard patternGuard = (PsiPatternGuard)caseValue;
+          processPattern(patternGuard.getPattern());
+          generateExpressionInstructions(patternGuard.getGuardingExpression());
+        }
+        else if (caseValue instanceof PsiPattern) {
+          processPattern((PsiPattern)caseValue);
+        }
       }
     }
   }
@@ -1616,15 +1624,29 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     operand.accept(this);
 
     PsiPattern pattern = expression.getPattern();
-    if (pattern instanceof PsiTypeTestPattern) {
-      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
-
-      if (variable != null) {
-        myCurrentFlow.addInstruction(new WriteVariableInstruction(variable));
-      }
+    if (pattern != null) {
+      processPattern(pattern);
     }
 
     finishElement(expression);
+  }
+
+  private void processPattern(@NotNull PsiPattern pattern) {
+    PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
+    if (patternVariable != null) {
+      generateWriteInstruction(patternVariable);
+    }
+    if (pattern instanceof PsiDeconstructionPattern) {
+      PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)pattern;
+      PsiPattern[] deconstructionComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
+      for (PsiPattern deconstructionComponent : deconstructionComponents) {
+        ProgressManager.checkCanceled();
+        processPattern(deconstructionComponent);
+      }
+    }
+    else if (pattern instanceof PsiGuardedPattern) {
+      generateExpressionInstructions(((PsiGuardedPattern)pattern).getGuardingExpression());
+    }
   }
 
   @Override

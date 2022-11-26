@@ -16,9 +16,10 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenc
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.utils.yieldIfNotNull
@@ -46,9 +47,8 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
         isLibrarySource: Boolean
     ) {
         val isBinary = virtualFile.fileType.isKotlinBinary
-        val scriptConfigurationManager = ScriptConfigurationManager.getInstance(project)
 
-        if (isBinary && virtualFile in scriptConfigurationManager.getAllScriptsDependenciesClassFilesScope()) {
+        if (isBinary && virtualFile in getAllScriptsDependenciesClassFilesScope(project)) {
             if (isLibrarySource) {
                 register(ScriptDependenciesSourceInfo.ForProject(project))
             } else {
@@ -56,7 +56,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
             }
         }
 
-        if (!isBinary && virtualFile in scriptConfigurationManager.getAllScriptDependenciesSourcesScope()) {
+        if (!isBinary && virtualFile in getAllScriptDependenciesSourcesScope(project)) {
             register(ScriptDependenciesSourceInfo.ForProject(project))
         }
     }

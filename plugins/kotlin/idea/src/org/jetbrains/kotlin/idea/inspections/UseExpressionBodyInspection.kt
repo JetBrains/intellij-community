@@ -107,7 +107,7 @@ class UseExpressionBodyInspection(private val convertEmptyToUnit: Boolean) : Abs
     private fun KtBlockExpression.findValueStatement(): KtExpression? {
         val bodyStatements = statements
         if (bodyStatements.isEmpty()) {
-            return if (convertEmptyToUnit) KtPsiFactory(this).createExpression("Unit") else null
+            return if (convertEmptyToUnit) KtPsiFactory(project).createExpression("Unit") else null
         }
         val statement = bodyStatements.singleOrNull() ?: return null
         when (statement) {
@@ -176,7 +176,7 @@ class UseExpressionBodyInspection(private val convertEmptyToUnit: Boolean) : Abs
 
         val commentSaver = CommentSaver(body)
 
-        val factory = KtPsiFactory(declaration)
+        val factory = KtPsiFactory(declaration.project)
         val eq = declaration.addBefore(factory.createEQ(), body)
         declaration.addAfter(factory.createWhiteSpace(), eq)
 

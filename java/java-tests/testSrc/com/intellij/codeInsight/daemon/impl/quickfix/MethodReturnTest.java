@@ -23,12 +23,13 @@ public class MethodReturnTest extends LightQuickFixParameterizedTestCase {
   public static class PreviewTest extends LightJavaCodeInsightFixtureTestCase {
     public void testAnotherFile() {
       myFixture.addClass("class Another {static void test(int x) {}}");
-      myFixture.configureByText("Test.java", "class Test {\n" +
-                                             "void test() {\n" +
-                                             "  int a = <caret>Another.test(123);\n" +
-                                             "}\n" +
-                                             "}");
-      IntentionAction action = myFixture.findSingleIntention("Make 'test' return 'int'");
+      myFixture.configureByText("Test.java", """
+        class Test {
+        void test() {
+          int a = <caret>Another.test(123);
+        }
+        }""");
+      IntentionAction action = myFixture.findSingleIntention("Make 'test()' return 'int'");
       assertNotNull(action);
       String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
       assertEquals("static int test(int x)", text);
@@ -36,12 +37,13 @@ public class MethodReturnTest extends LightQuickFixParameterizedTestCase {
 
     public void testAnotherFileManyParameters() {
       myFixture.addClass("class Another {static void test(int x, String y, StringBuilder z, Number a, Runnable r) {}}");
-      myFixture.configureByText("Test.java", "class Test {\n" +
-                                             "void test() {\n" +
-                                             "  int a = <caret>Another.test(123, null, null, null, null);\n" +
-                                             "}\n" +
-                                             "}");
-      IntentionAction action = myFixture.findSingleIntention("Make 'test' return 'int'");
+      myFixture.configureByText("Test.java", """
+        class Test {
+        void test() {
+          int a = <caret>Another.test(123, null, null, null, null);
+        }
+        }""");
+      IntentionAction action = myFixture.findSingleIntention("Make 'test()' return 'int'");
       assertNotNull(action);
       String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
       assertEquals(text, "static int test(int x, String y, StringBuilder z, Number a, ...)");

@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
-    <orderEntry type="library" scope="TEST" name="opentelemetry-exporter-jaeger" level="project" />
     <orderEntry type="library" scope="TEST" name="grpc-netty-shaded" level="project" />
     <orderEntry type="library" scope="TEST" name="grpc-core" level="project" />
     <orderEntry type="library" scope="TEST" name="grpc-protobuf" level="project" />
@@ -24,5 +23,10 @@
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-collections-immutable-jvm" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.reproducibleBuilds.diffTool" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
   </component>
 </module>

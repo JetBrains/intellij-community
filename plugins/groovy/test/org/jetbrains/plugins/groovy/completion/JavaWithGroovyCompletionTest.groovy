@@ -4,9 +4,6 @@ package org.jetbrains.plugins.groovy.completion
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiMethod
 
-/**
- * @author peter
- */
 class JavaWithGroovyCompletionTest extends GroovyCompletionTestBase {
 
   void "test using java keywords in member names"() {

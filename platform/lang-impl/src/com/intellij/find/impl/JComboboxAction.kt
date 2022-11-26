@@ -82,7 +82,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
                                                 ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom - JBUI.scale(
                                                   1))
 
-    fun getNormalizedText(): String? {
+    private fun getNormalizedText(): String? {
       val editorField = editor.editorComponent as JTextField
       return if (editorField.text == emptyText || editorField.text.isBlank()) null else editorField.text
     }

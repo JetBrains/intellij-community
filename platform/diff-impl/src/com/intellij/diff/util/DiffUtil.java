@@ -11,7 +11,6 @@ import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
-import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
@@ -23,9 +22,10 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
-import com.intellij.diff.util.MergeConflictType.Type;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -48,6 +48,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -57,6 +59,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -83,11 +86,13 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -102,6 +107,7 @@ import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -145,7 +151,6 @@ public final class DiffUtil {
 
   public static boolean isFileWithoutContent(@NotNull VirtualFile file) {
     if (file instanceof VirtualFileWithoutContent) return true;
-    if (file instanceof DiffVirtualFile) return true;
     return false;
   }
 
@@ -196,7 +201,14 @@ public final class DiffUtil {
   }
 
   public static void setEditorHighlighter(@Nullable Project project, @NotNull EditorEx editor, @NotNull DocumentContent content) {
-    Disposable disposable = ((EditorImpl)editor).getDisposable();
+    Disposable disposable = null;
+    if (editor instanceof EditorImpl) {
+      disposable = ((EditorImpl)editor).getDisposable();
+    }
+    else if (editor instanceof EditorWindow) {
+      disposable = ((EditorWindow)editor);
+    }
+    if (disposable == null) return;
     if (project != null) {
       DiffEditorHighlighterUpdater updater = new DiffEditorHighlighterUpdater(project, disposable, editor, content);
       updater.updateHighlightersAsync();
@@ -205,7 +217,7 @@ public final class DiffUtil {
       ReadAction
         .nonBlocking(() -> {
           CharSequence text = editor.getDocument().getImmutableCharSequence();
-          return initEditorHighlighter(project, content, text);
+          return initEditorHighlighter(null, content, text);
         })
         .finishOnUiThread(ModalityState.any(), result -> {
           if (result != null) editor.setHighlighter(result);
@@ -254,8 +266,38 @@ public final class DiffUtil {
     EditorKind kind = EditorKind.DIFF;
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project, kind) : factory.createEditor(document, project, kind));
 
+    if (document instanceof DocumentWindow && project != null) {
+      PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (injectedFile != null) {
+        FoldingModelEx model = editor.getFoldingModel();
+        int length = editor.getDocument().getTextLength();
+        model.runBatchFoldingOperation(() -> {
+          int start = 0;
+          int end = -1;
+          for (Segment range : ((DocumentWindow)document).getHostRanges()) {
+            FoldRegion region = model.addFoldRegion(start, range.getStartOffset(), "");
+            if (region != null) {
+              region.setExpanded(false);
+            }
+            end = range.getEndOffset();
+          }
+          if (end > 0) {
+            FoldRegion region = model.addFoldRegion(end, length, "");
+            if (region != null) {
+              region.setExpanded(false);
+            }
+          }
+        });
+
+        editor = (EditorEx)EditorWindowTracker.getInstance().createEditor(((DocumentWindow)document), editor, injectedFile);
+      }
+    }
+
     editor.getSettings().setShowIntentionBulb(false);
-    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
+    MarkupModelEx model = editor.getMarkupModel();
+    if (model instanceof EditorMarkupModel editorMarkupModel) {
+      editorMarkupModel.setErrorStripeVisible(true);
+    }
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
 
     if (enableFolding) {
@@ -423,6 +465,17 @@ public final class DiffUtil {
 
   public static void registerAction(@NotNull AnAction action, @NotNull JComponent component) {
     action.registerCustomShortcutSet(action.getShortcutSet(), component);
+  }
+
+  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
+                                                  @NotNull JComponent component,
+                                                  @Nullable Disposable parentDisposable) {
+    for (AnAction action : group.getChildren(null)) {
+      if (action instanceof ActionGroup) {
+        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
+      }
+      action.registerCustomShortcutSet(component, parentDisposable);
+    }
   }
 
   @NotNull
@@ -605,7 +658,7 @@ public final class DiffUtil {
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        components.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
+        components.add(wrapEditorNotificationComponent(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded"))));
       }
     }
 
@@ -1287,18 +1340,12 @@ public final class DiffUtil {
 
   @NotNull
   public static TextDiffType getDiffType(@NotNull MergeConflictType conflictType) {
-    Type type = conflictType.getType();
-    switch (type) {
-      case INSERTED:
-        return TextDiffType.INSERTED;
-      case DELETED:
-        return TextDiffType.DELETED;
-      case MODIFIED:
-        return TextDiffType.MODIFIED;
-      case CONFLICT:
-        return TextDiffType.CONFLICT;
-    }
-    throw new IllegalStateException(type.name());
+    return switch (conflictType.getType()) {
+      case INSERTED -> TextDiffType.INSERTED;
+      case DELETED -> TextDiffType.DELETED;
+      case MODIFIED -> TextDiffType.MODIFIED;
+      case CONFLICT -> TextDiffType.CONFLICT;
+    };
   }
 
   //
@@ -1391,7 +1438,7 @@ public final class DiffUtil {
 
   public static void refreshOnFrameActivation(VirtualFile @NotNull ... files) {
     if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-      DiffUtil.markDirtyAndRefresh(true, false, false, files);
+      markDirtyAndRefresh(true, false, false, files);
     }
   }
 
@@ -1535,15 +1582,30 @@ public final class DiffUtil {
 
   @NotNull
   private static List<DiffNotificationProvider> getNotificationProviders(@NotNull UserDataHolder holder) {
-    List<DiffNotificationProvider> providers = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
-    List<JComponent> components = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
-    return ContainerUtil.concat(providers, ContainerUtil.map(components, component -> (viewer) -> component));
+    return ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
   }
 
   @NotNull
   private static List<JComponent> createNotifications(@Nullable DiffViewer viewer,
-                                                      @NotNull List<DiffNotificationProvider> providers) {
-    return ContainerUtil.mapNotNull(providers, it -> it.createNotification(viewer));
+                                                      @NotNull List<? extends DiffNotificationProvider> providers) {
+    List<JComponent> notifications = ContainerUtil.mapNotNull(providers, it -> it.createNotification(viewer));
+    return wrapEditorNotificationBorders(notifications);
+  }
+
+  @NotNull
+  public static List<JComponent> wrapEditorNotificationBorders(@NotNull List<? extends JComponent> notifications) {
+    return ContainerUtil.map(notifications, component -> wrapEditorNotificationComponent(component));
+  }
+
+  @NotNull
+  private static JComponent wrapEditorNotificationComponent(JComponent component) {
+    Border border = ClientProperty.get(component, FileEditorManager.SEPARATOR_BORDER);
+    if (border == null) return component;
+
+    Wrapper wrapper = new InvisibleWrapper();
+    wrapper.setContent(component);
+    wrapper.setBorder(border);
+    return wrapper;
   }
 
   //

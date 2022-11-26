@@ -9,17 +9,19 @@ public class LiteralAsArgToStringEqualsFixTest extends IGQuickFixesTestCase {
 
   public void testSimple() {
     doTest("Flip 'equals()'",
-           "class X {\n" +
-           "  void test(String s) {\n" +
-           "    System.out.println(s.equals(\"<caret>foo\"));\n" +
-           "  }\n" +
-           "}",
+           """
+             class X {
+               void test(String s) {
+                 System.out.println(s.equals("<caret>foo"));
+               }
+             }""",
 
-           "class X {\n" +
-           "  void test(String s) {\n" +
-           "    System.out.println(\"foo\".equals(s));\n" +
-           "  }\n" +
-           "}"
+           """
+             class X {
+               void test(String s) {
+                 System.out.println("foo".equals(s));
+               }
+             }"""
     );
   }
 
@@ -35,17 +37,19 @@ public class LiteralAsArgToStringEqualsFixTest extends IGQuickFixesTestCase {
 
   public void testParentheses() {
     doTest("Flip 'equalsIgnoreCase()'",
-           "class X {\n" +
-           "  void test(String s) {\n" +
-           "    System.out.println(((s)).equalsIgnoreCase((/*1*/(\"<caret>foo\"))));\n" +
-           "  }\n" +
-           "}",
+           """
+             class X {
+               void test(String s) {
+                 System.out.println(((s)).equalsIgnoreCase((/*1*/("<caret>foo"))));
+               }
+             }""",
 
-           "class X {\n" +
-           "  void test(String s) {\n" +
-           "    System.out.println(/*1*/\"foo\".equalsIgnoreCase(s));\n" +
-           "  }\n" +
-           "}"
+           """
+             class X {
+               void test(String s) {
+                 System.out.println(/*1*/"foo".equalsIgnoreCase(s));
+               }
+             }"""
     );
   }
 

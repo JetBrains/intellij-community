@@ -5,6 +5,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -16,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.FocusEvent;
@@ -60,6 +60,7 @@ public class TitledSeparator extends JPanel {
     setLabelFor(labelFor);
     setOpaque(false);
     updateLabelFont();
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
   }
 
   @Override
@@ -197,8 +198,10 @@ public class TitledSeparator extends JPanel {
       }
 
       int arcSize = JBUIScale.scale(Registry.intValue("ide.link.button.focus.round.arc", 4));
-      return new CompoundBorder(new EmptyBorder(getOutsideFrameInsets()), new CompoundBorder(
-        new RoundedLineBorder(JBUI.CurrentTheme.Link.FOCUSED_BORDER_COLOR, arcSize, FOCUS_THICKNESS), new EmptyBorder(getInsideFrameInsets())));
+      return JBUI.Borders.compound(
+        new EmptyBorder(getOutsideFrameInsets()),
+        new RoundedLineBorder(JBUI.CurrentTheme.Link.FOCUSED_BORDER_COLOR, arcSize, FOCUS_THICKNESS),
+        new EmptyBorder(getInsideFrameInsets()));
     }
 
     private static void add(Insets destInsets, Insets insetsToAdd) {

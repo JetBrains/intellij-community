@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -23,9 +26,23 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testCaseLabelsExpressionDefaultLast() = doTest()
   fun testCaseLabelsExpressionDifferentComments() = doTest()
   fun testCaseLabelsExpressionSameComments() = doTest()
+  fun testEmptyBodiesCanBeMerge() = doTest()
+  fun testEmptyBodiesCannotBeMerge() = doTest()
+  fun testGuardedPatternMergeWithNull() = doTest()
+  fun testNullMergeWithGuardedPattern() = doTest()
+  fun testRecordPattern1() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
+  fun testRecordPattern2() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
+  fun testRecordPattern3() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
+  fun testTwoPatterns() = doTest()
+  fun testWhenClause1() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
+  fun testWhenClause2() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
 
   private fun doTest() {
     myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
     myFixture.testHighlighting("${getTestName(false)}.java")
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_17
   }
 }

@@ -49,25 +49,17 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract @Nullable JComponent getFocusTargetFor(@NotNull JComponent comp);
 
   /**
-   * Executes given {@code runnable} after all focus activities are finished.
-   *
-   * @apiNote be careful with this method. It may run {@code runnable} synchronously in the context of the current thread, or may queue
-   * runnable until the focus events queue is empty. In the latter case runnable is going to be run while processing the last focus
-   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer {@link #doWhenFocusSettlesDown(Runnable, ModalityState)}
+   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code ModalityState.defaultModalityState()} state.
    */
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
 
   /**
-   * Executes given {@code runnable} after all focus activities are finished, immediately or later with the given {@code modality} state.
+   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code modality} state.
    */
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality);
 
   /**
-   * Executes given {@code runnable} after all focus activities are finished.
-   *
-   * @apiNote be careful with this method. It may run {@code runnable} synchronously in the context of the current thread, or may queue
-   * runnable until the focus events queue is empty. In the latter case runnable is going to be run while processing the last focus
-   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer {@link #doWhenFocusSettlesDown(Runnable, ModalityState)}
+   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code ModalityState.defaultModalityState()} state.
    */
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
 
@@ -96,15 +88,9 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract boolean isFocusTransferEnabled();
 
   /**
-   * @deprecated This method does nothing currently
-   */
-  @Deprecated(forRemoval = true)
-  public void setTypeaheadEnabled(boolean enabled) {}
-
-  /**
    * Computes effective focus owner.
    */
-  public abstract Component getFocusOwner();
+  public abstract @Nullable Component getFocusOwner();
 
   /**
    * Runs runnable for which {@code DataContext} will not be computed from the current focus owner,

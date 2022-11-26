@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: Too many arguments for public final fun foo(): Unit defined in main.X
 // ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public operator fun String?.plus(other: Any?): String defined in kotlin
 // ERROR: Unresolved reference: XXX
@@ -26,7 +26,7 @@ fun X.foo(p: Int) {
 }
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: Too many arguments for public final fun foo(): Unit defined in main.X
 // ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public operator fun String?.plus(other: Any?): String defined in kotlin
 // ERROR: Unresolved reference: XXX

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
@@ -11,7 +12,6 @@ import com.intellij.util.Query
 import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.toFakeLightClass
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 fun HierarchySearchRequest<*>.searchInheritors(): Query<PsiClass> {

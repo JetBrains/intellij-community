@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.validateElement
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
@@ -35,13 +35,13 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class KotlinIntroduceParameterDialog private constructor(
-    project: Project,
-    val editor: Editor,
-    val descriptor: IntroduceParameterDescriptor,
-    val lambdaExtractionDescriptor: ExtractableCodeDescriptor?,
-    nameSuggestions: Array<String>,
-    typeSuggestions: List<KotlinType>,
-    val helper: KotlinIntroduceParameterHelper
+  project: Project,
+  val editor: Editor,
+  val descriptor: IntroduceParameterDescriptor,
+  private val lambdaExtractionDescriptor: ExtractableCodeDescriptor?,
+  nameSuggestions: Array<String>,
+  typeSuggestions: List<KotlinType>,
+  val helper: KotlinIntroduceParameterHelper
 ) : RefactoringDialog(project, true) {
     constructor(
         project: Project,

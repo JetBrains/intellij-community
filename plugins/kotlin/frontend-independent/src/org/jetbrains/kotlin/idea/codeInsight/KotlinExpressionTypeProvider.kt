@@ -34,11 +34,11 @@ abstract class KotlinExpressionTypeProvider : ExpressionTypeProvider<KtExpressio
         is KtFunctionLiteral -> false
         is KtFunction -> !hasBlockBody() && !hasDeclaredReturnType()
         is KtProperty -> typeReference == null
+        is KtParameter -> typeReference == null && (isLoopParameter || isLambdaParameter)
         is KtPropertyAccessor -> false
         is KtDestructuringDeclarationEntry -> true
         is KtStatementExpression, is KtDestructuringDeclaration -> false
         is KtIfExpression, is KtWhenExpression, is KtTryExpression -> shouldShowStatementType()
-        is KtLoopExpression -> false
         is KtConstantExpression -> false
         is KtThisExpression -> false
         else -> getQualifiedExpressionForSelector() == null && parent !is KtCallableReferenceExpression && !isFunctionCallee()

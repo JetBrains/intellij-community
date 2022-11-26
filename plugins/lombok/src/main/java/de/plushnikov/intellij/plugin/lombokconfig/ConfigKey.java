@@ -16,15 +16,17 @@ public enum ConfigKey {
   EQUALSANDHASHCODE_DO_NOT_USE_GETTERS("lombok.equalsAndHashCode.doNotUseGetters", "false"),
   ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES("lombok.anyConstructor.suppressConstructorProperties", "true"),
   ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES("lombok.anyConstructor.addConstructorProperties", "false"),
-  STANDARD_EXCEPTION_ADD_CONSTRUCTOR_PROPERTIES("lombok.standardException.addConstructorProperties", "false"),
 
   TOSTRING_CALL_SUPER("lombok.toString.callSuper", "skip"),
   TOSTRING_DO_NOT_USE_GETTERS("lombok.toString.doNotUseGetters", "false"),
   TOSTRING_INCLUDE_FIELD_NAMES("lombok.toString.includeFieldNames", "true"),
+  TOSTRING_ONLY_EXPLICITLY_INCLUDED("lombok.toString.onlyExplicitlyIncluded", "false"),
 
   ACCESSORS_PREFIX("lombok.accessors.prefix", "", false),
   ACCESSORS_CHAIN("lombok.accessors.chain", "false"),
   ACCESSORS_FLUENT("lombok.accessors.fluent", "false"),
+  ACCESSORS_MAKE_FINAL("lombok.accessors.makeFinal", "false"),
+  ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION("lombok.accessors.capitalization", "BASIC"),
   GETTER_NO_IS_PREFIX("lombok.getter.noIsPrefix", "false"),
 
   SINGULAR_USE_GUAVA("lombok.singular.useGuava", "false"),

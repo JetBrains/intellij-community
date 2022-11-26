@@ -1,4 +1,4 @@
-// "Make 'method' return 'java.util.List<T>'" "true-preview"
+// "Make 'method()' return 'java.util.List<T>'" "true-preview"
 import java.util.*;
 
 public class Test {

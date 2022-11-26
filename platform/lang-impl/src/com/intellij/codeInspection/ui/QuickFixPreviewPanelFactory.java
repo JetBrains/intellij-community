@@ -102,6 +102,7 @@ public final class QuickFixPreviewPanelFactory {
       }
 
       if (actions.getChildrenCount() != 0) {
+        view.setFixesAvailable(true);
         final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
         final JComponent component = toolbar.getComponent();
         toolbar.setTargetComponent(view);
@@ -134,7 +135,7 @@ public final class QuickFixPreviewPanelFactory {
 
         @NotNull
         @Override
-        protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+        protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
           return group;
         }
       };
@@ -160,7 +161,7 @@ public final class QuickFixPreviewPanelFactory {
 
         @NotNull
         @Override
-        protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+        protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
           DefaultActionGroup group = new DefaultCompactActionGroup();
           group.addAll(availableSuppressors);
           return group;
@@ -186,7 +187,7 @@ public final class QuickFixPreviewPanelFactory {
 
           @NotNull
           @Override
-          protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+          protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
             final DefaultActionGroup actionGroup = new DefaultActionGroup();
             for (QuickFixAction fix : fixes) {
               actionGroup.add(fix);

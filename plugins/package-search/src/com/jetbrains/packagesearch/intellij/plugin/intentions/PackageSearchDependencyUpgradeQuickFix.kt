@@ -31,7 +31,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 
 internal class PackageSearchDependencyUpgradeQuickFix(
     element: PsiElement,
-    @SafeFieldForPreview private val identifier: PackageIdentifier,
+    private val identifier: PackageIdentifier,
     @SafeFieldForPreview private val targetVersion: PackageVersion.Named,
     @SafeFieldForPreview private val operations: List<PackageSearchOperation<*>>
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element), HighPriorityAction {

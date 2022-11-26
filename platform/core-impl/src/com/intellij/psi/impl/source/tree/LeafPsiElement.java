@@ -82,7 +82,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
 
   @Override
   public PsiFile getContainingFile() {
-    final PsiFile file = SharedImplUtil.getContainingFile(this);
+    PsiFile file = SharedImplUtil.getContainingFile(this);
     if (file == null || !file.isValid()) invalid();
     return file;
   }
@@ -91,7 +91,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   private void invalid() {
     ProgressIndicatorProvider.checkCanceled();
 
-    final StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder();
     TreeElement element = this;
     while (element != null) {
       if (element != this) builder.append(" / ");
@@ -256,7 +256,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
     if (project != null) {
       return project;
     }
-    final PsiManager manager = getManager();
+    PsiManager manager = getManager();
     if (manager == null) invalid();
     return manager.getProject();
   }
@@ -289,7 +289,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
 
   @Override
   public void navigate(boolean requestFocus) {
-    final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
+    Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (descriptor != null) {
       descriptor.navigate(requestFocus);
     }
@@ -306,7 +306,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return this == another;
   }
 }

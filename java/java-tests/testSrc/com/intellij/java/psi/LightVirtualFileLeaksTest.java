@@ -29,9 +29,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class LightVirtualFileLeaksTest extends LightJavaCodeInsightFixtureTestCase {
   private Key<Boolean> myKey;
 

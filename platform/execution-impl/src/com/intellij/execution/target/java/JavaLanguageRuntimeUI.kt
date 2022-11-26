@@ -7,11 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toMutableProperty
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.builder.*
 import java.util.function.Supplier
 
 class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
@@ -28,7 +24,7 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
       }
       row(message("java.language.runtime.jdk.version")) {
         textField()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .bindText(config::javaVersionString)
       }
 

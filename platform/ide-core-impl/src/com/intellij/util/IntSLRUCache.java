@@ -5,9 +5,6 @@ import com.intellij.util.containers.IntObjectLRUMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class IntSLRUCache<T> {
   private static final boolean ourPrintDebugStatistics = false;
   private final IntObjectLRUMap<T> myProtectedQueue;

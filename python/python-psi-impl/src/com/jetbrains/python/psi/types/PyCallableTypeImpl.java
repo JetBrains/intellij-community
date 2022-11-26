@@ -14,7 +14,9 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author vlan
@@ -67,7 +69,7 @@ public class PyCallableTypeImpl implements PyCallableType {
                                         @NotNull Collection<PyCallableParameter> allParameters,
                                         @Nullable PyExpression receiver,
                                         @NotNull TypeEvalContext context) {
-    final var substitutions = PyTypeChecker.unifyGenericCallWithParamSpecs(receiver, actualParameters, context);
+    final var substitutions = PyTypeChecker.unifyGenericCall(receiver, actualParameters, context);
     final var substitutionsWithUnresolvedReturnGenerics =
       PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(allParameters, type, substitutions, context);
     return PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);

@@ -22,7 +22,7 @@ class KotlinStandaloneScriptRunConfigurationProducer :
         return true
     }
 
-    fun pathFromContext(context: ConfigurationContext?): String? {
+    private fun pathFromContext(context: ConfigurationContext?): String? {
         val location = context?.location ?: return null
         return pathFromPsiElement(location.psiElement)
     }

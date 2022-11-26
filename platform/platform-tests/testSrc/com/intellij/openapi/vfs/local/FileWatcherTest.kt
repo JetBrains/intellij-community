@@ -4,12 +4,9 @@ package com.intellij.openapi.vfs.local
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
-import com.intellij.openapi.util.io.IoTestUtil.assumeWindows
+import com.intellij.openapi.util.io.IoTestUtil.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -28,16 +25,14 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.watch
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.system.CpuArch
+import com.intellij.util.io.copyRecursively
+import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assert.*
@@ -46,16 +41,18 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.writeText
 
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
-  private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
+  private val LOG = logger<FileWatcherTest>()
 
   @Rule @JvmField val tempDir = TempDirectory()
 
@@ -69,12 +66,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private val resetHappened = AtomicBoolean()
 
   @Before fun setUp() {
-    assumeTrue("${SystemInfo.OS_NAME}/${CpuArch.CURRENT} is not supported", !CpuArch.isArm64() || SystemInfo.isMac)
-
+    TestLoggerFactory.enableTraceLogging(testRootDisposable, NativeFileWatcherImpl::class.java, FileWatcherTest::class.java)
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
     fs = LocalFileSystem.getInstance()
-    vfsTempDir = refresh(tempDir.root)
+    vfsTempDir = refresh(tempDir.rootPath)
 
     runInEdtAndWait { fs.refresh(false) }
     runInEdtAndWait { fs.refresh(false) }
@@ -83,7 +79,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
-    watchedPaths += tempDir.root.path
+    watchedPaths += tempDir.rootPath.toString()
     startup(watcher) { path ->
       if (path === FileWatcher.RESET || path !== FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
         alarm.cancelAllRequests()
@@ -113,63 +109,63 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   //</editor-fold>
 
   @Test fun testWatchRequestConvention() {
-    val dir = tempDir.newDirectory("dir")
+    val dir = tempDir.newDirectoryPath("dir")
     val r1 = watch(dir)
     val r2 = watch(dir)
     assertNotSame(r1, r2)
   }
 
   @Test fun testFileRoot() {
-    val files = arrayOf(tempDir.newFile("test1.txt"), tempDir.newFile("test2.txt"))
+    val files = arrayOf(tempDir.newFile("test1.txt").toPath(), tempDir.newFile("test2.txt").toPath())
     files.forEach { refresh(it) }
     files.forEach { watch(it, false) }
 
     assertEvents({ files.forEach { it.writeText("new content") } }, files.associateWith { 'U' })
-    assertEvents({ files.forEach { assertTrue(it.delete()) } }, files.associateWith { 'D' })
+    assertEvents({ files.forEach { it.delete() } }, files.associateWith { 'D' })
     assertEvents({ files.forEach { it.writeText("re-creation") } }, files.associateWith { 'C' })
   }
 
   @Test fun testFileRootRecursive() {
-    val files = arrayOf(tempDir.newFile("test1.txt"), tempDir.newFile("test2.txt"))
+    val files = arrayOf(tempDir.newFile("test1.txt").toPath(), tempDir.newFile("test2.txt").toPath())
     files.forEach { refresh(it) }
     files.forEach { watch(it, true) }
 
     assertEvents({ files.forEach { it.writeText("new content") } }, files.associateWith { 'U' })
-    assertEvents({ files.forEach { assertTrue(it.delete()) } }, files.associateWith { 'D' })
+    assertEvents({ files.forEach { it.delete() } }, files.associateWith { 'D' })
     assertEvents({ files.forEach { it.writeText("re-creation") } }, files.associateWith { 'C' })
   }
 
   @Test fun testNonCanonicallyNamedFileRoot() {
     assumeTrue("case-insensitive FS only", !SystemInfo.isFileSystemCaseSensitive)
 
-    val file = tempDir.newFile("test.txt")
+    val file = tempDir.newFile("test.txt").toPath()
     refresh(file)
 
-    watch(File(file.path.uppercase(Locale.US)))
+    watch(Path.of(file.toString().uppercase(Locale.US)))
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D'))
+    assertEvents({ file.delete() }, mapOf(file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
   }
 
   @Test fun testDirectoryRecursive() {
-    val top = tempDir.newDirectory("top")
-    val sub = File(top, "sub")
-    val file = File(sub, "test.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val sub = top.resolve("sub")
+    val file = sub.resolve("test.txt")
     refresh(top)
 
     watch(top)
-    assertEvents({ sub.mkdir() }, mapOf(sub to 'C'))
+    assertEvents({ sub.createDirectories() }, mapOf(sub to 'C'))
     refresh(sub)
-    assertEvents({ assertTrue(file.createNewFile()) }, mapOf(file to 'C'))
+    assertEvents({ file.createFile() }, mapOf(file to 'C'))
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D'))
+    assertEvents({ file.delete() }, mapOf(file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
   }
 
   @Test fun testDirectoryFlat() {
-    val top = tempDir.newDirectory("top")
-    val watchedFile = tempDir.newFile("top/test.txt")
-    val unwatchedFile = tempDir.newFile("top/sub/test.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val watchedFile = tempDir.newFile("top/test.txt").toPath()
+    val unwatchedFile = tempDir.newFile("top/sub/test.txt").toPath()
     refresh(top)
 
     watch(top, false)
@@ -178,11 +174,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testDirectoryMixed() {
-    val top = tempDir.newDirectory("top")
-    val sub = tempDir.newDirectory("top/sub2")
-    val unwatchedFile = tempDir.newFile("top/sub1/test.txt")
-    val watchedFile1 = tempDir.newFile("top/test.txt")
-    val watchedFile2 = tempDir.newFile("top/sub2/sub/test.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val sub = tempDir.newDirectoryPath("top/sub2")
+    val unwatchedFile = tempDir.newFile("top/sub1/test.txt").toPath()
+    val watchedFile1 = tempDir.newFile("top/test.txt").toPath()
+    val watchedFile2 = tempDir.newFile("top/sub2/sub/test.txt").toPath()
     refresh(top)
 
     watch(top, false)
@@ -193,25 +189,25 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testMove() {
-    val top = tempDir.newDirectory("top")
-    val srcFile = tempDir.newFile("top/src/f")
-    val srcDir = tempDir.newDirectory("top/src/sub")
+    val top = tempDir.newDirectoryPath("top")
+    val srcFile = tempDir.newFile("top/src/f").toPath()
+    val srcDir = tempDir.newDirectoryPath("top/src/sub")
     tempDir.newFile("top/src/sub/f1")
     tempDir.newFile("top/src/sub/f2")
-    val dst = tempDir.newDirectory("top/dst")
-    val dstFile = File(dst, srcFile.name)
-    val dstDir = File(dst, srcDir.name)
+    val dst = tempDir.newDirectoryPath("top/dst")
+    val dstFile = dst.resolve(srcFile.fileName)
+    val dstDir = dst.resolve(srcDir.fileName)
     refresh(top)
 
     watch(top)
-    assertEvents({ Files.move(srcFile.toPath(), dstFile.toPath(), StandardCopyOption.ATOMIC_MOVE) }, mapOf(srcFile to 'D', dstFile to 'C'))
-    assertEvents({ Files.move(srcDir.toPath(), dstDir.toPath(), StandardCopyOption.ATOMIC_MOVE) }, mapOf(srcDir to 'D', dstDir to 'C'))
+    assertEvents({ Files.move(srcFile, dstFile, StandardCopyOption.ATOMIC_MOVE) }, mapOf(srcFile to 'D', dstFile to 'C'))
+    assertEvents({ Files.move(srcDir, dstDir, StandardCopyOption.ATOMIC_MOVE) }, mapOf(srcDir to 'D', dstDir to 'C'))
   }
 
   @Test fun testIncorrectPath() {
-    val root = tempDir.newDirectory("root")
-    val file = tempDir.newFile("root/file.zip")
-    val pseudoDir = File(file.parent, "sub/zip")
+    val root = tempDir.newDirectoryPath("root")
+    val file = tempDir.newFile("root/file.zip").toPath()
+    val pseudoDir = file.resolveSibling("sub/zip")
     refresh(root)
 
     watch(pseudoDir, false)
@@ -219,12 +215,12 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testDirectoryOverlapping() {
-    val top = tempDir.newDirectory("top")
-    val topFile = tempDir.newFile("top/file1.txt")
-    val sub = tempDir.newDirectory("top/sub")
-    val subFile = tempDir.newFile("top/sub/file2.txt")
-    val side = tempDir.newDirectory("side")
-    val sideFile = tempDir.newFile("side/file3.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val topFile = tempDir.newFile("top/file1.txt").toPath()
+    val sub = tempDir.newDirectoryPath("top/sub")
+    val subFile = tempDir.newFile("top/sub/file2.txt").toPath()
+    val side = tempDir.newDirectoryPath("side")
+    val sideFile = tempDir.newFile("side/file3.txt").toPath()
     refresh(top)
     refresh(side)
 
@@ -249,7 +245,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
       mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-      { arrayOf(topFile, subFile, sideFile).forEach { assertTrue(it.delete()) } },
+      { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
       mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
   }
 
@@ -257,12 +253,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testSymbolicLinkIntoFlatRoot() {
     assumeSymLinkCreationIsSupported()
 
-    val root = tempDir.newDirectory("root")
-    val cDir = tempDir.newDirectory("root/A/B/C")
-    val aLink = File(root, "aLink")
-    IoTestUtil.createSymbolicLink(aLink.toPath(), Paths.get("${root.path}/A"))
-    val flatWatchedFile = tempDir.newFile("root/aLink/test.txt")
-    val fileOutsideFlatWatchRoot = tempDir.newFile("root/A/B/C/test.txt")
+    val root = tempDir.newDirectoryPath("root")
+    val cDir = tempDir.newDirectoryPath("root/A/B/C")
+    val aLink = Files.createSymbolicLink(root.resolve("aLink"), root.resolve("A"))
+    val flatWatchedFile = tempDir.newFile("root/aLink/test.txt").toPath()
+    val fileOutsideFlatWatchRoot = tempDir.newFile("root/A/B/C/test.txt").toPath()
     refresh(root)
 
     watch(aLink, false)
@@ -274,130 +269,128 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testMultipleSymbolicLinkPathsToFile() {
     assumeSymLinkCreationIsSupported()
 
-    val root = tempDir.newDirectory("root")
+    val root = tempDir.newDirectoryPath("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
-    val bLink = File(root, "bLink")
-    IoTestUtil.createSymbolicLink(bLink.toPath(), Paths.get("${root.path}/A/B"))
-    val cLink = File(root, "cLink")
-    IoTestUtil.createSymbolicLink(cLink.toPath(), Paths.get("${root.path}/A/B/C"))
+    val bLink = Files.createSymbolicLink(root.resolve("bLink"), root.resolve("A/B"))
+    val cLink = Files.createSymbolicLink(root.resolve("cLink"), root.resolve("A/B/C"))
     refresh(root)
-    val bFilePath = File(bLink.path, "C/${file.name}")
-    val cFilePath = File(cLink.path, file.name)
+    val bFilePath = bLink.resolve("C/${file.name}")
+    val cFilePath = cLink.resolve(file.name)
 
     watch(bLink)
     watch(cLink)
     assertEvents({ file.writeText("new content") }, mapOf(bFilePath to 'U', cFilePath to 'U'))
-    assertEvents({ assertTrue(file.delete()) }, mapOf(bFilePath to 'D', cFilePath to 'D'))
+    assertEvents({ file.delete() }, mapOf(bFilePath to 'D', cFilePath to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(bFilePath to 'C', cFilePath to 'C'))
   }
 
   @Test fun testSymbolicLinkWatchRoot() {
     assumeSymLinkCreationIsSupported()
 
-    val top = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = IoTestUtil.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
-    val fileLink = File(top, "link/dir3/test.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
+    val link = Files.createSymbolicLink(top.resolve("link"), top.resolve("dir1/dir2"))
+    val fileLink = top.resolve("link/dir3/test.txt")
     refresh(top)
 
     watch(link)
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
   }
 
   @Test fun testSymbolicLinkAboveWatchRoot() {
     assumeSymLinkCreationIsSupported()
 
-    val top = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = IoTestUtil.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
-    val watchRoot = File(link, "dir3")
-    val fileLink = File(watchRoot, file.name)
+    val top = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
+    val link = Files.createSymbolicLink(top.resolve("link"), top.resolve("dir1/dir2"))
+    val watchRoot = link.resolve("dir3")
+    val fileLink = watchRoot.resolve(file.fileName)
     refresh(top)
 
     watch(watchRoot)
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
   }
 
   @Test fun testJunctionWatchRoot() {
     assumeWindows()
 
-    val top = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
     val junctionPath = "${top}/link"
-    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", junctionPath)
+    val junction = createJunction("${top}/dir1/dir2", junctionPath).toPath()
     try {
-      val fileLink = File(top, "link/dir3/test.txt")
+      val fileLink = top.resolve("link/dir3/test.txt")
       refresh(top)
 
       watch(junction)
       assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-      assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D'))
+      assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
       assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
     }
     finally {
-      IoTestUtil.deleteJunction(junctionPath)
+      deleteJunction(junctionPath)
     }
   }
 
   @Test fun testJunctionAboveWatchRoot() {
     assumeWindows()
 
-    val top = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
     val junctionPath = "${top}/link"
-    IoTestUtil.createJunction("${top.path}/dir1/dir2", junctionPath)
+    createJunction("${top}/dir1/dir2", junctionPath)
     try {
-      val watchRoot = File(top, "link/dir3")
-      val fileLink = File(watchRoot, file.name)
+      val watchRoot = top.resolve("link/dir3")
+      val fileLink = watchRoot.resolve(file.fileName)
       refresh(top)
 
       watch(watchRoot)
 
       assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-      assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D'))
+      assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
       assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
     }
     finally {
-      IoTestUtil.deleteJunction(junctionPath)
+      deleteJunction(junctionPath)
     }
   }
 
   @Test fun testSymlinkBelowWatchRoot() {
     assumeSymLinkCreationIsSupported()
 
-    val top = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = IoTestUtil.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
-    val fileLink = File(link, "dir3/" + file.name)
+    val top = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
+    val link = Files.createSymbolicLink(top.resolve("link"), top.resolve("dir1/dir2"))
+    val fileLink = link.resolve("dir3/${file.fileName}")
     refresh(top)
     watch(top)
 
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U', file to 'U'))
-    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D', file to 'D'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D', file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C', file to 'C'))
   }
 
   @Test fun testCircularSymlinkBelowWatchRoot() {
     assumeSymLinkCreationIsSupported()
 
-    val top = tempDir.newDirectory("top")
-    val topA = tempDir.newDirectory("top/a")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = IoTestUtil.createSymbolicLink(Paths.get(topA.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
-    val link2 = IoTestUtil.createSymbolicLink(Paths.get(file.parent, "dir4"), Paths.get(topA.path)).toFile()
-    val fileLink = File(link, "dir3/" + file.name)
+    val top = tempDir.newDirectoryPath("top")
+    val topA = tempDir.newDirectoryPath("top/a")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
+    val link = Files.createSymbolicLink(topA.resolve("link"), top.resolve("dir1/dir2"))
+    val link2 = Files.createSymbolicLink(file.resolveSibling("dir4"), topA)
+    val fileLink = link.resolve("dir3/${file.fileName}")
 
     refresh(top)
 
-    val request = watch(link.parentFile)
-    watch(link2.parentFile)
+    val request = watch(link.parent)
+    watch(link2.parent)
 
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U', file to 'U'))
-    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D', file to 'D'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D', file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C', file to 'C'))
 
     unwatch(request)
@@ -408,15 +401,15 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testSymlinkBelowWatchRootCreation() {
     assumeSymLinkCreationIsSupported()
 
-    val top = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = File(top, "link")
-    val fileLink = File(link, "dir3/" + file.name)
+    val top = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
+    val link = top.resolve("link")
+    val fileLink = link.resolve("dir3/${file.fileName}")
     refresh(top)
     watch(top)
 
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ IoTestUtil.createSymbolicLink(link.toPath(), Paths.get("${top.path}/dir1/dir2")) }, mapOf(link to 'C'))
+    assertEvents({ Files.createSymbolicLink(link, top.resolve("dir1/dir2")) }, mapOf(link to 'C'))
     refresh(top)
     assertEvents({ file.writeText("newer content") }, mapOf(fileLink to 'U', file to 'U'))
     assertEvents({ link.delete() }, mapOf(link to 'D'))
@@ -426,30 +419,30 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testJunctionBelowWatchRoot() {
     assumeWindows()
 
-    val top = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top.path}/link")
-    val fileLink = File(link, "dir3/" + file.name)
+    val top = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
+    val link = createJunction("${top}/dir1/dir2", "${top}/link").toPath()
+    val fileLink = link.resolve("dir3/${file.fileName}")
     refresh(top)
     watch(top)
 
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U', file to 'U'))
-    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D', file to 'D'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D', file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C', file to 'C'))
   }
 
   @Test fun testJunctionBelowWatchRootCreation() {
     assumeWindows()
 
-    val top = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = File(top, "link")
-    val fileLink = File(link, "dir3/" + file.name)
+    val top = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
+    val link = top.resolve("link")
+    val fileLink = link.resolve("dir3/${file.fileName}")
     refresh(top)
     watch(top)
 
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ IoTestUtil.createJunction("${top.path}/dir1/dir2", link.path) }, mapOf(link to 'C'))
+    assertEvents({ createJunction("${top}/dir1/dir2", link.toString()) }, mapOf(link to 'C'))
     refresh(top)
     assertEvents({ file.writeText("newer content") }, mapOf(fileLink to 'U', file to 'U'))
     assertEvents({ link.delete() }, mapOf(link to 'D'))
@@ -459,25 +452,25 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testSubst() {
     assumeWindows()
 
-    val target = tempDir.newDirectory("top")
-    val file = tempDir.newFile("top/sub/test.txt")
+    val target = tempDir.newDirectoryPath("top")
+    val file = tempDir.newFile("top/sub/test.txt").toPath()
 
-    IoTestUtil.performTestOnWindowsSubst(target.path) { substRoot ->
+    performTestOnWindowsSubst(target.toString()) { substRoot ->
       VfsRootAccess.allowRootAccess(testRootDisposable, substRoot.path)
       val vfsRoot = fs.findFileByIoFile(substRoot)!!
       watchedPaths += substRoot.path
 
-      val substFile = File(substRoot, "sub/test.txt")
+      val substFile = substRoot.toPath().resolve("sub/test.txt")
       refresh(target)
-      refresh(substRoot)
+      refresh(substRoot.toPath())
 
       try {
-        watch(substRoot)
+        watch(substRoot.toPath())
         assertEvents({ file.writeText("new content") }, mapOf(substFile to 'U'))
 
         val request = watch(target)
         assertEvents({ file.writeText("updated content") }, mapOf(file to 'U', substFile to 'U'))
-        assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D', substFile to 'D'))
+        assertEvents({ file.delete() }, mapOf(file to 'D', substFile to 'D'))
         unwatch(request)
 
         assertEvents({ file.writeText("re-creation") }, mapOf(substFile to 'C'))
@@ -490,32 +483,33 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testDirectoryRecreation() {
-    val root = tempDir.newDirectory("root")
-    val dir = tempDir.newDirectory("root/dir")
-    val file1 = tempDir.newFile("root/dir/file1.txt")
-    val file2 = tempDir.newFile("root/dir/file2.txt")
+    val root = tempDir.newDirectoryPath("root")
+    val dir = tempDir.newDirectoryPath("root/dir")
+    val file1 = tempDir.newFile("root/dir/file1.txt").toPath()
+    val file2 = tempDir.newFile("root/dir/file2.txt").toPath()
     refresh(root)
 
     watch(root)
     assertEvents(
       {
-        assertTrue(dir.deleteRecursively())
-        assertTrue(dir.mkdir())
-        arrayOf(file1, file2).forEach { it.writeText("text") } },
+        dir.delete()
+        dir.createDirectories()
+        arrayOf(file1, file2).forEach { it.writeText("text") }
+      },
       mapOf(file1 to 'U', file2 to 'U'))
   }
 
   @Test fun testWatchRootRecreation() {
-    val root = tempDir.newDirectory("root")
-    val file1 = tempDir.newFile("root/file1.txt")
-    val file2 = tempDir.newFile("root/file2.txt")
+    val root = tempDir.newDirectoryPath("root")
+    val file1 = tempDir.newFile("root/file1.txt").toPath()
+    val file2 = tempDir.newFile("root/file2.txt").toPath()
     refresh(root)
 
     watch(root)
     assertEvents(
       {
-        assertTrue(root.deleteRecursively())
-        assertTrue(root.mkdir())
+        root.delete()
+        root.createDirectories()
         if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
         arrayOf (file1, file2).forEach { it.writeText("text") }
       },
@@ -523,42 +517,42 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testWatchNonExistingRoot() {
-    val top = File(tempDir.root, "top")
-    val root = File(tempDir.root, "top/d1/d2/d3/root")
-    refresh(tempDir.root)
+    val top = tempDir.rootPath.resolve("top")
+    val root = tempDir.rootPath.resolve("top/d1/d2/d3/root")
+    refresh(tempDir.rootPath)
 
     watch(root)
-    assertEvents({ assertTrue(root.mkdirs()) }, mapOf(top to 'C'))
+    assertEvents({ root.createDirectories() }, mapOf(top to 'C'))
   }
 
   @Test fun testWatchRootRenameRemove() {
-    val top = tempDir.newDirectory("top")
-    val root = tempDir.newDirectory("top/d1/d2/d3/root")
-    val root2 = File(top, "root2")
+    val top = tempDir.newDirectoryPath("top")
+    val root = tempDir.newDirectoryPath("top/d1/d2/d3/root")
+    val root2 = top.resolve("root2")
     refresh(top)
 
     watch(root)
-    assertEvents({ assertTrue(root.renameTo(root2)) }, mapOf(root to 'D', root2 to 'C'))
-    assertEvents({ assertTrue(root2.renameTo(root)) }, mapOf(root to 'C', root2 to 'D'))
-    assertEvents({ assertTrue(root.deleteRecursively()) }, mapOf(root to 'D'))
-    assertEvents({ assertTrue(root.mkdirs()) }, mapOf(root to 'C'))
-    assertEvents({ assertTrue(top.deleteRecursively()) }, mapOf(top to 'D'))
-    assertEvents({ assertTrue(root.mkdirs()) }, mapOf(top to 'C'))
+    assertEvents({ Files.move(root, root2) }, mapOf(root to 'D', root2 to 'C'))
+    assertEvents({ Files.move(root2, root) }, mapOf(root to 'C', root2 to 'D'))
+    assertEvents({ root.delete() }, mapOf(root to 'D'))
+    assertEvents({ root.createDirectories() }, mapOf(root to 'C'))
+    assertEvents({ top.delete() }, mapOf(top to 'D'))
+    assertEvents({ root.createDirectories() }, mapOf(top to 'C'))
   }
 
   @Test fun testSwitchingToFsRoot() {
-    val top = tempDir.newDirectory("top")
-    val root = tempDir.newDirectory("top/root")
-    val file1 = tempDir.newFile("top/1.txt")
-    val file2 = tempDir.newFile("top/root/2.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val root = tempDir.newDirectoryPath("top/root")
+    val file1 = tempDir.newFile("top/1.txt").toPath()
+    val file2 = tempDir.newFile("top/root/2.txt").toPath()
     refresh(top)
-    val fsRoot = File(if (SystemInfo.isUnix) "/" else top.path.substring(0, 3))
-    assertTrue("can't guess root of $top", fsRoot.exists())
+    val fsRoot = top.root
+    assertTrue("can't guess root of ${top}", Files.isDirectory(fsRoot))
 
     val request = watch(root)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
 
-    val rootRequest = watch(fsRoot, checkRoots = !SystemInfo.isLinux)
+    val rootRequest = watch(fsRoot, isManual = SystemInfo.isLinux)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY)
     unwatch(rootRequest)
 
@@ -571,8 +565,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testLineBreaksInName() {
     assumeTrue("Expected Unix but got: " + SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix)
 
-    val root = tempDir.newDirectory("root")
-    val file = tempDir.newFile("root/weird\ndir\nname/weird\nfile\nname")
+    val root = tempDir.newDirectoryPath("root")
+    val file = tempDir.newFile("root/weird\ndir\nname/weird\nfile\nname").toPath()
     refresh(root)
 
     watch(root)
@@ -582,24 +576,24 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testHiddenFiles() {
     assumeWindows()
 
-    val root = tempDir.newDirectory("root")
-    val file = tempDir.newFile("root/dir/file")
+    val root = tempDir.newDirectoryPath("root")
+    val file = tempDir.newFile("root/dir/file").toPath()
     refresh(root)
 
     watch(root)
-    assertEvents({ Files.setAttribute(file.toPath(), "dos:hidden", true) }, mapOf(file to 'P'))
+    assertEvents({ Files.setAttribute(file, "dos:hidden", true) }, mapOf(file to 'P'))
   }
 
   @Test fun testFileCaseChange() {
     assumeTrue("case-insensitive FS only", !SystemInfo.isFileSystemCaseSensitive)
 
-    val root = tempDir.newDirectory("root")
-    val file = tempDir.newFile("root/file.txt")
-    val newFile = File(file.parent, StringUtil.capitalize(file.name))
+    val root = tempDir.newDirectoryPath("root")
+    val file = tempDir.newFile("root/file.txt").toPath()
+    val newFile = file.resolveSibling(StringUtil.capitalize(file.fileName.toString()))
     refresh(root)
 
     watch(root)
-    assertEvents({ assertTrue(file.renameTo(newFile)) }, mapOf(newFile to 'P'))
+    assertEvents({ Files.move(file, newFile, StandardCopyOption.ATOMIC_MOVE) }, mapOf(newFile to 'P'))
   }
 
   // the following tests verify the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
@@ -609,11 +603,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testRefreshEquality(): Unit = LocalFileSystemTest.doTestRefreshEquality(tempDir.newDirectory("top"))
 
   @Test fun testUnicodePaths() {
-    val name = IoTestUtil.getUnicodeName()
+    val name = getUnicodeName()
     assumeTrue("Unicode names not supported", name != null)
 
-    val root = tempDir.newDirectory(name!!)
-    val file = tempDir.newFile("${name}/${name}.txt")
+    val root = tempDir.newDirectoryPath(name!!)
+    val file = tempDir.newFile("${name}/${name}.txt").toPath()
     refresh(root)
     watch(root)
 
@@ -623,48 +617,45 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testDisplacementByIsomorphicTree() {
     assumeTrue("Expected not Mac but got: " + SystemInfo.getOsNameAndVersion(), !SystemInfo.isMac)
 
-    val top = tempDir.newDirectory("top")
-    val root = tempDir.newDirectory("top/root")
-    val file = tempDir.newFile("top/root/middle/file.txt")
+    val top = tempDir.newDirectoryPath("top")
+    val root = tempDir.newDirectoryPath("top/root")
+    val file = tempDir.newFile("top/root/middle/file.txt").toPath()
     file.writeText("original content")
-    val root_copy = File(top, "root_copy")
+    val root_copy = top.resolve("root_copy")
     root.copyRecursively(root_copy)
     file.writeText("new content")
-    val root_bak = File(top, "root.bak")
+    val root_bak = top.resolve("root.bak")
 
-    val vFile = fs.refreshAndFindFileByIoFile(file)!!
+    val vFile = fs.refreshAndFindFileByNioFile(file)!!
     assertThat(VfsUtilCore.loadText(vFile)).isEqualTo("new content")
 
     watch(root)
-    assertEvents({
-                   assertTrue(root.renameTo(root_bak))
-                   assertTrue(root_copy.renameTo(root))
-                 }, mapOf(file to 'U'))
+    assertEvents({ Files.move(root, root_bak); Files.move(root_copy, root) }, mapOf(file to 'U'))
     assertTrue(vFile.isValid)
     assertThat(VfsUtilCore.loadText(vFile)).isEqualTo("original content")
   }
 
   @Test fun testWatchRootReplacement() {
-    val root1 = tempDir.newDirectory("top/root1")
-    val root2 = tempDir.newDirectory("top/root2")
-    val file1 = tempDir.newFile("top/root1/file.txt")
-    val file2 = tempDir.newFile("top/root2/file.txt")
+    val root1 = tempDir.newDirectoryPath("top/root1")
+    val root2 = tempDir.newDirectoryPath("top/root2")
+    val file1 = tempDir.newFile("top/root1/file.txt").toPath()
+    val file2 = tempDir.newFile("top/root2/file.txt").toPath()
     refresh(file1)
     refresh(file2)
 
     val request = watch(root1)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("data") } }, mapOf(file1 to 'U'))
-    fs.replaceWatchedRoot(request, root2.path, true)
+    fs.replaceWatchedRoot(request, root2.toString(), true)
     wait { watcher.isSettingRoots }
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("more data") } }, mapOf(file2 to 'U'))
   }
 
   @Test fun testPermissionUpdate() {
-    val file = tempDir.newFile("test.txt")
+    val file = tempDir.newFile("test.txt").toPath()
     val vFile = refresh(file)
     assertTrue(vFile.isWritable)
-    val ro = if (SystemInfo.isWindows) arrayOf("attrib", "+R", file.path) else arrayOf("chmod", "500", file.path)
-    val rw = if (SystemInfo.isWindows) arrayOf("attrib", "-R", file.path) else arrayOf("chmod", "700", file.path)
+    val ro = if (SystemInfo.isWindows) arrayOf("attrib", "+R", file.toString()) else arrayOf("chmod", "500", file.toString())
+    val rw = if (SystemInfo.isWindows) arrayOf("attrib", "-R", file.toString()) else arrayOf("chmod", "700", file.toString())
 
     watch(file)
     assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*ro)) }, mapOf(file to 'P'))
@@ -674,7 +665,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSyncRefreshNonWatchedFile() {
-    val file = tempDir.newFile("test.txt")
+    val file = tempDir.newFile("test.txt").toPath()
     val vFile = refresh(file)
     file.writeText("new content")
     assertThat(VfsTestUtil.print(VfsTestUtil.getEvents { vFile.refresh(false, false) })).containsOnly("U : ${vFile.path}")
@@ -682,13 +673,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   @Test fun testUncRoot() {
     assumeWindows()
-    watch(File("\\\\SRV\\share\\path"), checkRoots = false)
+    watch(Path.of("\\\\SRV\\share\\path"), isManual = true)
   }
 
   //<editor-fold desc="Helpers">
-  private fun watch(file: File, recursive: Boolean = true, checkRoots: Boolean = true): LocalFileSystem.WatchRequest {
+  private fun watch(file: Path, recursive: Boolean = true, isManual: Boolean = false): LocalFileSystem.WatchRequest {
     val request = watch(watcher, file, recursive)
-    assertThat(watcher.manualWatchRoots).let { if (checkRoots) it.doesNotContain(file.path) else it.contains(file.path) }
+    assertThat(watcher.manualWatchRoots).let { if (isManual) it.contains(file.toString()) else it.doesNotContain(file.toString()) }
     return request
   }
 
@@ -697,7 +688,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     fs.refresh(false)
   }
 
-  private fun assertEvents(action: () -> Unit, expectedOps: Map<File, Char>, timeout: Long = NATIVE_PROCESS_DELAY) {
+  private fun assertEvents(action: () -> Unit, expectedOps: Map<Path, Char>, timeout: Long = NATIVE_PROCESS_DELAY) {
     LOG.debug("** waiting for ${expectedOps}")
     watcherEvents.down()
     alarm.cancelAllRequests()
@@ -714,9 +705,9 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     LOG.debug("** done waiting")
 
     val events = VfsTestUtil.getEvents { fs.refresh(false) }
-      .filterNot { FileUtil.startsWith(it.path, PathManager.getConfigPath()) || FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
+      .filterNot { PathManager.getConfigDir().startsWith(it.path) || PathManager.getSystemDir().startsWith(it.path) }
 
-    val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
+    val expected = expectedOps.entries.map { "${it.value} : ${it.key.toString().replace('\\', '/')}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()
     assertEquals(expected, actual)
   }

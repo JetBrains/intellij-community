@@ -1,4 +1,4 @@
-// "Annotate method 'dontAnnotateBase' as '@NotNull'" "true-preview"
+// "Annotate method 'dontAnnotateBase()' as '@NotNull'" "true-preview"
 import org.jetbrains.annotations.NotNull;
 
 class X {

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
@@ -394,7 +394,7 @@ public class NullityInferrer {
           opposite = lOperand;
         }
         if (opposite != null && opposite.getType() == PsiType.NULL) {
-          if (DataFlowInspectionBase.isAssertionEffectively(binOp, binOp.getOperationTokenType() == JavaTokenType.NE)) {
+          if (DfaPsiUtil.isAssertionEffectively(binOp, binOp.getOperationTokenType() == JavaTokenType.NE)) {
             registerNotNullAnnotation(parameter);
             return true;
           }

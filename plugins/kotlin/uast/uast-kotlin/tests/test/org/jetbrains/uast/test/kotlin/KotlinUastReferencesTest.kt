@@ -22,7 +22,7 @@ import kotlin.test.fail
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinUastReferencesTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     @Test
     fun `test original getter is visible when reference is under renaming`() {

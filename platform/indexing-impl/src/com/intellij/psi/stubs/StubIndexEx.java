@@ -17,7 +17,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
@@ -41,8 +40,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.lookupStubEntriesStarted;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.lookupStubEntriesStarted;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
@@ -60,7 +59,6 @@ public abstract class StubIndexEx extends StubIndex {
   }, ConcurrentHashMap::new);
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
-  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   @ApiStatus.Internal
   abstract void initializeStubIndexes();
@@ -134,7 +132,7 @@ public abstract class StubIndexEx extends StubIndex {
     var trace = lookupStubEntriesStarted(indexKey)
       .withProject(project);
 
-    try (trace) {
+    try {
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
         if (project instanceof LightEditCompatible) return false;
@@ -227,6 +225,12 @@ public abstract class StubIndexEx extends StubIndex {
       trace.lookupFailed();
       throw t;
     }
+    finally {
+      //Not using try-with-resources because in case of exceptions are thrown, .close() needs to be called _after_ catch,
+      //  so .lookupFailed() is invoked on a not-yet-closed trace -- but TWR does the opposite: first close resources, then
+      //  do all catch/finally blocks
+      trace.close();
+    }
   }
 
   private static <Key, Psi extends PsiElement> boolean processInMemoryStubs(StubIndexKey<Key, Psi> indexKey,
@@ -306,10 +310,7 @@ public abstract class StubIndexEx extends StubIndex {
 
     try {
       @Nullable IdFilter finalIdFilter = idFilter;
-      return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, () -> FileBasedIndexEx.disableUpToDateCheckIn(() ->
-                                                                                                                    index.processAllKeys(
-                                                                                                                      processor, scope,
-                                                                                                                      finalIdFilter)));
+      return FileBasedIndexEx.disableUpToDateCheckIn(() -> index.processAllKeys(processor, scope, finalIdFilter));
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -407,12 +408,9 @@ public abstract class StubIndexEx extends StubIndex {
           return true;
         }
       };
-      myAccessValidator.validate(stubUpdatingIndexId, () -> {
-        trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
-        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        return FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(
-          stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
-      });
+      trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
+      // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+      FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {
@@ -534,4 +532,19 @@ public abstract class StubIndexEx extends StubIndex {
   public boolean areAllProblemsProcessedInTheCurrentThread() {
     return myStubProcessingHelper.areAllProblemsProcessedInTheCurrentThread();
   }
+
+  @ApiStatus.Internal
+  public void cleanCaches() {
+    myCachedStubIds.clear();
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public interface FileUpdateProcessor {
+    void processUpdate(@NotNull VirtualFile file);
+    default void endUpdatesBatch() {}
+  }
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  abstract public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor();
 }

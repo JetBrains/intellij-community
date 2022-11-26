@@ -87,4 +87,4 @@ UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifie
     UReturnExpression -> USimpleNameReferenceExpression (identifier = threshold2) -> Kotlin_Light_Value_Parameter: threshold2
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = Z) -> USimpleNameReferenceExpression (identifier = Z) -> Kotlin_Light_Type_Parameter: Z
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO

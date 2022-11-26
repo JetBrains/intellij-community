@@ -23,8 +23,6 @@ import java.lang.annotation.RetentionPolicy;
  * {@link DomElement} instances to and from string. Converter here is an
  * instance of {@link DomResolveConverter}.
  * Uses {@link NameValue} annotation to retrieve the DOM element's name.
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Resolve {

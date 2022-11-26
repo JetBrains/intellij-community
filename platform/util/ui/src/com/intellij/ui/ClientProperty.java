@@ -69,9 +69,9 @@ public final class ClientProperty {
   @Contract("null -> null")
   private static @Nullable JComponent getPropertiesHolder(@Nullable Component component) {
     if (component instanceof JComponent) return (JComponent)component;
-    if (component instanceof Window && component instanceof RootPaneContainer) {
-      RootPaneContainer container = (RootPaneContainer)component;
-      return container.getRootPane(); // store window properties in its root pane
+    if (component instanceof Window && component instanceof RootPaneContainer container) {
+      // store window properties in its root pane
+      return container.getRootPane();
     }
     return null;
   }
@@ -104,7 +104,6 @@ public final class ClientProperty {
     return null;
   }
 
-
   /**
    * @param component a Swing component that may hold a client property value
    * @param key       a typed key corresponding to a client property
@@ -129,7 +128,6 @@ public final class ClientProperty {
     return value != null ? (T)value : null;
   }
 
-
   /**
    * @param component a Swing component that may hold a client property value
    * @param key       a key corresponding to a client property
@@ -147,7 +145,6 @@ public final class ClientProperty {
   public static boolean isSetInHierarchy(@Nullable Component component, @NotNull @NonNls Object key) {
     return null != findInHierarchy(component, key);
   }
-
 
   /**
    * @param component a Swing component that may hold a client property value

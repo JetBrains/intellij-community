@@ -9,6 +9,7 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 /**
@@ -130,6 +131,52 @@ fun ObservableProperty<@NlsSafe String>.joinCanonicalPath(vararg properties: Obs
   operation(this, *properties) { it.joinToString(File.separator) }
 
 /**
+ * Creates mutable property string view for int property.
+ * All non-int string values will be ignored.
+ */
+fun ObservableMutableProperty<Int>.toStringIntProperty(): ObservableMutableProperty<String> =
+  toStringProperty { it.toIntOrNull() }
+
+/**
+ * Creates mutable property string view for boolean property.
+ * All non-boolean string values will be ignored.
+ */
+fun ObservableMutableProperty<Boolean>.toStringBooleanProperty(): ObservableMutableProperty<String> =
+  toStringProperty { it.toBooleanStrictOrNull() }
+
+/**
+ * Creates mutable property string view for enum property.
+ * All non-enum string values will be ignored.
+ */
+inline fun <reified T : Enum<T>> ObservableMutableProperty<T>.toStringEnumProperty(): ObservableMutableProperty<String> =
+  toStringProperty { it.toEnumOrNull<T>() }
+
+/**
+ * Creates observable property string view for value property.
+ */
+fun <T : Any> ObservableProperty<T>.toStringProperty(): ObservableProperty<String> =
+  transform { it.toString() }
+
+/**
+ * Creates mutable property string view for value property.
+ * All non-deserializable string values will be ignored.
+ */
+fun <T : Any> ObservableMutableProperty<T>.toStringProperty(deserialize: (String) -> T?): ObservableMutableProperty<String> =
+  toStringProperty({ it.toString() }, deserialize)
+
+/**
+ * Creates mutable property string view for value property.
+ * All non-deserializable string values will be ignored.
+ */
+fun <T : Any> ObservableMutableProperty<T>.toStringProperty(
+  serialize: (T?) -> String,
+  deserialize: (String) -> T?
+): ObservableMutableProperty<String> =
+  transform<T, T?>({ it }, { it!! })
+    .backwardFilter { it != null }
+    .transform(serialize, deserialize)
+
+/**
  * Creates observable property that represents property with transformed value.
  * @param map is value transformation function
  */
@@ -142,13 +189,24 @@ fun <T, R> ObservableProperty<T>.transform(map: (T) -> R): ObservableProperty<R>
 /**
  * Creates observable mutable property that represents property with transformed value.
  * @param map is value forward transformation function
- * @param comap is value backward transformation function
+ * @param backwardMap is value backward transformation function
  */
-fun <T, R> ObservableMutableProperty<T>.transform(map: (T) -> R, comap: (R) -> T): ObservableMutableProperty<R> =
+fun <T, R> ObservableMutableProperty<T>.transform(map: (T) -> R, backwardMap: (R) -> T): ObservableMutableProperty<R> =
   object : ObservableMutablePropertyTransformation<T, R>() {
     override val property = this@transform
     override fun map(value: T) = map(value)
-    override fun comap(value: R) = comap(value)
+    override fun backwardMap(value: R) = backwardMap(value)
+  }
+
+/**
+ * Creates observable mutable property which ignores invalid values.
+ * I.e. It doesn't store value in [this] property if [condition] returns false.
+ */
+@ApiStatus.Experimental
+fun <T> ObservableMutableProperty<T>.backwardFilter(condition: (T) -> Boolean): ObservableMutableProperty<T> =
+  object : ObservableMutablePropertyFiltration<T>() {
+    override val property = this@backwardFilter
+    override fun backwardFilter(value: T) = condition(value)
   }
 
 /**
@@ -192,10 +250,10 @@ private abstract class ObservableMutablePropertyTransformation<T, R> :
 
   abstract override val property: ObservableMutableProperty<T>
 
-  protected abstract fun comap(value: R): T
+  protected abstract fun backwardMap(value: R): T
 
   override fun set(value: R) =
-    property.set(comap(value))
+    property.set(backwardMap(value))
 }
 
 private abstract class ObservablePropertyTransformation<T, R> : ObservableProperty<R> {
@@ -207,11 +265,9 @@ private abstract class ObservablePropertyTransformation<T, R> : ObservableProper
   override fun get(): R =
     map(property.get())
 
-  override fun afterChange(listener: (R) -> Unit) =
-    property.afterChange { listener(map(it)) }
-
-  override fun afterChange(listener: (R) -> Unit, parentDisposable: Disposable) =
-    property.afterChange({ listener(map(it)) }, parentDisposable)
+  override fun afterChange(parentDisposable: Disposable?, listener: (R) -> Unit) {
+    property.afterChange(parentDisposable) { listener(map(it)) }
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -223,21 +279,36 @@ private abstract class ObservablePropertyTransformation<T, R> : ObservableProper
   }
 }
 
+private abstract class ObservableMutablePropertyFiltration<T> : ObservableMutableProperty<T> {
+
+  protected abstract val property: ObservableMutableProperty<T>
+
+  protected abstract fun backwardFilter(value: T): Boolean
+
+  override fun get(): T {
+    return property.get()
+  }
+
+  override fun set(value: T) {
+    if (backwardFilter(value)) {
+      property.set(value)
+    }
+  }
+
+  override fun afterChange(parentDisposable: Disposable?, listener: (T) -> Unit) {
+    property.afterChange(parentDisposable) { listener(it) }
+  }
+}
+
 private abstract class AbstractDelegateObservableProperty<T>(
   private val properties: List<ObservableProperty<*>>
 ) : ObservableProperty<T> {
 
   constructor(vararg properties: ObservableProperty<*>) : this(properties.toList())
 
-  override fun afterChange(listener: (T) -> Unit) {
+  override fun afterChange(parentDisposable: Disposable?, listener: (T) -> Unit) {
     for (property in properties) {
-      property.afterChange { listener(get()) }
-    }
-  }
-
-  override fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) {
-    for (property in properties) {
-      property.afterChange({ listener(get()) }, parentDisposable)
+      property.afterChange(parentDisposable) { listener(get()) }
     }
   }
 }

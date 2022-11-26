@@ -16,6 +16,16 @@ import java.util.List;
 import java.util.Set;
 
 class LightEditProjectFileIndex implements ProjectFileIndex {
+  @Override
+  public boolean isInProject(@NotNull VirtualFile file) {
+    return isInContent(file);
+  }
+
+  @Override
+  public boolean isInProjectOrExcluded(@NotNull VirtualFile file) {
+    return isInContent(file);
+  }
+
   @Nullable
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
@@ -132,11 +142,6 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
   }
 
   @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     return false;
   }
@@ -148,6 +153,16 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
 
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    return false;
+  }
+
+  @Override
+  public @Nullable JpsModuleSourceRootType<?> getContainingSourceRootType(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @Override
+  public boolean isInGeneratedSources(@NotNull VirtualFile file) {
     return false;
   }
 }

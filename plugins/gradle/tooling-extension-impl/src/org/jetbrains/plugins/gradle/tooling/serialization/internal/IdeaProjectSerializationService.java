@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import gnu.trove.TObjectHashingStrategy;
+import org.gradle.internal.impldep.gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.JavaVersion;
 import org.gradle.internal.impldep.com.google.api.client.repackaged.com.google.common.base.Objects;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;

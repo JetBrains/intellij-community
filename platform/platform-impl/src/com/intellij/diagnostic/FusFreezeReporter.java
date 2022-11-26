@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-class FusFreezeReporter implements IdePerformanceListener {
+final class FusFreezeReporter implements IdePerformanceListener {
   final boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
   private volatile long myPreviousLoggedUIResponse = 0;
   private static final int TOLERABLE_UI_LATENCY = 100;
@@ -26,10 +26,10 @@ class FusFreezeReporter implements IdePerformanceListener {
     final long elapsedMs = TimeUnit.NANOSECONDS.toMillis(currentTime - myPreviousLoggedUIResponse);
     if (elapsedMs >= IdeHeartbeatEventReporter.UI_RESPONSE_LOGGING_INTERVAL_MS) {
       myPreviousLoggedUIResponse = currentTime;
-      IdeHeartbeatEventReporter.UILatencyLogger.LATENCY.log(latencyMs);
+      UILatencyLogger.LATENCY.log(latencyMs);
     }
     if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
-      IdeHeartbeatEventReporter.UILatencyLogger.LAGGING.log(latencyMs);
+      UILatencyLogger.LAGGING.log(latencyMs);
     }
   }
 }

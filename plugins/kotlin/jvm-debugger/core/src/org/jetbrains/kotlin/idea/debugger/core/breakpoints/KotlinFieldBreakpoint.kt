@@ -12,6 +12,7 @@ import com.intellij.debugger.ui.breakpoints.BreakpointCategory
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter
 import com.intellij.debugger.ui.breakpoints.FieldBreakpoint
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -29,7 +30,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
@@ -201,7 +201,7 @@ class KotlinFieldBreakpoint(
         return super.evaluateCondition(context, event)
     }
 
-    fun matchesEvent(event: LocatableEvent): Boolean {
+    private fun matchesEvent(event: LocatableEvent): Boolean {
         val method = event.location()?.method()
         // TODO check property type
         return method != null && method.name() in getMethodsName()

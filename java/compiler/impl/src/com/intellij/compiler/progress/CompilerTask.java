@@ -258,12 +258,6 @@ public final class CompilerTask extends Task.Backgroundable {
     ProgressManager.getInstance().run(this);
   }
 
-  public void runUsingCurrentIndicator(Runnable compileWork, Runnable restartWork) {
-    myCompileWork = compileWork;
-    myRestartWork = restartWork;
-    run(ProgressManager.getInstance().getProgressIndicator());
-  }
-
   public void run(Runnable compileWork, Runnable restartWork, ProgressIndicator progressIndicator) {
     myCompileWork = compileWork;
     myRestartWork = restartWork;

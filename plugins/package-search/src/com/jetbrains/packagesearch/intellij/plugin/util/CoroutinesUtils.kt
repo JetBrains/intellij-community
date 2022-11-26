@@ -44,7 +44,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -52,18 +55,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -132,32 +140,8 @@ internal fun <T> Flow<T>.throttle(time: Duration) =
 
 internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
     modifierFlow: Flow<R>,
-    crossinline transform: suspend (T, R) -> T
-): Flow<T> = flow {
-    coroutineScope {
-        val queue = Channel<Any?>(capacity = 1)
-
-        val mutex = Mutex(locked = true)
-        this@modifiedBy.onEach {
-            queue.send(it)
-            if (mutex.isLocked) mutex.unlock()
-        }.launchIn(this)
-        mutex.lock()
-        modifierFlow.onEach { queue.send(it) }.launchIn(this)
-
-        var currentState: T = queue.receive() as T
-        emit(currentState)
-
-        for (e in queue) {
-            when (e) {
-                is T -> currentState = e
-                is R -> currentState = transform(currentState, e)
-                else -> continue
-            }
-            emit(currentState)
-        }
-    }
-}
+    noinline transform: suspend (T, R) -> T
+): Flow<T> = flatMapLatest { modifierFlow.scan(it, transform) }
 
 internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
     loggingContext: String,
@@ -181,8 +165,9 @@ internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
 
 internal fun <T> Flow<T>.catchAndLog(context: String, message: String? = null) =
     catch {
-        if (message!= null) { logDebug(context, it) { message } }
-        else logDebug(context, it)
+        if (message != null) {
+            logDebug(context, it) { message }
+        } else logDebug(context, it)
     }
 
 internal suspend inline fun <R> MutableStateFlow<Boolean>.whileLoading(action: () -> R): TimedValue<R> {
@@ -218,10 +203,9 @@ internal suspend fun showBackgroundLoadingBar(
     isSafe: Boolean = true
 ): BackgroundLoadingBarController {
     val syncSignal = Mutex(true)
-    val cancellationRequested = Channel<Unit>()
     val externalScopeJob = coroutineContext.job
     val progressManager = ProgressManager.getInstance()
-
+    val progressController = BackgroundLoadingBarController(syncSignal)
     progressManager.run(object : Task.Backgroundable(project, title, cancellable) {
         override fun run(indicator: ProgressIndicator) {
             if (isSafe && progressManager is ProgressManagerImpl && indicator is UserDataHolder) {
@@ -232,10 +216,7 @@ internal suspend fun showBackgroundLoadingBar(
                 indicator.text = upperMessage // ??? why does it work?
                 val indicatorCancelledPollingJob = launch {
                     while (true) {
-                        if (indicator.isCanceled) {
-                            cancellationRequested.send(Unit)
-                            break
-                        }
+                        if (indicator.isCanceled) break
                         delay(50)
                     }
                 }
@@ -244,16 +225,31 @@ internal suspend fun showBackgroundLoadingBar(
                 }
                 select {
                     internalJob.onJoin { }
-                    externalScopeJob.onJoin { internalJob.cancel() }
+                    externalScopeJob.onJoin {
+                        internalJob.cancel()
+                        indicatorCancelledPollingJob.cancel()
+                    }
+                    indicatorCancelledPollingJob.onJoin {
+                        syncSignal.unlock()
+                        progressController.triggerCallbacks()
+                    }
                 }
                 indicatorCancelledPollingJob.cancel()
             }
         }
     })
-    return BackgroundLoadingBarController(syncSignal)
+    return progressController
 }
 
 internal class BackgroundLoadingBarController(private val syncMutex: Mutex) {
+
+    private val callbacks = mutableSetOf<() -> Unit>()
+
+    fun addOnComputationInterruptedCallback(callback: () -> Unit) {
+        callbacks.add(callback)
+    }
+
+    internal fun triggerCallbacks() = callbacks.forEach { it.invoke() }
 
     fun clear() {
         runCatching { syncMutex.unlock() }
@@ -274,7 +270,7 @@ internal fun AsyncModuleTransformer.asCoroutine() = object : CoroutineModuleTran
 
 internal fun ModuleChangesSignalProvider.asCoroutine() = object : FlowModuleChangesSignalProvider {
     override fun registerModuleChangesListener(project: Project) = callbackFlow {
-        val sub = registerModuleChangesListener(project) { trySend(Unit) }
+        val sub = registerModuleChangesListener(project) { trySend() }
         awaitClose { sub.unsubscribe() }
     }
 }
@@ -339,4 +335,32 @@ internal fun AsyncProjectModuleOperationProvider.asCoroutine() = object : Corout
 
     override suspend fun listRepositoriesInModule(module: ProjectModule) =
         this@asCoroutine.listRepositoriesInModule(module).await().toList()
+}
+
+fun SendChannel<Unit>.trySend() = trySend(Unit)
+fun ProducerScope<Unit>.trySend() = trySend(Unit)
+
+suspend fun SendChannel<Unit>.send() = send(Unit)
+suspend fun ProducerScope<Unit>.send() = send(Unit)
+
+data class CombineLatest3<A, B, C>(val a: A, val b: B, val c: C)
+
+fun <A, B, C, Z> combineLatest(
+    flowA: Flow<A>,
+    flowB: Flow<B>,
+    flowC: Flow<C>,
+    transform: suspend (CombineLatest3<A, B, C>) -> Z
+) = combine(flowA, flowB, flowC) { a, b, c -> CombineLatest3(a, b, c) }
+    .mapLatest(transform)
+
+fun <T> Flow<T>.pauseOn(flow: Flow<Boolean>): Flow<T> = flow {
+    coroutineScope {
+        val buffer = produce { collect { send(it) } }
+        flow.flatMapLatest { isOpen -> if (isOpen) buffer.receiveAsFlow() else EMPTY_UNCLOSED_FLOW }
+            .collect { emit(it) }
+    }
+}
+
+private val EMPTY_UNCLOSED_FLOW = flow<Nothing> {
+    suspendCancellableCoroutine { }
 }

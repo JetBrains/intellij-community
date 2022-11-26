@@ -49,7 +49,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     myTracker.incModificationCount();
   }
 
-  private void addExtensionPointListener(@NotNull ExtensionPoint<KeyedLazyInstance<T>> point) {
+  private void addExtensionPointListener(@NotNull ExtensionPoint<@NotNull KeyedLazyInstance<T>> point) {
     if (myEpListenerAdded.compareAndSet(false, true)) {
       point.addExtensionPointListener(new MyExtensionPointListener(), false, null);
     }
@@ -143,7 +143,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   // must be called not under our lock
   protected final @NotNull List<KeyedLazyInstance<T>> getExtensions() {
-    ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+    ExtensionPoint<@NotNull KeyedLazyInstance<T>> point = getPoint();
     if (point == null) {
       return Collections.emptyList();
     }

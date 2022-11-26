@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -43,7 +43,7 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ModuleEntity entity,
                                                                                                 @NotNull Project project) {
     List<IndexableIteratorBuilder> iterators = new SmartList<>();
-    iterators.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getPersistentId()));
+    iterators.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getSymbolicId()));
     for (ModuleDependencyItem dependency : entity.getDependencies()) {
       iterators.addAll(createIteratorBuildersForDependency(dependency));
     }
@@ -52,7 +52,8 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleEntity oldEntity,
-                                                                                                   @NotNull ModuleEntity newEntity) {
+                                                                                                   @NotNull ModuleEntity newEntity,
+                                                                                                   @NotNull Project project) {
     List<IndexableIteratorBuilder> iterators = new SmartList<>();
     List<ModuleDependencyItem> newDependencies = newEntity.getDependencies();
     Collection<ModuleDependencyItem> oldDependencies = new HashSet<>(oldEntity.getDependencies());

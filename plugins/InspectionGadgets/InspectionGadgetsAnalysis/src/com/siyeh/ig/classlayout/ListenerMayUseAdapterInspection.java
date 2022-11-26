@@ -80,7 +80,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiJavaCodeReferenceElement element = (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
       final PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (aClass == null) {

@@ -25,9 +25,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public class LightParameterListBuilder extends LightElement implements PsiParameterList {
   private final List<PsiParameter> myParameters = new ArrayList<>();
   private PsiParameter[] myCachedParameters;

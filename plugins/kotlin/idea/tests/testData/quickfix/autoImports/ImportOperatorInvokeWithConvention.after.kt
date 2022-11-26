@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'SomeType.invoke'" "true"
 // WITH_STDLIB
 // ERROR: Expression 'topVal' of type 'SomeType' cannot be invoked as a function. The function 'invoke()' is not found
 

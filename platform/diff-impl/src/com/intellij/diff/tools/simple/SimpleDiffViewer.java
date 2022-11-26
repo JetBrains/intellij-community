@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -16,6 +16,7 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
@@ -24,6 +25,7 @@ import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -235,7 +237,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   }
 
   @NotNull
-  protected Runnable apply(@Nullable List<SimpleDiffChange> changes,
+  protected Runnable apply(@Nullable List<? extends SimpleDiffChange> changes,
                            boolean isContentsEqual) {
     List<SimpleDiffChange> nonSkipped = changes != null ? ContainerUtil.filter(changes, it -> !it.isSkipped()) : null;
     FoldingModelSupport.Data foldingState = myFoldingModel.createState(nonSkipped, getFoldingModelSettings());
@@ -289,7 +291,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
     super.onBeforeDocumentChange(e);
 
-    List<Document> documents = ContainerUtil.map(getEditors(), Editor::getDocument);
+    List<Document> documents = ContainerUtil.map(getEditors(), editor -> {
+      DocumentEx document = editor.getDocument();
+      return document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
+    });
     Side side = Side.fromValue(documents, e.getDocument());
     if (side == null) {
       LOG.warn("Unknown document changed");
@@ -484,6 +489,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
   protected abstract class SelectedChangesActionBase extends DumbAwareAction {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         // consume shortcut even if there are nothing to do - avoid calling some other action
@@ -527,7 +537,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     protected abstract Icon getIcon(@NotNull Side side);
 
     @RequiresWriteLock
-    protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<SimpleDiffChange> changes);
+    protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<? extends SimpleDiffChange> changes);
   }
 
   private abstract class ApplySelectedChangesActionBase extends SelectedChangesActionBase {
@@ -544,7 +554,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @Override
-    protected void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
+    protected void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<? extends SimpleDiffChange> changes) {
       if (!isEditable(myModifiedSide)) return;
 
       String title = DiffBundle.message("message.use.selected.changes.command", e.getPresentation().getText());
@@ -556,7 +566,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @RequiresWriteLock
-    protected abstract void apply(@NotNull List<SimpleDiffChange> changes);
+    protected abstract void apply(@NotNull List<? extends SimpleDiffChange> changes);
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
@@ -578,7 +588,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @Override
-    protected void apply(@NotNull List<SimpleDiffChange> changes) {
+    protected void apply(@NotNull List<? extends SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
         replaceChange(change, myModifiedSide.other());
       }
@@ -606,7 +616,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @Override
-    protected void apply(@NotNull List<SimpleDiffChange> changes) {
+    protected void apply(@NotNull List<? extends SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
         appendChange(change, myModifiedSide.other());
       }
@@ -794,7 +804,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
 
     @Nullable
-    public Data createState(@Nullable List<SimpleDiffChange> changes, @NotNull Settings settings) {
+    public Data createState(@Nullable List<? extends SimpleDiffChange> changes, @NotNull Settings settings) {
       Iterator<int[]> it = map(changes, change -> new int[]{
         change.getStartLine(Side.LEFT),
         change.getEndLine(Side.LEFT),

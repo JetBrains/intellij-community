@@ -33,7 +33,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.alignmentX = Component.LEFT_ALIGNMENT
 
     val header = JLabel(headerLabel)
-    header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(4))
+    header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(2))
 
     headerPanel.add(header)
     headerPanel.add(Box.createHorizontalGlue())

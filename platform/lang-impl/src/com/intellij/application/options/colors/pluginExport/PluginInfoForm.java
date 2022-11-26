@@ -54,7 +54,7 @@ public class PluginInfoForm {
         EditorEx editor = super.createEditor();
         editor.getSettings().setUseSoftWraps(true);
         editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        editor.setColorsScheme(EditorColorsUtil.getColorSchemeForComponent(this));
+        editor.setColorsScheme(editor.createBoundColorSchemeDelegate(EditorColorsUtil.getColorSchemeForComponent(this)));
         return editor;
       }
     };

@@ -1,6 +1,6 @@
 package testing
 
-interface Trait {
+interface Interface {
     open fun foo(a: Int, b: String) {
     }
 }
@@ -10,7 +10,7 @@ open class Super {
     }
 }
 
-open class Middle : Super(), Trait {
+open class Middle : Super(), Interface {
     override fun foo(/*rename*/a: Int, b: String) {
     }
 }

@@ -186,9 +186,9 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithoutParentheses.kt");
         }
 
-        @TestMetadata("data.kt")
-        public void testData() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/data.kt");
+        @TestMetadata("dataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/dataObject.kt");
         }
 
         @TestMetadata("enum.kt")
@@ -660,36 +660,6 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/reduceOrNull.kt");
             }
 
-            @TestMetadata("runningFold.kt")
-            public void testRunningFold() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/runningFold.kt");
-            }
-
-            @TestMetadata("runningFoldIndexed.kt")
-            public void testRunningFoldIndexed() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/runningFoldIndexed.kt");
-            }
-
-            @TestMetadata("runningReduce.kt")
-            public void testRunningReduce() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/runningReduce.kt");
-            }
-
-            @TestMetadata("runningReduceIndexed.kt")
-            public void testRunningReduceIndexed() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/runningReduceIndexed.kt");
-            }
-
-            @TestMetadata("scan.kt")
-            public void testScan() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/scan.kt");
-            }
-
-            @TestMetadata("scanIndexed.kt")
-            public void testScanIndexed() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/scanIndexed.kt");
-            }
-
             @TestMetadata("single.kt")
             public void testSingle() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/single.kt");
@@ -866,6 +836,36 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             @TestMetadata("returnAtLabels.kt")
             public void testReturnAtLabels() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/returnAtLabels.kt");
+            }
+
+            @TestMetadata("runningFold.kt")
+            public void testRunningFold() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/runningFold.kt");
+            }
+
+            @TestMetadata("runningFoldIndexed.kt")
+            public void testRunningFoldIndexed() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/runningFoldIndexed.kt");
+            }
+
+            @TestMetadata("runningReduce.kt")
+            public void testRunningReduce() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/runningReduce.kt");
+            }
+
+            @TestMetadata("runningReduceIndexed.kt")
+            public void testRunningReduceIndexed() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/runningReduceIndexed.kt");
+            }
+
+            @TestMetadata("scan.kt")
+            public void testScan() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/scan.kt");
+            }
+
+            @TestMetadata("scanIndexed.kt")
+            public void testScanIndexed() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/scanIndexed.kt");
             }
 
             @TestMetadata("set.kt")

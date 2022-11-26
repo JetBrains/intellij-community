@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -12,9 +13,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
 
   @NotNull
@@ -36,7 +34,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testMethodReferenceOnNullable() { doTest(); }
   public void testObjectsNonNullWithUnknownNullable() {
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTestWith(insp -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+    doTestWith((insp, __) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
   }
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
@@ -62,26 +60,31 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   private void addGuava() {
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public interface Supplier<T> { T get();}\n");
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public interface Function<F, T> { T apply(F input);}\n");
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public abstract class Optional<T> {\n" +
-                       "  public static <T> Optional<T> absent() {}\n" +
-                       "  public static <T> Optional<T> of(T ref) {}\n" +
-                       "  public static <T> Optional<T> fromNullable(T ref) {}\n" +
-                       "  public abstract T get();\n" +
-                       "  public abstract boolean isPresent();\n" +
-                       "  public abstract T orNull();\n" +
-                       "  public abstract T or(Supplier<? extends T> supplier);\n" +
-                       "  public abstract <V> Optional<V> transform(Function<? super T, V> fn);\n" +
-                       "  public abstract T or(T val);\n" +
-                       "  public abstract java.util.Optional<T> toJavaUtil();\n" +
-                       "}");
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public interface Supplier<T> { T get();}
+                         """);
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public interface Function<F, T> { T apply(F input);}
+                         """);
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public abstract class Optional<T> {
+                           public static <T> Optional<T> absent() {}
+                           public static <T> Optional<T> of(T ref) {}
+                           public static <T> Optional<T> fromNullable(T ref) {}
+                           public abstract T get();
+                           public abstract boolean isPresent();
+                           public abstract T orNull();
+                           public abstract T or(Supplier<? extends T> supplier);
+                           public abstract <V> Optional<V> transform(Function<? super T, V> fn);
+                           public abstract T or(T val);
+                           public abstract java.util.Optional<T> toJavaUtil();
+                         }""");
   }
 
   public void testPrimitiveInVoidLambda() { doTest(); }
@@ -108,7 +111,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.IGNORE_ASSERT_STATEMENTS = true;
-    myFixture.enableInspections(inspection);
+    ConstantValueInspection cvInspection = new ConstantValueInspection();
+    cvInspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection, cvInspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
@@ -215,8 +220,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamCustomSumMethod() { doTest(); }
   public void testStreamReduceLogicalAnd() { doTest(); }
   public void testStreamSingleElementReduce() { doTest(); }
+  public void testStreamGroupingBy() { doTest(); }
   public void testRequireNonNullMethodRef() {
-    doTestWith(dfa -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
+    doTestWith((dfa, __) -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
   }
 
   public void testMapGetWithValueNullability() { doTestWithCustomAnnotations(); }
@@ -252,16 +258,17 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testContractReturnValues() { doTest(); }
   public void testTryFinallySimple() { doTest(); }
   public void testAssertAll() {
-    myFixture.addClass("package org.junit.jupiter.api;\n" +
-                       "\n" +
-                       "import org.junit.jupiter.api.function.Executable;\n" +
-                       "\n" +
-                       "public class Assertions {\n" +
-                       "  public static void assertAll(String s, Executable... e) {}\n" +
-                       "  public static void assertAll(Executable... e) {}\n" +
-                       "  public static void assertNotNull(Object o) {}\n" +
-                       "  public static void assertTrue(boolean b) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.junit.jupiter.api;
+
+                         import org.junit.jupiter.api.function.Executable;
+
+                         public class Assertions {
+                           public static void assertAll(String s, Executable... e) {}
+                           public static void assertAll(Executable... e) {}
+                           public static void assertNotNull(Object o) {}
+                           public static void assertTrue(boolean b) {}
+                         }""");
     myFixture.addClass("package org.junit.jupiter.api.function;public interface Executable { void execute() throws Throwable;}\n");
     doTest();
   }
@@ -357,12 +364,14 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testConstantInClosure() { doTest(); }
   public void testUnknownNullability() {
-    myFixture.addClass("package org.jetbrains.annotations;\nimport java.lang.annotation.*;\n" +
-                       "@Target(ElementType.TYPE_USE)\n" +
-                       "public @interface UnknownNullability { }");
-    doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.*;
+                         @Target(ElementType.TYPE_USE)
+                         public @interface UnknownNullability { }""");
+    doTestWith((insp, __) -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
   }
-  public void testReturnOrElseNull() { doTestWith(insp -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
+  public void testReturnOrElseNull() { doTestWith((insp, __) -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
   public void testArrayIntersectionType() { doTest(); }
   public void testFunctionType() { doTest(); }
   public void testIteratorHasNextModifiesPrivateField() { doTest(); }
@@ -372,4 +381,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testConstructorMethodReferenceNullability() { doTest(); }
+  public void testCustomStreamImplementation() { doTest(); }
+  public void testEmptyCollection() { doTest(); }
+  public void testConsumedStream() { doTest(); }
+  public void testConsumedStreamDifferentMethods() { doTest(); }
+  public void testConsumedStreamWithoutInline()  { doTest(); }
+  public void testLocalityAndConditionalExpression() { doTest(); }
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,16 @@ import com.pme.exe.Bin;
  * Time: 11:30:10 AM
  */
 public class IconHeader extends Bin.Structure{
+  private final Word myCount;
+
   public IconHeader() {
-    super("Header");
+    super("Icon Header");
     addMember(new Word("idReserved"));
     addMember(new Word("idType"));
-    addMember(new Word("idCount"));
+    myCount = addMember(new Word("idCount"));
+  }
+
+  public Word getCount() {
+    return myCount;
   }
 }

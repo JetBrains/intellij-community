@@ -68,7 +68,7 @@ import java.util.List;
  * @see Document
  * @see Element
  */
-public interface Parent extends Cloneable, NamespaceAware {
+public interface Parent extends Cloneable {
   /**
    * Returns the number of children in this parent's content list.
    * Children may be any {@link Content} type.

@@ -15,9 +15,6 @@
  */
 package com.intellij.ide.util.gotoByName
 
-/**
- * @author peter
- */
 internal interface SelectionPolicy {
   fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int>
 }
@@ -31,6 +28,10 @@ internal object SelectMostRelevant : SelectionPolicy {
 
 internal data class SelectIndex(private val selectedIndex: Int) : SelectionPolicy {
   override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) = listOf(selectedIndex)
+}
+
+internal data class SelectObject(private val selected: Any) : SelectionPolicy {
+  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) = listOf(model.items.indexOf(selected))
 }
 
 internal object PreserveSelection : SelectionPolicy {

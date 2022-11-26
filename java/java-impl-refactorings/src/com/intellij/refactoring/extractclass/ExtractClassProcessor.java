@@ -484,12 +484,14 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   @Override
-  public void findUsages(@NotNull List<FixableUsageInfo> usages) {
+  public void findUsages(@NotNull List<? super FixableUsageInfo> usages) {
+    List<FixableUsageInfo> myFields = new ArrayList<>();
     for (PsiField field : fields) {
-      findUsagesForField(field, usages);
-      usages.add(new RemoveField(field));
+      findUsagesForField(field, myFields);
+      myFields.add(new RemoveField(field));
     }
-    usages.addAll(myExtractEnumProcessor.findEnumConstantUsages(new ArrayList<>(usages)));
+    usages.addAll(myFields);
+    usages.addAll(myExtractEnumProcessor.findEnumConstantUsages(myFields));
     for (PsiClass innerClass : innerClasses) {
       findUsagesForInnerClass(innerClass, usages);
       usages.add(new RemoveInnerClass(innerClass));

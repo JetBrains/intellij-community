@@ -124,7 +124,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
                                                             @NotNull PsiElement newExpression,
                                                             @NotNull TextRange textRange) {
     final String fullText = oldExpression.getText();
-    final Pair<String, String> detectedQuotes = PyStringLiteralUtil.getQuotes(fullText);
+    final Pair<String, String> detectedQuotes = PyStringLiteralCoreUtil.getQuotes(fullText);
     final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
     final String prefix = fullText.substring(0, textRange.getStartOffset());
     final String suffix = fullText.substring(textRange.getEndOffset(), oldExpression.getTextLength());

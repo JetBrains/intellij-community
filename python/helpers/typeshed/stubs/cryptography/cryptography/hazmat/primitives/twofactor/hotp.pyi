@@ -1,7 +1,7 @@
 from cryptography.hazmat.backends.interfaces import HMACBackend
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 
-class HOTP(object):
+class HOTP:
     def __init__(
         self, key: bytes, length: int, algorithm: HashAlgorithm, backend: HMACBackend | None = ..., enforce_key_length: bool = ...
     ): ...

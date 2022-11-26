@@ -37,16 +37,16 @@ import javax.swing.JLabel
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class HeaderPanel(
-    onUpdateAllLinkClicked: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
+    onUpdateAllLinkClicked: (List<PackageSearchOperation<*>>) -> Unit
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
-        border = emptyBorder(right = 20)
+        border = emptyBorder(right = 10)
         font = RelativeFont.BOLD.derive(font)
     }
 
     private val countLabel = JLabel().apply {
-        foreground = PackageSearchUI.GRAY_COLOR
+        foreground = PackageSearchUI.Colors.infoLabelForeground
         border = emptyBorder(right = 8)
     }
 
@@ -63,15 +63,15 @@ internal class HeaderPanel(
         insets.top = 3.scaled()
     }
 
-    private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
+    private var updateAllOperations:List<PackageSearchOperation<*>>? = null
 
     init {
-        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.SmallHeaderHeight.get())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.smallHeaderHeight.get())
         border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
-        background = PackageSearchUI.SectionHeaderBackgroundColor
+        background = PackageSearchUI.Colors.sectionHeaderBackground
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.LEFT, 6.scaled(), 0)
 
                 add(titleLabel)
@@ -82,7 +82,7 @@ internal class HeaderPanel(
         )
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.RIGHT, 6.scaled(), 0)
                 add(updateAllLink)
             },
@@ -135,4 +135,6 @@ internal class HeaderPanel(
         border = emptyBorder(top = 5, left = 5, right = rightBorder)
         updateAndRepaint()
     }
+
+    override fun getBackground() = PackageSearchUI.Colors.sectionHeaderBackground
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -92,6 +93,11 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
   private class ToggleChangeDiffAction extends CheckboxAction implements DumbAware {
     ToggleChangeDiffAction() {
       super(VcsBundle.message("checkbox.include"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

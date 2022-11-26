@@ -83,4 +83,9 @@ class Java9MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         module("automaticByManifest").addDependency(d)
         checkHighlightingInProject()
     }
+
+    fun testJavaBaseIsIncludedByDefault() {
+        module("main")
+        checkHighlightingInProject()
+    }
 }

@@ -33,7 +33,7 @@ private val LOG = Logger.getInstance(StructuredIdeActivity::class.java)
 class StructuredIdeActivity internal constructor(private val projectOrNullForApplication: Project?,
                                                  private val ideActivityDefinition: IdeActivityDefinition,
                                                  private val parentActivity: StructuredIdeActivity? = null) {
-  private val id: Int = parentActivity?.id ?: counter.incrementAndGet()
+  internal val id: Int = parentActivity?.id ?: counter.incrementAndGet()
 
   private var state = IdeActivityState.NOT_STARTED
   private var startedTimestamp = 0L

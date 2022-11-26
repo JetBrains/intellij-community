@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 
 internal object PluginEnvironment {
-  const val PLUGIN_ID = "org.jetbrains.idea.reposearch"
+  internal const val PLUGIN_ID = "org.jetbrains.idea.reposearch"
 
   val pluginVersion
     get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))?.version

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -23,6 +24,6 @@ class AddConversionCallMigrationInspection :
 
     override fun descriptionMessage(): String = KotlinBundle.message("inspection.add.conversion.call.display.name")
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtExpression, *>
-        get() = Errors.INTEGER_OPERATOR_RESOLVE_WILL_CHANGE
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtExpression, *> =
+        Errors.INTEGER_OPERATOR_RESOLVE_WILL_CHANGE
 }

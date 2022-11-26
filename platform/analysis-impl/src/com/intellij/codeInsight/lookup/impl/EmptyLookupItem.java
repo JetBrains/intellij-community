@@ -19,9 +19,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class EmptyLookupItem extends LookupElement {
   private final String myText;
   private final boolean myLoading;

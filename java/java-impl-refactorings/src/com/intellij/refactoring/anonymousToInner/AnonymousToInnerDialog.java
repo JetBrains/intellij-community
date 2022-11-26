@@ -37,8 +37,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   private final Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<>();
   private JCheckBox myCbMakeStatic;
 
-  AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos,
-                                boolean showCanBeStatic) {
+  AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos, boolean showCanBeStatic) {
     super(project, true);
     myProject = project;
     myAnonClass = anonClass;
@@ -51,24 +50,18 @@ class AnonymousToInnerDialog extends DialogWrapper{
     }
     myVariableData = new VariableData[variableInfos.length];
 
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-    for(int idx = 0; idx < variableInfos.length; idx++){
-      VariableInfo info = variableInfos[idx];
-      String name = info.variable.getName();
-      VariableKind kind = codeStyleManager.getVariableKind(info.variable);
-      name = codeStyleManager.variableNameToPropertyName(name, kind);
-      name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
-      VariableData data = new VariableData(info.variable);
-      data.name = name;
-      data.passAsParameter = true;
-      myVariableData[idx] = data;
-    }
+    fillVariableData(myProject, variableInfos, myVariableData);
 
     init();
 
-    final String[] names;
-    String name = myAnonClass.getBaseClassReference().getReferenceName();
-    PsiType[] typeParameters = myAnonClass.getBaseClassReference().getTypeParameters();
+    final String[] names = suggestNewClassNames(myAnonClass);
+    myNameField.setSuggestions(names);
+    myNameField.selectNameWithoutExtension();
+  }
+
+  public static String[] suggestNewClassNames(PsiAnonymousClass anonymousClass) {
+    String name = anonymousClass.getBaseClassReference().getReferenceName();
+    PsiType[] typeParameters = anonymousClass.getBaseClassReference().getTypeParameters();
 
     final String typeParamsList = StringUtil.join(typeParameters, psiType -> {
       PsiType type = psiType;
@@ -82,13 +75,22 @@ class AnonymousToInnerDialog extends DialogWrapper{
       return StringUtil.getShortName(type.getPresentableText());
     }, "") + name;
 
-    if (!typeParamsList.equals(name)) {
-      names = new String[]{typeParamsList, "My" + name};
-    } else {
-      names = new String[]{"My" + name};
+    return !typeParamsList.equals(name) ? new String[]{typeParamsList, "My" + name} : new String[]{"My" + name};
+  }
+
+  public static void fillVariableData(Project project, VariableInfo[] variableInfos, VariableData[] variableData) {
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    for (int idx = 0; idx < variableInfos.length; idx++) {
+      VariableInfo info = variableInfos[idx];
+      String name = info.variable.getName();
+      VariableKind kind = codeStyleManager.getVariableKind(info.variable);
+      name = codeStyleManager.variableNameToPropertyName(name, kind);
+      name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
+      VariableData data = new VariableData(info.variable);
+      data.name = name;
+      data.passAsParameter = true;
+      variableData[idx] = data;
     }
-    myNameField.setSuggestions(names);
-    myNameField.selectNameWithoutExtension();
   }
 
   @Override
@@ -105,6 +107,12 @@ class AnonymousToInnerDialog extends DialogWrapper{
   }
 
   public VariableInfo[] getVariableInfos() {
+    return getVariableInfos(myProject, myVariableData, myVariableToInfoMap);
+  }
+
+  public static VariableInfo[] getVariableInfos(Project myProject,
+                                                VariableData[] myVariableData,
+                                                Map<PsiVariable, VariableInfo> myVariableToInfoMap) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     VariableInfo[] infos = new VariableInfo[myVariableData.length];
     for (int idx = 0; idx < myVariableData.length; idx++) {
@@ -112,7 +120,6 @@ class AnonymousToInnerDialog extends DialogWrapper{
       VariableInfo info = myVariableToInfoMap.get(data.variable);
 
       info.passAsParameter = data.passAsParameter;
-      info.parameterName = data.name;
       info.parameterName = data.name;
       String propertyName = codeStyleManager.variableNameToPropertyName(data.name, VariableKind.PARAMETER);
       info.fieldName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.FIELD);
@@ -172,7 +179,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     FormBuilder formBuilder = FormBuilder.createFormBuilder()
       .addLabeledComponent(JavaRefactoringBundle.message("anonymousToInner.class.name.label.text"), myNameField);
 
-    if(!myShowCanBeStatic) {
+    if (myShowCanBeStatic) {
       myCbMakeStatic = new NonFocusableCheckBox(JavaRefactoringBundle.message("anonymousToInner.make.class.static.checkbox.text"));
       myCbMakeStatic.setSelected(true);
       formBuilder.addComponent(myCbMakeStatic);

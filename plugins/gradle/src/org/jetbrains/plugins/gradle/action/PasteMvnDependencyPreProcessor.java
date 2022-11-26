@@ -92,17 +92,13 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
   private static String getScope(@NotNull Document document, @NotNull GradleVersion gradleVersion) {
     String scope = firstOrEmpty(document.getElementsByTagName("scope"));
     boolean isSupportedImplementation = GradleUtil.isSupportedImplementationScope(gradleVersion);
-    switch (scope) {
-      case "test":
-        return isSupportedImplementation ? "testImplementation" : "testCompile";
-      case "provided":
-        return "compileOnly";
-      case "runtime":
-        return "runtime";
-      case "compile":
-      default:
-        return isSupportedImplementation ? "implementation" : "compile";
-    }
+    return switch (scope) {
+      case "test" -> isSupportedImplementation ? "testImplementation" : "testCompile";
+      case "provided" -> "compileOnly";
+      case "runtime" -> "runtime";
+      case "compile" -> isSupportedImplementation ? "implementation" : "compile";
+      default -> isSupportedImplementation ? "implementation" : "compile";
+    };
   }
 
   private static String getVersion(@NotNull Document document) {

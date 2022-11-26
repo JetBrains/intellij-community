@@ -82,7 +82,7 @@ public abstract class AbstractFilter<T> implements Filter<T> {
 
     if (content instanceof RandomAccess) {
       int size = content.size();
-      List<T> result = new ArrayList<T>(size);
+      List<T> result = new ArrayList<>(size);
       for (int i = 0; i < size; i++) {
         T c = filter(content.get(i));
         if (c != null) {
@@ -92,7 +92,7 @@ public abstract class AbstractFilter<T> implements Filter<T> {
       return result.isEmpty() ? Collections.emptyList() : result;
     }
 
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (Object o : content) {
       T c = filter(o);
       if (c != null) {
@@ -117,11 +117,11 @@ public abstract class AbstractFilter<T> implements Filter<T> {
 
   @Override
   public final Filter<T> and(Filter<?> filter) {
-    return new AndFilter<T>(filter, this);
+    return new AndFilter<>(filter, this);
   }
 
   @Override
   public <R> Filter<R> refine(Filter<R> filter) {
-    return new AndFilter<R>(this, filter);
+    return new AndFilter<>(this, filter);
   }
 }

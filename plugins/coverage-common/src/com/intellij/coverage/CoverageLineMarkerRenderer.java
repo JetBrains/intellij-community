@@ -124,16 +124,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   }
 
   private static TextAttributesKey getAttributesKey(LineData lineData) {
-    if (lineData != null) {
-      switch (lineData.getStatus()) {
-        case LineCoverage.FULL:
-          return CodeInsightColors.LINE_FULL_COVERAGE;
-        case LineCoverage.PARTIAL:
-          return CodeInsightColors.LINE_PARTIAL_COVERAGE;
-      }
-    }
-
-    return CodeInsightColors.LINE_NONE_COVERAGE;
+    int status = lineData == null ? LineCoverage.NONE : lineData.getStatus();
+    return switch (status) {
+      case LineCoverage.FULL -> CodeInsightColors.LINE_FULL_COVERAGE;
+      case LineCoverage.PARTIAL -> CodeInsightColors.LINE_PARTIAL_COVERAGE;
+      default -> CodeInsightColors.LINE_NONE_COVERAGE;
+    };
   }
 
   @Override
@@ -237,7 +233,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     final LineData lineData = getLineData(lineNumber);
     if (myCoverageByTestApplicable) {
-      group.add(new ShowCoveringTestsAction(myClassName, lineData));
+      group.add(new ShowCoveringTestsAction(editor.getProject(), myClassName, lineData));
     }
     final AnAction byteCodeViewAction = ActionManager.getInstance().getAction("ByteCodeViewer");
     if (byteCodeViewAction != null) {
@@ -247,6 +243,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     group.add(new HideCoverageInfoAction());
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CoverageHintToolbar", group, true);
+    toolbar.setTargetComponent(editorComponent);
     final JComponent toolbarComponent = toolbar.getComponent();
 
     final Color background = ((EditorEx)editor).getBackgroundColor();
@@ -382,14 +379,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       if (entry != null) {
         final LineData lineData = getLineData(entry);
         if (lineData != null) {
-          switch (lineData.getStatus()) {
-            case LineCoverage.NONE:
-              return CoverageBundle.message("coverage.next.change.uncovered");
-            case LineCoverage.PARTIAL:
-              return CoverageBundle.message("coverage.next.change.partial.covered");
-            case LineCoverage.FULL:
-              return CoverageBundle.message("coverage.next.change.fully.covered");
-          }
+          return switch (lineData.getStatus()) {
+            case LineCoverage.NONE -> CoverageBundle.message("coverage.next.change.uncovered");
+            case LineCoverage.PARTIAL -> CoverageBundle.message("coverage.next.change.partial.covered");
+            case LineCoverage.FULL -> CoverageBundle.message("coverage.next.change.fully.covered");
+            default -> null;
+          };
         }
       }
       return null;
@@ -398,6 +393,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     @Override
     public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(getLineEntry() != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -458,6 +458,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
         }
         colorAndFontOptions.disposeUIResources();
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

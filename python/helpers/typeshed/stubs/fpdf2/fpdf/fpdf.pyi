@@ -7,7 +7,7 @@ from enum import IntEnum
 from io import BytesIO
 from pathlib import Path
 from typing import Any, NamedTuple, overload
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 from PIL import Image
 
@@ -16,10 +16,10 @@ from .recorder import FPDFRecorder
 from .syntax import DestinationXYZ
 from .util import _Unit
 
-_Orientation = Literal["", "portrait", "p", "P", "landscape", "l", "L"]
-_Format = Literal["", "a3", "A3", "a4", "A4", "a5", "A5", "letter", "Letter", "legal", "Legal"]
-_FontStyle = Literal["", "B", "I"]
-_FontStyles = Literal["", "B", "I", "U", "BU", "UB", "BI", "IB", "IU", "UI", "BIU", "BUI", "IBU", "IUB", "UBI", "UIB"]
+_Orientation: TypeAlias = Literal["", "portrait", "p", "P", "landscape", "l", "L"]
+_Format: TypeAlias = Literal["", "a3", "A3", "a4", "A4", "a5", "A5", "letter", "Letter", "legal", "Legal"]
+_FontStyle: TypeAlias = Literal["", "B", "I"]
+_FontStyles: TypeAlias = Literal["", "B", "I", "U", "BU", "UB", "BI", "IB", "IU", "UI", "BIU", "BUI", "IBU", "IUB", "UBI", "UIB"]
 PAGE_FORMATS: dict[_Format, tuple[float, float]]
 
 class DocumentState(IntEnum):
@@ -64,10 +64,10 @@ def get_page_format(format: _Format | tuple[float, float], k: float | None = ...
 def load_cache(filename: Path): ...
 
 # TODO: TypedDicts
-_Page = dict[str, Any]
-_Font = dict[str, Any]
-_FontFile = dict[str, Any]
-_Image = dict[str, Any]
+_Page: TypeAlias = dict[str, Any]
+_Font: TypeAlias = dict[str, Any]
+_FontFile: TypeAlias = dict[str, Any]
+_Image: TypeAlias = dict[str, Any]
 
 class FPDF:
     MARKDOWN_BOLD_MARKER: str

@@ -1,4 +1,4 @@
-// "Make 'get' return 'Callable<java.lang.Integer>'" "true-preview"
+// "Make 'get()' return 'Callable<java.lang.Integer>'" "true-preview"
 interface Gettable<T> {
   Callable<Integer> get();
 }

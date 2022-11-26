@@ -49,11 +49,10 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
                        "public abstract int hashCode();" +
                        "public abstract String toString();" +
                        "}");
-    myFixture.configureByText("A.java", "record Point(int x) {" +
-                                        "    public Point {\n" +
-                                        "        int x<caret>1 = 0\n" +
-                                        "    }" + 
-                                        "}");
+    myFixture.configureByText("A.java", """
+      record Point(int x) {    public Point {
+              int x<caret>1 = 0
+          }}""");
 
     PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiDeclarationStatement.class);
     assertNotNull(decl);

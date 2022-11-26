@@ -9,10 +9,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
   protected final ComboBox<V> myCbx;
 

@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.lang.lexer;
 
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
 import org.intellij.markdown.ast.ASTNode;
 import org.intellij.markdown.ast.ASTNodeKt;
@@ -19,32 +20,39 @@ public class MarkdownToplevelLexer extends LexerBase {
   private int myBufferStart;
   private int myBufferEnd;
 
-  private List<IElementType> myLexemes;
-  private List<Integer> myStartOffsets;
-  private List<Integer> myEndOffsets;
+  private int lastBufferHash = 0;
+
+  private final List<IElementType> myLexemes = new ArrayList<>();
+  private final List<Integer> myStartOffsets = new ArrayList<>();
+  private final List<Integer> myEndOffsets = new ArrayList<>();
 
   private int myLexemeIndex;
 
-  @NotNull final MarkdownFlavourDescriptor myFlavour;
+  private @NotNull final MarkdownFlavourDescriptor flavour;
 
   public MarkdownToplevelLexer() {
     this(MarkdownParserManager.FLAVOUR);
   }
 
   public MarkdownToplevelLexer(@NotNull MarkdownFlavourDescriptor flavour) {
-    myFlavour = flavour;
+    this.flavour = flavour;
   }
 
   @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
-    myBuffer = buffer;
+    final var bufferHash = buffer.hashCode();
     myBufferStart = startOffset;
     myBufferEnd = endOffset;
-
-    final ASTNode parsedTree = MarkdownParserManager.parseContent(buffer.subSequence(startOffset, endOffset), myFlavour);
-    myLexemes = new ArrayList<>();
-    myStartOffsets = new ArrayList<>();
-    myEndOffsets = new ArrayList<>();
+    if (bufferHash == lastBufferHash && buffer.equals(myBuffer)) {
+      myLexemeIndex = initialState;
+      return;
+    }
+    lastBufferHash = bufferHash;
+    myBuffer = buffer;
+    final var parsedTree = MarkdownParserManager.parseContent(buffer.subSequence(startOffset, endOffset), flavour);
+    myLexemes.clear();
+    myStartOffsets.clear();
+    myEndOffsets.clear();
     ASTNodeKt.accept(parsedTree, new LexerBuildingVisitor());
     myLexemeIndex = 0;
   }
@@ -99,6 +107,7 @@ public class MarkdownToplevelLexer extends LexerBase {
 
     @Override
     public void visitNode(@NotNull ASTNode node) {
+      ProgressManager.checkCanceled();
       if (node.getStartOffset() == node.getEndOffset()) {
         return;
       }

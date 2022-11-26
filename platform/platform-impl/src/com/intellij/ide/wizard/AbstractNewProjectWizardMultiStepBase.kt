@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
 
 
@@ -17,7 +16,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   protected abstract val label: @NlsContexts.Label String
 
-  val stepsProperty = AtomicProperty<Map<String, NewProjectWizardStep>>(emptyMap())
+  private val stepsProperty = AtomicProperty<Map<String, NewProjectWizardStep>>(emptyMap())
   var steps: Map<String, NewProjectWizardStep> by stepsProperty
 
   val stepProperty = propertyGraph.property("")
@@ -49,7 +48,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
     with(builder) {
       row {
         val placeholder = placeholder()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
 
         placeholder.component = getOrCreateStepPanel()
         stepProperty.afterChange {

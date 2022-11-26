@@ -141,4 +141,56 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
       )
     },
   )
+
+  override fun getLessonIdToTipsMap(): Map<String, List<String>> = mutableMapOf(
+    // Essential
+    "context.actions" to listOf("ContextActions"),
+    "Actions" to listOf("find_action", "GoToAction"),
+    "Search everywhere" to listOf("SearchEverywhere", "GoToClass", "search_everywhere_general"),
+    "Basic completion" to listOf("CodeCompletion"),
+
+    // EditorBasics
+    "Select" to listOf("smart_selection", "CtrlW"),
+    "Comment line" to listOf("CommentCode"),
+    "Duplicate" to listOf("CtrlD", "DeleteLine"),
+    "Move" to listOf("MoveUpDown"),
+    "Surround and unwrap" to listOf("SurroundWith"),
+
+    // CodeCompletion
+    "Basic completion" to listOf("CodeCompletion"),
+    "Smart type completion" to listOf("SmartTypeCompletion", "SmartTypeAfterNew", "SecondSmartCompletionToar"),
+    "Postfix completion" to listOf("PostfixCompletion"),
+    "Statement completion" to listOf("CompleteStatement", "FinishBySmartEnter"),
+    "Completion with tab" to listOf("TabInLookups"),
+
+    // Refactorings
+    "Refactorings.Rename" to listOf("Rename"),
+    "Extract variable" to listOf("IntroduceVariable"),
+    "Refactorings.ExtractMethod" to listOf("ExtractMethod"),
+    "java.refactoring.menu" to listOf("RefactorThis"),
+
+    // CodeAssistance
+    "CodeAssistance.LocalHistory" to listOf("local_history"),
+    "CodeAssistance.CodeFormatting" to listOf("LayoutCode"),
+    "CodeAssistance.ParameterInfo" to listOf("ParameterInfo"),
+    "CodeAssistance.QuickPopups" to listOf("CtrlShiftIForLookup", "CtrlShiftI", "QuickJavaDoc"),
+    "CodeAssistance.EditorCodingAssistance" to listOf("HighlightUsagesInFile", "NextPrevError", "NavigateBetweenErrors"),
+
+    // Navigation
+    "Search everywhere" to listOf("SearchEverywhere", "GoToClass", "search_everywhere_general"),
+    "Find in files" to listOf("FindReplaceToggle", "FindInPath"),
+    "File structure" to listOf("FileStructurePopup"),
+    "Declaration and usages" to listOf("GoToDeclaration", "ShowUsages"),
+    "java.inheritance.hierarchy.lesson" to listOf("HierarchyBrowser"),
+    "Recent Files and Locations" to listOf("recent-locations", "RecentFiles"),
+
+    // RunAndDebug
+    "java.run.configuration" to listOf("SelectRunDebugConfiguration"),
+    "java.debug.workflow" to listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor"),
+  ).also { map ->
+    val gitCourse = CourseManager.instance.findCommonCourseById("Git")
+    if (gitCourse != null) {
+      map.putAll(gitCourse.getLessonIdToTipsMap())
+    }
+  }
 }

@@ -24,11 +24,11 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
     }
   };
 
-  public IStubFileElementType(final Language language) {
+  public IStubFileElementType(Language language) {
     super(language);
   }
 
-  public IStubFileElementType(@NonNls final String debugName, final Language language) {
+  public IStubFileElementType(@NonNls String debugName, Language language) {
     super(debugName, language);
     if (hasNonTrivialExternalId() && !isOutOfOurControl()) {
       IStubElementType.checkNotInstantiatedTooLate(getClass());
@@ -59,6 +59,11 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
     return new DefaultStubBuilder();
   }
 
+  /**
+   * Can only depend on getLanguage() or getDebugName(), should be calculated inplace.
+   * MUST NOT be calculated from any other non-static local variables as it can lead to race-conditions
+   * (<a href="https://youtrack.jetbrains.com/issue/IDEA-306646">IDEA-306646</a>).
+   */
   @NonNls
   @NotNull
   @Override
@@ -67,20 +72,20 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   }
 
   @Override
-  public void serialize(@NotNull final T stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull T stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
   @NotNull
   @Override
-  public T deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public T deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return (T)new PsiFileStubImpl(null);
   }
 
   @Override
-  public void indexStub(@NotNull final PsiFileStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(@NotNull PsiFileStub stub, @NotNull IndexSink sink) {
   }
 
-  public boolean shouldBuildStubFor(final VirtualFile file) {
+  public boolean shouldBuildStubFor(VirtualFile file) {
     return true;
   }
 

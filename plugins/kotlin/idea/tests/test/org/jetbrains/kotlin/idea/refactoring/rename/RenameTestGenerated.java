@@ -223,6 +223,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/internalVarWithOverrides/internalFunWithOverrides.test");
     }
 
+    @TestMetadata("intersectionOverrideInKotlin/intersectionOverrideInKotlin.test")
+    public void testIntersectionOverrideInKotlin_IntersectionOverrideInKotlin() throws Exception {
+        runTest("testData/refactoring/rename/intersectionOverrideInKotlin/intersectionOverrideInKotlin.test");
+    }
+
     @TestMetadata("javaClassImportAliasByRef/javaClassImportAliasByRef.test")
     public void testJavaClassImportAliasByRef_JavaClassImportAliasByRef() throws Exception {
         runTest("testData/refactoring/rename/javaClassImportAliasByRef/javaClassImportAliasByRef.test");
@@ -706,6 +711,16 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameKotlinClassConstructor/renameKotlinConstructor.test")
     public void testRenameKotlinClassConstructor_RenameKotlinConstructor() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinClassConstructor/renameKotlinConstructor.test");
+    }
+
+    @TestMetadata("renameKotlinClassNamedAsFile/javaClassWrapper.test")
+    public void testRenameKotlinClassNamedAsFile_JavaClassWrapper() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinClassNamedAsFile/javaClassWrapper.test");
+    }
+
+    @TestMetadata("renameKotlinClassNamedAsFile/kotlinClass.test")
+    public void testRenameKotlinClassNamedAsFile_KotlinClass() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinClassNamedAsFile/kotlinClass.test");
     }
 
     @TestMetadata("renameKotlinClassSecondaryConstructor/renameKotlinSecondaryConstructor.test")

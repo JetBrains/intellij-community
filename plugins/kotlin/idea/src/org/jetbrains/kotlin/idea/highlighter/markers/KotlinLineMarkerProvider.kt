@@ -309,7 +309,7 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
     val anchor = element.nameIdentifier ?: element
     val gutter = if (element.isInterface()) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
     val icon = gutter.icon ?: return
-    val lineMarkerInfo = LineMarkerInfo(
+    val lineMarkerInfo = OverriddenMergeableLineMarkerInfo(
         anchor,
         anchor.textRange,
         icon,
@@ -350,7 +350,7 @@ private fun collectOverriddenPropertyAccessors(
 
         val anchor = (property as? PsiNameIdentifierOwner)?.nameIdentifier ?: property
         val gutter = if (isImplemented(property)) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
-        val lineMarkerInfo = LineMarkerInfo(
+        val lineMarkerInfo = OverriddenMergeableLineMarkerInfo(
             anchor,
             anchor.textRange,
             gutter.icon!!,

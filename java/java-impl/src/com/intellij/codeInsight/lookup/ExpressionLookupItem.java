@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
-/**
- * @author peter
-*/
 public class ExpressionLookupItem extends LookupElement implements TypedLookupItem {
   private final PsiExpression myExpression;
   private final Icon myIcon;
@@ -43,7 +40,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
-      return PlatformIcons.METHOD_ICON;
+      return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method);
     }
     return null;
   }

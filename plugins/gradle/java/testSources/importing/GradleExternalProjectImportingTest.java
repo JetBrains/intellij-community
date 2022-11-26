@@ -64,9 +64,10 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
 
       buildViewTestFixture.setUp();
       importProject("");
-      buildViewTestFixture.assertSyncViewTreeEquals("-\n" +
-                                                    " -failed\n" +
-                                                    "  Boom!");
+      buildViewTestFixture.assertSyncViewTreeEquals("""
+                                                      -
+                                                       -failed
+                                                        Boom!""");
       buildViewTestFixture.assertSyncViewSelectedNode("Boom!", true, s -> {
         assertThat(s).startsWith("Boom!\n");
         return null;

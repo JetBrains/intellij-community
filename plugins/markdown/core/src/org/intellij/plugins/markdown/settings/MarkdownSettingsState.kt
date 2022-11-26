@@ -20,6 +20,7 @@ class MarkdownSettingsState: BaseState() {
   var isVerticalSplit by property(true)
   var isAutoScrollEnabled by property(true)
   var isRunnerEnabled by property(true)
+  var isFileGroupingEnabled by property(false)
 
   var useCustomStylesheetPath by property(false)
   var customStylesheetPath by string()

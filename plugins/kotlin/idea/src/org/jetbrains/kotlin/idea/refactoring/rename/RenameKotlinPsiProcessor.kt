@@ -186,7 +186,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
                         val newFqName = fqName.parent().child(Name.identifier(newName))
                         val importList = importDirective.parent as KtImportList
                         if (importList.imports.none { directive -> directive.importedFqName == newFqName }) {
-                            val newImportDirective = KtPsiFactory(element).createImportDirective(ImportPath(newFqName, false))
+                            val newImportDirective = KtPsiFactory(element.project).createImportDirective(ImportPath(newFqName, false))
                             importDirective.parent.addAfter(newImportDirective, importDirective)
                         }
                     }

@@ -4,7 +4,9 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -28,10 +30,13 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
-import org.jetbrains.kotlin.idea.base.platforms.*
-import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -86,7 +91,11 @@ class KotlinGradleProjectSettingsDataService : AbstractProjectDataService<Projec
         project: Project,
         modelsProvider: IdeModifiableModelsProvider,
     ) {
-        KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project, modelsProvider.modules)
+        runInEdt {
+            runWriteAction {
+                KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project, modelsProvider.modules)
+            }
+        }
     }
 }
 
@@ -175,7 +184,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 
             val modifiableModel = modelsProvider.getModifiableLibraryModel(ideLibrary) as LibraryEx.ModifiableModelEx
             if (anyNonJvmModules || ideLibrary.looksAsNonJvmLibrary()) {
-                detectLibraryKind(modifiableModel.getFiles(OrderRootType.CLASSES))?.let { modifiableModel.kind = it }
+                detectLibraryKind(ideLibrary, project)?.let { modifiableModel.kind = it }
             } else if (ideLibrary is LibraryEx && ideLibrary.kind in NON_JVM_LIBRARY_KINDS) {
                 modifiableModel.forgetKind()
             }
@@ -307,7 +316,10 @@ fun configureFacetByGradleModule(
     kotlinFacet.noVersionAutoAdvance()
 
     if (platformKind != null && !platformKind.isJvm) {
-        migrateNonJvmSourceFolders(modelsProvider.getModifiableRootModel(ideModule))
+        migrateNonJvmSourceFolders(
+            modelsProvider.getModifiableRootModel(ideModule),
+            ExternalSystemApiUtil.toExternalSource(moduleNode.data.owner)
+        )
     }
 
     return kotlinFacet

@@ -148,10 +148,10 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
       return existingLocalHasCommits
     }
 
-    internal fun checkCommitsUnderProgress(project: Project,
-                                           repositories: List<GitRepository>,
-                                           startRef: String,
-                                           branchName: String): Boolean =
+    private fun checkCommitsUnderProgress(project: Project,
+                                          repositories: List<GitRepository>,
+                                          startRef: String,
+                                          branchName: String): Boolean =
       ProgressManager.getInstance().runProcessWithProgressSynchronously<Boolean, RuntimeException>(
         { checkCommitsBetweenRefAndBranchName(project, repositories, startRef, branchName) },
         GitBundle.message("branches.checking.existing.commits.process"), true, project)

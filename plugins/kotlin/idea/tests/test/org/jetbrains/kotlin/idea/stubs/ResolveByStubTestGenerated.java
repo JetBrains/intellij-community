@@ -56,11 +56,6 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/classMembers/EnumArgument.kt"));
             }
 
-            @TestMetadata("EnumEntry.kt")
-            public void testEnumEntry() throws Exception {
-                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/classMembers/EnumEntry.kt"));
-            }
-
             @TestMetadata("Function.kt")
             public void testFunction() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/classMembers/Function.kt"));
@@ -251,11 +246,6 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
             @TestMetadata("Constructor.kt")
             public void testConstructor() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/parameters/Constructor.kt"));
-            }
-
-            @TestMetadata("EnumConstructor.kt")
-            public void testEnumConstructor() throws Exception {
-                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/parameters/EnumConstructor.kt"));
             }
 
             @TestMetadata("ExtensionFunction.kt")
@@ -450,24 +440,19 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotatedMethod.kt"));
             }
 
-            @TestMetadata("AnnotationInAnnotationArguments.kt")
-            public void testAnnotationInAnnotationArguments() throws Exception {
-                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationInAnnotationArguments.kt"));
-            }
-
             @TestMetadata("AnnotationInArray.kt")
             public void testAnnotationInArray() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationInArray.kt"));
             }
 
+            @TestMetadata("AnnotationOnTypeParameter.kt")
+            public void testAnnotationOnTypeParameter() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationOnTypeParameter.kt"));
+            }
+
             @TestMetadata("ClassLiteralArguments.kt")
             public void testClassLiteralArguments() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/ClassLiteralArguments.kt"));
-            }
-
-            @TestMetadata("EnumArgumentWithCustomToString.kt")
-            public void testEnumArgumentWithCustomToString() throws Exception {
-                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/EnumArgumentWithCustomToString.kt"));
             }
 
             @TestMetadata("MultiDimensionalArrayMethod.kt")
@@ -654,16 +639,6 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
             @TestMetadata("ClassTwoParams2.kt")
             public void testClassTwoParams2() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/class/ClassTwoParams2.kt"));
-            }
-
-            @TestMetadata("EnumWithGenericConstructorParameter.kt")
-            public void testEnumWithGenericConstructorParameter() throws Exception {
-                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/class/EnumWithGenericConstructorParameter.kt"));
-            }
-
-            @TestMetadata("EnumWithPrimitiveConstructorParameter.kt")
-            public void testEnumWithPrimitiveConstructorParameter() throws Exception {
-                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/class/EnumWithPrimitiveConstructorParameter.kt"));
             }
 
             @TestMetadata("FunInterface.kt")
@@ -1049,6 +1024,11 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         public void testBasic() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/coroutines/Basic.kt"));
         }
+
+        @TestMetadata("TypeAliasFTSuspendWithReceiver.kt")
+        public void testTypeAliasFTSuspendWithReceiver() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/coroutines/TypeAliasFTSuspendWithReceiver.kt"));
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -1082,50 +1062,6 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         @TestMetadata("TwoVars.kt")
         public void testTwoVars() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/dataClass/TwoVars.kt"));
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/enum")
-    public static class Enum extends AbstractResolveByStubTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @Override
-        protected void setUp() {
-            compilerTestData("compiler/testData/loadJava/compiledKotlin/enum");
-            super.setUp();
-        }
-
-        @TestMetadata("enumVisibility.kt")
-        public void testEnumVisibility() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/enum/enumVisibility.kt"));
-        }
-
-        @TestMetadata("enumWithConstuctor.kt")
-        public void testEnumWithConstuctor() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/enum/enumWithConstuctor.kt"));
-        }
-
-        @TestMetadata("enumWithInnerClasses.kt")
-        public void testEnumWithInnerClasses() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/enum/enumWithInnerClasses.kt"));
-        }
-
-        @TestMetadata("innerEnum.kt")
-        public void testInnerEnum() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/enum/innerEnum.kt"));
-        }
-
-        @TestMetadata("innerEnumExistingClassObject.kt")
-        public void testInnerEnumExistingClassObject() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/enum/innerEnumExistingClassObject.kt"));
-        }
-
-        @TestMetadata("simpleEnum.kt")
-        public void testSimpleEnum() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/enum/simpleEnum.kt"));
         }
     }
 
@@ -1944,11 +1880,6 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/fromLoadJava/ClassWithTypePRefSelfAndClass.kt"));
             }
 
-            @TestMetadata("enum.kt")
-            public void testEnum() throws Exception {
-                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/fromLoadJava/enum.kt"));
-            }
-
             @TestMetadata("FieldAsVar.kt")
             public void testFieldAsVar() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/fromLoadJava/FieldAsVar.kt"));
@@ -2395,11 +2326,6 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         @TestMetadata("callablesNameClash.kt")
         public void testCallablesNameClash() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/memberOrder/callablesNameClash.kt"));
-        }
-
-        @TestMetadata("enumEntries.kt")
-        public void testEnumEntries() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/memberOrder/enumEntries.kt"));
         }
 
         @TestMetadata("extensionMembers.kt")

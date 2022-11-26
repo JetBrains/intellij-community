@@ -19,14 +19,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JUnit5TestRunnerUtil {
-  public static LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef) {
+  private static final Pattern VALUE_SOURCE_PATTERN = Pattern.compile("valueSource\\s(\\d+)");
+
+  public static LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef, String param) {
     if (suiteClassNames.length == 0) {
       return null;
     }
@@ -104,6 +105,12 @@ public class JUnit5TestRunnerUtil {
                                            : selector;
         builder.filters(createMethodFilter(Collections.singletonList(methodSelector)));
         selector = classSelector;
+      }
+      if (selector instanceof MethodSelector && param != null) {
+        DiscoverySelector methodSelectIteration = createMethodSelectIteration(selector, param);
+        if (methodSelectIteration != null) {
+          return builder.selectors(methodSelectIteration).build();
+        }
       }
       assert selector != null : "selector by class name is never null";
       return builder.selectors(selector).build();
@@ -218,6 +225,29 @@ public class JUnit5TestRunnerUtil {
     return DiscoverySelectors.selectClass(line);
   }
 
+  private static DiscoverySelector createMethodSelectIteration(DiscoverySelector methodSelector, String param) {
+    Integer index = null;
+    if (param != null) {
+      Matcher matcher = VALUE_SOURCE_PATTERN.matcher(param);
+      if (matcher.find()) {
+        String group = matcher.group(1);
+        try {
+          index = Integer.parseInt(group);
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+    }
+    if (index != null) {
+      try {
+        return DiscoverySelectors.selectIteration(methodSelector, index);
+      }
+      catch (NoSuchMethodError e) {
+        return null;
+      }
+    }
+    return null;
+  }
   private static NestedClassSelector getNestedSelector(String line,
                                                        int nestedClassIdx) {
     String enclosingClass = line.substring(0, nestedClassIdx);

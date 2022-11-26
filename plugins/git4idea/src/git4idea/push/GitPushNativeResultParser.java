@@ -114,14 +114,14 @@ public final class GitPushNativeResultParser {
   }
 
   private static GitPushNativeResult.Type parseType(String flag) {
-    switch(flag.charAt(0)) {
-      case ' ' : return GitPushNativeResult.Type.SUCCESS;
-      case '+' : return GitPushNativeResult.Type.FORCED_UPDATE;
-      case '-' : return GitPushNativeResult.Type.DELETED;
-      case '*' : return GitPushNativeResult.Type.NEW_REF;
-      case '!' : return GitPushNativeResult.Type.REJECTED;
-      case '=' : return GitPushNativeResult.Type.UP_TO_DATE;
-    }
-    return null;
+    return switch (flag.charAt(0)) {
+      case ' ' -> GitPushNativeResult.Type.SUCCESS;
+      case '+' -> GitPushNativeResult.Type.FORCED_UPDATE;
+      case '-' -> GitPushNativeResult.Type.DELETED;
+      case '*' -> GitPushNativeResult.Type.NEW_REF;
+      case '!' -> GitPushNativeResult.Type.REJECTED;
+      case '=' -> GitPushNativeResult.Type.UP_TO_DATE;
+      default -> null;
+    };
   }
 }

@@ -49,7 +49,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
     file.putInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET.toLong(), globalModCount)
   }
 
-  override fun incGlobalModCount(): Int {
+  private fun incGlobalModCount(): Int {
     return _globalModCount.incrementAndGet()
   }
 
@@ -110,14 +110,17 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun setFlags(id: Int, flags: @PersistentFS.Attributes Int) = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
-    flags(flags)
+  override fun setFlags(id: Int, flags: @PersistentFS.Attributes Int): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+    if(flags!=flags()) {
+      flags(flags)
+      return true
+    }
+    return false
   }
 
   @Throws(IOException::class)
-  override fun setModCount(id: Int, value: Int) = acquireRecord(id, AccessType.WRITE) {
-    //TODO
-    incModCount()
+  override fun markRecordAsModified(id: Int) = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+    //do nothing but increment modCount
   }
 
   @Throws(IOException::class)
@@ -126,8 +129,14 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun setContentRecordId(id: Int, value: Int) = acquireRecord(id, AccessType.WRITE) {
-    content(value)
+  override fun setContentRecordId(id: Int, value: Int): Boolean = acquireRecord(id, AccessType.WRITE) {
+    if (content() != value) {
+      content(value)
+      return true
+    }
+    else {
+      return false
+    }
   }
 
   @Throws(IOException::class)
@@ -146,8 +155,12 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun putTimestamp(id: Int, value: Long) = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
-    timeStamp(value)
+  override fun putTimestamp(id: Int, value: Long): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+    if(timeStamp()!=value) {
+      timeStamp(value)
+      return true
+    }
+    return false
   }
 
   @Throws(IOException::class)
@@ -156,8 +169,13 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun putLength(id: Int, value: Long) = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
-    length(value)
+  override fun putLength(id: Int, value: Long): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+    if(value != length()) {
+      length(value)
+      return true
+    }else{
+      return false
+    }
   }
 
   @Throws(IOException::class)
@@ -169,14 +187,14 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   override fun allocateRecord(): Int = recordCount.getAndIncrement()
 
   @Throws(IOException::class)
-  override fun setAttributesAndIncModCount(id: Int,
-                                           timestamp: Long,
-                                           length: Long,
-                                           flags: Int,
-                                           nameId: Int,
-                                           parentId: Int,
-                                           overwriteMissed: Boolean) = acquireRecord(id, AccessType.WRITE) {
-    setup(parentId, nameId, flags, 0, 0, timestamp, length, overwriteMissed)
+  override fun fillRecord(id: Int,
+                          timestamp: Long,
+                          length: Long,
+                          flags: Int,
+                          nameId: Int,
+                          parentId: Int,
+                          overwriteAttrRef: Boolean) = acquireRecord(id, AccessType.WRITE) {
+    setup(parentId, nameId, flags, 0, 0, timestamp, length, overwriteAttrRef)
   }
 
   override fun length(): Long = metadataReadLock.withLock {
@@ -342,6 +360,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
       putInt(CONTENT_OFFSET, content)
       putLong(TIMESTAMP_OFFSET, timestamp)
       putLong(LENGTH_OFFSET, length)
+      //TODO RC: probably, better to increment modCount still
     }
 
     fun parent(): Int = read { getInt(PARENT_OFFSET) }

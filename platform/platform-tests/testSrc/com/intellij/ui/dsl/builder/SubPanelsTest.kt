@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.doLayout
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -11,18 +10,18 @@ class SubPanelsTest {
 
   @Test
   fun testFillAligned() {
-    for (horizontalAlign in HorizontalAlign.values()) {
-      testAligned(horizontalAlign)
+    for (alignX in AlignX::class.sealedSubclasses.mapNotNull { it.objectInstance }) {
+      testAligned(alignX)
     }
   }
 
-  private fun testAligned(horizontalAlign: HorizontalAlign) {
+  private fun testAligned(alignX: AlignX) {
     lateinit var textField: JBTextField
     lateinit var textFieldFromSubPanel: JBTextField
     val subPanel = panel {
       row {
         textFieldFromSubPanel = textField()
-          .horizontalAlign(horizontalAlign)
+          .align(alignX)
           .component
       }
     }
@@ -30,12 +29,12 @@ class SubPanelsTest {
     val panel = panel {
       row("Row") {
         textField = textField()
-          .horizontalAlign(horizontalAlign)
+          .align(alignX)
           .component
       }
       row("Row 2") {
         cell(subPanel)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
 

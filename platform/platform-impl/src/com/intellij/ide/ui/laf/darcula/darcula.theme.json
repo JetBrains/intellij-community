@@ -116,7 +116,10 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI"
     },
 
-    "ComboBoxButton.background": "#3c3f41",
+    "ComboBoxButton": {
+      "background": "#3c3f41",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
+    },
     "CompletionPopup.nonFocusedState": true,
 
     "Component": {
@@ -165,8 +168,6 @@
       "tabInsets": "0,8,0,8",
       "underlinedTabBackground": "#4E5254"
     },
-
-    "Editor.SearchField.background": "#45494A",
 
     "FileView.fileIcon": "AllIcons.FileTypes.Unknown",
     "Focus.color": "ff0000",
@@ -467,6 +468,12 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI"
     },
 
+    "SearchFieldWithExtension": {
+      "background": "#45494A",
+      "border": "com.intellij.ui.components.DarculaSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
+    },
+
     "TitledBorder.titleColor": "#bbbbbb",
 
     "ToggleButton": {
@@ -571,7 +578,38 @@
     "Plugins.borderColor": "#515151",
 
     "TipOfTheDay": {
-      "Image.borderColor": "#515151"
+      "Image.borderColor": "#323232"
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#3f4749",
+        "hoverBackground": "#464a4d",
+        "PackageTag": {
+          "background": "#4e5658",
+          "foreground": "#8e8f8f",
+          "hoverBackground": "#55585b",
+          "selectedBackground": "#2f65ca",
+          "selectedForeground": "#bbbbbb"
+        }
+      },
+      "PackageTag": {
+        "background": "#4c4e50",
+        "foreground": "#9c9c9c",
+        "hoverBackground": "#55585b",
+        "selectedBackground": "#2f65ca",
+        "selectedForeground": "#bbbbbb"
+      },
+      "PackageTagSelected.background": "#78ade2",
+      "PackageTagSelected.foreground": "#bbbbbb"
+    },
+    "RunWidget" : {
+      "foreground": "#ffffff",
+      "background": "#3369d6",
+      "runningBackground": "#599e5e",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
     }
   },
 

@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class PrattBuilderImpl extends PrattBuilder {
   private final PsiBuilder myBuilder;
   private final PrattBuilder myParentBuilder;

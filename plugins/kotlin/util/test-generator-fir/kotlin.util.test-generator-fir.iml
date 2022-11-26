@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xskip-prerelease-check" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xskip-prerelease-check" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -61,9 +61,14 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.navigation.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refactorings.tests.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.searching.test.k2" scope="TEST" />
   </component>
 </module>

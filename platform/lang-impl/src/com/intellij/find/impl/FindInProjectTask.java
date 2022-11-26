@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.ngrams.TrigramTextSearchService;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
@@ -32,10 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -62,8 +61,8 @@ import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.EDT;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,9 +73,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author peter
- */
+import static com.intellij.openapi.application.ActionsKt.runReadAction;
+
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);
 
@@ -202,9 +200,15 @@ final class FindInProjectTask {
     StringSearcher searcher = myFindModel.isRegularExpressions() || StringUtil.isEmpty(myFindModel.getStringToFind()) ? null :
                               new StringSearcher(myFindModel.getStringToFind(), myFindModel.isCaseSensitive(), true);
 
-    return virtualFile -> processFindInFilesUsagesInFile(processPresentation, usageConsumer, occurrenceCount,
-                                                         usagesBeingProcessed, reportedFirst, searcher,
-                                                         virtualFile);
+    ClientId currentClientId = ClientId.getCurrent();
+
+    return virtualFile -> {
+      try (AccessToken ignored = ClientId.withClientId(currentClientId)) {
+        return processFindInFilesUsagesInFile(processPresentation, usageConsumer, occurrenceCount,
+                                              usagesBeingProcessed, reportedFirst, searcher,
+                                              virtualFile);
+      }
+    };
   }
 
   private boolean processFindInFilesUsagesInFile(@NotNull FindUsagesProcessPresentation processPresentation,
@@ -242,7 +246,8 @@ final class FindInProjectTask {
 
     if (searcher != null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(sourceVirtualFile);
-      CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(sourceVirtualFile, -1);
+      CharSequence s = document != null ? document.getCharsSequence() :
+                       DiskQueryRelay.compute(() -> LoadTextUtil.loadText(sourceVirtualFile, -1));
       if (s.length() == 0 || searcher.scan(s) < 0) {
         return true;
       }
@@ -310,7 +315,7 @@ final class FindInProjectTask {
                              && !Registry.is("find.search.in.excluded.dirs")
                              && !ReadAction.compute(() -> myProjectFileIndex.isExcluded(myDirectory));
     boolean withSubdirs = myDirectory != null && myFindModel.isWithSubdirectories();
-    boolean locateClassSources = myDirectory != null && myProjectFileIndex.getClassRootForFile(myDirectory) != null;
+    boolean locateClassSources = myDirectory != null && runReadAction(() -> myProjectFileIndex.getClassRootForFile(myDirectory)) != null;
     boolean searchInLibs = globalCustomScope != null && globalCustomScope.isSearchInLibraries();
 
     ConcurrentLinkedDeque<Object> deque = new ConcurrentLinkedDeque<>();

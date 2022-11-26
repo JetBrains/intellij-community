@@ -17,8 +17,6 @@ package com.intellij.util.xml;
 
 /**
  * Wraps enumeration with value used in XML.
- *
- * @author peter
  */
 public interface NamedEnum {
   String getValue();

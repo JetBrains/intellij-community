@@ -157,6 +157,11 @@ public abstract class GitHandler {
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      toPass.add("protocol.file.allow=always");
+    }
+
     return toPass;
   }
 

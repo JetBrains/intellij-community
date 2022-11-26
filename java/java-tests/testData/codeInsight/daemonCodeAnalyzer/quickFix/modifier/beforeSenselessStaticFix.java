@@ -1,4 +1,4 @@
-// "Make 'main' not static" "false"
+// "Make 'main()' not static" "false"
 class DateFormat {
 
   public void parse(String s){}

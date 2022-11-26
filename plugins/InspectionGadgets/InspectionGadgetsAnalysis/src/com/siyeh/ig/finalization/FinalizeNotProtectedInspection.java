@@ -59,7 +59,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodName.getParent();
       Objects.requireNonNull(method).getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);

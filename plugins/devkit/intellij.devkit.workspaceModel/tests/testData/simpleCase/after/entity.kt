@@ -2,9 +2,11 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -15,7 +17,7 @@ interface SimpleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SimpleEntity, ModifiableWorkspaceEntity<SimpleEntity>, ObjBuilder<SimpleEntity> {
+  interface Builder : SimpleEntity, WorkspaceEntity.Builder<SimpleEntity>, ObjBuilder<SimpleEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var name: String
@@ -23,6 +25,9 @@ interface SimpleEntity : WorkspaceEntity {
   }
 
   companion object : Type<SimpleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(version: Int,
                         name: String,
                         isSimple: Boolean,

@@ -234,18 +234,13 @@ public final class LookupUsageTracker {
     ENTER, TAB, COMPLETE_STATEMENT, AUTO_INSERT, OTHER;
 
     static CompletionChar of(char completionChar) {
-      switch (completionChar) {
-        case Lookup.NORMAL_SELECT_CHAR:
-          return ENTER;
-        case Lookup.REPLACE_SELECT_CHAR:
-          return TAB;
-        case Lookup.AUTO_INSERT_SELECT_CHAR:
-          return AUTO_INSERT;
-        case Lookup.COMPLETE_STATEMENT_SELECT_CHAR:
-          return COMPLETE_STATEMENT;
-        default:
-          return OTHER;
-      }
+      return switch (completionChar) {
+        case Lookup.NORMAL_SELECT_CHAR -> ENTER;
+        case Lookup.REPLACE_SELECT_CHAR -> TAB;
+        case Lookup.AUTO_INSERT_SELECT_CHAR -> AUTO_INSERT;
+        case Lookup.COMPLETE_STATEMENT_SELECT_CHAR -> COMPLETE_STATEMENT;
+        default -> OTHER;
+      };
     }
   }
 

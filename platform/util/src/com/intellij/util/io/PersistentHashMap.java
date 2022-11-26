@@ -6,9 +6,8 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
 
@@ -27,7 +26,7 @@ import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
  **/
 public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value>, MeasurableIndexStore {
   @NonNls
-  static String DATA_FILE_EXTENSION = ".values";
+  static final String DATA_FILE_EXTENSION = ".values";
 
   @NotNull private final PersistentMapBase<Key, Value> myImpl;
 
@@ -42,6 +41,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   public PersistentHashMap(@NotNull PersistentMapBase<Key, Value> impl) {
     myImpl = impl;
   }
+
 
   @Override
   public final void closeAndClean() throws IOException {
@@ -81,7 +81,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
                            int initialSize,
                            int version,
                            @Nullable StorageLockContext lockContext) throws IOException {
-    this(newBuilder(file, keyDescriptor, valueExternalizer).withInitialSize(initialSize).withVersion(version).withStorageLockContext(lockContext), true);
+    this(newBuilder(file, keyDescriptor, valueExternalizer).withInitialSize(initialSize).withVersion(version)
+           .withStorageLockContext(lockContext), true);
   }
 
   public final void dropMemoryCaches() {
@@ -91,6 +92,10 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   @Override
   public final void put(Key key, Value value) throws IOException {
     myImpl.put(key, value);
+  }
+
+  public @NotNull PersistentMapBase<Key, Value> getImpl() {
+    return myImpl;
   }
 
   /**
@@ -202,5 +207,33 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   @Override
   public final String toString() {
     return myImpl.toString();
+  }
+
+  /**
+   * Method creates 'canonical' PHMap by copying content of originalMap into canonicalMap (which assumed to be
+   * empty).
+   * <br/>
+   * PHMap binary (on-disk) representation could be different even for the same key-value content because
+   * of different order of inserts/deletes/updates. This method tries to generate PHMap with 'canonical'
+   * binary content. It is done by copying entries to canonicalMap in some stable order, defined by
+   * stableKeysSorter, which guarantees canonicalMap to have fixed binary representation on disk.
+   *
+   * @param stableKeysSorter   function to sort List of keys. Must provide stable sort -- i.e. same set
+   *                           of keys must always come out sorted in the same order, regardless of their
+   *                           original order
+   * @param targetCanonicalMap out-parameter: empty map of the same type as originalMap (i.e. suitable as
+   *                           receiver of keys-values from originalMap)
+   */
+  public static <K, V> PersistentHashMap<K, V> canonicalize(final @NotNull PersistentHashMap<K, V> originalMap,
+                                                            final @NotNull /* @OutParam */ PersistentHashMap<K, V> targetCanonicalMap,
+                                                            final @NotNull Function<? super List<K>, ? extends List<K>> stableKeysSorter,
+                                                            final @NotNull Function<? super V, ? extends V> valueCanonicalizer) throws IOException {
+    PersistentMapBase.canonicalize(
+      originalMap.myImpl,
+      targetCanonicalMap.myImpl,
+      stableKeysSorter,
+      valueCanonicalizer
+    );
+    return targetCanonicalMap;
   }
 }

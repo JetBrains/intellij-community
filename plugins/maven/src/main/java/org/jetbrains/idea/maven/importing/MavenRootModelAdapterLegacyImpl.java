@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -32,9 +31,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInterface {
 
@@ -45,6 +42,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
 
   private final Set<String> myOrderEntriesBeforeJdk = new HashSet<>();
+  private volatile Map<String, Library> myLibrariesTable;
 
   public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final ModifiableModelsProviderProxy rootModelsProvider) {
     myMavenProject = p;
@@ -74,7 +72,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   private void initContentRoots() {
     Url url = toUrl(myMavenProject.getDirectory());
     if (getContentRootFor(url) != null) return;
-    myRootModel.addContentEntry(url.getUrl());
+    myRootModel.addContentEntry(url.getUrl(), getMavenExternalSource());
   }
 
   private ContentEntry getContentRootFor(Url url) {
@@ -209,7 +207,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     ContentEntry e = getContentRootFor(url);
     if (e == null) return;
     if (e.getUrl().equals(url.getUrl())) return;
-    e.addExcludeFolder(url.getUrl());
+    e.addExcludeFolder(url.getUrl(), getMavenExternalSource());
   }
 
   @Override
@@ -300,6 +298,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   public void addModuleDependency(@NotNull String moduleName,
                                   @NotNull DependencyScope scope,
                                   boolean testJar) {
+    myLibrariesTable = null;
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -357,6 +356,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
                                                 MavenProject project) {
     assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 
+    myLibrariesTable = null;
     String libraryName = artifact.getLibraryName();
 
     Library library = provider.getLibraryByName(libraryName);
@@ -431,21 +431,34 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   private static boolean isRepositoryUrl(MavenArtifact artifact, String url) {
-    return url.contains(artifact.getGroupId().replace('.', '/') + '/' + artifact.getArtifactId() + '/' + artifact.getBaseVersion() + '/' + artifact.getArtifactId() + '-');
+    return url.contains(artifact.getGroupId().replace('.', '/') +
+                        '/' +
+                        artifact.getArtifactId() +
+                        '/' +
+                        artifact.getBaseVersion() +
+                        '/' +
+                        artifact.getArtifactId() +
+                        '-');
   }
 
 
   @Override
   public Library findLibrary(@NotNull final MavenArtifact artifact) {
-    final String name = artifact.getLibraryName();
-    final Ref<Library> result = Ref.create(null);
-    myRootModel.orderEntries().forEachLibrary(library -> {
-      if (name.equals(library.getName())) {
-        result.set(library);
-      }
-      return true;
-    });
-    return result.get();
+    return getOrCreateLibrariesTable().get(artifact.getLibraryName());
+  }
+
+  private Map<String, Library> getOrCreateLibrariesTable() {
+    Map<String, Library> table = myLibrariesTable;
+    if (table == null) {
+      Map<String, Library> temp = new HashMap<>();
+      myRootModel.orderEntries().forEachLibrary(library -> {
+        temp.put(library.getName(), library);
+        return true;
+      });
+      myLibrariesTable = temp;
+      return temp;
+    }
+    return table;
   }
 
   public static boolean isMavenLibrary(@Nullable Library library) {

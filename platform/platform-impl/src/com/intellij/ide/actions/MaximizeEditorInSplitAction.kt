@@ -18,17 +18,17 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DrawUtil
-import com.intellij.util.SmartList
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.animation
-import com.intellij.util.ui.UIUtil
 import java.awt.Component
 
-class MaximizeEditorInSplitAction : DumbAwareAction() {
-  val myActiveAnimators = SmartList<JBAnimator>()
+internal class MaximizeEditorInSplitAction : DumbAwareAction() {
+  private val myActiveAnimators = mutableListOf<JBAnimator>()
+
   init {
     templatePresentation.text = IdeBundle.message("action.maximize.editor") + "/" +IdeBundle.message("action.normalize.splits")
   }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project == null) return
@@ -142,8 +142,8 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
         splitters = candidate ?: break
       }
       if (splitters != null) {
-        val splitterList = UIUtil.findComponentsOfType(splitters, Splitter::class.java)
-        splitterList.removeIf { !UIUtil.isClientPropertyTrue(it, EditorsSplitters.SPLITTER_KEY) }
+        val splitterList = ComponentUtil.findComponentsOfType(splitters, Splitter::class.java)
+        splitterList.removeIf { !ClientProperty.isTrue(it, EditorsSplitters.SPLITTER_KEY) }
         set.addAll(splitterList)
       }
       return set

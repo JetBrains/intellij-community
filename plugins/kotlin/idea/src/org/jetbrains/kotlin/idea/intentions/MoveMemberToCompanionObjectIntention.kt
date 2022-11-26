@@ -6,6 +6,8 @@ import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -31,16 +33,18 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
@@ -52,9 +56,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -67,7 +69,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import java.util.*
-import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 
 class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
     KtNamedDeclaration::class.java,
@@ -141,7 +142,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
             is KtSimpleNameExpression -> {
                 val call = refElement.parent as? KtCallExpression ?: return
-                val psiFactory = KtPsiFactory(refElement)
+                val psiFactory = KtPsiFactory(refElement.project)
                 val argumentList =
                     call.valueArgumentList
                         ?: call.addAfter(psiFactory.createCallArguments("()"), call.typeArgumentList ?: refElement) as KtValueArgumentList
@@ -308,8 +309,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
         val hasInstanceArg = nameSuggestions.isNotEmpty()
 
-        element.removeModifier(KtTokens.OPEN_KEYWORD)
-        element.removeModifier(KtTokens.FINAL_KEYWORD)
+        removeModifiers(element)
 
         val newDeclaration = Mover.Default(element, companionObject)
         progressIndicator.checkCanceled()
@@ -414,5 +414,10 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction = MoveMemberToCompanionObjectIntention()
+
+        fun removeModifiers(element: KtModifierListOwner) {
+            element.removeModifier(KtTokens.OPEN_KEYWORD)
+            element.removeModifier(KtTokens.FINAL_KEYWORD)
+        }
     }
 }

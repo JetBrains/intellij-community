@@ -80,6 +80,12 @@ public class GitLabelComparatorTest extends GitRefManagerTest {
           expect("master", "master"));
   }
 
+  public void test_current_branch_first() {
+    git("checkout -b zzz");
+    check(given("xxx", "zzz", "yyy"),
+          expect("zzz", "xxx", "yyy"));
+  }
+
   private void check(Collection<? extends VcsRef> unsorted, List<? extends VcsRef> expected) {
     // for the sake of simplicity we check only names of references
     List<VcsRef> actual = sort(unsorted);

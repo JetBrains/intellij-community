@@ -56,7 +56,9 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     if (!show) return
 
     if (!::popup.isInitialized || popup.isDisposed) {
-      component = IntentionPreviewComponent(project)
+      val origPopup = originalPopup
+      if (origPopup == null || origPopup.isDisposed) return
+      component = IntentionPreviewComponent(origPopup)
 
       component.multiPanel.select(LOADING_PREVIEW, true)
 
@@ -154,7 +156,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun cancel(): Boolean {
-    editorsToRelease.forEach { editor -> if (!editor.isDisposed) EditorFactory.getInstance().releaseEditor(editor) }
+    editorsToRelease.forEach { editor -> EditorFactory.getInstance().releaseEditor(editor) }
     editorsToRelease.clear()
     component.removeAll()
     show = false

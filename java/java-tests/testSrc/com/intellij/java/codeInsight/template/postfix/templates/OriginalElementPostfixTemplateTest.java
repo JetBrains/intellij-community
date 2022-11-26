@@ -11,7 +11,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.LazyKt;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Lazy;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -21,26 +23,29 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 
 public class OriginalElementPostfixTemplateTest extends PostfixTemplateTestCase {
-  private static final JavaPostfixTemplateProvider PROVIDER = new JavaPostfixTemplateProvider();
+  private static final Lazy<JavaPostfixTemplateProvider> PROVIDER = LazyKt.lazyPub(() -> new JavaPostfixTemplateProvider());
+
   private Set<PostfixTemplate> myOriginalTemplates;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myOriginalTemplates = PROVIDER.getTemplates();
+
+    JavaPostfixTemplateProvider provider = PROVIDER.getValue();
+    myOriginalTemplates = provider.getTemplates();
     // Register a custom condition which returns true if it can get an original element of the next method.
     // This emulates conditions in some languages e.g. in go where resolve involves getOriginalElement() calls.
     PostfixTemplate template = new JavaEditablePostfixTemplate(
       "myId", "foo", "System.out.println();$END$", "",
       ContainerUtil.set(new OriginalElementCondition()),
-      LanguageLevel.JDK_1_8, true, PROVIDER);
-    PostfixTemplateStorage.getInstance().setTemplates(PROVIDER, asList(template));
+      LanguageLevel.JDK_1_8, true, provider);
+    PostfixTemplateStorage.getInstance().setTemplates(provider, asList(template));
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      PostfixTemplateStorage.getInstance().setTemplates(PROVIDER, myOriginalTemplates);
+      PostfixTemplateStorage.getInstance().setTemplates(PROVIDER.getValue(), myOriginalTemplates);
     }
     catch (Throwable e) {
       addSuppressedException(e);

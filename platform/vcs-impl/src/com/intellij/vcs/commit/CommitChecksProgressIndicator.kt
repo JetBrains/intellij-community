@@ -38,7 +38,7 @@ internal abstract class CommitChecksProgressIndicator : InlineProgressIndicator(
 }
 
 internal class InlineCommitChecksProgressIndicator(isOnlyRunCommitChecks: Boolean) : CommitChecksProgressIndicator() {
-  val statusBarDelegate: ProgressIndicatorEx = StatusBarProgressIndicator(isOnlyRunCommitChecks)
+  val statusBarDelegate: ProgressIndicatorEx = StatusBarProgressIndicator(isOnlyRunCommitChecks, this)
 
   init {
     addStateDelegate(statusBarDelegate)
@@ -101,7 +101,21 @@ internal class PopupCommitChecksProgressIndicator(private val original: Progress
   override fun isStopping(): Boolean = isCanceled
 }
 
-private class StatusBarProgressIndicator(val isOnlyRunCommitChecks: Boolean) : AbstractProgressIndicatorExBase(false) {
+private class StatusBarProgressIndicator(
+  private val isOnlyRunCommitChecks: Boolean,
+  private val realIndicator: InlineCommitChecksProgressIndicator
+) : AbstractProgressIndicatorExBase(false) {
+
+  init {
+    addStateDelegate(object : AbstractProgressIndicatorExBase() {
+      override fun cancel() {
+        if (!realIndicator.isCanceled) { // avoid recursion - we're its state delegate
+          realIndicator.cancel()
+        }
+      }
+    })
+  }
+
   override fun setText(text: String?) {
     // TODO: customize with AbstractCommitWorkflowHandlerKt.getDefaultCommitActionName
     val progressText = when {

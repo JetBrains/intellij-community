@@ -91,7 +91,7 @@ public class ContentTabLabel extends ContentLabel {
       super.setText(myText);
     } finally {
       //noinspection ConstantConditions
-      if (myContent != null && !Disposer.isDisposed(myContent)) {
+      if (myContent != null && !(myContent instanceof SingleContentLayout.SubContent) && !Disposer.isDisposed(myContent)) {
         new SingleAlarm(() -> {
           ObjectUtils.consumeIfNotNull(getParent(), c -> {
             c.revalidate();

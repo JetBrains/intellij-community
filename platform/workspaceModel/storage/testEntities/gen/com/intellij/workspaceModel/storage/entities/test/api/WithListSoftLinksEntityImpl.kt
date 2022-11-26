@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -25,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntityBase() {
+open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityData) : WithListSoftLinksEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -35,21 +34,21 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
-  @JvmField
-  var _links: List<NameId>? = null
   override val links: List<NameId>
-    get() = _links!!
+    get() = dataSource.links
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: WithListSoftLinksEntityData?) : ModifiableWorkspaceEntityBase<WithListSoftLinksEntity>(), WithListSoftLinksEntity.Builder {
+  class Builder(result: WithListSoftLinksEntityData?) : ModifiableWorkspaceEntityBase<WithListSoftLinksEntity, WithListSoftLinksEntityData>(
+    result), WithListSoftLinksEntity.Builder {
     constructor() : this(WithListSoftLinksEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +66,9 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -90,12 +92,19 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
       return connections
     }
 
+    override fun afterModification() {
+      val collection_links = getEntityData().links
+      if (collection_links is MutableWorkspaceList<*>) {
+        collection_links.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as WithListSoftLinksEntity
-      this.entitySource = dataSource.entitySource
-      this.myName = dataSource.myName
-      this.links = dataSource.links.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      if (this.links != dataSource.links) this.links = dataSource.links.toMutableList()
       if (parents != null) {
       }
     }
@@ -105,7 +114,7 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -114,7 +123,7 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
       get() = getEntityData().myName
       set(value) {
         checkModificationAllowed()
-        getEntityData().myName = value
+        getEntityData(true).myName = value
         changedProperty.add("myName")
       }
 
@@ -126,42 +135,46 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
       get() {
         val collection_links = getEntityData().links
         if (collection_links !is MutableWorkspaceList) return collection_links
-        collection_links.setModificationUpdateAction(linksUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_links.setModificationUpdateAction(linksUpdater)
+        }
+        else {
+          collection_links.cleanModificationUpdateAction()
+        }
         return collection_links
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().links = value
+        getEntityData(true).links = value
         linksUpdater.invoke(value)
       }
 
-    override fun getEntityData(): WithListSoftLinksEntityData = result ?: super.getEntityData() as WithListSoftLinksEntityData
     override fun getEntityClass(): Class<WithListSoftLinksEntity> = WithListSoftLinksEntity::class.java
   }
 }
 
-class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistentId<WithListSoftLinksEntity>(), SoftLinkable {
+class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculableSymbolicId<WithListSoftLinksEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var links: MutableList<NameId>
 
   fun isMyNameInitialized(): Boolean = ::myName.isInitialized
   fun isLinksInitialized(): Boolean = ::links.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     for (item in links) {
       result.add(item)
     }
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     for (item in links) {
       index.index(this, item)
     }
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in links) {
@@ -175,7 +188,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val links_data = links.map {
       val it_data = if (it == oldLink) {
@@ -198,26 +211,21 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<WithListSoftLinksEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<WithListSoftLinksEntity> {
     val modifiable = WithListSoftLinksEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): WithListSoftLinksEntity {
-    val entity = WithListSoftLinksEntityImpl()
-    entity._myName = myName
-    entity._links = links.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = WithListSoftLinksEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): WithListSoftLinksEntityData {
@@ -227,7 +235,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
     return clonedEntity
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return AnotherNameId(myName)
   }
 
@@ -253,7 +261,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as WithListSoftLinksEntityData
 
@@ -265,7 +273,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as WithListSoftLinksEntityData
 

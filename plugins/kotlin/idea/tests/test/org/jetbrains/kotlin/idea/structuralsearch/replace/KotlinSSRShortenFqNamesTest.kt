@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
+import com.intellij.application.options.CodeStyle
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralReplaceTest
 
 class KotlinSSRShortenFqNamesTest : KotlinStructuralReplaceTest() {
@@ -26,6 +27,32 @@ class KotlinSSRShortenFqNamesTest : KotlinStructuralReplaceTest() {
             match = "fun main() { var foo: String }",
             result = "fun main() { var foo : java.io.File }",
             shortenFqNames = false
+        )
+    }
+
+    fun testReformattingAfterShorten() {
+        assert(CodeStyle.getSettings(project).defaultRightMargin == 120) // make sure the right margin default hasn't changed
+        doTest(
+            searchPattern = "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt(Collections.singletonList(Foo(\"B\")));",
+            replacePattern = "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt(java.util.Collections.singletonList(Bar(\"B\")));",
+            match = """
+                import java.util.*
+
+                fun tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt(x: List<String>) {
+                    TODO()
+                    tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt(Collections.singletonList(Foo("B")));
+                }
+            """.trimIndent(),
+            result ="""
+                import java.util.*
+
+                fun tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt(x: List<String>) {
+                    TODO()
+                    tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt(Collections.singletonList(Bar("B")));
+                }
+            """.trimIndent(),
+            shortenFqNames = true,
+            reformat = true
         )
     }
 

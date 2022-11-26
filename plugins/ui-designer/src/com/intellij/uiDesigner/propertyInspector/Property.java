@@ -12,10 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class Property<T extends RadComponent, V> implements IProperty {
   public static final Property[] EMPTY_ARRAY=new Property[]{};
 

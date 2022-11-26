@@ -36,7 +36,6 @@ import java.util.function.Function;
  *   <ul>Language depending on file content</ul>
  * </li>
  * 
- * @author peter
  */
 public class CheckHighlighterConsistency extends ActionOnFile {
 

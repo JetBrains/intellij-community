@@ -4,27 +4,27 @@ package com.intellij.openapi.fileEditor.ex;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.EditorDataProvider;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.impl.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.docking.DockContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class FileEditorManagerEx extends FileEditorManager implements BusyObject {
   private final List<EditorDataProvider> myDataProviders = new ArrayList<>();
@@ -62,7 +62,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   /**
    * Asynchronous version of {@link #getCurrentWindow()}. Execution happens after focus settle down. Can be invoked on any thread.
    */
-  public abstract @NotNull Promise<EditorWindow> getActiveWindow();
+  public abstract @NotNull CompletableFuture<@Nullable EditorWindow> getActiveWindow();
 
   public abstract void setCurrentWindow(EditorWindow window);
 
@@ -89,7 +89,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    * is not open. The returned files have the same order as they have in the
    * tabbed container.
    */
-  public abstract VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file);
+  public abstract @NotNull Collection<VirtualFile> getSiblings(@NotNull VirtualFile file);
 
   public abstract void createSplitter(int orientation, @Nullable EditorWindow window);
 
@@ -101,6 +101,10 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public boolean canOpenFile(@NotNull VirtualFile file) {
     return FileEditorProviderManager.getInstance().getProviderList(getProject(), file).size() > 0;
+  }
+
+  protected boolean canOpenFile(@NotNull VirtualFile file, @NotNull List<FileEditorProvider> providers) {
+    return !providers.isEmpty();
   }
 
   public abstract @Nullable VirtualFile getCurrentFile();
@@ -119,12 +123,14 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   @Override
   public final FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor) {
-    return openFileWithProviders(file, focusEditor, false).getFirst();
+    FileEditorOpenOptions options = new FileEditorOpenOptions().withRequestFocus(focusEditor);
+    return openFileWithProviders(file, null, options).getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
   }
 
   @Override
   public final FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
-    return openFileWithProviders(file, focusEditor, searchForOpen).getFirst();
+    FileEditorOpenOptions options = new FileEditorOpenOptions().withRequestFocus(focusEditor).withReuseOpen(searchForOpen);
+    return openFileWithProviders(file, null, options).getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
   }
 
   public abstract @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
@@ -135,18 +141,20 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
                                                                                           boolean focusEditor,
                                                                                           @NotNull EditorWindow window);
 
-  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                 @Nullable EditorWindow window,
-                                                                                 @NotNull FileEditorOpenOptions options) {
-    return window != null && !window.isDisposed() ? openFileWithProviders(file, options.getRequestFocus(), window)
-                                                  : openFileWithProviders(file, options.getRequestFocus(), options.getReuseOpen());
+  public @NotNull FileEditorComposite openFileWithProviders(@NotNull VirtualFile file,
+                                                            @Nullable EditorWindow window,
+                                                            @NotNull FileEditorOpenOptions options) {
+    Pair<FileEditor[], FileEditorProvider[]> result = window == null || window.isDisposed()
+                                                      ? openFileWithProviders(file, options.requestFocus, options.reuseOpen)
+                                                      : openFileWithProviders(file, options.requestFocus, window);
+    return FileEditorComposite.Companion.fromPair(result);
   }
 
   public abstract boolean isChanged(@NotNull EditorComposite editor);
 
-  public abstract EditorWindow getNextWindow(final @NotNull EditorWindow window);
+  public abstract EditorWindow getNextWindow(@NotNull EditorWindow window);
 
-  public abstract EditorWindow getPrevWindow(final @NotNull EditorWindow window);
+  public abstract EditorWindow getPrevWindow(@NotNull EditorWindow window);
 
   public abstract boolean isInsideChange();
 
@@ -168,24 +176,18 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   }
 
   public void refreshIcons() {
-    if (this instanceof FileEditorManagerImpl) {
-      final FileEditorManagerImpl mgr = (FileEditorManagerImpl)this;
-      Set<EditorsSplitters> splitters = mgr.getAllSplitters();
-      for (EditorsSplitters each : splitters) {
-        for (VirtualFile file : mgr.getOpenFiles()) {
-          each.updateFileIcon(file);
-        }
-      }
-    }
   }
 
   public abstract EditorsSplitters getSplittersFor(Component c);
 
-
-  public abstract @NotNull ActionCallback notifyPublisher(@NotNull Runnable runnable);
+  public abstract void notifyPublisher(@NotNull Runnable runnable);
 
   @Override
   public void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable) {
     AsyncEditorLoader.performWhenLoaded(editor, runnable);
+  }
+
+  public @Nullable DockContainer getDockContainer() {
+    return null;
   }
 }

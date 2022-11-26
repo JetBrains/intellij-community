@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -25,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
+open class NamedEntityImpl(val dataSource: NamedEntityData) : NamedEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(NamedEntity::class.java, NamedChildEntity::class.java,
@@ -37,24 +36,23 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
-  @JvmField
-  var _additionalProperty: String? = null
   override val additionalProperty: String?
-    get() = _additionalProperty
+    get() = dataSource.additionalProperty
 
   override val children: List<NamedChildEntity>
     get() = snapshot.extractOneToManyChildren<NamedChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: NamedEntityData?) : ModifiableWorkspaceEntityBase<NamedEntity>(), NamedEntity.Builder {
+  class Builder(result: NamedEntityData?) : ModifiableWorkspaceEntityBase<NamedEntity, NamedEntityData>(result), NamedEntity.Builder {
     constructor() : this(NamedEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -72,6 +70,9 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -106,9 +107,9 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as NamedEntity
-      this.entitySource = dataSource.entitySource
-      this.myName = dataSource.myName
-      this.additionalProperty = dataSource.additionalProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      if (this.additionalProperty != dataSource?.additionalProperty) this.additionalProperty = dataSource.additionalProperty
       if (parents != null) {
       }
     }
@@ -118,7 +119,7 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -127,7 +128,7 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
       get() = getEntityData().myName
       set(value) {
         checkModificationAllowed()
-        getEntityData().myName = value
+        getEntityData(true).myName = value
         changedProperty.add("myName")
       }
 
@@ -135,7 +136,7 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
       get() = getEntityData().additionalProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().additionalProperty = value
+        getEntityData(true).additionalProperty = value
         changedProperty.add("additionalProperty")
       }
 
@@ -160,7 +161,13 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -168,7 +175,7 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -179,40 +186,34 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
         changedProperty.add("children")
       }
 
-    override fun getEntityData(): NamedEntityData = result ?: super.getEntityData() as NamedEntityData
     override fun getEntityClass(): Class<NamedEntity> = NamedEntity::class.java
   }
 }
 
-class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEntity>() {
+class NamedEntityData : WorkspaceEntityData.WithCalculableSymbolicId<NamedEntity>() {
   lateinit var myName: String
   var additionalProperty: String? = null
 
   fun isMyNameInitialized(): Boolean = ::myName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<NamedEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NamedEntity> {
     val modifiable = NamedEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): NamedEntity {
-    val entity = NamedEntityImpl()
-    entity._myName = myName
-    entity._additionalProperty = additionalProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = NamedEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return NameId(myName)
   }
 
@@ -239,7 +240,7 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as NamedEntityData
 
@@ -251,7 +252,7 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as NamedEntityData
 

@@ -3,12 +3,14 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -171,6 +173,7 @@ class MixedResultsSearcher implements SESearcher {
     @Override
     public void run() {
       LOG.debug("Search task started for contributor ", myContributor);
+      SearchingProcessStatisticsCollector.searchStarted(myContributor);
       try {
         boolean repeat;
         do {
@@ -215,6 +218,8 @@ class MixedResultsSearcher implements SESearcher {
           return true;
         }
 
+        reportElementOnce();
+
         boolean added = myAccumulator.addElement(element, myContributor, priority, wrapperIndicator);
         if (!added) {
           myAccumulator.setContributorHasMore(myContributor, true);
@@ -225,6 +230,13 @@ class MixedResultsSearcher implements SESearcher {
         LOG.warn("Search task was interrupted");
         return false;
       }
+    }
+
+    private boolean firstElementReported;
+    private void reportElementOnce() {
+      if (firstElementReported) return;
+      firstElementReported = true;
+      SearchingProcessStatisticsCollector.elementFound(myContributor);
     }
   }
 
@@ -308,6 +320,9 @@ class MixedResultsSearcher implements SESearcher {
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
         SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
+        if (Registry.is("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
+          action = fixReplaceAction(replaceAction);
+        }
         if (action == SEEqualElementsActionType.Skip.INSTANCE) {
           LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
           return true;
@@ -336,6 +351,15 @@ class MixedResultsSearcher implements SESearcher {
       finally {
         lock.unlock();
       }
+    }
+
+    private static SEEqualElementsActionType fixReplaceAction(SEEqualElementsActionType.Replace action) {
+      String recentContributorID = RecentFilesSEContributor.class.getSimpleName();
+      List<SearchEverywhereFoundElementInfo> updatedList = ContainerUtil.filter(
+        action.getToBeReplaced(),
+        info -> !recentContributorID.equals(info.getContributor().getSearchProviderId())
+      );
+      return updatedList.isEmpty() ? SEEqualElementsActionType.Skip.INSTANCE : new SEEqualElementsActionType.Replace(updatedList);
     }
 
     public void contributorFinished(SearchEverywhereContributor<?> contributor) {

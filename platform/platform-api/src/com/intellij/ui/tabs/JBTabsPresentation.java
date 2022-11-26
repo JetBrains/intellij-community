@@ -22,7 +22,7 @@ public interface JBTabsPresentation {
   /**
    * @deprecated You should implement {@link JBTabsBorder} abstract class
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   JBTabsPresentation setTabSidePaintBorder(int size);
 
   JBTabsPresentation setPaintFocus(boolean paintFocus);

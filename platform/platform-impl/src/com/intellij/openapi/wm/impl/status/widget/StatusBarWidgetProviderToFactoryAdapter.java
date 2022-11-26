@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,27 +14,23 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarWidgetFactory {
-  @NotNull
   private final Project myProject;
-  @NotNull
-  private final StatusBarWidgetProvider myProvider;
+  @SuppressWarnings("removal") final StatusBarWidgetProvider provider;
 
   private boolean widgetWasCreated;
-  @Nullable
-  private StatusBarWidget myWidget;
+  private @Nullable StatusBarWidget myWidget;
 
-  public StatusBarWidgetProviderToFactoryAdapter(@NotNull Project project, @NotNull StatusBarWidgetProvider provider) {
+  public StatusBarWidgetProviderToFactoryAdapter(@NotNull Project project, @SuppressWarnings("removal") @NotNull StatusBarWidgetProvider provider) {
     myProject = project;
-    myProvider = provider;
+    this.provider = provider;
   }
 
   @Override
   public @NotNull String getId() {
     StatusBarWidget widget = getWidget();
-    return widget != null ? widget.ID() : myProvider.getClass().getName();
+    return widget != null ? widget.ID() : provider.getClass().getName();
   }
 
-  @Nls
   @Override
   public @NotNull String getDisplayName() {
     StatusBarWidget widget = getWidget();
@@ -56,10 +51,8 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   @Override
   public boolean isAvailable(@NotNull Project project) {
     IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
-    if (frame == null || !myProvider.isCompatibleWith(frame)) {
-      return false;
-    }
-    return getWidget() != null;
+    //noinspection removal
+    return frame != null && provider.isCompatibleWith(frame) && getWidget() != null;
   }
 
   @Override
@@ -77,13 +70,12 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
     return Objects.requireNonNull(getWidget());
   }
 
-  @Nullable
-  private StatusBarWidget getWidget() {
+  private @Nullable StatusBarWidget getWidget() {
     if (!widgetWasCreated) {
-      myWidget = myProvider.getWidget(myProject);
+      //noinspection removal
+      myWidget = provider.getWidget(myProject);
       widgetWasCreated = true;
     }
-
     return myWidget;
   }
 
@@ -95,7 +87,8 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   }
 
   public @NotNull String getAnchor() {
-    return myProvider.getAnchor();
+    //noinspection removal
+    return provider.getAnchor();
   }
 
   @Override
@@ -103,11 +96,11 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     StatusBarWidgetProviderToFactoryAdapter adapter = (StatusBarWidgetProviderToFactoryAdapter)o;
-    return myProvider.equals(adapter.myProvider) && myProject.equals(adapter.myProject);
+    return provider.equals(adapter.provider) && myProject.equals(adapter.myProject);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myProvider, myProject);
+    return Objects.hash(provider, myProject);
   }
 }

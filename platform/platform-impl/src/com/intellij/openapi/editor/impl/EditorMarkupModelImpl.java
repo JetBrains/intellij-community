@@ -324,7 +324,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() && analyzerStatus.getController().enableToolbar();
+        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() && analyzerStatus.getController().isToolbarEnabled();
 
         updateTrafficLightVisibility();
       }
@@ -474,7 +474,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     myStatusUpdates.queue(Update.create("icon", () -> {
       if (myErrorStripeRenderer != null) {
         AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus();
-        if (!newStatus.equals(analyzerStatus)) {
+        if (!newStatus.equalsTo(analyzerStatus)) {
           changeStatus(newStatus);
         }
       }
@@ -489,9 +489,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     analyzerStatus = newStatus;
     smallIconLabel.setIcon(analyzerStatus.getIcon());
 
-    if (showToolbar != analyzerStatus.getController().enableToolbar()) {
+    if (showToolbar != analyzerStatus.getController().isToolbarEnabled()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
-                    analyzerStatus.getController().enableToolbar();
+                    analyzerStatus.getController().isToolbarEnabled();
       updateTrafficLightVisibility();
     }
 
@@ -1474,7 +1474,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
       Icon newIcon = analyzerStatus.getIcon();
 
-      presentation.setVisible(!AnalyzerStatus.isEmpty(analyzerStatus));
+      presentation.setVisible(!analyzerStatus.isEmpty());
 
       if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
         List<StatusItem> adjusted = newStatus.isEmpty() ? Collections.singletonList(new StatusItem("", newIcon)) : newStatus;
@@ -1845,7 +1845,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(analyzerStatus.getController().enableToolbar());
+      e.getPresentation().setEnabled(analyzerStatus.getController().isToolbarEnabled());
     }
 
     @Override

@@ -1664,6 +1664,17 @@ public class Mappings {
       assert myCompiledFiles != null;
       assert myAffectedFiles != null;
 
+      if (classRepr.isEnum()) {
+        debug("Constants added to enum, affecting class usages ", classRepr.name);
+        final UsageRepr.Usage usage = classRepr.createUsage();
+        state.myAffectedUsages.add(usage);
+        // only mark synthetic classes used to implement switch statements: this will limit the number of recompiled classes to those where switch statements on changed enum are used
+        state.myUsageConstraints.put(usage, residence -> {
+          final ClassRepr candidate = myPresent.classReprByName(residence);
+          return candidate != null && candidate.isSynthetic();
+        });
+      }
+      
       for (final FieldRepr f : added) {
         debug("Field: ", f.name);
 
@@ -2062,7 +2073,7 @@ public class Mappings {
               state.myAffectedUsages.add(changedClass.createUsage());
             }
             else if (diff.targetAttributeCategoryMightChange()) {
-              debug("Annotation's attribute category in bytecode might be affected because of TYPE_USE target, adding class usage to affected usages");
+              debug("Annotation's attribute category in bytecode might be affected because of TYPE_USE or RECORD_COMPONENT target, adding class usage to affected usages");
               state.myAffectedUsages.add(changedClass.createUsage());
             }
             else {
@@ -2273,65 +2284,53 @@ public class Mappings {
 
     private boolean calculateAffectedFiles(final DiffState state) {
       debug("Checking dependent classes:");
-      Collection<? super File> affectedFiles = myAffectedFiles;
-      assert affectedFiles != null;
-      Collection<? extends File> compiledFiles = myCompiledFiles;
-      assert compiledFiles != null;
-      final Ref<Boolean> incrementalMode = new Ref<>(Boolean.TRUE);
-
+      assert myAffectedFiles != null;
+      assert myCompiledFiles != null;
       IntIterator iterator = state.myDependants.iterator();
       while (iterator.hasNext()) {
         int depClass = iterator.nextInt();
         Iterable<File> depFiles = classToSourceFileGet(depClass);
         if (depFiles != null) {
           for (File depFile : depFiles) {
-            processDependentFile(depClass, depFile, incrementalMode, state, affectedFiles, compiledFiles);
-            if (!incrementalMode.get()) {
-              break;
+            if (!processDependentFile(depClass, depFile, state)) {
+              debug("Turning non-incremental for the BuildTarget because dependent class is annotation-processor generated");
+              return false;
             }
           }
         }
       }
-      return incrementalMode.get();
+      return true;
     }
 
-    private void processDependentFile(int depClass,
-                                      @NotNull File depFile,
-                                      Ref<? super Boolean> incrementalMode,
-                                      DiffState state,
-                                      Collection<? super File> affectedFiles,
-                                      Collection<? extends File> compiledFiles) {
-      if (affectedFiles.contains(depFile)) {
-        return;
-      }
-
+    @SuppressWarnings("DataFlowIssue")
+    private boolean processDependentFile(int depClass, @NotNull File depFile, DiffState state) {
       debug("Dependent class: ", depClass);
 
       final ClassFileRepr repr = getReprByName(depFile, depClass);
       if (repr == null) {
-        return;
+        return true;
       }
+      boolean isGenerated = false;
       if (repr instanceof ClassRepr) {
         final ClassRepr clsRepr = (ClassRepr)repr;
-        if (!clsRepr.hasInlinedConstants() && compiledFiles.contains(depFile)) {
+        if (!clsRepr.hasInlinedConstants() && myCompiledFiles.contains(depFile)) {
           // Classes containing inlined constants from other classes and compiled against older constant values
-          // may need to be recompiled several times within a compile session.
-          // Otherwise it is safe to skip the file if it has already been compiled in this session.
-          return;
+          // may need to be recompiled several times within compile session.
+          // Otherwise, it is safe to skip the file if it has already been compiled in this session.
+          return true;
         }
+        
         // If among affected files are annotation processor-generated, then we might need to re-generate them.
         // To achieve this, we need to recompile the whole chunk which will cause processors to re-generate these affected files
-
-        if (clsRepr.isGenerated()) {
-          debug("Turning non-incremental for the BuildTarget because dependent class is annotation-processor generated");
-          incrementalMode.set(Boolean.FALSE);
-          return;
-        }
+        isGenerated = clsRepr.isGenerated();
       }
 
+      if (myAffectedFiles.contains(depFile)) {
+        return !isGenerated;
+      }
       final Set<UsageRepr.Usage> depUsages = repr.getUsages();
       if (depUsages == null || depUsages.isEmpty()) {
-        return;
+        return !isGenerated;
       }
 
       for (UsageRepr.Usage usage : depUsages) {
@@ -2340,8 +2339,8 @@ public class Mappings {
           for (final UsageRepr.AnnotationUsage query : state.myAnnotationQuery) {
             if (query.satisfies(annotationUsage)) {
               debug("Added file due to annotation query");
-              affectedFiles.add(depFile);
-              return;
+              myAffectedFiles.add(depFile);
+              return !isGenerated;
             }
           }
         }
@@ -2349,16 +2348,17 @@ public class Mappings {
           final UsageConstraint constraint = state.myUsageConstraints.get(usage);
           if (constraint == null) {
             debug("Added file with no constraints");
-            affectedFiles.add(depFile);
-            return;
+            myAffectedFiles.add(depFile);
+            return !isGenerated;
           }
           if (constraint.checkResidence(depClass)) {
             debug("Added file with satisfied constraint");
-            affectedFiles.add(depFile);
-            return;
+            myAffectedFiles.add(depFile);
+            return !isGenerated;
           }
         }
       }
+      return true;
     }
 
     boolean differentiate() {

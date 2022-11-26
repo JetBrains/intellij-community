@@ -210,28 +210,21 @@ public abstract class ContractReturnValue {
    */
   @NotNull
   public static ContractReturnValue valueOf(int ordinal) {
-    switch (ordinal) {
-      case 0:
-      case 1:
-        return returnNull();
-      case 2:
-        return returnNotNull();
-      case 3:
-        return returnTrue();
-      case 4:
-        return returnFalse();
-      case 5:
-        return fail();
-      case 6:
-        return returnNew();
-      case 7:
-        return returnThis();
-      default:
+    return switch (ordinal) {
+      case 0, 1 -> returnNull();
+      case 2 -> returnNotNull();
+      case 3 -> returnTrue();
+      case 4 -> returnFalse();
+      case 5 -> fail();
+      case 6 -> returnNew();
+      case 7 -> returnThis();
+      default -> {
         if (ordinal >= PARAMETER_ORDINAL_BASE && ordinal <= PARAMETER_ORDINAL_BASE + MAX_SUPPORTED_PARAMETER) {
-          return returnParameter(ordinal - PARAMETER_ORDINAL_BASE);
+          yield returnParameter(ordinal - PARAMETER_ORDINAL_BASE);
         }
-        return returnAny();
-    }
+        yield returnAny();
+      }
+    };
   }
 
   /**
@@ -244,37 +237,31 @@ public abstract class ContractReturnValue {
    */
   @Nullable
   public static ContractReturnValue valueOf(@NotNull String value) {
-    switch (value) {
-      case "_":
-        return returnAny();
-      case "fail":
-        return fail();
-      case "true":
-        return returnTrue();
-      case "false":
-        return returnFalse();
-      case "null":
-        return returnNull();
-      case "!null":
-        return returnNotNull();
-      case "new":
-        return returnNew();
-      case "this":
-        return returnThis();
-    }
-    if (value.startsWith("param")) {
-      String suffix = value.substring("param".length());
-      try {
-        int paramNumber = Integer.parseInt(suffix) - 1;
-        if (paramNumber >= 0 && paramNumber <= MAX_SUPPORTED_PARAMETER) {
-          return new ParameterReturnValue(paramNumber);
+    return switch (value) {
+      case "_" -> returnAny();
+      case "fail" -> fail();
+      case "true" -> returnTrue();
+      case "false" -> returnFalse();
+      case "null" -> returnNull();
+      case "!null" -> returnNotNull();
+      case "new" -> returnNew();
+      case "this" -> returnThis();
+      default -> {
+        if (value.startsWith("param")) {
+          String suffix = value.substring("param".length());
+          try {
+            int paramNumber = Integer.parseInt(suffix) - 1;
+            if (paramNumber >= 0 && paramNumber <= MAX_SUPPORTED_PARAMETER) {
+              yield new ParameterReturnValue(paramNumber);
+            }
+          }
+          catch (NumberFormatException ignored) {
+            // unexpected non-integer suffix: ignore
+          }
         }
+        yield null;
       }
-      catch (NumberFormatException ignored) {
-        // unexpected non-integer suffix: ignore
-      }
-    }
-    return null;
+    };
   }
 
   /**

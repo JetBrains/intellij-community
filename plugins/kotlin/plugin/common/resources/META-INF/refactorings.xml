@@ -1,0 +1,9 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>
+
+    <renameInputValidator implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDeclarationRenameInputValidator"/>
+
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDirectoryAsPackageRenameHandler"/>
+  </extensions>
+</idea-plugin>

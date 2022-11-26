@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
@@ -17,7 +16,6 @@ import java.util.function.LongSupplier;
  * 2. if checker returns TRUE -> those whose timestamp is older than required
  *
  */
-@SomeQueue
 // TODO: Used only in RemoteRevisionsNumberCache
 public final class LazyRefreshingSelfQueue<T> {
   private static final Logger LOG = Logger.getInstance(LazyRefreshingSelfQueue.class);

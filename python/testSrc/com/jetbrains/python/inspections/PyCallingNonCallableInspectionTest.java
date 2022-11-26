@@ -112,20 +112,22 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
   public void testTypeVarBoundedWithCallable() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
-      () -> doTestByText("from typing import TypeVar, Callable, Any\n" +
-                         "\n" +
-                         "F = TypeVar('F', bound=Callable[[], Any])\n" +
-                         "\n" +
-                         "def deco(func: F):\n" +
-                         "    func()")
+      () -> doTestByText("""
+                           from typing import TypeVar, Callable, Any
+
+                           F = TypeVar('F', bound=Callable[[], Any])
+
+                           def deco(func: F):
+                               func()""")
     );
   }
 
   // PY-41676
   public void testThereIsNoInspectionOnCallProtectedByHasattr() {
-    doTestByText("def test(obj):\n" +
-                 "    if hasattr(obj, \"anything\"):\n" +
-                 "        pkgs = obj.anything()");
+    doTestByText("""
+                   def test(obj):
+                       if hasattr(obj, "anything"):
+                           pkgs = obj.anything()""");
   }
 
   @NotNull

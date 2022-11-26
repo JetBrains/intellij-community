@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.codevision
 
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
+import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
@@ -109,9 +109,9 @@ class InterfaceImplementations(implNum: Int, limitReached: Boolean) :
 }
 
 class SettingsHint : KotlinCodeVisionHint(SETTINGS_FORMAT) {
-    override fun onClick(editor: Editor, element: PsiElement, event: MouseEvent?) {
-        val project = element.project
-        logSettingsClicked(project)
-        InlayHintsConfigurable.showSettingsDialogForLanguage(project, element.language)
-    }
+  override fun onClick(editor: Editor, element: PsiElement, event: MouseEvent?) {
+    val project = element.project
+    logSettingsClicked(project)
+    showInlaySettings(project, element.language, null)
+  }
 }

@@ -19,7 +19,6 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -41,6 +40,11 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   protected void perform(AnActionEvent e) {
     final PsiClass psiClass = getPsiClass(e, false);
     if (psiClass != null) {
@@ -50,10 +54,9 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
 
   @Nullable
   private PsiClass getPsiClass(AnActionEvent e, boolean fromUpdate) {
-
-    final ReferenceType selectedClass = fromUpdate ? Utils.getOrCreateUpdateSession(e)
-      .compute(this, "selectedClass", ActionUpdateThread.EDT, () -> ActionUtil.getSelectedClass(e))
-                                                   : ActionUtil.getSelectedClass(e);
+    ReferenceType selectedClass = fromUpdate ? e.getUpdateSession()
+      .compute(this, "selectedClass", ActionUpdateThread.EDT, () -> DebuggerActionUtil.getSelectedClass(e))
+                                             : DebuggerActionUtil.getSelectedClass(e);
     final Project project = e.getProject();
     if (selectedClass == null || project == null) {
       return null;

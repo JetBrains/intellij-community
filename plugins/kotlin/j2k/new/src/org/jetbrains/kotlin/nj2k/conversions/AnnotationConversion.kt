@@ -6,6 +6,7 @@ import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.primaryConstructor
 import org.jetbrains.kotlin.nj2k.toExpression
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -33,6 +34,7 @@ class AnnotationConversion(context: NewJ2kConverterContext) : RecursiveApplicabl
                             (annotationParameter.value as JKKtAnnotationArrayInitializerExpression)::initializers
                                 .detached()
                                 .map { JKAnnotationParameterImpl(it) }
+
                         annotationParameter is JKAnnotationNameParameter
                                 && annotation.isVarargsArgument(annotationParameter.name.value)
                                 && annotationParameter.value !is JKKtAnnotationArrayInitializerExpression -> {
@@ -43,6 +45,7 @@ class AnnotationConversion(context: NewJ2kConverterContext) : RecursiveApplicabl
                                 )
                             )
                         }
+
                         annotationParameter is JKAnnotationNameParameter ->
                             listOf(
                                 JKAnnotationNameParameter(
@@ -50,6 +53,7 @@ class AnnotationConversion(context: NewJ2kConverterContext) : RecursiveApplicabl
                                     annotationParameter::name.detached()
                                 )
                             )
+
                         else -> listOf(
                             JKAnnotationParameterImpl(
                                 annotationParameter::value.detached()
@@ -72,9 +76,11 @@ class AnnotationConversion(context: NewJ2kConverterContext) : RecursiveApplicabl
                 ?.parameters
                 ?.getOrNull(index)
                 ?.isVarArgsAnnotationParameter(isNamedArgument = false)
+
             is PsiClass -> target.methods
                 .getOrNull(index)
                 ?.isVarArgsAnnotationMethod(isNamedArgument = false)
+
             else -> false
         } ?: false
 
@@ -85,9 +91,11 @@ class AnnotationConversion(context: NewJ2kConverterContext) : RecursiveApplicabl
                 ?.parameters
                 ?.firstOrNull { it.name.value == name }
                 ?.isVarArgsAnnotationParameter(isNamedArgument = true)
+
             is PsiClass -> target.methods
                 .firstOrNull { it.name == name }
                 ?.isVarArgsAnnotationMethod(isNamedArgument = true)
+
             else -> false
         } ?: false
 }

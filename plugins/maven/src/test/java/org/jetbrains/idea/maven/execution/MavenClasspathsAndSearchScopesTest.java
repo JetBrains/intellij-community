@@ -9,7 +9,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1156,11 +1155,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
   // The result is the same for "compile" and "runtime" scopes.
   private void checkDirIndexTestModulesWithCompileOrRuntimeScope(List<Module> modules) {
     assertEquals(6, modules.size());
-    DirectoryIndex index = DirectoryIndex.getInstance(myProject);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
     VirtualFile m3JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "m3/src/main/java"), true);
     assertNotNull(m3JavaDir);
     // Should be: m1 -> m3, m2 -> m3, m3 -> source, and m4 -> m3
-    List<OrderEntry> orderEntries = index.getOrderEntries(index.getInfoForFile(m3JavaDir));
+    List<OrderEntry> orderEntries = index.getOrderEntriesForFile(m3JavaDir);
     assertEquals(4, orderEntries.size());
     List<Module> ownerModules = orderEntriesToOwnerModules(orderEntries);
     List<Module> depModules = orderEntriesToDepModules(orderEntries);
@@ -1175,7 +1174,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     VirtualFile m6javaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "m6/src/main/java"), true);
     assertNotNull(m6javaDir);
     // Should be m1 -> m6, m2 -> m6, m5 -> m6, m6 -> source
-    List<OrderEntry> m6OrderEntries = index.getOrderEntries(index.getInfoForFile(m6javaDir));
+    List<OrderEntry> m6OrderEntries = index.getOrderEntriesForFile(m6javaDir);
     assertEquals(4, m6OrderEntries.size());
     List<Module> m6OwnerModules = orderEntriesToOwnerModules(m6OrderEntries);
     List<Module> m6DepModules = orderEntriesToDepModules(m6OrderEntries);
@@ -1192,7 +1191,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     VirtualFile jmockJar = JarFileSystem.getInstance().getJarRootForLocalFile(jmockDir);
     assertNotNull(jmockJar);
     // m2 -> jmock, m3 -> jmock
-    List<OrderEntry> jmockOrderEntries = index.getOrderEntries(index.getInfoForFile(jmockJar));
+    List<OrderEntry> jmockOrderEntries = index.getOrderEntriesForFile(jmockJar);
     assertEquals(2, jmockOrderEntries.size());
     OrderEntry jmockE0 = jmockOrderEntries.get(0);
     assertEquals(modules.get(1), jmockE0.getOwnerModule());
@@ -1208,11 +1207,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     // because test scope does not propagate transitive dependencies.
     List<Module> modules = setupDirIndexTestModulesWithScope("test");
     assertEquals(6, modules.size());
-    DirectoryIndex index = DirectoryIndex.getInstance(myProject);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
     VirtualFile m3JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "m3/src/main/java"), true);
     assertNotNull(m3JavaDir);
     // Should be no transitive deps: m2 -> m3, m3 -> source, and m4 -> m3
-    List<OrderEntry> orderEntries = index.getOrderEntries(index.getInfoForFile(m3JavaDir));
+    List<OrderEntry> orderEntries = index.getOrderEntriesForFile(m3JavaDir);
     assertEquals(3, orderEntries.size());
     List<Module> ownerModules = orderEntriesToOwnerModules(orderEntries);
     List<Module> depModules = orderEntriesToDepModules(orderEntries);
@@ -1228,7 +1227,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     assertNotNull(m6javaDir);
     // Still has some transitive deps because m5 -> m6 is hardcoded to be compile scope
     // m2 -> m6, m5 -> m6, m6 -> source
-    List<OrderEntry> m6OrderEntries = index.getOrderEntries(index.getInfoForFile(m6javaDir));
+    List<OrderEntry> m6OrderEntries = index.getOrderEntriesForFile(m6javaDir);
     assertEquals(3, m6OrderEntries.size());
     List<Module> m6OwnerModules = orderEntriesToOwnerModules(m6OrderEntries);
     List<Module> m6DepModules = orderEntriesToDepModules(m6OrderEntries);
@@ -1245,7 +1244,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     VirtualFile jmockJar = JarFileSystem.getInstance().getJarRootForLocalFile(jmockDir);
     assertNotNull(jmockJar);
     // m2 -> jmock, m3 -> jmock
-    List<OrderEntry> jmockOrderEntries = index.getOrderEntries(index.getInfoForFile(jmockJar));
+    List<OrderEntry> jmockOrderEntries = index.getOrderEntriesForFile(jmockJar);
     assertEquals(2, jmockOrderEntries.size());
     OrderEntry jmockE0 = jmockOrderEntries.get(0);
     assertEquals(modules.get(1), jmockE0.getOwnerModule());
@@ -1279,12 +1278,12 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     assertModuleModuleDeps("nonMavenM2", "m1");
     assertModuleModuleDeps("m1", "m2", "m3", "m5", "m6");
 
-    DirectoryIndex index = DirectoryIndex.getInstance(myProject);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
     VirtualFile m3JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "m3/src/main/java"), true);
     assertNotNull(m3JavaDir);
     // Should be: m1 -> m3, m2 -> m3, m3 -> source, and m4 -> m3
     // It doesn't trace back to nonMavenM1 and nonMavenM2.
-    List<OrderEntry> orderEntries = index.getOrderEntries(index.getInfoForFile(m3JavaDir));
+    List<OrderEntry> orderEntries = index.getOrderEntriesForFile(m3JavaDir);
     List<Module> ownerModules = orderEntriesToOwnerModules(orderEntries);
     List<Module> depModules = orderEntriesToDepModules(orderEntries);
     assertOrderedElementsAreEqual(ownerModules,
@@ -1295,7 +1294,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     VirtualFile m6javaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "m6/src/main/java"), true);
     assertNotNull(m6javaDir);
     // Should be m1 -> m6, m2 -> m6, m5 -> m6, m6 -> source
-    List<OrderEntry> m6OrderEntries = index.getOrderEntries(index.getInfoForFile(m6javaDir));
+    List<OrderEntry> m6OrderEntries = index.getOrderEntriesForFile(m6javaDir);
     List<Module> m6OwnerModules = orderEntriesToOwnerModules(m6OrderEntries);
     List<Module> m6DepModules = orderEntriesToDepModules(m6OrderEntries);
     assertOrderedElementsAreEqual(m6OwnerModules,
@@ -1306,7 +1305,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     VirtualFile nonMavenM2JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "nonMavenM2/src/main/java"), true);
     assertNotNull(nonMavenM2JavaDir);
     // Should be nonMavenM1 -> nonMavenM2, nonMavenM2 -> source
-    List<OrderEntry> nonMavenM2JavaOrderEntries = index.getOrderEntries(index.getInfoForFile(nonMavenM2JavaDir));
+    List<OrderEntry> nonMavenM2JavaOrderEntries = index.getOrderEntriesForFile(nonMavenM2JavaDir);
     List<Module> nonMavenM2OwnerModules = orderEntriesToOwnerModules(nonMavenM2JavaOrderEntries);
     List<Module> nonMavenM2DepModules = orderEntriesToDepModules(nonMavenM2JavaOrderEntries);
     assertOrderedElementsAreEqual(nonMavenM2OwnerModules, Arrays.asList(nonMavenM1, nonMavenM2));
@@ -1410,18 +1409,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     createOutputDirectories();
     Module module = getModule(moduleName);
 
-    GlobalSearchScope searchScope = null;
-    switch (scope) {
-      case MODULE:
-        searchScope = module.getModuleScope();
-        break;
-      case COMPILE:
-        searchScope = module.getModuleWithDependenciesAndLibrariesScope(type == Type.TESTS);
-        break;
-      case RUNTIME:
-        searchScope = module.getModuleRuntimeScope(type == Type.TESTS);
-        break;
-    }
+    GlobalSearchScope searchScope = switch (scope) {
+      case MODULE -> module.getModuleScope();
+      case COMPILE -> module.getModuleWithDependenciesAndLibrariesScope(type == Type.TESTS);
+      case RUNTIME -> module.getModuleRuntimeScope(type == Type.TESTS);
+    };
 
     assertSearchScope(searchScope, expectedPaths);
   }

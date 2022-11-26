@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -22,13 +22,11 @@ import com.intellij.vcs.log.data.index.IndexDiagnosticRunner;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
-import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
+
+import static com.intellij.diagnostic.telemetry.TraceKt.runSpanWithScope;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -161,14 +161,13 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
                                                                      false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            Scope scope = span.makeCurrent();
-            indicator.setIndeterminate(true);
-            resetState();
-            readCurrentUser();
-            DataPack dataPack = myRefresher.readFirstBlock();
-            fireDataPackChangeEvent(dataPack);
-            span.end();
-            scope.close();
+            runSpanWithScope(span, () -> {
+              indicator.setIndeterminate(true);
+              resetState();
+              readCurrentUser();
+              myRefresher.readFirstBlock();
+              fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
+            });
           }
 
           @Override

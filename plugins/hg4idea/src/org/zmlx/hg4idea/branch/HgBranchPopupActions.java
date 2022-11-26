@@ -9,10 +9,7 @@ import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -192,10 +189,15 @@ public class HgBranchPopupActions {
       List<Change> changesForRepositories = ContainerUtil.filter(activeChangeList.getChanges(),
                                                                  change -> myRepositories.contains(repositoryManager.getRepositoryForFile(
                                                                    ChangesUtil.getFilePath(change))));
-      HgCloseBranchExecutor closeBranchExecutor = vcs.getCloseBranchExecutor();
-      closeBranchExecutor.setRepositories(myRepositories);
+      HgCloseBranchExecutor closeBranchExecutor = new HgCloseBranchExecutor(myRepositories);
       CommitChangeListDialog.commitChanges(project, changesForRepositories, changesForRepositories, activeChangeList,
-                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null, false); //NON-NLS
+                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null,
+                                           false); //NON-NLS
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -219,6 +221,11 @@ public class HgBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, myRepositories, HgBundle.message("action.not.possible.in.fresh.repo.new.bookmark"));
     }
@@ -239,7 +246,7 @@ public class HgBranchPopupActions {
   public static class HgShowUnnamedHeadsForCurrentBranchAction extends ActionGroup implements DumbAware {
     @NotNull final HgRepository myRepository;
     @NotNull final String myCurrentBranchName;
-    @NotNull Collection<Hash> myHeads;
+    @NotNull final Collection<Hash> myHeads;
 
     public HgShowUnnamedHeadsForCurrentBranchAction(@NotNull HgRepository repository) {
       super(Presentation.NULL_STRING, true);
@@ -273,6 +280,11 @@ public class HgBranchPopupActions {
           .add(new HgCommonBranchActions(myRepository.getProject(), Collections.singletonList(myRepository), hash.toShortString()));
       }
       return branchHeadActions.toArray(AnAction.EMPTY_ARRAY);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

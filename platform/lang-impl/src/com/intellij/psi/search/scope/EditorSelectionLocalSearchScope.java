@@ -62,7 +62,7 @@ public class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope 
 
       int[] selectionStarts = selectionModel.getBlockSelectionStarts();
       int[] selectionEnds = selectionModel.getBlockSelectionEnds();
-      final List<PsiElement> elements = new ArrayList<>();
+      final List<@NotNull PsiElement> elements = new ArrayList<>();
 
       for (int i = 0; i < selectionStarts.length; ++i) {
         collectPsiElementsAtRange(psiFile, elements, selectionStarts[i], selectionEnds[i]);
@@ -73,12 +73,12 @@ public class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope 
   }
 
   @Override
-  protected PsiElement[] getPsiElements() {
+  protected @NotNull PsiElement @NotNull [] getPsiElements() {
     if (myPsiElements == null) init();
     return myPsiElements;
   }
 
-  private TextRange[] getRanges() {
+  private @NotNull TextRange @NotNull [] getRanges() {
     initVirtualFilesAndRanges();
     return myRanges;
   }
@@ -177,9 +177,8 @@ public class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope 
     return false;
   }
 
-  @NotNull
   @Override
-  public TextRange[] getRanges(@NotNull VirtualFile file) {
+  public @NotNull TextRange @NotNull [] getRanges(@NotNull VirtualFile file) {
     VirtualFile[] files = getVirtualFiles();
     if (files.length == 1 && files[0].equals(file)) {
       return getRanges();

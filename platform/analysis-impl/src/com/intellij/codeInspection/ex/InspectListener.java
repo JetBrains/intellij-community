@@ -22,6 +22,8 @@ public interface InspectListener {
 
   enum ActivityKind {
     REFERENCE_SEARCH,
-    GLOBAL_POST_RUN_ACTIVITIES
+    GLOBAL_POST_RUN_ACTIVITIES,
+    EXTERNAL_TOOLS_CONFIGURATION,
+    EXTERNAL_TOOLS_EXECUTION
   }
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -17,13 +17,14 @@ import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
@@ -91,21 +92,66 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     }
 
     override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
-        val ktQualifiedExpression = reference.sourcePsi?.castSafelyTo<KtDotQualifiedExpression>() ?: return null
+        val ktQualifiedExpression = reference.sourcePsi?.asSafely<KtDotQualifiedExpression>() ?: return null
         val selector = ktQualifiedExpression.selectorExpression ?: return null
         val ptr = SmartPointerManager.createPointer(selector)
         ImportAllMembersIntention().applyTo(ktQualifiedExpression, null)
         return ptr.element?.toUElementOfType()
+    }
+
+    override fun initializeField(uField: UField, uParameter: UParameter) {
+        val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return
+        val sourcePsi = uMethod.sourcePsi ?: return
+        if (sourcePsi is KtPrimaryConstructor) {
+            if (uField.name == uParameter.name) {
+                val psiElement = uParameter.sourcePsi ?: return
+                val ktParameter = KtPsiFactory(psiElement.project).createParameter(uField.sourcePsi?.text ?: return)
+                ktParameter.modifierList?.getModifier(KtTokens.FINAL_KEYWORD)?.delete()
+                ktParameter.defaultValue?.delete()
+                ktParameter.equalsToken?.delete()
+                val psiField = uField.sourcePsi
+                if (psiField != null) {
+                    val nextSibling = psiField.nextSibling
+                    if (nextSibling is PsiWhiteSpace) {
+                        nextSibling.delete()
+                    }
+                    psiField.delete()
+                }
+                psiElement.replace(ktParameter)
+            }
+            else {
+                val property = uField.sourcePsi as? KtProperty ?: return
+                property.initializer = KtPsiFactory(property.project).createExpression(uParameter.name)
+            }
+            return
+        }
+
+        val body = (sourcePsi as? KtDeclarationWithBody)?.bodyBlockExpression ?: return
+        val ktPsiFactory = KtPsiFactory(sourcePsi)
+        val assigmentExpression = ktPsiFactory.buildExpression {
+            if (uField.name == uParameter.name) {
+                appendFixedText("this.")
+            }
+            appendName(Name.identifier(uField.name))
+            appendFixedText(" = ")
+            appendName(Name.identifier(uParameter.name))
+        }
+
+        body.addBefore(assigmentExpression, body.rBrace)
     }
 }
 
 private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != null && oldPsi.rBrace != null
 
 class KotlinUastElementFactory(project: Project) : UastElementFactory {
-    private val psiFactory = KtPsiFactory(project)
+    private val contextlessPsiFactory = KtPsiFactory(project)
+
+    private fun psiFactory(context: PsiElement?): KtPsiFactory {
+        return if (context != null) KtPsiFactory.contextual(context) else contextlessPsiFactory
+    }
 
     override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
-        return psiFactory.createExpression(qualifiedName).let {
+        return psiFactory(context).createExpression(qualifiedName).let {
             when (it) {
                 is KtDotQualifiedExpression -> KotlinUQualifiedReferenceExpression(it, null)
                 is KtSafeQualifiedExpression -> KotlinUSafeQualifiedExpression(it, null)
@@ -124,6 +170,8 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         context: PsiElement?
     ): UCallExpression? {
         if (kind != UastCallKind.METHOD_CALL) return null
+
+        val psiFactory = psiFactory(context)
 
         val name = methodName.quoteIfNeeded()
         val methodCall = psiFactory.createExpression(
@@ -193,16 +241,16 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         context: PsiElement?
     ): UCallableReferenceExpression? {
         val text = receiver?.sourcePsi?.text ?: ""
-        val callableExpression = psiFactory.createCallableReferenceExpression("$text::$methodName") ?: return null
+        val callableExpression = psiFactory(context).createCallableReferenceExpression("$text::$methodName") ?: return null
         return KotlinUCallableReferenceExpression(callableExpression, null)
     }
 
     override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression {
-        return KotlinStringULiteralExpression(psiFactory.createExpression(StringUtil.wrapWithDoubleQuote(text)), null)
+        return KotlinStringULiteralExpression(psiFactory(context).createExpression(StringUtil.wrapWithDoubleQuote(text)), null)
     }
 
     override fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression? {
-        return when (val literalExpr = psiFactory.createExpression(long.toString() + "L")) {
+        return when (val literalExpr = psiFactory(context).createExpression(long.toString() + "L")) {
             is KtConstantExpression -> KotlinULiteralExpression(literalExpr, null)
             is KtPrefixExpression -> KotlinUPrefixExpression(literalExpr, null)
             else -> null
@@ -210,15 +258,15 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     override fun createNullLiteral(context: PsiElement?): ULiteralExpression {
-        return psiFactory.createExpression("null").toUElementOfType()!!
+        return psiFactory(context).createExpression("null").toUElementOfType()!!
     }
 
     @Suppress("UNUSED_PARAMETER")
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
-        return psiFactory.createExpression(value.toString()).toUElementOfType()!!
+        return psiFactory(context).createExpression(value.toString()).toUElementOfType()!!
     }
 
-    private fun KtExpression.ensureBlockExpressionBraces(): KtExpression {
+    private fun KtExpression.ensureBlockExpressionBraces(psiFactory: KtPsiFactory): KtExpression {
         if (this !is KtBlockExpression || hasBraces(this)) return this
         val blockExpression = psiFactory.createBlock(this.statements.joinToString("\n") { "println()" })
         for ((placeholder, statement) in blockExpression.statements.zip(this.statements)) {
@@ -243,8 +291,14 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         val thenBranchPsi = thenBranch.sourcePsi as? KtExpression ?: return null
         val elseBranchPsi = elseBranch?.sourcePsi as? KtExpression
 
+        val psiFactory = psiFactory(context)
+
         return KotlinUIfExpression(
-            psiFactory.createIf(conditionPsi, thenBranchPsi.ensureBlockExpressionBraces(), elseBranchPsi?.ensureBlockExpressionBraces()),
+            psiFactory.createIf(
+                conditionPsi,
+                thenBranchPsi.ensureBlockExpressionBraces(psiFactory),
+                elseBranchPsi?.ensureBlockExpressionBraces(psiFactory)
+            ),
             givenParent = null
         )
     }
@@ -257,7 +311,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
     override fun createParenthesizedExpression(expression: UExpression, context: PsiElement?): UParenthesizedExpression? {
         val source = expression.sourcePsi ?: return null
-        val parenthesized = psiFactory.createExpression("(${source.text})") as? KtParenthesizedExpression ?: return null
+        val parenthesized = psiFactory(context).createExpression("(${source.text})") as? KtParenthesizedExpression ?: return null
         return KotlinUParenthesizedExpression(parenthesized, null)
     }
 
@@ -268,7 +322,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     override fun createSimpleReference(name: String, context: PsiElement?): USimpleNameReferenceExpression {
-        return KotlinUSimpleReferenceExpression(psiFactory.createSimpleName(name), null)
+        return KotlinUSimpleReferenceExpression(psiFactory(context).createSimpleName(name), null)
     }
 
     @Deprecated("use version with context parameter")
@@ -289,7 +343,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
     override fun createReturnExpresion(expression: UExpression?, inLambda: Boolean, context: PsiElement?): UReturnExpression {
         val label = if (inLambda && context != null) getParentLambdaLabelName(context)?.let { "@$it" } ?: "" else ""
-        val returnExpression = psiFactory.createExpression("return$label 1") as KtReturnExpression
+        val returnExpression = psiFactory(context).createExpression("return$label 1") as KtReturnExpression
         val sourcePsi = expression?.sourcePsi
         if (sourcePsi != null) {
             returnExpression.returnedExpression!!.replace(sourcePsi)
@@ -325,19 +379,20 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         operator: UastBinaryOperator,
         context: PsiElement?
     ): UBinaryExpression? {
-        val binaryExpression = joinBinaryExpression(leftOperand, rightOperand, operator) ?: return null
+        val binaryExpression = joinBinaryExpression(leftOperand, rightOperand, operator, context) ?: return null
         return KotlinUBinaryExpression(binaryExpression, null)
     }
 
     private fun joinBinaryExpression(
         leftOperand: UExpression,
         rightOperand: UExpression,
-        operator: UastBinaryOperator
+        operator: UastBinaryOperator,
+        context: PsiElement?
     ): KtBinaryExpression? {
         val leftPsi = leftOperand.sourcePsi ?: return null
         val rightPsi = rightOperand.sourcePsi ?: return null
 
-        val binaryExpression = psiFactory.createExpression("a ${operator.text} b") as? KtBinaryExpression ?: return null
+        val binaryExpression = psiFactory(context).createExpression("a ${operator.text} b") as? KtBinaryExpression ?: return null
         binaryExpression.left?.replace(leftPsi)
         binaryExpression.right?.replace(rightPsi)
         return binaryExpression
@@ -359,18 +414,17 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         operator: UastBinaryOperator,
         context: PsiElement?
     ): UPolyadicExpression? {
-
         fun unwrapParentheses(exp: KtExpression?) {
             if (exp !is KtParenthesizedExpression) return
             if (!KtPsiUtil.areParenthesesUseless(exp)) return
             exp.expression?.let { exp.replace(it) }
         }
 
-        val binaryExpression = joinBinaryExpression(leftOperand, rightOperand, operator) ?: return null
+        val binaryExpression = joinBinaryExpression(leftOperand, rightOperand, operator, context) ?: return null
         unwrapParentheses(binaryExpression.left)
         unwrapParentheses(binaryExpression.right)
 
-        return psiFactory.createExpression(binaryExpression.text).toUElementOfType()!!
+        return psiFactory(context).createExpression(binaryExpression.text).toUElementOfType()!!
     }
 
     @Deprecated("use version with context parameter")
@@ -381,7 +435,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
     override fun createBlockExpression(expressions: List<UExpression>, context: PsiElement?): UBlockExpression {
         val sourceExpressions = expressions.flatMap { it.toSourcePsiFakeAware() }
-        val block = psiFactory.createBlock(
+        val block = psiFactory(context).createBlock(
             sourceExpressions.joinToString(separator = "\n") { "println()" }
         )
         for ((placeholder, psiElement) in block.statements.zip(sourceExpressions)) {
@@ -421,7 +475,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         } else
             listOf(body.sourcePsi!!)
 
-        val ktLambdaExpression = psiFactory.createLambdaExpression(
+        val ktLambdaExpression = psiFactory(context).createLambdaExpression(
             parameters.joinToString(", ") { p ->
                 val ktype = resolutionFacade?.let { p.type?.resolveToKotlinType(it) }
                 StringBuilder().apply {
@@ -457,7 +511,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         val validator = (context as? KtElement)?.let { usedNamesFilter(it) } ?: { true }
         val ktype = resolutionFacade?.let { type?.resolveToKotlinType(it) }
 
-        val function = psiFactory.createFunction(
+        val function = psiFactory(context).createFunction(
             buildString {
                 append("fun foo() { ")
                 append(if (immutable) "val" else "var")

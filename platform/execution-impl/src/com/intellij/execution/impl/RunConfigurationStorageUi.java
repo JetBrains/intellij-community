@@ -380,13 +380,9 @@ public class RunConfigurationStorageUi {
 
   public void apply(@NotNull RunnerAndConfigurationSettings settings) {
     switch (myRCStorageType) {
-      case Workspace:
-        settings.storeInLocalWorkspace();
-        break;
-      case DotIdeaFolder:
-        settings.storeInDotIdeaFolder();
-        break;
-      case ArbitraryFileInProject:
+      case Workspace -> settings.storeInLocalWorkspace();
+      case DotIdeaFolder -> settings.storeInDotIdeaFolder();
+      case ArbitraryFileInProject -> {
         if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
           // don't apply incorrect UI to the model
         }
@@ -396,9 +392,8 @@ public class RunConfigurationStorageUi {
           String fileName = getFileNameByRCName(name);
           settings.storeInArbitraryFileInProject(myFolderPathIfStoredInArbitraryFile + "/" + fileName);
         }
-        break;
-      default:
-        throw new IllegalStateException("Unexpected value: " + myRCStorageType);
+      }
+      default -> throw new IllegalStateException("Unexpected value: " + myRCStorageType);
     }
   }
 

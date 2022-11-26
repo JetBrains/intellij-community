@@ -43,7 +43,7 @@ public interface WordOptimizer {
           return false;
         }
 
-        final RegExpPredicate predicate = handler.findRegExpPredicate();
+        final RegExpPredicate predicate = handler.findPredicate(RegExpPredicate.class);
         if (predicate != null && predicate.couldBeOptimized()) {
           if (handler.isStrictSubtype() || handler.isSubtype()) {
             final List<String> descendants = getDescendantsOf(predicate.getRegExp(), handler.isSubtype(), compileContext.getProject());

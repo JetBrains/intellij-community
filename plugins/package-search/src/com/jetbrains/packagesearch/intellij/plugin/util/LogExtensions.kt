@@ -89,7 +89,7 @@ fun logDebug(traceInfo: TraceInfo? = null, contextName: String? = null, throwabl
 }
 
 fun logDebug(message: String, throwable: Throwable? = null) {
-    if (!FeatureFlags.useDebugLogging || isNotLoggable(throwable)) return
+    if (!FeatureFlags.useDebugLogging.value || isNotLoggable(throwable)) return
     if (!logger.isDebugEnabled) warnNotLoggable()
     logger.debug(message, throwable)
 }
@@ -110,14 +110,14 @@ private inline fun catchAndSuppress(action: () -> Unit) {
 }
 
 fun logTrace(message: String) = catchAndSuppress {
-    if (!FeatureFlags.useDebugLogging) return
+    if (!FeatureFlags.useDebugLogging.value) return
     if (!logger.isTraceEnabled) warnNotLoggable()
 
     logger.trace(message)
 }
 
 fun logTrace(throwable: Throwable) = catchAndSuppress {
-    if (!FeatureFlags.useDebugLogging) return
+    if (!FeatureFlags.useDebugLogging.value) return
     if (!logger.isTraceEnabled) warnNotLoggable()
 
     logger.trace(throwable)

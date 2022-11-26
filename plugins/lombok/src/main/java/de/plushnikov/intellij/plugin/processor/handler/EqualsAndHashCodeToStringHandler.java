@@ -3,9 +3,12 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -52,6 +55,10 @@ public class EqualsAndHashCodeToStringHandler {
       return psiField;
     }
 
+    public boolean isField() {
+      return psiField != null;
+    }
+
     public PsiMethod getMethod() {
       return psiMethod;
     }
@@ -80,10 +87,11 @@ public class EqualsAndHashCodeToStringHandler {
     }
   }
 
-  public Collection<MemberInfo> filterFields(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
-                                             boolean filterTransient, String includeAnnotationProperty) {
+  public static Collection<MemberInfo> filterMembers(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
+                                                     boolean filterTransient, String includeAnnotationProperty,
+                                                     @Nullable ConfigKey onlyExplicitlyIncludedConfigKey) {
     final boolean explicitOf = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "of");
-    final boolean onlyExplicitlyIncluded = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);
+    final boolean onlyExplicitlyIncluded = checkOnlyExplicitlyIncluded(psiClass, psiAnnotation, onlyExplicitlyIncludedConfigKey);
 
     final String annotationFQN = psiAnnotation.getQualifiedName();
     final String annotationIncludeFQN = annotationFQN + ".Include";
@@ -114,11 +122,8 @@ public class EqualsAndHashCodeToStringHandler {
         if (!(psiMember instanceof PsiField)) {
           continue;
         }
-        final PsiField psiField = (PsiField) psiMember;
+        final PsiField psiField = (PsiField)psiMember;
         final String fieldName = psiField.getName();
-        if (null == fieldName) {
-          continue;
-        }
 
         if (ofProperty.contains(fieldName)) {
           result.add(new MemberInfo(psiField));
@@ -154,7 +159,7 @@ public class EqualsAndHashCodeToStringHandler {
         }
 
         if ((psiMember instanceof PsiMethod)) {
-          final PsiMethod psiMethod = (PsiMethod) psiMember;
+          final PsiMethod psiMethod = (PsiMethod)psiMember;
           if (0 == psiMethod.getParameterList().getParametersCount()) {
             fieldNames2BeReplaced.add(newMemberName);
             int memberRank = calcMemberRank(includeAnnotation);
@@ -162,7 +167,7 @@ public class EqualsAndHashCodeToStringHandler {
           }
         } else {
           int memberRank = calcMemberRank(includeAnnotation);
-          result.add(new MemberInfo((PsiField) psiMember, newMemberName, memberRank));
+          result.add(new MemberInfo((PsiField)psiMember, newMemberName, memberRank));
         }
       }
     }
@@ -176,11 +181,30 @@ public class EqualsAndHashCodeToStringHandler {
     return result;
   }
 
-  private int calcMemberRank(@NotNull PsiAnnotation includeAnnotation) {
+  private static boolean checkOnlyExplicitlyIncluded(@NotNull PsiClass psiClass,
+                                                     @NotNull PsiAnnotation psiAnnotation,
+                                                     @Nullable ConfigKey onlyExplicitlyIncludedConfigKey) {
+    final boolean onlyExplicitlyIncluded;
+    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded");
+    if (null == declaredAnnotationValue) {
+      if (null != onlyExplicitlyIncludedConfigKey) {
+        onlyExplicitlyIncluded = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(onlyExplicitlyIncludedConfigKey, psiClass);
+      }
+      else {
+        onlyExplicitlyIncluded = false;
+      }
+    }
+    else {
+      onlyExplicitlyIncluded = declaredAnnotationValue;
+    }
+    return onlyExplicitlyIncluded;
+  }
+
+  private static int calcMemberRank(@NotNull PsiAnnotation includeAnnotation) {
     return PsiAnnotationUtil.getIntAnnotationValue(includeAnnotation, TO_STRING_RANK_ANNOTATION_PARAMETER, 0);
   }
 
-  public String getMemberAccessorName(@NotNull MemberInfo memberInfo, boolean doNotUseGetters, @NotNull PsiClass psiClass) {
+  public static String getMemberAccessorName(@NotNull MemberInfo memberInfo, boolean doNotUseGetters, @NotNull PsiClass psiClass) {
     final String memberAccessor;
     if (null == memberInfo.getMethod()) {
       memberAccessor = buildAttributeNameString(doNotUseGetters, memberInfo.getField(), psiClass);
@@ -190,7 +214,7 @@ public class EqualsAndHashCodeToStringHandler {
     return memberAccessor;
   }
 
-  private String buildAttributeNameString(boolean doNotUseGetters, @NotNull PsiField classField, @NotNull PsiClass psiClass) {
+  private static String buildAttributeNameString(boolean doNotUseGetters, @NotNull PsiField classField, @NotNull PsiClass psiClass) {
     final String fieldName = classField.getName();
     if (doNotUseGetters) {
       return fieldName;
@@ -198,7 +222,8 @@ public class EqualsAndHashCodeToStringHandler {
       final String getterName = LombokUtils.getGetterName(classField);
 
       final boolean hasGetter;
-      final boolean annotatedWith = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.DATA, LombokClassNames.VALUE, LombokClassNames.GETTER);
+      final boolean annotatedWith =
+        PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.DATA, LombokClassNames.VALUE, LombokClassNames.GETTER);
       if (annotatedWith) {
         final PsiAnnotation getterLombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokClassNames.GETTER);
         hasGetter = null == getterLombokAnnotation || null != LombokProcessorUtil.getMethodModifier(getterLombokAnnotation);
@@ -210,7 +235,7 @@ public class EqualsAndHashCodeToStringHandler {
     }
   }
 
-  private Collection<String> makeSet(@NotNull Collection<String> exclude) {
+  private static Collection<String> makeSet(@NotNull Collection<String> exclude) {
     if (exclude.isEmpty()) {
       return Collections.emptySet();
     } else {

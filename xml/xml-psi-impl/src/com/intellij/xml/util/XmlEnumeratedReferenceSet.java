@@ -14,7 +14,7 @@ import java.util.List;
 
 public class XmlEnumeratedReferenceSet extends ReferenceSetBase<XmlEnumeratedValueReference> {
 
-  private final XmlEnumerationDescriptor myDescriptor;
+  protected final XmlEnumerationDescriptor myDescriptor;
 
   public XmlEnumeratedReferenceSet(@NotNull XmlElement element, XmlEnumerationDescriptor descriptor) {
     super(ElementManipulators.getValueText(element),element, ElementManipulators.getOffsetInElement(element), ' ');
@@ -30,6 +30,6 @@ public class XmlEnumeratedReferenceSet extends ReferenceSetBase<XmlEnumeratedVal
   @Override
   public List<XmlEnumeratedValueReference> getReferences() {
     if (myDescriptor.isList()) return super.getReferences();
-    return Collections.singletonList(new XmlEnumeratedValueReference((XmlElement)getElement(), myDescriptor));
+    return Collections.singletonList(createReference(null, 0));
   }
 }

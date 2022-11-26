@@ -6,11 +6,14 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
@@ -22,8 +25,14 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +52,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(this::createScopeByFile, ContainerUtil::createConcurrentWeakKeySoftValueMap);
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.compute(() -> createScopeByFile(key)), ContainerUtil::createConcurrentWeakKeySoftValueMap);
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -199,7 +208,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     Module module = projectFileIndex.getModuleForFile(notNullVFile);
     if (module == null) {
       List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
-      if (entries.isEmpty() && (myAdditionalIndexableFileSet.isInSet(notNullVFile) || isFromAdditionalLibraries(notNullVFile))) {
+      if (entries.isEmpty() && (myAdditionalIndexableFileSet.isInSet(notNullVFile) || isFromAdditionalLibraries(notNullVFile)
+                                || isFromLibraryEntities(notNullVFile))) {
         return allScope;
       }
 
@@ -219,6 +229,30 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
         if (library.contains(file)) {
           return true;
         }
+      }
+    }
+    return false;
+  }
+
+  private boolean isFromLibraryEntities(@NotNull VirtualFile file) {
+    EntityStorage snapshot = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+    for (CustomEntityProjectModelInfoProvider<? extends WorkspaceEntity> provider : CustomEntityProjectModelInfoProvider.EP.getExtensionList()) {
+      if (isFromLibraryEntities(file, provider, snapshot)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static <T extends WorkspaceEntity> boolean isFromLibraryEntities(@NotNull VirtualFile file,
+                                                                           @NotNull CustomEntityProjectModelInfoProvider<T> provider,
+                                                                           @NotNull EntityStorage snapshot) {
+    Sequence<T> entities = snapshot.entities(provider.getEntityClass());
+    for (CustomEntityProjectModelInfoProvider.LibraryRoots<T> libraryRoots :
+      SequencesKt.asIterable(provider.getLibraryRoots(entities, snapshot))) {
+      if (VfsUtilCore.isUnder(file, new HashSet<>(libraryRoots.sources)) &&
+          !VfsUtilCore.isUnder(file, new HashSet<>(libraryRoots.excluded))) {
+        return true;
       }
     }
     return false;

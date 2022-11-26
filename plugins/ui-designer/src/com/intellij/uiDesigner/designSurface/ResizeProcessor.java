@@ -17,10 +17,6 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ResizeProcessor extends EventProcessor {
   private final RadComponent myComponent;
   private final int myResizeMask;

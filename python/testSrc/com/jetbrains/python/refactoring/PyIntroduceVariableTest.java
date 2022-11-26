@@ -311,10 +311,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   }
 
   public void testAttributesAreNotConsideredAsUsedNames() {
-    myFixture.configureByText(PythonFileType.INSTANCE, "def f<caret>unc():\n" +
-                                                       "    foo()\n" +
-                                                       "    baz.bar()\n" +
-                                                       "    return quux[42].spam + 'eggs'");
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      def f<caret>unc():
+          foo()
+          baz.bar()
+          return quux[42].spam + 'eggs'""");
     final PsiElement element = myFixture.getElementAtCaret();
     assertInstanceOf(element, PyFunction.class);
     final Collection<String> usedNames = PyUtil.collectUsedNames(element);

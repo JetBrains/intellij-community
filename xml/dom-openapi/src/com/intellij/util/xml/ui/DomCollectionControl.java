@@ -37,9 +37,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable, DataProvider {
   private static final DataKey<DomCollectionControl> DOM_COLLECTION_CONTROL = DataKey.create("DomCollectionControl");
 

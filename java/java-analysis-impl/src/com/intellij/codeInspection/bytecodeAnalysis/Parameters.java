@@ -273,20 +273,18 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     int opcode = insnNode.getOpcode();
     switch (opcode) {
-      case ARETURN:
-      case IRETURN:
-      case LRETURN:
-      case FRETURN:
-      case DRETURN:
-      case RETURN:
+      case ARETURN, IRETURN, LRETURN, FRETURN, DRETURN, RETURN -> {
         if (!hasCompanions) {
           earlyResult = Return;
-        } else {
+        }
+        else {
           results.set(stateIndex, Return);
           addComputed(insnIndex, state);
         }
         return;
-      default:
+      }
+      default -> {
+      }
     }
 
     if (opcode == ATHROW) {
@@ -360,17 +358,16 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
   private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
     switch (insnNode.getType()) {
-      case AbstractInsnNode.LABEL:
-      case AbstractInsnNode.LINE:
-      case AbstractInsnNode.FRAME:
+      case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME -> {
         nextFrame = frame;
         subResult = Identity;
-        break;
-      default:
+      }
+      default -> {
         nextFrame = new Frame<>(frame);
         interpreter.reset(false);
         nextFrame.execute(insnNode, interpreter);
         subResult = interpreter.getSubResult();
+      }
     }
   }
 }
@@ -473,18 +470,17 @@ class NullableInAnalysis extends Analysis<PResult> {
 
     int opcode = insnNode.getOpcode();
     switch (opcode) {
-      case ARETURN:
+      case ARETURN -> {
         if (popValue(frame) instanceof ParamValue) {
           earlyResult = NPE;
         }
         return;
-      case IRETURN:
-      case LRETURN:
-      case FRETURN:
-      case DRETURN:
-      case RETURN:
+      }
+      case IRETURN, LRETURN, FRETURN, DRETURN, RETURN -> {
         return;
-      default:
+      }
+      default -> {
+      }
     }
 
     if (opcode == ATHROW) {
@@ -538,19 +534,18 @@ class NullableInAnalysis extends Analysis<PResult> {
 
   private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode, boolean taken) throws AnalyzerException {
     switch (insnNode.getType()) {
-      case AbstractInsnNode.LABEL:
-      case AbstractInsnNode.LINE:
-      case AbstractInsnNode.FRAME:
+      case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME -> {
         nextFrame = frame;
         subResult = Identity;
         top = false;
-        break;
-      default:
+      }
+      default -> {
         nextFrame = new Frame<>(frame);
         interpreter.reset(taken);
         nextFrame.execute(insnNode, interpreter);
         subResult = interpreter.getSubResult();
         top = interpreter.top;
+      }
     }
   }
 }
@@ -582,25 +577,23 @@ abstract class NullityInterpreter extends BasicInterpreter {
   @Override
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case GETFIELD:
-      case ARRAYLENGTH:
-      case MONITORENTER:
+      case GETFIELD, ARRAYLENGTH, MONITORENTER -> {
         if (value instanceof ParamValue) {
           subResult = NPE;
         }
-        break;
-      case CHECKCAST:
+      }
+      case CHECKCAST -> {
         if (value instanceof ParamValue) {
           return new ParamValue(Type.getObjectType(((TypeInsnNode)insn).desc));
         }
-        break;
-      case INSTANCEOF:
+      }
+      case INSTANCEOF -> {
         if (value instanceof ParamValue) {
           return InstanceOfCheckValue;
         }
-        break;
-      default:
-
+      }
+      default -> {
+      }
     }
     return super.unaryOperation(insn, value);
   }
@@ -608,27 +601,21 @@ abstract class NullityInterpreter extends BasicInterpreter {
   @Override
   public BasicValue binaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case IALOAD:
-      case LALOAD:
-      case FALOAD:
-      case DALOAD:
-      case AALOAD:
-      case BALOAD:
-      case CALOAD:
-      case SALOAD:
+      case IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD -> {
         if (value1 instanceof ParamValue) {
           subResult = NPE;
         }
-        break;
-      case PUTFIELD:
+      }
+      case PUTFIELD -> {
         if (value1 instanceof ParamValue) {
           subResult = NPE;
         }
         if (nullableAnalysis && value2 instanceof ParamValue) {
           subResult = NPE;
         }
-        break;
-      default:
+      }
+      default -> {
+      }
     }
     return super.binaryOperation(insn, value1, value2);
   }
@@ -636,26 +623,21 @@ abstract class NullityInterpreter extends BasicInterpreter {
   @Override
   public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     switch (insn.getOpcode()) {
-      case IASTORE:
-      case LASTORE:
-      case FASTORE:
-      case DASTORE:
-      case BASTORE:
-      case CASTORE:
-      case SASTORE:
+      case IASTORE, LASTORE, FASTORE, DASTORE, BASTORE, CASTORE, SASTORE -> {
         if (value1 instanceof ParamValue) {
           subResult = NPE;
         }
-        break;
-      case AASTORE:
+      }
+      case AASTORE -> {
         if (value1 instanceof ParamValue) {
           subResult = NPE;
         }
         if (nullableAnalysis && value3 instanceof ParamValue) {
           subResult = NPE;
         }
-        break;
-      default:
+      }
+      default -> {
+      }
     }
     return null;
   }

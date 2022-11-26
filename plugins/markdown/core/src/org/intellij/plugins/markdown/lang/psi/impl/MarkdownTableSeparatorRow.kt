@@ -7,6 +7,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parents
 import org.intellij.plugins.markdown.editor.tables.TableProps
+import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.util.hasType
@@ -18,7 +19,8 @@ class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(Mark
     }
 
   private fun buildCellsRanges(): List<TextRange> {
-    val elementText = text
+    val actualRange = calculateActualTextRange().shiftLeft(startOffset)
+    val elementText = actualRange.substring(text)
     val cells = elementText.split(TableProps.SEPARATOR_CHAR).toMutableList()
     val startedWithSeparator = cells.firstOrNull()?.isEmpty() == true
     if (startedWithSeparator) {
@@ -31,8 +33,7 @@ class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(Mark
     if (cells.isEmpty()) {
       return emptyList()
     }
-    val elementRange = textRange
-    var left = elementRange.startOffset
+    var left = actualRange.startOffset
     if (startedWithSeparator) {
       left += 1
     }
@@ -45,7 +46,7 @@ class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(Mark
       right = left + cell.length
       ranges.add(TextRange(left, right))
     }
-    return ranges
+    return ranges.map { it.shiftRight(startOffset) }
   }
 
   val parentTable: MarkdownTable?
@@ -54,7 +55,7 @@ class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(Mark
   val cellsRanges: List<TextRange>
     get() = cachedCellsRanges
 
-  val cellsLocalRanges: List<TextRange>
+  private val cellsLocalRanges: List<TextRange>
     get() = cachedCellsRanges.map { it.shiftLeft(startOffset) }
 
   val cellsCount: Int
@@ -107,7 +108,7 @@ class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(Mark
     CENTER
   }
 
-  fun getCellAlignment(range: TextRange): CellAlignment {
+  private fun getCellAlignment(range: TextRange): CellAlignment {
     val cellText = text.subSequence(range.startOffset, range.endOffset)
     val firstIndex = cellText.indexOfFirst { it == ':' }
     if (firstIndex == -1) {

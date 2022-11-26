@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,13 +16,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service(Service.Level.APP)
+@ApiStatus.Internal
 public final class LiveTemplateContextService implements Disposable {
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final ReadWriteLock myRwLock = new ReentrantReadWriteLock();
 
-  private Map<String, LiveTemplateContext> liveTemplateIds = Map.of();
-  private final Map<Class<?>, LiveTemplateContext> liveTemplateClasses = new ConcurrentHashMap<>();
-
-  private Map<String, String> internalIds = new HashMap<>();
+  private Map<String, LiveTemplateContext> myLiveTemplateIds = Map.of();
+  private final Map<Class<?>, LiveTemplateContext> myLiveTemplateClasses = new ConcurrentHashMap<>();
+  private Map<String, String> myInternalIds = new HashMap<>();
 
   public LiveTemplateContextService() {
     loadLiveTemplateContexts();
@@ -34,48 +35,50 @@ public final class LiveTemplateContextService implements Disposable {
     return ApplicationManager.getApplication().getService(LiveTemplateContextService.class);
   }
 
-  public @NotNull Collection<LiveTemplateContext> getLiveTemplateContexts() {
-    lock.readLock().lock();
+  public @NotNull Collection<@NotNull LiveTemplateContext> getLiveTemplateContexts() {
+    myRwLock.readLock().lock();
     try {
-      return liveTemplateIds.values();
+      return myLiveTemplateIds.values();
     }
     finally {
-      lock.readLock().unlock();
+      myRwLock.readLock().unlock();
     }
   }
 
-  public @Nullable LiveTemplateContext getLiveTemplateContext(@NotNull String id) {
-    lock.readLock().lock();
+  public @Nullable LiveTemplateContext getLiveTemplateContext(@Nullable String id) {
+    if (id == null) return null;
+
+    myRwLock.readLock().lock();
     try {
-      return liveTemplateIds.get(id);
+      return myLiveTemplateIds.get(id);
     }
     finally {
-      lock.readLock().unlock();
+      myRwLock.readLock().unlock();
     }
   }
 
-  public @NotNull Map<String, String> getInternalIds() {
-    lock.readLock().lock();
+  public @NotNull Map<@NotNull String, @NotNull String> getInternalIds() {
+    myRwLock.readLock().lock();
     try {
-      return internalIds;
+      return myInternalIds;
     }
     finally {
-      lock.readLock().unlock();
+      myRwLock.readLock().unlock();
     }
   }
 
   public @Nullable LiveTemplateContext getLiveTemplateContext(@NotNull Class<?> clazz) {
-    lock.readLock().lock();
+    myRwLock.readLock().lock();
     try {
-      LiveTemplateContext existingBean = liveTemplateClasses.get(clazz);
+      LiveTemplateContext existingBean = myLiveTemplateClasses.get(clazz);
       if (existingBean != null) {
         return existingBean;
       }
 
-      for (LiveTemplateContext bean : liveTemplateIds.values()) {
+      for (LiveTemplateContext bean : myLiveTemplateIds.values()) {
         TemplateContextType instance = bean.getTemplateContextType();
         if (clazz.isInstance(instance)) {
-          liveTemplateClasses.put(clazz, bean);
+          myLiveTemplateClasses.put(clazz, bean);
           return bean;
         }
       }
@@ -83,29 +86,29 @@ public final class LiveTemplateContextService implements Disposable {
       return null;
     }
     finally {
-      lock.readLock().unlock();
+      myRwLock.readLock().unlock();
     }
   }
 
   public @NotNull TemplateContextType getTemplateContextType(@NotNull String id) {
     LiveTemplateContext context = getLiveTemplateContext(id);
-    if (context == null) throw new IllegalStateException("Unable to find LiveTemplateContext with contextId " + id);
+    if (context == null) throw new LiveTemplateContextNotFoundException("Unable to find LiveTemplateContext with contextId " + id);
 
     return context.getTemplateContextType();
   }
 
   public @NotNull TemplateContextType getTemplateContextType(@NotNull Class<?> clazz) {
     LiveTemplateContext context = getLiveTemplateContext(clazz);
-    if (context == null) throw new IllegalStateException("Unable to find LiveTemplateContext with class " + clazz);
+    if (context == null) throw new LiveTemplateContextNotFoundException("Unable to find LiveTemplateContext with class " + clazz);
 
     return context.getTemplateContextType();
   }
 
   private void loadLiveTemplateContexts() {
-    lock.writeLock().lock();
+    myRwLock.writeLock().lock();
     try {
       // reset previously calculated base contexts
-      for (LiveTemplateContext liveTemplateContext : liveTemplateIds.values()) {
+      for (LiveTemplateContext liveTemplateContext : myLiveTemplateIds.values()) {
         liveTemplateContext.getTemplateContextType().clearCachedBaseContextType();
       }
 
@@ -121,20 +124,36 @@ public final class LiveTemplateContextService implements Disposable {
         }
       }
 
-      this.liveTemplateIds = allIdsMap;
-      this.liveTemplateClasses.clear();
+      this.myLiveTemplateIds = allIdsMap;
+      this.myLiveTemplateClasses.clear();
 
-      this.internalIds = allIdsMap.values().stream()
+      this.myInternalIds = allIdsMap.values().stream()
         .map(LiveTemplateContext::getContextId)
         .distinct()
         .collect(Collectors.toMap(Function.identity(), Function.identity()));
     }
     finally {
-      lock.writeLock().unlock();
+      myRwLock.writeLock().unlock();
+    }
+  }
+
+  public @NotNull LiveTemplateContextsSnapshot getSnapshot() {
+    myRwLock.readLock().lock();
+    try {
+      return new LiveTemplateContextsSnapshot(myLiveTemplateIds); // myLiveTemplateIds is immutable
+    }
+    finally {
+      myRwLock.readLock().unlock();
     }
   }
 
   @Override
   public void dispose() {
+  }
+}
+
+final class LiveTemplateContextNotFoundException extends IllegalStateException {
+  LiveTemplateContextNotFoundException(String s) {
+    super(s);
   }
 }

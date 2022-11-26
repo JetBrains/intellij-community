@@ -38,6 +38,8 @@ import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import com.intellij.ui.BadgeIconSupplier;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
@@ -113,8 +115,27 @@ public final class ServersTreeStructure {
       RemoteServer<?> server = getServer();
       ServerConnection<?> connection = getConnection();
       presentation.setPresentableText(server.getName());
-      presentation
-        .setIcon(getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null));
+
+      Icon icon;
+
+      if (ExperimentalUI.isNewUI()) {
+        if (connection == null) {
+          icon = server.getType().getIcon();
+        }
+        else {
+          icon = switch (connection.getStatus()) {
+            case CONNECTED -> new BadgeIconSupplier(server.getType().getIcon()).getLiveIndicatorIcon();
+            case DISCONNECTED -> new LayeredIcon(server.getType().getIcon(), AllIcons.RunConfigurations.InvalidConfigurationLayer);
+            default -> server.getType().getIcon();
+          };
+        }
+      }
+      else {
+        icon = getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null);
+      }
+
+      presentation.setIcon(icon);
+
       presentation.setTooltip(connection != null ? connection.getStatusText() : null);
     }
 
@@ -209,14 +230,11 @@ public final class ServersTreeStructure {
 
     @Nullable
     private static Icon getStatusIcon(final ConnectionStatus status) {
-      switch (status) {
-        case CONNECTED:
-          return RemoteServersIcons.ResumeScaled;
-        case DISCONNECTED:
-          return RemoteServersIcons.SuspendScaled;
-        default:
-          return null;
-      }
+      return switch (status) {
+        case CONNECTED -> RemoteServersIcons.ResumeScaled;
+        case DISCONNECTED -> RemoteServersIcons.SuspendScaled;
+        default -> null;
+      };
     }
   }
 
@@ -360,7 +378,7 @@ public final class ServersTreeStructure {
       return result;
     }
 
-    protected void collectDeploymentChildren(List<AbstractTreeNode<?>> children) {
+    protected void collectDeploymentChildren(List<? super AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;
@@ -373,7 +391,7 @@ public final class ServersTreeStructure {
       }
     }
 
-    protected void collectLogChildren(List<AbstractTreeNode<?>> children) {
+    protected void collectLogChildren(List<? super AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;

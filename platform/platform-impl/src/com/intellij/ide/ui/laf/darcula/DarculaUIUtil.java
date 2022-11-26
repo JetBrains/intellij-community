@@ -36,6 +36,14 @@ import java.util.Locale;
  */
 @SuppressWarnings("UnregisteredNamedColor")
 public final class DarculaUIUtil {
+
+  private static final @NotNull JBColor DISABLED_BORDER_BORDER =
+    JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
+  private static final @NotNull JBColor BORDER_COLOR =
+    JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF));
+  private static final @NotNull JBColor FOCUSED_BORDER_COLOR =
+    JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA));
+
   public enum Outline {
     error {
       @Override
@@ -268,10 +276,8 @@ public final class DarculaUIUtil {
   }
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
-    return enabled ?
-           focused ? JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA)) :
-           JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF)) :
-           JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
+    if (enabled) return focused ? FOCUSED_BORDER_COLOR : BORDER_COLOR;
+    return DISABLED_BORDER_BORDER;
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {

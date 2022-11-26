@@ -1,11 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.concurrency.ThreadContext;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataValidators;
-import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -25,14 +24,12 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -42,11 +39,17 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDia
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.OwnerOptional;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -184,8 +187,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return new HeadlessDialog(wrapper);
     }
     else {
-      ActionCallback focused = new ActionCallback("DialogFocusedCallback");
-      MyDialog dialog = new MyDialog(OwnerOptional.fromComponent(owner).get(), wrapper, project, focused);
+      MyDialog dialog = new MyDialog(OwnerOptional.fromComponent(owner).get(), wrapper, project);
       dialog.setModalityType(ideModalityType.toAwtModality());
       return dialog;
     }
@@ -262,8 +264,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  @Nullable
-  public Container getContentPane() {
+  public @Nullable Container getContentPane() {
     return getRootPane() != null ? myDialog.getContentPane() : null;
   }
 
@@ -366,9 +367,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.setResizable(resizable);
   }
 
-  @NotNull
   @Override
-  public Point getLocation() {
+  public @NotNull Point getLocation() {
     return myDialog.getLocation();
   }
 
@@ -451,6 +451,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
+    Component componentToRestoreFocus = null;
+    KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    if (UIUtil.isSimpleWindow(kfm.getFocusedWindow())) {
+      // 'Simple' windows cannot be dialog owners, so focus won't return to them automatically on dialog closing
+      componentToRestoreFocus = kfm.getPermanentFocusOwner();
+    }
+
     try (
       AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET);
       AccessToken ignore2 = ThreadContext.resetThreadContext()
@@ -469,6 +476,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       myDialog.getFocusManager().doWhenFocusSettlesDown(() -> result.complete(null));
+    }
+
+    if (componentToRestoreFocus != null) {
+      componentToRestoreFocus.requestFocus();
     }
 
     return result;
@@ -541,17 +552,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
     private boolean myOpened = false;
-    private boolean myActivated = false;
 
     private MyDialog.MyWindowListener myWindowListener;
 
     private final WeakReference<Project> myProject;
-    private final ActionCallback myFocusedCallback;
 
     MyDialog(Window owner,
                     DialogWrapper dialogWrapper,
-                    Project project,
-                    @NotNull ActionCallback focused) {
+                    Project project) {
       super(owner);
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
@@ -559,16 +567,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
         @Override
         public boolean accept(Component aComponent) {
-          if (UIUtil.isFocusProxy(aComponent)) return false;
-          return super.accept(aComponent);
+          return !ComponentUtil.isFocusProxy(aComponent) && super.accept(aComponent);
         }
       });
-
-      myFocusedCallback = focused;
 
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
+      addWindowFocusListener(myWindowListener);
       UIUtil.setAutoRequestFocus(this, (owner != null && owner.isActive()) || !isDisableAutoRequestFocus());
     }
 
@@ -594,6 +600,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        Project project = getProject();
+        if (project != null && project.isInitialized()) {
+          return project;
+        }
+      }
       DialogWrapper wrapper = myDialogWrapper.get();
       Object wrapperData = wrapper instanceof DataProvider ? ((DataProvider)wrapper).getData(dataId) : null;
       if (wrapperData != null) {
@@ -637,9 +649,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.setBounds(r);
     }
 
-    @NotNull
     @Override
-    protected JRootPane createRootPane() {
+    protected @NotNull JRootPane createRootPane() {
       return new DialogRootPane();
     }
 
@@ -649,6 +660,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
       }
       super.addNotify();
+      if (SystemInfo.isMacOSVentura && Registry.is("ide.mac.stage.manager.support", false)) {
+        Foundation.executeOnMainThread(true, false, () -> {
+          ID window = MacUtil.getWindowFromJavaWindow(this);
+          Foundation.invoke(window, "setCollectionBehavior:", 1 << 4);
+        });
+      }
     }
 
     @Override
@@ -712,13 +729,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBounds(bounds);
       }
 
-      // Workaround for switching workspaces on dialog show
-      if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing", false) && !dialogWrapper.isModalProgress()) {
-        final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject.get());
-        AppIcon.getInstance().requestFocus(frame);
+      DialogWrapper wrapper = myDialogWrapper == null ? null : myDialogWrapper.get();
+      if (wrapper != null) {
+        wrapper.beforeShowCallback();
       }
 
-      setBackground(UIUtil.getPanelBackground());
+      if (!SystemInfo.isMac || !WindowRoundedCornersManager.isAvailable()) {
+        setBackground(UIUtil.getPanelBackground());
+      }
       super.show();
     }
 
@@ -749,14 +767,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return size;
     }
 
-    @Nullable
-    private Project getProject() {
+    private @Nullable Project getProject() {
       return SoftReference.dereference(myProject);
     }
 
-    @NotNull
     @Override
-    public IdeFocusManager getFocusManager() {
+    public @NotNull IdeFocusManager getFocusManager() {
       Project project = getProject();
       if (project != null && !project.isDisposed()) {
         return IdeFocusManager.getInstance(project);
@@ -781,6 +797,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (myWindowListener != null) {
         myWindowListener.saveSize();
         removeWindowListener(myWindowListener);
+        removeWindowFocusListener(myWindowListener);
         myWindowListener = null;
       }
       DialogWrapper wrapper = getDialogWrapper();
@@ -857,71 +874,34 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       @Override
-      public void windowOpened(final WindowEvent e) {
-        SwingUtilities.invokeLater(() -> {
-          myOpened = true;
-          final DialogWrapper activeWrapper = getActiveWrapper();
-          UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class).consumeEach(c -> {
-            GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
-            c.invalidate();
-          });
+      public void windowGainedFocus(final WindowEvent e) {
+        removeWindowFocusListener(this); // run this code only the first time our dialog is focused
 
-          JComponent rootPane = ((JDialog)e.getComponent()).getRootPane();
-          if (rootPane != null) {
-            rootPane.revalidate();
-          }
-          e.getComponent().repaint();
+        myOpened = true;
 
-          if (activeWrapper == null) {
-            myFocusedCallback.setRejected();
-          }
-
-          final DialogWrapper wrapper = getActiveWrapper();
-          if (wrapper == null && !myFocusedCallback.isProcessed()) {
-            myFocusedCallback.setRejected();
-            return;
-          }
-
-          if (myActivated) {
-            return;
-          }
-          myActivated = true;
-          JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
-          if (getRootPane() != null && toFocus == null) {
-            toFocus = getRootPane().getDefaultButton();
-          }
-
-          if (getRootPane() != null) {
-            IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
-          }
-          setupSelectionOnPreferredComponent(toFocus);
-
-          if (toFocus != null) {
-            if (isShowing() && (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isActive())) {
-              toFocus.requestFocus();
-            } else {
-              toFocus.requestFocusInWindow();
-            }
-            notifyFocused(wrapper);
-          } else {
-            if (isShowing()) {
-              notifyFocused(wrapper);
-            }
-          }
-        });
-      }
-
-      private void notifyFocused(DialogWrapper wrapper) {
-        myFocusedCallback.setDone();
-      }
-
-      private DialogWrapper getActiveWrapper() {
-        DialogWrapper activeWrapper = getDialogWrapper();
-        if (activeWrapper == null || !activeWrapper.isShowing()) {
-          return null;
+        DialogWrapper wrapper = getDialogWrapper();
+        JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
+        JRootPane pane = getRootPane();
+        if (pane != null && toFocus == null) {
+          toFocus = pane.getDefaultButton();
         }
 
-        return activeWrapper;
+        if (pane != null) {
+          IJSwingUtilities.moveMousePointerOn(pane.getDefaultButton());
+        }
+
+        setupSelectionOnPreferredComponent(toFocus);
+
+        if (toFocus != null && toFocus.isEnabled()) {
+          if (isShowing() && (!LoadingState.COMPONENTS_REGISTERED.isOccurred() ||
+                              ApplicationManager.getApplication() == null ||
+                              ApplicationManager.getApplication().isActive())) {
+            toFocus.requestFocus();
+          }
+          else {
+            toFocus.requestFocusInWindow();
+          }
+        }
       }
     }
 
@@ -938,9 +918,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBorder(UIManager.getBorder("Window.border"));
       }
 
-      @NotNull
       @Override
-      protected JLayeredPane createLayeredPane() {
+      protected @NotNull JLayeredPane createLayeredPane() {
         JLayeredPane p = new JBLayeredPane();
         p.setName(this.getName()+".layeredPane");
         return p;
@@ -1007,8 +986,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    @NotNull
-    private static WindowStateService getWindowStateService(@Nullable Project project) {
+    private static @NotNull WindowStateService getWindowStateService(@Nullable Project project) {
       return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
     }
   }

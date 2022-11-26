@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
+@Deprecated("Please don't use this for new intentions. Use `KotlinApplicableIntention` or `KotlinApplicableIntentionWithContext` instead.")
 abstract class AbstractKotlinApplicatorBasedIntention<PSI : KtElement, INPUT : KotlinApplicatorInput>(
     elementType: KClass<PSI>,
 ) : SelfTargetingIntention<PSI>(elementType.java, { "" }) {

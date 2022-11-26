@@ -19,31 +19,30 @@ import com.intellij.designer.designSurface.ComponentGlassLayer;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-
-import javax.swing.tree.DefaultTreeModel;
+import com.intellij.openapi.Disposable;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 
 /**
  * @author Alexander Lobas
  */
-public final class ComponentTreeBuilder extends AbstractTreeBuilder implements ComponentSelectionListener {
+public final class ComponentTreeBuilder implements ComponentSelectionListener, Disposable {
+  private final ComponentTree myTree;
+  private final StructureTreeModel<TreeContentProvider> myStructureTreeModel;
   private final EditableArea mySurfaceArea;
   private final TreeEditableArea myTreeArea;
   private final ComponentGlassLayer myGlassLayer;
   private final ExpandStateHandler myExpandStateHandler;
 
   public ComponentTreeBuilder(ComponentTree tree, DesignerEditorPanel designer) {
-    super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null);
-
-    setPassthroughMode(true);
-    setCanYieldUpdate(false);
-
-    initRootNode();
+    myTree = tree;
+    myStructureTreeModel = new StructureTreeModel<>(new TreeContentProvider(designer), this);
+    tree.setModel(new AsyncTreeModel(myStructureTreeModel, this));
 
     mySurfaceArea = designer.getSurfaceArea();
-    myTreeArea = new TreeEditableArea(tree, this, designer.getActionPanel());
+    myTreeArea = new TreeEditableArea(tree, myStructureTreeModel, designer.getActionPanel());
     myGlassLayer = new ComponentGlassLayer(tree, designer.getToolProvider(), myTreeArea);
-    myExpandStateHandler = new ExpandStateHandler(tree, designer, this);
+    myExpandStateHandler = new ExpandStateHandler(tree, designer);
 
     tree.setArea(myTreeArea);
     designer.handleTreeArea(myTreeArea);
@@ -67,7 +66,6 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     myTreeArea.unhookSelection();
     myGlassLayer.dispose();
     myExpandStateHandler.unhookListener();
-    super.dispose();
   }
 
   private void addListeners() {
@@ -108,6 +106,13 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
   }
 
   public void expandFromState() {
-    expand(myExpandStateHandler.getExpanded(), null);
+    for (Object element : myExpandStateHandler.getExpanded()) {
+      myStructureTreeModel.expand(element, myTree, path -> {
+      });
+    }
+  }
+
+  public void queueUpdate() {
+    myStructureTreeModel.invalidateAsync();
   }
 }

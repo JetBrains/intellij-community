@@ -18,9 +18,6 @@ package com.intellij.codeInsight.completion
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class CustomFileTypeAutopopupTest extends CompletionAutoPopupTestCase {
   void "test no autopopup when typing just digit in a custom file type"() {

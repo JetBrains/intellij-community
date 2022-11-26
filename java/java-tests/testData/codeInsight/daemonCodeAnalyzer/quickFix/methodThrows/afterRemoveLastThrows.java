@@ -1,4 +1,4 @@
-// "Remove 'Exception' from 'f' throws list" "true-preview"
+// "Remove 'Exception' from 'f()' throws list" "true-preview"
 
 class A {
   /**

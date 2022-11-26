@@ -2,6 +2,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCache
+import com.intellij.ide.actions.searcheverywhere.ml.features.HeavyFeaturesProviderTestCase
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider

@@ -1,11 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
@@ -20,10 +21,12 @@ import org.jetbrains.kotlin.resolve.BindingContext
 class KotlinSuppressIntentionAction(
     suppressAt: KtElement,
     private val suppressionKey: String,
-    private val kind: AnnotationHostKind
+    @SafeFieldForPreview private val kind: AnnotationHostKind
 ) : SuppressIntentionAction() {
-    val pointer = suppressAt.createSmartPointer()
-    val project = suppressAt.project
+    private val pointer = suppressAt.createSmartPointer()
+
+    @SafeFieldForPreview
+    private val project = suppressAt.project
 
     override fun getFamilyName() = KotlinBaseFe10CodeInsightBundle.message("intention.suppress.family")
     override fun getText() = KotlinBaseFe10CodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")
@@ -33,7 +36,6 @@ class KotlinSuppressIntentionAction(
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         if (!element.isValid) return
         val suppressAt = pointer.element ?: return
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
 
         val id = "\"$suppressionKey\""
         when (suppressAt) {
@@ -57,6 +59,14 @@ class KotlinSuppressIntentionAction(
             is KtFile ->
                 suppressAtFile(suppressAt, id)
         }
+    }
+
+    override fun getFileModifierForPreview(target: PsiFile): KotlinSuppressIntentionAction {
+        return KotlinSuppressIntentionAction(
+            PsiTreeUtil.findSameElementInCopy(pointer.element, target),
+            suppressionKey,
+            kind
+        )
     }
 
     private fun suppressAtFile(ktFile: KtFile, id: String) {
@@ -104,7 +114,7 @@ class KotlinSuppressIntentionAction(
         assert(suppressAt !is KtDeclaration) { "Declarations should have been checked for above" }
 
         val placeholderText = "PLACEHOLDER_ID"
-        val annotatedExpression = KtPsiFactory(suppressAt).createExpression(suppressAnnotationText(id) + "\n" + placeholderText)
+        val annotatedExpression = KtPsiFactory(project).createExpression(suppressAnnotationText(id) + "\n" + placeholderText)
 
         val copy = suppressAt.copy()!!
 
@@ -119,7 +129,7 @@ class KotlinSuppressIntentionAction(
     private fun addArgumentToSuppressAnnotation(entry: KtAnnotationEntry, id: String) {
         // add new arguments to an existing entry
         val args = entry.valueArgumentList
-        val psiFactory = KtPsiFactory(entry)
+        val psiFactory = KtPsiFactory(project)
         val newArgList = psiFactory.createCallArguments("($id)")
         when {
             args == null -> // new argument list

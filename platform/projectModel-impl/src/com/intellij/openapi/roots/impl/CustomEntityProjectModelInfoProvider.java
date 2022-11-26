@@ -5,8 +5,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,17 +33,20 @@ public interface CustomEntityProjectModelInfoProvider<T extends WorkspaceEntity>
   Class<T> getEntityClass();
 
   @NotNull
-  default Sequence<@NotNull CustomContentRoot<T>> getContentRoots(@NotNull Sequence<T> entities) {
+  default Sequence<@NotNull CustomContentRoot<T>> getContentRoots(@NotNull Sequence<T> entities,
+                                                                  @NotNull EntityStorage entityStorage) {
     return SequencesKt.emptySequence();
   }
 
   @NotNull
-  default Sequence<@NotNull LibraryRoots<T>> getLibraryRoots(@NotNull Sequence<T> entities) {
+  default Sequence<@NotNull LibraryRoots<T>> getLibraryRoots(@NotNull Sequence<T> entities,
+                                                             @NotNull EntityStorage entityStorage) {
     return SequencesKt.emptySequence();
   }
 
   @NotNull
-  default Sequence<@NotNull ExcludeStrategy<T>> getExcludeSdkRootStrategies(@NotNull Sequence<T> entities) {
+  default Sequence<@NotNull ExcludeStrategy<T>> getExcludeSdkRootStrategies(@NotNull Sequence<T> entities,
+                                                                            @NotNull EntityStorage entityStorage) {
     return SequencesKt.emptySequence();
   }
 
@@ -97,12 +102,12 @@ public interface CustomEntityProjectModelInfoProvider<T extends WorkspaceEntity>
      * Supply all file urls (existing as well as not yet created) that should be treated as 'excluded'
      */
     @NotNull
-    public final String @NotNull [] excludeUrls;
+    public final List<@NotNull VirtualFileUrl> excludeUrls;
     @Nullable
     public final Function<Sdk, List<VirtualFile>> excludeSdkRootsStrategy;
 
     public ExcludeStrategy(@NotNull T generativeEntity,
-                           @NotNull String @NotNull [] excludeUrls,
+                           @NotNull List<@NotNull VirtualFileUrl> excludeUrls,
                            @Nullable Function<Sdk, List<VirtualFile>> excludeSdkRootsStrategy) {
       this.generativeEntity = generativeEntity;
       this.excludeUrls = excludeUrls;

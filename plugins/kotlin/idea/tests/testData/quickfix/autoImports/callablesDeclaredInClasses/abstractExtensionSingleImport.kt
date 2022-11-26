@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'Int.based'" "true"
 package p
 
 abstract class Base1 {

@@ -36,7 +36,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class GitUntrackedFilesHolder implements Disposable {
   private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHolder.class);
@@ -396,7 +398,12 @@ public class GitUntrackedFilesHolder implements Disposable {
       CountDownLatch waiter = new CountDownLatch(1);
       myQueue.queue(Update.create(waiter, () -> waiter.countDown()));
       ProgressIndicatorUtils.awaitWithCheckCanceled(waiter);
-      myQueue.waitForAllExecuted(10, TimeUnit.SECONDS);
+      try {
+        myQueue.waitForAllExecuted(10, TimeUnit.SECONDS);
+      }
+      catch (ExecutionException | InterruptedException | TimeoutException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }

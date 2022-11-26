@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -131,7 +132,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
       return;
     }
 
-    setRange(pair.first.toScalarRange());
+    setRange(TextRangeScalarUtil.toScalarRange(pair.first));
     myLinesCols = pair.second;
   }
 

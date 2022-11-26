@@ -24,8 +24,8 @@ class ExcludePolicyDescriptor {
 
   @NotNull
   static ExcludePolicyDescriptor create(@NotNull DirectoryIndexExcludePolicy policy,
-                                        @NotNull Set<Sdk> sdks,
-                                        @NotNull Set<VirtualFile> sdkRoots) {
+                                        @NotNull Set<? extends Sdk> sdks,
+                                        @NotNull Set<? extends VirtualFile> sdkRoots) {
     String[] excludedRootUrls = policy.getExcludeUrlsForProject();
     Function<Sdk, List<VirtualFile>> strategy = policy.getExcludeSdkRootsStrategy();
     Set<VirtualFile> excludedFromSdkRoots;

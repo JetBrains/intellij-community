@@ -113,12 +113,15 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
       super(scalar);
     }
 
+    private String text;
+    private List<TextRange> contentRanges;
+    
     @Override
     public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-      String text = myHost.getText();
-      List<TextRange> ranges = myHost.getContentRanges();
+      text = myHost.getText();
+      contentRanges = myHost.getContentRanges();
       boolean decoded = false;
-      for (TextRange range : ranges) {
+      for (TextRange range : contentRanges) {
         TextRange intersection = range.intersection(rangeInsideHost);
         if (intersection == null) continue;
         decoded = true;
@@ -130,15 +133,15 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
 
     @Override
     public @NotNull TextRange getRelevantTextRange() {
-      List<TextRange> ranges = myHost.getContentRanges();
-      if (ranges.isEmpty()) return TextRange.EMPTY_RANGE;
-      return TextRange.create(ranges.get(0).getStartOffset(), ranges.get(ranges.size() - 1).getEndOffset());
+      if (contentRanges == null) {
+        contentRanges = myHost.getContentRanges();
+      }
+      if (contentRanges.isEmpty()) return TextRange.EMPTY_RANGE;
+      return TextRange.create(contentRanges.get(0).getStartOffset(), contentRanges.get(contentRanges.size() - 1).getEndOffset());
     }
 
     @Override
     public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
-      final String text = myHost.getText();
-      final List<TextRange> contentRanges = myHost.getContentRanges();
 
       int currentOffsetInDecoded = 0;
 

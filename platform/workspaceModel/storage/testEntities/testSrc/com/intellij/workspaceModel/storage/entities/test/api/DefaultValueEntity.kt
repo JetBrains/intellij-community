@@ -4,8 +4,11 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.deft.api.annotations.Default
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -20,7 +23,7 @@ interface DefaultValueEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : DefaultValueEntity, ModifiableWorkspaceEntity<DefaultValueEntity>, ObjBuilder<DefaultValueEntity> {
+  interface Builder : DefaultValueEntity, WorkspaceEntity.Builder<DefaultValueEntity>, ObjBuilder<DefaultValueEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var isGenerated: Boolean
@@ -28,6 +31,9 @@ interface DefaultValueEntity: WorkspaceEntity {
   }
 
   companion object : Type<DefaultValueEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DefaultValueEntity {
       val builder = builder()
       builder.name = name

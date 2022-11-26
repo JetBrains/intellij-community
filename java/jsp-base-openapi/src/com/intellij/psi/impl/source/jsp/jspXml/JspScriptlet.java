@@ -15,8 +15,5 @@
  */
 package com.intellij.psi.impl.source.jsp.jspXml;
 
-/**
- * @author peter
- */
 public interface JspScriptlet extends JspXmlTagBase {
 }

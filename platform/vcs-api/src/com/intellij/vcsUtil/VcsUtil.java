@@ -42,7 +42,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
@@ -530,6 +529,7 @@ public class VcsUtil {
                                             @NotNull String projectBaseDir,
                                             @NotNull FilePath filePath,
                                             boolean acceptEmptyPath) {
+    if (project.isDisposed()) return null;
     String path = filePath.getPath();
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -641,11 +641,11 @@ public class VcsUtil {
 
   @NotNull
   public static Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
-    return IgnoredFileContentProvider
-      .IGNORE_FILE_CONTENT_PROVIDER
-      .extensions(project)
-      .map(IgnoredFileContentProvider::getFileName)
-      .collect(Collectors.toSet());
+    Set<String> set = new HashSet<>();
+    for (IgnoredFileContentProvider provider : IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.getExtensionList(project)) {
+      set.add(provider.getFileName());
+    }
+    return set;
   }
 
   @Nls

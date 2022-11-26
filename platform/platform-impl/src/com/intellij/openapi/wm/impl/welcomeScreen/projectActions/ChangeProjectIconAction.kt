@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.ui.IconDeferrer
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.dialog
@@ -77,6 +78,10 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
         FileUtil.delete(ui.pathToIcon())
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
       }
+      // Actually we can try to drop the needed icon,
+      // but it is a very rare action and this whole cache drop will not have any performance impact
+      // Moreover, VCS changes will drop the cache also.
+      IconDeferrer.getInstance().clearCache()
     }
   }
 
@@ -107,7 +112,7 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
 
 class ProjectIconUI(val projectPath: @SystemIndependent String) {
   val setIconActionLink = AnActionLink(IdeBundle.message("link.change.project.icon"), ChangeProjectIcon(this))
-  val iconLabel = JBLabel((RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectIcon(projectPath, false))
+  val iconLabel = JBLabel((RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectIcon(projectPath, true))
   var pathToIcon: VirtualFile? = null
   val removeIcon = createToolbar()
   var iconRemoved = false
@@ -116,7 +121,7 @@ class ProjectIconUI(val projectPath: @SystemIndependent String) {
     val removeIconAction = object : DumbAwareAction(AllIcons.Actions.GC) {
       override fun actionPerformed(e: AnActionEvent) {
         iconRemoved = true
-        iconLabel.icon = RecentProjectIconHelper.generateProjectIcon(projectPath)
+        iconLabel.icon = RecentProjectIconHelper.generateProjectIcon(projectPath, isProjectValid = true)
         pathToIcon = null
       }
 

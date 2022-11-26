@@ -87,12 +87,8 @@ public class VcsExecutablePathSelector {
                                              VcsBundle.message("executable.project.override.reset.revert"),
                                              Messages.getCancelButton(),
                                              null)) {
-        case Messages.NO:
-          myPathSelector.setText(mySavedPath);
-          break;
-        case Messages.CANCEL:
-          myProjectPathCheckbox.setSelected(true);
-          break;
+        case Messages.NO -> myPathSelector.setText(mySavedPath);
+        case Messages.CANCEL -> myProjectPathCheckbox.setSelected(true);
       }
     }
   }

@@ -53,6 +53,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
@@ -73,28 +74,28 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   @NotNull
   private static List<SamDescriptor> calcDescriptors(@NotNull Session session) {
-    List<SamDescriptor> descriptors = new ArrayList<>();
-    Project project = PsiUtilCore.getProjectInReadAction(session.elementToSearch);
+    PsiClass aClass = session.elementToSearch;
+    Project project = PsiUtilCore.getProjectInReadAction(aClass);
 
-    DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-      PsiClass aClass = session.elementToSearch;
+    Callable<List<SamDescriptor>> runnable = () -> {
       if (!aClass.isValid() || !aClass.isInterface()) {
-        return;
+        return List.of();
       }
       if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasJava8Modules(project)) {
-        return;
+        return List.of();
       }
       PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(project);
 
       Set<PsiClass> visited = new HashSet<>();
       processSubInterfaces(aClass, visited);
+      List<SamDescriptor> descriptors = new ArrayList<>();
       for (PsiClass samClass : visited) {
         if (LambdaUtil.isFunctionalClass(samClass)) {
           PsiMethod saMethod = Objects.requireNonNull(LambdaUtil.getFunctionalInterfaceMethod(samClass));
           PsiType samType = saMethod.getReturnType();
           if (samType == null) continue;
-          if (session.method != null && 
-              !saMethod.equals(session.method) && 
+          if (session.method != null &&
+              !saMethod.equals(session.method) &&
               !MethodSignatureUtil.isSuperMethod(saMethod, session.method)) {
             continue;
           }
@@ -103,15 +104,16 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
           descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
         }
       }
-    });
-    return descriptors;
+      return descriptors;
+    };
+    return ReadAction.nonBlocking(runnable).inSmartMode(project).executeSynchronously();
   }
 
   @NotNull
   private static Set<VirtualFile> getLikelyFiles(@NotNull List<? extends SamDescriptor> descriptors,
                                                  @NotNull Collection<? extends VirtualFile> candidateFiles,
                                                  @NotNull Project project) {
-    final GlobalSearchScope candidateFilesScope = GlobalSearchScope.filesScope(project, candidateFiles);
+    final GlobalSearchScope candidateFilesScope = ReadAction.compute(() -> GlobalSearchScope.filesScope(project, candidateFiles));
     return JBIterable.from(descriptors).flatMap(descriptor -> ((SamDescriptor)descriptor).getMostLikelyFiles(candidateFilesScope)).toSet();
   }
 
@@ -145,6 +147,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
     Set<VirtualFile> filesFirst = getLikelyFiles(descriptors, allFiles, session.project);
     Processor<VirtualFile> vFileProcessor = vFile -> {
+      if (vFile.isDirectory()) return true;
       Collection<FunExprOccurrence> occurrences = allCandidates.get(vFile);
       session.contextsConsidered.addAndGet(occurrences.size());
       Map<FunExprOccurrence, Confidence> toLoad = filterInapplicable(samClasses, vFile, occurrences, session.project);
@@ -166,13 +169,13 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   @NotNull
   private static Map<FunExprOccurrence, Confidence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
-                                                           @NotNull VirtualFile vFile,
-                                                           @NotNull Collection<? extends FunExprOccurrence> occurrences,
-                                                           @NotNull Project project) {
+                                                                       @NotNull VirtualFile vFile,
+                                                                       @NotNull Collection<? extends FunExprOccurrence> occurrences,
+                                                                       @NotNull Project project) {
     return ReadAction.nonBlocking(() -> {
       Map<FunExprOccurrence, Confidence> map = new HashMap<>();
       for (FunExprOccurrence occurrence : occurrences) {
-        ThreeState result = occurrence.checkHasTypeLight(samClasses, vFile);
+        ThreeState result = occurrence.checkHasTypeLight(samClasses, vFile, project);
         if (result != ThreeState.NO) {
           map.put(occurrence, result == ThreeState.YES ? Confidence.sure : Confidence.needsCheck);
         }

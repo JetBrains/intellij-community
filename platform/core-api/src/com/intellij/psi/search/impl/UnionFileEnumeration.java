@@ -7,9 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public final class UnionFileEnumeration implements VirtualFileEnumeration {
-  private final @NotNull Collection<VirtualFileEnumeration> myHints;
+  private final @NotNull Collection<? extends VirtualFileEnumeration> myHints;
 
-  public UnionFileEnumeration(@NotNull Collection<VirtualFileEnumeration> hints) {
+  public UnionFileEnumeration(@NotNull Collection<? extends VirtualFileEnumeration> hints) {
     myHints = hints;
   }
 

@@ -95,7 +95,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
         return null
     }
 
-    internal fun KtExpression.toExpressionReceiverValue(context: Fe10WrapperContext): ExpressionReceiver {
+    private fun KtExpression.toExpressionReceiverValue(context: Fe10WrapperContext): ExpressionReceiver {
         val ktType = context.withAnalysisSession {
             this@toExpressionReceiverValue.getKtType() ?: context.implementationPostponed()
         }

@@ -5,14 +5,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 data class FileEditorOpenOptions(
-  var selectAsCurrent: Boolean = true,
-  var reuseOpen: Boolean = false,
-  var usePreviewTab: Boolean = false,
-  var requestFocus: Boolean = false,
-  var pin: Boolean? = null,
-  var index: Int = -1,
-  var isExactState: Boolean = false,
-  var isReopeningOnStartup: Boolean = false,
+  @JvmField var selectAsCurrent: Boolean = true,
+  @JvmField var reuseOpen: Boolean = false,
+  @JvmField var usePreviewTab: Boolean = false,
+  @JvmField var requestFocus: Boolean = false,
+  @JvmField var pin: Boolean? = null,
+  @JvmField var index: Int = -1,
+  @JvmField val isExactState: Boolean = false,
+  @JvmField var isReopeningOnStartup: Boolean = false,
 ) {
   fun clone() = copy()  // no arg copying for Java
 
@@ -21,8 +21,6 @@ data class FileEditorOpenOptions(
   @JvmOverloads fun withReuseOpen(value: Boolean = true)           = apply { reuseOpen = value }
   @JvmOverloads fun withUsePreviewTab(value: Boolean = true)       = apply { usePreviewTab = value }
   @JvmOverloads fun withRequestFocus(value: Boolean = true)        = apply { requestFocus = value }
-  @JvmOverloads fun withExactState(value: Boolean = true)          = apply { isExactState = value }
-  @JvmOverloads fun withReopeningOnStartup(value: Boolean = true)  = apply { isReopeningOnStartup = value }
   fun withPin(value: Boolean?)  = apply { pin = value }
   fun withIndex(value: Int)     = apply { index = value }
   // @formatter:on

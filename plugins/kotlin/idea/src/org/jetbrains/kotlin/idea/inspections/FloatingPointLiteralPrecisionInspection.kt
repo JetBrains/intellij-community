@@ -79,6 +79,6 @@ private class FloatingPointLiteralPrecisionQuickFix(val replacementText: String)
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? KtConstantExpression ?: return
-        element.replace(KtPsiFactory(element).createExpression(replacementText))
+        element.replace(KtPsiFactory(project).createExpression(replacementText))
     }
 }

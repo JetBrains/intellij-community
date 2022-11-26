@@ -17,10 +17,6 @@ package com.intellij.uiDesigner.wizard;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class FormProperty2BeanProperty {
   public final FormProperty myFormProperty;
   /**

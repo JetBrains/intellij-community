@@ -30,9 +30,6 @@ import static com.intellij.patterns.PsiJavaPatterns.elementType;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author peter
-*/
 public class PreferByKindWeigher extends LookupElementWeigher {
   public static final Key<Boolean> INTRODUCED_VARIABLE = Key.create("INTRODUCED_VARIABLE");
 

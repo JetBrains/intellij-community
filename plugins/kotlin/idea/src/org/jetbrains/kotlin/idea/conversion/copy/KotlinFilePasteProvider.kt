@@ -34,7 +34,6 @@ class KotlinFilePasteProvider : PasteProvider {
         val ktFile = KtPsiFactory(project).createFile(text)
         val fileName = (ktFile.declarations.firstOrNull()?.name ?: return) + ".kt"
 
-        @Suppress("UsePropertyAccessSyntax")
         val directory = ideView.getOrChooseDirectory() ?: return
         project.executeWriteCommand(KotlinBundle.message("create.kotlin.file")) {
             val file = try {

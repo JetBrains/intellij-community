@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.io.DataOutputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -56,7 +57,7 @@ public final class IOUtil {
   private static final int STRING_LENGTH_THRESHOLD = 255;
   private static final String LONGER_THAN_64K_MARKER = "LONGER_THAN_64K";
 
-  private IOUtil() {}
+  private IOUtil() { }
 
   public static String readString(@NotNull DataInput stream) throws IOException {
     try {
@@ -141,7 +142,7 @@ public final class IOUtil {
   }
 
   public static void writeUTFFast(byte @NotNull [] buffer, @NotNull DataOutput storage, @NotNull String value) throws IOException {
-    writeUTFFast(buffer, storage, (CharSequence) value);
+    writeUTFFast(buffer, storage, (CharSequence)value);
   }
 
   public static void writeUTFFast(byte @NotNull [] buffer, @NotNull DataOutput storage, @NotNull CharSequence value) throws IOException {
@@ -258,7 +259,7 @@ public final class IOUtil {
     boolean ok = true;
     if (files != null) {
       for (File f : files) {
-        ok &= FileUtilRt.delete(f);
+        ok &= FileUtil.delete(f);
       }
     }
 
@@ -325,7 +326,9 @@ public final class IOUtil {
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
   @NotNull
-  public static <C extends Collection<String>> C readStringCollection(@NotNull DataInput in, @NotNull IntFunction<? extends C> collectionGenerator) throws IOException {
+  public static <C extends Collection<String>> C readStringCollection(@NotNull DataInput in,
+                                                                      @NotNull IntFunction<? extends C> collectionGenerator)
+    throws IOException {
     int size = DataInputOutputUtil.readINT(in);
     C strings = collectionGenerator.apply(size);
     for (int i = 0; i < size; i++) {
@@ -352,6 +355,24 @@ public final class IOUtil {
           log.error(e);
         }
       }
+    }
+  }
+
+
+  public static <T> byte[] toBytes(final T object,
+                                   final @NotNull DataExternalizer<? super T> externalizer) throws IOException {
+    final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (final DataOutputStream dos = new DataOutputStream(bos)) {
+      externalizer.save(dos, object);
+    }
+    return bos.toByteArray();
+  }
+
+  public static <T> T fromBytes(final byte[] bytes,
+                                final @NotNull DataExternalizer<? extends T> externalizer) throws IOException {
+    final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+    try (final DataInputStream dis = new DataInputStream(bis)) {
+      return externalizer.read(dis);
     }
   }
 }

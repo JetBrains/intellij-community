@@ -31,8 +31,8 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetectorUtils;
 import org.jetbrains.kotlin.idea.base.indices.JavaIndicesUtils;
-import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility;
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind;
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility;
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider;
 import org.jetbrains.kotlin.idea.base.projectStructure.LanguageVersionSettingsProviderUtils;
 import org.jetbrains.kotlin.idea.base.psi.JavaPsiUtils;
@@ -54,7 +54,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 @RunWith(JUnit38ClassRunner.class)
 public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
@@ -188,7 +189,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
             return true;
         });
 
-        LibraryEffectiveKindProvider effectiveKindProvider = LibraryEffectiveKindProvider.getInstance(myProject);
+        LibraryEffectiveKindProvider effectiveKindProvider = myProject.getService(LibraryEffectiveKindProvider.class);
 
         assertEquals(RepositoryLibraryType.REPOSITORY_LIBRARY_KIND, jsTest.get().getKind());
         assertEquals(KotlinJavaScriptLibraryKind.INSTANCE, effectiveKindProvider.getEffectiveKind(jsTest.get()));
@@ -342,13 +343,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         try {
             KotlinFacet facet = FacetUtilsKt.getOrCreateFacet(getModule(), modelsProvider, false, null, false);
             TargetPlatform platform = JvmPlatforms.INSTANCE.jvmPlatformByTargetVersion(jvmTarget);
-            FacetUtilsKt.configureFacet(
-                    facet,
-                    IdeKotlinVersion.get("1.4.0"),
-                    platform,
-                    modelsProvider,
-                    emptySet()
-            );
+            FacetUtilsKt.configureFacet(facet, IdeKotlinVersion.get("1.4.0"), platform, modelsProvider);
             assertEquals(platform, facet.getConfiguration().getSettings().getTargetPlatform());
             assertEquals(jvmTarget.getDescription(),
                          ((K2JVMCompilerArguments) facet.getConfiguration().getSettings().getCompilerArguments()).getJvmTarget());

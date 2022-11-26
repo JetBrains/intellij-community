@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -116,9 +117,9 @@ public class ArrayRenderer extends NodeRendererImpl{
               int shownLength = Math.min(length, Registry.intValue(
                 isString ? "debugger.renderers.arrays.max.strings" : "debugger.renderers.arrays.max.primitives"));
               return DebuggerUtilsAsync.getValues(arrValue, 0, shownLength).thenCompose(values -> {
-                CompletableFuture<String>[] futures = StreamEx.of(values).map(ArrayRenderer::getElementAsString).toArray(CompletableFuture[]::new);
+                CompletableFuture<String>[] futures = ContainerUtil.map2Array(values, new CompletableFuture[0], ArrayRenderer::getElementAsString);
                 return CompletableFuture.allOf(futures).thenApply(__ -> {
-                  List<String> elements = StreamEx.of(futures).map(CompletableFuture::join).toList();
+                  List<String> elements = ContainerUtil.map(futures, CompletableFuture::join);
                   if (descriptor instanceof ValueDescriptorImpl) {
                     int compactLength = Math.min(shownLength, isString ? 5 : 10);
                     String compact =

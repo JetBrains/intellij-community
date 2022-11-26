@@ -23,9 +23,9 @@ import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
@@ -98,7 +98,7 @@ class ArtifactModifiableModelBridge(
     return artifacts
   }
 
-  override fun getAllArtifactsIncludingInvalid(): MutableList<out Artifact> {
+  override fun getAllArtifactsIncludingInvalid(): List<Artifact> {
     val newBridges = mutableListOf<ArtifactBridge>()
     val artifacts = diff
       .entities(ArtifactEntity::class.java)
@@ -147,8 +147,8 @@ class ArtifactModifiableModelBridge(
       outputUrl, rootElementEntity, source
     )
 
-    val persistentId = artifactEntity.persistentId
-    val modifiableArtifact = ArtifactBridge(persistentId, versionedOnBuilder, project, eventDispatcher, null)
+    val symbolicId = artifactEntity.symbolicId
+    val modifiableArtifact = ArtifactBridge(symbolicId, versionedOnBuilder, project, eventDispatcher, null)
     modifiableToOriginal[modifiableArtifact] = modifiableArtifact
     diff.mutableArtifactsMap.addMapping(artifactEntity, modifiableArtifact)
 
@@ -182,7 +182,7 @@ class ArtifactModifiableModelBridge(
     if (artifact as ArtifactBridge in modifiableToOriginal) return artifact
 
     val entity = diff.artifactsMap.getEntities(artifact).singleOrNull() as? ArtifactEntity ?: error("Artifact doesn't exist")
-    val artifactId = entity.persistentId
+    val artifactId = entity.symbolicId
     val existingModifiableArtifact = modifiableToOriginal.getKeysByValue(artifact)?.singleOrNull()
     if (existingModifiableArtifact != null) return existingModifiableArtifact
 
@@ -206,7 +206,7 @@ class ArtifactModifiableModelBridge(
 
   override fun isModified(): Boolean {
     // TODO: 03.02.2021 May give a wrong result
-    return !diff.isEmpty()
+    return diff.hasChanges()
   }
 
   @RequiresWriteLock

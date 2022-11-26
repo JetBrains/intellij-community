@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search
 
@@ -10,9 +10,7 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DataClassResolver
@@ -81,11 +79,6 @@ interface KotlinSearchUsagesSupport {
             searchDeeply: Boolean,
             processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
         ): Boolean = getInstance(ktClass.project).forEachKotlinOverride(ktClass, members, scope, searchDeeply, processor)
-
-        fun PsiMethod.forEachOverridingMethod(
-            scope: SearchScope = runReadAction { useScope() },
-            processor: (PsiMethod) -> Boolean
-        ): Boolean = getInstance(project).forEachOverridingMethod(this, scope, processor)
 
         fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
             getInstance(method.project).findDeepestSuperMethodsNoWrapping(method)
@@ -168,12 +161,6 @@ interface KotlinSearchUsagesSupport {
         scope: SearchScope,
         searchDeeply: Boolean,
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
-    ): Boolean
-
-    fun forEachOverridingMethod(
-        method: PsiMethod,
-        scope: SearchScope,
-        processor: (PsiMethod) -> Boolean
     ): Boolean
 
     fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>

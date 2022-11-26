@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.NonNls;
 
-// "Annotate method 'test' as '@NonNls'" "true-preview"
+// "Annotate method 'test()' as '@NonNls'" "true-preview"
 class Foo {
   @NonNls
   Foo test(String s) {

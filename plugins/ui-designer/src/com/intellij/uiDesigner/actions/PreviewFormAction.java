@@ -66,11 +66,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public final class PreviewFormAction extends AnAction{
+public final class PreviewFormAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**
@@ -108,9 +104,9 @@ public final class PreviewFormAction extends AnAction{
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
+    GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
-    if(editor == null){
+    if (editor == null) {
       e.getPresentation().setVisible(false);
       return;
     }
@@ -124,7 +120,7 @@ public final class PreviewFormAction extends AnAction{
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT ;
   }
 
   private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,

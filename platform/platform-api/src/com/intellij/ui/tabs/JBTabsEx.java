@@ -37,7 +37,7 @@ public interface JBTabsEx extends JBTabs {
 
   boolean isEmptyVisible();
 
-  void setTitleProducer(@Nullable Producer<Pair<Icon, String>> titleProducer);
+  void setTitleProducer(@Nullable Producer<? extends Pair<Icon, String>> titleProducer);
 
   void setHideTopPanel(boolean isHideTopPanel);
 

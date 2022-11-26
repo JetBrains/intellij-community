@@ -14,7 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -62,8 +62,8 @@ class ReaderModeSettingsListener : ReaderModeListener {
   }
 }
 
-private class ReaderModeEditorSettingsListener : StartupActivity.DumbAware {
-  override fun runActivity(project: Project) {
+private class ReaderModeEditorSettingsListener : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {
         EditorSettingsExternalizable.PROP_DOC_COMMENT_RENDERING -> {

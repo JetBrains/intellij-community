@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.classpathEntryToVfs
+import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -24,17 +24,19 @@ class ScriptClassRootsCache(
     private val classes: Set<String>,
     private val sources: Set<String>,
     val customDefinitionsUsed: Boolean,
-    val sdks: ScriptSdks
+    val sdks: ScriptSdks,
+    private val classpathVfsHint: MutableMap<String, VirtualFile?>?,
 ) {
     companion object {
         val EMPTY = ScriptClassRootsCache(
             mapOf(), setOf(), setOf(), true,
-            ScriptSdks(mapOf(), setOf(), setOf())
+            ScriptSdks(mapOf(), setOf(), setOf()),
+            null
         )
     }
 
     fun withUpdatedSdks(newSdks: ScriptSdks) =
-        ScriptClassRootsCache(scripts, classes, sources, customDefinitionsUsed, newSdks)
+        ScriptClassRootsCache(scripts, classes, sources, customDefinitionsUsed, newSdks, classpathVfsHint)
 
     fun builder(project: Project): ScriptClassRootsBuilder {
         return ScriptClassRootsBuilder(
@@ -47,6 +49,7 @@ class ScriptClassRootsCache(
                 builder.useCustomScriptDefinition()
             }
             builder.sdks.addAll(sdks)
+            builder.withClasspathVfsHint(classpathVfsHint ?: mutableMapOf())
         }
     }
 
@@ -63,9 +66,12 @@ class ScriptClassRootsCache(
 
     class HeavyScriptInfo(
         val scriptConfiguration: ScriptCompilationConfigurationWrapper,
+        val classFiles: List<VirtualFile>,
         val classFilesScope: GlobalSearchScope,
         val sdk: Sdk?
     )
+
+    fun scriptsPaths() = scripts.keys
 
     fun getLightScriptInfo(file: String) = scripts[file]
 
@@ -88,13 +94,18 @@ class ScriptClassRootsCache(
         val configuration = lightScriptInfo.buildConfiguration() ?: return null
 
         val roots = configuration.dependenciesClassPath
+        val vfsRoots = toVfsRoots(roots)
         val sdk = sdks[SdkId(configuration.javaHome?.toPath())]
 
-        return if (sdk == null) {
-            HeavyScriptInfo(configuration, compose(toVfsRoots(roots)), null)
+        fun heavyInfoForRoots(roots: List<VirtualFile>): HeavyScriptInfo {
+            return HeavyScriptInfo(configuration, roots, compose(roots), sdk)
+        }
+
+        return if (sdk == null || scriptsAsEntities) {
+            heavyInfoForRoots(vfsRoots)
         } else {
             val sdkClasses = sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()
-            HeavyScriptInfo(configuration, compose(sdkClasses + toVfsRoots(roots)), sdk)
+            heavyInfoForRoots(sdkClasses + vfsRoots)
         }
     }
 
@@ -106,13 +117,18 @@ class ScriptClassRootsCache(
     val allDependenciesSources: Set<VirtualFile>
 
     init {
-        allDependenciesClassFiles = mutableSetOf<VirtualFile>().also { result ->
-            classes.mapNotNullTo(result) { classpathEntryToVfs(Path(it)) }
+        fun String.toVFile(): VirtualFile? {
+            return if (classpathVfsHint?.containsKey(this) == true) {
+                classpathVfsHint[this]
+            } else {
+                classpathEntryToVfs(Path(this)).also { vFile ->
+                    classpathVfsHint?.put(this, vFile)
+                }
+            }
         }
 
-        allDependenciesSources = mutableSetOf<VirtualFile>().also { result ->
-            sources.mapNotNullTo(result) { classpathEntryToVfs(Path(it)) }
-        }
+        allDependenciesClassFiles = classes.mapNotNull { it.toVFile() }.filterRedundantDependencies()
+        allDependenciesSources = sources.mapNotNull { it.toVFile() }.filterRedundantDependencies()
     }
 
     val allDependenciesClassFilesScope = compose(allDependenciesClassFiles.toList() + sdks.nonIndexedClassRoots)
@@ -128,6 +144,21 @@ class ScriptClassRootsCache(
     fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope =
         getHeavyScriptInfo(file.path)?.classFilesScope ?: GlobalSearchScope.EMPTY_SCOPE
 
+    fun getScriptDependenciesClassFiles(file: VirtualFile): List<VirtualFile> =
+        getHeavyScriptInfo(file.path)?.classFiles ?: emptyList()
+
+    fun getScriptDependenciesSourceFiles(file: VirtualFile): List<VirtualFile> {
+        val scriptInfo = getLightScriptInfo(file.path) ?: return emptyList()
+        val configuration = scriptInfo.buildConfiguration() ?: return emptyList()
+        return configuration.dependenciesSources.mapNotNull { classpathEntryToVfs(it.toPath()) }
+    }
+
+    fun getScriptDependenciesSdkFiles(file: VirtualFile, rootType: OrderRootType): List<VirtualFile> {
+        val scriptInfo = getHeavyScriptInfo(file.path) ?: return emptyList()
+        val sdk = scriptInfo.sdk ?: return emptyList()
+        return sdk.rootProvider.getFiles(rootType).toList()
+    }
+
     fun diff(project: Project, old: ScriptClassRootsCache?): Updates =
         when (old) {
             null -> FullUpdate(project, this)
@@ -138,7 +169,7 @@ class ScriptClassRootsCache(
                 hasOldRoots = old.hasNewRoots(this),
                 updatedScripts = getChangedScripts(old),
                 oldRoots = old.allDependenciesClassFiles + old.allDependenciesSources,
-                newRoots = allDependenciesClassFiles + allDependenciesSources,
+                newRoots = (allDependenciesClassFiles + allDependenciesSources).filterRedundantDependencies(),
                 oldSdkRoots = old.sdks.nonIndexedClassRoots + old.sdks.nonIndexedSourceRoots,
                 newSdkRoots = sdks.nonIndexedClassRoots + sdks.nonIndexedSourceRoots
             )
@@ -210,8 +241,8 @@ class ScriptClassRootsCache(
         override val oldSdkRoots: Collection<VirtualFile> = emptyList()
 
         override val newRoots: Collection<VirtualFile>
-            get() = cache.allDependenciesClassFiles +
-                    cache.allDependenciesSources
+            get() = (cache.allDependenciesClassFiles +
+                    cache.allDependenciesSources).filterRedundantDependencies()
 
         override val newSdkRoots: Collection<VirtualFile>
             get() = cache.sdks.nonIndexedClassRoots +

@@ -33,11 +33,13 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.types.DefinitelyNotNullType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.keysToMap
@@ -119,7 +121,7 @@ open class KotlinChangeInfo(
 
             val toRemove = BooleanArray(receiverShift + methodDescriptor.parametersCount) { true }
             if (hasReceiver) {
-                toRemove[0] = receiverParameterInfo == null && hasReceiver && originalReceiver !in getNonReceiverParameters()
+                toRemove[0] = receiverParameterInfo == null && originalReceiver !in getNonReceiverParameters()
             }
 
             for (parameter in newParameters) {
@@ -303,13 +305,30 @@ open class KotlinChangeInfo(
             return signatureParameters[0].getDeclarationSignature(0, inheritedCallable).text
         }
 
-        return signatureParameters.indices.joinToString(separator = ", ") { i ->
-            signatureParameters[i].getDeclarationSignature(i, inheritedCallable).text
+        return buildString {
+            val indices = signatureParameters.indices
+            val lastIndex = indices.last
+            indices.forEach { index ->
+                val parameter = signatureParameters[index].getDeclarationSignature(index, inheritedCallable)
+                if (index == lastIndex) {
+                    append(parameter.text)
+                } else {
+                    val lastCommentsOrWhiteSpaces =
+                        parameter.allChildren.toList().reversed().takeWhile { it is PsiComment || it is PsiWhiteSpace }
+                    if (lastCommentsOrWhiteSpaces.any { it is PsiComment }) {
+                        val commentsText = lastCommentsOrWhiteSpaces.reversed().joinToString(separator = "") { it.text }
+                        lastCommentsOrWhiteSpaces.forEach { it.delete() }
+                        append("${parameter.text},$commentsText\n")
+                    } else {
+                        append("${parameter.text}, ")
+                    }
+                }
+            }
         }
     }
 
     fun renderReceiverType(inheritedCallable: KotlinCallableDefinitionUsage<*>): String? {
-        val receiverTypeText = receiverParameterInfo?.currentTypeInfo?.render() ?: return null
+        val receiverTypeText = receiverParameterInfo?.currentTypeInfo?.getReceiverTypeText() ?: return null
         val typeSubstitutor = inheritedCallable.typeSubstitutor ?: return receiverTypeText
         val currentBaseFunction = inheritedCallable.baseFunction.currentCallableDescriptor ?: return receiverTypeText
         val receiverType = currentBaseFunction.extensionReceiverParameter!!.type
@@ -362,7 +381,7 @@ open class KotlinChangeInfo(
     fun getOrCreateJavaChangeInfos(): List<JavaChangeInfo>? {
         fun initCurrentSignatures(currentPsiMethods: List<PsiMethod>): List<JvmOverloadSignature> {
             val parameterInfoToPsi = methodDescriptor.original.parameters.zip(originalParameters).toMap()
-            val dummyParameter = KtPsiFactory(method).createParameter("dummy")
+            val dummyParameter = KtPsiFactory(method.project).createParameter("dummy")
             return makeSignatures(
                 parameters = newParameters,
                 psiMethods = currentPsiMethods,

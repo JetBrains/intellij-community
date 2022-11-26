@@ -27,6 +27,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -111,7 +112,7 @@ public final class SwitchUtils {
                                         Set<Object> existingCaseValues, boolean isPatternMatch) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (isPatternMatch) {
-      if(canBePatternSwitchCase(expression, switchExpression)) {
+      if (canBePatternSwitchCase(expression, switchExpression)) {
         final PsiPattern pattern = createPatternFromExpression(expression);
         if (pattern == null) return true;
         for (Object caseValue : existingCaseValues) {
@@ -142,10 +143,9 @@ public final class SwitchUtils {
         return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, left);
       }
     }
-    if (!(expression instanceof PsiPolyadicExpression)) {
+    if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
     final IElementType operation = polyadicExpression.getOperationTokenType();
     final PsiExpression[] operands = polyadicExpression.getOperands();
     if (operation.equals(JavaTokenType.OROR)) {
@@ -169,7 +169,9 @@ public final class SwitchUtils {
 
   public static @Nullable PsiPattern createPatternFromExpression(@NotNull PsiExpression expression) {
     PsiElementFactory factory = PsiElementFactory.getInstance(expression.getProject());
-    final String switchText = "switch(o) { case " + createPatternCaseText(expression) + ": break; }";
+    final String patternCaseText = createPatternCaseText(expression);
+    if (patternCaseText == null) return null;
+    final String switchText = "switch(o) { case " + patternCaseText + ": break; }";
     final PsiElement switchStatement = factory.createStatementFromText(switchText, expression.getContext());
     return PsiTreeUtil.findChildOfType(switchStatement, PsiPattern.class);
   }
@@ -270,10 +272,9 @@ public final class SwitchUtils {
       final PsiExpression patternSwitchExpression = findPatternSwitchExpression(expression);
       if (patternSwitchExpression != null) return patternSwitchExpression;
     }
-    if (!(expression instanceof PsiPolyadicExpression)) {
+    if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return null;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
     final IElementType operation = polyadicExpression.getOperationTokenType();
     final PsiExpression[] operands = polyadicExpression.getOperands();
     if (operation.equals(JavaTokenType.OROR) && operands.length > 0) {
@@ -296,8 +297,7 @@ public final class SwitchUtils {
     if (expression instanceof PsiInstanceOfExpression) {
       return ((PsiInstanceOfExpression)expression).getOperand();
     }
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final IElementType operationToken = polyadicExpression.getOperationTokenType();
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (JavaTokenType.ANDAND.equals(operationToken)) {
@@ -319,8 +319,7 @@ public final class SwitchUtils {
     if (patternOperand != null) return patternOperand;
     final PsiExpression nullCheckedOperand = findNullCheckedOperand(expression);
     if (nullCheckedOperand != null) return nullCheckedOperand;
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final IElementType operationToken = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.OROR.equals(operationToken)) {
         final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -351,8 +350,7 @@ public final class SwitchUtils {
   }
 
   public static @Nullable PsiExpression findNullCheckedOperand(PsiExpression expression){
-    if (!(expression instanceof PsiBinaryExpression)) return null;
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+    if (!(expression instanceof PsiBinaryExpression binaryExpression)) return null;
     if (! JavaTokenType.EQEQ.equals(binaryExpression.getOperationTokenType())) return null;
     if (ExpressionUtils.isNullLiteral(binaryExpression.getLOperand())) {
       return binaryExpression.getROperand();
@@ -399,7 +397,12 @@ public final class SwitchUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiInstanceOfExpression instanceOf) {
       final PsiPrimaryPattern pattern = instanceOf.getPattern();
-      if (pattern != null) return pattern.getText();
+      if (pattern != null) {
+        if (pattern instanceof PsiDeconstructionPattern deconstruction && ErrorUtil.containsError(deconstruction.getDeconstructionList())) {
+          return null;
+        }
+        return pattern.getText();
+      }
       final PsiTypeElement typeElement = instanceOf.getCheckType();
       final PsiType type = typeElement != null ? typeElement.getType() : null;
       String name = new VariableNameGenerator(instanceOf, VariableKind.LOCAL_VARIABLE).byType(type).generate(true);
@@ -413,7 +416,7 @@ public final class SwitchUtils {
         final PsiExpression instanceOf = ContainerUtil.find(operands, operand -> operand instanceof PsiInstanceOfExpression);
         StringBuilder builder = new StringBuilder();
         builder.append(createPatternCaseText(instanceOf));
-        boolean needAppendWhen = PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_19);
+        boolean needAppendWhen = HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(expression);
         for (PsiExpression operand : operands) {
           if (operand != instanceOf) {
             builder.append(needAppendWhen ? " when " : " && ").append(operand.getText());
@@ -672,8 +675,7 @@ public final class SwitchUtils {
       if (statement == null) {
         return;
       }
-      if (statement instanceof PsiDeclarationStatement) {
-        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
+      if (statement instanceof PsiDeclarationStatement declarationStatement) {
         final PsiElement[] elements = declarationStatement.getDeclaredElements();
         for (PsiElement element : elements) {
           final PsiVariable variable = (PsiVariable)element;
@@ -681,8 +683,7 @@ public final class SwitchUtils {
           topLevelVariables.add(varName);
         }
       }
-      else if (statement instanceof PsiBlockStatement) {
-        final PsiBlockStatement block = (PsiBlockStatement)statement;
+      else if (statement instanceof PsiBlockStatement block) {
         final PsiCodeBlock codeBlock = block.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         for (PsiStatement statement1 : statements) {

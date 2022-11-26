@@ -18,9 +18,6 @@ import java.awt.*;
 /**
  * This class is a base for implementing such properties
  * as "minimum size", "preferred size" and "maximum size".
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public abstract class AbstractDimensionProperty<T extends RadComponent> extends Property<T, Dimension> {
   private final Property[] myChildren;

@@ -13,18 +13,17 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.getOrCreateExternalSystemModuleOptions
 
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {
   private fun findEntity(): ExternalSystemModuleOptionsEntity? {
     val modelsProvider = module.getUserData(IdeModifiableModelsProviderImpl.MODIFIABLE_MODELS_PROVIDER_KEY)
     val storage = if (modelsProvider != null) modelsProvider.actualStorageBuilder else (module as ModuleBridge).entityStorage.current
-    val moduleEntity = storage.findModuleEntity(module as ModuleBridge)
+    val moduleEntity = (module as ModuleBridge).findModuleEntity(storage)
     return moduleEntity?.exModuleOptions
   }
 
@@ -37,14 +36,14 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
   private fun editEntity(moduleDiff: MutableEntityStorage?, action: ExternalSystemModuleOptionsEntity.Builder.() -> Unit) {
     module as ModuleBridge
     if (moduleDiff != null) {
-      val moduleEntity = (moduleDiff as EntityStorage).findModuleEntity(module) ?: return
+      val moduleEntity = module.findModuleEntity(moduleDiff) ?: return
       val options = moduleDiff.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
       moduleDiff.modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, options, action)
     }
     else {
       WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
-          val moduleEntity = builder.findModuleEntity(module) ?: return@updateProjectModel
+        WorkspaceModel.getInstance(module.project).updateProjectModel("Modify external system module options") { builder ->
+          val moduleEntity = module.findModuleEntity(builder) ?: return@updateProjectModel
           val options = builder.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
           builder.modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, options, action)
         }
@@ -61,7 +60,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
   private fun updateSource(storageBuilder: MutableEntityStorage?) {
     module as ModuleBridge
     val storage = storageBuilder ?: module.entityStorage.current
-    val moduleEntity = storage.findModuleEntity(module) ?: return
+    val moduleEntity = module.findModuleEntity(storage) ?: return
     val externalSystemId = moduleEntity.exModuleOptions?.externalSystem
     val entitySource = moduleEntity.entitySource
     if (externalSystemId == null && entitySource is JpsFileEntitySource ||

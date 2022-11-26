@@ -24,9 +24,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -198,7 +198,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
             if (qualifierType instanceof PyClassType && name != null) {
               variants.add(LookupElementBuilder.createWithSmartPointer(name, expression)
                              .withTypeText(qualifierType.getName())
-                             .withIcon(PlatformIcons.FIELD_ICON));
+                             .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
               namesAlready.add(name);
             }
           }

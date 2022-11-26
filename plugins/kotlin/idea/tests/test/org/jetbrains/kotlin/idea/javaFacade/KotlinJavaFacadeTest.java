@@ -28,7 +28,7 @@ public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase 
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE;
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance();
     }
 
     public void testDoNotWrapFunFromLocalClass() {
@@ -79,11 +79,11 @@ public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase 
         doTestWrapMethod(true);
     }
 
-    public void testWrapFunWithImplInTrait() {
+    public void testWrapFunWithImplInInterface() {
         doTestWrapMethod(true);
     }
 
-    public void testWrapFunWithoutImplInTrait() {
+    public void testWrapFunWithoutImplInInterface() {
         doTestWrapMethod(true);
     }
 
@@ -123,7 +123,7 @@ public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase 
         doTestWrapProperty(true, true);
     }
 
-    public void testWrapVarPropertyWithAccessorsInTrait() {
+    public void testWrapVarPropertyWithAccessorsInInterface() {
         doTestWrapProperty(true, true);
     }
 

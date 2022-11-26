@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -12,6 +12,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,19 +27,21 @@ class AdvancedSettingsIdContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar
       .registerUastReferenceProvider(registrar,
-                                     injectionHostUExpression().methodCallParameter(0, psiMethod()
-                                       .withName(string().oneOf(
-                                         "getBoolean", "getInt", "getString", "getEnum",
-                                         "getDefaultBoolean", "getDefaultInt", "getDefaultString", "getDefaultEnum",
-                                         "setBoolean", "setInt", "setString", "setEnum")
-                                       )
-                                       .definedInClass(AdvancedSettings.class.getName())),
+                                     injectionHostUExpression()
+                                       .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+                                       .methodCallParameter(0, psiMethod()
+                                         .withName(string().oneOf(
+                                           "getBoolean", "getInt", "getString", "getEnum",
+                                           "getDefaultBoolean", "getDefaultInt", "getDefaultString", "getDefaultEnum",
+                                           "setBoolean", "setInt", "setString", "setEnum")
+                                         )
+                                         .definedInClass(AdvancedSettings.class.getName())),
                                      UastReferenceRegistrar.uastInjectionHostReferenceProvider(
                                        (expression, host) -> new PsiReference[]{new AdvancedSettingReference(host)}),
                                      PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  static class AdvancedSettingReference extends ExtensionPointReferenceBase {
+  static class AdvancedSettingReference extends ExtensionReferenceBase {
 
     AdvancedSettingReference(PsiElement element) {
       super(element);

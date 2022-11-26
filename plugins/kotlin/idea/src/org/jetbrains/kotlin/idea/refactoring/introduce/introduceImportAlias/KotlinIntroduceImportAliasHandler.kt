@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceImportAlias
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
@@ -92,11 +94,13 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
         }
         val newName = suggestionsName.first()
         suggestedImportAliasNames = suggestionsName
-        project.executeWriteCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
-            val newDirective = ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName))
+        project.executeCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
+            val newDirective = runWriteAction { ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName)) }
 
             replaceUsages(usages, newName)
-            cleanImport(file, fqName)
+            runWriteAction {
+                cleanImport(file, fqName)
+            }
 
             if (elementInImportDirective) editor.moveCaret(newDirective.alias?.nameIdentifier?.textOffset ?: newDirective.endOffset)
 
@@ -137,21 +141,23 @@ private fun invokeRename(
 
 private fun replaceUsages(usages: List<UsageContext>, newName: String) {
     // case: inner element
-    for (usage in usages.asReversed()) {
-        val reference = usage.pointer.element?.safeAs<KtElement>()?.mainReference?.takeUnless { it.isImportUsage() } ?: continue
-        val newExpression = reference.handleElementRename(newName) as? KtNameReferenceExpression ?: continue
-        if (usage.isExtension) {
-            newExpression.getQualifiedElementSelector()?.replace(newExpression)
-            continue
-        }
+    runWriteAction {
+        for (usage in usages.asReversed()) {
+            val reference = usage.pointer.element?.safeAs<KtElement>()?.mainReference?.takeUnless { it.isImportUsage() } ?: continue
+            val newExpression = reference.handleElementRename(newName) as? KtNameReferenceExpression ?: continue
+            if (usage.isExtension) {
+                newExpression.getQualifiedElementSelector()?.replace(newExpression)
+                continue
+            }
 
-        val qualifiedElement = newExpression.getQualifiedElement()
-        if (qualifiedElement != newExpression) {
-            val parent = newExpression.parent
-            if (parent is KtCallExpression || parent is KtUserType) {
-                newExpression.siblings(forward = false, withItself = false).forEach(PsiElement::delete)
-                qualifiedElement.replace(parent)
-            } else qualifiedElement.replace(newExpression)
+            val qualifiedElement = newExpression.getQualifiedElement()
+            if (qualifiedElement != newExpression) {
+                val parent = newExpression.parent
+                if (parent is KtCallExpression || parent is KtUserType) {
+                    newExpression.siblings(forward = false, withItself = false).forEach(PsiElement::delete)
+                    qualifiedElement.replace(parent)
+                } else qualifiedElement.replace(newExpression)
+            }
         }
     }
 }

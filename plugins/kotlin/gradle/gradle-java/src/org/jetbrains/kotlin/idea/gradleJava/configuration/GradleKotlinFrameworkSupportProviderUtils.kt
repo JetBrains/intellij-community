@@ -47,7 +47,6 @@ internal fun addBrowserSupport(module: Module) {
         )
     }
 
-
     getNewFileWriter(module, "src/main/kotlin", "main.kt")?.use {
         it.write(
             """
@@ -61,20 +60,27 @@ internal fun addBrowserSupport(module: Module) {
     }
 }
 
-internal fun browserConfiguration(): String {
+internal fun browserConfiguration(kotlinDsl: Boolean): String {
+    val receiver = if (kotlinDsl) "" else "it."
     return """
         webpackTask {
-            cssSupport.enabled = true
+            cssSupport {
+                ${receiver}enabled.set(true)
+            }
         }
         
         runTask {
-            cssSupport.enabled = true
+            cssSupport {
+                ${receiver}enabled.set(true)
+            }
         }
         
         testTask {
             useKarma {
                 useChromeHeadless()
-                webpackConfig.cssSupport.enabled = true
+                webpackConfig.cssSupport {
+                    ${receiver}enabled.set(true)
+                }
             }
         }
     """.trimIndent()

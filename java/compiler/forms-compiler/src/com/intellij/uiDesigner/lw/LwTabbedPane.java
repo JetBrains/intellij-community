@@ -6,10 +6,6 @@ import org.jdom.Element;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class LwTabbedPane extends LwContainer implements ITabbedPane {
   LwTabbedPane(String className) {
     super(className);

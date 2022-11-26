@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -11,8 +12,9 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.project.stateStore
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
-import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
+import com.intellij.testFramework.common.publishHeapDump
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.ref.GCWatcher
@@ -48,16 +50,17 @@ class EditorHistoryManagerTest {
     file.write("first line\nsecond line")
 
     val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)!!
-    useRealFileEditorManager()
+    overrideFileEditorManagerImplementation(PsiAwareFileEditorManagerImpl::class.java, disposable.disposable)
     runBlocking {
       openProjectPerformTaskCloseProject(dir) { project ->
-        val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, virtualFile), false)!!
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        val editor = fileEditorManager.openTextEditor(OpenFileDescriptor(project, virtualFile), false)!!
         try {
           EditorTestUtil.waitForLoading(editor)
           EditorTestUtil.addFoldRegion(editor, 15, 16, ".", true)
         }
         finally {
-          FileEditorManager.getInstance(project).closeFile(virtualFile)
+          fileEditorManager.closeFile(virtualFile)
         }
       }
       val threadDumpBefore = ThreadDumper.dumpThreadsToString()
@@ -67,7 +70,9 @@ class EditorHistoryManagerTest {
 
       val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile)
       if (document != null) {
-        fail<Any>("Document wasn't collected, see heap dump at ${publishHeapDump(EditorHistoryManagerTest::class.java.name)}")
+        fail<Any>("Document wasn't collected, see heap dump at ${
+          publishHeapDump(EditorHistoryManagerTest::class.java.name)
+        }")
         System.err.println("Keeping a reference to the document: $document")
         System.err.println(threadDumpBefore)
       }
@@ -80,19 +85,22 @@ class EditorHistoryManagerTest {
     }
   }
 
-  private fun useRealFileEditorManager() {
-    ProjectServiceContainerCustomizer.getEp().maskAll(listOf(object : ProjectServiceContainerCustomizer {
-      override fun serviceRegistered(project: Project) {
-        project.registerComponentImplementation(key = FileEditorManager::class.java,
-                                                implementation = PsiAwareFileEditorManagerImpl::class.java,
-                                                shouldBeRegistered = false)
-      }
-    }), disposable.disposable, false)
-  }
+}
+
+internal fun overrideFileEditorManagerImplementation(implementation: Class<out FileEditorManager>, disposable: Disposable) {
+  ProjectServiceContainerCustomizer.getEp().maskAll(listOf(object : ProjectServiceContainerCustomizer {
+    override fun serviceRegistered(project: Project) {
+      (project as ComponentManagerImpl).registerService(serviceInterface = FileEditorManager::class.java,
+                                                        implementation = implementation,
+                                                        pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
+                                                        override = true)
+    }
+  }), disposable, false)
 }
 
 private suspend fun openProjectPerformTaskCloseProject(projectDir: Path, task: (Project) -> Unit) {
-  val project = ProjectManagerEx.getInstanceEx().openProject(projectDir, createTestOpenProjectOptions())!!
+  val projectManager = ProjectManagerEx.getInstanceEx()
+  val project = projectManager.openProject(projectDir, createTestOpenProjectOptions())!!
   try {
     withContext(Dispatchers.EDT) {
       task(project)
@@ -100,6 +108,6 @@ private suspend fun openProjectPerformTaskCloseProject(projectDir: Path, task: (
     }
   }
   finally {
-    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
+    projectManager.forceCloseProjectAsync(project)
   }
 }

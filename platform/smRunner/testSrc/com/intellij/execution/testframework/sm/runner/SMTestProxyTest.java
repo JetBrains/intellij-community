@@ -243,23 +243,25 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     };
     mySimpleTest.printOn(printer);
     assertEquals("", printer.getStdOut());
-    assertEquals("\n" +
-                 "a\n" +
-                 "Expected :expected1\n" +
-                 "Actual   :actual1\n" +
-                 "<Click to see difference>\n" +
-                 "\n" +
-                 "stacktrace\n" +
-                 "\n" +
-                 "b\n" +
-                 "Expected :expected2\n" +
-                 "Actual   :actual2\n" +
-                 "<Click to see difference>\n" +
-                 "\n" +
-                 "stacktrace\n" +
-                 "\n" +
-                 "c\n" +
-                 "stacktrace\n", printer.getAllOut());
+    assertEquals("""
+
+                   a
+                   Expected :expected1
+                   Actual   :actual1
+                   <Click to see difference>
+
+                   stacktrace
+
+                   b
+                   Expected :expected2
+                   Actual   :actual2
+                   <Click to see difference>
+
+                   stacktrace
+
+                   c
+                   stacktrace
+                   """, printer.getAllOut());
   }
 
   public void testTestFailed_ComparisonAssertion() {

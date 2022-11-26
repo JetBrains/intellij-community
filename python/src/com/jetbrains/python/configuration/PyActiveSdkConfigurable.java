@@ -377,7 +377,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected @NotNull List<Sdk> getAvailableSdks() {
-    return myInterpreterList.getAllPythonSdks(myProject);
+    return myInterpreterList.getAllPythonSdks(myProject, myModule);
   }
 
   private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
@@ -386,7 +386,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final List<Object> items = new ArrayList<>();
     items.add(null);
 
-    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes = groupModuleSdksByTypes(allPythonSdks, myModule, PythonSdkUtil::isInvalid);
+    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes =
+      groupModuleSdksByTypes(allPythonSdks, myModule, sdk -> !PySdkExtKt.getSdkSeemsValid(sdk));
 
     final PyRenderedSdkType[] renderedSdkTypes = PyRenderedSdkType.values();
     for (int i = 0; i < renderedSdkTypes.length; i++) {

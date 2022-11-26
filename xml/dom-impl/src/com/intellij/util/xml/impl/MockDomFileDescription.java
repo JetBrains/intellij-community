@@ -22,9 +22,6 @@ import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 public class MockDomFileDescription<T> extends DomFileDescription<T> {
   private final VirtualFile myFile;
 

@@ -8,9 +8,9 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator.getLibraryTableId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 
 /**
  * @return [Library] or null if corresponding module is unloaded

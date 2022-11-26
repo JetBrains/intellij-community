@@ -27,7 +27,7 @@ import com.intellij.slicer.*;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -67,10 +67,10 @@ public class SliceBackwardTest extends SliceTestCase {
     params.dataFlowToThis = true;
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
     params.valueFilter = filter.isEmpty() ? JavaValueFilter.ALLOW_EVERYTHING : provider.parseFilter(element, filter);
-    List<ExceptionAnalysisProvider.StackLine> lines = StreamEx.of(stack).map(line -> {
+    List<ExceptionAnalysisProvider.StackLine> lines = ContainerUtil.map(stack, line -> {
       String[] parts = line.split(":");
       return new ExceptionAnalysisProvider.StackLine(parts[0], parts[1], null);
-    }).toList();
+    });
     assertTrue(params.valueFilter instanceof JavaValueFilter);
     params.valueFilter = ((JavaValueFilter)params.valueFilter).withStack(lines);
 

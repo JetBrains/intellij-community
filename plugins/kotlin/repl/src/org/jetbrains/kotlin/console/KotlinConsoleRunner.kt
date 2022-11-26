@@ -117,7 +117,7 @@ class KotlinConsoleRunner(
             field = value
         }
 
-    fun changeConsoleEditorIndicator(newIconWithTooltip: IconWithTooltip) = WriteCommandAction.runWriteCommandAction(project) {
+    private fun changeConsoleEditorIndicator(newIconWithTooltip: IconWithTooltip) = WriteCommandAction.runWriteCommandAction(project) {
         consoleEditorHighlighter.gutterIconRenderer = ConsoleIndicatorRenderer(newIconWithTooltip)
     }
 
@@ -230,7 +230,7 @@ class KotlinConsoleRunner(
         editor.setPlaceholderAttributes(placeholderAttrs)
     }
 
-    fun setupGutters(consoleView: LanguageConsoleView) {
+    private fun setupGutters(consoleView: LanguageConsoleView) {
         fun configureEditorGutter(editor: EditorEx, color: Color, iconWithTooltip: IconWithTooltip): RangeHighlighter {
             editor.settings.isLineMarkerAreaShown = true // hack to show gutter
             editor.settings.isFoldingOutlineShown = true
@@ -314,7 +314,7 @@ class KotlinConsoleRunner(
 
 class ConsoleScriptDefinitionContributor : ScriptDefinitionSourceAsContributor {
 
-    val definitionsSet = ContainerUtil.newConcurrentSet<ScriptDefinition>()
+    private val definitionsSet = ContainerUtil.newConcurrentSet<ScriptDefinition>()
 
     override val definitions: Sequence<ScriptDefinition>
         get() = definitionsSet.asSequence()

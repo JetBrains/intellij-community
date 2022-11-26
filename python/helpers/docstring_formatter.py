@@ -1,3 +1,5 @@
+import argparse
+import json
 import os
 import re
 import sys
@@ -7,19 +9,26 @@ import six
 from six import text_type, u
 
 ENCODING = 'utf-8'
-_stdin = os.fdopen(sys.stdin.fileno(), 'rb')
-_stdout = os.fdopen(sys.stdout.fileno(), 'wb')
-_stderr = os.fdopen(sys.stderr.fileno(), 'wb')
+
+# regexp from sphinxcontrib/napoleon/docstring.py:35 and py2only/docutils/parsers/rst/states.py:1107
+TAGS_START = re.compile(
+    r'(\.\. \S+::)|:(?![: ])([^:\\]|\\.|:(?!([ `]|$)))*(?<! ):( +|$)')
 
 
-def read_safe():
-    return _stdin.read().decode(ENCODING)
+def format_fragments(fragments_list):
+    formatted_fragments = []
 
+    for element in fragments_list:
+        formatted = format_rest(element['myDescription'])
+        if formatted.startswith('<p>') and formatted.endswith('</p>\n'):
+            formatted = formatted[len('<p>'):][:-len('</p>\n')]
+        formatted_fragments.append({
+            'myName': element['myName'],
+            'myDescription': formatted,
+            'myFragmentType': element['myFragmentType']
+        })
 
-def print_safe(s, error=False):
-    stream = _stderr if error else _stdout
-    stream.write(s.encode(ENCODING))
-    stream.flush()
+    return formatted_fragments
 
 
 def format_rest(docstring):
@@ -221,6 +230,7 @@ def format_rest(docstring):
             self.output = ''
 
     writer = _DocumentPseudoWriter()
+    docstring = add_blank_line_before_first_tag(docstring)
     publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
                                                                  'halt_level': 10000,
                                                                  'warning_stream': None,
@@ -230,6 +240,16 @@ def format_rest(docstring):
     visitor = RestHTMLTranslator(document)
     document.walkabout(visitor)
     return u('').join(visitor.body)
+
+
+def add_blank_line_before_first_tag(docstring):
+    input_lines = docstring.splitlines()
+    for i, line in enumerate(input_lines):
+        if TAGS_START.match(line):
+            if i > 0 and not input_lines[i - 1].isspace():
+                input_lines.insert(i, '')
+            break
+    return '\n'.join(input_lines)
 
 
 def format_google(docstring):
@@ -283,38 +303,63 @@ def format_epytext(docstring):
     return html
 
 
-def main():
-    # Remove existing Sphinx extensions registered via
-    # sphinxcontrib setuptools namespace package, as they
-    # conflict with sphinxcontrib.napoleon that we bundle.
-    sys.modules.pop('sphinxcontrib', None)
-
-    args = sys.argv[1:]
-
-    docstring_format = args[0] if args else 'rest'
-    if len(args) > 1:
-        try:
-            f = open(args[1], 'rb')
-            text = f.read().decode('utf-8')
-        finally:
-            f.close()
-    else:
-        text = read_safe()
-
+def format_body(docstring_format, input_body):
     formatter = {
         'rest': format_rest,
         'google': format_google,
         'numpy': format_numpy,
         'epytext': format_epytext
     }.get(docstring_format, format_rest)
-
-    html = formatter(text)
-    print_safe(html)
+    return formatter(input_body)
 
 
-if __name__ == '__main__':
+def main():
+    _stdin = os.fdopen(sys.stdin.fileno(), 'rb')
+    _stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+    _stderr = os.fdopen(sys.stderr.fileno(), 'wb')
+
+    def read_safe():
+        return _stdin.read().decode(ENCODING)
+
+    def print_safe(s, error=False):
+        stream = _stderr if error else _stdout
+        stream.write(s.encode(ENCODING))
+        stream.flush()
+
+    # Remove existing Sphinx extensions registered via
+    # sphinxcontrib setuptools namespace package, as they
+    # conflict with sphinxcontrib.napoleon that we bundle.
+    sys.modules.pop('sphinxcontrib', None)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--format', default='rest', nargs='?', const='rest')
+    parser.add_argument('--fragments', action="store_true")
+    parser.add_argument('--input', type=argparse.FileType('rb'), default=_stdin, nargs='?', const=_stdin)
+    args = parser.parse_args()
+
+    if args.input:
+        try:
+            text = args.input.read().decode(ENCODING)
+        finally:
+            args.input.close()
+    else:
+        text = read_safe()
+
     try:
-        main()
+        if args.fragments:
+            input_json = json.loads(text)
+            formatted_body = format_body(args.format, input_json['body'])
+            formatted_fragments = format_fragments(input_json['fragments'])
+            print_safe(json.dumps({
+                'body': formatted_body,
+                'fragments': formatted_fragments,
+            }, ensure_ascii=False, separators=(',', ':'), sort_keys=True))
+        else:
+            print_safe(format_body(args.format, text))
     except ImportError:
         print_safe('sys.path = %s\n\n' % sys.path, error=True)
         raise
+
+
+if __name__ == '__main__':
+    main()

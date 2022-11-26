@@ -66,7 +66,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement castTypeElement = descriptor.getPsiElement();
       final PsiTypeCastExpression expression = (PsiTypeCastExpression)castTypeElement.getParent();
       if (expression == null) {

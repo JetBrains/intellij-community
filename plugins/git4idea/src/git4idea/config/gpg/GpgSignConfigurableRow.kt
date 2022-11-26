@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config.gpg
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBLabel
@@ -14,7 +14,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import git4idea.config.GitExecutableListener
 import git4idea.config.GitExecutableManager
 import git4idea.config.HasGitRootsPredicate
@@ -40,11 +40,11 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
   }
   private val errorLabel: JLabel = JBLabel().apply {
-    foreground = UIUtil.getErrorForeground()
+    foreground = NamedColorUtil.getErrorForeground()
   }
 
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable)
-  private val uiDispatcher get() = AppUIExecutor.onUiThread(ModalityState.any()).coroutineDispatchingContext()
+  private val uiDispatcher get() = Dispatchers.EDT + ModalityState.any().asContextElement()
   private val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
 
   private val secretKeys = SecretKeysValue(project)

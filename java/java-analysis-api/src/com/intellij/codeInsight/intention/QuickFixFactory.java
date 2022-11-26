@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
@@ -252,7 +251,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createRenameFileFix(@NotNull String newName);
 
   @Nullable
-  public abstract IntentionAction createRenameFix(@NotNull PsiElement element, @Nullable Object highlightInfo);
+  public abstract IntentionAction createRenameFix(@NotNull PsiElement element);
 
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
@@ -382,13 +381,13 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createMoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType type);
 
-  public abstract void registerPullAsAbstractUpFixes(@NotNull PsiMethod method, @NotNull QuickFixActionRegistrar registrar);
+  public abstract void registerPullAsAbstractUpFixes(@NotNull PsiMethod method, @NotNull List<? super IntentionAction> registrar);
 
   @NotNull
   public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
   @NotNull
-  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
+  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly, boolean isInContent);
 
   @NotNull
   public abstract IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);
@@ -424,7 +423,8 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
 
   @NotNull
-  public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiReference reference);
+  public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
+                                                              @NotNull List<? super IntentionAction> registrar);
 
   @NotNull
   public abstract IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
@@ -560,8 +560,8 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
 
-  @Nullable
-  public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo);
+  @NotNull
+  public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement duplicateElement);
 
   public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
 
@@ -615,4 +615,20 @@ public abstract class QuickFixFactory {
    * @return a fix that converts an anonymous class to an inner class
    */
   public abstract @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass);
+
+  public abstract @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction();
+
+  /**
+   * @param variable variable to make an effectively final
+   * @return a fix that refactors code to make variable effectively final when possible. Null, if it cannot create such a fix.
+   */
+  public abstract @Nullable IntentionAction createMakeVariableEffectivelyFinalFix(@NotNull PsiVariable variable);
+
+  /**
+   * @param elements elements to delete
+   * @param text     the text to show in the intention popup
+   * @return a fix that deletes the elements
+   */
+  @NotNull
+  public abstract IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text);
 }

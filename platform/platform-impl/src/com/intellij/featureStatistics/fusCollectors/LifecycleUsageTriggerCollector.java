@@ -7,7 +7,6 @@ import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
 import com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
@@ -29,7 +27,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 64);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 65);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -41,8 +39,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final VarargEventId IDE_EVENT_START = LIFECYCLE.registerVarargEvent("ide.start", eapField, testField, commandLineField,
                                                                                      internalField, headlessField, debugAgentField);
   private static final EventId1<Boolean> IDE_CLOSE = LIFECYCLE.registerEvent("ide.close", EventFields.Boolean("restart"));
-  private static final EventId1<Long> PROJECT_OPENING_FINISHED =
-    LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"));
+  private static final EventId2<Long, Boolean> PROJECT_OPENING_FINISHED =
+    LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"));
   private static final EventId PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened");
   private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed");
   private static final EventId PROJECT_MODULE_ATTACHED = LIFECYCLE.registerEvent("project.module.attached");
@@ -99,8 +97,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     IDE_CLOSE.log(restart);
   }
 
-  public static void onProjectOpenFinished(@NotNull Project project, long time) {
-    PROJECT_OPENING_FINISHED.log(project, time);
+  public static void onProjectOpenFinished(@NotNull Project project, long time, boolean isTab) {
+    PROJECT_OPENING_FINISHED.log(project, time, isTab);
   }
 
   public static void onProjectOpened(@NotNull Project project) {
@@ -178,20 +176,12 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   public static void onProjectFrameSelected(int option) {
     ProjectOpenMode optionValue;
     switch (option) {
-      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW:
-        optionValue = ProjectOpenMode.New;
-        break;
-
-      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW:
-        optionValue = ProjectOpenMode.Same;
-        break;
-
-      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH:
-        optionValue = ProjectOpenMode.Attach;
-        break;
-
-      default:
+      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW -> optionValue = ProjectOpenMode.New;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW -> optionValue = ProjectOpenMode.Same;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> optionValue = ProjectOpenMode.Attach;
+      default -> {
         return;
+      }
     }
     PROJECT_FRAME_SELECTED.log(optionValue);
   }

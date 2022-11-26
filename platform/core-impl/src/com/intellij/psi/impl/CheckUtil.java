@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public final class CheckUtil {
   private CheckUtil() { }
 
-  public static void checkWritable(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public static void checkWritable(@NotNull PsiElement element) throws IncorrectOperationException {
     if (!element.isWritable()) {
       if (element instanceof PsiDirectory) {
         String url = ((PsiDirectory)element).getVirtualFile().getPresentableUrl();
@@ -35,7 +35,7 @@ public final class CheckUtil {
     }
   }
 
-  public static void checkDelete(@NotNull final VirtualFile file) throws IncorrectOperationException {
+  public static void checkDelete(@NotNull VirtualFile file) throws IncorrectOperationException {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

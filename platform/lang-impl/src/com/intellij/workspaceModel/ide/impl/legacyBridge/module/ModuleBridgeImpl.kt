@@ -14,23 +14,24 @@ import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
@@ -46,19 +47,17 @@ internal class ModuleBridgeImpl(
   init {
     // default project doesn't have modules
     if (!project.isDefault && !project.isDisposed) {
-      val busConnection = project.messageBus.connect(this)
-
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.persistentId != moduleEntityId) return@forEach
+            if (it.entity.symbolicId != moduleEntityId) return@forEach
 
             if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
 
             val currentStore = entityStorage.current
             val storage = if (currentStore is MutableEntityStorage) currentStore.toSnapshot() else currentStore
             entityStorage = VersionedEntityStorageOnStorage(storage)
-            assert(entityStorage.current.resolve(moduleEntityId) != null) {
+            assert(moduleEntityId in entityStorage.current) {
               // If we ever get this assertion, replace use `event.storeBefore` instead of current
               // As it made in ArtifactBridge
               "Cannot resolve module $moduleEntityId. Current store: $currentStore"
@@ -66,6 +65,18 @@ internal class ModuleBridgeImpl(
           }
         }
       })
+    }
+
+    // This is temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
+    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+    val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
+                               ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
+    if (TestModuleProperties.testModulePropertiesBridgeEnabled()) {
+      registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
+    } else {
+      val classLoader = javaClass.classLoader
+      val implClass = classLoader.loadClass("com.intellij.openapi.roots.impl.TestModulePropertiesImpl")
+      registerService(TestModuleProperties::class.java, implClass, corePluginDescriptor, false)
     }
   }
 
@@ -130,7 +141,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun getOptionValue(key: String): String? {
-    val moduleEntity = entityStorage.current.findModuleEntity(this)
+    val moduleEntity = this.findModuleEntity(entityStorage.current)
     if (key == Module.ELEMENT_TYPE) {
       return moduleEntity?.type
     }
@@ -164,7 +175,7 @@ internal class ModuleBridgeImpl(
 
     val diff = diff
     if (diff != null) {
-      val entity = entityStorage.current.findModuleEntity(this)
+      val entity = this.findModuleEntity(entityStorage.current)
       if (entity != null) {
         updateOptionInEntity(diff, entity)
       }
@@ -173,8 +184,8 @@ internal class ModuleBridgeImpl(
       @Suppress("DEPRECATION")
       if (getOptionValue(key) != value) {
         WriteAction.runAndWait<RuntimeException> {
-          WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-            val entity = builder.findModuleEntity(this)
+          WorkspaceModel.getInstance(project).updateProjectModel("Set option in module entity") { builder ->
+            val entity = this.findModuleEntity(builder)
             if (entity != null) {
               updateOptionInEntity(builder, entity)
             }

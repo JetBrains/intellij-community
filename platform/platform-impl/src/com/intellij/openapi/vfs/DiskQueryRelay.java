@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,20 +70,10 @@ public final class DiskQueryRelay<Param, Result> {
    * inside the {@code task} block.
    */
   public static <Result, E extends Exception> Result compute(@NotNull ThrowableComputable<Result, E> task) throws E, ProcessCanceledException {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator == null) {
-      return task.compute();
-    }
-    else {
-      Future<Result> future = ProcessIOExecutorService.INSTANCE.submit(() -> task.compute());
-      return await(future, indicator);
-    }
-  }
-
-  private static <Result, E extends Exception> Result await(Future<Result> future, ProgressIndicator indicator) throws E {
+    Future<Result> future = ProcessIOExecutorService.INSTANCE.submit(() -> task.compute());
     while (true) {
       try {
-        indicator.checkCanceled();
+        ProgressManager.checkCanceled();
       }
       catch (ProcessCanceledException e) {
         future.cancel(true);
@@ -97,7 +88,9 @@ public final class DiskQueryRelay<Param, Result> {
         throw new ProcessCanceledException(e);
       }
       catch (ExecutionException e) {
-        @SuppressWarnings("unchecked") E cause = (E)e.getCause();
+        Throwable t = e.getCause();
+        ExceptionUtil.rethrowUnchecked(t);
+        @SuppressWarnings("unchecked") E cause = (E)t;
         throw cause;
       }
     }

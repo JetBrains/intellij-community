@@ -98,7 +98,8 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     }
   }
 
-  protected abstract void setupFacet(FACET_TYPE f, MavenProject mavenProject);
+  protected void setupFacet(FACET_TYPE f, MavenProject mavenProject) {
+  }
 
   @Override
   public void process(IdeModifiableModelsProvider modifiableModelsProvider,

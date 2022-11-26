@@ -45,7 +45,6 @@ import java.util.List;
 */
 public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction {
 
-  private final Class<? extends DomElement> myClazz;
   private final String myNewName;
   private final List<? extends DomElement> myParents;
   private final DomCollectionChildDescription myChildDescription;
@@ -53,12 +52,11 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   public ResolvingElementQuickFix(final Class<? extends DomElement> clazz, final String newName, final List<? extends DomElement> parents,
                                   final DomCollectionChildDescription childDescription) {
-    myClazz = clazz;
     myNewName = newName;
     myParents = parents;
     myChildDescription = childDescription;
 
-    myTypeName = TypePresentationService.getService().getTypePresentableName(myClazz);
+    myTypeName = TypePresentationService.getService().getTypePresentableName(clazz);
   }
 
   public void setTypeName(final String typeName) {
@@ -118,31 +116,27 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   protected static void chooseParent(final List<? extends DomElement> files, final Consumer<? super DomElement> onChoose) {
     switch (files.size()) {
-      case 0:
-        return;
-      case 1:
-        onChoose.consume(files.iterator().next());
-        return;
-      default:
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(XmlDomBundle.message(
-          "dom.quickfix.create.new.element.choose.file.title"), files) {
-          @Override
-          public PopupStep onChosen(final DomElement selectedValue, final boolean finalChoice) {
-            onChoose.consume(selectedValue);
-            return super.onChosen(selectedValue, finalChoice);
-          }
+      case 0 -> {}
+      case 1 -> onChoose.consume(files.iterator().next());
+      default -> JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(XmlDomBundle.message(
+        "dom.quickfix.create.new.element.choose.file.title"), files) {
+        @Override
+        public PopupStep onChosen(final DomElement selectedValue, final boolean finalChoice) {
+          onChoose.consume(selectedValue);
+          return super.onChosen(selectedValue, finalChoice);
+        }
 
-          @Override
-          public Icon getIconFor(final DomElement aValue) {
-            return DomUtil.getFile(aValue).getIcon(0);
-          }
+        @Override
+        public Icon getIconFor(final DomElement aValue) {
+          return DomUtil.getFile(aValue).getIcon(0);
+        }
 
-          @Override
-          @NotNull
-          public String getTextFor(final DomElement value) {
-            return DomUtil.getFile(value).getName();
-          }
-        }).showInBestPositionFor(DataManager.getInstance().getDataContext());
+        @Override
+        @NotNull
+        public String getTextFor(final DomElement value) {
+          return DomUtil.getFile(value).getName();
+        }
+      }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }
   }
 

@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -98,6 +100,12 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
     String name = DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.analyze.extension.point",
                                        action.getTemplateText(), extensionPoint.getEffectiveQualifiedName());
     return new IntentionAndQuickFixAction() {
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+        return IntentionPreviewInfo.EMPTY;
+      }
+
       @Nls(capitalization = Nls.Capitalization.Sentence)
       @NotNull
       @Override

@@ -23,8 +23,6 @@ import java.lang.reflect.Type;
 
 /**
  * Allows runtime extension of DOM Model.
- *
- * @author peter
  */
 public interface DomExtensionsRegistrar {
 

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -33,13 +34,13 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.PLUGIN_ID
+import org.jetbrains.kotlin.test.util.ResolverTracker
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -103,18 +104,6 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         }
     }
 
-    class ResolverTracker : ResolverForModuleComputationTracker {
-        val moduleResolversComputed = mutableListOf<Module>()
-        val sdkResolversComputed = mutableListOf<Sdk>()
-
-        override fun onResolverComputed(moduleInfo: ModuleInfo) {
-            when (moduleInfo) {
-                is ModuleSourceInfo -> moduleResolversComputed.add(moduleInfo.module)
-                is SdkInfo -> sdkResolversComputed.add(moduleInfo.sdk)
-            }
-        }
-    }
-
     fun testRecomputeResolversOnChange() {
         val tracker = ResolverTracker()
 
@@ -132,10 +121,10 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
 
+            assertEquals(1, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
 
-            tracker.sdkResolversComputed.clear()
-            tracker.moduleResolversComputed.clear()
+            tracker.clear()
 
             val module1ModTracker = KotlinModuleOutOfCodeBlockModificationTracker(module1)
             val module2ModTracker = KotlinModuleOutOfCodeBlockModificationTracker(module2)
@@ -177,15 +166,15 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
 
-            assertEquals(1, tracker.sdkResolversComputed.size)
+            assertEquals(0, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
 
-            tracker.moduleResolversComputed.clear()
+            tracker.clear()
             ApplicationManager.getApplication().runWriteAction {
                 (PsiModificationTracker.getInstance(myProject) as PsiModificationTrackerImpl).incOutOfCodeBlockModificationCounter()
             }
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
-            assertEquals(2, tracker.sdkResolversComputed.size)
+            assertEquals(0, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
         }
     }

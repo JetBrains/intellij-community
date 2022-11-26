@@ -101,110 +101,126 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testAltDragStartingFromWithinLine() {
-    initText("<caret>line\n" +
-             "long line\n" +
-             "very long line\n" +
-             "long line\n" +
-             "line");
+    initText("""
+               <caret>line
+               long line
+               very long line
+               long line
+               line""");
     setEditorVisibleSize(1000, 1000);
 
     EditorMouseFixture mouse = mouse();
     mouse.alt().pressAt(1, 6);
-    checkResultByText("line\n" +
-                      "long l<caret>ine\n" +
-                      "very long line\n" +
-                      "long line\n" +
-                      "line");
+    checkResultByText("""
+                        line
+                        long l<caret>ine
+                        very long line
+                        long line
+                        line""");
 
     mouse.dragTo(4, 6); // still holding Alt
-    checkResultByText("line\n" +
-                      "long l<caret>ine\n" +
-                      "very l<caret>ong line\n" +
-                      "long l<caret>ine\n" +
-                      "line<caret>");
+    checkResultByText("""
+                        line
+                        long l<caret>ine
+                        very l<caret>ong line
+                        long l<caret>ine
+                        line<caret>""");
 
     mouse.dragTo(4, 8); // still holding Alt
-    checkResultByText("line\n" +
-                      "long l<selection>in<caret></selection>e\n" +
-                      "very l<selection>on<caret></selection>g line\n" +
-                      "long l<selection>in<caret></selection>e\n" +
-                      "line");
+    checkResultByText("""
+                        line
+                        long l<selection>in<caret></selection>e
+                        very l<selection>on<caret></selection>g line
+                        long l<selection>in<caret></selection>e
+                        line""");
 
     mouse.dragTo(4, 10).release(); // still holding Alt
-    checkResultByText("line\n" +
-                      "long l<selection>ine<caret></selection>\n" +
-                      "very l<selection>ong <caret></selection>line\n" +
-                      "long l<selection>ine<caret></selection>\n" +
-                      "line");
+    checkResultByText("""
+                        line
+                        long l<selection>ine<caret></selection>
+                        very l<selection>ong <caret></selection>line
+                        long l<selection>ine<caret></selection>
+                        line""");
   }
 
   public void testMiddleButtonDragStartingFromVirtualSpace() {
-    initText("<caret>line\n" +
-             "long line\n" +
-             "very long line\n" +
-             "long line\n" +
-             "line");
+    initText("""
+               <caret>line
+               long line
+               very long line
+               long line
+               line""");
     setEditorVisibleSize(1000, 1000);
 
     EditorMouseFixture mouse = mouse();
     mouse.middle().pressAt(1, 17);
-    checkResultByText("line\n" +
-                      "long line<caret>\n" +
-                      "very long line\n" +
-                      "long line\n" +
-                      "line");
+    checkResultByText("""
+                        line
+                        long line<caret>
+                        very long line
+                        long line
+                        line""");
 
     mouse.dragTo(2, 16);
-    checkResultByText("line\n" +
-                      "long line<caret>\n" +
-                      "very long line<caret>\n" +
-                      "long line\n" +
-                      "line");
+    checkResultByText("""
+                        line
+                        long line<caret>
+                        very long line<caret>
+                        long line
+                        line""");
 
     mouse.dragTo(3, 12);
-    checkResultByText("line\n" +
-                      "long line\n" +
-                      "very long li<selection><caret>ne</selection>\n" +
-                      "long line\n" +
-                      "line");
+    checkResultByText("""
+                        line
+                        long line
+                        very long li<selection><caret>ne</selection>
+                        long line
+                        line""");
 
     mouse.dragTo(3, 6).release();
-    checkResultByText("line\n" +
-                      "long l<selection><caret>ine</selection>\n" +
-                      "very l<selection><caret>ong line</selection>\n" +
-                      "long l<selection><caret>ine</selection>\n" +
-                      "line");
+    checkResultByText("""
+                        line
+                        long l<selection><caret>ine</selection>
+                        very l<selection><caret>ong line</selection>
+                        long l<selection><caret>ine</selection>
+                        line""");
   }
 
   public void testAltOnOffWhileDragging() {
-    initText("line1\n" +
-             "line2\n" +
-             "line3");
+    initText("""
+               line1
+               line2
+               line3""");
     setEditorVisibleSize(1000, 1000);
 
     EditorMouseFixture mouse = mouse();
     mouse.pressAt(0, 1).dragTo(1, 2);
-    checkResultByText("l<selection>ine1\n" +
-                      "li<caret></selection>ne2\n" +
-                      "line3");
+    checkResultByText("""
+                        l<selection>ine1
+                        li<caret></selection>ne2
+                        line3""");
     mouse.alt().dragTo(1, 3);
-    checkResultByText("l<selection>in<caret></selection>e1\n" +
-                      "l<selection>in<caret></selection>e2\n" +
-                      "line3");
+    checkResultByText("""
+                        l<selection>in<caret></selection>e1
+                        l<selection>in<caret></selection>e2
+                        line3""");
     mouse.noModifiers().dragTo(2, 4).release();
-    checkResultByText("l<selection>ine1\n" +
-                      "line2\n" +
-                      "line<caret></selection>3");
+    checkResultByText("""
+                        l<selection>ine1
+                        line2
+                        line<caret></selection>3""");
   }
 
   public void testTyping() {
-    initText("some<caret> text<caret>\n" +
-             "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-             "<selection>ano<caret>ther</selection> line");
+    initText("""
+               some<caret> text<caret>
+               some <selection><caret>other</selection> <selection>text<caret></selection>
+               <selection>ano<caret>ther</selection> line""");
     type('A');
-    checkResultByText("someA<caret> textA<caret>\n" +
-                      "some A<caret> A<caret>\n" +
-                      "A<caret> line");
+    checkResultByText("""
+                        someA<caret> textA<caret>
+                        some A<caret> A<caret>
+                        A<caret> line""");
   }
 
   public void testCopyPaste() {
@@ -217,6 +233,66 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "three fourthree<caret> ");
   }
 
+  public void testCopyPasteFromEmptySelection() {
+    initText("<caret>one two \n" +
+             "three<caret> four");
+    executeAction("EditorCopy");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("""
+                        one two\s
+                        one two<caret>\s
+                        three four
+                        three four<caret>""");
+  }
+
+  public void testCopyPasteFromEmptySelectionMultiCaretOnEachLine() {
+    initText("<caret>one <caret>two \n" +
+             "three<caret> four<caret>");
+    executeAction("EditorCopy");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("""
+                        one two\s
+                        one two<caret>\s
+                        three four
+                        three four<caret>""");
+  }
+
+  public void testCopyPasteFromEmptySelectionMultipleCaretsAtLineStart() {
+    initText("""
+               \tone two\s
+                hi<caret>\s
+               \tthree four\s""");
+    int tabSize = getEditor().getSettings().getTabSize(getProject());
+    getEditor().getSettings().setCaretInsideTabs(true);
+    executeAction("EditorCopy");
+    executeAction("EditorLineStart");
+    getEditor().getCaretModel().moveToVisualPosition(new VisualPosition(1,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0,1));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0, tabSize));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2,1));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2, tabSize));
+    checkResultByText("""
+                        <caret><caret>\t<caret>one two\s
+                        <caret> hi\s
+                        <caret><caret>\t<caret>three four\s""");
+    executeAction("EditorPaste");
+    checkResultByText("""
+                         hi\s
+                         hi\s
+                         hi\s
+                        <caret><caret>\t<caret>one two\s
+                         hi\s
+                        <caret> hi\s
+                         hi\s
+                         hi\s
+                         hi\s
+                        <caret><caret>\t<caret>three four\s""");
+  }
+
   public void testCutAndPaste() {
     initText("<selection>one<caret></selection> two \n" +
              "<selection>three<caret></selection> four ");
@@ -225,6 +301,97 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     executeAction("EditorPaste");
     checkResultByText(" twoone<caret> \n" +
                       " fourthree<caret> ");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithCaretAtLineEnd() {
+    initText("""
+               <caret>one\s
+               two\s
+               th<caret>ree\s
+               four\s""");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>four ");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("""
+                        one\s
+                        two<caret>\s
+                        three\s
+                        four<caret>\s""");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithCaretAtLineStart() {
+    initText("""
+               <caret>one\s
+               two\s
+               th<caret>ree\s
+               four\s""");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>four ");
+    executeAction("EditorPaste");
+    checkResultByText("""
+                        one\s
+                        <caret>two\s
+                        three\s
+                        <caret>four\s""");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithFewerCaret() {
+    initText("""
+               <caret>one\s
+               two\s
+               th<caret>ree\s
+               four<caret>\s""");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("""
+                        one\s
+                        two<caret>\s
+                        three\s
+                        <caret>""");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithMultipleCaretsOnSingleLine() {
+    initText("""
+               <caret>one\s
+               two\s
+               th<caret>ree\s
+               four<caret>\s""");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>");
+    getEditor().getCaretModel().addCaret(new VisualPosition(0,2));
+    executeAction("EditorPaste");
+    checkResultByText("""
+                        one\s
+                        three\s
+                        <caret>tw<caret>o\s
+                        four\s
+                        <caret>""");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithMultipleCaretsOnSingleLineAndLineStart() {
+    initText("""
+               <caret>one\s
+               two\s
+               th<caret>ree\s
+               four<caret>\s""");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>");
+    initText("<caret>t<caret>w<caret>o \n");
+    executeAction("EditorPaste");
+    checkResultByText("""
+                        one\s
+                        three\s
+                        four\s
+                        <caret>t<caret>w<caret>o\s
+                        """);
   }
 
   public void testPasteSingleItem() {
@@ -239,54 +406,61 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCutAndPasteMultiline() {
-    initText("one <selection>two \n" +
-             "three<caret></selection> four \n" +
-             "five <selection>six \n" +
-             "seven<caret></selection> eight");
+    initText("""
+               one <selection>two\s
+               three<caret></selection> four\s
+               five <selection>six\s
+               seven<caret></selection> eight""");
     executeAction("EditorCut");
     executeAction("EditorLineEnd");
     executeAction("EditorPaste");
-    checkResultByText("one  fourtwo \n" +
-                      "three<caret> \n" +
-                      "five  eightsix \n" +
-                      "seven<caret>");
+    checkResultByText("""
+                        one  fourtwo\s
+                        three<caret>\s
+                        five  eightsix\s
+                        seven<caret>""");
   }
 
   public void testCopyMultilineFromOneCaretPasteIntoTwo() {
-    initText("<selection>one\n" +
-             "two<caret></selection>\n" +
-             "three\n" +
-             "four");
+    initText("""
+               <selection>one
+               two<caret></selection>
+               three
+               four""");
     executeAction("EditorCopy");
     executeAction("EditorTextStart");
     executeAction("EditorCloneCaretBelow");
     executeAction("EditorPaste");
-    checkResultByText("one\n" +
-                      "two<caret>one\n" +
-                      "one\n" +
-                      "two<caret>two\n" +
-                      "three\n" +
-                      "four");
+    checkResultByText("""
+                        one
+                        two<caret>one
+                        one
+                        two<caret>two
+                        three
+                        four""");
   }
 
   public void testCopyPasteDoesNothingWithUnevenSelection() {
-    initText("<selection>one\n" +
-             "two<caret></selection>\n" +
-             "<selection>three<caret></selection>\n" +
-             "four");
+    initText("""
+               <selection>one
+               two<caret></selection>
+               <selection>three<caret></selection>
+               four""");
     executeAction("EditorCopy");
     executeAction("EditorPaste");
-    checkResultByText("one\n" +
-                      "two<caret>\n" +
-                      "three<caret>\n" +
-                      "four");
+    checkResultByText("""
+                        one
+                        two<caret>
+                        three<caret>
+                        four""");
   }
 
   public void testPastingAtDifferentNumberOfCarets() {
-    initText("<selection>one<caret></selection>\n" +
-             "<selection>two<caret></selection>\n" +
-             "<selection>three<caret></selection>\n" +
-             "<selection>four<caret></selection>");
+    initText("""
+               <selection>one<caret></selection>
+               <selection>two<caret></selection>
+               <selection>three<caret></selection>
+               <selection>four<caret></selection>""");
     copy();
     getEditor().getCaretModel().setCaretsAndSelections(Arrays.asList(new CaretState(new LogicalPosition(0, 0),
                                                                                     new LogicalPosition(0, 0),
@@ -295,10 +469,11 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                                                                                  new LogicalPosition(1, 0),
                                                                                  new LogicalPosition(1, 0))));
     paste();
-    checkResultByText("oneone\n" +
-                      "twotwo\n" +
-                      "three\n" +
-                      "four");
+    checkResultByText("""
+                        oneone
+                        twotwo
+                        three
+                        four""");
   }
 
   public void testPastingLineWithBreakFromOutside() {
@@ -345,71 +520,82 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testAltShiftTripleClick() {
-    initText("q<caret>uick\n" +
-             "brown\n" +
-             "fox");
+    initText("""
+               q<caret>uick
+               brown
+               fox""");
     mouse().alt().shift().tripleClickAt(1, 2);
-    checkResultByText("q<caret>uick\n" +
-                      "<selection>br<caret>own\n" +
-                      "</selection>fox");
+    checkResultByText("""
+                        q<caret>uick
+                        <selection>br<caret>own
+                        </selection>fox""");
   }
 
   public void testAltShiftTripleClickAtExistingCaret() {
-    initText("q<caret>uick\n" +
-             "br<caret>own\n" +
-             "fox");
+    initText("""
+               q<caret>uick
+               br<caret>own
+               fox""");
     mouse().alt().shift().tripleClickAt(1, 2);
-    checkResultByText("q<caret>uick\n" +
-                      "brown\n" +
-                      "fox");
+    checkResultByText("""
+                        q<caret>uick
+                        brown
+                        fox""");
   }
 
   public void testCaretPositionsRecalculationOnDocumentChange() {
-    initText("\n" +
-             "<selection><caret>word</selection>\n" +
-             "some long prefix <selection><caret>word</selection>-suffix");
+    initText("""
+
+               <selection><caret>word</selection>
+               some long prefix <selection><caret>word</selection>-suffix""");
     EditorTestUtil.configureSoftWraps(getEditor(), 17); // wrapping right before 'word-suffix'
 
     delete();
 
-    checkResultByText("\n" +
-                      "<caret>\n" +
-                      "some long prefix <caret>-suffix");
+    checkResultByText("""
+
+                        <caret>
+                        some long prefix <caret>-suffix""");
     verifySoftWrapPositions(19);
   }
 
   public void testCreateRectangularSelectionWithMouseClicks() {
-    initText("<caret>line\n" +
-             "long line\n" +
-             "very long line\n" +
-             "long line\n" +
-             "line");
+    initText("""
+               <caret>line
+               long line
+               very long line
+               long line
+               line""");
     mouse().alt().shift().middle().clickAt(2, 2);
-    checkResultByText("<selection>li<caret></selection>ne\n" +
-                      "<selection>lo<caret></selection>ng line\n" +
-                      "<selection>ve<caret></selection>ry long line\n" +
-                      "long line\n" +
-                      "line");
+    checkResultByText("""
+                        <selection>li<caret></selection>ne
+                        <selection>lo<caret></selection>ng line
+                        <selection>ve<caret></selection>ry long line
+                        long line
+                        line""");
   }
 
   public void testCreateRectangularSelectionExtendsSelection() {
-    initText("<caret>line\n" +
-             "long line\n" +
-             "very long line\n" +
-             "long line\n" +
-             "line");
+    initText("""
+               <caret>line
+               long line
+               very long line
+               long line
+               line""");
     mouse().alt().shift().middle().clickAt(1, 1);
-    checkResultByText("<selection>l<caret></selection>ine\n" +
-                      "<selection>l<caret></selection>ong line\n" +
-                      "very long line\n" +
-                      "long line\n" +
-                      "line");
+    checkResultByText("""
+                        <selection>l<caret></selection>ine
+                        <selection>l<caret></selection>ong line
+                        very long line
+                        long line
+                        line""");
     mouse().alt().shift().middle().clickAt(2, 2);
-    checkResultByText("<selection>li<caret></selection>ne\n" +
-                      "<selection>lo<caret></selection>ng line\n" +
-                      "<selection>ve<caret></selection>ry long line\n" +
-                      "long line\n" +
-                      "line");
+    checkResultByText("""
+                        <selection>li<caret></selection>ne
+                        <selection>lo<caret></selection>ng line
+                        <selection>ve<caret></selection>ry long line
+                        long line
+                        line""");
   }
 
   public void testAddingMultipleSelectionsUsingMouse() {
@@ -442,26 +628,29 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCaretPositionUpdateOnFolding() {
-    initText("line1\n" +
-             "line2\n" +
-             "l<caret>ine3\n" +
-             "line<caret>4");
+    initText("""
+               line1
+               line2
+               l<caret>ine3
+               line<caret>4""");
     addCollapsedFoldRegion(0, 6, "...");
     verifyCaretsAndSelections(1, 1, 1, 1,
                               2, 4, 4, 4);
   }
 
   public void testCaretStaysPrimaryOnMerging() {
-    initText("word\n" +
-             "<caret>word word\n" +
-             "");
+    initText("""
+               word
+               <caret>word word
+               """);
     getEditor().getCaretModel().addCaret(new VisualPosition(0, 0));
     getEditor().getCaretModel().addCaret(new VisualPosition(1, 5));
     assertEquals(new VisualPosition(1, 5), getEditor().getCaretModel().getPrimaryCaret().getVisualPosition());
     down();
-    checkResultByText("word\n" +
-                      "<caret>word word\n" +
-                      "<caret>");
+    checkResultByText("""
+                        word
+                        <caret>word word
+                        <caret>""");
     assertEquals(new VisualPosition(2, 0), getEditor().getCaretModel().getPrimaryCaret().getVisualPosition());
   }
 

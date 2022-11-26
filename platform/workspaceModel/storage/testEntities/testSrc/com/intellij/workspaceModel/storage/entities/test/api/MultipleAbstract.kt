@@ -2,8 +2,11 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -17,12 +20,15 @@ interface ParentAbEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentAbEntity, ModifiableWorkspaceEntity<ParentAbEntity>, ObjBuilder<ParentAbEntity> {
+  interface Builder : ParentAbEntity, WorkspaceEntity.Builder<ParentAbEntity>, ObjBuilder<ParentAbEntity> {
     override var entitySource: EntitySource
     override var children: List<ChildAbstractBaseEntity>
   }
 
   companion object : Type<ParentAbEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentAbEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -47,13 +53,16 @@ interface ChildAbstractBaseEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : ChildAbstractBaseEntity> : ChildAbstractBaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : ChildAbstractBaseEntity> : ChildAbstractBaseEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
   }
 
   companion object : Type<ChildAbstractBaseEntity, Builder<ChildAbstractBaseEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         entitySource: EntitySource,
                         init: (Builder<ChildAbstractBaseEntity>.() -> Unit)? = null): ChildAbstractBaseEntity {
@@ -73,7 +82,7 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildFirstEntity, ChildAbstractBaseEntity.Builder<ChildFirstEntity>, ModifiableWorkspaceEntity<ChildFirstEntity>, ObjBuilder<ChildFirstEntity> {
+  interface Builder : ChildFirstEntity, ChildAbstractBaseEntity.Builder<ChildFirstEntity>, WorkspaceEntity.Builder<ChildFirstEntity>, ObjBuilder<ChildFirstEntity> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
@@ -81,6 +90,9 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
   }
 
   companion object : Type<ChildFirstEntity, Builder>(ChildAbstractBaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         firstData: String,
                         entitySource: EntitySource,
@@ -111,7 +123,7 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSecondEntity, ChildAbstractBaseEntity.Builder<ChildSecondEntity>, ModifiableWorkspaceEntity<ChildSecondEntity>, ObjBuilder<ChildSecondEntity> {
+  interface Builder : ChildSecondEntity, ChildAbstractBaseEntity.Builder<ChildSecondEntity>, WorkspaceEntity.Builder<ChildSecondEntity>, ObjBuilder<ChildSecondEntity> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
@@ -119,6 +131,9 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
   }
 
   companion object : Type<ChildSecondEntity, Builder>(ChildAbstractBaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         secondData: String,
                         entitySource: EntitySource,

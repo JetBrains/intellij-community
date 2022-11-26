@@ -9,9 +9,9 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.ClassRule
@@ -22,7 +22,7 @@ import java.io.File
 class JpsProjectSaveAllEntitiesTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before

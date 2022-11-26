@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
 import org.jetbrains.kotlin.idea.util.withoutRedundantAnnotations
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -21,6 +22,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
@@ -136,6 +139,11 @@ fun KtExpression.guessTypes(
 ): Array<KotlinType> {
     fun isAcceptable(type: KotlinType) = allowErrorTypes || !ErrorUtils.containsErrorType(type)
 
+    val lambda = getStrictParentOfType<KtLambdaExpression>()
+    if (this.isLastStatementOf(lambda)) {
+        lambda?.expectedReturnType(context)?.let { return arrayOf(it) }
+    }
+
     if (coerceUnusedToUnit
         && this !is KtDeclaration
         && isUsedAsStatement(context)
@@ -248,12 +256,25 @@ fun KtExpression.guessTypes(
             val lambdaTypes = functionalExpression.guessTypes(context, module, pseudocode?.parent, coerceUnusedToUnit)
             lambdaTypes.mapNotNull { it.getFunctionType()?.arguments?.lastOrNull()?.type }.toTypedArray()
         }
+        parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> {
+            parent.guessTypes(context, module, pseudocode, coerceUnusedToUnit)
+        }
         else -> {
             pseudocode?.getElementValue(this)?.let {
                 getExpectedTypePredicate(it, context, module.builtIns).getRepresentativeTypes().toTypedArray()
             } ?: arrayOf() // can't infer anything
         }
     }
+}
+
+private fun KtExpression.isLastStatementOf(lambda: KtLambdaExpression?): Boolean =
+    this == lambda?.bodyExpression?.statements?.lastOrNull()
+
+private fun KtLambdaExpression.expectedReturnType(context: BindingContext): KotlinType? {
+    val argument = parent as? KtValueArgument ?: return null
+    val call = argument.getStrictParentOfType<KtCallExpression>() ?: return null
+    val parameter = call.getResolvedCall(context)?.getParameterForArgument(argument)
+    return parameter?.type?.arguments?.lastOrNull()?.type
 }
 
 private fun KotlinType.getFunctionType() = if (isFunctionType) this else supertypes().firstOrNull { it.isFunctionType }

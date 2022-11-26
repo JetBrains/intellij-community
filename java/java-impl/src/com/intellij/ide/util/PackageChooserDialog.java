@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -26,15 +26,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.JavaReferenceEditorUtil;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +95,7 @@ public class PackageChooserDialog extends PackageChooser {
           boolean hasFocus
         ) {
           super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-          setIcon(PlatformIcons.PACKAGE_ICON);
+          setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package));
 
           if (value instanceof DefaultMutableTreeNode) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
@@ -122,7 +118,7 @@ public class PackageChooserDialog extends PackageChooser {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
 
-    new TreeSpeedSearch(myTree, path -> {
+    new TreeSpeedSearch(myTree, false, path -> {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object object = node.getUserObject();
       if (object instanceof PsiPackage) return ((PsiPackage)object).getName();
@@ -409,6 +405,11 @@ public class PackageChooserDialog extends PackageChooser {
     public void update(@NotNull AnActionEvent event) {
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(getTreeSelection() != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     public void enableInModalConext() {

@@ -66,7 +66,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(final Project project, ProblemDescriptor descriptor) {
+  public void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     doFix(project, descriptor, false);
   }
 

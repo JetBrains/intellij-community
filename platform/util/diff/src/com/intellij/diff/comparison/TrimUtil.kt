@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.Strings.isWhiteSpace
 import java.util.*
 
 fun isPunctuation(c: Char): Boolean {
-  return isPunctuation(c.toInt())
+  return isPunctuation(c.code)
 }
 
 fun isPunctuation(b: Int): Boolean {

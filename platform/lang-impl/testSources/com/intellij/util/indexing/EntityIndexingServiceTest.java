@@ -5,7 +5,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -26,11 +25,11 @@ import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
+import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -162,8 +161,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
                           Function<T, Collection<IndexableFilesIterator>> expectedIteratorsProducer)
     throws Exception {
     MyWorkspaceModelChangeListener listener = new MyWorkspaceModelChangeListener();
-    WorkspaceModelTopics.getInstance(getProject())
-      .subscribeAfterModuleLoading(getProject().getMessageBus().connect(getTestRootDisposable()), listener);
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(WorkspaceModelTopics.CHANGED, listener);
     T createdEntities = WriteAction.compute(generator);
 
     List<IndexableFilesIterator> iterators;
@@ -185,7 +183,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
       WriteAction.run(() -> remover.consume(createdEntities));
     }
 
-    DumbService.getInstance(getProject()).queueTask(new UnindexedFilesUpdater(getProject(), iterators, null, getTestName(false)));
+    new UnindexedFilesUpdater(getProject(), iterators, null, getTestName(false)).queue();
   }
 
 
@@ -208,11 +206,6 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
   private static class MyWorkspaceModelChangeListener implements WorkspaceModelChangeListener {
     final List<VersionedStorageChange> myEvents = new ArrayList<>();
-
-    @Override
-    public void beforeChanged(@NotNull VersionedStorageChange event) {
-      //ignore
-    }
 
     @Override
     public void changed(@NotNull VersionedStorageChange event) {

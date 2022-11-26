@@ -22,10 +22,6 @@
     <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider" dynamic="true"/>
 
-    <extensionPoint name="codeInsight.signatureHelp" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.signatureHelp.SignatureHelpProvider"/>
-    </extensionPoint>
-
     <extensionPoint name="localInspection" beanClass="com.intellij.codeInspection.LocalInspectionEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
     </extensionPoint>
@@ -57,6 +53,8 @@
     <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
 
     <extensionPoint name="localFileSystemTimestampEvaluator" interface="com.intellij.openapi.vfs.impl.local.LocalFileSystemTimestampEvaluator" dynamic="true"/>
+    <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger" dynamic="true"/>
+    <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>

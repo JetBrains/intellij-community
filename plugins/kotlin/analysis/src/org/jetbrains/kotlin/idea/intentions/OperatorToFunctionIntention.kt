@@ -139,7 +139,9 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
                 else -> return element
             }
 
-            val transformed = KtPsiFactory(element).createExpressionByPattern("$0.$1()", element.baseExpression!!, operatorName)
+            val transformed = KtPsiFactory(element.project)
+                .createExpressionByPattern("$0.$1()", element.baseExpression!!, operatorName)
+
             return element.replace(transformed) as KtExpression
         }
 
@@ -150,7 +152,9 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
                 else -> return element
             }
 
-            val transformed = KtPsiFactory(element).createExpressionByPattern("$0 = $0.$1()", element.baseExpression!!, operatorName)
+            val transformed = KtPsiFactory(element.project)
+                .createExpressionByPattern("$0 = $0.$1()", element.baseExpression!!, operatorName)
+
             return element.replace(transformed) as KtExpression
         }
 
@@ -203,13 +207,13 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
                 else -> return element
             }
 
-            val transformed = KtPsiFactory(element).createExpressionByPattern(pattern, left, right)
+            val transformed = KtPsiFactory(element.project).createExpressionByPattern(pattern, left, right)
             return element.replace(transformed) as KtExpression
         }
 
         private fun convertArrayAccess(element: KtArrayAccessExpression): KtExpression {
             var expressionToReplace: KtExpression = element
-            val transformed = KtPsiFactory(element).buildExpression {
+            val transformed = KtPsiFactory(element.project).buildExpression {
                 appendExpression(element.arrayExpression)
 
                 appendFixedText(".")
@@ -257,7 +261,7 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
             val funcLitArgs = element.lambdaArguments
             val calleeText = callee.text
             val transformation = "$calleeText.${OperatorNameConventions.INVOKE.asString()}" + "($argumentsWithReceiverIfNeeded)"
-            val transformed = KtPsiFactory(element).createExpression(transformation)
+            val transformed = KtPsiFactory(element.project).createExpression(transformation)
             val callExpression = transformed.getCalleeExpressionIfAny()?.parent as? KtCallExpression
             if (callExpression != null && funcLitArgs.isNotEmpty()) {
                 funcLitArgs.forEach { callExpression.add(it) }

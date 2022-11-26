@@ -39,7 +39,6 @@ import java.util.function.Consumer;
 
 /**
  * @author Eugene Belyaev
- * @author Vladimir Kondratyev
  */
 public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final String KEEP_MENU_OPEN_PROP = "BegMenuItemUI.keep-menu-open";

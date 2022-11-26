@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author peter
- */
 public final class ConcurrentInstanceMap {
   private ConcurrentInstanceMap() {
   }

@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,7 +16,6 @@ public class ConsentsTest extends TestCase{
   private static final String JSON_CONSENTS_DATA = "[{\"consentId\":\"rsch.test.consent.option.for.intellij\",\"version\":\"1.0\",\"text\":\"This is a text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":true,\"deleted\":false,\"acceptanceTime\":0},{\"consentId\":\"rsch.send.usage.stat\",\"version\":\"1.0\",\"text\":\"I consent to submit anonymous usage statistics to help JetBrains make better releases and refine the most important areas of the products. I agree that the following information will be sent\\n  * Information about which product features is used\\n  * General statistics (number of files, file types) of the solutions I am working on\\n  * General information about my hardware configuration (for example, amount of RAM, CPU speed and number of cores)\\n  * General information about my software configuration (for example, OS version)\",\"printableName\":\"Send anonymous usage statistics to JetBrains\",\"accepted\":false,\"deleted\":false,\"acceptanceTime\":0}]";
   private static final String JSON_MINOR_UPGRADE_CONSENTS_DATA = "[{\"consentId\":\"rsch.test.consent.option.for.intellij\",\"version\":\"1.5\",\"text\":\"This is an upgraded text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":true,\"deleted\":false,\"acceptanceTime\":0}]";
   private static final String JSON_MAJOR_UPGRADE_CONSENTS_DATA = "[{\"consentId\":\"rsch.send.usage.stat\",\"version\":\"2.0\",\"text\":\"This is an major-upgraded text of usage stats option.\",\"printableName\":\"Test consent option\",\"accepted\":true,\"deleted\":false,\"acceptanceTime\":0}]";
-  private static final String JSON_DELETED_CONSENTS_DATA = "[{\"consentId\":\"rsch.test.consent.option.for.intellij\",\"version\":\"1.0\",\"text\":\"This is a text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":true,\"deleted\":true,\"acceptanceTime\":0},{\"consentId\":\"rsch.send.usage.stat\",\"version\":\"1.0\",\"text\":\"I consent to submit anonymous usage statistics to help JetBrains make better releases and refine the most important areas of the products. I agree that the following information will be sent\\n  * Information about which product features is used\\n  * General statistics (number of files, file types) of the solutions I am working on\\n  * General information about my hardware configuration (for example, amount of RAM, CPU speed and number of cores)\\n  * General information about my software configuration (for example, OS version)\",\"printableName\":\"Send anonymous usage statistics to JetBrains\",\"accepted\":false,\"deleted\":false,\"acceptanceTime\":0}]";
 
   private static final String CONSENT_ID_1 = "rsch.test.consent.option.for.intellij";
   private static final String CONSENT_ID_USAGE_STATS = "rsch.send.usage.stat";
@@ -29,10 +28,10 @@ public class ConsentsTest extends TestCase{
 
   public void testUpdateDefaultsAndConfirmedFromServer() throws InterruptedException {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions("", JSON_CONSENTS_DATA);
-    final ConsentOptions options = data.first;
-    final MemoryIOBackend storage = data.second;
+    final ConsentOptions options = data.getFirst();
+    final MemoryIOBackend storage = data.getSecond();
 
-    final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
+    Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
     assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
     assertEquals(2, beforeConfirm.getFirst().size());
     checkStorage(storage, JSON_CONSENTS_DATA, "", "");
@@ -71,8 +70,8 @@ public class ConsentsTest extends TestCase{
 
   public void testConsentMinorVersionUpgrade() {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions("", JSON_CONSENTS_DATA);
-    final ConsentOptions options = data.first;
-    final MemoryIOBackend storage = data.second;
+    final ConsentOptions options = data.getFirst();
+    final MemoryIOBackend storage = data.getSecond();
 
     final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
     assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
@@ -105,8 +104,8 @@ public class ConsentsTest extends TestCase{
 
   public void testConsentMajorVersionUpgrade() {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions("", JSON_CONSENTS_DATA);
-    final ConsentOptions options = data.first;
-    final MemoryIOBackend storage = data.second;
+    final ConsentOptions options = data.getFirst();
+    final MemoryIOBackend storage = data.getSecond();
 
     {
       final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
@@ -179,8 +178,8 @@ public class ConsentsTest extends TestCase{
 
   public void testUsageStatsPermission() {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, JSON_CONSENTS_DATA);
-    final ConsentOptions options = data.first;
-    final MemoryIOBackend storage = data.second;
+    final ConsentOptions options = data.getFirst();
+    final MemoryIOBackend storage = data.getSecond();
 
     final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
     assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
@@ -203,8 +202,8 @@ public class ConsentsTest extends TestCase{
 
   public void testLoadReadAndConfirm() {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, JSON_CONSENTS_DATA);
-    final ConsentOptions options = data.first;
-    final MemoryIOBackend storage = data.second;
+    final ConsentOptions options = data.getFirst();
+    final MemoryIOBackend storage = data.getSecond();
 
     final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
     assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
@@ -259,12 +258,12 @@ public class ConsentsTest extends TestCase{
 
   private static Pair<ConsentOptions, MemoryIOBackend> createConsentOptions(String initialDefauls, String initialBundled) {
     final MemoryIOBackend backend = new MemoryIOBackend(initialDefauls, initialBundled);
-    return Pair.create(new ConsentOptions(backend, false), backend);
+    return new Pair<>(new ConsentOptions(backend, false), backend);
   }
 
   private static class MemoryIOBackend implements ConsentOptions.IOBackend {
     final String myBundled;
-    String myDefaults = "";
+    String myDefaults;
     String myConfirmed = "";
 
     MemoryIOBackend(@NotNull String defs, @NotNull String bundled) {

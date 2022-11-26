@@ -143,14 +143,11 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
 
     private StreamEx<PsiExpression> keyExpressions() {
-      switch (myType) {
-        case "Set":
-          return StreamEx.of(myContent);
-        case "Map":
-          return IntStreamEx.range(0, myContent.size(), 2).elements(myContent);
-        default:
-          return StreamEx.empty();
-      }
+      return switch (myType) {
+        case "Set" -> StreamEx.of(myContent);
+        case "Map" -> IntStreamEx.range(0, myContent.size(), 2).elements(myContent);
+        default -> StreamEx.empty();
+      };
     }
 
     public static PrepopulatedCollectionModel fromList(PsiExpression listDefinition) {

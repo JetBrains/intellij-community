@@ -105,7 +105,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
-  public static final int THROTTLING_TIMEOUT = 100;
 
   private static final Icon SHOW_IN_FIND_TOOL_WINDOW_ICON =
     ExperimentalUI.isNewUI() ? IconManager.getInstance().getIcon("expui/general/openInToolWindow.svg", AllIcons.class)
@@ -146,7 +145,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     init();
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
-    myBufferedListener = createListener(contributors);
+    myBufferedListener = createListener();
     SearchListener listener = Registry.is("search.everywhere.detect.slow.contributors")
                               ? SearchListener.combine(myBufferedListener, new SlowContributorDetector())
                               : myBufferedListener;
@@ -188,13 +187,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @NotNull
-  private BufferingListenerWrapper createListener(Collection<SearchEverywhereContributor<?>> contributors) {
+  private BufferingListenerWrapper createListener() {
+    SearchListener wrapped = SearchListener.combine(mySearchListener, new SearchProcessLogger());
     if (Registry.is("search.everywhere.wait.for.contributors")) {
-      List<SearchEverywhereContributor<?>> contributorsToWait = ContainerUtil.filter(contributors, c -> !PossibleSlowContributor.checkSlow(c));
-      return new WaitForContributorsListenerWrapper(mySearchListener, myListModel);
+      return new SwitchSEListener(wrapped, myListModel);
     }
 
-    return new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener);
+    return new ThrottlingListenerWrapper(wrapped);
   }
 
   @Override
@@ -257,7 +256,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     updateRightActions(contributors);
   }
 
-  private void updateRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+  private void updateRightActions(@NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
     List<AnAction> actions = getRightActions(contributors);
     myHintHelper.removeRightExtensions();
     if (!actions.isEmpty()) {
@@ -266,7 +265,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @NotNull
-  private List<AnAction> getRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+  private List<AnAction> getRightActions(@NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
     for (SearchEverywhereContributor<?> contributor : contributors) {
       if (!Objects.equals(getSelectedTabID(), contributor.getSearchProviderId()) || !(contributor instanceof SearchFieldActionsContributor)) continue;
 
@@ -292,7 +291,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   @Nls
   @Nullable
-  private static String getAdvertisement(List<SearchEverywhereContributor<?>> contributors) {
+  private static String getAdvertisement(List<? extends SearchEverywhereContributor<?>> contributors) {
 
     boolean commandsSupported = contributors.stream().anyMatch(contributor -> !contributor.getSupportedCommands().isEmpty());
     if (commandsSupported) {
@@ -349,7 +348,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     return null;
   }
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<SearchEverywhereFoundElementInfo> selection) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<? extends SearchEverywhereFoundElementInfo> selection) {
     if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> list = ContainerUtil.mapNotNull(selection, o -> (PsiElement)getDataFromElementInfo(CommonDataKeys.PSI_ELEMENT.getName(), o));
       return list.isEmpty() ? null : list.toArray(PsiElement.EMPTY_ARRAY);
@@ -1484,7 +1483,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       };
     }
 
-    private void setRightExtensions(@NotNull List<AnAction> actions) {
+    private void setRightExtensions(@NotNull List<? extends AnAction> actions) {
       myTextField.removeExtension(myHintExtension);
       myTextField.removeExtension(myWarningExtension);
       actions.stream().map(HintHelper::createRightActionExtension).forEach(it -> {

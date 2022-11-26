@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
@@ -16,6 +17,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -40,9 +42,11 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
@@ -161,9 +165,13 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             .toTypedArray()
     }
 
+    override fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
+        val kModifierOwner = target.toKtElement<KtModifierListOwner>() ?: return emptyList()
+        return createChangeModifierActions(kModifierOwner, KtTokens.OVERRIDE_KEYWORD, shouldBePresent)
+    }
+
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
-        val kModifierOwner =
-            target.toKtElement<KtModifierListOwner>() ?: return emptyList()
+        val kModifierOwner = target.toKtElement<KtModifierListOwner>() ?: return emptyList()
 
         val modifier = request.modifier
         val shouldPresent = request.shouldBePresent()
@@ -186,11 +194,18 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             else -> javaPsiModifiersMapping[modifier] to shouldPresent
         }
         if (kToken == null) return emptyList()
+        return createChangeModifierActions(kModifierOwner, kToken, shouldPresentMapped)
+    }
 
-        val action = if (shouldPresentMapped) {
-            AddModifierFixFE10.createIfApplicable(kModifierOwner, kToken)
+    private fun createChangeModifierActions(
+        modifierListOwners: KtModifierListOwner,
+        token: KtModifierKeywordToken,
+        shouldBePresent: Boolean
+    ): List<IntentionAction> {
+        val action = if (shouldBePresent) {
+            AddModifierFixFE10.createIfApplicable(modifierListOwners, token)
         } else {
-            RemoveModifierFixBase(kModifierOwner, kToken, false)
+            RemoveModifierFixBase(modifierListOwners, token, false)
         }
         return listOfNotNull(action)
     }
@@ -375,24 +390,54 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         override fun startInWriteAction(): Boolean = true
 
-        override fun getText(): String =
-            QuickFixBundle.message("create.annotation.text", StringUtilRt.getShortName(request.qualifiedName))
+        override fun getText(): String = QuickFixBundle.message("create.annotation.text", StringUtilRt.getShortName(request.qualifiedName))
 
         override fun getFamilyName(): String = QuickFixBundle.message("create.annotation.family")
 
         override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
 
-        override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-            val target = pointer.element ?: return
-            val entry = addAnnotationEntry(target, request, annotationTarget)
-            ShortenReferences.DEFAULT.process(entry)
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            PsiTreeUtil.findSameElementInCopy(pointer.element, file)?.addAnnotation()
+            return IntentionPreviewInfo.DIFF
         }
 
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+            pointer.element?.addAnnotation() ?: return
+        }
+
+        private fun KtModifierListOwner.addAnnotation() {
+            val entry = addAnnotationEntry(this, request, annotationTarget)
+            ShortenReferences.DEFAULT.process(entry)
+        }
     }
 
     override fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
-        val ktNamedFunction = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtNamedFunction ?: return emptyList()
-        return listOfNotNull(ChangeMethodParameters.create(ktNamedFunction, request))
+        return when (val kotlinOrigin = (target as? KtLightElement<*, *>)?.kotlinOrigin) {
+            is KtNamedFunction -> listOfNotNull(ChangeMethodParameters.create(kotlinOrigin, request))
+            is KtConstructor<*> -> kotlinOrigin.containingClass()?.let {
+                createChangeConstructorParametersAction(kotlinOrigin, it, request)
+            } ?: emptyList()
+            is KtClass -> createChangeConstructorParametersAction(kotlinOrigin, kotlinOrigin, request)
+            else -> emptyList()
+        }
+    }
+
+    private fun createChangeConstructorParametersAction(kotlinOrigin: PsiElement,
+                                                        targetKtClass: KtClass,
+                                                        request: ChangeParametersRequest): List<IntentionAction> {
+        return listOfNotNull(run {
+            val lightMethod = kotlinOrigin.toLightMethods().firstOrNull() ?: return@run null
+            val project = kotlinOrigin.project
+            val fakeParametersExpressions = fakeParametersExpressions(request.expectedParameters, project) ?: return@run null
+            QuickFixFactory.getInstance().createChangeMethodSignatureFromUsageFix(
+              lightMethod,
+              fakeParametersExpressions,
+              PsiSubstitutor.EMPTY,
+              targetKtClass,
+              false,
+              2
+            ).takeIf { it.isAvailable(project, null, targetKtClass.containingFile) }
+        })
     }
 
     override fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> {
@@ -424,12 +469,20 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         override fun getFamilyName(): String = QuickFixBundle.message("change.type.family")
 
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            doChangeType(PsiTreeUtil.findSameElementInCopy(pointer.element ?: return IntentionPreviewInfo.EMPTY, file))
+            return IntentionPreviewInfo.DIFF
+        }
+
         override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
             if (!request.isValid) return
-            val target = pointer.element ?: return
+            doChangeType(pointer.element ?: return)
+        }
+
+        private fun doChangeType(target: KtCallableDeclaration) {
             val oldType = target.typeReference
             val typeName = primitiveTypeMapping.getOrDefault(request.qualifiedName, request.qualifiedName ?: target.typeName() ?: return)
-            val psiFactory = KtPsiFactory(target)
+            val psiFactory = KtPsiFactory(target.project)
             val annotations = request.annotations.joinToString(" ") { "@${renderAnnotation(target, it, psiFactory)}" }
             val newType = psiFactory.createType("$annotations $typeName".trim())
             target.typeReference = newType
@@ -493,7 +546,7 @@ internal fun addAnnotationEntry(
         "${annotationTarget.renderName}:"
     }
 
-    val psiFactory = KtPsiFactory(target)
+    val psiFactory = KtPsiFactory(target.project)
     // could be generated via descriptor when KT-30478 is fixed
     val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(target, request, psiFactory)
     return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))

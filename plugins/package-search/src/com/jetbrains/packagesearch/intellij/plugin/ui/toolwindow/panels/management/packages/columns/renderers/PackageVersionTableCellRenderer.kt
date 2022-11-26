@@ -19,14 +19,14 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.hover.TableHoverListener
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
-import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperations
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
@@ -47,15 +47,11 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         row: Int,
         column: Int
     ) = JPanel(MigLayout("al left center, insets 0 8 0 0")).apply {
-        table.colors.applyTo(this, isSelected)
+        val isHover = TableHoverListener.getHoveredRow(table) == row
+        val isSearchResult = value is UiPackageModel.SearchResult
 
-        val bgColor = if (!isSelected && value is UiPackageModel.SearchResult) {
-            PackageSearchUI.ListRowHighlightBackground
-        } else {
-            background
-        }
-
-        background = bgColor
+        val colors = computeColors(isSelected, isHover, isSearchResult)
+        colors.applyTo(this)
 
         val viewModel = checkNotNull(value as? UiPackageModel<*>)
         val labelText = when (viewModel) {
@@ -64,21 +60,21 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         }
 
         val hasVersionsToChooseFrom = viewModel.sortedVersions.isNotEmpty()
-        val labelComponent = if (hasVersionsToChooseFrom) {
+        val labelComponent: JComponent = if (hasVersionsToChooseFrom) {
             JBComboBoxLabel().apply {
                 icon = AllIcons.General.LinkDropTriangle
                 text = labelText
             }
         } else {
-            JBLabel().apply { text = labelText }
+            JBLabel().apply {
+                text = labelText
+            }
+        }.apply {
+            background = colors.background
+            foreground = colors.foreground
         }
 
-        add(
-            labelComponent.apply {
-                table.colors.applyTo(this, isSelected)
-                background = bgColor
-            }
-        )
+        add(labelComponent)
     }
 
     @Nls

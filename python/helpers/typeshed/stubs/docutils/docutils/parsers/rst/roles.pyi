@@ -1,11 +1,13 @@
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+from typing_extensions import TypeAlias
 
 import docutils.nodes
 import docutils.parsers.rst.states
 from docutils.languages import _LanguageModule
 from docutils.utils import Reporter, SystemMessage
 
-_RoleFn = Callable[
+_RoleFn: TypeAlias = Callable[
     [str, str, str, int, docutils.parsers.rst.states.Inliner, dict[str, Any], list[str]],
     tuple[list[docutils.nodes.reference], list[docutils.nodes.reference]],
 ]

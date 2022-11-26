@@ -190,6 +190,9 @@ public abstract class Task implements TaskInfo, Progressive {
     throw new IllegalStateException("Not a backgroundable task");
   }
 
+  /**
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+   */
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
     private final @NotNull PerformInBackgroundOption myBackgroundOption;
 
@@ -240,6 +243,9 @@ public abstract class Task implements TaskInfo, Progressive {
     }
  }
 
+  /**
+   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   */
   public abstract static class Modal extends Task {
     public Modal(@Nullable Project project, @DialogTitle @NotNull String title, boolean canBeCancelled) {
       this(project, null, title, canBeCancelled);
@@ -317,6 +323,9 @@ public abstract class Task implements TaskInfo, Progressive {
     }
   }
 
+  /**
+   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   */
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
     private volatile T myResult;
     private volatile Throwable myError;

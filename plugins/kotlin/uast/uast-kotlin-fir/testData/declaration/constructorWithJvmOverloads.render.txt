@@ -1,0 +1,34 @@
+package test.pkg
+
+public final class AllOptionalJvmOverloads {
+    @org.jetbrains.annotations.NotNull private final var foo: int = 0
+    @org.jetbrains.annotations.NotNull private final var bar: int = 0
+    @kotlin.jvm.JvmOverloads
+    public fun AllOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int, @org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
+    @kotlin.jvm.JvmOverloads
+    public fun AllOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int) = UastEmptyExpression
+    @kotlin.jvm.JvmOverloads
+    public fun AllOptionalJvmOverloads() = UastEmptyExpression
+}
+
+public final class AllOptionalNoJvmOverloads {
+    @org.jetbrains.annotations.NotNull private final var foo: int = 0
+    @org.jetbrains.annotations.NotNull private final var bar: int = 0
+    public fun AllOptionalNoJvmOverloads(@org.jetbrains.annotations.NotNull foo: int, @org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
+    public fun AllOptionalNoJvmOverloads() = UastEmptyExpression
+}
+
+public final class SomeOptionalJvmOverloads {
+    @org.jetbrains.annotations.NotNull private final var foo: int
+    @org.jetbrains.annotations.NotNull private final var bar: int = 0
+    @kotlin.jvm.JvmOverloads
+    public fun SomeOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int, @org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
+    @kotlin.jvm.JvmOverloads
+    public fun SomeOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int) = UastEmptyExpression
+}
+
+public final class SomeOptionalNoJvmOverloads {
+    @org.jetbrains.annotations.NotNull private final var foo: int
+    @org.jetbrains.annotations.NotNull private final var bar: int = 0
+    public fun SomeOptionalNoJvmOverloads(@org.jetbrains.annotations.NotNull foo: int, @org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
+}

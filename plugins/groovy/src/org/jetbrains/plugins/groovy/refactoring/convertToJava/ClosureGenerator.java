@@ -55,12 +55,10 @@ public class ClosureGenerator {
     final GrMethod method = generateClosureMethod(closure);
     final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
 
-    if (reflectedMethods.length > 0) {
-      for (GrReflectedMethod reflectedMethod : reflectedMethods) {
-        if (reflectedMethod.getSkippedParameters().length > 0) {
-          generator.writeMethod(builder, reflectedMethod);
-          builder.append('\n');
-        }
+    for (GrReflectedMethod reflectedMethod : reflectedMethods) {
+      if (reflectedMethod.getSkippedParameters().length > 0) {
+        generator.writeMethod(builder, reflectedMethod);
+        builder.append('\n');
       }
     }
     builder.append('}');

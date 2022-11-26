@@ -1,4 +1,4 @@
-// "Make 'f' abstract" "false"
+// "Make 'f()' abstract" "false"
 import java.io.*;
 
 class a {

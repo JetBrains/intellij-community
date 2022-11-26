@@ -90,7 +90,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   }
 
   @Override
-  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
@@ -125,7 +125,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   protected @NotNull ListPopup createActionPopup(@NotNull DataContext context,
                                                  @NotNull JComponent component,
                                                  @Nullable Runnable disposeCallback) {
-    final var group = createPopupActionGroup(component);
+    final var group = createPopupActionGroup(component, context);
     myPopup = new HighlightPopup(
       myPopupTitle,
       group,
@@ -142,7 +142,8 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final ComboBoxButton button = createComboBoxButton(presentation);
-    button.setMinimumSize(new Dimension(100, 0));
+    button.setMinimumSize(new Dimension(100, button.getPreferredSize().height));
+    button.setPreferredSize(button.getMinimumSize());
     return button;
   }
 }

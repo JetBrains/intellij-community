@@ -1,30 +1,29 @@
-from typing import Any
+from _typeshed import Self
+from typing import ClassVar
 
 import passlib.utils.handlers as uh
 
-class _SHA2_Common(uh.HasManyBackends, uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignore
-    setting_kwds: Any
-    checksum_chars: Any
-    max_salt_size: int
-    salt_chars: Any
-    min_rounds: int
-    max_rounds: int
-    rounds_cost: str
+class _SHA2_Common(uh.HasManyBackends, uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignore[misc]
+    checksum_chars: ClassVar[str]
+    max_salt_size: ClassVar[int]
+    salt_chars: ClassVar[str]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
     implicit_rounds: bool
-    def __init__(self, implicit_rounds: Any | None = ..., **kwds) -> None: ...
+    def __init__(self, implicit_rounds: bool | None = ..., **kwds) -> None: ...
     @classmethod
-    def from_string(cls, hash): ...
-    def to_string(self): ...
-    backends: Any
+    def from_string(cls: type[Self], hash: str | bytes) -> Self: ...  # type: ignore[override]
+    backends: ClassVar[tuple[str, ...]]
 
 class sha256_crypt(_SHA2_Common):
-    name: str
-    ident: Any
-    checksum_size: int
-    default_rounds: int
+    name: ClassVar[str]
+    ident: ClassVar[str]
+    checksum_size: ClassVar[int]
+    default_rounds: ClassVar[int]
 
 class sha512_crypt(_SHA2_Common):
-    name: str
-    ident: Any
-    checksum_size: int
-    default_rounds: int
+    name: ClassVar[str]
+    ident: ClassVar[str]
+    checksum_size: ClassVar[int]
+    default_rounds: ClassVar[int]

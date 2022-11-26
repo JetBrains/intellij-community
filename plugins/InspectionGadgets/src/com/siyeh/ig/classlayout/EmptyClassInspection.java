@@ -37,8 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class EmptyClassInspection extends BaseInspection {
 
@@ -103,7 +101,7 @@ public class EmptyClassInspection extends BaseInspection {
 
   private static class ConvertEmptyAnonymousToNewFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element == null) return;
       PsiElement parent = element.getParent();

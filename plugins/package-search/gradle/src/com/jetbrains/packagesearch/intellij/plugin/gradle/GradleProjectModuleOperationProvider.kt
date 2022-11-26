@@ -21,6 +21,7 @@ package com.jetbrains.packagesearch.intellij.plugin.gradle
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
@@ -126,33 +127,16 @@ internal open class GradleProjectModuleOperationProvider : AbstractCoroutineProj
         }
     }
 
-    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> {
-        if (scopes.isEmpty()) return emptyList()
-        val fullGradlePath = CachedModuleDataFinder.getGradleModuleData(module.nativeModule)?.fullGradlePath ?: return emptyList()
-        return getGradleConfigurations(module, fullGradlePath, scopes).flatMap { configuration ->
-            configuration.dependencies.map { UnifiedDependency(it.groupId, it.artifactId, it.version, configuration.configurationName) }
-        }
-    }
-
-    private suspend fun getGradleConfigurations(
-        module: ProjectModule,
-        gradlePath: String,
-        scopes: Set<String>
-    ): List<ConfigurationReport> {
-        val outputFile = FileUtil.createTempFile("dependencies", ".json", true)
-        val isTaskSuccessful = gradleMutex.withLock {
-            val taskName = "generateDependenciesOutput${Random.nextLong()}"
-            CoroutineGradleTaskManager.runTask(
-                taskScript = getDependencyTaskScript(taskName, outputFile, scopes, gradlePath),
-                taskName = taskName,
-                project = module.nativeModule.project,
-                executionName = GradleBundle.message("gradle.dependency.analyzer.loading"),
-                projectPath = module.projectDir.path,
-                gradlePath = gradlePath
-            )
-        }
-        val result: List<ConfigurationReport> = if (isTaskSuccessful) Json.decodeFromString(outputFile.readText()) else emptyList()
-        outputFile.delete()
-        return result
-    }
+    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>) =
+        module.nativeModule.project
+            .service<GradleConfigurationReportNodeProcessor.Cache>()
+            .state[module.projectDir.absolutePath]
+            ?.configurations
+            ?.asSequence()
+            ?.filter { it.name in scopes }
+            ?.flatMap { configuration ->
+                configuration.dependencies.map { UnifiedDependency(it.groupId, it.artifactId, it.version, configuration.name) }
+            }
+            ?.toList()
+            ?: emptyList()
 }

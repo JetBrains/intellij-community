@@ -4,6 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -18,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +27,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public final class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance(RedundantCastUtil.class);
@@ -745,20 +749,47 @@ public final class RedundantCastUtil {
       super.visitSwitchExpression(expression);
     }
 
-    private void visitSwitchBlockSelector(PsiSwitchBlock expression) {
-      PsiExpression switchVariable = deparenthesizeExpression(expression.getExpression());
-      if (switchVariable instanceof PsiTypeCastExpression) {
-        PsiExpression operand = ((PsiTypeCastExpression)switchVariable).getOperand();
+    private void visitSwitchBlockSelector(PsiSwitchBlock switchBlock) {
+      PsiExpression selector = deparenthesizeExpression(switchBlock.getExpression());
+      if (selector instanceof PsiTypeCastExpression cast) {
+        PsiExpression operand = cast.getOperand();
         if (operand != null) {
           PsiType opType = operand.getType();
-          if (opType instanceof PsiClassType && PsiPrimitiveType.getUnboxedType(opType) == null && !opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          if (opType instanceof PsiClassType && PsiPrimitiveType.getUnboxedType(opType) == null && !opType.equalsToText(JAVA_LANG_STRING)) {
             PsiClass aClass = ((PsiClassType)opType).resolve();
             if (aClass != null && !aClass.isEnum()) {
               return;
             }
           }
+          if (opType instanceof PsiPrimitiveType) {
+            if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(switchBlock)) {
+              for (PsiElement branch : SwitchUtils.getSwitchBranches(switchBlock)) {
+                // 14.11.1 A null case element is switch compatible with T if T is a reference type (JEP 427)
+                if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
+                // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
+                // applicable at another reference type T if T is downcast convertible to U (JEP 427)
+                // There is no rule that says that a reference type applies to a primitive type
+                // There is no restriction on primitive types in JEP 406 and JEP 420:
+                // 14.30.1 An expression e is compatible with a pattern if the pattern is of type T
+                // and e is downcast compatible with T
+                if (branch instanceof PsiPattern || branch instanceof PsiPatternGuard) return;
+              }
+            }
+            else if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) {
+              boolean needToCheckCompleteness = switchBlock instanceof PsiSwitchExpression;
+              boolean hasDefault = false;
+              for (PsiElement branch : SwitchUtils.getSwitchBranches(switchBlock)) {
+                // 14.11.1. A null case label element is compatible with e if the type of e is a reference type (JEP 406 and JEP 420)
+                if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
+                needToCheckCompleteness |= branch instanceof PsiPattern;
+                hasDefault |= branch instanceof PsiDefaultCaseLabelElement ||
+                              branch instanceof PsiSwitchLabelStatementBase label && label.isDefaultCase();
+              }
+              if (needToCheckCompleteness && !hasDefault) return;
+            }
+          }
           if (opType != null) {
-            addIfNarrowing((PsiTypeCastExpression)switchVariable, opType, null);
+            addIfNarrowing(cast, opType, null);
           }
         }
       }

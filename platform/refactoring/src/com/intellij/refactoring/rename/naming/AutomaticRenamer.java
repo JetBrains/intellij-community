@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
  * @author dsl
@@ -29,8 +28,8 @@ public abstract class AutomaticRenamer {
   }
 
   public boolean hasAnythingToRename() {
-    return myRenames.values().stream().anyMatch(Objects::nonNull) &&
-           myRenames.keySet().stream().anyMatch(Predicate.not(SyntheticElement.class::isInstance));
+    return ContainerUtil.exists(myRenames.values(), Objects::nonNull) &&
+           ContainerUtil.exists(myRenames.keySet(), obj -> !(obj instanceof SyntheticElement));
   }
 
   public void findUsages(List<UsageInfo> result, final boolean searchInStringsAndComments, final boolean searchInNonJavaFiles) {
@@ -40,14 +39,14 @@ public abstract class AutomaticRenamer {
   public void findUsages(List<UsageInfo> result,
                          final boolean searchInStringsAndComments,
                          final boolean searchInNonJavaFiles,
-                         List<UnresolvableCollisionUsageInfo> unresolvedUsages) {
+                         List<? super UnresolvableCollisionUsageInfo> unresolvedUsages) {
     findUsages(result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages, null);
   }
 
   public void findUsages(List<UsageInfo> result,
                          final boolean searchInStringsAndComments,
                          final boolean searchInNonJavaFiles,
-                         List<UnresolvableCollisionUsageInfo> unresolvedUsages,
+                         List<? super UnresolvableCollisionUsageInfo> unresolvedUsages,
                          Map<PsiElement, String> allRenames) {
     for (Iterator<PsiNamedElement> iterator = myElements.iterator(); iterator.hasNext();) {
       final PsiNamedElement variable = iterator.next();

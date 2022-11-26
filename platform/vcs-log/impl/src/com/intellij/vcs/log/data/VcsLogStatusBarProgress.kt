@@ -107,6 +107,8 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     override fun getCancelTooltipText(): String = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.tooltip", vcsName.capitalize())
 
     override fun isCancellable(): Boolean = true
+
+    override fun getStatusBarIndicatorWeight(): Int = 1500
   }
 
   companion object {

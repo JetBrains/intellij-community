@@ -7,15 +7,17 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.resolve.ImportPath
 
 internal class WeighingContext private constructor(
     override val token: KtLifetimeToken,
+    val languageVersionSettings: LanguageVersionSettings,
     val explicitReceiver: KtExpression?,
     private val myExpectedType: KtType?,
     private val myImplicitReceivers: List<KtImplicitReceiver>,
@@ -40,7 +43,7 @@ internal class WeighingContext private constructor(
         }
 
     fun withoutExpectedType(): WeighingContext = withValidityAssertion {
-        WeighingContext(token, explicitReceiver, null, myImplicitReceivers, importableFqNameClassifier)
+        WeighingContext(token, languageVersionSettings, explicitReceiver, null, myImplicitReceivers, importableFqNameClassifier)
     }
 
     companion object {
@@ -51,8 +54,10 @@ internal class WeighingContext private constructor(
             fakeCompletionFile: KtFile,
         ): WeighingContext {
             val defaultImportPaths = fakeCompletionFile.getDefaultImportPaths()
+            val languageVersionSettings = fakeCompletionFile.languageVersionSettings
             return WeighingContext(
                 token,
+                languageVersionSettings,
                 receiver,
                 expectedType,
                 implicitReceivers,
@@ -87,6 +92,7 @@ internal object Weighers {
         with(NotImportedWeigher) { addWeight(context, lookupElement, symbol) }
         with(KindWeigher) { addWeight(lookupElement, symbol) }
         with(VariableOrFunctionWeigher) { addWeight(lookupElement, symbol) }
+        with(K2SoftDeprecationWeigher) { addWeight(lookupElement, symbol, context.languageVersionSettings) }
     }
 
     fun addWeighersToCompletionSorter(sorter: CompletionSorter): CompletionSorter =
@@ -100,6 +106,7 @@ internal object Weighers {
                 NotImportedWeigher.Weigher,
                 KindWeigher.Weigher,
                 CallableWeigher.Weigher,
+                K2SoftDeprecationWeigher.Weigher,
             )
             .weighAfter(PlatformWeighersIds.STATS, VariableOrFunctionWeigher.Weigher)
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)

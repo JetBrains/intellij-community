@@ -8,9 +8,14 @@ import javax.swing.tree.TreePath
 
 interface GitBranchesTreeModel : TreeModel {
 
+  var isPrefixGrouping: Boolean
+
   fun getPreferredSelection(): TreePath?
+
+  fun createTreePathFor(value: Any): TreePath?
 
   fun filterBranches(type: GitBranchType? = null, matcher: MinusculeMatcher? = null)
 
+  object TreeRoot
   data class BranchesPrefixGroup(val type: GitBranchType, val prefix: List<String>)
 }

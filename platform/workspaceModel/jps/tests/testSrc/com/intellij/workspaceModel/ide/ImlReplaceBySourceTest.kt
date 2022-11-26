@@ -11,9 +11,9 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
@@ -26,7 +26,7 @@ import java.io.File
 class ImlReplaceBySourceTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
@@ -105,7 +105,7 @@ class ImlReplaceBySourceTest {
     @Suppress("USELESS_IS_CHECK")
     val sourceRootChange = changes.filterIsInstance<EntityChange.Added<SourceRootEntity>>().single { it.entity is SourceRootEntity }
     @Suppress("USELESS_IS_CHECK")
-    val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootEntity>>().single { it.entity is JavaSourceRootEntity }
+    val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootPropertiesEntity>>().single { it.entity is JavaSourceRootPropertiesEntity }
     Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, sourceRootChange.entity.url.url)
     Assert.assertEquals(true, javaSourceRootChange.entity.generated)
   }

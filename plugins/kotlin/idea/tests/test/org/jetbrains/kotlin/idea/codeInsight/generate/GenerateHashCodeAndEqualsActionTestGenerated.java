@@ -73,6 +73,11 @@ public class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractGenera
         runTest("testData/codeInsight/generate/equalsWithHashCode/genericClassWithIsCheck.kt");
     }
 
+    @TestMetadata("inlineClass.kt")
+    public void testInlineClass() throws Exception {
+        runTest("testData/codeInsight/generate/equalsWithHashCode/inlineClass.kt");
+    }
+
     @TestMetadata("interface.kt")
     public void testInterface() throws Exception {
         runTest("testData/codeInsight/generate/equalsWithHashCode/interface.kt");
@@ -171,5 +176,10 @@ public class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractGenera
     @TestMetadata("singleVarWithSuperClass.kt")
     public void testSingleVarWithSuperClass() throws Exception {
         runTest("testData/codeInsight/generate/equalsWithHashCode/singleVarWithSuperClass.kt");
+    }
+
+    @TestMetadata("valueClass.kt")
+    public void testValueClass() throws Exception {
+        runTest("testData/codeInsight/generate/equalsWithHashCode/valueClass.kt");
     }
 }

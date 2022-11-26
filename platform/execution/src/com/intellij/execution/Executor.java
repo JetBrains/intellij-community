@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution;
 
@@ -24,7 +24,7 @@ import javax.swing.*;
  * @author spleaner
  */
 public abstract class Executor {
-  public static final ExtensionPointName<Executor> EXECUTOR_EXTENSION_NAME = ExtensionPointName.create("com.intellij.executor");
+  public static final ExtensionPointName<Executor> EXECUTOR_EXTENSION_NAME = new ExtensionPointName<>("com.intellij.executor");
 
   /**
    * Returns the ID of the toolwindow in which the run tabs created by this executor will be displayed.
@@ -32,19 +32,20 @@ public abstract class Executor {
    * @return the ID of the toolwindow (usually {@link com.intellij.openapi.wm.ToolWindowId#RUN} or
    * {@link com.intellij.openapi.wm.ToolWindowId#DEBUG}).
    */
-  @NotNull
-  public abstract String getToolWindowId();
+  public abstract @NotNull String getToolWindowId();
 
-  @NotNull
-  public abstract Icon getToolWindowIcon();
+  public abstract @NotNull Icon getToolWindowIcon();
 
   /**
    * Returns the 16x16 icon for the toolbar button corresponding to the executor.
    *
    * @return the icon.
    */
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
+
+  public @NotNull Icon getRerunIcon() {
+    return getIcon();
+  }
 
   /**
    * Returns the 16x16 icon for the disabled toolbar button corresponding to the executor.
@@ -58,34 +59,25 @@ public abstract class Executor {
    *
    * @return the executor action description.
    */
-  @NlsActions.ActionDescription
-  public abstract String getDescription();
+  public abstract @NlsActions.ActionDescription String getDescription();
 
-  @NotNull
-  @NlsActions.ActionText
-  public abstract String getActionName();
+  public abstract @NotNull @NlsActions.ActionText String getActionName();
 
   /**
    * Returns the unique ID of the executor.
    *
    * @return the ID of the executor.
    */
-  @NotNull
-  @NonNls
-  public abstract String getId();
+  public abstract @NotNull @NonNls String getId();
 
   /**
    * @return text of the action in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format
    */
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public abstract String getStartActionText();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getStartActionText();
 
-  @NonNls
-  public abstract String getContextActionId();
+  public abstract @NonNls String getContextActionId();
 
-  @NonNls
-  public abstract String getHelpId();
+  public abstract @NonNls String getHelpId();
 
   /**
    * Returns the way to customize ExecutorAction (or ExecutorGroupActionGroup) created for this Executor by ExecutorRegistryImpl
@@ -94,8 +86,7 @@ public abstract class Executor {
    * (or {@link com.intellij.execution.ExecutorRegistryImpl.ExecutorGroupActionGroup}) created for this Executor,
    * that will be shown in {@link com.intellij.execution.ExecutorRegistryImpl#RUNNERS_GROUP} group on main toolbar
    */
-  @Nullable
-  public ActionWrapper runnerActionsGroupExecutorActionCustomizer() {
+  public @Nullable ActionWrapper runnerActionsGroupExecutorActionCustomizer() {
     return null;
   }
 
@@ -109,9 +100,7 @@ public abstract class Executor {
    * @return text of the action specialized for given configuration name
    * in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format.
    */
-  @NotNull
-  @NlsSafe
-  public String getStartActionText(@NlsSafe @NotNull String configurationName) {
+  public @NotNull @NlsSafe String getStartActionText(@NlsSafe @NotNull String configurationName) {
     String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
     return TextWithMnemonic.parse(getStartActionText()).append(configName).toString();
   }

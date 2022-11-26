@@ -115,7 +115,7 @@ public class EmmetAbbreviationBalloon {
           }
 
           switch (e.getKeyCode()) {
-            case KeyEvent.VK_ENTER:
+            case KeyEvent.VK_ENTER -> {
               final String abbreviation = field.getText();
               if (validateTemplateKey(field, balloon, abbreviation, customTemplateCallback)) {
                 myCallback.onEnter(abbreviation);
@@ -123,10 +123,8 @@ public class EmmetAbbreviationBalloon {
                 field.addCurrentTextToHistory();
                 balloon.hide();
               }
-              break;
-            case KeyEvent.VK_ESCAPE:
-              balloon.hide(false);
-              break;
+            }
+            case KeyEvent.VK_ESCAPE -> balloon.hide(false);
           }
         }
       }

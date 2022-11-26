@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -46,17 +45,26 @@ internal val AnActionEvent.contextBookmark: Bookmark?
   get() {
     val editor = getData(CommonDataKeys.EDITOR) ?: getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
     val project = editor?.project ?: project ?: return null
+    val manager = BookmarksManager.getInstance(project) ?: return null
+    val window = getData(PlatformDataKeys.TOOL_WINDOW)
+    if (window?.id == ToolWindowId.BOOKMARKS) return null
+
+    if (place == ActionPlaces.EDITOR_TAB_POPUP || window?.id == ToolWindowId.PROJECT_VIEW) {
+      // Create file bookmark
+      val file = getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
+      return manager.createBookmark(file)
+    }
+
     if (editor != null) {
       val provider = LineBookmarkProvider.find(project) ?: return null
       val line = getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR)
       return provider.createBookmark(editor, line)
     }
-    val manager = BookmarksManager.getInstance(project) ?: return null
-    val window = getData(PlatformDataKeys.TOOL_WINDOW)
-    if (window?.id == ToolWindowId.BOOKMARKS) return null
+
     val component = getData(PlatformDataKeys.CONTEXT_COMPONENT)
     val allowed = UIUtil.getClientProperty(component, BookmarksManager.ALLOWED) ?: (window?.id == ToolWindowId.PROJECT_VIEW)
     if (!allowed) return null
+
     // TODO mouse shortcuts as in gutter/LOGICAL_LINE_AT_CURSOR
     val items = getData(PlatformDataKeys.SELECTED_ITEMS)
     if (items != null && items.size > 1) return null
@@ -67,6 +75,18 @@ internal val AnActionEvent.contextBookmark: Bookmark?
       is NodeDescriptor<*> -> manager.createBookmark(item.element)
       else -> manager.createBookmark(item)
     }
+  }
+
+internal val AnActionEvent.contextBookmarks: List<Bookmark>?
+  get() {
+    val window = getData(PlatformDataKeys.TOOL_WINDOW)
+    if (window?.id != ToolWindowId.PROJECT_VIEW) return null
+
+    val files = getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return null
+    if (files.size < 2) return null
+
+    val manager = BookmarksManager.getInstance(window.project) ?: return null
+    return files.mapNotNull { manager.createBookmark(it) }
   }
 
 
@@ -80,15 +100,8 @@ internal val Bookmark.firstGroupWithDescription
 /**
  * Creates and registers an action that navigates to a bookmark by a digit or a letter, if speed search is not active.
  */
-internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: BookmarkType) = createBookmarkTypeAction(type)
+internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: BookmarkType) = GotoBookmarkTypeAction(type, true)
   .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), this, parent)
-
-/**
- * Creates an action that navigates to a bookmark by its type, if speed search is not active.
- */
-private fun createBookmarkTypeAction(type: BookmarkType) = GotoBookmarkTypeAction(type) {
-  null == it.bookmarksView?.run { SpeedSearchSupply.getSupply(tree) }
-}
 
 /**
  * Creates an action that navigates to a selected bookmark by the EditSource shortcut.

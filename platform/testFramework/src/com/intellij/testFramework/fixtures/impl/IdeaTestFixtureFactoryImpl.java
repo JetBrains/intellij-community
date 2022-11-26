@@ -95,7 +95,7 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   }
 
   @Override
-  public @NotNull SdkTestFixture createSdkFixture(@NotNull SdkType sdkType, @NotNull Predicate<String> versionFilter) {
+  public @NotNull SdkTestFixture createSdkFixture(@NotNull SdkType sdkType, @NotNull Predicate<? super String> versionFilter) {
     return new SdkTestFixtureImpl(sdkType, it -> versionFilter.test(it));
   }
 

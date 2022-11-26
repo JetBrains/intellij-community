@@ -43,9 +43,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class ComponentItemDialog extends DialogWrapper {
   private JPanel myPanel;
   private final ComponentWithBrowseButton<EditorTextField> myTfClassName;

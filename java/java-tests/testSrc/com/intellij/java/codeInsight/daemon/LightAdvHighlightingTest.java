@@ -153,10 +153,9 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSerializableStuff() {  doTest(true); }
   public void testDeprecated() { doTest(true); }
   public void testJavadoc() { enableInspectionTool(new JavadocDeclarationInspection()); doTest(true); }
-  public void testExpressionsInSwitch () { doTest(false); }
+  public void testExpressionsInSwitch () { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, () -> doTest(false)); }
   public void testAccessInner() {
     Editor e = createSaveAndOpenFile("x/BeanContextServicesSupport.java",
-                                     "" +
                                      "package x;\n" +
                                      "public class BeanContextServicesSupport {" +
                                      "  protected class BCSSChild {" +
@@ -167,7 +166,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
                                      "  }" +
                                      "}");
     Editor e2 = createSaveAndOpenFile("x/Component.java",
-                                      "" +
                                       "package x;\n" +
                                       "public class Component {" +
                                       "  protected class FlipBufferStrategy {" +

@@ -47,22 +47,24 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     svc.setActionActive(InheritedMembersNodeProvider.ID, true);
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),
-      "-Class1.java\n" +
-      " -Class1\n" +
-      "  getValue(): int\n" +
-      "  getClass(): Class<?>\n" +
-      "  hashCode(): int\n" +
-      "  equals(Object): boolean\n" +
-      "  clone(): Object\n" +
-      "  toString(): String\n" +
-      "  notify(): void\n" +
-      "  notifyAll(): void\n" +
-      "  wait(long): void\n" +
-      "  wait(long, int): void\n" +
-      "  wait(): void\n" +
-      "  finalize(): void\n" +
-      "  myField1: boolean\n" +
-      "  myField2: boolean\n");
+      """
+        -Class1.java
+         -Class1
+          getValue(): int
+          getClass(): Class<?>
+          hashCode(): int
+          equals(Object): boolean
+          clone(): Object
+          toString(): String
+          notify(): void
+          notifyAll(): void
+          wait(long): void
+          wait(long, int): void
+          wait(): void
+          finalize(): void
+          myField1: boolean
+          myField2: boolean
+        """);
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       int offset = document.getLineStartOffset(5);
@@ -75,22 +77,25 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),
-      "-Class1.java\n" +
-      " -Class1\n" + "  getValue(): int\n" +
-      "  getClass(): Class<?>\n" +
-      "  hashCode(): int\n" +
-      "  equals(Object): boolean\n" +
-      "  clone(): Object\n" +
-      "  toString(): String\n" +
-      "  notify(): void\n" +
-      "  notifyAll(): void\n" +
-      "  wait(long): void\n" +
-      "  wait(long, int): void\n" +
-      "  wait(): void\n" +
-      "  finalize(): void\n" +
-      "  myField1: boolean\n" +
-      "  myField2: boolean\n" +
-      "  myNewField: boolean = false\n");
+      """
+        -Class1.java
+         -Class1
+          getValue(): int
+          getClass(): Class<?>
+          hashCode(): int
+          equals(Object): boolean
+          clone(): Object
+          toString(): String
+          notify(): void
+          notifyAll(): void
+          wait(long): void
+          wait(long, int): void
+          wait(): void
+          finalize(): void
+          myField1: boolean
+          myField2: boolean
+          myNewField: boolean = false
+        """);
   }
 
   public void testShowClassMembers() {
@@ -106,15 +111,17 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     PlatformTestUtil.waitForPromise(svc.rebuildAndUpdate());
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),
-      "-Class2.java\n" +
-      " -Class2\n" +
-      "  +InnerClass1\n" +
-      "  +InnerClass2\n" +
-      "  getValue(): int\n" +
-      "  myField1: boolean\n" +
-      "  myField2: boolean\n" +
-      "  myField3: boolean\n" +
-      "  myField4: boolean\n");
+      """
+        -Class2.java
+         -Class2
+          +InnerClass1
+          +InnerClass2
+          getValue(): int
+          myField1: boolean
+          myField2: boolean
+          myField3: boolean
+          myField4: boolean
+        """);
 
     PsiField innerClassField = psiClass.getInnerClasses()[0].getFields()[0];
 
@@ -123,17 +130,19 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     PlatformTestUtil.waitWhileBusy(svc.getTree());
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),
-      "-Class2.java\n" +
-      " -Class2\n" +
-      "  -InnerClass1\n" +
-      "   +InnerClass12\n" +
-      "   myInnerClassField: int\n" +
-      "  +InnerClass2\n" +
-      "  getValue(): int\n" +
-      "  myField1: boolean\n" +
-      "  myField2: boolean\n" +
-      "  myField3: boolean\n" +
-      "  myField4: boolean\n");
+      """
+        -Class2.java
+         -Class2
+          -InnerClass1
+           +InnerClass12
+           myInnerClassField: int
+          +InnerClass2
+          getValue(): int
+          myField1: boolean
+          myField2: boolean
+          myField3: boolean
+          myField4: boolean
+        """);
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
@@ -148,16 +157,18 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),
-      "-Class2.java\n" +
-      " -Class2\n" +
-      "  -InnerClass1\n" +
-      "   +InnerClass12\n" +
-      "  +InnerClass2\n" +
-      "  getValue(): int\n" +
-      "  myField1: boolean\n" +
-      "  myField2: boolean\n" +
-      "  myField3: boolean\n" +
-      "  myField4: boolean\n");
+      """
+        -Class2.java
+         -Class2
+          -InnerClass1
+           +InnerClass12
+          +InnerClass2
+          getValue(): int
+          myField1: boolean
+          myField2: boolean
+          myField3: boolean
+          myField4: boolean
+        """);
   }
 
   public void testExpandElementWithExitingName() {
@@ -175,23 +186,27 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     JTree tree = svc.getTree();
     PlatformTestUtil.assertTreeEqual(
       tree,
-      "-test.xml\n" +
-      " -test\n" +
-      "  +level1\n" +
-      "  +level1\n" +
-      "  +level1\n" +
-      "  +level1\n");
+      """
+        -test.xml
+         -test
+          +level1
+          +level1
+          +level1
+          +level1
+        """);
 
     tree.expandPath(tree.getPathForRow(3));
 
     PlatformTestUtil.assertTreeEqual(
       tree,
-      "-test.xml\n" +
-      " -test\n" +
-      "  +level1\n" +
-      "  -level1\n" +
-      "   +level2\n" +
-      "  +level1\n" +
-      "  +level1\n");
+      """
+        -test.xml
+         -test
+          +level1
+          -level1
+           +level2
+          +level1
+          +level1
+        """);
   }
 }

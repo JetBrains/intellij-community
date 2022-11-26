@@ -1,0 +1,14 @@
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        maven { url 'KOTLIN_BOOTSTRAP_REPO' }
+        maven { url 'KOTLIN_REPO' }
+    }
+
+}
+rootProject.name = 'generatedProject'
+
+
+include(':b:c')
+include(':b')

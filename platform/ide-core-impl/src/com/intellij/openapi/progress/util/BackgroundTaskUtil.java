@@ -11,10 +11,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -298,7 +295,8 @@ public final class BackgroundTaskUtil {
         future.get(1, TimeUnit.SECONDS);
       }
       catch (ExecutionException e) {
-        if (e.getCause() instanceof ProcessCanceledException) {
+        Throwable cause = e.getCause();
+        if (cause instanceof ProcessCanceledException || cause instanceof CancellationException) {
           // ignore: expected cancellation
         }
         else {
@@ -347,9 +345,9 @@ public final class BackgroundTaskUtil {
   public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent,
                                                    @NotNull Runnable task,
                                                    @Nullable ProgressIndicator parentIndicator) {
-    final ProgressIndicator indicator = parentIndicator == null
-                                        ? new EmptyProgressIndicator(ModalityState.defaultModalityState())
-                                        : new SensitiveProgressWrapper(parentIndicator);
+    final ProgressIndicator indicator = parentIndicator instanceof StandardProgressIndicator
+                                        ? new SensitiveProgressWrapper(parentIndicator)
+                                        : new EmptyProgressIndicator(ModalityState.defaultModalityState());
     Disposable disposable = () -> {
       if (indicator.isRunning()) {
         indicator.cancel();

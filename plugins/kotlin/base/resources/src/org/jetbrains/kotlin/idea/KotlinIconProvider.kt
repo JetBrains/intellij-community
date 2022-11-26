@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IconProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.IndexNotReadyException
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclarationBase
@@ -107,13 +109,13 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
         fun getVisibilityIcon(list: KtModifierList?): Icon {
             if (list != null) {
                 if (list.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-                    return PlatformIcons.PRIVATE_ICON
+                    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Private)
                 }
                 if (list.hasModifier(KtTokens.PROTECTED_KEYWORD)) {
-                    return PlatformIcons.PROTECTED_ICON
+                    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)
                 }
                 if (list.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
-                    return PlatformIcons.PACKAGE_LOCAL_ICON
+                    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local)
                 }
             }
 
@@ -121,21 +123,23 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
         }
 
         fun PsiElement.getBaseIcon(): Icon? = when (this) {
-            is KtPackageDirective -> PlatformIcons.PACKAGE_ICON
+            is KtPackageDirective -> AllIcons.Nodes.Package
             is KtFile, is KtLightClassForFacade -> FILE
             is KtLightClassForSourceDeclaration -> navigationElement.getBaseIcon()
             is KtNamedFunction -> when {
                 receiverTypeReference != null ->
                     if (KtPsiUtil.isAbstract(this)) ABSTRACT_EXTENSION_FUNCTION else EXTENSION_FUNCTION
                 getStrictParentOfType<KtNamedDeclaration>() is KtClass ->
-                    if (KtPsiUtil.isAbstract(this)) PlatformIcons.ABSTRACT_METHOD_ICON else PlatformIcons.METHOD_ICON
+                    if (KtPsiUtil.isAbstract(this)) PlatformIcons.ABSTRACT_METHOD_ICON else IconManager.getInstance().getPlatformIcon(
+                      com.intellij.ui.PlatformIcons.Method)
                 else ->
                     FUNCTION
             }
-            is KtConstructor<*> -> PlatformIcons.METHOD_ICON
+            is KtConstructor<*> -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             is KtLightMethod -> when(val u = unwrapped) {
-                is KtProperty -> if (!u.hasBody()) PlatformIcons.ABSTRACT_METHOD_ICON else PlatformIcons.METHOD_ICON
-                else -> PlatformIcons.METHOD_ICON
+                is KtProperty -> if (!u.hasBody()) PlatformIcons.ABSTRACT_METHOD_ICON else IconManager.getInstance().getPlatformIcon(
+                  com.intellij.ui.PlatformIcons.Method)
+                else -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             }
             is KtFunctionLiteral -> LAMBDA
             is KtClass -> when {

@@ -35,6 +35,8 @@ import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
 
 internal class ModuleOperationExecutor {
 
+    private val operations = mutableListOf<suspend () -> Result>()
+
     sealed class Result {
 
         companion object {
@@ -66,119 +68,119 @@ internal class ModuleOperationExecutor {
         }
     }
 
-    /** This **MUST** run on EDT */
-    suspend fun doOperation(operation: PackageSearchOperation<*>) = Result.from(
-        operation = operation,
-        operationFailures = when (operation) {
-            is PackageSearchOperation.Package.Install -> installPackage(operation)
-            is PackageSearchOperation.Package.Remove -> removePackage(operation)
-            is PackageSearchOperation.Package.ChangeInstalled -> changePackage(operation)
-            is PackageSearchOperation.Repository.Install -> installRepository(operation)
-            is PackageSearchOperation.Repository.Remove -> removeRepository(operation)
-        }
-    )
+    fun addOperation(operation: PackageSearchOperation<*>) = when (operation) {
+        is PackageSearchOperation.Package.Install -> installPackage(operation)
+        is PackageSearchOperation.Package.Remove -> removePackage(operation)
+        is PackageSearchOperation.Package.ChangeInstalled -> changePackage(operation)
+        is PackageSearchOperation.Repository.Install -> installRepository(operation)
+        is PackageSearchOperation.Repository.Remove -> removeRepository(operation)
+    }
 
-    private suspend fun installPackage(operation: PackageSearchOperation.Package.Install): List<OperationFailure<out OperationItem>> {
+    fun addOperations(operations: Iterable<PackageSearchOperation<*>>) = operations.forEach { addOperation(it) }
+
+    private fun installPackage(operation: PackageSearchOperation.Package.Install) {
         val projectModule = operation.projectModule
         val operationProvider =
             CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
-        logDebug("ModuleOperationExecutor#installPackage()") { "Installing package ${operation.model.displayName} in ${projectModule.name}" }
-
         val operationMetadata = dependencyOperationMetadataFrom(
             projectModule = projectModule, dependency = operation.model, newVersion = operation.newVersion, newScope = operation.newScope
         )
 
-        val errors = operationProvider.addDependencyToModule(operationMetadata, projectModule)
+        operations.add {
+            logDebug("ModuleOperationExecutor#installPackage()") { "Installing package ${operation.model.displayName} in ${projectModule.name}" }
+            val errors = operationProvider.addDependencyToModule(operationMetadata, projectModule)
 
-        if (errors.isEmpty()) {
-            PackageSearchEventsLogger.logPackageInstalled(
-                packageIdentifier = operation.model.coordinates.toIdentifier(),
-                packageVersion = operation.newVersion,
-                targetModule = operation.projectModule
-            )
-        }
-
-        logTrace("ModuleOperationExecutor#installPackage()") {
             if (errors.isEmpty()) {
-                "Package ${operation.model.displayName} installed in ${projectModule.name}"
-            } else {
-                "Package ${operation.model.displayName} failed to be installed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                PackageSearchEventsLogger.logPackageInstalled(
+                    packageIdentifier = operation.model.coordinates.toIdentifier(),
+                    packageVersion = operation.newVersion,
+                    targetModule = operation.projectModule
+                )
             }
-        }
 
-        return errors
+            logTrace("ModuleOperationExecutor#installPackage()") {
+                if (errors.isEmpty()) {
+                    "Package ${operation.model.displayName} installed in ${projectModule.name}"
+                } else {
+                    "Package ${operation.model.displayName} failed to be installed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                }
+            }
+
+            Result.from(operation, errors)
+        }
     }
 
     private fun UnifiedCoordinates.toIdentifier() = PackageIdentifier("$groupId:$artifactId")
 
-    private suspend fun removePackage(operation: PackageSearchOperation.Package.Remove): List<OperationFailure<out OperationItem>> {
+    private fun removePackage(operation: PackageSearchOperation.Package.Remove) {
         val projectModule = operation.projectModule
         val operationProvider =
             CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
-        logDebug("ModuleOperationExecutor#removePackage()") { "Removing package ${operation.model.displayName} from ${projectModule.name}" }
-
         val operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model)
+        operations.add {
+            logDebug("ModuleOperationExecutor#removePackage()") { "Removing package ${operation.model.displayName} from ${projectModule.name}" }
+            val errors = operationProvider.removeDependencyFromModule(operationMetadata, projectModule)
 
-        val errors = operationProvider.removeDependencyFromModule(operationMetadata, projectModule)
-
-        if (errors.isEmpty()) {
-            PackageSearchEventsLogger.logPackageRemoved(
-                packageIdentifier = operation.model.coordinates.toIdentifier(),
-                packageVersion = operation.currentVersion,
-                targetModule = operation.projectModule
-            )
-        }
-
-        logTrace("ModuleOperationExecutor#removePackage()") {
             if (errors.isEmpty()) {
-                "Package ${operation.model.displayName} removed from ${projectModule.name}"
-            } else {
-                "Package ${operation.model.displayName} failed to be removed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                PackageSearchEventsLogger.logPackageRemoved(
+                    packageIdentifier = operation.model.coordinates.toIdentifier(),
+                    packageVersion = operation.currentVersion,
+                    targetModule = operation.projectModule
+                )
             }
-        }
 
-        return errors
+            logTrace("ModuleOperationExecutor#removePackage()") {
+                if (errors.isEmpty()) {
+                    "Package ${operation.model.displayName} removed from ${projectModule.name}"
+                } else {
+                    "Package ${operation.model.displayName} failed to be removed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                }
+            }
+
+            Result.from(operation, errors)
+        }
     }
 
-    private suspend fun changePackage(operation: PackageSearchOperation.Package.ChangeInstalled): List<OperationFailure<out OperationItem>> {
+    private fun changePackage(operation: PackageSearchOperation.Package.ChangeInstalled) {
         val projectModule = operation.projectModule
-        val operationProvider = readAction {
-            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
-                ?: throw OperationException.unsupportedBuildSystem(projectModule)
-        }
-
-        logDebug("ModuleOperationExecutor#changePackage()") { "Changing package ${operation.model.displayName} in ${projectModule.name}" }
+        val operationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
+            ?: throw OperationException.unsupportedBuildSystem(projectModule)
 
         val operationMetadata = dependencyOperationMetadataFrom(
             projectModule = projectModule, dependency = operation.model, newVersion = operation.newVersion, newScope = operation.newScope
         )
 
-        val errors = operationProvider.updateDependencyInModule(operationMetadata, projectModule)
+        operations.add {
 
-        if (errors.isEmpty()) {
-            PackageSearchEventsLogger.logPackageUpdated(
-                packageIdentifier = operation.model.coordinates.toIdentifier(),
-                packageFromVersion = operation.currentVersion,
-                packageVersion = operation.newVersion,
-                targetModule = operation.projectModule
-            )
-        }
+            logDebug("ModuleOperationExecutor#changePackage()") { "Changing package ${operation.model.displayName} in ${projectModule.name}" }
 
-        logTrace("ModuleOperationExecutor#changePackage()") {
+            val errors = operationProvider.updateDependencyInModule(operationMetadata, projectModule)
+
             if (errors.isEmpty()) {
-                "Package ${operation.model.displayName} changed in ${projectModule.name}"
-            } else {
-                "Package ${operation.model.displayName} failed to be changed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                PackageSearchEventsLogger.logPackageUpdated(
+                    packageIdentifier = operation.model.coordinates.toIdentifier(),
+                    packageFromVersion = operation.currentVersion,
+                    packageVersion = operation.newVersion,
+                    targetModule = operation.projectModule
+                )
             }
-        }
 
-        return errors
+            logTrace("ModuleOperationExecutor#changePackage()") {
+                if (errors.isEmpty()) {
+                    "Package ${operation.model.displayName} changed in ${projectModule.name}"
+                } else {
+                    "Package ${operation.model.displayName} failed to be changed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                }
+            }
+
+            Result.from(operation, errors)
+        }
     }
 
     private fun dependencyOperationMetadataFrom(
@@ -193,55 +195,59 @@ internal class ModuleOperationExecutor {
         newScope = newScope?.scopeName.nullIfBlank() ?: dependency.scope.nullIfBlank()
     )
 
-    private suspend fun installRepository(operation: PackageSearchOperation.Repository.Install): List<OperationFailure<out OperationItem>> {
+    private fun installRepository(operation: PackageSearchOperation.Repository.Install) {
         val projectModule = operation.projectModule
         val operationProvider =
             CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
+        operations.add {
+            logDebug("ModuleOperationExecutor#installRepository()") { "Installing repository ${operation.model.displayName} in ${projectModule.name}" }
 
-        logDebug("ModuleOperationExecutor#installRepository()") { "Installing repository ${operation.model.displayName} in ${projectModule.name}" }
+            val errors = operationProvider.addRepositoryToModule(operation.model, projectModule)
 
-        val errors = operationProvider.addRepositoryToModule(operation.model, projectModule)
-
-        if (errors.isEmpty()) {
-            PackageSearchEventsLogger.logRepositoryAdded(operation.model)
-        }
-
-        logTrace("ModuleOperationExecutor#installRepository()") {
             if (errors.isEmpty()) {
-                "Repository ${operation.model.displayName} installed in ${projectModule.name}"
-            } else {
-                "Repository ${operation.model.displayName} failed to be installed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                PackageSearchEventsLogger.logRepositoryAdded(operation.model)
             }
-        }
 
-        return errors
+            logTrace("ModuleOperationExecutor#installRepository()") {
+                if (errors.isEmpty()) {
+                    "Repository ${operation.model.displayName} installed in ${projectModule.name}"
+                } else {
+                    "Repository ${operation.model.displayName} failed to be installed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                }
+            }
+
+            Result.from(operation, errors)
+        }
     }
 
-    private suspend fun removeRepository(operation: PackageSearchOperation.Repository.Remove): List<OperationFailure<out OperationItem>> {
+    private fun removeRepository(operation: PackageSearchOperation.Repository.Remove) {
         val projectModule = operation.projectModule
         val operationProvider =
             CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
+        operations.add {
+            logDebug("ModuleOperationExecutor#removeRepository()") { "Removing repository ${operation.model.displayName} from ${projectModule.name}" }
 
-        logDebug("ModuleOperationExecutor#removeRepository()") { "Removing repository ${operation.model.displayName} from ${projectModule.name}" }
+            val errors = operationProvider.removeRepositoryFromModule(operation.model, projectModule)
 
-        val errors = operationProvider.removeRepositoryFromModule(operation.model, projectModule)
-
-        if (errors.isEmpty()) {
-            PackageSearchEventsLogger.logRepositoryRemoved(operation.model)
-        }
-
-        logTrace("ModuleOperationExecutor#removeRepository()") {
             if (errors.isEmpty()) {
-                "Repository ${operation.model.displayName} removed from ${projectModule.name}"
-            } else {
-                "Repository ${operation.model.displayName} failed to be removed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                PackageSearchEventsLogger.logRepositoryRemoved(operation.model)
             }
-        }
 
-        return errors
+            logTrace("ModuleOperationExecutor#removeRepository()") {
+                if (errors.isEmpty()) {
+                    "Repository ${operation.model.displayName} removed from ${projectModule.name}"
+                } else {
+                    "Repository ${operation.model.displayName} failed to be removed due to:" + "\n${errors.joinToString("\n") { it.error.stackTraceToString() }}"
+                }
+            }
+
+            Result.from(operation, errors)
+        }
     }
+
+    suspend fun execute() = operations.map { it() }
 }

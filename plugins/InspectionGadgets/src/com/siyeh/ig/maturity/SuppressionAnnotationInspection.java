@@ -91,7 +91,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   private static class RemoveSuppressCommentFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement != null) {
         psiElement.delete();
@@ -107,7 +107,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   private class AllowSuppressionsFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       final Iterable<String> ids;
       if (psiElement instanceof PsiAnnotation) {

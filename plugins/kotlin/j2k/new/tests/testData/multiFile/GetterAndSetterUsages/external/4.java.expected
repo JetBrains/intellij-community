@@ -2,6 +2,6 @@ package test;
 
 class JavaClass {
     void foo(AAA a) {
-        a.setX(a.getX() + 1);
+        a.x = a.x + 1;
     }
 }

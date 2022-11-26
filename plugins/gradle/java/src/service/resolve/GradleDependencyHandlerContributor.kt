@@ -7,7 +7,6 @@ import com.intellij.psi.util.parentOfType
 import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.completion.GradleLookupWeigher
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER
-import org.jetbrains.plugins.gradle.service.resolve.staticModel.impl.getStaticPluginModel
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleConfiguration
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
@@ -42,18 +41,9 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
     val configurationsMap = if (qualifierType.buildscript) data.buildScriptConfigurations else data.configurations
     val configurations = if (methodName == null) configurationsMap.values else configurationsMap[methodName]?.let{ listOf(it) } ?: emptyList()
 
-    val dynamicConfigurations = configurations.mapTo(HashSet()) { it.name }
-
-    val staticConfigurations = getStaticPluginModel(place.containingFile).configurations.filter { if (methodName == null) it.name !in dynamicConfigurations else it.name == methodName }
-
     for (configuration in configurations) {
       val configurationName = configuration.name ?: continue
       if (!addMethod(manager, configurationName, clazz, place, objectVarargType, configuration.getDescription(), processor, state, configuration.declarationAlternatives)) return
-    }
-
-    for (staticConfiguration in staticConfigurations) {
-      val configurationName = staticConfiguration.name
-      if (!addMethod(manager, configurationName, clazz, place, objectVarargType, staticConfiguration.description, processor, state, emptyList())) return
     }
   }
 

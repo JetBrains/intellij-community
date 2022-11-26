@@ -9,6 +9,7 @@ import com.intellij.diff.util.Range
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -296,6 +297,9 @@ object LocalTrackerDiffUtil {
 
   private abstract class MySelectedChangesActionBase(private val forActiveChangelistOnly: Boolean,
                                                      protected val provider: LocalTrackerActionProvider) : DumbAwareAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
 
     override fun update(e: AnActionEvent) {
       if (forActiveChangelistOnly && !provider.allowExcludeChangesFromCommit) {

@@ -13,7 +13,6 @@ import javax.swing.*;
  * Customize icons for {@link PsiElement}s.
  *
  * @see FileIconProvider
- * @author peter
  */
 public abstract class IconProvider {
   public static final ExtensionPointName<IconProvider> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.iconProvider");

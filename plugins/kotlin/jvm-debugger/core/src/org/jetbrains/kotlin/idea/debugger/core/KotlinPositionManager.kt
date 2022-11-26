@@ -15,19 +15,17 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
-import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
@@ -37,13 +35,16 @@ import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.base.analysis.isInlinedArgument
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.idea.base.psi.getEndLineOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
@@ -51,9 +52,6 @@ import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getValueArgumentForExpression
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.isInlinedArgument
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
@@ -62,7 +60,6 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
@@ -72,21 +69,9 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor? = debugProcess.project.serviceOrNull()
 
-    private val allKotlinFilesScope = object : DelegatingGlobalSearchScope(
-        KotlinSourceFilterScope.projectAndLibrarySources(GlobalSearchScope.allScope(debugProcess.project), debugProcess.project)
-    ) {
-        private val projectIndex = ProjectRootManager.getInstance(debugProcess.project).fileIndex
-        private val scopeComparator = Comparator
-            .comparing<VirtualFile?, Boolean?> { projectIndex.isInSourceContent(it) }
-            .thenComparing<Boolean?> { projectIndex.isInLibrarySource(it) }
-            .thenComparing { file1, file2 -> super.compare(file1, file2) }
-
-        override fun compare(file1: VirtualFile, file2: VirtualFile): Int = scopeComparator.compare(file1, file2)
-    }
-
     private val sourceSearchScopes: List<GlobalSearchScope> = listOf(
         debugProcess.searchScope,
-        allKotlinFilesScope
+        KotlinAllFilesScopeProvider.getInstance(debugProcess.project).getAllKotlinFilesScope()
     )
 
     override fun getAcceptedFileTypes(): Set<FileType> = KOTLIN_FILE_TYPES
@@ -384,11 +369,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     override fun getAllClasses(sourcePosition: SourcePosition): List<ReferenceType> {
         val psiFile = sourcePosition.file
         if (psiFile is KtFile) {
-            if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return emptyList()
 
             val referenceTypesInKtFile = syncNonBlockingReadAction(psiFile.project) {
+                if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return@syncNonBlockingReadAction null
                 getReferenceTypesForPositionInKotlinFile(sourcePosition)
-            }
+            } ?: return emptyList()
 
             if (sourcePosition.isInsideProjectWithCompose()) {
                 return referenceTypesInKtFile + getComposableSingletonsClasses(debugProcess, psiFile)
@@ -532,8 +517,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 //
 // Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
 private fun decorateSourcePosition(location: Location, sourcePosition: SourcePosition): SourcePosition {
-    val lambda = sourcePosition.elementAt.parent
-    if (lambda !is KtFunctionLiteral) return sourcePosition
+    val lambda = sourcePosition.elementAt?.parent as? KtFunctionLiteral ?: return sourcePosition
     val lines = lambda.getLineRange() ?: return sourcePosition
     if (!location.hasVisibleInlineLambdasOnLines(lines)) {
         return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
@@ -619,13 +603,15 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
 }
 
 private fun KtFunction.isSamLambda(): Boolean {
-    if (this !is KtFunctionLiteral && this !is KtNamedFunction) return false
-    return analyze(this) {
-        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
-        val call = getResolvedFunctionCall(parentCall) ?: return false
-        val valueArgument = parentCall.getValueArgumentForExpression(this@isSamLambda) ?: return false
-        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
+    if (this !is KtFunctionLiteral && this !is KtNamedFunction) {
+        return false
+    }
 
+    analyze(this) {
+        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
+        val call = parentCall.resolveCall().successfulFunctionCallOrNull() ?: return false
+        val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return false
+        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argument.returnType is KtUsualClassType
     }
 }

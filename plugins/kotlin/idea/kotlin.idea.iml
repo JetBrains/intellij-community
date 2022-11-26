@@ -39,7 +39,6 @@
     <orderEntry type="module" module-name="kotlin.base.external-build-system" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.base.statistics" />
@@ -70,8 +69,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />
@@ -105,5 +102,9 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
+    <orderEntry type="module" module-name="kotlin.searching.base" />
   </component>
 </module>

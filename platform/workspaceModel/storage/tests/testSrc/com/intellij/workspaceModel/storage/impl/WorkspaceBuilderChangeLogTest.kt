@@ -11,6 +11,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class WorkspaceBuilderChangeLogTest {
@@ -558,6 +559,73 @@ class WorkspaceBuilderChangeLogTest {
     }
     val change = builder.changeLog.changeLog.values.single()
     assertInstanceOf<ChangeEntry.AddEntity>(change)
+  }
+
+  @Test
+  fun `join remove plus add`() {
+    val oldSource = SampleEntitySource("oldSource")
+    val entity = builder.addSourceEntity("one", oldSource)
+    builder.changeLog.clear()
+    val original = builder.toSnapshot()
+    builder.removeEntity(entity)
+    builder.addSourceEntity("one", oldSource)
+    assertTrue(builder.hasSameEntities(original as AbstractEntityStorage))
+  }
+
+  @Test
+  fun `join remove plus add content root`() {
+    val moduleTestEntity = ModuleTestEntity("data", MySource) {
+      contentRoots = listOf(
+        ContentRootTestEntity(MySource)
+      )
+    }
+    builder.addEntity(moduleTestEntity)
+    builder.changeLog.clear()
+    val original = builder.toSnapshot()
+    builder.removeEntity(builder.entities(ModuleTestEntity::class.java).single().contentRoots.single())
+    builder.addEntity(ContentRootTestEntity(MySource) {
+      module = moduleTestEntity
+    })
+    assertTrue(builder.hasSameEntities(original as AbstractEntityStorage))
+  }
+
+  @Test
+  fun `join remove plus add content root with mappings`() {
+    val moduleTestEntity = ModuleTestEntity("data", MySource) {
+      contentRoots = listOf(
+        ContentRootTestEntity(MySource)
+      )
+    }
+    builder.addEntity(moduleTestEntity)
+    builder.changeLog.clear()
+    val contentRoot = builder.entities(ModuleTestEntity::class.java).single().contentRoots.single()
+    builder.getMutableExternalMapping<Any>("data").addMapping(contentRoot, 1)
+    val original = builder.toSnapshot()
+    builder.removeEntity(contentRoot)
+    builder.addEntity(ContentRootTestEntity(MySource) {
+      module = moduleTestEntity
+    })
+    assertFalse(builder.hasSameEntities(original as AbstractEntityStorage))
+  }
+
+  @Test
+  fun `join remove plus add content root with mappings 2`() {
+    val moduleTestEntity = ModuleTestEntity("data", MySource) {
+      contentRoots = listOf(
+        ContentRootTestEntity(MySource)
+      )
+    }
+    builder.addEntity(moduleTestEntity)
+    builder.changeLog.clear()
+    val contentRoot = builder.entities(ModuleTestEntity::class.java).single().contentRoots.single()
+    val original = builder.toSnapshot()
+    builder.removeEntity(contentRoot)
+    val newContentRoot = ContentRootTestEntity(MySource) {
+      module = moduleTestEntity
+    }
+    builder.addEntity(newContentRoot)
+    builder.getMutableExternalMapping<Any>("data").addMapping(newContentRoot, 1)
+    assertFalse(builder.hasSameEntities(original as AbstractEntityStorage))
   }
 
   // ------------- Testing events collapsing end ----

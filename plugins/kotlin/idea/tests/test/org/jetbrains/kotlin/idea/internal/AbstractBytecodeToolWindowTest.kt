@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun doTest(testPath: String) {
         val mainDir = File(testPath)

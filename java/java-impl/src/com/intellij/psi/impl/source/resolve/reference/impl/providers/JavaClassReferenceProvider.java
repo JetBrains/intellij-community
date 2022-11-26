@@ -34,7 +34,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> ALLOW_WILDCARDS = new CustomizationKey<>("ALLOW_WILDCARDS");
 
   /** @deprecated use {@link #SUPER_CLASSES} instead */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
   /** @deprecated use {@link #IMPORTS} instead */
   @Deprecated(forRemoval = true)

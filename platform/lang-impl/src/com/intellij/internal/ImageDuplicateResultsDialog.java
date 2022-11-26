@@ -52,14 +52,14 @@ import java.util.stream.Collectors;
  */
 public class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
-  private final List<VirtualFile> myImages;
+  private final List<? extends VirtualFile> myImages;
   private final Map<String, Set<VirtualFile>> myDuplicates;
   private final Tree myTree;
   private final TreeSpeedSearch mySpeedSearch;
   private final ResourceModules myResourceModules = new ResourceModules();
 
 
-  public ImageDuplicateResultsDialog(Project project, List<VirtualFile> images, Map<String, Set<VirtualFile>> duplicates) {
+  public ImageDuplicateResultsDialog(Project project, List<? extends VirtualFile> images, Map<String, Set<VirtualFile>> duplicates) {
     super(project);
     myProject = project;
     myImages = images;
@@ -70,7 +70,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     myTree.setRootVisible(true);
     MyCellRenderer renderer = new MyCellRenderer();
     myTree.setCellRenderer(renderer);
-    mySpeedSearch = new TreeSpeedSearch(myTree, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
+    mySpeedSearch = new TreeSpeedSearch(myTree, false, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
     init();
     TreeUtil.expandAll(myTree);
     setTitle("Image Duplicates");

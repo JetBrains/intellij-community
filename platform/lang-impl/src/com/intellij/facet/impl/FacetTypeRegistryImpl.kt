@@ -153,7 +153,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
         registerFacetType(type)
       }
       FacetType.EP_NAME.addExtensionPointListener(
-        object : ExtensionPointListener<FacetType<*, *>?> {
+        object : ExtensionPointListener<FacetType<*, *>> {
           override fun extensionAdded(extension: FacetType<*, *>, pluginDescriptor: PluginDescriptor) {
             registerFacetType(extension)
             runWriteAction {

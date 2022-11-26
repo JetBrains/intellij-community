@@ -6,7 +6,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.lang.Java11Shim
+import com.intellij.util.Java11Shim
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -189,7 +189,6 @@ class PluginSetBuilder(
   internal fun initEnableState(
     descriptor: IdeaPluginDescriptorImpl,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    disabledRequired: MutableSet<IdeaPluginDescriptorImpl>,
     disabledPlugins: Set<PluginId>,
     errors: MutableMap<PluginId, PluginLoadingError>,
   ): PluginLoadingError? {
@@ -208,89 +207,93 @@ class PluginSetBuilder(
       )
     }
 
-    for (dependency in descriptor.pluginDependencies) {
-      val depId = dependency.pluginId
-      if (dependency.isOptional || enabledPluginIds.containsKey(depId)) {
-        continue
+    descriptor.allPluginDependencies
+      .firstOrNull { it !in enabledPluginIds }
+      ?.let { dependencyPluginId ->
+        return idMap.get(dependencyPluginId)?.let {
+          createTransitivelyDisabledError(descriptor, it, isNotifyUser)
+        } ?: createCannotLoadError(descriptor, dependencyPluginId, errors, isNotifyUser)
       }
 
-      val dep = idMap.get(depId)
-      if (dep != null && disabledPlugins.contains(depId)) {
-        // broken/incompatible plugins can be updated, add them anyway
-        disabledRequired.add(dep)
+    return descriptor.moduleDependencies
+      .firstOrNull { it !in enabledModuleV2Ids }
+      ?.let {
+        PluginLoadingError(
+          plugin = descriptor,
+          detailedMessageSupplier = message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.name, it),
+          shortMessageSupplier = message("plugin.loading.error.short.depends.on.not.installed.plugin", it),
+          isNotifyUser = isNotifyUser,
+        )
       }
-      return createCannotLoadError(descriptor, errors, isNotifyUser, depId, dep)
-    }
-
-    for (item in descriptor.dependencies.plugins) {
-      val depId = item.id
-      if (enabledPluginIds.containsKey(depId)) {
-        continue
-      }
-
-      val dep = idMap.get(depId)
-      if (dep != null && disabledPlugins.contains(depId)) {
-        // broken/incompatible plugins can be updated, add them anyway
-        disabledRequired.add(dep)
-      }
-      return createCannotLoadError(descriptor, errors, isNotifyUser, depId, dep)
-    }
-
-    for (item in descriptor.dependencies.modules) {
-      if (enabledModuleV2Ids.containsKey(item.name)) {
-        continue
-      }
-
-      return PluginLoadingError(
-        plugin = descriptor,
-        detailedMessageSupplier = message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.name, item.name),
-        shortMessageSupplier = message("plugin.loading.error.short.depends.on.not.installed.plugin", item.name),
-        isNotifyUser = isNotifyUser,
-      )
-    }
-
-    return null
   }
 }
 
 private fun createCannotLoadError(
   descriptor: IdeaPluginDescriptorImpl,
-  errors: MutableMap<PluginId, PluginLoadingError>,
+  dependencyPluginId: PluginId,
+  errors: Map<PluginId, PluginLoadingError>,
   isNotifyUser: Boolean,
-  depId: PluginId,
-  dep: IdeaPluginDescriptor?,
 ): PluginLoadingError {
-  val depName = dep?.name
-  return if (depName == null) {
-    val depPresentableId = depId.idString
+  val dependencyIdString = dependencyPluginId.idString
+  val dependency = errors.get(dependencyPluginId)?.plugin
 
-    errors.get(depId)?.plugin?.let {
-      PluginLoadingError(
-        plugin = descriptor,
-        detailedMessageSupplier = message(
-          "plugin.loading.error.long.depends.on.failed.to.load.plugin",
-          descriptor.name,
-          it.name ?: depPresentableId,
-        ),
-        shortMessageSupplier = message("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId),
-        isNotifyUser = isNotifyUser,
-      )
-    } ?: PluginLoadingError(
-      plugin = descriptor,
-      detailedMessageSupplier = message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.name, depPresentableId),
-      shortMessageSupplier = message("plugin.loading.error.short.depends.on.not.installed.plugin", depPresentableId),
-      isNotifyUser = isNotifyUser,
+  val detailedMessageSupplier = dependency?.let {
+    message(
+      "plugin.loading.error.long.depends.on.failed.to.load.plugin",
+      descriptor.name,
+      it.name ?: dependencyIdString,
     )
-  }
-  else PluginLoadingError(
+  } ?: message(
+    "plugin.loading.error.long.depends.on.not.installed.plugin",
+    descriptor.name,
+    dependencyIdString,
+  )
+
+  val shortMessageSupplier = dependency?.let {
+    message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyIdString)
+  } ?: message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyIdString)
+
+  return PluginLoadingError(
     plugin = descriptor,
-    detailedMessageSupplier = message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.name, depName),
-    shortMessageSupplier = message("plugin.loading.error.short.depends.on.disabled.plugin", depName),
+    detailedMessageSupplier = detailedMessageSupplier,
+    shortMessageSupplier = shortMessageSupplier,
     isNotifyUser = isNotifyUser,
-    disabledDependency = dep.pluginId,
+  )
+}
+
+private fun createTransitivelyDisabledError(
+  descriptor: IdeaPluginDescriptorImpl,
+  dependency: IdeaPluginDescriptorImpl,
+  isNotifyUser: Boolean,
+): PluginLoadingError {
+  val dependencyName = dependency.name
+
+  return PluginLoadingError(
+    plugin = descriptor,
+    detailedMessageSupplier = message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.name, dependencyName),
+    shortMessageSupplier = message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyName),
+    isNotifyUser = isNotifyUser,
+    disabledDependency = dependency.pluginId,
   )
 }
 
 private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String, vararg params: Any): @Nls Supplier<String> {
   return Supplier { CoreBundle.message(key, *params) }
 }
+
+private val IdeaPluginDescriptorImpl.allPluginDependencies
+  get(): Sequence<PluginId> {
+    return pluginDependencies.asSequence()
+             .filterNot { it.isOptional }
+             .map { it.pluginId } +
+           dependencies
+             .plugins.asSequence()
+             .map { it.id }
+  }
+
+private val IdeaPluginDescriptorImpl.moduleDependencies
+  get(): Sequence<String> {
+    return dependencies
+      .modules.asSequence()
+      .map { it.name }
+  }

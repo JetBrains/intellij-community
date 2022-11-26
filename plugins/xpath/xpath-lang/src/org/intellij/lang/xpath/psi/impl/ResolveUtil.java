@@ -28,6 +28,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -171,7 +172,7 @@ public final class ResolveUtil {
       if (matcher.isRecursive()) {
         root.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             final Matcher.Result match = matcher.match(tag);
             if (match != null) {
               if (match.chain != null) {
@@ -191,7 +192,7 @@ public final class ResolveUtil {
         root.acceptChildren(new XmlElementVisitor() {
 
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             final Matcher.Result match = matcher.match(tag);
             if (match != null) {
               if (match.chain != null) {

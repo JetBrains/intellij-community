@@ -48,9 +48,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
-/**
- * @author peter
- */
 public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
   public void testCoalesceEqual() {
@@ -173,6 +170,10 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testReportConflictForSameCoalesceFromDifferentPlaces() {
+    //RC: current implementation treat lambdas from the same class as 'same place' -- i.e. they are OK to use
+    // with same .coalesceBy key. Hence the need to create the Inner class here -- to clearly show 'those 2 lambdas
+    // are of different origins':
+
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
     Object same = new Object();
     class Inner {

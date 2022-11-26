@@ -20,10 +20,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class BindToExistingBeanStep extends StepAdapter{
   private static final Logger LOG = Logger.getInstance(BindToExistingBeanStep.class);
 

@@ -183,7 +183,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlComment(final XmlComment comment) {
+    public void visitXmlComment(final @NotNull XmlComment comment) {
       doVisitAnyComment(comment);
       super.visitXmlComment(comment);
     }
@@ -196,7 +196,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
       myHolder.addUsedPrefix(tag.getNamespacePrefix());
       myHolder.addUsedNamespace(tag.getNamespace());
       String text = tag.getValue().getTrimmedText();
@@ -205,7 +205,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlAttribute(XmlAttribute attribute) {
+    public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
       if (!attribute.isNamespaceDeclaration()) {
         myHolder.addUsedPrefix(attribute.getNamespacePrefix());
       }
@@ -214,7 +214,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlAttributeValue(final XmlAttributeValue value) {
+    public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
       final PsiElement element = value.getParent();
       if (!(element instanceof XmlAttribute)) return;
 

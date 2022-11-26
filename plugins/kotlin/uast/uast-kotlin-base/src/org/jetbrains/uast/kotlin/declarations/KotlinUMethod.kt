@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.asJava.elements.isSetter
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
@@ -60,12 +62,14 @@ open class KotlinUMethod(
     override val uAnnotations: List<UAnnotation> by lz {
         // NB: we can't use sourcePsi.annotationEntries directly due to annotation use-site targets. The given `psi` as a light element,
         // which spans regular function, property accessors, etc., is already built with targeted annotation.
-        baseResolveProviderService.getPsiAnnotations(psi)
+        baseResolveProviderService.getPsiAnnotations(psi).asSequence()
+            .filter { if (javaPsi.hasModifier(JvmModifier.STATIC)) !isJvmStatic(it) else true }
             .mapNotNull { (it as? KtLightElement<*, *>)?.kotlinOrigin as? KtAnnotationEntry }
             .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) }
+            .toList()
     }
 
-    protected val receiverTypeReference by lz {
+    private val receiverTypeReference by lz {
         when (sourcePsi) {
             is KtCallableDeclaration -> sourcePsi
             is KtPropertyAccessor -> sourcePsi.property
@@ -120,5 +124,7 @@ open class KotlinUMethod(
                     KotlinUMethod(psi, givenParent)
             }
         }
+
+        private fun isJvmStatic(it: PsiAnnotation): Boolean = it.hasQualifiedName(JVM_STATIC_ANNOTATION_FQ_NAME.asString())
     }
 }

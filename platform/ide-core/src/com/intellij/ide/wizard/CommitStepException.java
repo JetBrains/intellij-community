@@ -17,9 +17,6 @@ package com.intellij.ide.wizard;
 
 import org.jetbrains.annotations.Nls;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class CommitStepException extends Exception {
   public CommitStepException(final @Nls String message) {
     super(message);

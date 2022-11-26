@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ProjectRootManager
@@ -16,7 +17,6 @@ import com.intellij.refactoring.MultiFileTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import java.io.File
 

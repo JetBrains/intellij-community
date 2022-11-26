@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
@@ -54,6 +54,14 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+/**
+ * Tracker that is used for "Partial Changelist" and "Partial Commit" features, allowing to commit a subset of file's changed lines.
+ *
+ * The tracker stores changelists ids, see [com.intellij.openapi.vcs.changes.ChangeListWorker.PartialChangeTracker].
+ *
+ * @see com.intellij.openapi.vcs.impl.PartialChangesUtil
+ * @see LineStatusTrackerManager.arePartialChangelistsEnabled
+ */
 interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun getAffectedChangeListsIds(): List<String>
 
@@ -69,10 +77,14 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun setExcludedFromCommit(lines: BitSet, isExcluded: Boolean)
 
 
+  /**
+   * @return `false` if file can be committed as is
+   */
   fun hasPartialChangesToCommit(): Boolean
 
   @RequiresEdt
   fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
+  fun getChangesToBeCommitted(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): String?
   fun getPartialCommitContent(changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitContent?
   fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean)
 
@@ -125,8 +137,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   private var defaultMarker: ChangeListMarker
 
-  private var initialChangeListId: String? = null
-  private var lastKnownTrackerChangeListId: String? = null
+  private var initialChangeListId: String? = null // Initial state from ChangeListWorker or DefaultChangelist if initialized by typing
+  private var lastKnownTrackerChangeListId: String? = null // Track changelist for a file without changed lines. Ex: executable bit change.
   private val affectedChangeLists = HashSet<String>()
 
   private var hasUndoInCommand: Boolean = false
@@ -495,7 +507,14 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   override fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper {
     val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
 
-    val contentToCommit = documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
+    val contentToCommit = documentTracker.writeLock {
+      documentTracker.updateFrozenContentIfNeeded()
+      documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
+      ?: run {
+        LOG.warn("handlePartialCommit - frozen tracker: $this")
+        documentTracker.getContent(side).toString()
+      }
+    }
 
     return object : PartialCommitHelper(contentToCommit) {
       override fun applyChanges() {
@@ -520,6 +539,18 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
     val toCommitCondition = createToCommitCondition(changelistsIds, honorExcludedFromCommit)
     runBulkRollback(toCommitCondition)
+  }
+
+  override fun getChangesToBeCommitted(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): String? {
+    return documentTracker.readLock {
+      if (!isValid() || documentTracker.isFrozen()) return@readLock null
+      val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
+      return@readLock documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
+                      ?: run {
+                        LOG.warn("getChangesToBeCommitted - frozen tracker: $this")
+                        documentTracker.getContent(side).toString()
+                      }
+    }
   }
 
   override fun getPartialCommitContent(changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitContent? {
@@ -551,7 +582,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, flagsProvider, 0)
     }
 
-    class MyFlagsProvider(val defaultChangelistId: String) : DefaultFlagsProvider() {
+    class MyFlagsProvider(private val defaultChangelistId: String) : DefaultFlagsProvider() {
       override fun getFlags(range: Range): DefaultLineFlags {
         val ignored = range is LocalRange && range.changelistId != defaultChangelistId
         return if (ignored) DefaultLineFlags.IGNORED else DefaultLineFlags.DEFAULT

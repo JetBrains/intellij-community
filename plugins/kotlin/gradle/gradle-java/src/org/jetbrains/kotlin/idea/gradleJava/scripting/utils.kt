@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,7 +10,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScriptInitializer

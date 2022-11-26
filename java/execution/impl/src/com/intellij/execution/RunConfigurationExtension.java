@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Allows changing behaviour for already created {@link RunConfigurationBase}
  */
-public abstract class RunConfigurationExtension extends RunConfigurationExtensionBase<RunConfigurationBase<?>>{
+public abstract class RunConfigurationExtension extends RunConfigurationExtensionBase<RunConfigurationBase<?>> {
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME =
     new ExtensionPointName<>("com.intellij.runConfigurationExtension");
 
@@ -31,22 +31,23 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
    * @param params java parameters to be updated. E.g. put additional jars on classpath or module path, additional VM options, etc
    */
   public abstract <T extends RunConfigurationBase<?>> void updateJavaParameters(@NotNull T configuration,
-                                                                             @NotNull JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException;
+                                                                                @NotNull JavaParameters params,
+                                                                                @Nullable RunnerSettings runnerSettings) throws ExecutionException;
 
   @Override
   protected void patchCommandLine(@NotNull RunConfigurationBase configuration,
                                   RunnerSettings runnerSettings,
                                   @NotNull GeneralCommandLine cmdLine,
-                                  @NotNull String runnerId)  throws ExecutionException {}
+                                  @NotNull String runnerId) throws ExecutionException { }
 
   @Override
   public boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {
     return true;
   }
 
-  public void cleanUserData(RunConfigurationBase<?> runConfigurationBase) {}
+  public void cleanUserData(RunConfigurationBase<?> runConfigurationBase) { }
 
-  public static void cleanExtensionsUserData(RunConfigurationBase<?> runConfigurationBase) {
+  public static void cleanExtensionsUserData(@NotNull RunConfigurationBase<?> runConfigurationBase) {
     for (RunConfigurationExtension extension : EP_NAME.getExtensionList()) {
       extension.cleanUserData(runConfigurationBase);
     }
@@ -71,13 +72,12 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
   }
 
   /**
-   * @return true if {@code runnerSettings} explicitly says that current extension should be disabled, 
-   *         e.g. for run without coverage, coverage listeners should not be enabled
+   * @return true if {@code runnerSettings} explicitly says that current extension should be disabled,
+   * e.g. for run without coverage, coverage listeners should not be enabled
    */
-  public  boolean isListenerDisabled(RunConfigurationBase<?> configuration, Object listener, RunnerSettings runnerSettings) {
+  public boolean isListenerDisabled(RunConfigurationBase<?> configuration, Object listener, RunnerSettings runnerSettings) {
     return false;
   }
-
 
   /**
    * Enhances the run process console by adding any extension-specific information to it.

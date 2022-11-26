@@ -77,7 +77,7 @@ class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<
             val returnLabel = secondArg.findDescendantOfType<KtReturnExpression>()?.getLabelName()
             compatibleNames.firstOrNull { it == returnLabel }?.plus("@") ?: ""
         } else ""
-        return KtPsiFactory(element).createExpressionByPattern(
+        return KtPsiFactory(element.project).createExpressionByPattern(
             "$0[$1] = $label$2",
             element.receiverExpression, firstArg, secondArg,
             reformat = false

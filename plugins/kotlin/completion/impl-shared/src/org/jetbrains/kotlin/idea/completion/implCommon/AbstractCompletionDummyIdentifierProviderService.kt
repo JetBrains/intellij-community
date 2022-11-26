@@ -227,12 +227,15 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
 
     private fun specialInArgumentListDummyIdentifier(tokenBefore: PsiElement?): String? {
-        // If we insert $ in the argument list of a delegation specifier, this will break parsing
+        // If we insert `$` in the argument list of a delegation specifier, this will break parsing
         // and the following block will not be attached as a body to the constructor. Therefore
         // we need to use a regular identifier.
         val argumentList = tokenBefore?.getNonStrictParentOfType<KtValueArgumentList>() ?: return null
         if (argumentList.parent is KtConstructorDelegationCall) return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
-        return null
+        // If there is = in the argument list after caret, then breaking parsing with just $ prevents K2 from resolving function call,
+        // i.e. `f ($ = )` is resolved to variable assignment and left part `f ($` is resolved to erroneous name reference,
+        // so we need to use `$,` to avoid resolving to variable assignment
+        return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + "$,"
     }
 
     private companion object {

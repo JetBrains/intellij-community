@@ -5,7 +5,7 @@
         "icons": {
           "expui": {
             "image.svg": "org/intellij/images/icons/ImagesFileType.svg",
-            "chessboard.svg": "org/intellij/images/icons/ToggleTransparencyChessboard.svg",
+            "chessboard.svg": "org/intellij/images/icons/ToggleTransparencyChessboard.svg"
           }
         }
       }

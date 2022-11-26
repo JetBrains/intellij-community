@@ -26,9 +26,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public class FunctionalExpressionKey {
   public static final int UNKNOWN_PARAM_COUNT = -1;
   private final int lambdaParameterCount;

@@ -719,7 +719,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
         failedToImportDescriptors: Set<DeclarationDescriptor>
     ) : ShorteningProcessor<KtThisExpression>(file, failedToImportDescriptors) {
 
-        private val simpleThis = KtPsiFactory(file).createExpression("this") as KtThisExpression
+        private val simpleThis = KtPsiFactory(file.project).createExpression("this") as KtThisExpression
 
         override val collectElementsVisitor: CollectElementsVisitor<KtThisExpression> =
             object : CollectElementsVisitor<KtThisExpression>(elementFilter) {

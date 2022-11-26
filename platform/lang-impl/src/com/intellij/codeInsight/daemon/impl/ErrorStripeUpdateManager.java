@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
-import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -36,7 +35,9 @@ public final class ErrorStripeUpdateManager implements Disposable {
     TrafficLightRendererContributor.EP_NAME.addChangeListener(() -> {
       for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
         if (fileEditor instanceof TextEditor) {
-          repaintErrorStripePanel(((TextEditor)fileEditor).getEditor());
+          Editor editor = ((TextEditor)fileEditor).getEditor();
+          PsiFile file = myPsiDocumentManager.getCachedPsiFile(editor.getDocument());
+          repaintErrorStripePanel(editor, file);
         }
       }
     }, this);
@@ -46,20 +47,17 @@ public final class ErrorStripeUpdateManager implements Disposable {
   public void dispose() {
   }
 
-  @SuppressWarnings("WeakerAccess") // Used in Rider
-  public void repaintErrorStripePanel(@NotNull Editor editor) {
+  public void repaintErrorStripePanel(@NotNull Editor editor, @Nullable PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myProject.isInitialized()) return;
 
-    PsiFile file = myPsiDocumentManager.getPsiFile(editor.getDocument());
     EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
     markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
     markup.setErrorStripTooltipRendererProvider(createTooltipRenderer(editor));
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
-    setOrRefreshErrorStripeRenderer(markup, file);
+    setOrRefreshErrorStripeRenderer(markup, psiFile);
   }
 
-  @SuppressWarnings("WeakerAccess") // Used in Rider
   void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @Nullable PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!editorMarkupModel.isErrorStripeVisible() || file == null || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
@@ -96,19 +94,11 @@ public final class ErrorStripeUpdateManager implements Disposable {
   }
 
   private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
       TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
       if (renderer != null) return renderer;
     }
-    return createFallbackRenderer(editor);
-  }
-
-  private @NotNull TrafficLightRenderer createFallbackRenderer(@NotNull Editor editor) {
-    return new TrafficLightRenderer(myProject, editor.getDocument()) {
-      @Override
-      protected @NotNull UIController createUIController() {
-        return super.createUIController(editor);
-      }
-    };
+    return new TrafficLightRenderer(myProject, editor);
   }
 }

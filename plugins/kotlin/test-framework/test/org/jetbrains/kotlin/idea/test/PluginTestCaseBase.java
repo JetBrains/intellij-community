@@ -52,34 +52,26 @@ public class PluginTestCaseBase {
 
     @NotNull
     public static Sdk jdk(@NotNull TestJdkKind kind) {
-        switch (kind) {
-            case MOCK_JDK:
-                return IdeaTestUtil.getMockJdk18();
-            case FULL_JDK_11:
+        return switch (kind) {
+            case MOCK_JDK -> IdeaTestUtil.getMockJdk18();
+            case FULL_JDK_11 -> {
                 String jre9 = KotlinTestUtils.getAtLeastJdk9Home().getPath();
-                return getSdk(jre9, "Full JDK 9");
-            case FULL_JDK_17:
-                return IdeaTestUtil.getMockJdk(LanguageLevel.JDK_17.toJavaVersion());
-            case FULL_JDK:
-                return fullJdk();
-            default:
-                throw new UnsupportedOperationException(kind.toString());
-        }
+                yield getSdk(jre9, "Full JDK 9");
+            }
+            case FULL_JDK_17 -> IdeaTestUtil.getMockJdk(LanguageLevel.JDK_17.toJavaVersion());
+            case FULL_JDK -> fullJdk();
+            default -> throw new UnsupportedOperationException(kind.toString());
+        };
     }
 
     @NotNull
     public static LanguageLevel getLanguageLevel(@NotNull TestJdkKind kind) {
-        switch (kind) {
-            case MOCK_JDK:
-                return LanguageLevel.JDK_1_8;
-            case FULL_JDK_11:
-                return LanguageLevel.JDK_11;
-            case FULL_JDK_17:
-                return LanguageLevel.JDK_17;
-            case FULL_JDK:
-                return LanguageLevel.JDK_1_8;
-            default:
-                throw new UnsupportedOperationException(kind.toString());
-        }
+      return switch (kind) {
+        case MOCK_JDK -> LanguageLevel.JDK_1_8;
+        case FULL_JDK_11 -> LanguageLevel.JDK_11;
+        case FULL_JDK_17 -> LanguageLevel.JDK_17;
+        case FULL_JDK -> LanguageLevel.JDK_1_8;
+        default -> throw new UnsupportedOperationException(kind.toString());
+      };
     }
 }

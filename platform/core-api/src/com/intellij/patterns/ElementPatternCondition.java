@@ -6,9 +6,6 @@ import com.intellij.util.SmartList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 @SuppressWarnings("ForLoopReplaceableByForEach")
 public final class ElementPatternCondition<T> {
 

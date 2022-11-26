@@ -1,6 +1,7 @@
 import ast
 from argparse import Namespace
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 __version__: str
 

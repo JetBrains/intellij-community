@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +45,11 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String vendorEmail;
   private String vendorUrl;
   private String url;
+  private String sourceCodeUrl;
+  private String forumUrl;
+  private String licenseUrl;
+  private String bugtrackerUrl;
+  private String documentationUrl;
   private long date = Long.MAX_VALUE;
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
@@ -58,6 +64,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<String> myTags;
   private String externalUpdateId;
   private String externalPluginId;
+  private PageContainer<PluginReviewComment> reviewComments;
+  private List<String> screenShots;
+  private String externalPluginIdForScreenShots;
+  private String mySuggestedCommercialIde = null;
 
   /**
    * @deprecated Use {@link #PluginNode(PluginId)}
@@ -314,6 +324,46 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.url = url;
   }
 
+  public @Nullable String getSourceCodeUrl() {
+    return sourceCodeUrl;
+  }
+
+  public void setSourceCodeUrl(@Nullable String sourceCodeUrl) {
+    this.sourceCodeUrl = sourceCodeUrl;
+  }
+
+  public @Nullable String getForumUrl() {
+    return forumUrl;
+  }
+
+  public void setForumUrl(@Nullable String forumUrl) {
+    this.forumUrl = forumUrl;
+  }
+
+  public @Nullable String getLicenseUrl() {
+    return licenseUrl;
+  }
+
+  public void setLicenseUrl(@Nullable String licenseUrl) {
+    this.licenseUrl = licenseUrl;
+  }
+
+  public @Nullable String getBugtrackerUrl() {
+    return bugtrackerUrl;
+  }
+
+  public void setBugtrackerUrl(@Nullable String bugtrackerUrl) {
+    this.bugtrackerUrl = bugtrackerUrl;
+  }
+
+  public @Nullable String getDocumentationUrl() {
+    return documentationUrl;
+  }
+
+  public void setDocumentationUrl(@Nullable String documentationUrl) {
+    this.documentationUrl = documentationUrl;
+  }
+
   public void setDate(String date) {
     this.date = Long.parseLong(date);
   }
@@ -504,6 +554,38 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public boolean detailsLoaded() {
     return externalPluginId == null || externalUpdateId == null || description != null;
+  }
+
+  public @Nullable PageContainer<PluginReviewComment> getReviewComments() {
+    return reviewComments;
+  }
+
+  public void setReviewComments(@NotNull PageContainer<PluginReviewComment> reviewComments) {
+    this.reviewComments = reviewComments;
+  }
+
+  public @Nullable List<String> getScreenShots() {
+    return screenShots;
+  }
+
+  public @Nullable String getExternalPluginIdForScreenShots() {
+    return externalPluginIdForScreenShots;
+  }
+
+  public void setExternalPluginIdForScreenShots(@Nullable String externalPluginId) {
+    externalPluginIdForScreenShots = externalPluginId;
+  }
+
+  public void setScreenShots(@NotNull List<String> screenshots) {
+    this.screenShots = screenshots;
+  }
+
+  public String getSuggestedCommercialIde() {
+    return mySuggestedCommercialIde;
+  }
+
+  public void setSuggestedCommercialIde(String commercialIdeCode) {
+    mySuggestedCommercialIde = commercialIdeCode;
   }
 
   @Override

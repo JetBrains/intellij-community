@@ -40,9 +40,9 @@ abstract class ContextCollector(private val resolutionFacade: ResolutionFacade) 
         val typeBasedTypeVariables = mutableListOf<TypeBasedTypeVariable>()
 
         fun KtTypeReference.toBoundType(
-          owner: TypeVariableOwner,
-          alreadyCalculatedType: KotlinType? = null,
-          defaultState: State? = null
+            owner: TypeVariableOwner,
+            alreadyCalculatedType: KotlinType? = null,
+            defaultState: State? = null
         ): BoundType? {
             val typeElement = typeElement ?: return null
             val type = alreadyCalculatedType ?: analyze(resolutionFacade, BodyResolveMode.PARTIAL)[BindingContext.TYPE, this]
@@ -145,7 +145,7 @@ abstract class ContextCollector(private val resolutionFacade: ResolutionFacade) 
                         val descriptor =
                             expression.resolveToDescriptorIfAny(resolutionFacade) ?: return@forEachDescendantOfType
                         substitutors[descriptor] =
-                          SuperTypesSubstitutor.createFromKtClass(expression, resolutionFacade) ?: return@forEachDescendantOfType
+                            SuperTypesSubstitutor.createFromKtClass(expression, resolutionFacade) ?: return@forEachDescendantOfType
                         for (typeParameter in expression.typeParameters) {
                             val typeVariable = typeParameter.resolveToDescriptorIfAny(resolutionFacade)
                                 ?.safeAs<TypeParameterDescriptor>()
@@ -156,20 +156,24 @@ abstract class ContextCollector(private val resolutionFacade: ResolutionFacade) 
                             declarationToTypeVariable[typeParameter] = typeVariable
                         }
                     }
+
                     is KtCallExpression ->
                         for (typeArgument in expression.typeArguments) {
                             typeArgument.typeReference?.toBoundType(TypeArgument)
                         }
+
                     is KtLambdaExpression -> {
                         val context = expression.analyze(resolutionFacade)
                         val returnType = expression.getType(context)?.arguments?.lastOrNull()?.type ?: return@forEachDescendantOfType
                         val typeVariable = returnType.toBoundType().typeVariable ?: return@forEachDescendantOfType
                         declarationToTypeVariable[expression.functionLiteral] = typeVariable
                     }
+
                     is KtBinaryExpressionWithTypeRHS -> {
                         isOrAsExpression(expression.right ?: return@forEachDescendantOfType)
 
                     }
+
                     is KtIsExpression -> {
                         isOrAsExpression(expression.typeReference ?: return@forEachDescendantOfType)
                     }

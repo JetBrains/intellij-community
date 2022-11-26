@@ -435,7 +435,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       }
       else {
         Path file = Paths.get(p.getFileName());
-        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding(), false);
+        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding());
         showNotification(message("message.patch.created"));
         RevealFileAction.openFile(file);
       }
@@ -473,6 +473,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
 
     protected abstract void doPerform(T model);
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {

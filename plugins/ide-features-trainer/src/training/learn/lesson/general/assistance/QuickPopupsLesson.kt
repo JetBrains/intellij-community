@@ -52,8 +52,6 @@ class QuickPopupsLesson(private val sample: LessonSample) :
     return activeDocComponent == null || !activeDocComponent.isShowing
   }
 
-  override val suitableTips = listOf("CtrlShiftIForLookup", "CtrlShiftI", "QuickJavaDoc")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("quick.popups.help.link"),
          LessonUtil.getHelpLink("using-code-editor.html#quick_popups")),
