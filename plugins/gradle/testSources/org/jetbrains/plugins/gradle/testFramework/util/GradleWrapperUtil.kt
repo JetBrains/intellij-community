@@ -3,10 +3,9 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.generator.AssetsProcessor
-import com.intellij.openapi.vfs.createFile
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
-import com.intellij.openapi.externalSystem.util.text
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.file.VirtualFileUtil
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.gradle.wrapper.WrapperExecutor.*
@@ -20,8 +19,10 @@ fun generateWrapper(root: VirtualFile, gradleVersion: GradleVersion) {
 
 fun generateWrapper(root: VirtualFile, configuration: WrapperConfiguration) {
   runWriteActionAndWait {
-    val wrapperProperties = root.createFile(StandardAssetsProvider().gradleWrapperPropertiesLocation)
-    wrapperProperties.text = getWrapperPropertiesContent(configuration)
+    val propertiesLocation = StandardAssetsProvider().gradleWrapperPropertiesLocation
+    val propertiesFile = VirtualFileUtil.createFile(root, propertiesLocation)
+    val propertiesContent = getWrapperPropertiesContent(configuration)
+    VirtualFileUtil.setTextContent(propertiesFile, propertiesContent)
     val assets = StandardAssetsProvider().getGradlewAssets()
     AssetsProcessor.generateSources(root, assets, emptyMap())
   }

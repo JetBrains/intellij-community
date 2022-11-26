@@ -5,6 +5,7 @@ import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.GeneratorContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.*
+import com.intellij.openapi.file.VirtualFileUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
@@ -32,14 +33,14 @@ object AssetsProcessor {
   private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorTemplateFile, properties: Map<String, Any>): VirtualFile {
     val content = asset.getTextContent(properties)
     val file = findOrCreateFile(outputDirectory, asset.targetFileName)
-    file.setTextContent(content)
+    VirtualFileUtil.setTextContent(file, content)
     return file
   }
 
   private fun generateSources(outputDirectory: VirtualFile, asset: GeneratorResourceFile): VirtualFile {
     val content = asset.getBinaryContent()
     val file = findOrCreateFile(outputDirectory, asset.targetFileName)
-    file.setBinaryContent(content)
+    VirtualFileUtil.setBinaryContent(file, content)
     return file
   }
 
@@ -69,12 +70,12 @@ object AssetsProcessor {
 
   private fun findOrCreateFile(outputDirectory: VirtualFile, relativePath: String): VirtualFile {
     logger<AssetsProcessor>().info("Creating file $relativePath in ${outputDirectory.path}")
-    return outputDirectory.findOrCreateFile(relativePath)
+    return VirtualFileUtil.findOrCreateFile(outputDirectory, relativePath)
   }
 
   private fun findOrCreateDirectory(outputDirectory: VirtualFile, relativePath: String): VirtualFile {
     logger<AssetsProcessor>().info("Creating directory $relativePath in ${outputDirectory.path}")
-    return outputDirectory.findOrCreateDirectory(relativePath)
+    return VirtualFileUtil.findOrCreateDirectory(outputDirectory, relativePath)
   }
 
   private class TemplateProcessingException(t: Throwable) : IOException("Unable to process template", t)

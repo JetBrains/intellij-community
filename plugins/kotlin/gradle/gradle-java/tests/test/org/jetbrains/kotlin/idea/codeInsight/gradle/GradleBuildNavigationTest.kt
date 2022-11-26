@@ -2,9 +2,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.externalSystem.util.runReadAction
-import com.intellij.psi.PsiManager
+import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.testFramework.findReferenceByText
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
@@ -25,9 +24,9 @@ class GradleBuildNavigationTest: GradleCodeInsightTestCase() {
                 |    jvm()
                 |}""".trimMargin())
         }) {
-            val file = projectRoot.findOrCreateFile("build.gradle")
+            val file = VirtualFileUtil.findOrCreateFile(projectRoot, "build.gradle")
             runReadAction {
-                val buildGradle = PsiManager.getInstance(project).findFile(file) ?: error("unable to find psi file for $file")
+                val buildGradle = VirtualFileUtil.getPsiFile(project, file)
                 val jvmElement = buildGradle.findReferenceByText("jvm").element
                 val documentationProvider = DocumentationManager.getProviderFromElement(jvmElement)
                 val doc = documentationProvider.generateDoc(jvmElement, jvmElement)

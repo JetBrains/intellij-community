@@ -15,9 +15,8 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.openapi.fileSystem.LocalFileSystemUtil
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
@@ -60,7 +59,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
       val generatedFiles = invokeAndWaitIfNeeded {
         runWriteAction {
-          val outputDirectory = LocalFileSystem.getInstance().findOrCreateDirectory(outputDirectory)
+          val outputDirectory = LocalFileSystemUtil.findOrCreateDirectory(outputDirectory)
           AssetsProcessor.generateSources(outputDirectory, assets, templateProperties)
         }
       }

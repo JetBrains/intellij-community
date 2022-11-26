@@ -1,27 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.getTextContent
-import com.intellij.openapi.vfs.reloadFromDisk
-import com.intellij.openapi.vfs.setTextContent
+import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.testFramework.runInEdtAndGet as runInEdtAndGetImpl
 import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitImpl
 import com.intellij.util.ui.UIUtil
 
-var VirtualFile.text: String
-  get() = runReadAction {
-    getTextContent()
-  }
-  set(text) {
-    runWriteActionAndWait {
-      reloadFromDisk()
-      setTextContent(text)
-    }
-  }
+val VirtualFile.textContent: String
+  get() = VirtualFileUtil.getTextContent(this)
+
+val VirtualFile.binaryContent: ByteArray
+  get() = VirtualFileUtil.getBinaryContent(this)
 
 fun VirtualFile.refreshAndWait() {
   runWriteActionAndWait {
