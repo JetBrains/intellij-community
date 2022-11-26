@@ -3787,10 +3787,10 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/convertToNonIndexedFunctionCall")
-    public abstract static class ConvertToNonIndexedFunctionCall extends AbstractQuickFixTest {
+    public abstract static class ConvertToNonIndexedFunctionCall extends AbstractK1QuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/convertToNonIndexedFunctionCall/basic")
-        public static class Basic extends AbstractQuickFixTest {
+        public static class Basic extends AbstractK1QuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3888,7 +3888,7 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/convertToNonIndexedFunctionCall")
-        public static class Uncategorized extends AbstractQuickFixTest {
+        public static class Uncategorized extends AbstractK1QuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
