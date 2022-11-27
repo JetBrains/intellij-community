@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,6 @@ public final class ActionGroupUtil {
    */
   public static @NotNull JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
                                                                          @NotNull AnActionEvent e) {
-    Utils.initUpdateSession(e); //todo remove me
     UpdateSession session = e.getUpdateSession();
     return JBIterable.from(session.expandedChildren(actionGroup))
       .filter(o -> !(o instanceof Separator) && session.presentation(o).isEnabledAndVisible());
@@ -40,7 +38,6 @@ public final class ActionGroupUtil {
    */
   public static @NotNull JBIterable<? extends AnAction> getVisibleActions(@NotNull ActionGroup actionGroup,
                                                                           @NotNull AnActionEvent e) {
-    Utils.initUpdateSession(e); //todo remove me
     UpdateSession session = e.getUpdateSession();
     return JBIterable.from(session.expandedChildren(actionGroup))
       .filter(o -> !(o instanceof Separator) && session.presentation(o).isVisible());
