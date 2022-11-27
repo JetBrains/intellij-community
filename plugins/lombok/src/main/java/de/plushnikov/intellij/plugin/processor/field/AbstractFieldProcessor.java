@@ -104,8 +104,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
                                         @NotNull ProblemSink problemSink,
                                         @NotNull String parameterName) {
     if(problemSink.deepValidation()) {
-      final @NotNull List<PsiAnnotation> copyableAnnotations =
-        LombokCopyableAnnotations.collectCopyableAnnotations(psiField, LombokCopyableAnnotations.BASE_COPYABLE);
+      final @NotNull List<PsiAnnotation> copyableAnnotations = LombokCopyableAnnotations.BASE_COPYABLE.collectCopyableAnnotations(psiField);
 
       if (!copyableAnnotations.isEmpty()) {
         final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
