@@ -16,7 +16,7 @@ import com.intellij.ui.ClickListener
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.HorizontalBox
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
@@ -28,7 +28,6 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
@@ -39,7 +38,10 @@ import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.awt.Cursor
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 object GHPRReviewThreadComponent {
 
@@ -98,7 +100,8 @@ object GHPRReviewThreadComponent {
         add(commentsListPanel)
         add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
       }
-    } else {
+    }
+    else {
       commentsListPanel
     }
 
@@ -188,42 +191,15 @@ object GHPRReviewThreadComponent {
       }
     }
 
-    val toggleReplyLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.reply"), null) { _, _ ->
-      toggleModel.value = true
-    }.apply {
-      isFocusable = true
-    }
-
-    val resolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.resolve"), null).apply {
-      isFocusable = true
-    }.also {
-      it.setListener({ _, _ ->
-                       it.isEnabled = false
-                       reviewDataProvider.resolveThread(EmptyProgressIndicator(), thread.id).handleOnEdt { _, _ ->
-                         it.isEnabled = true
-                       }
-                     }, null)
-    }
-
-    val unresolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.unresolve"), null).apply {
-      isFocusable = true
-    }.also {
-      it.setListener({ _, _ ->
-                       it.isEnabled = false
-                       reviewDataProvider.unresolveThread(EmptyProgressIndicator(), thread.id).handleOnEdt { _, _ ->
-                         it.isEnabled = true
-                       }
-                     }, null)
-    }
-
     val content = ToggleableContainer.create(
       toggleModel,
-      { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
       {
-        GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
-                                                         GithubBundle.message(
-                                                           "pull.request.review.thread.reply"),
-                                                         onCancel = { toggleModel.value = false })
+        createCollapsedThreadActionsComponent(reviewDataProvider, thread) {
+          toggleModel.value = true
+        }
+      },
+      {
+        createUncollapsedThreadActionsComponent(textFieldModel, avatarIconsProvider, currentUser, toggleModel)
       }
     )
     return JPanel().apply {
@@ -233,25 +209,56 @@ object GHPRReviewThreadComponent {
     }
   }
 
-  private fun createThreadActionsComponent(model: GHPRReviewThreadModel,
-                                           toggleReplyLink: LinkLabel<Any>,
-                                           resolveLink: LinkLabel<Any>,
-                                           unresolveLink: LinkLabel<Any>): JComponent {
-    fun update() {
-      resolveLink.isVisible = model.state != GHPullRequestReviewCommentState.PENDING && !model.isResolved
-      unresolveLink.isVisible = model.state != GHPullRequestReviewCommentState.PENDING && model.isResolved
+  private fun createCollapsedThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
+                                                    thread: GHPRReviewThreadModel,
+                                                    onReply: () -> Unit): JComponent {
+
+    val toggleReplyLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.reply"), null) { _, _ ->
+      onReply()
+    }.apply {
+      isFocusable = true
     }
 
-    model.addAndInvokeStateChangeListener(::update)
 
-    return HorizontalBox().apply {
+    val unResolveLink = LinkLabel<Any>("", null).apply {
+      isFocusable = true
+      setListener({ comp, _ ->
+                    comp.isEnabled = false
+                    if (thread.isResolved) {
+                      reviewDataProvider.unresolveThread(EmptyProgressIndicator(), thread.id)
+                    }
+                    else {
+                      reviewDataProvider.resolveThread(EmptyProgressIndicator(), thread.id)
+                    }.handleOnEdt { _, _ ->
+                      comp.isEnabled = true
+                    }
+                  }, null)
+    }
+
+    thread.addAndInvokeStateChangeListener {
+      unResolveLink.text = if (thread.isResolved) {
+        GithubBundle.message("pull.request.review.thread.unresolve")
+      }
+      else {
+        GithubBundle.message("pull.request.review.thread.resolve")
+      }
+    }
+
+    return JPanel(HorizontalLayout(8)).apply {
       isOpaque = false
       border = JBUI.Borders.empty(6, GHPRReviewCommentComponent.AVATAR_SIZE + GHPRReviewCommentComponent.AVATAR_GAP, 6, 0)
 
       add(toggleReplyLink)
-      add(Box.createHorizontalStrut(JBUIScale.scale(8)))
-      add(resolveLink)
-      add(unresolveLink)
+      add(unResolveLink)
     }
+  }
+
+  private fun createUncollapsedThreadActionsComponent(textFieldModel: GHCommentTextFieldModel,
+                                                      avatarIconsProvider: GHAvatarIconsProvider,
+                                                      currentUser: GHUser,
+                                                      toggleModel: SingleValueModel<Boolean>): JComponent {
+    return GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
+                                                            GithubBundle.message("pull.request.review.thread.reply"),
+                                                            onCancel = { toggleModel.value = false })
   }
 }
