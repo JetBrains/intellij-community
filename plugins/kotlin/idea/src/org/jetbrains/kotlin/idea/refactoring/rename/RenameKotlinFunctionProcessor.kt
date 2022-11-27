@@ -189,11 +189,21 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                     KotlinTypeMapper.InternalNameMapper.getModuleNameSuffix(baseName)!!
                 )
             } else newName
-            if (psiMethod.containingClass != null) {
-                psiMethod.forEachOverridingMethod(scope) {
-                    val overrider = (it as? PsiMirrorElement)?.prototype as? PsiMethod ?: it
 
-                    if (overrider is SyntheticElement) return@forEachOverridingMethod true
+            if (psiMethod.containingClass != null) {
+                val overriders = runProcessWithProgressSynchronously(
+                    KotlinBundle.message("rename.searching.for.all.overrides"),
+                    canBeCancelled = true,
+                    psiMethod.project
+                ) {
+                    findAllOverridingMethods(psiMethod, scope)
+                }
+
+                for (originalOverrider in overriders) {
+                    // for possible Groovy wrappers
+                    val overrider = (originalOverrider as? PsiMirrorElement)?.prototype as? PsiMethod ?: originalOverrider
+
+                    if (overrider is SyntheticElement) continue
 
                     val overriderName = overrider.name
                     val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
@@ -201,11 +211,20 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                         RenameUtil.assertNonCompileElement(overrider)
                         allRenames[overrider] = newOverriderName
                     }
-                    return@forEachOverridingMethod true
                 }
             }
         }
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
+    }
+
+    /**
+     * A utility method to use [forEachOverridingMethod] without a callback.
+     */
+    private fun findAllOverridingMethods(psiMethod: PsiMethod, scope: SearchScope): List<PsiMethod> = buildList {
+        psiMethod.forEachOverridingMethod(scope) {
+            add(it)
+            true
+        }
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {

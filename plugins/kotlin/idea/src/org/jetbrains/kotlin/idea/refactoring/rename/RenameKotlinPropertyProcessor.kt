@@ -25,14 +25,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.isEnumCompanionPropertyWithEntryConflict
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.checkSuperMethodsWithPopup
@@ -358,19 +355,25 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     }
 
     private fun addRenameElements(
-        psiMethod: PsiMethod?,
+        psiMethod: PsiMethod,
         oldName: String?,
         newName: String?,
         allRenames: MutableMap<PsiElement, String>,
         scope: SearchScope
     ) {
-        if (psiMethod == null) return
+        val allOverriders = runProcessWithProgressSynchronously(
+            KotlinBundle.message("rename.searching.for.all.overrides"),
+            canBeCancelled = true,
+            psiMethod.project,
+        ) {
+            OverridingMethodsSearch.search(psiMethod, scope, true).findAll()
+        }
 
-        OverridingMethodsSearch.search(psiMethod, scope, true).forEach { overrider ->
+        for (overrider in allOverriders) {
             val overriderElement = overrider.namedUnwrappedElement
 
             if (overriderElement != null && overriderElement !is SyntheticElement) {
-              RenameUtil.assertNonCompileElement(overriderElement)
+                RenameUtil.assertNonCompileElement(overriderElement)
 
                 val overriderName = overriderElement.name
 

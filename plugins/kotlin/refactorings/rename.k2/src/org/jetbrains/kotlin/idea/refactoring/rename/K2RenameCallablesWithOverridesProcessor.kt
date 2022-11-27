@@ -3,11 +3,6 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
@@ -80,7 +75,7 @@ internal class K2RenameCallablesWithOverridesProcessor : RenamePsiElementProcess
 
     private fun collectAllOverrides(element: KtCallableDeclaration): Set<PsiElement> =
         runProcessWithProgressSynchronously(
-            KotlinK2RefactoringsBundle.message("rename.searching.for.all.overrides"),
+            KotlinBundle.message("rename.searching.for.all.overrides"),
             canBeCancelled = true,
             element.project
         ) {
@@ -131,19 +126,3 @@ internal class K2RenameCallablesWithOverridesProcessor : RenamePsiElementProcess
         }
     }
 }
-
-
-/**
- * A utility function to call [ProgressManager.runProcessWithProgressSynchronously] more conveniently.
- */
-private inline fun <T> runProcessWithProgressSynchronously(
-    @NlsSafe @NlsContexts.DialogTitle progressTitle: String,
-    canBeCancelled: Boolean,
-    project: Project,
-    crossinline action: () -> T
-): T = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-    ThrowableComputable { action() },
-    progressTitle,
-    canBeCancelled,
-    project
-)
