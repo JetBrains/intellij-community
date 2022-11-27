@@ -291,7 +291,7 @@ public class DataManagerImpl extends DataManager {
   @Override
   public @NotNull DataContext getDataContext() {
     Component component = null;
-    if (Registry.is("actionSystem.getContextByRecentMouseEvent")) {
+    if (Registry.is("actionSystem.getContextByRecentMouseEvent", false)) {
       component = IdeUiService.getInstance().getComponentFromRecentMouseEvent();
     }
     return getDataContext(component != null ? component : getFocusedComponent());

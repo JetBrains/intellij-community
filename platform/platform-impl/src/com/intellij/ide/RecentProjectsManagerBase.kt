@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.*
 import com.intellij.openapi.util.ModificationTracker
@@ -731,7 +732,8 @@ int32 "extendedState"
         return
       }
 
-      val openProjects = ProjectManagerEx.getOpenProjects()
+      val projectManager = ProjectManager.getInstanceIfCreated() ?: return
+      val openProjects = projectManager.openProjects
       // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
       if (openProjects.isEmpty()) {
         if (!isUseProjectFrameAsSplash()) {
