@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.RecordAugmentProvider;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -182,7 +183,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   protected static Collection<PsiField> getAllNotInitializedAndNotStaticFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> allNotInitializedNotStaticFields = new ArrayList<>();
     final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE);
-    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+    Collection<PsiField> fields = psiClass.isRecord() ? RecordAugmentProvider.getFieldAugments(psiClass)
+                                                      : PsiClassUtil.collectClassFieldsIntern(psiClass);
+    for (PsiField psiField : fields) {
       // skip fields named $
       boolean addField = !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
 
