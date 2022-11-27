@@ -186,14 +186,18 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             is PsiMethod -> element.findDeepestSuperMethods().toList()
             is KtCallableDeclaration -> analyze(element) {
                 val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
-                symbol.getAllOverriddenSymbols()
-                    .filter {
-                        when (it) {
-                            is KtFunctionSymbol -> it.isOverride
-                            is KtPropertySymbol -> it.isOverride
-                            else -> false
-                        }
-                    }.mapNotNull { it.psi }
+
+                val allSuperMethods = symbol.getAllOverriddenSymbols()
+                val deepestSuperMethods = allSuperMethods.filter {
+                    when (it) {
+                        is KtFunctionSymbol -> !it.isOverride
+                        is KtPropertySymbol -> !it.isOverride
+                        else -> false
+                    }
+                }
+
+                // FIXME remove .distinct() when getAllOverriddenSymbols stops returning duplicating symbols
+                deepestSuperMethods.mapNotNull { it.psi }.distinct()
             }
             else -> emptyList()
         }
