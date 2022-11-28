@@ -834,10 +834,6 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     return originalList
 }
 
-fun <T> Pass(body: (T) -> Unit) = object : Pass<T>() {
-    override fun pass(t: T) = body(t)
-}
-
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
     val parent = parent as? KtBlockStringTemplateEntry ?: return this
     return parent.dropCurlyBracketsIfPossible().expression!!

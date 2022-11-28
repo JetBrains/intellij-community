@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -611,23 +611,31 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       return;
     }
     var groovyFile = (GroovyFile)file;
-    processDocComments(PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocComment.class), sink);
+    List<GrDocCommentOwner> owners = PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocCommentOwner.class);
+    List<GrDocComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocComment.class);
+    processDocComments(owners, comments, sink);
   }
 
-  private static void processDocComments(@NotNull List<GrDocComment> comments,
+  private static void processDocComments(@NotNull List<GrDocCommentOwner> owners,
+                                         @NonNls List<GrDocComment> danglingDocComments,
                                          @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
-    for (var comment : comments) {
-      if (comment == null) {
-        continue;
+    for (var docComment : danglingDocComments) {
+      if (docComment != null) {
+        sink.accept(docComment);
       }
-      GrDocCommentOwner owner = comment.getOwner();
+    }
+    for (var owner : owners) {
       if (owner == null) {
         continue;
       }
-      sink.accept(comment);
+      GrDocComment comment = owner.getDocComment();
+      if (comment != null) {
+        sink.accept(comment);
+      }
       if (owner instanceof GrTypeDefinition) {
         var nestedComments = PsiTreeUtil.getChildrenOfTypeAsList(((GrTypeDefinition)owner).getBody(), GrDocComment.class);
-        processDocComments(nestedComments, sink);
+        var nestedOwners = PsiTreeUtil.getChildrenOfTypeAsList(((GrTypeDefinition)owner).getBody(), GrDocCommentOwner.class);
+        processDocComments(nestedOwners, nestedComments, sink);
       }
     }
   }

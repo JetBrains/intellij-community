@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.Activity;
@@ -14,14 +14,12 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -32,23 +30,12 @@ import java.nio.file.*;
 import java.security.MessageDigest;
 import java.security.Security;
 import java.util.Base64;
-import java.util.Objects;
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
  * the tag attributes in ApplicationInfo.xsd file.
  */
 public final class Splash extends Dialog {
-  private static final float JBUI_INIT_SCALE = JBUIScale.scale(1f);
-
-  private final int myWidth;
-  private final int myHeight;
-  private final int progressHeight;
-  private final int progressY;
-  private double progress;
-  private final Color progressColor;
-  private int progressLastPosition = 0;
-  private final Icon progressTail;
   private final @Nullable ProgressSlidePainter progressSlidePainter;
   private final Image image;
 
@@ -58,37 +45,15 @@ public final class Splash extends Dialog {
     setResizable(false); // makes tiling window managers on Linux show window as floating
 
     progressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info);
-    progressHeight = uiScale(info.getProgressHeight());
-    progressY = uiScale(info.getProgressY());
-    progressTail = getProgressTailIcon(info);
 
     setFocusableWindowState(false);
 
     image = loadImage(info.getSplashImageUrl(), info);
-    myWidth = image.getWidth(null);
-    myHeight = image.getHeight(null);
-    long rgba = info.getProgressColor();
-    //noinspection UseJBColor
-    progressColor = rgba == -1 ? null : new Color((int)rgba, rgba > 0xffffff);
+    int width = image.getWidth(null);
+    int height = image.getHeight(null);
 
-    setSize(new Dimension(myWidth, myHeight));
+    setSize(new Dimension(width, height));
     setLocationInTheCenterOfScreen(this);
-  }
-
-  private static @Nullable Icon getProgressTailIcon(@NotNull ApplicationInfoEx info) {
-    String progressTailIconName = info.getProgressTailIcon();
-    if (progressTailIconName == null) {
-      return null;
-    }
-
-    try {
-      String path = Objects.requireNonNull(Splash.class.getResource(progressTailIconName)).toString();
-      Image image = doLoadImage(path);
-      return image == null ? null : new JBImageIcon(image);
-    }
-    catch (Exception ignore) {
-      return null;
-    }
   }
 
   public void initAndShow(boolean visible) {
@@ -124,12 +89,13 @@ public final class Splash extends Dialog {
   }
 
   private static void cacheAsync(@NotNull String url, @NotNull ApplicationInfoEx appInfo) {
-    // Don't use already loaded image to avoid oom
+    // don't use already loaded image to avoid oom
     NonUrgentExecutor.getInstance().execute(() -> {
       var cacheFile = getCacheFile(url, JBUIScale.sysScale(), appInfo);
       if (cacheFile == null) {
         return;
       }
+
       var image = doLoadImage(url);
       if (image != null) {
         saveImage(cacheFile, FileUtilRt.getExtension(url), image);
@@ -147,7 +113,7 @@ public final class Splash extends Dialog {
 
   @Override
   public void paint(Graphics g) {
-    if (progress < 0.10 || progressSlidePainter == null) {
+    if (progressSlidePainter == null) {
       StartupUiUtil.drawImage(g, image, 0, 0, null);
     }
     else {
@@ -164,54 +130,14 @@ public final class Splash extends Dialog {
     window.setLocation(StartupUiUtil.getCenterPoint(bounds, window.getSize()));
   }
 
-  public void showProgress(double progress) {
-    if (progressColor == null) {
-      return;
-    }
-
-    if ((progress - this.progress) > 0.01 || progress > 0.99) {
-      this.progress = progress;
-      Graphics graphics = getGraphics();
-      // not yet initialized
-      if (graphics != null) {
-        paintProgress(graphics);
-      }
-    }
-  }
-
   private void paintProgress(@Nullable Graphics g) {
     if (g == null) {
       return;
     }
 
     if (progressSlidePainter != null) {
-      progressSlidePainter.paintSlides(g, progress);
+      progressSlidePainter.paintSlides(g, 0.0);
     }
-
-    Color progressColor = this.progressColor;
-    if (progressColor == null) {
-      return;
-    }
-
-    int progressWidth = (int)(myWidth * progress);
-    int currentWidth = progressWidth - progressLastPosition;
-    if (currentWidth == 0) {
-      return;
-    }
-
-    g.setColor(progressColor);
-    int y = progressSlidePainter == null ? progressY : myHeight - progressHeight;
-    g.fillRect(progressLastPosition, y, currentWidth, progressHeight);
-    if (progressTail != null) {
-      int tx = (int)(currentWidth - (progressTail.getIconWidth() / JBUI_INIT_SCALE / 2f * JBUI_INIT_SCALE));
-      int ty = (int)(progressY - (progressTail.getIconHeight() - progressHeight) / JBUI_INIT_SCALE / 2f * JBUI_INIT_SCALE);
-      progressTail.paintIcon(this, g, tx, ty);
-    }
-    progressLastPosition = progressWidth;
-  }
-
-  private static int uiScale(int i) {
-    return (int)(i * JBUI_INIT_SCALE);
   }
 
    private static void saveImage(@NotNull Path file, String extension, @NotNull Image image) {

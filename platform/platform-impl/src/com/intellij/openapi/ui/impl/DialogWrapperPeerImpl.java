@@ -87,7 +87,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     Window window = null;
     if (windowManager != null) {
-      if (project == null) {
+      if (project == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
         //noinspection deprecation
         project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       }
@@ -104,7 +104,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (window == null) {
         for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
           IdeFrameImpl frame = frameHelper.getFrame();
-          if (frame != null && frame.isActive()) {
+          if (frame.isActive()) {
             window = frameHelper.getFrame();
             break;
           }
@@ -198,6 +198,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     return myDialog instanceof HeadlessDialog;
   }
 
+  @Override
   public void setOnDeactivationAction(@NotNull Disposable disposable, @NotNull Runnable onDialogDeactivated) {
     WindowDeactivationManager.getInstance().addWindowDeactivationListener(getWindow(), myProject, disposable, onDialogDeactivated);
   }
@@ -385,10 +386,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @Override
   public CompletableFuture<?> show() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
-    final CompletableFuture<Void> result = new CompletableFuture<Void>();
+    CompletableFuture<Void> result = new CompletableFuture<>();
 
-    final AnCancelAction anCancelAction = new AnCancelAction();
-    final JRootPane rootPane = getRootPane();
+    AnCancelAction anCancelAction = new AnCancelAction();
+    JRootPane rootPane = getRootPane();
     UIUtil.decorateWindowHeader(rootPane);
 
     Window window = getWindow();
@@ -525,7 +526,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return true;
     }
 
-    private boolean isEditingTreeOrTable(Component comp) {
+    private static boolean isEditingTreeOrTable(Component comp) {
       if (comp instanceof JTree) {
         return ((JTree)comp).isEditing();
       }

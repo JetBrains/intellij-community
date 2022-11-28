@@ -62,11 +62,17 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
   runBlocking(rootTask()) {
-    doInitApplication(rawArgs, appDeferred)
+    val euaDocumentDeferred = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("eua document") + Dispatchers.IO) { loadEuaDocument() }
+    }
+    doInitApplication(rawArgs, appDeferred, euaDocumentDeferred)
   }
 }
 
-private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>, euaDocumentDeferred: Deferred<Any?>?) {
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
@@ -77,33 +83,36 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
     appDeferred.await() as Pair<ApplicationImpl, Job?>
   }
 
-  initAppActivity.runChild("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(),
-                           app = app,
-                           precomputedExtensionModel = null,
-                           listenerCallbacks = null)
-  }
+  val loadIconMapping: Job? = coroutineScope {
+    initAppActivity.runChild("app component registration") {
+      app.registerComponents(modules = pluginSet.getEnabledModules(),
+                             app = app,
+                             precomputedExtensionModel = null,
+                             listenerCallbacks = null)
+    }
 
-
-  withContext(Dispatchers.IO) {
-    initConfigurationStore(app)
-  }
-
-  val loadIconMapping: Job = if (app.isHeadlessEnvironment) {
-    CompletableDeferred(value = Unit)
-  }
-  else {
-    app.coroutineScope.launchAndMeasure("icon mapping loading", Dispatchers.IO) {
-      try {
-        service<IconMapLoader>().preloadIconMapping()
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
+    val loadIconMapping = if (app.isHeadlessEnvironment) {
+      null
+    }
+    else {
+      app.coroutineScope.launchAndMeasure("icon mapping loading") {
+        try {
+          service<IconMapLoader>().preloadIconMapping()
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
       }
     }
+
+    withContext(Dispatchers.IO) {
+      initConfigurationStore(app)
+    }
+
+    loadIconMapping
   }
 
   coroutineScope {
@@ -113,11 +122,12 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
       initLafJob?.join()
     }
 
+    euaDocumentDeferred?.let { showEuaIfNeeded(it, asyncScope = this) }
+
     // executed in main thread
     launch {
-      loadIconMapping.join()
+      loadIconMapping?.join()
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
-        // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
       }
       if (!app.isHeadlessEnvironment) {

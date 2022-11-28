@@ -342,6 +342,9 @@ public final class Utils {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw new ProcessCanceledException();
     }
+    if (Thread.holdsLock(component.getTreeLock())) {
+      throw new ProcessCanceledException();
+    }
     List<AnAction> result = null;
     Span span = getTracer(false).spanBuilder("fillMenu").setAttribute("place", place).startSpan();
     long start = System.nanoTime();
