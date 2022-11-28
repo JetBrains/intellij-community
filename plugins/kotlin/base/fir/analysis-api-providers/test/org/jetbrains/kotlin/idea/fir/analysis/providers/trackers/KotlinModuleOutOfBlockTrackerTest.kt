@@ -85,7 +85,9 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
                                     "}", ktFile.text)
     }
 
-    fun testThatDeleteWhitespaceOutsideOfFunctionDoesNotLeadToOutOfBlockChange() {
+    //1. outside function
+    //2. in function identifier
+    fun testWhitespace() {
         val moduleA = createModuleInTmpDir("a") {
             listOf(
                 FileWithText(
@@ -103,7 +105,8 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
         val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
         configureByExistingFile(virtualFile)
         val singleFunction = (ktFile.declarations[0] as KtClass).declarations.single()
-        editor.caretModel.moveToOffset(singleFunction.textRange.startOffset)
+        val startOffset = singleFunction.textRange.startOffset
+        editor.caretModel.moveToOffset(startOffset)
         backspace()
         PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
 
@@ -113,6 +116,17 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
         )
         Assert.assertEquals("class Main {   fun main() {}\n" +
                                     "}", ktFile.text)
+
+        editor.caretModel.moveToOffset(startOffset + "fun ".length)
+        type(" ")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+        Assert.assertTrue(
+            "Out of block modification count for module A should change after adding space in identifier, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("class Main {   fun m ain() {}\n" +
+                                    "}", ktFile.text)
+
     }
     
     fun testThatAddModifierDoesLeadToOutOfBlockChange() {
