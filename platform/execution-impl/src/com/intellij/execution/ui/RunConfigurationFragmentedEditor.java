@@ -197,7 +197,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
         String text = fragment.getName().replace("\u001B", "");
         new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
           withHeader(ExecutionBundle.message("gotIt.popup.title")).
-          show(component, (c, b) -> new Point(GotItComponentBuilder.ARROW_SHIFT, c.getHeight()));
+          show(component, (c, b) -> new Point(GotItComponentBuilder.getArrowShift(), c.getHeight()));
       }
     }
   }

@@ -185,7 +185,8 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Limit tooltip body width to the given value. By default, it's limited to [GotItComponentBuilder.MAX_WIDTH] pixels.
+   * Limit tooltip text width to the given value. By default, it's limited to [GotItComponentBuilder.MAX_WIDTH] pixels.
+   * Note, that this limitation will not be taken into account if there is an image [withImage].
    */
   fun withMaxWidth(width: Int): GotItTooltip {
     gotItBuilder.withMaxWidth(width)

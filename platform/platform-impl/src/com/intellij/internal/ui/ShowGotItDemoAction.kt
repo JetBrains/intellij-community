@@ -22,6 +22,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import java.net.URL
@@ -55,8 +56,8 @@ class ShowGotItDemoAction : DumbAwareAction() {
     private var addInlineLinks: Boolean = true
 
     private var showImage: Boolean = true
-    private var imageWidth: Int = 248
-    private var imageHeight: Int = 132
+    private var imageWidth: Int = JBUI.scale(248)
+    private var imageHeight: Int = JBUI.scale(132)
 
     private var showIconOrStep: Boolean = true
     private var showIcon: Boolean = true
@@ -103,11 +104,11 @@ class ShowGotItDemoAction : DumbAwareAction() {
       }
       row {
         val checkbox = checkBox(CheckboxDescriptor("Image", this@GotItConfigurationDialog::showImage))
-        intTextField(IntRange(100, 500))
+        intTextField(IntRange(JBUI.scale(100), JBUI.scale(500)))
           .label("Width:")
           .bindIntText(this@GotItConfigurationDialog::imageWidth)
           .enabledIf(checkbox.selected)
-        intTextField(IntRange(50, 300))
+        intTextField(IntRange(JBUI.scale(50), JBUI.scale(300)))
           .label("Height:")
           .bindIntText(this@GotItConfigurationDialog::imageHeight)
           .enabledIf(checkbox.selected)

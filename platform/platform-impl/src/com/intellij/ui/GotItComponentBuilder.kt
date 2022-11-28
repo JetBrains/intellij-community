@@ -201,7 +201,8 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 
   /**
-   * Limit tooltip body width to the given value. By default, it's limited to `MAX_WIDTH` pixels.
+   * Limit tooltip text width to the given value. By default, it's limited to [MAX_WIDTH] pixels.
+   * Note, that this limitation will not be taken into account if there is an image [withImage].
    */
   fun withMaxWidth(width: Int): GotItComponentBuilder {
     maxWidth = width
@@ -229,7 +230,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
       .setBorderColor(JBUI.CurrentTheme.GotItTooltip.borderColor(useContrastColors))
-      .setCornerToPointerDistance(ARROW_SHIFT)
+      .setCornerToPointerDistance(getArrowShift())
       .setFillColor(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))
       .setPointerSize(JBUI.size(16, 8))
       .setCornerRadius(JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get())
@@ -281,16 +282,19 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
                   .insets(JBUI.CurrentTheme.GotItTooltip.IMAGE_TOP_INSET.get(), 0, JBUI.CurrentTheme.GotItTooltip.IMAGE_BOTTOM_INSET.get(), 0))
     }
 
+    var iconOrStepLabel: JLabel? = null
     icon?.let {
       val adjusted = adjustIcon(it, useContrastColors)
-      panel.add(JLabel(adjusted), gc.nextLine().next().anchor(GridBagConstraints.BASELINE))
+      iconOrStepLabel = JLabel(adjusted)
+      panel.add(iconOrStepLabel!!, gc.nextLine().next().anchor(GridBagConstraints.BASELINE))
     }
 
     stepNumber?.let { step ->
-      val label = JLabel(step.toString().padStart(2, '0'))
-      label.foreground = JBUI.CurrentTheme.GotItTooltip.stepForeground()
-      label.font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
-      panel.add(label, gc.nextLine().next().anchor(GridBagConstraints.BASELINE))
+      iconOrStepLabel = JLabel(step.toString().padStart(2, '0')).apply {
+        foreground = JBUI.CurrentTheme.GotItTooltip.stepForeground()
+        font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
+      }
+      panel.add(iconOrStepLabel!!, gc.nextLine().next().anchor(GridBagConstraints.BASELINE))
     }
 
     if (header.isNotEmpty()) {
@@ -314,7 +318,10 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     }
 
     if (icon == null && stepNumber == null || header.isNotEmpty()) gc.nextLine()
-    val description = LimitedWidthEditorPane(builder, maxWidth, useContrastColors)
+    val textWidth = image?.let { img ->
+      img.iconWidth - (iconOrStepLabel?.let { it.preferredSize.width + left } ?: 0)
+    } ?: maxWidth
+    val description = LimitedWidthEditorPane(builder, textWidth, useContrastColors)
     descriptionConsumer(description)
     panel.add(description,
               gc.setColumn(column).anchor(GridBagConstraints.LINE_START)
@@ -372,13 +379,15 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 
   companion object {
-    @JvmField
-    val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue(
-      "ide.balloon.shadow.size") + JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
-
     internal const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
 
-    private val MAX_WIDTH = JBUIScale.scale(280)
+    private val MAX_WIDTH: Int
+      get() = JBUIScale.scale(280)
+
+    @JvmStatic
+    fun getArrowShift(): Int {
+      return JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
+    }
 
     // returns dark icon if GotIt tooltip background is dark
     internal fun adjustIcon(icon: Icon, useContrastColors: Boolean): Icon {
