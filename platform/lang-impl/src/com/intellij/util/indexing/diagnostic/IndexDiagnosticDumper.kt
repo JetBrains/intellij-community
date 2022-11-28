@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -138,6 +139,26 @@ class IndexDiagnosticDumper : Disposable {
       directory.createDirectories()
       return directory
     }
+
+    private fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>, sizeLimit: Long): Pair<Int, Long> {
+      thisLogger().assertTrue(sizeLimit > 0)
+      var sizeLimitLevel = sizeLimit
+      var number = 0
+      for (diagnostic in existingDiagnostics) {
+        sizeLimitLevel -= max(0, diagnostic.jsonFile.sizeOrNull())
+        sizeLimitLevel -= max(0, diagnostic.htmlFile.sizeOrNull())
+        if (sizeLimitLevel <= 0) {
+          break
+        }
+        number++
+      }
+      return Pair(min(indexingDiagnosticsLimitOfFiles, number), sizeLimitLevel)
+    }
+
+    @TestOnly
+    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>): Int =
+      getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics,
+                                              indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
   }
 
   private var isDisposed = false
@@ -271,16 +292,9 @@ class IndexDiagnosticDumper : Disposable {
       numberLimit = existingDiagnostics.size
     }
     else if (sizeLimit > 0) {
-      var number = 0
-      for (diagnostic in existingDiagnostics) {
-        sizeLimit -= max(0, diagnostic.jsonFile.sizeOrNull())
-        sizeLimit -= max(0, diagnostic.htmlFile.sizeOrNull())
-        if (sizeLimit <= 0) {
-          break
-        }
-        number++
-      }
-      numberLimit = min(indexingDiagnosticsLimitOfFiles, number)
+      val pair = getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics, sizeLimit)
+      numberLimit = pair.first
+      sizeLimit = pair.second
     }
     else {
       numberLimit = indexingDiagnosticsLimitOfFiles
