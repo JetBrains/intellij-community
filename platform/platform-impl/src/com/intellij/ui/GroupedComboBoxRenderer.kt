@@ -112,6 +112,7 @@ abstract class GroupedComboBoxRenderer<T>(private val combo: ComboBox<T>) : Grou
     AccessibleContextUtil.setName(myRendererComponent, coloredComponent)
     AccessibleContextUtil.setDescription(myRendererComponent, coloredComponent)
 
+    list?.let { myRendererComponent.background = it.background }
     updateSelection(isSelected, myComponent, coloredComponent)
 
     if (ExperimentalUI.isNewUI() && myComponent is SelectablePanel) {
