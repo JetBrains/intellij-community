@@ -2,5 +2,6 @@
   "type": "KOTLIN_CLASS",
   "classId": "testing/TopLevel.ClassBefore",
   "newName": "ClassAfter",
-  "mainFile": "ClassBefore.kt"
+  "mainFile": "ClassBefore.kt",
+  "enabledInK2": true
 }
