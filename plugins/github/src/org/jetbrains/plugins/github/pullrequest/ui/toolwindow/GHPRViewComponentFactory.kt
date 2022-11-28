@@ -52,10 +52,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.*
 import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
