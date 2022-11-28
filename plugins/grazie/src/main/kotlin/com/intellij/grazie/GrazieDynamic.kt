@@ -6,7 +6,6 @@ import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.delete
 import com.intellij.util.io.isFile
@@ -17,7 +16,6 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 
 internal object GrazieDynamic : DynamicPluginListener {
@@ -70,7 +68,7 @@ internal object GrazieDynamic : DynamicPluginListener {
 
   val dynamicFolder: Path
     get() {
-      val result = Paths.get(PathManager.getSystemPath(), "grazie")
+      val result = GraziePathProvider.getDynamicFolder()
       Files.createDirectories(result)
       return result
     }
