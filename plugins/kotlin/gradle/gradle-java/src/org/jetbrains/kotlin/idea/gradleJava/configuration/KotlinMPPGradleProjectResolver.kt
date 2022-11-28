@@ -894,7 +894,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 info.isTestModule = sourceSet.isTestComponent
                 info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet).map { dependsOnSourceSet ->
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
-                }
+                }.toSet()
                 info.additionalVisible = sourceSet.additionalVisibleSourceSets.map { additionalVisibleSourceSetName ->
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, additionalVisibleSourceSetName)
                 }.toSet()
@@ -961,7 +961,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 sourceSetInfo.isTestModule = compilation.isTestComponent
                 sourceSetInfo.dependsOn = compilation.declaredSourceSets.flatMap { it.allDependsOnSourceSets }.map {
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
-                }.distinct().toList()
+                }.distinct().toSet()
 
                 sourceSetInfo.additionalVisible = sourceSetInfo.additionalVisible.map {
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
