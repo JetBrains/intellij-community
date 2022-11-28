@@ -729,6 +729,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     public String getPath() {
       return myPath.getPath();
     }
+
+    @Override
+    public String toString() {
+      return "DiffContentFactory " + super.toString();
+    }
   }
 
   private static class MyBinaryLightVirtualFile extends BinaryLightVirtualFile {
@@ -743,6 +748,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @Override
     public String getPath() {
       return myPath.getPath();
+    }
+
+    @Override
+    public String toString() {
+      return "DiffContentFactory " + super.toString();
     }
   }
 
