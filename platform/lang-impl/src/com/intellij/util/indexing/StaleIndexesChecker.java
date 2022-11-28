@@ -9,10 +9,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.ints.IntSets;
+import com.intellij.util.indexing.events.DeletedVirtualFileStub;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -26,6 +24,7 @@ public final class StaleIndexesChecker {
   }
 
   static @NotNull IntSet checkIndexForStaleRecords(@NotNull UpdatableIndex<?, ?, FileContent, ?> index,
+                                                   IntSet knownStaleIds,
                                                    boolean onStartup) throws StorageException {
     if (!ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isEAP()) {
       return IntSets.EMPTY_SET;
@@ -37,6 +36,9 @@ public final class StaleIndexesChecker {
 
     Int2ObjectMap<String> staleFiles = new Int2ObjectOpenHashMap<>();
     for (int freeRecord : onStartup ? FSRecords.getRemainFreeRecords() : FSRecords.getNewFreeRecords()) {
+      if (knownStaleIds.contains(freeRecord)) {
+        continue;
+      }
       Map<?, ?> dataAsMap = index.getIndexedFileData(freeRecord);
       Object data = ContainerUtil.getFirstItem(dataAsMap.values());
       if (data != null) {
@@ -80,9 +82,9 @@ public final class StaleIndexesChecker {
     IS_IN_STALE_IDS_DELETION.set(Boolean.TRUE);
     try {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        for (Integer staleId : staleIds) {
+        staleIds.forEach((staleId) -> {
           clearStaleIndexesForId(staleId);
-        }
+        });
       });
     }
     finally {
@@ -92,19 +94,7 @@ public final class StaleIndexesChecker {
 
   static void clearStaleIndexesForId(int staleInputId) {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    IndexConfiguration state = fileBasedIndex.getRegisteredIndexes().getState();
-    for (ID<?, ?> id : state.getIndexIDs()) {
-      try {
-        UpdatableIndex<?, ?, FileContent, ?> index = state.getIndex(id);
-        if (index != null) {
-          fileBasedIndex.runUpdateForPersistentData(index.mapInputAndPrepareUpdate(staleInputId, null));
-        }
-      }
-      catch (Exception e) {
-        LOG.info(e);
-        fileBasedIndex.requestRebuild(id);
-      }
-    }
+    fileBasedIndex.removeDataFromIndicesForFile(staleInputId, new DeletedVirtualFileStub(staleInputId), "stale indexes removal");
   }
 
   @NotNull

@@ -429,7 +429,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   static <K, V> void registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension,
                                      @NotNull IndexConfiguration state,
                                      @NotNull IndexVersionRegistrationSink versionRegistrationStatusSink,
-                                     @NotNull IntSet staleInputIdSink) throws Exception {
+                                     @NotNull IntSet staleInputIdSink,
+                                     @NotNull IntSet dirtyFiles) throws Exception {
     ID<K, V> name = extension.getName();
     int version = getIndexExtensionVersion(extension);
 
@@ -450,14 +451,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
 
-    initIndexStorage(extension, version, state, versionRegistrationStatusSink, staleInputIdSink);
+    initIndexStorage(extension, version, state, versionRegistrationStatusSink, staleInputIdSink, dirtyFiles);
   }
 
   private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
                                               int version,
                                               @NotNull IndexConfiguration state,
                                               @NotNull IndexVersionRegistrationSink registrationStatusSink,
-                                              @NotNull IntSet staleInputIdSink)
+                                              @NotNull IntSet staleInputIdSink,
+                                              @NotNull IntSet dirtyFiles)
     throws Exception {
     ID<K, V> name = extension.getName();
     Set<FileType> addedTypes;
@@ -555,7 +557,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     try {
       if (StubUpdatingIndex.INDEX_ID.equals(extension.getName()) && index != null) {
-        staleInputIdSink.addAll(StaleIndexesChecker.checkIndexForStaleRecords(index, true));
+        staleInputIdSink.addAll(StaleIndexesChecker.checkIndexForStaleRecords(index, dirtyFiles, true));
       }
     }
     catch (Exception e) {
@@ -608,16 +610,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
+        IntSet dirtyFileIds = new IntOpenHashSet();
+        //TODO mark them as dirty using attributes
         for (VirtualFile file : getChangedFilesCollector().getAllPossibleFilesToUpdate()) {
           PingProgress.interactWithEdtProgress();
           int fileId = getFileId(file);
-          try {
-            removeDataFromIndicesForFile(fileId, file, "shutdown");
-          }
-          catch (Throwable throwable) {
-            LOG.error(throwable);
-          }
+          dirtyFileIds.add(fileId);
         }
+        dirtyFileIds.addAll(myStaleIds);
+        PersistentDirtyFilesQueue.INSTANCE.storeIndexingQueue(dirtyFileIds);
         getChangedFilesCollector().clearFilesToUpdate();
 
         IndexingStamp.flushCaches();
@@ -626,7 +627,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if (myIsUnitTestMode) {
           UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
           if (index != null) {
-            StaleIndexesChecker.checkIndexForStaleRecords(index, false);
+            StaleIndexesChecker.checkIndexForStaleRecords(index, dirtyFileIds, false);
           }
         }
 
@@ -650,7 +651,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if (!keepConnection) {
           myConnection.disconnect();
         }
-
         //CorruptionMarker.markIndexesAsClosed();
       }
       catch (Throwable e) {
@@ -678,7 +678,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       cleanProcessingFlag(file);
     }
     boolean isValid =
-      file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile().isValid() : file.isValid();
+      file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).isOriginalValid() : file.isValid();
     if (!isValid) {
       getIndexableFilesFilterHolder().removeFile(fileId);
     }
@@ -1355,9 +1355,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private boolean isPendingDeletionFileAppearedInIndexableFilter(int fileId, @NotNull VirtualFile file) {
-    if (file instanceof DeletedVirtualFileStub) {
-      VirtualFile originalFile = ((DeletedVirtualFileStub)file).getOriginalFile();
-      if (originalFile.isValid() && ensureFileBelongsToIndexableFilter(fileId, originalFile) != FileAddStatus.SKIPPED) {
+    if (file instanceof DeletedVirtualFileStub deletedFileStub) {
+      if (deletedFileStub.isOriginalValid() &&
+          ensureFileBelongsToIndexableFilter(fileId, deletedFileStub.getOriginalFile()) != FileAddStatus.SKIPPED) {
         return true;
       }
     }
@@ -1383,6 +1383,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     if (isPendingDeletionFileAppearedInIndexableFilter(fileId, file)) {
       file = ((DeletedVirtualFileStub)file).getOriginalFile();
+      assert file != null;
       content = new CachedFileContent(file);
       isValid = file.isValid();
       dropNontrivialIndexedStates(fileId);
