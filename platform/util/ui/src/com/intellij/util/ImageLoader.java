@@ -222,7 +222,7 @@ public final class ImageLoader {
       }
     }
     if (digest == null) {
-      digest = SVGLoader.getDEFAULT_THEME();
+      digest = SVGLoader.INSTANCE.getDEFAULT_THEME();
     }
 
     if ((flags & USE_CACHE) == USE_CACHE && !tmpPatcher) {
@@ -285,8 +285,8 @@ public final class ImageLoader {
     }
     else {
       if (descriptor.isSvg) {
-        image = SVGLoader.loadFromClassResource(resourceClass, classLoader, descriptor.path, 0, descriptor.getSvgMapper(),
-                                                colorPatcher, null);
+        image = SVGLoader.INSTANCE.loadFromClassResource(resourceClass, classLoader, descriptor.path, 0, descriptor.getSvgMapper(),
+                                                         colorPatcher, null);
       }
       else {
         image = loadPngFromClassResource(descriptor.path, resourceClass, classLoader, descriptor.scale, null);
@@ -583,6 +583,7 @@ public final class ImageLoader {
     return null;
   }
 
+  @SuppressWarnings("unused")
   public static @Nullable Image loadCustomIcon(@NotNull File file) throws IOException {
     return loadCustomIcon(file.toURI().toURL());
   }

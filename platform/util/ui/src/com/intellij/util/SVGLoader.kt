@@ -53,7 +53,6 @@ object SVGLoader {
   const val ICON_DEFAULT_SIZE = 16
 
   @ApiStatus.Internal
-  @JvmStatic
   val DEFAULT_THEME: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
 
   @Throws(IOException::class)
@@ -69,14 +68,12 @@ object SVGLoader {
   }
 
   @Throws(IOException::class)
-  @JvmStatic
   fun load(url: URL?, stream: InputStream, scale: Float): Image {
     return load(path = url?.path, stream = stream, SvgCacheMapper(scale = scale), colorPatcher = null, docSize = null)
   }
 
   @ApiStatus.Internal
   @Throws(IOException::class)
-  @JvmStatic
   fun loadFromClassResource(resourceClass: Class<*>?,
                             classLoader: ClassLoader?,
                             path: String,

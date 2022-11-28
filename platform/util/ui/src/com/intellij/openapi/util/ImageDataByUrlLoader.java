@@ -78,7 +78,7 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
 
     String path = overriddenPath;
     if (path == null || (ownerClass == null && (classLoader == null || path.charAt(0) != '/'))) {
-      URL url = getURL();
+      URL url = getUrl();
       if (url == null) {
         return null;
       }
@@ -91,11 +91,11 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
    * Resolves the URL if it's not yet resolved.
    */
   public void resolve() {
-    getURL();
+    getUrl();
   }
 
   @Override
-  public @Nullable URL getURL() {
+  public @Nullable URL getUrl() {
     URL result = this.url;
     if (result == UNRESOLVED_URL) {
       result = null;

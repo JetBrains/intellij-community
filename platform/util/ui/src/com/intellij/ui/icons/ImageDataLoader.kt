@@ -1,24 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.icons;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.icons
 
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
-import java.net.URL;
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Image
+import java.net.URL
 
 @ApiStatus.Internal
-public interface ImageDataLoader {
-  @Nullable Image loadImage(@NotNull LoadIconParameters parameters);
+interface ImageDataLoader {
+  fun loadImage(parameters: LoadIconParameters): Image?
 
-  @Nullable URL getURL();
+  val url: URL?
 
-  @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform);
+  fun patch(originalPath: String, transform: IconTransform): ImageDataLoader?
 
-  boolean isMyClassLoader(@NotNull ClassLoader classLoader);
+  fun isMyClassLoader(classLoader: ClassLoader): Boolean
 
-  default int getFlags() {
-    return 0;
-  }
+  val flags: Int
+    get() = 0
 }
