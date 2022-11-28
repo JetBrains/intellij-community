@@ -25,7 +25,7 @@ internal class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame) {
     add(customDecorationTitle.view, "wmin 0, left, growx, center")
     add(buttonPanes.getView(), "top, wmin pref")
 
-    setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH })
+    setCustomFrameTopBorder(isTopNeeded = { myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH })
   }
 
   override fun updateActive() {

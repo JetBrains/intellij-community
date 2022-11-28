@@ -1002,19 +1002,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
     else if (component instanceof JComboBox) {
-      JComboBox combobox = (JComboBox)component;
-      combobox.getEditor().selectAll();
+      ((JComboBox<?>)component).getEditor().selectAll();
     }
   }
 
   @Override
   public void setContentPane(JComponent content) {
-    JComponent wrappedContent =
-      IdeFrameDecorator.isCustomDecorationActive() && !isHeadlessEnv()
-      ? CustomFrameDialogContent.getCustomContentHolder(getWindow(), content)
-      : content;
-
-    myDialog.setContentPane(wrappedContent);
+    myDialog.setContentPane(IdeFrameDecorator.isCustomDecorationActive() && !isHeadlessEnv()
+                                ? CustomFrameDialogContent.Companion.getCustomContentHolder(getWindow(), content)
+                                : content);
   }
 
   @Override

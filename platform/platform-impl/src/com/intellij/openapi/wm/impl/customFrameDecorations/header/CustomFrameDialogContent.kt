@@ -9,9 +9,9 @@ import javax.swing.*
 internal class CustomFrameDialogContent private constructor(private val window: Window,
                                                             private val header: CustomHeader, content: Container) : JPanel() {
   companion object {
-    @JvmStatic
     fun getCustomContentHolder(window: Window, content: JComponent): JComponent {
-      return CustomFrameDialogContent(window, CustomHeader.create(window), content)
+      val header = if (window is JFrame) DefaultFrameHeader(window) else DialogHeader(window)
+      return CustomFrameDialogContent(window = window, header = header, content = content)
     }
 
     fun getCustomContentHolder(window: Window, content: JComponent, header: CustomHeader): JComponent {
