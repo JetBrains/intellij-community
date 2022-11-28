@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
@@ -197,11 +196,7 @@ class GotItTooltip(@NonNls val id: String,
    * Add an optional link to the tooltip.
    */
   fun withLink(@Nls linkLabel: String, action: () -> Unit): GotItTooltip {
-    val actionWithLogging = {
-      action()
-      GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.LinkClick)
-    }
-    gotItBuilder.withLink(linkLabel, actionWithLogging)
+    gotItBuilder.withLink(linkLabel, action)
     return this
   }
 
@@ -216,11 +211,7 @@ class GotItTooltip(@NonNls val id: String,
    * Add an optional browser link to the tooltip. Link is rendered with arrow icon.
    */
   fun withBrowserLink(@Nls linkLabel: String, url: URL): GotItTooltip {
-    val actionWithLogging = {
-      BrowserUtil.browse(url)
-      GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.LinkClick)
-    }
-    gotItBuilder.withBrowserLink(linkLabel, actionWithLogging)
+    gotItBuilder.withBrowserLink(linkLabel, url)
     return this
   }
 
@@ -438,6 +429,7 @@ class GotItTooltip(@NonNls val id: String,
   private fun createBalloon(): Balloon {
     val balloon = gotItBuilder
       .onButtonClick { GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.ButtonClick) }
+      .onLinkClick { GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.LinkClick) }
       .build(parentDisposable = this)
 
     if (timeout > 0) {

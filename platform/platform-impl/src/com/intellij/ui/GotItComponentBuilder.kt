@@ -2,6 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
@@ -30,6 +31,7 @@ import java.awt.*
 import java.awt.event.ActionListener
 import java.awt.geom.RoundRectangle2D
 import java.io.StringReader
+import java.net.URL
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.event.HyperlinkEvent
@@ -57,6 +59,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
   private var link: LinkLabel<Unit>? = null
   private var linkAction: () -> Unit = {}
+  private var afterLinkClickedAction: () -> Unit = {}
 
   private var showButton: Boolean = true
   @Nls
@@ -142,11 +145,19 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   /**
    * Add an optional browser link to the tooltip. Link is rendered with arrow icon.
    */
-  fun withBrowserLink(@Nls linkLabel: String, action: () -> Unit): GotItComponentBuilder {
+  fun withBrowserLink(@Nls linkLabel: String, url: URL): GotItComponentBuilder {
     link = object : LinkLabel<Unit>(linkLabel, AllIcons.Ide.External_link_arrow) {
       override fun getNormal(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
     }.apply { horizontalTextPosition = SwingConstants.LEFT }
-    linkAction = action
+    linkAction = { BrowserUtil.browse(url) }
+    return this
+  }
+
+  /**
+   * Action to invoke when any link clicked (inline or separated)
+   */
+  fun onLinkClick(action: () -> Unit): GotItComponentBuilder {
+    afterLinkClickedAction = action
     return this
   }
 
@@ -223,6 +234,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         val action = event.description?.toIntOrNull()?.let(linkActionsMap::get)
         if (action != null) {
           action()
+          afterLinkClickedAction()
           balloon.hide(true)
         }
         else thisLogger().error("Unknown link: ${event.description}")
@@ -232,6 +244,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     link?.apply {
       setListener(LinkListener { _, _ ->
         linkAction()
+        afterLinkClickedAction()
         balloon.hide(true)
       }, null)
     }
