@@ -15,10 +15,10 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
 import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
 import java.io.File
 
-class KotlinSourceSetProtoBuilder(
+class KotlinSourceSetBuilder(
     private val androidDeps: Map<String, List<Any>>?,
     val project: Project
-) : KotlinMultiplatformComponentBuilder<KotlinSourceSetReflection, KotlinSourceSetProto> {
+) {
     private val sourceSetsWithoutNeedOfBuildingDependenciesMetadata: Set<Named> by lazy {
         val isHMPPEnabled = project.getProperty(GradleImportProperties.IS_HMPP_ENABLED)
         if (!isHMPPEnabled) return@lazy emptySet()
@@ -40,7 +40,7 @@ class KotlinSourceSetProtoBuilder(
             .keys
     }
 
-    override fun buildComponent(
+    fun buildComponent(
         origin: KotlinSourceSetReflection,
         importingContext: MultiplatformModelImportingContext
     ): KotlinSourceSetProto? {
@@ -98,7 +98,7 @@ class KotlinSourceSetProtoBuilder(
     }
 
     companion object {
-        private val logger = Logging.getLogger(KotlinSourceSetProtoBuilder::class.java)
+        private val logger = Logging.getLogger(KotlinSourceSetBuilder::class.java)
 
         private val apiMetadataDependenciesBuilder = object : KotlinMultiplatformDependenciesBuilder() {
             override val configurationNameAccessor: String = "getApiMetadataConfigurationName"
