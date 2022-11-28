@@ -112,12 +112,6 @@ public class TodoCheckinHandlerWorker {
           return null;
         }
 
-        String beforeContent = getRevisionContent(beforeRevision);
-        if (beforeContent == null) {
-          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
-          return null;
-        }
-
         Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
         if (afterDocument == null) {
           mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
@@ -127,16 +121,10 @@ public class TodoCheckinHandlerWorker {
         List<? extends TodoItem> afterTodoItems = collectTodoItems(afterPsiFile, false);
 
         if (afterRevision instanceof CurrentContentRevision) {
-          return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, afterTodoItems);
+          return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeRevision, afterContent, afterTodoItems);
         }
         else {
-          String afterChangeContent = getRevisionContent(afterRevision);
-          if (afterChangeContent == null) {
-            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
-            return null;
-          }
-
-          return new NonLocalEditedFileProcessor(myProject, afterFilePath, beforeContent, afterChangeContent, afterContent, afterTodoItems);
+          return new NonLocalEditedFileProcessor(myProject, afterFilePath, beforeRevision, afterRevision, afterContent, afterTodoItems);
         }
       });
 
@@ -188,12 +176,25 @@ public class TodoCheckinHandlerWorker {
   }
 
   private final class SimpleEditedFileProcessor extends EditedFileProcessorBase {
+    private final ContentRevision myBeforeRevision;
+
     private SimpleEditedFileProcessor(@NotNull Project project,
                                       @NotNull FilePath afterFilePath,
-                                      @NotNull String beforeContent,
+                                      @NotNull ContentRevision beforeRevision,
                                       @NotNull String afterContent,
                                       @NotNull List<? extends TodoItem> afterTodoItems) {
-      super(project, afterFilePath, beforeContent, afterContent, afterTodoItems);
+      super(project, afterFilePath, afterContent, afterTodoItems);
+      myBeforeRevision = beforeRevision;
+    }
+
+    @Override
+    protected boolean loadContents() {
+      myBeforeContent = getRevisionContent(myBeforeRevision);
+      if (myBeforeContent == null) {
+        mySkipped.add(Pair.create(myAfterFile, VcsBundle.message("checkin.can.not.load.previous.revision")));
+        return false;
+      }
+      return true;
     }
 
     @Override
@@ -204,16 +205,37 @@ public class TodoCheckinHandlerWorker {
   }
 
   private final class NonLocalEditedFileProcessor extends EditedFileProcessorBase {
-    private final String myAfterChangeContent;
+    private final ContentRevision myBeforeRevision;
+    private final ContentRevision myAfterChangeRevision;
+
+    private String myAfterChangeContent;
 
     private NonLocalEditedFileProcessor(@NotNull Project project,
                                         @NotNull FilePath afterFilePath,
-                                        @NotNull String beforeContent,
-                                        @NotNull String afterChangeContent,
+                                        @NotNull ContentRevision beforeRevision,
+                                        @NotNull ContentRevision afterChangeRevision,
                                         @NotNull String afterContent,
                                         @NotNull List<? extends TodoItem> afterTodoItems) {
-      super(project, afterFilePath, beforeContent, afterContent, afterTodoItems);
-      myAfterChangeContent = afterChangeContent;
+      super(project, afterFilePath, afterContent, afterTodoItems);
+      myBeforeRevision = beforeRevision;
+      myAfterChangeRevision = afterChangeRevision;
+    }
+
+    @Override
+    protected boolean loadContents() {
+      myBeforeContent = getRevisionContent(myBeforeRevision);
+      if (myBeforeContent == null) {
+        mySkipped.add(Pair.create(myAfterFile, VcsBundle.message("checkin.can.not.load.previous.revision")));
+        return false;
+      }
+
+      myAfterChangeContent = getRevisionContent(myAfterChangeRevision);
+      if (myAfterChangeContent == null) {
+        mySkipped.add(Pair.create(myAfterFile, VcsBundle.message("checkin.can.not.load.current.revision")));
+        return false;
+      }
+
+      return true;
     }
 
     @Override
@@ -237,22 +259,22 @@ public class TodoCheckinHandlerWorker {
 
   private abstract class EditedFileProcessorBase {
     @NotNull protected final Project myProject;
-    @NotNull protected final String myBeforeContent;
+    protected String myBeforeContent;
     @NotNull protected final String myAfterContent;
     @NotNull protected final FilePath myAfterFile;
     @NotNull private final List<? extends TodoItem> myNewTodoItems;
 
     private EditedFileProcessorBase(@NotNull Project project,
                                     @NotNull FilePath afterFilePath,
-                                    @NotNull String beforeContent,
                                     @NotNull String afterContent,
                                     @NotNull List<? extends TodoItem> afterTodoItems) {
       myProject = project;
       myAfterFile = afterFilePath;
-      myBeforeContent = beforeContent;
       myAfterContent = afterContent;
       myNewTodoItems = afterTodoItems;
     }
+
+    protected abstract boolean loadContents();
 
     protected abstract @NotNull List<LineFragment> computeFragments();
 
@@ -264,6 +286,8 @@ public class TodoCheckinHandlerWorker {
     }
 
     public void process() throws DiffTooBigException {
+      if (!loadContents()) return;
+
       List<LineFragment> lineFragments = computeFragments();
 
       List<Pair<TodoItem, LineFragment>> changedTodoItems = new ArrayList<>();
