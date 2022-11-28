@@ -40,19 +40,18 @@ internal class KotlinSourceSetBuilder(
     }
 
     private val androidDependencies: Map<String, List<Any>>? by lazy {
-        if (context.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)) {
-            try {
-                val resolverClass = context.kotlinExtensionReflection.kotlinExtension.javaClass
-                    .classLoader.loadClass("org.jetbrains.kotlin.gradle.targets.android.internal.AndroidDependencyResolver")
-                val getAndroidSourceSetDependencies = resolverClass.getMethodOrNull("getAndroidSourceSetDependencies", Project::class.java)
-                val resolver = resolverClass.getField("INSTANCE").get(null)
-                @Suppress("UNCHECKED_CAST")
-                getAndroidSourceSetDependencies?.let { it(resolver, context.project) } as Map<String, List<Any>>?
-            } catch (e: Exception) {
-                KotlinMPPGradleModelBuilder.logger.info("Unexpected exception", e)
-            }
+        if (!context.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)) return@lazy null
+        try {
+            val resolverClass = context.kotlinExtensionReflection.kotlinExtension.javaClass
+                .classLoader.loadClass("org.jetbrains.kotlin.gradle.targets.android.internal.AndroidDependencyResolver")
+            val getAndroidSourceSetDependencies = resolverClass.getMethodOrNull("getAndroidSourceSetDependencies", Project::class.java)
+            val resolver = resolverClass.getField("INSTANCE").get(null)
+            @Suppress("UNCHECKED_CAST")
+            getAndroidSourceSetDependencies?.let { it(resolver, context.project) } as Map<String, List<Any>>?
+        } catch (e: Exception) {
+            KotlinMPPGradleModelBuilder.logger.info("Unexpected exception", e)
+            null
         }
-        null
     }
 
     fun buildKotlinSourceSet(sourceSetReflection: KotlinSourceSetReflection): KotlinSourceSetImpl? {
