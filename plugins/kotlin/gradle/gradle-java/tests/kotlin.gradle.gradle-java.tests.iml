@@ -59,5 +59,6 @@
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
     <orderEntry type="library" exported="" name="kotlin-gradle-plugin-idea" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
   </component>
 </module>
