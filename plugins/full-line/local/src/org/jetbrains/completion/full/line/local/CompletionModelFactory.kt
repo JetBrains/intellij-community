@@ -26,7 +26,7 @@ object CompletionModelFactory {
 
     var model: ModelWrapper = GPT2ModelWrapper(modelPath, configPath)
     if (modelCache != null) {
-      model = HiddenStateCachingModelWrapper(GPT2ModelWrapper(modelPath, configPath), modelCache)
+      model = HiddenStateCachingModelWrapper(model, modelCache)
     }
 
     val generator = FullLineCompletionsGenerator(model, tokenizer, loggingCallback)
