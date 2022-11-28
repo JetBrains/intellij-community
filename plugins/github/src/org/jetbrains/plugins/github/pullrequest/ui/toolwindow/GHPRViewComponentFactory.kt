@@ -52,7 +52,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponent
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRMetadataModelImpl
@@ -246,10 +246,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       val stateModel = GHPRStateModelImpl(project, dataProvider.stateData, dataProvider.changesData, model, disposable)
 
-      GHPRDetailsComponent.create(project,
-                                  dataContext.securityService,
-                                  dataContext.avatarIconsProvider,
-                                  branchesModel, detailsModel, metadataModel, stateModel)
+      GHPRDetailsComponentFactory.create(project,
+                                         dataContext.securityService,
+                                         dataContext.avatarIconsProvider,
+                                         branchesModel, detailsModel, metadataModel, stateModel)
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }

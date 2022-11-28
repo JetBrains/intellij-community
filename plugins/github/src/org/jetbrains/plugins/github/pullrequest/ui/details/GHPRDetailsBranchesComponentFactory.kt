@@ -32,7 +32,7 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal object GHPRBranchesPanel {
+internal object GHPRDetailsBranchesComponentFactory {
 
   fun create(model: GHPRBranchesModel): JComponent {
     val from = createLabel()

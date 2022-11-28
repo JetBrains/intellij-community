@@ -31,7 +31,7 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal object GHPRDetailsComponent {
+internal object GHPRDetailsComponentFactory {
 
   fun create(project: Project,
              securityService: GHPRSecurityService,
@@ -42,7 +42,7 @@ internal object GHPRDetailsComponent {
              stateModel: GHPRStateModel): JComponent {
     val actionManager = ActionManager.getInstance()
 
-    val branches = GHPRBranchesPanel.create(branchesModel)
+    val branches = GHPRDetailsBranchesComponentFactory.create(branchesModel)
     val title = GHPRTitleComponent.create(detailsModel)
     val description = HtmlEditorPane().apply {
       detailsModel.addAndInvokeDetailsChangedListener {

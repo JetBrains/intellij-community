@@ -161,7 +161,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
                                                                    }, SwingConstants.LEFT)
 
       private fun createLoadedComponent(mergeability: GHPRMergeabilityState, isDraft: Boolean): JComponent {
-        val statusChecks = GHPRStatusChecksComponent.create(mergeability)
+        val statusChecks = GHPRStatusChecksComponentFactory.create(mergeability)
 
         val conflictsLabel = JLabel().apply {
           when (mergeability.hasConflicts) {

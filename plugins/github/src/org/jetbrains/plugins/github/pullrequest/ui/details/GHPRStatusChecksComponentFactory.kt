@@ -13,7 +13,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-object GHPRStatusChecksComponent {
+object GHPRStatusChecksComponentFactory {
 
   fun create(mergeability: GHPRMergeabilityState): JComponent {
     val panel = JPanel(FlowLayout(FlowLayout.LEADING, 0, 0))
