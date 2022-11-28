@@ -907,6 +907,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private void showPlugin() {
     @NlsSafe String text = "<html><span>" + myPlugin.getName() + "</span></html>";
     myNameComponent.setText(text);
+    myNameComponent.setForeground(null);
     updateNotifications();
     updateIcon();
 
@@ -1199,6 +1200,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       if (myMultiTabs) {
         if (installed || myInstalledDescriptorForMarketplace == null) {
           myGearButton.setVisible(false);
+          myEnableDisableButton.setVisible(false);
         }
         else {
           boolean[] state = getDeletedState(myInstalledDescriptorForMarketplace);
@@ -1218,13 +1220,14 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             }
           }
 
+          boolean bundled = myInstalledDescriptorForMarketplace.isBundled();
           myEnableDisableController.update();
-          myGearButton.setVisible(!uninstalled);
+          myGearButton.setVisible(!uninstalled && !bundled);
+          myEnableDisableButton.setVisible(bundled);
           myUpdateButton.setVisible(!uninstalled && myUpdateDescriptor != null && !installedWithoutRestart);
           updateEnableForNameAndIcon();
           updateErrors();
         }
-        myEnableDisableButton.setVisible(false);
       }
       else {
         myGearButton.setVisible(false);
@@ -1346,7 +1349,6 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
             if (myInstalledDescriptorForMarketplace != null) {
               myInstallButton.setVisible(false);
-              myEnableDisableButton.setVisible(true);
               myVersion1.setText(myInstalledDescriptorForMarketplace.getVersion());
               myVersion1.setVisible(true);
               updateEnabledState();
@@ -1383,7 +1385,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         myEnableDisableController.update();
       }
       if (myMultiTabs) {
-        boolean bundled = myPlugin.isBundled();
+        boolean bundled = getDescriptorForActions().isBundled();
         myGearButton.setVisible(!bundled);
         myEnableDisableButton.setVisible(bundled);
       }
