@@ -306,6 +306,8 @@ impl RemoteDevLaunchConfiguration {
 
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
             // ("jdk.lang.Process.launchMechanism", "vfork"),
+
+            ("jdk.configure.existing", "true"),
         ];
 
         remote_dev_properties
