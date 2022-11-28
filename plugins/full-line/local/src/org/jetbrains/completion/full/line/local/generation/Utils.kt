@@ -61,7 +61,12 @@ private data class IndexToValue(val index: Int, val value: Double) : Comparable<
 }
 
 internal fun topk1d(data: DoubleArray, size: Int): IntArray {
-  val newData = data.mapIndexed { i, v -> IndexToValue(i, v) }.filter { it.value != Double.NEGATIVE_INFINITY }.toMutableList()
+  val newData = mutableListOf<IndexToValue>()
+  for ((index, value) in data.withIndex()) {
+    if (value != Double.NEGATIVE_INFINITY) {
+      newData.add(IndexToValue(index, value))
+    }
+  }
   val queue = PriorityQueue(newData)
   return IntArray(min(size, queue.size)) { queue.poll().index }
 }
