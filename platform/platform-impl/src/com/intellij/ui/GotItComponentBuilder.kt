@@ -32,6 +32,7 @@ import java.awt.geom.RoundRectangle2D
 import java.io.StringReader
 import javax.swing.*
 import javax.swing.border.EmptyBorder
+import javax.swing.event.HyperlinkEvent
 import javax.swing.plaf.TextUI
 import javax.swing.text.*
 import javax.swing.text.View.X_AXIS
@@ -43,6 +44,8 @@ import kotlin.math.min
 class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   @Nls
   private val text: String
+  private val linkActionsMap: Map<Int, () -> Unit>
+
   private var image: Icon? = null
 
   @Nls
@@ -56,7 +59,6 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   private var linkAction: () -> Unit = {}
 
   private var showButton: Boolean = true
-
   @Nls
   private var buttonLabel: String = IdeBundle.message("got.it.button.name")
   private var buttonAction: () -> Unit = {}
@@ -66,8 +68,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   private var useContrastColors = false
 
   init {
-    val builtText = textSupplier(GotItTextBuilder())
-    this.text = ShortcutExtension.patchShortcutTags(builtText)
+    val builder = GotItTextBuilderImpl()
+    this.text = ShortcutExtension.patchShortcutTags(textSupplier(builder))
+    this.linkActionsMap = builder.getLinkActions()
   }
 
   /**
@@ -197,8 +200,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
   fun build(parentDisposable: Disposable, additionalSettings: BalloonBuilder.() -> BalloonBuilder = { this }): Balloon {
     var button: JButton? = null
+    lateinit var description: JEditorPane
     val balloon = JBPopupFactory.getInstance()
-      .createBalloonBuilder(createContent { button = it })
+      .createBalloonBuilder(createContent({ button = it }, { description = it }))
       .setDisposable(parentDisposable)
       .setHideOnAction(false)
       .setHideOnClickOutside(false)
@@ -213,6 +217,17 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       .setCornerRadius(JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get())
       .additionalSettings()
       .createBalloon().also { it.setAnimationEnabled(false) }
+
+    description.addHyperlinkListener { event ->
+      if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+        val action = event.description?.toIntOrNull()?.let(linkActionsMap::get)
+        if (action != null) {
+          action()
+          balloon.hide(true)
+        }
+        else thisLogger().error("Unknown link: ${event.description}")
+      }
+    }
 
     link?.apply {
       setListener(LinkListener { _, _ ->
@@ -231,7 +246,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     return balloon
   }
 
-  private fun createContent(buttonSupplier: (JButton) -> Unit): JComponent {
+  private fun createContent(buttonConsumer: (JButton) -> Unit, descriptionConsumer: (JEditorPane) -> Unit): JComponent {
     val panel = JPanel(GridBagLayout())
     val gc = GridBag()
     val left = if (icon != null || stepNumber != null) JBUI.CurrentTheme.GotItTooltip.ICON_INSET.get() else 0
@@ -279,7 +294,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     }
 
     if (icon == null && stepNumber == null || header.isNotEmpty()) gc.nextLine()
-    panel.add(LimitedWidthEditorPane(builder, maxWidth, useContrastColors),
+    val description = LimitedWidthEditorPane(builder, maxWidth, useContrastColors)
+    descriptionConsumer(description)
+    panel.add(description,
               gc.setColumn(column).anchor(GridBagConstraints.LINE_START)
                 .insets(if (header.isNotEmpty()) JBUI.CurrentTheme.GotItTooltip.TEXT_INSET.get() else 0, left, 0, 0))
 
@@ -306,7 +323,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
           foreground = JBUI.CurrentTheme.GotItTooltip.buttonForegroundContrast()
         }
       }
-      buttonSupplier(button)
+      buttonConsumer(button)
 
       val buttonComponent: JComponent = if (showCloseShortcut) {
         val buttonPanel = JPanel().apply { isOpaque = false }
@@ -373,9 +390,10 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder, maxWidth: Int, us
 
   private fun createEditorKit(useContrastColors: Boolean): HTMLEditorKit {
     val styleSheet = StyleSheet()
+    val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground())} }"
     val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
                                                      JBUI.CurrentTheme.GotItTooltip.shortcutBackground())
-    StringReader(shortcutStyles).use { styleSheet.loadRules(it, null) }
+    StringReader(linkStyles + shortcutStyles).use { styleSheet.loadRules(it, null) }
 
     val iconsExtension = ExtendableHTMLViewFactory.Extensions.icons { iconKey ->
       IconLoader.findIcon(iconKey, GotItTooltip::class.java, true, false)?.let { icon ->

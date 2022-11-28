@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.Balloon.Position
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
@@ -49,9 +50,9 @@ class ShowGotItDemoAction : DumbAwareAction() {
     private var text: String = """
       This is Debug tool window. 
       Here, you can use various actions like <shortcut actionId="GotoAction"/>,
-      <b>Step In</b> <icon src="AllIcons.Actions.TraceInto"/>, 
       <b>Resume</b> <icon src="AllIcons.Actions.Resume"/>, 
       and <b>Stop</b> <icon src="AllIcons.Actions.Suspend"/>.""".trimIndent()
+    private var addInlineLinks: Boolean = true
 
     private var showImage: Boolean = true
     private var imageWidth: Int = 248
@@ -89,6 +90,9 @@ class ShowGotItDemoAction : DumbAwareAction() {
           .columns(COLUMNS_LARGE)
           .bindText(this@GotItConfigurationDialog::text)
           .align(AlignX.FILL)
+      }
+      row {
+        checkBox(CheckboxDescriptor("Add inline links to text", this@GotItConfigurationDialog::addInlineLinks))
       }
       row {
         val checkbox = checkBox(CheckboxDescriptor("Header:", this@GotItConfigurationDialog::showHeader))
@@ -177,8 +181,20 @@ class ShowGotItDemoAction : DumbAwareAction() {
       val icon = AllIcons.General.BalloonInformation
       val image = createTestImage()
 
+      val textSupplier: GotItTextBuilder.() -> String = {
+        if (addInlineLinks) buildString {
+          append(text)
+          append(" ")
+          append(link("Click") { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() })
+          append(" to open the Project tool window, or ")
+          append(browserLink("open", URL("https://www.jetbrains.com/help/idea/getting-started.html")))
+          append(" IDE help.")
+        }
+        else text
+      }
+
       val randomId = Random(System.currentTimeMillis()).nextBytes(32).toString(StandardCharsets.UTF_8)
-      val gotIt = GotItTooltip(randomId, text, Disposer.newDisposable())
+      val gotIt = GotItTooltip(randomId, textSupplier, Disposer.newDisposable())
       if (showImage) gotIt.withImage(image)
       if (showIconOrStep && showIcon) gotIt.withIcon(icon)
       if (showIconOrStep && showStepNumber) gotIt.withStepNumber(stepNumber)

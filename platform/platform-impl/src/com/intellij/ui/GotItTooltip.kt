@@ -61,7 +61,7 @@ class GotItTooltipService {
  * Prefix can cover a whole class of different Got It tooltips. If the prefix is shorter than the whole ID, then all different
  * tooltip usages will be reported in one category described by the prefix.
  *
- * The description of the tooltip can contain inline shortcuts and icons.
+ * The description of the tooltip can contain inline shortcuts, icons and links.
  * See [GotItTextBuilder] doc for more info.
  */
 class GotItTooltip(@NonNls val id: String,
