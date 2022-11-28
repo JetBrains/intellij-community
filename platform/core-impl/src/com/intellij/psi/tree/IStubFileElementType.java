@@ -44,6 +44,14 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
     return getClass().getName().contains(".kotlin."); // KT-28732
   }
 
+  // workaround for KT-55160
+  private boolean isKotlinFragment() {
+    String debugName = getDebugName();
+    return debugName.equals("kotlin.EXPRESSION_CODE_FRAGMENT") ||
+           debugName.equals("kotlin.TYPE_CODE_FRAGMENT") ||
+           debugName.equals("kotlin.BLOCK_CODE_FRAGMENT");
+  }
+
   /**
    * Stub structure version. Should be incremented each time when stub tree changes (e.g. elements added/removed,
    * element serialization/deserialization changes).
@@ -95,7 +103,9 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
 
   private static int calcTemplateStubBaseVersion() {
     IElementType[] dataElementTypes = IElementType.enumerate(
-      (elementType) -> elementType instanceof IStubFileElementType && !(elementType.getLanguage() instanceof TemplateLanguage));
+      (elementType) -> elementType instanceof IStubFileElementType &&
+                       !(elementType.getLanguage() instanceof TemplateLanguage) &&
+                       !(((IStubFileElementType<?>)elementType).isKotlinFragment()));
     return Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType<?>)e).getStubVersion()).sum();
   }
 
