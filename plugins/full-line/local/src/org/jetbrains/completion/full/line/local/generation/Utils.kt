@@ -4,7 +4,6 @@ import java.util.*
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.min
-import kotlin.random.Random
 
 internal fun IntArray.toLongArray(): LongArray {
   return LongArray(size) { this[it].toLong() }
@@ -57,51 +56,14 @@ internal fun logSoftmax(scores: Array<DoubleArray>): Array<DoubleArray> {
   return expScores
 }
 
+private data class IndexToValue(val index: Int, val value: Double) : Comparable<IndexToValue> {
+  override fun compareTo(other: IndexToValue): Int = -compareValues(this.value, other.value)
+}
+
 internal fun topk1d(data: DoubleArray, size: Int): IntArray {
-  if (size == 0) {
-    return IntArray(0)
-  }
-  val filteredData = data.filter { it > Double.NEGATIVE_INFINITY }.toMutableList()
-  val kthLargestValue = if (size <= filteredData.size) kthLargest(filteredData, size) else Double.NEGATIVE_INFINITY
-  return data
-    .mapIndexed { i, v -> Pair(i, v) }
-    .filter { it.second >= kthLargestValue }
-    .take(size)
-    .sortedBy { -it.second }
-    .map { it.first }
-    .toIntArray()
-}
-
-private fun kthLargest(arr: MutableList<Double>, k: Int): Double {
-  assert(k > 0 && k <= arr.size)
-  return quickSelect(arr, arr.size - k)
-}
-
-private fun quickSelect(arr: MutableList<Double>, k: Int): Double {
-  var left = 0
-  var right = arr.size - 1
-  while (true) {
-    if (left >= right) return arr[left]
-    val partitionIndex = partition(arr, left, right, left + (right - left) / 2)
-    when {
-      k < partitionIndex -> right = partitionIndex - 1
-      k > partitionIndex -> left = partitionIndex + 1
-      else -> return arr[k]
-    }
-  }
-}
-
-private fun partition(arr: MutableList<Double>, left: Int, right: Int, partitionIndex: Int): Int {
-  val partVal = arr[partitionIndex]
-  Collections.swap(arr, partitionIndex, right)
-  var resultIndex = left
-  for (i in left until right) {
-    if (arr[i] < partVal) {
-      Collections.swap(arr, resultIndex++, i)
-    }
-  }
-  Collections.swap(arr, resultIndex, right)
-  return resultIndex
+  val newData = data.mapIndexed { i, v -> IndexToValue(i, v) }.filter { it.value != Double.NEGATIVE_INFINITY }.toMutableList()
+  val queue = PriorityQueue(newData)
+  return IntArray(min(size, queue.size)) { queue.poll().index }
 }
 
 internal fun topk2d(data: Array<DoubleArray>, size: Int, dim: Int = 0): Array<IntArray> {
