@@ -109,7 +109,7 @@ public abstract class ZenCodingGenerator {
         }
       }
     }
-    return groupCount == 0 && textCount == 0 && bracketCount == 0 && currentOffset >= 0 && currentOffset < text.length()
+    return groupCount == 0 && textCount == 0 && bracketCount == 0 && currentOffset < text.length()
            ? text.subSequence(currentOffset, text.length()).toString().replaceFirst("^[*+>^]+", "")
            : null;
   }
