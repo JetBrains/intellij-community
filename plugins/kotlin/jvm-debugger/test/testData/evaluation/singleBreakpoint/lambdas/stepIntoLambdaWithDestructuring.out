@@ -1,0 +1,28 @@
+// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR
+LineBreakpoint created at stepIntoLambdaWithDestructuring.kt:14
+Run Java
+Connected to the target VM
+stepIntoLambdaWithDestructuring.kt:14
+stepIntoLambdaWithDestructuring.kt:28
+Compile bytecode for a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
+KotlinStackFrame (stepIntoLambdaWithDestructuring.kt:28)
+    JavaValue[this] this: StepIntoLambdaWithDestructuringKt$main$1@uniqueID = Function7<destructurableClasses.A, java.lang.Integer, java.lang.Integer, destructurableClasses.B, java.lang.Integer, destructurableClasses.A, destructurableClasses.B, kotlin.Unit>
+        JavaValue[field] arity: int = 7 (Lambda.!EXT!)
+    JavaValue[local] c: int = 1 (stepIntoLambdaWithDestructuring.kt:19)
+    JavaValue[local] d: int = 1 (stepIntoLambdaWithDestructuring.kt:20)
+    JavaValue[local] i: int = 1 (stepIntoLambdaWithDestructuring.kt:23)
+    JavaValue[local] a: int = 1 (stepIntoLambdaWithDestructuring.kt:18)
+    JavaValue[local] b: int = 1 (stepIntoLambdaWithDestructuring.kt:18)
+    JavaValue[local] e: int = 1 (stepIntoLambdaWithDestructuring.kt:20)
+    JavaValue[local] f: int = 1 (stepIntoLambdaWithDestructuring.kt:21)
+    JavaValue[local] g: int = 1 (stepIntoLambdaWithDestructuring.kt:21)
+    JavaValue[local] h: int = 1 (stepIntoLambdaWithDestructuring.kt:22)
+    JavaValue[local] j: int = 1 (stepIntoLambdaWithDestructuring.kt:24)
+    JavaValue[local] k: int = 1 (stepIntoLambdaWithDestructuring.kt:24)
+    JavaValue[local] l: int = 1 (stepIntoLambdaWithDestructuring.kt:25)
+    JavaValue[local] m: int = 1 (stepIntoLambdaWithDestructuring.kt:26)
+    JavaValue[local] n: int = 1 (stepIntoLambdaWithDestructuring.kt:27)
+    JavaValue[local] o: int = 1 (stepIntoLambdaWithDestructuring.kt:27)
+Disconnected from the target VM
+
+Process finished with exit code 0

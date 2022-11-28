@@ -578,9 +578,6 @@ private fun decorateSourcePosition(location: Location, sourcePosition: SourcePos
     return sourcePosition
 }
 
-private fun Location.getZeroBasedLineNumber(): Int =
-    DebuggerUtilsEx.getLineNumber(this, true)
-
 private fun Location.hasVisibleInlineLambdasOnLines(lines: IntRange): Boolean {
     val method = safeMethod() ?: return false
     return method.getInlineFunctionAndArgumentVariablesToBordersMap()

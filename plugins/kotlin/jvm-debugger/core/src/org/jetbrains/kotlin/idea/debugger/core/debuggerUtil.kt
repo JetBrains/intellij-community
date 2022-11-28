@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
@@ -282,3 +283,9 @@ fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
 
 val DebugProcessImpl.canRunEvaluation: Boolean
     get() = suspendManager.pausedContext != null
+
+val KtFunction.isLambdaOrAnonymous: Boolean
+    get() = this is KtFunctionLiteral || name == null
+
+fun Location.getZeroBasedLineNumber(): Int =
+    DebuggerUtilsEx.getLineNumber(this, true)

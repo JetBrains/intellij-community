@@ -9,16 +9,21 @@ import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.util.parentOfType
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.getZeroBasedLineNumber
 import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.core.isOnSuspensionPoint
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.org.objectweb.asm.Type
 
 open class KotlinRequestHint(
@@ -187,11 +192,33 @@ class KotlinStepIntoRequestHint(
                 lastWasKotlinFakeLineNumber = false
                 return STOP
             }
+
+            // Step over `component*` function calls to let destructured parameters be initialized
+            if (location != null && shouldStepOverParameterDestructuring(context, location)) {
+                return StepRequest.STEP_OVER
+            }
+
             return super.getNextStepDepth(context)
         } catch (ignored: VMDisconnectedException) {
         } catch (e: EvaluateException) {
             LOG.error(e)
         }
         return STOP
+    }
+}
+
+private fun shouldStepOverParameterDestructuring(context: SuspendContextImpl, location: Location): Boolean {
+    val sourcePosition = context.debugProcess.positionManager.getSourcePosition(location) ?: return false
+    if (location.safeMethod()?.isBridge == true) {
+        return false
+    }
+
+    return runReadAction {
+        val functionParent = sourcePosition.elementAt?.parentOfType<KtFunctionLiteral>() ?: return@runReadAction false
+        if (functionParent.valueParameters.any { it.destructuringDeclaration != null }) {
+            val lambdaBody = functionParent.bodyExpression ?: return@runReadAction false
+            return@runReadAction location.getZeroBasedLineNumber() < lambdaBody.getLineNumber()
+        }
+        return@runReadAction false
     }
 }

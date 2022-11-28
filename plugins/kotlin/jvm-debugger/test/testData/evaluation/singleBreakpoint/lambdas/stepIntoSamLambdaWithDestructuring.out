@@ -1,0 +1,26 @@
+// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR
+LineBreakpoint created at stepIntoSamLambdaWithDestructuring.kt:18
+Run Java
+Connected to the target VM
+stepIntoSamLambdaWithDestructuring.kt:18
+stepIntoSamLambdaWithDestructuring.kt:32
+Compile bytecode for a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
+KotlinStackFrame (stepIntoSamLambdaWithDestructuring.kt:32)
+    JavaValue[local] c: int = 1 (stepIntoSamLambdaWithDestructuring.kt:23)
+    JavaValue[local] d: int = 1 (stepIntoSamLambdaWithDestructuring.kt:24)
+    JavaValue[local] i: int = 1 (stepIntoSamLambdaWithDestructuring.kt:27)
+    JavaValue[local] a: int = 1 (stepIntoSamLambdaWithDestructuring.kt:22)
+    JavaValue[local] b: int = 1 (stepIntoSamLambdaWithDestructuring.kt:22)
+    JavaValue[local] e: int = 1 (stepIntoSamLambdaWithDestructuring.kt:24)
+    JavaValue[local] f: int = 1 (stepIntoSamLambdaWithDestructuring.kt:25)
+    JavaValue[local] g: int = 1 (stepIntoSamLambdaWithDestructuring.kt:25)
+    JavaValue[local] h: int = 1 (stepIntoSamLambdaWithDestructuring.kt:26)
+    JavaValue[local] j: int = 1 (stepIntoSamLambdaWithDestructuring.kt:28)
+    JavaValue[local] k: int = 1 (stepIntoSamLambdaWithDestructuring.kt:28)
+    JavaValue[local] l: int = 1 (stepIntoSamLambdaWithDestructuring.kt:29)
+    JavaValue[local] m: int = 1 (stepIntoSamLambdaWithDestructuring.kt:30)
+    JavaValue[local] n: int = 1 (stepIntoSamLambdaWithDestructuring.kt:31)
+    JavaValue[local] o: int = 1 (stepIntoSamLambdaWithDestructuring.kt:31)
+Disconnected from the target VM
+
+Process finished with exit code 0
