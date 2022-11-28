@@ -7,7 +7,7 @@ import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
-import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetProtoBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.buildIdeaKotlinDependenciesContainer
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
@@ -117,7 +117,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         val sourceSets = kotlinExtensionReflection.sourceSets
         val androidDeps = buildAndroidDeps(importingContext, kotlinExtensionReflection.kotlinExtension.javaClass.classLoader)
 
-        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps, importingContext.project)
+        val sourceSetProtoBuilder = KotlinSourceSetBuilder(androidDeps, importingContext.project)
 
         val allSourceSetsProtosByNames = sourceSets.mapNotNull { sourceSet ->
             sourceSetProtoBuilder.buildComponent(
