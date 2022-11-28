@@ -49,10 +49,16 @@ final class UpdatePluginsApp implements ApplicationStarter {
       return;
     }
 
-    Set<String> filter = new HashSet<>(args.subList(1, args.size()));
-    List<PluginDownloader> pluginsToUpdate = availableUpdates.stream()
-      .filter(downloader -> filter.contains(downloader.getId().getIdString()))
-      .toList();
+    Collection<PluginDownloader> pluginsToUpdate;
+    if (args.size() > 1) {
+      Set<String> filter = new HashSet<>(args.subList(1, args.size()));
+      pluginsToUpdate = availableUpdates.stream()
+        .filter(downloader -> filter.contains(downloader.getId().getIdString()))
+        .toList();
+    }
+    else {
+      pluginsToUpdate = availableUpdates;
+    }
 
     log("Plugins to update:");
     pluginsToUpdate.forEach(d -> log("\t" + d.getPluginName()));
