@@ -70,7 +70,9 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     numberOfIndexedFiles++
     if (fileStatistics.wasFullyIndexedByExtensions) {
       numberOfFilesFullyIndexedByExtensions++
-      listOfFilesFullyIndexedByExtensions.add(file.toString())
+      if (IndexDiagnosticDumper.shouldDumpPathsOfFilesIndexedByInfrastructureExtensions) {
+        listOfFilesFullyIndexedByExtensions.add(file.toString())
+      }
     }
     processingTimeInAllThreads += processingTime
     contentLoadingTimeInAllThreads += contentLoadingTime
