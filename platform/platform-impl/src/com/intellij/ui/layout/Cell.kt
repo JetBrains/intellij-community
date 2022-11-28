@@ -328,6 +328,7 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment).withSelectedBinding(modelBinding)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun checkBox(@Checkbox text: String,
                property: GraphProperty<Boolean>,
                @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
@@ -398,26 +399,32 @@ abstract class Cell : BaseBuilder {
 
   fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null) = textField(PropertyBinding(getter, setter), columns)
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textField(binding: PropertyBinding<String>, columns: Int? = null): CellBuilder<JBTextField> {
     return component(JBTextField(binding.get(), columns ?: 0))
       .withTextBinding(binding)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textField(property: GraphProperty<String>, columns: Int? = null): CellBuilder<JBTextField> {
     return textField(property::get, property::set, columns)
       .withGraphProperty(property)
       .applyToComponent { bind(property) }
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textArea(prop: KMutableProperty0<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> = textArea(prop.toBinding(), rows, columns)
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null, columns: Int? = null) = textArea(PropertyBinding(getter, setter), rows, columns)
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textArea(binding: PropertyBinding<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> {
     return component(JBTextArea(binding.get(), rows ?: 0, columns ?: 0))
       .withTextBinding(binding)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textArea(property: GraphProperty<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> {
     return textArea(property::get, property::set, rows, columns)
       .withGraphProperty(property)
@@ -492,6 +499,7 @@ abstract class Cell : BaseBuilder {
       .withBinding(TextFieldWithHistoryWithBrowseButton::getText, TextFieldWithHistoryWithBrowseButton::setText, modelBinding)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textFieldWithBrowseButton(
     @DialogTitle browseDialogTitle: String? = null,
     value: String? = null,
@@ -504,6 +512,7 @@ abstract class Cell : BaseBuilder {
     return component(textField)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textFieldWithBrowseButton(
     prop: KMutableProperty0<String>,
     @DialogTitle browseDialogTitle: String? = null,
@@ -515,6 +524,7 @@ abstract class Cell : BaseBuilder {
     return textFieldWithBrowseButton(modelBinding, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textFieldWithBrowseButton(
     getter: () -> String,
     setter: (String) -> Unit,
@@ -527,6 +537,7 @@ abstract class Cell : BaseBuilder {
     return textFieldWithBrowseButton(modelBinding, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textFieldWithBrowseButton(
     modelBinding: PropertyBinding<String>,
     @DialogTitle browseDialogTitle: String? = null,
@@ -541,6 +552,7 @@ abstract class Cell : BaseBuilder {
       .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, modelBinding)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textFieldWithBrowseButton(
     property: GraphProperty<String>,
     emptyTextProperty: GraphProperty<String>,
@@ -554,6 +566,7 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { emptyText.text = emptyTextProperty.get() }
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textFieldWithBrowseButton(
     property: GraphProperty<String>,
     @DialogTitle browseDialogTitle: String? = null,
@@ -617,6 +630,7 @@ abstract class Cell : BaseBuilder {
    * @see LayoutBuilder.titledRow
    */
   @JvmOverloads
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun panel(@BorderTitle title: String, wrappedComponent: Component, hasSeparator: Boolean = true): CellBuilder<JPanel> {
     val panel = Panel(title, hasSeparator)
     panel.add(wrappedComponent)
