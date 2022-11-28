@@ -29,6 +29,10 @@ class KotlinExtensionReflection(
             .map { sourceSet -> KotlinSourceSetReflection(sourceSet) }
     }
 
+    val sourceSetsByName: Map<String, KotlinSourceSetReflection> by lazy {
+        sourceSets.associateBy { it.name }
+    }
+
     companion object {
         private val logger: ReflectionLogger = ReflectionLogger(KotlinExtensionReflection::class.java)
         private const val KOTLIN_PLUGIN_WRAPPER_FILE_CLASS_NAME = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt"
