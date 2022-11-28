@@ -62,17 +62,19 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
   runBlocking(rootTask()) {
-    val euaDocumentDeferred = if (AppMode.isHeadless()) {
+    val euaTaskDeferred = if (AppMode.isHeadless()) {
       null
     }
     else {
-      async(CoroutineName("eua document") + Dispatchers.IO) { loadEuaDocument() }
+      async(CoroutineName("eua document") + Dispatchers.Default) {
+        prepareShowEuaIfNeededTask(loadEuaDocument(), asyncScope = this@runBlocking)
+      }
     }
-    doInitApplication(rawArgs, appDeferred, euaDocumentDeferred)
+    doInitApplication(rawArgs, appDeferred, euaTaskDeferred)
   }
 }
 
-private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>, euaDocumentDeferred: Deferred<Any?>?) {
+private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>, euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
@@ -80,7 +82,7 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
 
   val (app, initLafJob) = initAppActivity.runChild("app waiting") {
     @Suppress("UNCHECKED_CAST")
-    appDeferred.await() as Pair<ApplicationImpl, Job?>
+    appDeferred.await() as Pair<ApplicationImpl, Job>
   }
 
   val loadIconMapping: Job? = coroutineScope {
@@ -119,10 +121,10 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
     // LaF must be initialized before app init because icons maybe requested and as result,
     // scale must be already initialized (especially important for Linux)
     runActivity("init laf waiting") {
-      initLafJob?.join()
+      initLafJob.join()
     }
 
-    euaDocumentDeferred?.let { showEuaIfNeeded(it, asyncScope = this) }
+    euaTaskDeferred?.await()?.invoke()
 
     // executed in main thread
     launch {

@@ -263,18 +263,19 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     if (!isHeadless && configImportNeededDeferred.await()) {
       initLafJob.join()
-      val imported = importConfig(
+      importConfig(
         args = args,
         log = logDeferred.await(),
         appStarter = appStarterDeferred.await(),
       )
-      if (imported) {
+      if (!PlatformUtils.isRider()) {
         PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
       }
     }
-
-    // must be scheduled before starting app
-    schedulePluginDescriptorLoading.join()
+    else {
+      // must be scheduled before starting app
+      schedulePluginDescriptorLoading.join()
+    }
 
     // with main dispatcher (appStarter uses runBlocking - block main thread and not some coroutine thread)
     appStarter.start(args, appDeferred)
@@ -388,7 +389,7 @@ private fun runPreAppClass(log: Logger, args: List<String>) {
   }
 }
 
-private suspend fun importConfig(args: List<String>, log: Logger, appStarter: AppStarter): Boolean {
+private suspend fun importConfig(args: List<String>, log: Logger, appStarter: AppStarter) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -405,13 +406,12 @@ private suspend fun importConfig(args: List<String>, log: Logger, appStarter: Ap
     UIManager.setLookAndFeel(IntelliJLaf())
   }
 
-  val veryFirstStartOnThisComputer = coroutineScope { showEuaIfNeeded(CompletableDeferred(loadEuaDocument()), asyncScope = this) }
+  val veryFirstStartOnThisComputer = coroutineScope { prepareShowEuaIfNeededTask(loadEuaDocument(), asyncScope = this)?.invoke() ?: false }
   withContext(RawSwingDispatcher) {
     ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
   }
   appStarter.importFinished(newConfigDir)
   activity.end()
-  return !PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()
 }
 
 // return type (LookAndFeel) is not specified to avoid class loading
