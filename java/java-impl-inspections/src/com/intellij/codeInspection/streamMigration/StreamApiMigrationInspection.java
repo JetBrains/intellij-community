@@ -5,7 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -33,12 +33,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
@@ -52,13 +53,12 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   public boolean SUGGEST_FOREACH;
   private static final String SHORT_NAME = "Convert2streamapi";
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("checkbox.warn.if.only.foreach.replacement.is.available"), "SUGGEST_FOREACH");
-    panel.addCheckbox(JavaBundle.message("checkbox.warn.if.the.loop.is.trivial"), "REPLACE_TRIVIAL_FOREACH");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("SUGGEST_FOREACH", JavaBundle.message("checkbox.warn.if.only.foreach.replacement.is.available")),
+      checkbox("REPLACE_TRIVIAL_FOREACH", JavaBundle.message("checkbox.warn.if.the.loop.is.trivial"))
+    );
   }
 
   @Nls
