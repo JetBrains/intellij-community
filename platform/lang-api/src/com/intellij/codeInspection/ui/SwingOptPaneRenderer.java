@@ -17,6 +17,14 @@ public class SwingOptPaneRenderer implements InspectionOptionPaneRenderer {
     for (OptComponent component : pane.components()) {
       if (component instanceof OptCheckbox checkbox) {
         panel.addCheckbox(checkbox.label().label(), checkbox.bindId());
+        // TODO: support nested controls
+      }
+      else if (component instanceof OptNumber number) {
+        LocMessage.PrefixSuffix prefixSuffix = number.splitLabel().splitLabel();
+        JFormattedTextField field = SingleIntegerFieldOptionsPanel.createIntegerFieldTrackingValue(entry, number.bindId(), 4);
+        panel.addLabeledRow(prefixSuffix.prefix(), field);
+        // TODO: support suffix
+        // TODO: range validation
       }
       else if (component instanceof OptCustom custom) {
         JComponent jComponent = controls.get(custom);
