@@ -60,11 +60,14 @@ class GotItTooltipService {
  * `plugin.xml` (`PlatformExtensions.xml`) with `com.intellij.statistics.gotItTooltipAllowlist` extension point.
  * Prefix can cover a whole class of different Got It tooltips. If the prefix is shorter than the whole ID, then all different
  * tooltip usages will be reported in one category described by the prefix.
+ *
+ * The description of the tooltip can contain inline shortcuts and icons.
+ * See [GotItTextBuilder] doc for more info.
  */
 class GotItTooltip(@NonNls val id: String,
-                   @Nls val text: String,
+                   textSupplier: GotItTextBuilder.() -> @Nls String,
                    parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
-  private val gotItBuilder = GotItComponentBuilder(text)
+  private val gotItBuilder = GotItComponentBuilder(textSupplier)
 
   private var timeout: Int = -1
   private var maxCount = 1
@@ -86,6 +89,11 @@ class GotItTooltip(@NonNls val id: String,
   private var nextToShow: GotItTooltip? = null // Next tooltip in the global queue
   private var pendingRefresh = false
   var position: Balloon.Position = Balloon.Position.below
+
+  constructor(@NonNls id: String,
+              @Nls text: String,
+              parentDisposable: Disposable? = null)
+    : this(id, { text }, parentDisposable)
 
   init {
     if (parentDisposable != null) {

@@ -40,7 +40,7 @@ import javax.swing.text.html.*
 import kotlin.math.min
 
 @ApiStatus.Internal
-class GotItComponentBuilder(text: @Nls String) {
+class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   @Nls
   private val text: String
   private var image: Icon? = null
@@ -66,7 +66,8 @@ class GotItComponentBuilder(text: @Nls String) {
   private var useContrastColors = false
 
   init {
-    this.text = ShortcutExtension.patchShortcutTags(text)
+    val builtText = textSupplier(GotItTextBuilder())
+    this.text = ShortcutExtension.patchShortcutTags(builtText)
   }
 
   /**
