@@ -9,13 +9,11 @@ import com.intellij.openapi.roots.DependencyScope
 import org.jetbrains.kotlin.gradle.idea.tcs.*
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
-fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency): DataNode<out AbstractDependencyData<*>>? {
+fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency): List<DataNode<out AbstractDependencyData<*>>> {
     return when (dependency) {
-        is IdeaKotlinBinaryDependency -> addDependency(dependency)
-        is IdeaKotlinSourceDependency -> addDependency(dependency)
-        is IdeaKotlinProjectArtifactDependency -> {
-            addDependency(resolve(dependency) ?: return null)
-        }
+        is IdeaKotlinBinaryDependency -> listOfNotNull(addDependency(dependency))
+        is IdeaKotlinSourceDependency -> listOfNotNull(addDependency(dependency))
+        is IdeaKotlinProjectArtifactDependency -> addDependency(dependency)
     }
 }
 
@@ -57,4 +55,11 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
     }
 
     return dependencyNode
+}
+
+fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinProjectArtifactDependency): List<DataNode<ModuleDependencyData>> {
+    val project = this.getParent(ProjectData::class.java) ?: return emptyList()
+    return KotlinProjectArtifactDependencyResolver(project).resolve(dependency).mapNotNull { sourceDependency ->
+        addDependency(sourceDependency)
+    }
 }
