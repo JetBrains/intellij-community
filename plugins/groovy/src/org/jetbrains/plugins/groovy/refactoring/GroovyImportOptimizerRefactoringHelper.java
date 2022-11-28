@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,13 +52,14 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       final int total = files.size();
       int i = 0;
       for (final GroovyFile file : files) {
-        if (!file.isValid()) continue;
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (progressIndicator != null) {
-          progressIndicator.setText2(virtualFile.getPresentableUrl());
-          progressIndicator.setFraction((double)i++/total);
-        }
+        double fraction = (double)i++ / total;
         ApplicationManager.getApplication().runReadAction(() -> {
+          if (!file.isValid()) return;
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (progressIndicator != null) {
+            progressIndicator.setText2(virtualFile.getPresentableUrl());
+            progressIndicator.setFraction(fraction);
+          }
           if (ProjectRootManager.getInstance(project).getFileIndex().isInSource(virtualFile)) {
             final Set<GrImportStatement> usedImports = usedImports(file);
             final List<GrImportStatement> validImports = PsiUtil.getValidImportStatements(file);
