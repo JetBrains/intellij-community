@@ -2,6 +2,7 @@ package org.jetbrains.completion.full.line.local.generation
 
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 class UtilsTest {
   @Test
@@ -23,6 +24,19 @@ class UtilsTest {
     val list = doubleArrayOf(0.1, 0.9)
     val expected = intArrayOf(1, 0)
     assertArrayEquals(topk1d(list, 3), expected)
+  }
+
+  @Test
+  fun testTopk1dCorrectness() {
+    val list = DoubleArray(10000) { Random.nextDouble() }
+    val k = 10
+    val expected = list
+      .mapIndexed { i, v -> Pair(i, v) }
+      .sortedByDescending { it.second }
+      .take(k)
+      .map { it.first }
+      .toIntArray()
+    assertArrayEquals(topk1d(list, k), expected)
   }
 
   @Test
