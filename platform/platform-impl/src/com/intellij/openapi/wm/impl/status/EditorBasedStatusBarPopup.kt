@@ -258,7 +258,6 @@ abstract class EditorBasedStatusBarPopup(
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @TestOnly
   private fun drainRequestsInTest() {
     runBlockingModal(ModalTaskOwner.guess(), "") {

@@ -1,169 +1,144 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm;
+package com.intellij.openapi.wm
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.Collection;
-import java.util.function.Supplier;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.StatusBar.Info
+import com.intellij.openapi.wm.StatusBar.StandardWidgets
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.awt.Color
+import java.awt.Component
+import java.util.function.Supplier
+import javax.swing.JComponent
 
 /**
  * Status bar shown on the bottom of IDE frame.
- * <p>
- * Displays {@link Info#set(String, Project) status text} and
- * a number of {@link StandardWidgets builtin} and custom {@link StatusBarWidget widgets}.
+ *
+ *
+ * Displays [status text][Info.set] and
+ * a number of [builtin][StandardWidgets] and custom [widgets][StatusBarWidget].
  *
  * @see StatusBarWidgetFactory
  */
-public interface StatusBar extends StatusBarInfo, Disposable {
-  @SuppressWarnings("AbstractClassNeverImplemented")
-  final class Info {
+interface StatusBar : StatusBarInfo, Disposable {
+  object Info {
     @Topic.ProjectLevel
-    public static final Topic<StatusBarInfo> TOPIC = new Topic<>("IdeStatusBar.Text", StatusBarInfo.class, Topic.BroadcastDirection.NONE);
+    @JvmField
+    val TOPIC = Topic("IdeStatusBar.Text", StatusBarInfo::class.java, Topic.BroadcastDirection.NONE)
 
-    private Info() {
-    }
-
-    public static void set(@NlsContexts.StatusBarText @Nullable final String text, @Nullable final Project project) {
-      set(text, project, null);
-    }
-
-    public static void set(@NlsContexts.StatusBarText @Nullable final String text, @Nullable final Project project,
-                           @NonNls @Nullable final String requestor) {
+    @JvmOverloads
+    @JvmStatic
+    fun set(text: @NlsContexts.StatusBarText String?, project: Project?, requestor: @NonNls String? = null) {
       if (project != null) {
-        if (project.isDisposed()) {
-          return;
+        if (project.isDisposed) {
+          return
         }
-        if (!project.isInitialized()) {
-          StartupManager.getInstance(project).runAfterOpened(() -> {
-            project.getMessageBus().syncPublisher(TOPIC).setInfo(text, requestor);
-          });
-          return;
+        if (!project.isInitialized) {
+          StartupManager.getInstance(project).runAfterOpened { project.messageBus.syncPublisher(TOPIC).setInfo(text, requestor) }
+          return
         }
       }
-
-      MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-      bus.syncPublisher(TOPIC).setInfo(text, requestor);
+      (project?.messageBus ?: ApplicationManager.getApplication().messageBus).syncPublisher(TOPIC).setInfo(text, requestor)
     }
   }
 
   /**
    * Adds the given widget on the right.
    *
-   * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated(forRemoval = true)
-  void addWidget(@NotNull StatusBarWidget widget);
+  @Deprecated("Use {@link StatusBarWidgetFactory}")
+  fun addWidget(widget: StatusBarWidget)
 
   /**
-   * Adds the given widget positioned according to given anchor (see {@link Anchors}).
+   * Adds the given widget positioned according to given anchor (see [Anchors]).
    *
-   * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated(forRemoval = true)
-  void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor);
+  @Deprecated("Use {@link StatusBarWidgetFactory}")
+  fun addWidget(widget: StatusBarWidget, anchor: @NonNls String)
 
   /**
    * Adds the given widget on the right.
-   * <p>
-   * For external usages use {@link StatusBarWidgetFactory}.
+   *
+   *
+   * For external usages use [StatusBarWidgetFactory].
    */
   @ApiStatus.Internal
-  void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable);
+  fun addWidget(widget: StatusBarWidget, parentDisposable: Disposable)
 
   /**
-   * Adds the given widget positioned according to given anchor (see {@link Anchors}).
-   * <p>
-   * For external usages use {@link StatusBarWidgetFactory}.
+   * Adds the given widget positioned according to given anchor (see [Anchors]).
+   *
+   *
+   * For external usages use [StatusBarWidgetFactory].
    */
   @ApiStatus.Internal
-  void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor, @NotNull Disposable parentDisposable);
+  fun addWidget(widget: StatusBarWidget, anchor: @NonNls String, parentDisposable: Disposable)
 
   /**
-   * For external usages use {@link StatusBarWidgetFactory}.
+   * For external usages use [StatusBarWidgetFactory].
    */
   @ApiStatus.Internal
-  void removeWidget(@NonNls @NotNull String id);
+  fun removeWidget(id: @NonNls String)
 
-  void updateWidget(@NonNls @NotNull String id);
+  fun updateWidget(id: @NonNls String)
 
-  @Nullable
-  StatusBarWidget getWidget(@NonNls String id);
+  fun getWidget(id: @NonNls String): StatusBarWidget?
 
-  void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);
+  fun fireNotificationPopup(content: JComponent, backgroundColor: Color?)
 
-  @Nullable
-  StatusBar createChild(@NotNull IdeFrame frame);
+  fun createChild(frame: IdeFrame): StatusBar?
 
-  JComponent getComponent();
+  val component: JComponent?
 
-  StatusBar findChild(Component c);
+  fun findChild(c: Component): StatusBar?
 
-  @Nullable
-  IdeFrame getFrame();
+  val frame: IdeFrame?
 
-  @Nullable
-  Project getProject();
+  val project: Project?
 
-  final class Anchors {
-    public static final String DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL);
+  object Anchors {
+    @JvmField
+    val DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL)
 
-    public static String before(String widgetId) {
-      return "before " + widgetId;
-    }
+    @JvmStatic
+    fun before(widgetId: String): String = "before $widgetId"
 
-    public static String after(String widgetId) {
-      return "after " + widgetId;
-    }
+    @JvmStatic
+    fun after(widgetId: String): String = "after $widgetId"
   }
 
-  final class StandardWidgets {
-    public static final String ENCODING_PANEL = "Encoding";
-    public static final String COLUMN_SELECTION_MODE_PANEL = "InsertOverwrite"; // Keep the old ID for backwards compatibility
-    public static final String READONLY_ATTRIBUTE_PANEL = "ReadOnlyAttribute";
-    public static final String POSITION_PANEL = "Position";
-    public static final String LINE_SEPARATOR_PANEL = "LineSeparator";
+  object StandardWidgets {
+    const val ENCODING_PANEL = "Encoding"
+    // keep the old ID for backwards compatibility
+    const val COLUMN_SELECTION_MODE_PANEL = "InsertOverwrite"
+    const val READONLY_ATTRIBUTE_PANEL = "ReadOnlyAttribute"
+    const val POSITION_PANEL = "Position"
+    const val LINE_SEPARATOR_PANEL = "LineSeparator"
   }
 
-  void startRefreshIndication(@NlsContexts.Tooltip String tooltipText);
+  fun startRefreshIndication(tooltipText: @NlsContexts.Tooltip String?)
 
-  void stopRefreshIndication();
+  fun stopRefreshIndication()
 
-  default void addListener(@NotNull StatusBarListener listener, @NotNull Disposable parentDisposable) {
-  }
+  fun addListener(listener: StatusBarListener, parentDisposable: Disposable) {}
 
-  @Nullable
-  default Collection<StatusBarWidget> getAllWidgets() {
-    return null;
-  }
+  val allWidgets: Collection<StatusBarWidget>?
+    get() = null
 
-  @NonNls
-  @Nullable
-  default String getWidgetAnchor(@NonNls @NotNull String id) {
-    return null;
-  }
+  fun getWidgetAnchor(id: @NonNls String): @NonNls String? = null
 
   /**
-   * @return if not {@code null}, an editor which should be used as the current one
-   * by editor-based widgets installed on this status bar,
-   * otherwise should be ignored.
+   * if not `null`, an editor which should be used as the current one
+   * by editor-based widgets installed on this status bar, otherwise should be ignored.
    */
-  @Nullable
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  default Supplier<@Nullable FileEditor> getCurrentEditor() {
-    return null;
-  }
+  @get:ApiStatus.Internal
+  @get:ApiStatus.Experimental
+  val currentEditor: Supplier<FileEditor?>?
+    get() = null
 }
