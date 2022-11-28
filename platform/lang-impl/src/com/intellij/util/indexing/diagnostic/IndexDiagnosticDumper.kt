@@ -115,6 +115,11 @@ class IndexDiagnosticDumper : Disposable {
     @TestOnly
     var shouldDumpInUnitTestMode: Boolean = false
 
+    @JvmStatic
+    val shouldDumpPathsOfFilesIndexedByInfrastructureExtensions =
+      SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.indexed.by.infrastructure.extensions",
+                                          ApplicationManagerEx.isInIntegrationTest())
+
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
     fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
