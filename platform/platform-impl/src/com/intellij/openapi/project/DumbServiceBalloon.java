@@ -8,18 +8,17 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -73,8 +72,7 @@ public class DumbServiceBalloon {
     long startTimestamp = System.nanoTime();
     UIEventLogger.DumbModeBalloonRequested.log(myProject);
     myBalloon = JBPopupFactory.getInstance().
-      createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
-      setBorderColor(JBColor.border()).
+      createHtmlTextBalloonBuilder(balloonText, MessageType.WARNING, null).
       setBorderInsets(DUMB_BALLOON_INSETS).
       setShowCallout(false).
       createBalloon();
