@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.notification
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.*
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.notification.BrowseNotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -12,8 +12,9 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImp
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.util.DoNotShowAgainNotificationAction
 import java.util.concurrent.Callable
 
 const val IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION = "notification.kotlin.js.compiler.ignored"
@@ -31,34 +32,26 @@ class KotlinJsCompilerNotificationImportListener(private val project: Project) :
             Condition<Any?> { project.isDisposed || KotlinPluginDisposable.getInstance(project).disposed },
         )
     }
-}
 
-fun showDeprecatedKotlinJsCompilerWarning(
-    project: Project,
-) {
-    if (
-        !PropertiesComponent.getInstance(project).getBoolean(IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION, false)
-    ) {
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup("Kotlin/JS compiler Gradle")
-            .createNotification(
-                KotlinIdeaGradleBundle.message("notification.text.kotlin.js.compiler.title"),
-                KotlinIdeaGradleBundle.message("notification.text.kotlin.js.compiler.body"),
-                NotificationType.WARNING
-            )
-            .addAction(
-                BrowseNotificationAction(
-                    KotlinIdeaGradleBundle.message("notification.text.kotlin.js.compiler.learn.more"),
-                    KotlinIdeaGradleBundle.message("notification.text.kotlin.js.compiler.link"),
+    private fun showDeprecatedKotlinJsCompilerWarning(project: Project) {
+        if (
+            !PropertiesComponent.getInstance(project).getBoolean(IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION, false)
+        ) {
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("Kotlin/JS compiler Gradle")
+                .createNotification(
+                    KotlinBundle.message("notification.text.kotlin.js.compiler.title"),
+                    KotlinBundle.message("notification.text.kotlin.js.compiler.body"),
+                    NotificationType.WARNING
                 )
-            )
-            .addAction(object : NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
-                override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                    PropertiesComponent.getInstance(project).setValue(IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION, true)
-                    notification.expire();
-                }
-            })
-            .notify(project)
-
+                .addAction(
+                    BrowseNotificationAction(
+                        KotlinBundle.message("notification.text.kotlin.js.compiler.learn.more"),
+                        KotlinBundle.message("notification.text.kotlin.js.compiler.link"),
+                    )
+                )
+                .addAction(DoNotShowAgainNotificationAction(project, IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION))
+                .notify(project)
+        }
     }
 }
