@@ -91,7 +91,11 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     }
   }
 
-  open val logger: StatisticsEventLogger by lazy { createLogger() }
+  private val emptyLogger: StatisticsEventLogger by lazy { EmptyStatisticsEventLogger() }
+  private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
+
+  open val logger: StatisticsEventLogger
+    get() = if (isRecordEnabled()) actualLogger else emptyLogger
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
@@ -115,10 +119,6 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   }
 
   private fun createLogger(): StatisticsEventLogger {
-    if (!isRecordEnabled()) {
-      return EmptyStatisticsEventLogger()
-    }
-
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
