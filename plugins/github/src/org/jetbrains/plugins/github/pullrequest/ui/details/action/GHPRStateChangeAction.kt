@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.util.NlsActions
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 import javax.swing.AbstractAction
 
 abstract class GHPRStateChangeAction(@NlsActions.ActionText actionName: String, protected val stateModel: GHPRStateModel)

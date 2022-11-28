@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 import java.awt.event.ActionEvent
 
 internal class GHPRRebaseMergeAction(stateModel: GHPRStateModel)

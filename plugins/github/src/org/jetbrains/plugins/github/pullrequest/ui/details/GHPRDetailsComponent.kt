@@ -20,6 +20,10 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane

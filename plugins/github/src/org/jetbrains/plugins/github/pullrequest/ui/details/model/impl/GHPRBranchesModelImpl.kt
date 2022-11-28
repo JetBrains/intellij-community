@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui.details
+package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.collaboration.ui.SingleValueModel
@@ -13,6 +13,7 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesModel
 import org.jetbrains.plugins.github.util.GithubGitHelper
 
 internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GHPullRequest>,

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.util.NlsActions
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 
 abstract class GHPRMergeAction(@NlsActions.ActionText actionName: String, stateModel: GHPRStateModel)
   : GHPRStateChangeAction(actionName, stateModel) {

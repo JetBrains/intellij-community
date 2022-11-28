@@ -9,7 +9,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 

@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui.details
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -16,8 +18,7 @@ import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessa
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
-import com.intellij.collaboration.ui.SimpleEventListener
-import com.intellij.collaboration.ui.SingleValueModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import java.util.concurrent.CompletableFuture
