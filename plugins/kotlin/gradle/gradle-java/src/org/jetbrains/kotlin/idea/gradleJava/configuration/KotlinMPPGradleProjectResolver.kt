@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.gradle.configuration.*
@@ -649,7 +650,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             val dependenciesContainer = mppModel.dependencies
 
             if (dependenciesContainer != null) {
-                populateModuleDependenciesWithDependenciesContainer(gradleModule, ideModule, resolverCtx, mppModel, dependenciesContainer)
+                populateModuleDependenciesWithDependenciesContainer(
+                    gradleModule, ideProject, ideModule, resolverCtx, mppModel, dependenciesContainer
+                )
             } else {
                 populateModuleDependenciesWithoutDependenciesContainer(gradleModule, ideProject, ideModule, resolverCtx)
             }
@@ -660,6 +663,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
          */
         private fun populateModuleDependenciesWithDependenciesContainer(
             gradleModule: IdeaModule,
+            ideProject: DataNode<ProjectData>,
             ideModule: DataNode<ModuleData>,
             resolverCtx: ProjectResolverContext,
             mppModel: KotlinMPPGradleModel,
@@ -668,8 +672,24 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             mppModel.sourceSetsByName.values.forEach { sourceSet ->
                 val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
                 val sourceSetDataNode = ideModule.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
-                dependencies[sourceSet.name].forEachIndexed { index, dependency ->
-                    sourceSetDataNode.addDependency(dependency)?.data?.setOrder(index)
+
+                /*
+                Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
+                Such dependencies can be resolved to the actual source sets that built this artifact.
+                 */
+                val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver(ideProject)
+                val resolvedDependencies = dependencies[sourceSet.name].flatMap { dependency ->
+                    if (dependency is IdeaKotlinProjectArtifactDependency) projectArtifactDependencyResolver.resolve(dependency)
+                    else listOf(dependency)
+                }
+
+                /*
+                Add each resolved dependency
+                 */
+                resolvedDependencies.forEachIndexed { index, dependency ->
+                    sourceSetDataNode.addDependency(dependency)
+                        /* The classpath order of the dependencies is given by the order they were sent by the Kotlin Gradle Plugin */
+                        .forEach { it.data.setOrder(index) }
                 }
             }
         }

@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlin-gradle-plugin-idea" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea:1.8.20-dev-3076" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea:1.8.20-dev-3177" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.8.20-dev-3076/kotlin-gradle-plugin-idea-1.8.20-dev-3076.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.8.20-dev-3177/kotlin-gradle-plugin-idea-1.8.20-dev-3177.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.8.20-dev-3076/kotlin-gradle-plugin-idea-1.8.20-dev-3076-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.8.20-dev-3177/kotlin-gradle-plugin-idea-1.8.20-dev-3177-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
