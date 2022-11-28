@@ -11,26 +11,6 @@ interface KotlinPlatformContainer : Serializable, Iterable<KotlinPlatform> {
     val platforms: Collection<KotlinPlatform>
     val arePlatformsInitialized: Boolean
 
-    @Deprecated(
-        "Ambiguous semantics of 'supports' for COMMON or (ANDROID/JVM) platforms. Use 'platforms' directly to express clear intention",
-        level = DeprecationLevel.ERROR
-    )
-    fun supports(simplePlatform: KotlinPlatform): Boolean
-
-    @Deprecated(
-        "Unclear semantics: Use 'platforms' directly to express intention",
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("platforms.singleOrNull() ?: KotlinPlatform.COMMON")
-    )
-    fun getSinglePlatform() = platforms.singleOrNull() ?: KotlinPlatform.COMMON
-
-    @Deprecated(
-        "Unclear semantics: Use 'pushPlatform' instead",
-        ReplaceWith("pushPlatform"),
-        level = DeprecationLevel.ERROR
-    )
-    fun addSimplePlatforms(platforms: Collection<KotlinPlatform>) = pushPlatforms(platforms)
-
     /**
      * Adds the given [platforms] to this container.
      * Note: If any of the pushed [platforms] is common, then this container will drop all non-common platforms and subsequent invocations

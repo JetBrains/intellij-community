@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
-private val MPP_BUILDER_LOGGER = Logging.getLogger(KotlinMPPGradleModelBuilder::class.java)
 
 class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
@@ -44,18 +43,16 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             val kotlinExtensionReflection = KotlinExtensionReflection(project, kotlinExtension)
             if (!shouldBuild(kotlinExtensionReflection)) return null
 
-            val modelBuilderContext = builderContext ?: return null
-
-            val kotlinGradlePluginVersion = kotlinExtensionReflection.parseKotlinGradlePluginVersion()
-            val argsMapper = CompilerArgumentsCacheMapperImpl()
-
-            val multiplatformImportReflection = KotlinMultiplatformImportReflection(kotlinExtensionReflection)
-
             val importingContext = MultiplatformModelImportingContextImpl(
-                project, multiplatformImportReflection, kotlinGradlePluginVersion, argsMapper, modelBuilderContext
+                project = project,
+                importReflection = KotlinMultiplatformImportReflection(kotlinExtensionReflection),
+                kotlinExtensionReflection = kotlinExtensionReflection,
+                kotlinGradlePluginVersion = kotlinExtensionReflection.parseKotlinGradlePluginVersion(),
+                compilerArgumentsCacheMapper = CompilerArgumentsCacheMapperImpl(),
+                modelBuilderContext = builderContext ?: return null
             )
 
-            val sourceSets = buildSourceSets(kotlinExtensionReflection, importingContext)
+            val sourceSets = buildSourceSets(importingContext)
             importingContext.initializeSourceSets(sourceSets)
 
             val targets = buildTargets(importingContext, kotlinExtensionReflection.targets)
@@ -79,8 +76,8 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
                 dependencies = dependenciesContainer,
-                cacheAware = argsMapper,
-                kotlinGradlePluginVersion = kotlinGradlePluginVersion
+                cacheAware = importingContext.compilerArgumentsCacheMapper,
+                kotlinGradlePluginVersion = importingContext.kotlinGradlePluginVersion
             ).apply {
                 kotlinImportingDiagnostics += collectDiagnostics(importingContext)
             }
@@ -99,7 +96,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         val (orphanSourceSets, nonOrphanSourceSets) = importingContext.sourceSets.partition { importingContext.isOrphanSourceSet(it) }
 
         orphanSourceSets.forEach {
-            MPP_BUILDER_LOGGER.warn("[sync warning] Source set \"${it.name}\" is not compiled with any compilation. This source set is not imported in the IDE.")
+            logger.warn("[sync warning] Source set \"${it.name}\" is not compiled with any compilation. This source set is not imported in the IDE.")
         }
         return nonOrphanSourceSets.associateBy { it.name }
     }
@@ -111,47 +108,11 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     }
 
     private fun buildSourceSets(
-        kotlinExtensionReflection: KotlinExtensionReflection,
         importingContext: MultiplatformModelImportingContext
-    ): Map<String, KotlinSourceSetImpl> {
-        val sourceSets = kotlinExtensionReflection.sourceSets
-        val androidDeps = buildAndroidDeps(importingContext, kotlinExtensionReflection.kotlinExtension.javaClass.classLoader)
-
-        val sourceSetProtoBuilder = KotlinSourceSetBuilder(androidDeps, importingContext.project)
-
-        val allSourceSetsProtosByNames = sourceSets.mapNotNull { sourceSet ->
-            sourceSetProtoBuilder.buildComponent(
-                origin = sourceSet,
-                importingContext = importingContext
-            )
-        }.associateBy { it.name }
-
-        // Some performance optimisation: do not build metadata dependencies if source set is not common
-        return if (importingContext.getProperty(BUILD_METADATA_DEPENDENCIES)) {
-            allSourceSetsProtosByNames.mapValues { (_, proto) ->
-                proto.buildKotlinSourceSetImpl(true, allSourceSetsProtosByNames)
-            }
-        } else {
-            val unactualizedSourceSets = allSourceSetsProtosByNames.values.flatMap { it.dependsOnSourceSets }.distinct()
-            allSourceSetsProtosByNames.mapValues { (name, proto) ->
-                proto.buildKotlinSourceSetImpl(unactualizedSourceSets.contains(name), allSourceSetsProtosByNames)
-            }
-        }
-    }
-
-    private fun buildAndroidDeps(importingContext: MultiplatformModelImportingContext, classLoader: ClassLoader): Map<String, List<Any>>? {
-        if (importingContext.getProperty(INCLUDE_ANDROID_DEPENDENCIES)) {
-            try {
-                val resolverClass = classLoader.loadClass("org.jetbrains.kotlin.gradle.targets.android.internal.AndroidDependencyResolver")
-                val getAndroidSourceSetDependencies = resolverClass.getMethodOrNull("getAndroidSourceSetDependencies", Project::class.java)
-                val resolver = resolverClass.getField("INSTANCE").get(null)
-                @Suppress("UNCHECKED_CAST")
-                return getAndroidSourceSetDependencies?.let { it(resolver, importingContext.project) } as Map<String, List<Any>>?
-            } catch (e: Exception) {
-                MPP_BUILDER_LOGGER.info("Unexpected exception", e)
-            }
-        }
-        return null
+    ): List<KotlinSourceSetImpl> {
+        val sourceSetBuilder = KotlinSourceSetBuilder(importingContext)
+        return importingContext.kotlinExtensionReflection.sourceSets
+            .mapNotNull { sourceSetReflection -> sourceSetBuilder.buildKotlinSourceSet(sourceSetReflection) }
     }
 
     private fun buildTargets(
@@ -237,7 +198,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     private fun KotlinExtensionReflection.parseKotlinGradlePluginVersion(): KotlinGradlePluginVersion? {
         val version = KotlinGradlePluginVersion.parse(kotlinGradlePluginVersion ?: return null)
         if (version == null) {
-            MPP_BUILDER_LOGGER.warn("[sync warning] Failed to parse KotlinGradlePluginVersion: version == null")
+            logger.warn("[sync warning] Failed to parse KotlinGradlePluginVersion: version == null")
         }
         return version
     }
@@ -255,5 +216,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                     it.check(this@collectDiagnostics, this, importingContext)
                 }
             }
+
+        val logger = Logging.getLogger(KotlinMPPGradleModelBuilder::class.java)
     }
 }
