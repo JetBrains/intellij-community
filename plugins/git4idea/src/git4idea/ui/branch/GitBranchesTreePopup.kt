@@ -56,10 +56,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import java.awt.AWTEvent
-import java.awt.Component
-import java.awt.Cursor
-import java.awt.Point
+import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
 import java.util.function.Function
@@ -688,12 +685,27 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         border = JBUI.Borders.emptyLeft(10)
       }
 
+      private val branchInfoPanel = JBUI.Panels.simplePanel(mainTextComponent)
+        .addToLeft(mainIconComponent)
+        .addToRight(incomingOutgoingLabel)
+        .andTransparent()
+
       private val textPanel = JBUI.Panels.simplePanel()
-        .addToLeft(JBUI.Panels.simplePanel(mainTextComponent)
-                     .addToLeft(mainIconComponent)
-                     .addToRight(incomingOutgoingLabel)
-                     .andTransparent())
-        .addToCenter(secondaryLabel)
+        .addToCenter(JPanel(GridBagLayout()).apply {
+          isOpaque = false
+
+          add(branchInfoPanel,
+              GridBagConstraints().apply {
+                anchor = GridBagConstraints.LINE_START
+                weightx = 1.0
+              })
+
+          add(secondaryLabel,
+              GridBagConstraints().apply {
+                anchor = GridBagConstraints.LINE_END
+                weightx = 1.0
+              })
+        })
         .andTransparent()
 
       private val mainPanel = JBUI.Panels.simplePanel()
