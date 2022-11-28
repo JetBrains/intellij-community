@@ -76,7 +76,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
       }
 
       String text = combo.getText();
-      if (!StringUtil.isEmpty(text)) {
+      if (!StringUtil.isEmpty(text) && maxTextWidth > 0) {
         g2.setColor(c.getForeground());
         Rectangle textRect = new Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height);
         drawText(c, text, g2, textRect);
@@ -177,7 +177,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static void doClip(Rectangle bounds, int shift) {
-    bounds.setBounds(bounds.x + shift, bounds.y, bounds.width - shift, bounds.height);
+    bounds.setBounds(bounds.x + shift, bounds.y, Math.max(bounds.width - shift, 0), bounds.height);
   }
 
   private static Rectangle paintIcons(List<? extends Icon> icons, JComponent c, Graphics g, Rectangle bounds, int gapBetweenIcons) {
