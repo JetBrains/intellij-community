@@ -28,9 +28,9 @@ import java.util.Collection;
 
 public abstract class SafeDeleteProcessorDelegateBase implements SafeDeleteProcessorDelegate {
   @Nullable
-  public abstract Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @Nullable Module module, @NotNull Collection<PsiElement> allElementsToDelete);
+  public abstract Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @Nullable Module module, @NotNull Collection<? extends PsiElement> allElementsToDelete);
   @Override
-  public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<PsiElement> allElementsToDelete) {
+  public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return getElementsToSearch(element, null, allElementsToDelete);
   }
 

@@ -43,7 +43,7 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
   @Override
   public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
                                                               @Nullable Module module,
-                                                              @NotNull Collection<PsiElement> allElementsToDelete) {
+                                                              @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return Collections.singleton(element);
   }
 
@@ -62,7 +62,7 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
   @Nullable
   @Override
   public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element,
-                                                              @NotNull Collection<PsiElement> allElementsToDelete,
+                                                              @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               boolean askUser) {
     final IProperty property = (IProperty)element;
     final String key = property.getKey();

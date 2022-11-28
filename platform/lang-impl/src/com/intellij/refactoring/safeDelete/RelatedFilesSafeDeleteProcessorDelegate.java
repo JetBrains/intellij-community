@@ -51,7 +51,7 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
 
   @Override
   public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element,
-                                                              @NotNull final Collection<PsiElement> allElementsToDelete,
+                                                              final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     if (!askUser || !(element instanceof PsiFile)) return Collections.emptyList();
 
@@ -93,7 +93,7 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
 
   @Override
   public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
-                                                              @NotNull Collection<PsiElement> allElementsToDelete) {
+                                                              @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return Collections.singleton(element);
   }
 

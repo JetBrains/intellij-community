@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -175,9 +174,9 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     }
 
     override fun getElementsToSearch(
-        element: PsiElement,
-        module: Module?,
-        allElementsToDelete: MutableCollection<PsiElement>
+      element: PsiElement,
+      module: Module?,
+      allElementsToDelete: Collection<PsiElement>
     ): Collection<PsiElement> {
         when (element) {
             is KtParameter -> {
@@ -195,13 +194,13 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
 
     override fun getAdditionalElementsToDelete(
         element: PsiElement,
-        allElementsToDelete: MutableCollection<PsiElement>,
+        allElementsToDelete: Collection<PsiElement>,
         askUser: Boolean
-    ): MutableCollection<PsiElement>? {
+    ): Collection<PsiElement>? {
         return null
     }
 
-    override fun findConflicts(element: PsiElement, allElementsToDelete: Array<out PsiElement>): MutableCollection<String>? {
+    override fun findConflicts(element: PsiElement, allElementsToDelete: Array<out PsiElement>): Collection<String>? {
         if (element is KtNamedFunction || element is KtProperty) {
             val ktClass = element.getNonStrictParentOfType<KtClass>()
             if (ktClass == null || ktClass.body != element.parent) return null

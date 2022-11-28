@@ -52,7 +52,7 @@ public interface SafeDeleteProcessorDelegate {
    * @return additional elements to search for usages, or null if the user has cancelled the refactoring.
    */
   @Nullable
-  Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<PsiElement> allElementsToDelete);
+  Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<? extends PsiElement> allElementsToDelete);
 
   /**
    * Returns the list of additional elements to be deleted. Called after the refactoring dialog is shown.
@@ -64,7 +64,7 @@ public interface SafeDeleteProcessorDelegate {
    * @return additional elements to search for usages, or null if no additional elements were chosen.
    */
   @Nullable
-  Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element, @NotNull Collection<PsiElement> allElementsToDelete, final boolean askUser);
+  Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element, @NotNull Collection<? extends PsiElement> allElementsToDelete, final boolean askUser);
 
   /**
    * Detects usages which are not safe to delete.

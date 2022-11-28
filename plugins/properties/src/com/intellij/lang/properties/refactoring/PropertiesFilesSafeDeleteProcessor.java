@@ -41,12 +41,12 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
   }
 
   @Override
-  public Collection<PsiElement> getElementsToSearch(@NotNull final PsiElement element, @NotNull final Collection<PsiElement> allElementsToDelete) {
+  public Collection<PsiElement> getElementsToSearch(@NotNull final PsiElement element, final @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return Collections.singletonList(element);
   }
 
   @Override
-  public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element, @NotNull final Collection<PsiElement> allElementsToDelete,
+  public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element, final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     return null;
   }

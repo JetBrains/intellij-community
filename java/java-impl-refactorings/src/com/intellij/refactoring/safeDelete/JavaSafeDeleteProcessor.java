@@ -120,7 +120,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   @Override
   public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
                                                               @Nullable Module module,
-                                                              @NotNull Collection<PsiElement> allElementsToDelete) {
+                                                              @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     Project project = element.getProject();
     if (element instanceof PsiPackage && module != null) {
       final PsiDirectory[] directories = ((PsiPackage)element).getDirectories(module.getModuleScope());
@@ -229,7 +229,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element,
-                                                              @NotNull final Collection<PsiElement> allElementsToDelete,
+                                                              final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     if (element instanceof PsiField) {
       PsiField field = (PsiField)element;
