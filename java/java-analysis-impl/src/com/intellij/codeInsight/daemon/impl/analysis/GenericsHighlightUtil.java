@@ -436,17 +436,23 @@ public final class GenericsHighlightUtil {
                                                                               @NotNull PsiMethod method,
                                                                               @NotNull PsiElement methodIdentifier) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && aClass.isInterface() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
-      HierarchicalMethodSignature sig = method.getHierarchicalMethodSignature();
-      for (HierarchicalMethodSignature methodSignature : sig.getSuperSignatures()) {
-        PsiMethod objectMethod = methodSignature.getMethod();
-        PsiClass containingClass = objectMethod.getContainingClass();
-        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) && objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip(JavaErrorBundle.message("default.method.overrides.object.member", sig.getName()))
-            .range(methodIdentifier)
-            ;
-        }
+      return checkDefaultMethodOverrideEquivalentToObjectNonPrivate(methodIdentifier, method.getHierarchicalMethodSignature());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static HighlightInfo.Builder checkDefaultMethodOverrideEquivalentToObjectNonPrivate(@NotNull PsiElement methodIdentifier, HierarchicalMethodSignature sig) {
+    for (HierarchicalMethodSignature methodSignature : sig.getSuperSignatures()) {
+      PsiMethod objectMethod = methodSignature.getMethod();
+      PsiClass containingClass = objectMethod.getContainingClass();
+      if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) && objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .descriptionAndTooltip(JavaErrorBundle.message("default.method.overrides.object.member", sig.getName()))
+          .range(methodIdentifier);
       }
+      HighlightInfo.Builder inHierarchy = checkDefaultMethodOverrideEquivalentToObjectNonPrivate(methodIdentifier, methodSignature);
+      if (inHierarchy != null) return inHierarchy;
     }
     return null;
   }
