@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -29,34 +29,35 @@ public final class ChangeToAppendUtil {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       boolean isConstant = true;
+      boolean isPrimitiveOrBoxed = true;
       boolean isString = false;
       final StringBuilder builder = new StringBuilder();
       for (PsiExpression operand : operands) {
-        if (isConstant && PsiUtil.isConstantExpression(operand)) {
-          if (builder.length() != 0) {
+        final PsiType operandType = operand.getType();
+        isConstant &= PsiUtil.isConstantExpression(operand);
+        isPrimitiveOrBoxed &= operandType instanceof PsiPrimitiveType || PsiPrimitiveType.getUnboxedType(operandType) != null;
+        if (isConstant || !isString && isPrimitiveOrBoxed) {
+          if (!builder.isEmpty()) {
             builder.append('+');
           }
-          final PsiType operandType = operand.getType();
           if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             isString = true;
           }
           builder.append(CommentTracker.textWithSurroundingComments(operand));
         }
         else if (!operand.textMatches("\"\"")) {
-          isConstant = false;
-          if (builder.length() != 0) {
+          if (!builder.isEmpty()) {
             append(builder, useStringValueOf && !isString, out);
             builder.setLength(0);
           }
           buildAppendExpression(operand, useStringValueOf, out);
         }
       }
-      if (builder.length() != 0) {
+      if (!builder.isEmpty()) {
         append(builder, false, out);
       }
     }
-    else if (concatenation instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)concatenation;
+    else if (concatenation instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression expression = parenthesizedExpression.getExpression();
       if (expression != null) {
         return buildAppendExpression(expression, useStringValueOf, out);
