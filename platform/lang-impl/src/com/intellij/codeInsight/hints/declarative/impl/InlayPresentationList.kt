@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.withTranslated
@@ -21,7 +22,12 @@ import java.awt.geom.Rectangle2D
 /**
  * @see PresentationTreeBuilderImpl
  */
-class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var hasBackground: Boolean, @TestOnly var isDisabled: Boolean) {
+class InlayPresentationList(
+  private var state: TinyTree<Any?>,
+  @TestOnly var hasBackground: Boolean,
+  @TestOnly var isDisabled: Boolean,
+  var payloads: Map<String, InlayActionPayload>? = null
+) {
   companion object {
     private const val NOT_COMPUTED = -1
     private const val LEFT_MARGIN = 7
@@ -30,7 +36,7 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     private const val TOP_MARGIN = 1
     private const val ARC_WIDTH = 8
     private const val ARC_HEIGHT = 8
-    private const val BACKGROUND_ALPHA : Float = 0.55f
+    private const val BACKGROUND_ALPHA: Float = 0.55f
   }
 
   private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state).buildPresentationEntries()
@@ -67,7 +73,7 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     val partialWidthSums = getPartialWidthSums(fontMetricsStorage)
     for ((index, entry) in entries.withIndex()) {
       val leftBound = partialWidthSums[index] + LEFT_MARGIN
-      val rightBound = partialWidthSums.getOrElse(index + 1) { Int.MAX_VALUE - LEFT_MARGIN }  + LEFT_MARGIN
+      val rightBound = partialWidthSums.getOrElse(index + 1) { Int.MAX_VALUE - LEFT_MARGIN } + LEFT_MARGIN
 
       if (x in leftBound..rightBound) {
         return entry
@@ -87,7 +93,10 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     this.hasBackground = hasBackground
   }
 
-  private fun updateStateTree(treeToUpdate: TinyTree<Any?>, treeToUpdateFrom: TinyTree<Any?>, treeToUpdateIndex: Byte, treeToUpdateFromIndex: Byte) {
+  private fun updateStateTree(treeToUpdate: TinyTree<Any?>,
+                              treeToUpdateFrom: TinyTree<Any?>,
+                              treeToUpdateIndex: Byte,
+                              treeToUpdateFromIndex: Byte) {
     // we want to preserve the structure
     val treeToUpdateTag = treeToUpdate.getBytePayload(treeToUpdateIndex)
     val treeToUpdateFromTag = treeToUpdateFrom.getBytePayload(treeToUpdateFromIndex)
@@ -100,8 +109,9 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
         treeToUpdate.setBytePayload(nodePayload = treeToUpdateFromTag, index = treeToUpdateIndex)
       }
     }
-    
-    treeToUpdateFrom.syncProcessChildren(treeToUpdateFromIndex, treeToUpdateIndex, treeToUpdate) { treeToUpdateFromChildIndex, treeToUpdateChildIndex ->
+
+    treeToUpdateFrom.syncProcessChildren(treeToUpdateFromIndex, treeToUpdateIndex,
+                                         treeToUpdate) { treeToUpdateFromChildIndex, treeToUpdateChildIndex ->
       updateStateTree(treeToUpdate, treeToUpdateFrom, treeToUpdateChildIndex, treeToUpdateFromChildIndex)
       true
     }
@@ -122,7 +132,7 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     updateState(state, isDisabled, hasBackground)
   }
 
-  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage) : Int {
+  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int {
     if (computedWidth == NOT_COMPUTED) {
       val width = entries.sumOf { it.computeWidth(textMetricsStorage) } + LEFT_MARGIN + RIGHT_MARGIN
       computedWidth = width

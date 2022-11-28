@@ -10,6 +10,7 @@ interface InlayTreeSink {
    * @param builder builder for a given inlay entry. It can be executed zero times or once.
    */
   fun addPresentation(position: InlayPosition,
+                      payloads: List<InlayPayload>? = null,
                       tooltip: String? = null,
                       hasBackground: Boolean,
                       builder: PresentationTreeBuilder.() -> Unit)
@@ -19,6 +20,11 @@ interface InlayTreeSink {
    */
   fun whenOptionEnabled(optionId: String, block: () -> Unit)
 }
+
+/**
+ * The payload for the whole inlay, may be used later by the actions from the right-click menu.
+ */
+class InlayPayload(val payloadName: String, val payload: InlayActionPayload)
 
 sealed interface InlayPosition
 

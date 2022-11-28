@@ -610,6 +610,11 @@
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
 
+    <group id="InlayMenu"  popup="true" >
+      <action id="DisableDeclarativeInlayAction" class="com.intellij.codeInsight.hints.declarative.impl.DisableDeclarativeInlayAction" />
+      <action id="TestInlayAction" class="com.intellij.codeInsight.hints.declarative.impl.TestInlayAction" />
+    </group>
+
     <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
 
     <!-- Refactor -->

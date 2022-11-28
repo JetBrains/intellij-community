@@ -57,6 +57,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
     private val currentOptions = HashSet<String>()
 
     override fun addPresentation(position: InlayPosition,
+                                 payloads: List<InlayPayload>?,
                                  tooltip: String?,
                                  hasBackground: Boolean,
                                  builder: PresentationTreeBuilder.() -> Unit) {
@@ -124,7 +125,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
                 }
                 if (sink.attemptedToAddUnderOptions.isNotEmpty()) {
                   for (optionId in sink.attemptedToAddUnderOptions) {
-                    providersWithOptionsToToggle.add(ProviderWithOptionInfo(providerId, optionId, providerName, providerEnabled, ))
+                    providersWithOptionsToToggle.add(ProviderWithOptionInfo(providerId, optionId, providerName, providerEnabled))
                   }
                 }
               }

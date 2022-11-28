@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
-import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.Point
@@ -54,7 +53,23 @@ class DeclarativeInlayRenderer(
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
     val providerInfo = InlayHintsProviderFactory.getProviderInfo(psiFile.language, providerId) ?: return
     val providerName = providerInfo.providerName
-    JBPopupMenu.showByEvent(e.mouseEvent, "InlayMenu", DefaultActionGroup(DisableDeclarativeInlayAction(providerName, providerId)))
+
+    val inlayMenu: AnAction = ActionManager.getInstance().getAction("InlayMenu")
+    val inlayMenuActionGroup = inlayMenu as ActionGroup
+    val popupMenu = ActionManager.getInstance().createActionPopupMenu("InlayMenuPopup", inlayMenuActionGroup)
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.PSI_FILE, psiFile)
+      .add(CommonDataKeys.EDITOR, e.editor)
+      .add(InlayHintsProvider.PROVIDER_ID, providerId)
+      .add(InlayHintsProvider.PROVIDER_NAME, providerName)
+      .add(InlayHintsProvider.INLAY_PAYLOADS, presentationList.payloads)
+      .build()
+    popupMenu.setDataContext {
+      dataContext
+    }
+
+    JBPopupMenu.showByEvent(e.mouseEvent, popupMenu.component)
   }
 
   fun setInlay(inlay: Inlay<DeclarativeInlayRenderer>) {
@@ -71,18 +86,3 @@ class DeclarativeInlayRenderer(
   }
 }
 
-private class DisableDeclarativeInlayAction(private val providerName: @Nls String, private val providerId: String) : AnAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.text = CodeInsightBundle.message("inlay.hints.declarative.disable.action.text", providerName)
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    val settings = DeclarativeInlayHintsSettings.getInstance(project)
-    settings.setProviderEnabled(providerId, false)
-  }
-}
