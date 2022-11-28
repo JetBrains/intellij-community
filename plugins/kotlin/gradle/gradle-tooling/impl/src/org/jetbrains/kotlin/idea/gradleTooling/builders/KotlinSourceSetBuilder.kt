@@ -7,24 +7,23 @@ import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinAndroidSourceSetInfoBuilder.buildKotlinAndroidSourceSetInfo
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
 import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
 import java.io.File
 
-class KotlinSourceSetBuilder(
-    private val androidDeps: Map<String, List<Any>>?,
-    val project: Project
+internal class KotlinSourceSetBuilder(
+    private val context: MultiplatformModelImportingContext
 ) {
     private val sourceSetsWithoutNeedOfBuildingDependenciesMetadata: Set<Named> by lazy {
-        val isHMPPEnabled = project.getProperty(GradleImportProperties.IS_HMPP_ENABLED)
+        val isHMPPEnabled = context.getProperty(GradleImportProperties.IS_HMPP_ENABLED)
         if (!isHMPPEnabled) return@lazy emptySet()
 
         val sourceSetPlatforms = mutableMapOf<Named, MutableSet<KotlinPlatform>>()
-        val targets = project.getTargets().orEmpty().map(::KotlinTargetReflection)
+        val targets = context.kotlinExtensionReflection.targets
 
         for (target in targets) {
             val platform = target.platformType?.let { KotlinPlatform.byId(it) } ?: continue
@@ -40,60 +39,78 @@ class KotlinSourceSetBuilder(
             .keys
     }
 
-    fun buildComponent(
-        origin: KotlinSourceSetReflection,
-        importingContext: MultiplatformModelImportingContext
-    ): KotlinSourceSetProto? {
-        val languageSettings = origin.languageSettings
+    private val androidDependencies: Map<String, List<Any>>? by lazy {
+        if (context.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)) {
+            try {
+                val resolverClass = context.kotlinExtensionReflection.kotlinExtension.javaClass
+                    .classLoader.loadClass("org.jetbrains.kotlin.gradle.targets.android.internal.AndroidDependencyResolver")
+                val getAndroidSourceSetDependencies = resolverClass.getMethodOrNull("getAndroidSourceSetDependencies", Project::class.java)
+                val resolver = resolverClass.getField("INSTANCE").get(null)
+                @Suppress("UNCHECKED_CAST")
+                getAndroidSourceSetDependencies?.let { it(resolver, context.project) } as Map<String, List<Any>>?
+            } catch (e: Exception) {
+                KotlinMPPGradleModelBuilder.logger.info("Unexpected exception", e)
+            }
+        }
+        null
+    }
+
+    fun buildKotlinSourceSet(sourceSetReflection: KotlinSourceSetReflection): KotlinSourceSetImpl? {
+        val languageSettings = sourceSetReflection.languageSettings
             ?.let { KotlinLanguageSettingsBuilder.buildComponent(it) }
             ?: return null
 
-        val sourceDirs = origin.kotlin?.srcDirs ?: emptySet()
-        val resourceDirs = origin.resources?.srcDirs ?: emptySet()
-        val dependsOnSourceSets = origin.dependsOn.map { it.name }.toSet()
-        val additionalVisibleSourceSets = origin.additionalVisibleSourceSets.map { it.name }.toSet()
+        val sourceDirs = sourceSetReflection.kotlin?.srcDirs ?: emptySet()
+        val resourceDirs = sourceSetReflection.resources?.srcDirs ?: emptySet()
+        val dependsOnSourceSets = sourceSetReflection.dependsOn.map { it.name }.toSet()
+        val additionalVisibleSourceSets = sourceSetReflection.additionalVisibleSourceSets.map { it.name }.toSet()
 
-        val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = dependencies@{
+        val sourceSetDependencies: Array<KotlinDependencyId> = run dependencies@{
             /* Eagerly return empty, if dependencies are resolved using KGP */
-            if (importingContext.useKgpDependencyResolution()) return@dependencies emptyArray()
+            if (context.useKgpDependencyResolution()) return@dependencies emptyArray()
 
-            val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDeps, origin.instance)
-            val includeAndroidDependencies = importingContext.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)
+            val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDependencies, sourceSetReflection.instance)
+            val includeAndroidDependencies = context.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)
 
             val dependencies = when {
-                !includeAndroidDependencies && origin.instance in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
-                else -> buildMetadataDependencies(origin.instance, importingContext) + androidDependenciesForSourceSet
+                !includeAndroidDependencies && sourceSetReflection.instance in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
+                else -> buildMetadataDependencies(sourceSetReflection.instance, context) + androidDependenciesForSourceSet
             }
 
             dependencies
-                .map { importingContext.dependencyMapper.getId(it) }
+                .map { context.dependencyMapper.getId(it) }
                 .distinct()
                 .toTypedArray()
         }
 
-        val intransitiveSourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = dependencies@{
+        val intransitiveSourceSetDependencies: Array<KotlinDependencyId> = run dependencies@{
             /* Eagerly return empty, if dependencies are resolved using KGP */
-            if (importingContext.useKgpDependencyResolution()) return@dependencies emptyArray()
+            if (context.useKgpDependencyResolution()) return@dependencies emptyArray()
 
-            buildIntransitiveSourceSetDependencies(origin.instance, importingContext)
-                .map { importingContext.dependencyMapper.getId(it) }
+            buildIntransitiveSourceSetDependencies(sourceSetReflection.instance, context)
+                .map { context.dependencyMapper.getId(it) }
                 .distinct()
                 .toTypedArray()
         }
 
-        val androidSourceSetInfo = if (importingContext.kotlinGradlePluginVersion.supportsKotlinAndroidSourceSetInfo())
-            origin.androidSourceSetInfo?.let { info -> buildKotlinAndroidSourceSetInfo(info) } else null
+        val androidSourceSetInfo = if (context.kotlinGradlePluginVersion.supportsKotlinAndroidSourceSetInfo())
+            sourceSetReflection.androidSourceSetInfo?.let { info -> buildKotlinAndroidSourceSetInfo(info) } else null
 
-        return KotlinSourceSetProto(
-            name = origin.name,
+        val allDependsOnSourceSetNames = sourceSetReflection.dependsOn.map { it.name }.withClosure<String> { sourceSetName ->
+            context.kotlinExtensionReflection.sourceSetsByName[sourceSetName]?.dependsOn.orEmpty().map { it.name }
+        }
+
+        return KotlinSourceSetImpl(
+            name = sourceSetReflection.name,
             languageSettings = languageSettings,
             sourceDirs = sourceDirs,
             resourceDirs = resourceDirs,
-            regularDependencies = sourceSetDependenciesBuilder,
-            intransitiveDependencies = intransitiveSourceSetDependenciesBuilder,
-            dependsOnSourceSets = dependsOnSourceSets,
-            additionalVisibleSourceSets = additionalVisibleSourceSets,
-            androidSourceSetInfo = androidSourceSetInfo
+            regularDependencies = sourceSetDependencies,
+            intransitiveDependencies = intransitiveSourceSetDependencies,
+            declaredDependsOnSourceSets = dependsOnSourceSets.toMutableSet(),
+            allDependsOnSourceSets = allDependsOnSourceSetNames.toMutableSet(),
+            additionalVisibleSourceSets = additionalVisibleSourceSets.toMutableSet(),
+            androidSourceSetInfo = androidSourceSetInfo,
         )
     }
 
@@ -170,5 +187,6 @@ class KotlinSourceSetBuilder(
             intransitiveMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext).toList()
     }
 }
+
 
 internal const val INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR = "getIntransitiveMetadataConfigurationName"
