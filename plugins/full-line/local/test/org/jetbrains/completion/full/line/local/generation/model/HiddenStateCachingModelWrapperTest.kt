@@ -64,7 +64,7 @@ internal class HiddenStateCachingModelWrapperTest {
   companion object {
     private val modelFiles = ModelsFiles.gpt2_py_4L_512_83_q_local
     private var gpt2 = GPT2ModelWrapper(modelFiles.model, modelFiles.config)
-    private val bpe = FullLineTokenizer(modelFiles.tokenizer, nThreads = 2)
+    private val bpe = FullLineTokenizer(modelFiles.tokenizer)
     private var isCacheHit = false
     private val modelCache = object : HiddenStateCache() {
       override fun onCacheHit(commonPrefixLength: Int) {

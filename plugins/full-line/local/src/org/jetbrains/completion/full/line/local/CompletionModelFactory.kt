@@ -22,7 +22,7 @@ object CompletionModelFactory {
     loggingCallback: ((String) -> Unit)? = null,
     modelCache: HiddenStateCache? = null
   ): FullLineCompletionPipeline {
-    val tokenizer = FullLineTokenizer(tokenizerPath, nThreads = 2)
+    val tokenizer = FullLineTokenizer(tokenizerPath)
 
     var model: ModelWrapper = GPT2ModelWrapper(modelPath, configPath)
     if (modelCache != null) {
