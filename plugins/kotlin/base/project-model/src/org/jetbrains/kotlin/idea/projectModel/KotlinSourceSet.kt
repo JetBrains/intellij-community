@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.projectModel
 
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import java.io.File
 
 interface KotlinSourceSet : KotlinComponent {
@@ -11,12 +10,12 @@ interface KotlinSourceSet : KotlinComponent {
     val actualPlatforms: KotlinPlatformContainer
 
     /**
-     * Special dependencies, that shall not be passed transitively to any depending source sets
+     * Special dependencies, that shall not be passed transitively to any dependee source sets
      */
     val intransitiveDependencies: Array<KotlinDependencyId>
 
     /**
-     * Dependencies that can be forworded transitively to any dependending source set
+     * Dependencies that can be forwarded transitively to any dependee source set
      */
     val regularDependencies: Array<KotlinDependencyId>
 
@@ -30,30 +29,6 @@ interface KotlinSourceSet : KotlinComponent {
      */
     val declaredDependsOnSourceSets: Set<String>
 
-    /**
-     * The whole transitive closure of source sets this source set depends on.
-     * ([declaredDependsOnSourceSets] and their dependencies recursively)
-     */
-    @Suppress("DEPRECATION")
-    @Deprecated(
-        "This property might be misleading. " +
-                "Replace with 'KotlinSourceSetContainer.resolveAllDependsOnSourceSets' to make intention of " +
-                "receiving the full transitive closure explicit",
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("allDependsOnSourceSets")
-    )
-    val dependsOnSourceSets: Set<String>
-        get() = allDependsOnSourceSets
-
-    /**
-     * The whole transitive closure of source sets this source set depends on.
-     * ([declaredDependsOnSourceSets] and their dependencies recursively)
-     */
-    @Deprecated(
-        "This set of source sets might be inconsistent with any KotlinSourceSetContainer different to the one used to build this instance" +
-                "Replace with 'KotlinSourceSetContainer.resolveAllDependsOnSourceSets' to get consistent resolution",
-        level = DeprecationLevel.WARNING
-    )
     val allDependsOnSourceSets: Set<String>
 
     val additionalVisibleSourceSets: Set<String>
