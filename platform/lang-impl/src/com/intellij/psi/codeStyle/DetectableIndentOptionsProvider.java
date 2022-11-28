@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -174,7 +173,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       CodeStyle.getSettings(myProject).AUTODETECT_INDENTS = true;
-      notifyIndentOptionsChanged(myProject, null);
+      notifyIndentOptionsChanged(myProject);
       myNotification.expire();
     }
   }
@@ -210,13 +209,13 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
               ApplicationBundle.message("code.style.indent.detector.reject", projectOptionsTip),
               e -> {
                 disableForFile(virtualFile, indentOptions);
-                notifyIndentOptionsChanged(project, file);
+                notifyIndentOptionsChanged(project, virtualFile);
               }));
           actions.add(
             DumbAwareAction.create(ApplicationBundle.message("code.style.indent.detector.reindent", projectOptionsTip),
                                    e -> {
                                      disableForFile(virtualFile, indentOptions);
-                                     notifyIndentOptionsChanged(project, file);
+                                     notifyIndentOptionsChanged(project, virtualFile);
                                      CommandProcessor.getInstance().runUndoTransparentAction(
                                        () -> ApplicationManager.getApplication().runWriteAction(
                                          () -> CodeStyleManager.getInstance(project).adjustLineIndent(file, file.getTextRange()))
@@ -238,7 +237,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
               e -> {
                 myDiscardedOptions.remove(virtualFile);
                 discardedOptions.associateWithDocument(document);
-                notifyIndentOptionsChanged(project, file);
+                notifyIndentOptionsChanged(project, virtualFile);
               }));
           actions.add(Separator.getInstance());
         }
@@ -253,7 +252,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
         e -> {
           CodeStyle.getSettings(project).AUTODETECT_INDENTS = false;
           myDiscardedOptions.clear();
-          notifyIndentOptionsChanged(project, null);
+          notifyIndentOptionsChanged(project);
           showDisabledDetectionNotification(project);
         });
     }

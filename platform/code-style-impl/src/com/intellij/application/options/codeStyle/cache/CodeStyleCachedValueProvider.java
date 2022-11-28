@@ -276,10 +276,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         runnable.run();
       }
       if (!myProject.isDisposed()) {
-        PsiFile psiFile = getPsiFile();
-        if (psiFile != null) {
-          CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(psiFile);
-        }
+        CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(myViewProvider.getVirtualFile());
       }
       myComputation.reset();
     }

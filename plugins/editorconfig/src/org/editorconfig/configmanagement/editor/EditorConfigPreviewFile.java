@@ -51,18 +51,14 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
 
   @Override
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
-    PsiFile psiFile = event.getPsiFile();
-    if (psiFile == null || isOriginalFile(psiFile)) {
+    VirtualFile virtualFile = event.getVirtualFile();
+    if (virtualFile == null || isOriginalFile(virtualFile)) {
       reformat();
     }
   }
 
-  private boolean isOriginalFile(@NotNull PsiFile psiFile) {
-    VirtualFile file = psiFile.getVirtualFile();
-    if (file != null) {
-      return file.getPath().equals(myOriginalPath);
-    }
-    return false;
+  private boolean isOriginalFile(@NotNull VirtualFile file) {
+    return file.getPath().equals(myOriginalPath);
   }
 
   private void reformat() {

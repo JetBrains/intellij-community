@@ -9,10 +9,12 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
@@ -308,10 +310,33 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }
   }
 
+  /**
+   * @deprecated use {@link #fireCodeStyleSettingsChanged()} for project-wide changes or
+   */
+  @Deprecated
   public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
-    for (CodeStyleSettingsListener listener : myListeners) {
-      listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(file));
+    if (file != null) {
+      fireCodeStyleSettingsChanged(file.getVirtualFile());
     }
+    else {
+      fireCodeStyleSettingsChanged();
+    }
+  }
+
+  public void fireCodeStyleSettingsChanged(@NotNull VirtualFile file) {
+    for (CodeStyleSettingsListener listener : myListeners) {
+      listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), file));
+    }
+  }
+
+  public void fireCodeStyleSettingsChanged() {
+    for (CodeStyleSettingsListener listener : myListeners) {
+      listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), null));
+    }
+  }
+
+  protected @NotNull Project getProject() {
+    return ProjectManager.getInstance().getDefaultProject();
   }
 
   /**
@@ -324,7 +349,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    */
   public final void notifyCodeStyleSettingsChanged() {
     updateSettingsTracker();
-    fireCodeStyleSettingsChanged(null);
+    fireCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal

@@ -190,4 +190,9 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
     }
     return false;
   }
+
+  @Override
+  protected @NotNull Project getProject() {
+    return myProject;
+  }
 }

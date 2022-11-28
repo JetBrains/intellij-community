@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +50,21 @@ public abstract class FileIndentOptionsProvider {
     return true;
   }
 
+  /**
+   * @deprecated Use {@link #notifyIndentOptionsChanged(Project, VirtualFile)} or {@link #notifyIndentOptionsChanged(Project)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
+  }
+
+  protected static void notifyIndentOptionsChanged(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
+  }
+
+  protected static void notifyIndentOptionsChanged(@NotNull Project project) {
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
   }
 
   @Nullable

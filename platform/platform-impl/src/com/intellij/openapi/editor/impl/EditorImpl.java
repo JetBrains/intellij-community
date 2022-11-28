@@ -60,8 +60,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -4980,9 +4978,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
     if (myProject != null) {
-      if (event.getPsiFile() != null) {
-        PsiFile editorFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(getDocument());
-        if (editorFile != event.getPsiFile()) return;
+      VirtualFile eventFile = event.getVirtualFile();
+      if (eventFile != null && !eventFile.equals(getVirtualFile())) {
+        return;
       }
       int oldTabSize = EditorUtil.getTabSize(this);
       mySettings.reinitSettings();
