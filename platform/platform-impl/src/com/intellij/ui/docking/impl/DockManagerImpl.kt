@@ -452,6 +452,9 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     val dockContentUiContainer: JPanel
     var toolWindowPane: ToolWindowPane? = null
 
+    override val isDockWindow: Boolean
+      get() = true
+
     init {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment && container !is DockContainer.Dialog) {
         val statusBar = WindowManager.getInstance().getStatusBar(project)

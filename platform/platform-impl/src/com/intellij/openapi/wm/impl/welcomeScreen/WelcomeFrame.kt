@@ -164,10 +164,12 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
         if (instance != null) {
           return@Runnable
         }
-        val frame = EP.computeSafeIfAny(WelcomeFrameProvider::createFrame)
+
+        val frame = EP.lazySequence().mapNotNull { it.createFrame() }.firstOrNull()
                     ?: throw IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point")
         val jFrame = frame as JFrame
         registerKeyboardShortcuts(jFrame.rootPane)
+        SplashManager.hideBeforeShow(jFrame)
         jFrame.isVisible = true
         IdeMenuBar.installAppMenuIfNeeded(jFrame)
         instance = frame

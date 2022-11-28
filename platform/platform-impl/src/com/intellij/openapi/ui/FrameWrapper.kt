@@ -85,6 +85,9 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     show(true)
   }
 
+  protected open val isDockWindow: Boolean
+    get() = false
+
   fun createContents() {
     val frame = getFrame()
     if (frame is JFrame) {
@@ -129,7 +132,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       component?.let {
-        component = CustomFrameDialogContent.getCustomContentHolder(frame, it)
+        component = CustomFrameDialogContent.getCustomContentHolder(window = frame, content = it, isForDockContainerProvider = isDockWindow)
       }
     }
 

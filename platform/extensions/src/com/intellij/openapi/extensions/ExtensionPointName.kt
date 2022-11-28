@@ -53,8 +53,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return findFirstSafe(predicate, getPointImpl(null))
   }
 
-  fun <R> computeSafeIfAny(processor: Function<in T, out R?>): R? {
-    return computeSafeIfAny(processor, getPointImpl(null))
+  fun <R> computeSafeIfAny(processor: Function<T, out R>): R? {
+    return computeSafeIfAny(processor = processor, iterable = getPointImpl(null))
   }
 
   val extensionsIfPointIsRegistered: List<T>

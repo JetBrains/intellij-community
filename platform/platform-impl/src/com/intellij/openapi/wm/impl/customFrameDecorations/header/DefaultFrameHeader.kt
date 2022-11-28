@@ -10,8 +10,8 @@ import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import javax.swing.JFrame
 
-internal class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame) {
-  private val customDecorationTitle = CustomDecorationTitle(frame)
+internal class DefaultFrameHeader(frame: JFrame, isForDockContainerProvider: Boolean) : FrameHeader(frame) {
+  private val customDecorationTitle = CustomDecorationTitle(frame, isForDockContainerProvider = isForDockContainerProvider)
 
   init {
     layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "[min!][][pref!]")

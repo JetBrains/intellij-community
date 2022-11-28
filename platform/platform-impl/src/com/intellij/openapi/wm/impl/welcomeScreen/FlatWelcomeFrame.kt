@@ -11,7 +11,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditServiceListener
 import com.intellij.ide.plugins.PluginDropHandler
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.idea.SplashManager
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
@@ -82,8 +81,9 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
     private fun saveSizeAndLocation(location: Rectangle) {
       val middle = Point(location.x + location.width / 2, location.y + location.height / 2)
-      WindowStateService.getInstance().putLocation(WelcomeFrame.DIMENSION_KEY, middle)
-      WindowStateService.getInstance().putSize(WelcomeFrame.DIMENSION_KEY, location.size)
+      val windowStateService = WindowStateService.getInstance()
+      windowStateService.putLocation(WelcomeFrame.DIMENSION_KEY, middle)
+      windowStateService.putSize(WelcomeFrame.DIMENSION_KEY, location.size)
     }
 
     @JvmStatic
@@ -99,14 +99,13 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   }
 
   init {
-    SplashManager.hideBeforeShow(this)
     val rootPane = getRootPane()
     balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
     screen = suggestedScreen ?: FlatWelcomeScreen(frame = this)
     content = Wrapper()
     contentPane = content
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      header = DefaultFrameHeader(this)
+      header = DefaultFrameHeader(this, isForDockContainerProvider = false)
       content.setContent(getCustomContentHolder(this, screen.welcomePanel, header!!))
     }
     else {

@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
-import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
-import com.intellij.ui.docking.DockManager
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.beans.PropertyChangeListener
@@ -15,7 +13,10 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class CustomDecorationTitle(private val frame: JFrame) : CustomHeaderTitle {
+internal class CustomDecorationTitle(
+  private val frame: JFrame,
+  private val isForDockContainerProvider: Boolean,
+) : CustomHeaderTitle {
   override var onBoundsChanged: (() -> Unit)? = null
   private var selectedEditorFilePath: CustomDecorationPath? = null
   private var active = false
@@ -62,9 +63,7 @@ internal class CustomDecorationTitle(private val frame: JFrame) : CustomHeaderTi
     }
 
     project?.let { project ->
-      val dockManager = DockManager.getInstance(project)
-      val dockContainer = dockManager.getContainerFor(frame.rootPane) { it is DockableEditorTabbedContainer }
-      if (dockContainer is DockableEditorTabbedContainer) {
+      if (isForDockContainerProvider) {
         createCustomDecoration(project)
       }
     }
