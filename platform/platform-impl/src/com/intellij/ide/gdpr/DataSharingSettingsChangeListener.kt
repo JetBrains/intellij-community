@@ -4,10 +4,10 @@ package com.intellij.ide.gdpr
 import com.intellij.util.messages.Topic
 import java.util.*
 
-interface GdprSettingsChangeListener : EventListener {
+interface DataSharingSettingsChangeListener : EventListener {
   companion object {
     @Topic.AppLevel
-    val TOPIC: Topic<GdprSettingsChangeListener> = Topic(GdprSettingsChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+    val TOPIC: Topic<DataSharingSettingsChangeListener> = Topic(DataSharingSettingsChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
   fun consentWritten()
 }

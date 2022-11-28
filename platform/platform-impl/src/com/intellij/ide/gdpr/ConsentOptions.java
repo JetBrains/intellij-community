@@ -70,8 +70,8 @@ public final class ConsentOptions {
 
       @Override
       public void writeConfirmedConsents(@NotNull String data) throws IOException {
-        GdprSettingsChangeListener syncPublisher =
-          ApplicationManager.getApplication().getMessageBus().syncPublisher(GdprSettingsChangeListener.Companion.getTOPIC());
+        DataSharingSettingsChangeListener syncPublisher =
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.Companion.getTOPIC());
         Path confirmedConsentsFile = getConfirmedConsentsFile();
         Files.createDirectories(confirmedConsentsFile.getParent());
         Files.writeString(confirmedConsentsFile, data);
