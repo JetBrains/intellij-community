@@ -82,7 +82,7 @@ private fun quickSelect(arr: MutableList<Double>, k: Int): Double {
   var right = arr.size - 1
   while (true) {
     if (left >= right) return arr[left]
-    val partitionIndex = partition(arr, left, right, left + Random.nextInt(right - left))
+    val partitionIndex = partition(arr, left, right, left + (right - left) / 2)
     when {
       k < partitionIndex -> right = partitionIndex - 1
       k > partitionIndex -> left = partitionIndex + 1
