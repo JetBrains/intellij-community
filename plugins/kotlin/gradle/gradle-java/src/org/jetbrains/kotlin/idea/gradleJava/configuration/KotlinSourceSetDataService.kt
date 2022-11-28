@@ -206,7 +206,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 modelsProvider = modelsProvider,
                 hmppEnabled = kotlinGradleProjectData.isHmpp,
                 pureKotlinSourceFolders = if (platform.isJvm()) kotlinGradleProjectData.pureKotlinSourceFolders.toList() else emptyList(),
-                dependsOnList = kotlinSourceSet.dependsOn,
+                dependsOnList = kotlinSourceSet.dependsOn.toList(),
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
 

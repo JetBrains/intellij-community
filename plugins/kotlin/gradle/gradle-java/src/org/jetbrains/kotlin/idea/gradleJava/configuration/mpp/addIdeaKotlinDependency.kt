@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.DependencyScope
 import org.jetbrains.kotlin.gradle.idea.tcs.*
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency): List<DataNode<out AbstractDependencyData<*>>> {
@@ -18,16 +19,25 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency
 }
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinSourceDependency): DataNode<ModuleDependencyData>? {
-    /* Already created dependency: Return node */
-    findModuleDependencyNode(dependency.kotlinSourceSetModuleId)?.let { return it }
+    val dependencyNode = findModuleDependencyNode(dependency.kotlinSourceSetModuleId) ?: run create@{
+        /* Create module dependency */
+        val projectNode = ExternalSystemApiUtil.findParent(this, ProjectKeys.PROJECT) ?: return null
+        val dependencyNode = projectNode.findSourceSetNode(dependency.kotlinSourceSetModuleId) ?: return null
 
-    /* Create module dependency */
-    val projectNode = ExternalSystemApiUtil.findParent(this, ProjectKeys.PROJECT) ?: return null
-    val dependencyNode = projectNode.findSourceSetNode(dependency.kotlinSourceSetModuleId) ?: return null
+        val moduleDependencyData = ModuleDependencyData(this.data, dependencyNode.data)
+        moduleDependencyData.scope = DependencyScope.COMPILE
+        createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
+    }
 
-    val moduleDependencyData = ModuleDependencyData(this.data, dependencyNode.data)
-    moduleDependencyData.scope = DependencyScope.COMPILE
-    return createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
+    kotlinSourceSetData?.sourceSetInfo?.let { kotlinSourceSetInfo ->
+        when (dependency.type) {
+            IdeaKotlinSourceDependency.Type.Regular -> Unit
+            IdeaKotlinSourceDependency.Type.Friend -> kotlinSourceSetInfo.additionalVisible += dependencyNode.data.target.id
+            IdeaKotlinSourceDependency.Type.DependsOn -> kotlinSourceSetInfo.dependsOn += dependencyNode.data.target.id
+        }
+    }
+
+    return dependencyNode
 }
 
 
@@ -59,7 +69,6 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinProjectArtifactDependency): List<DataNode<ModuleDependencyData>> {
     val project = this.getParent(ProjectData::class.java) ?: return emptyList()
-    return KotlinProjectArtifactDependencyResolver(project).resolve(dependency).mapNotNull { sourceDependency ->
-        addDependency(sourceDependency)
-    }
+    return KotlinProjectArtifactDependencyResolver(project).resolve(dependency)
+        .mapNotNull { sourceDependency -> addDependency(sourceDependency) }
 }
