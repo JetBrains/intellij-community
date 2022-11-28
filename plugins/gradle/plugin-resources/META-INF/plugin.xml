@@ -109,6 +109,8 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper$SystemPropertiesAdjuster"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix"/>
+
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration$LegacyDefaultGradleProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration"/>
