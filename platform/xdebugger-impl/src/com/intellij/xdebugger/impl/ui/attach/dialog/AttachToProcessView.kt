@@ -84,7 +84,7 @@ internal abstract class AttachToProcessView(
 
   abstract fun getViewActions(): List<AnAction>
 
-  fun getName(): String = getHostType().displayText
+  fun getName(): String = application.getService(AttachDialogPresentationService::class.java).getHostTypeDisplayText(getHostType())
 
   abstract fun getHostType(): AttachDialogHostType
 

@@ -18,6 +18,7 @@
     <extensionPoint name="xdebugger.inlineValuePopupProvider" interface="com.intellij.xdebugger.impl.inline.InlineValuePopupProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.attachHostSettingsProvider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.dialog.item.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogPresentationProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -96,6 +97,7 @@
     <projectService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessDialogFactory"/>
 
     <xdebugger.dialog.item.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultItemPresentationProvider"/>
+    <xdebugger.dialog.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultPresentationProvider"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
