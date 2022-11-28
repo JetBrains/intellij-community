@@ -62,8 +62,8 @@ public class BackgroundTaskQueue {
   public void run(@NotNull Task.Backgroundable task,
                   @NotNull ModalityState modalityState,
                   @Nullable ProgressIndicator indicator) {
-    // do not ever enter this branch, except for cidr tests which are yet to be fixed: TODO Dmitry Kozhevnikov
-    if (!myForceAsyncInTests && ApplicationManager.getApplication().isUnitTestMode() && PlatformUtils.isCidr()) {
+    // do not ever enter this branch, except for AppCode tests which are yet to be fixed: TODO Florian Kistner
+    if (!myForceAsyncInTests && ApplicationManager.getApplication().isUnitTestMode() && PlatformUtils.isAppCode()) {
       // prohibit simultaneous execution from different threads
       synchronized (this) {
         getProgressManager().runProcessWithProgressInCurrentThread(task,
