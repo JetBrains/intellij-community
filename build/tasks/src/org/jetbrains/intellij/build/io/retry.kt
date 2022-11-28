@@ -4,6 +4,9 @@ package org.jetbrains.intellij.build.io
 import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.tracer
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -16,6 +19,17 @@ fun <T> retryWithExponentialBackOff(
   backOffFactor: Int = 2, backOffJitter: Double = 0.1,
   onException: (attempt: Int, e: Exception) -> Unit = ::defaultExceptionConsumer,
   action: (attempt: Int) -> T
+): T = runBlocking(Dispatchers.IO) {
+  suspendingRetryWithExponentialBackOff(attempts, initialDelayMs, backOffLimitMs, backOffFactor, backOffJitter, onException, action)
+}
+
+suspend fun <T> suspendingRetryWithExponentialBackOff(
+  attempts: Int = 5,
+  initialDelayMs: Long = TimeUnit.SECONDS.toMillis(5),
+  backOffLimitMs: Long = TimeUnit.MINUTES.toMillis(3),
+  backOffFactor: Int = 2, backOffJitter: Double = 0.1,
+  onException: suspend (attempt: Int, e: Exception) -> Unit = { attempt, e -> defaultExceptionConsumer(attempt, e) },
+  action: suspend (attempt: Int) -> T
 ): T {
   val random = Random()
   var effectiveDelay = initialDelayMs
@@ -35,7 +49,7 @@ fun <T> retryWithExponentialBackOff(
       }
     }
     if (effectiveDelay > 0) {
-      Thread.sleep(effectiveDelay)
+      delay(effectiveDelay)
     }
     effectiveDelay = nextDelay(
       random, previousDelay = effectiveDelay,

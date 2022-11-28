@@ -17,11 +17,13 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.io.suspendingRetryWithExponentialBackOff
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Builds 'repair' command line utility which is a simple and automated way to fix the IDE when it cannot start:
@@ -105,7 +107,7 @@ class RepairUtilityBuilder {
       }
     }
 
-    private fun findBinary(os: OsFamily, arch: JvmArchitecture): Binary {
+    fun findBinary(os: OsFamily, arch: JvmArchitecture): Binary {
       val binary = BINARIES.find { it.os == os && it.arch == arch }
       checkNotNull(binary) { "Unsupported binary: $os $arch" }
       return binary
@@ -129,7 +131,7 @@ private fun getBinaryCache(context: BuildContext): Deferred<Map<Binary, Path>> {
 }
 
 private fun repairUtilityProjectHome(context: BuildContext): Path? {
-  val projectHome = context.paths.communityHomeDir.parent.resolve("native/repair-utility")
+  val projectHome = context.paths.communityHomeDir.resolve("native/repair-utility")
   if (Files.exists(projectHome)) {
     return projectHome
   }
@@ -143,15 +145,23 @@ private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
   return spanBuilder("build repair-utility").useWithScope2 {
     if (SystemInfoRt.isWindows) {
       // FIXME: Linux containers on Windows should be fine
-      context.messages.warning("Cannot be built on Windows")
+      Span.current().addEvent("repair-utility cannot be built on Windows yet")
       return@useWithScope2 emptyMap()
     }
 
     val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope2 emptyMap()
     try {
-      withContext(Dispatchers.IO) {
-        runProcess(args = listOf("docker", "--version"))
+      val isDockerAvailable = withContext(Dispatchers.IO) {
+        try {
+          runProcess(args = listOf("docker", "--version"), inheritOut = true)
+          true
+        }
+        catch (e: Exception) {
+          Span.current().addEvent("repair-utility cannot be without Docker: ${e.message}")
+          false
+        }
       }
+      if (!isDockerAvailable) return@useWithScope2 emptyMap()
       val baseUrl = context.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
       val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
       val distributionUrls = BINARIES.associate {
@@ -162,7 +172,12 @@ private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
       }
 
       withContext(Dispatchers.IO) {
-        runProcess(args = listOf("bash", "build.sh"), workingDir = projectHome, additionalEnvVariables = distributionUrls)
+        suspendingRetryWithExponentialBackOff {
+          runProcess(args = listOf("bash", "build.sh"), workingDir = projectHome,
+                     additionalEnvVariables = distributionUrls,
+                     timeout = 5.minutes,
+                     inheritOut = true)
+        }
       }
     }
     catch (e: Throwable) {
@@ -197,7 +212,7 @@ private val BINARIES: List<Binary> = listOf(
   Binary(OsFamily.MACOS, JvmArchitecture.aarch64, "bin/repair-darwin-arm64", "bin/repair", "darwin_arm64_url"),
 )
 
-private class Binary(
+class Binary(
   @JvmField val os: OsFamily,
   @JvmField val arch: JvmArchitecture,
   @JvmField val relativeSourcePath: String,
