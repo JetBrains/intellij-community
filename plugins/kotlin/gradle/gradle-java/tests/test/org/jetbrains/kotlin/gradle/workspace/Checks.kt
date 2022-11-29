@@ -30,12 +30,13 @@ fun checkWorkspaceModel(
 
     for ((expectedFile, mode) in filesWithExpectedTestData) {
         val actualWorkspaceModelText = mode.printer.build().print(project, actualTestProjectRoot)
+            .replace(kotlinPluginVersion.toString(), "{{KGP_VERSION}}")
 
         // NB: KotlinTestUtils handle non-existent expectedFile fine
         KotlinTestUtils.assertEqualsToFile(
             expectedFile,
             actualWorkspaceModelText
-        ) { sanitizeExpectedFile(it, kotlinPluginVersion) }
+        ) { sanitizeExpectedFile(it) }
     }
 }
 
