@@ -493,7 +493,7 @@ public final class FormatDecode {
     }
   }
 
-  abstract static class Validator {
+  public abstract static class Validator {
 
     private final String mySpecifier;
 

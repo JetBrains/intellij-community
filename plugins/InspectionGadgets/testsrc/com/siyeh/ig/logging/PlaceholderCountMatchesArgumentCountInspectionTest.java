@@ -1,14 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ui.OptionAccessor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 @SuppressWarnings("PlaceholderCountMatchesArgumentCount")
 public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJavaInspectionTestCase {
   @Override
-  protected LocalInspectionTool getInspection() {
-    return new PlaceholderCountMatchesArgumentCountInspection();
+  protected InspectionProfileEntry getInspection() {
+    PlaceholderCountMatchesArgumentCountInspection inspection = new PlaceholderCountMatchesArgumentCountInspection();
+    inspection.slf4jThrowableShouldNotHavePlaceholder = false;
+    String option = StringUtil.substringAfter(getName(), "_");
+    if(option != null) {
+      new OptionAccessor.Default(inspection).setOption(option, true);
+    }
+    return inspection;
   }
 
   @Override
@@ -21,6 +29,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
       "import org.apache.logging.log4j.util.Supplier;" +
       "public interface Logger {" +
       "  void info(String message, Object... params);" +
+      "  void info(String message, Supplier<?>... params);" +
       "  void fatal(String message, Object... params);" +
       "  void error(Supplier<?> var1, Throwable var2);" +
       "  LogBuilder atInfo();" +
@@ -31,6 +40,9 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
       "package org.apache.logging.log4j;" +
       "public class LogManager {" +
       "  public static Logger getLogger() {" +
+      "    return null;" +
+      "  }" +
+      "  public static Logger getFormatterLogger() {" +
       "    return null;" +
       "  }" +
       "}",
@@ -154,6 +166,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
     );
   }
 
+  @SuppressWarnings("RedundantThrows")
   public void testMultiCatch() {
     doTest("""
              import org.slf4j.*;
@@ -267,5 +280,85 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
            "    LOG.info(\"\", new Exception());" +
            "  }" +
            "}");
+  }
+
+  public void testLog4j2WithTextVariables() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final String FINAL_TEXT = "const";
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                 String text = "test {}{}{}";
+                 LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/text/**/, i);
+                 final String text2 = "test ";
+                 LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/text2/**/, i);
+                 LOG.info(/*More arguments provided (1) than placeholders specified (0)*/FINAL_TEXT/**/, i);
+               }
+             }""");
+  }
+  public void testLog4j2WithExceptionInSuppliers() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                try {
+                  throw new RuntimeException();
+                } catch (Throwable t) {
+                    LOG.info("test {}", () -> "test", () -> t);
+                    LOG.info("test {}", () -> "test");
+                }
+               }
+             }""");
+  }
+
+  public void testLog4j2BuilderWithException() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                try {
+                  throw new RuntimeException();
+                } catch (Throwable t) {
+                 LOG.atError().log(/*More arguments provided (2) than placeholders specified (1)*/"'{}'"/**/, "bar", new Exception());
+                 LOG.atError().log(/*More arguments provided (2) than placeholders specified (1)*/"test test test {}"/**/, () -> "123", () -> t);
+                }
+               }
+             }""");
+  }
+
+  public void testSlf4J_slf4jThrowableShouldNotHavePlaceholder() {
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 logger.info(/*Fewer arguments provided (1) than placeholders specified (2)*/"string {} {}"/**/, 1, new RuntimeException());
+               }
+             }"""
+    );
+  }
+
+  public void testFormattedLog4J() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class X {
+               private static final Logger LOG = LogManager.getFormatterLogger();
+               void m() {
+                try {
+                  throw new RuntimeException();
+                } catch (Throwable t) {
+                 Logger LOG2 = LogManager.getFormatterLogger();
+                 LOG.info("My %s text", "test", t);
+                 LOG.info(/*Illegal format string specifier*/"My %i text"/**/, "test");
+                 LOG.info(/*More arguments provided (2) than placeholders specified (1)*/"My %s text"/**/, "test1", "test2");
+                 LOG2.info("My %s text, %s", "test1"); //skip because LOG2 is not final
+                 LogManager.getFormatterLogger().info(/*Fewer arguments provided (1) than placeholders specified (2)*/"My %s text, %s"/**/, "test1");
+                                                                       }
+               }
+             }"""
+    );
   }
 }
