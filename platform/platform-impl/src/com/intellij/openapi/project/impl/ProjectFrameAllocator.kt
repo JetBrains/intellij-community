@@ -312,12 +312,6 @@ private suspend fun restoreEditors(project: Project,
         editorComponent.restoreEditors(state = editorState, onStartup = true, anyEditorOpened = anyEditorOpened)
       }
     }
-
-    withContext(Dispatchers.EDT) {
-      frameHelper.rootPane.statusBar?.setEditorProvider {
-        fileEditorManager.selectedEditor
-      }
-    }
     frameHelper
   }
 

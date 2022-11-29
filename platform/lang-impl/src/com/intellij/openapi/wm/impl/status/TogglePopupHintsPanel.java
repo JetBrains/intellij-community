@@ -14,6 +14,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
@@ -47,23 +48,12 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
   }
 
   @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    updateStatus();
-  }
-
-  @Override
-  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    updateStatus();
-  }
-
-  @Override
   public StatusBarWidget copy() {
     return new TogglePopupHintsPanel(getProject());
   }
 
   @Override
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myCurrentIcon;
   }
 
@@ -88,6 +78,18 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
 
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        updateStatus();
+      }
+
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateStatus();
+      }
+    });
+
     MessageBusConnection connection = myConnection;
     connection.subscribe(PowerSaveMode.TOPIC, this::updateStatus);
     connection.subscribe(ProfileChangeAdapter.TOPIC,  new ProfileChangeAdapter() {
@@ -111,8 +113,7 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
   }
 
   @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return ID;
   }
 
@@ -169,8 +170,7 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
     return file != null && DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file);
   }
 
-  @Nullable
-  private PsiFile getCurrentFile() {
+  private @Nullable PsiFile getCurrentFile() {
     VirtualFile virtualFile = getSelectedFile();
     if (virtualFile != null && virtualFile.isValid()){
       return PsiManager.getInstance(getProject()).findFile(virtualFile);

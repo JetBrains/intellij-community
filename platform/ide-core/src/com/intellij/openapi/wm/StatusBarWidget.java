@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -24,10 +24,15 @@ public interface StatusBarWidget extends Disposable {
   @NotNull @NonNls String ID();
 
   default @Nullable WidgetPresentation getPresentation() {
-    return getPresentation(SystemInfo.isMac ? PlatformType.MAC : PlatformType.DEFAULT);
+    return getPresentation(SystemInfoRt.isMac ? PlatformType.MAC : PlatformType.DEFAULT);
   }
 
-  void install(@NotNull StatusBar statusBar);
+  default void install(@NotNull StatusBar statusBar) {
+  }
+
+  @Override
+  default void dispose() {
+  }
 
   @SuppressWarnings("SpellCheckingInspection")
   interface Multiframe extends StatusBarWidget {
@@ -39,7 +44,9 @@ public interface StatusBarWidget extends Disposable {
 
     default @Nullable @Nls String getShortcutText() { return null; }
 
-    @Nullable Consumer<MouseEvent> getClickConsumer();
+    default @Nullable Consumer<MouseEvent> getClickConsumer() {
+      return null;
+    }
   }
 
   interface IconPresentation extends WidgetPresentation {
@@ -60,6 +67,7 @@ public interface StatusBarWidget extends Disposable {
     /**
      * @deprecated implement {@link #getPopup()}
      */
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated(forRemoval = true)
     default @Nullable("null means the widget is unable to show the popup") ListPopup getPopupStep() {
       return null;
@@ -79,13 +87,6 @@ public interface StatusBarWidget extends Disposable {
     default @Nullable Icon getIcon() {
       return null;
     }
-
-    /**
-     * @deprecated not used
-     */
-    @Override
-    @Deprecated
-    default @Nullable Consumer<MouseEvent> getClickConsumer() { return null; }
   }
 
   //<editor-fold desc="Deprecated stuff">

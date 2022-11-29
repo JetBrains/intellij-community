@@ -20,13 +20,11 @@ import javax.swing.JComponent
 /**
  * Status bar shown on the bottom of IDE frame.
  *
+ * Displays [status text][Info.set] and a number of [builtin][StandardWidgets] and custom [widgets][StatusBarWidget].
  *
- * Displays [status text][Info.set] and
- * a number of [builtin][StandardWidgets] and custom [widgets][StatusBarWidget].
- *
- * @see StatusBarWidgetFactory
+ * @see com.intellij.openapi.wm.StatusBarWidgetFactory
  */
-interface StatusBar : StatusBarInfo, Disposable {
+interface StatusBar : StatusBarInfo {
   object Info {
     @Topic.ProjectLevel
     @JvmField
@@ -66,7 +64,7 @@ interface StatusBar : StatusBarInfo, Disposable {
    * Adds the given widget on the right.
    *
    *
-   * For external usages use [StatusBarWidgetFactory].
+   * For external usages use [com.intellij.openapi.wm.StatusBarWidgetFactory].
    */
   @ApiStatus.Internal
   fun addWidget(widget: StatusBarWidget, parentDisposable: Disposable)
@@ -75,13 +73,13 @@ interface StatusBar : StatusBarInfo, Disposable {
    * Adds the given widget positioned according to given anchor (see [Anchors]).
    *
    *
-   * For external usages use [StatusBarWidgetFactory].
+   * For external usages use [com.intellij.openapi.wm.StatusBarWidgetFactory].
    */
   @ApiStatus.Internal
   fun addWidget(widget: StatusBarWidget, anchor: @NonNls String, parentDisposable: Disposable)
 
   /**
-   * For external usages use [StatusBarWidgetFactory].
+   * For external usages use [com.intellij.openapi.wm.StatusBarWidgetFactory].
    */
   @ApiStatus.Internal
   fun removeWidget(id: @NonNls String)
@@ -97,8 +95,6 @@ interface StatusBar : StatusBarInfo, Disposable {
   val component: JComponent?
 
   fun findChild(c: Component): StatusBar?
-
-  val frame: IdeFrame?
 
   val project: Project?
 

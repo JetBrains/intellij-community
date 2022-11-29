@@ -177,7 +177,7 @@ open class ProjectFrameHelper internal constructor(
       return frame
     }
 
-    rootPane.createAndConfigureStatusBar(frame = this, parentDisposable = this)
+    rootPane.createAndConfigureStatusBar(frameHelper = this)
     val frame = frame
     MnemonicHelper.init(frame)
     frame.focusTraversalPolicy = IdeFocusTraversalPolicy()
@@ -344,8 +344,7 @@ open class ProjectFrameHelper internal constructor(
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       rootPane.statusBar!!.setEditorProvider {
-        // see ProjectFrameAllocator.restoreEditors
-        null
+        project.getServiceIfCreated(FileEditorManager::class.java)?.selectedEditor
       }
     }
     project.service<StatusBarWidgetsManager>().init { rootPane.statusBar!! }
@@ -355,15 +354,7 @@ open class ProjectFrameHelper internal constructor(
       PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
 
       val navBar = rootPane.navBarStatusWidgetComponent ?: return@withContext
-      statusBar.setCentralWidget(object : StatusBarWidget {
-        override fun dispose() {
-        }
-
-        override fun ID(): String = IdeStatusBarImpl.NAVBAR_WIDGET_KEY
-
-        override fun install(statusBar: StatusBar) {
-        }
-      }, navBar)
+      statusBar.setCentralWidget({ IdeStatusBarImpl.NAVBAR_WIDGET_KEY }, navBar)
     }
   }
 

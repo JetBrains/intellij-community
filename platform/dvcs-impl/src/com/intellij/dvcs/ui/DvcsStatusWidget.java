@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
@@ -36,11 +37,11 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   implements StatusBarWidget.MultipleTextValuesPresentation, StatusBarWidget.Multiframe {
   protected static final Logger LOG = Logger.getInstance(DvcsStatusWidget.class);
 
-  @NotNull private final String myVcsName;
+  private final @NotNull String myVcsName;
 
-  @Nullable private volatile @Nls String myText;
-  @Nullable private volatile @NlsContexts.Tooltip String myTooltip;
-  @Nullable private volatile Icon myIcon;
+  private volatile @Nullable @Nls String myText;
+  private volatile @Nullable @NlsContexts.Tooltip String myTooltip;
+  private volatile @Nullable Icon myIcon;
   private final Alarm myUpdateBackgroundAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   protected DvcsStatusWidget(@NotNull Project project, @NotNull @Nls String vcsName) {
@@ -60,16 +61,12 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   /**
    * @see DvcsUtil#guessWidgetRepository
    */
-  @Nullable
   @CalledInAny
-  protected abstract T guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile);
+  protected abstract @Nullable T guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile);
 
-  @Nls
-  @NotNull
-  protected abstract String getFullBranchName(@NotNull T repository);
+  protected abstract @Nls @NotNull String getFullBranchName(@NotNull T repository);
 
-  @Nullable
-  protected Icon getIcon(@NotNull T repository) {
+  protected @Nullable Icon getIcon(@NotNull T repository) {
     if (repository.getState() != Repository.State.NORMAL) return AllIcons.General.Warning;
     return AllIcons.Vcs.Branch;
   }
@@ -81,13 +78,11 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
    */
   @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)
-  @NotNull
-  protected ListPopup getPopup(@NotNull Project project, @NotNull T repository) {
+  protected @NotNull ListPopup getPopup(@NotNull Project project, @NotNull T repository) {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
-  protected JBPopup getWidgetPopup(@NotNull Project project, @NotNull T repository) {
+  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull T repository) {
     return null;
   }
 
@@ -96,6 +91,27 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
+
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        LOG.debug("selection changed");
+        updateLater();
+      }
+
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        LOG.debug("file opened");
+        updateLater();
+      }
+
+      @Override
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        LOG.debug("file closed");
+        updateLater();
+      }
+    });
+
     updateLater();
   }
 
@@ -104,40 +120,19 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     return this;
   }
 
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    LOG.debug("selection changed");
-    updateLater();
-  }
-
-  @Override
-  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    LOG.debug("file opened");
-    updateLater();
-  }
-
-  @Override
-  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    LOG.debug("file closed");
-    updateLater();
-  }
-
   @RequiresEdt
-  @Nullable
   @Override
-  public String getSelectedValue() {
+  public @Nullable String getSelectedValue() {
     return StringUtil.defaultIfEmpty(myText, "");
   }
 
-  @Nullable
   @Override
-  public String getTooltipText() {
+  public @Nullable String getTooltipText() {
     return myTooltip;
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myIcon;
   }
 
@@ -209,9 +204,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     rememberRecentRoot(repository.getRoot().getPath());
   }
 
-  @NlsContexts.Tooltip
-  @Nullable
-  protected String getToolTip(@Nullable T repository) {
+  protected @NlsContexts.Tooltip @Nullable String getToolTip(@Nullable T repository) {
     if (repository == null) return null;
     String message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", myVcsName, getFullBranchName(repository));
     if (isMultiRoot(repository.getProject())) {

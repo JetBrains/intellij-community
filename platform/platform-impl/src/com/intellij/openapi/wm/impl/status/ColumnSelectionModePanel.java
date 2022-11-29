@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.editor.Editor;
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -22,11 +23,11 @@ import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
+final class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
   @NonNls static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
   private final TextPanel myTextPanel = new TextPanel();
 
-  public ColumnSelectionModePanel(@NotNull Project project) {
+  ColumnSelectionModePanel(@NotNull Project project) {
     super(project);
     myTextPanel.setVisible(false);
   }
@@ -55,6 +56,24 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
+
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateStatus();
+      }
+
+      @Override
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateStatus();
+      }
+
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        updateStatus();
+      }
+    });
+
     FocusUtil.addFocusOwnerListener(this, this);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     if (multicaster instanceof EditorEventMulticasterEx) {
@@ -64,9 +83,14 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
   }
 
   private void updateStatus() {
-    if (myProject.isDisposed()) return;
-    final Editor editor = getFocusedEditor();
-    if (editor != null && !isOurEditor(editor)) return;
+    if (myProject.isDisposed()) {
+      return;
+    }
+
+    Editor editor = getFocusedEditor();
+    if (editor != null && !isOurEditor(editor)) {
+      return;
+    }
     if (editor == null || !editor.isColumnMode()) {
       myTextPanel.setVisible(false);
     } 
@@ -78,16 +102,6 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
   }
 
   @Override
-  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    updateStatus();
-  }
-
-  @Override
-  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    updateStatus();
-  }
-
-  @Override
   public void propertyChange(@NotNull PropertyChangeEvent evt) {
     String propertyName = evt.getPropertyName();
     if (EditorEx.PROP_INSERT_MODE.equals(propertyName) || 
@@ -95,10 +109,5 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
         SWING_FOCUS_OWNER_PROPERTY.equals(propertyName)) {
       updateStatus();
     }
-  }
-
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    updateStatus();
   }
 }

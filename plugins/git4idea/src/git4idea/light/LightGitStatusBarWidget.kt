@@ -10,10 +10,8 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.util.Consumer
 import git4idea.i18n.GitBundle
 import java.awt.Component
-import java.awt.event.MouseEvent
 
 private const val ID = "light.edit.git"
 private val LOG = Logger.getInstance(LightGitStatusBarWidget::class.java)
@@ -53,10 +51,6 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
   }
 
   override fun getAlignment(): Float = Component.LEFT_ALIGNMENT
-
-  override fun getClickConsumer(): Consumer<MouseEvent>? = null
-
-  override fun dispose() = Unit
 }
 
 private class LightGitStatusBarWidgetFactory : StatusBarWidgetFactory, LightEditCompatible {

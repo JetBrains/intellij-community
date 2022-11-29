@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -65,38 +64,32 @@ final class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
     return false;
   }
 
-  private static class PowerWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+  private static final class PowerWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
     @Override
     public @NotNull String ID() {
       return ID;
     }
 
     @Override
-    public void install(@NotNull StatusBar statusBar) { }
-
-    @Override
-    public @Nullable WidgetPresentation getPresentation() {
+    public @NotNull WidgetPresentation getPresentation() {
       return this;
     }
 
     @Override
-    public @Nullable String getTooltipText() {
+    public @NotNull String getTooltipText() {
       return PowerSaveMode.isEnabled() ?
              InspectionsBundle.message("power.save.mode.widget.tooltip.enabled") :
              InspectionsBundle.message("power.save.mode.widget.tooltip.disabled");
     }
 
     @Override
-    public @Nullable Consumer<MouseEvent> getClickConsumer() {
+    public @NotNull Consumer<MouseEvent> getClickConsumer() {
       return __ -> PowerSaveMode.setEnabled(!PowerSaveMode.isEnabled());
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return PowerSaveMode.isEnabled() ? AllIcons.General.InspectionsPowerSaveMode : AllIcons.General.InspectionsEye;
     }
-
-    @Override
-    public void dispose() { }
   }
 }

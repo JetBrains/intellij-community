@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -18,7 +19,6 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -49,17 +49,39 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     myDisabledIcon = IconLoader.getDisabledIcon(myEnabledIcon);
     myCurrentIcon = myDisabledIcon;
 
-    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
-    busConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, () -> updateLater());
-    busConnection.subscribe(HgVcs.STATUS_TOPIC, (project, root) -> updateLater());
-    busConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateLater());
-    busConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
+    updateLater();
+  }
+
+  @Override
+  public void install(@NotNull StatusBar statusBar) {
+    super.install(statusBar);
+
+    myConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, () -> updateLater());
+    myConnection.subscribe(HgVcs.STATUS_TOPIC, (project, root) -> updateLater());
+    myConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateLater());
+    myConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
       @Override
       public void update() {
         updateLater();
       }
     });
-    updateLater();
+
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateLater();
+      }
+
+      @Override
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateLater();
+      }
+
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        updateLater();
+      }
+    });
   }
 
   @Override
@@ -75,21 +97,6 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
   @Override
   public WidgetPresentation getPresentation() {
     return this;
-  }
-
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    updateLater();
-  }
-
-  @Override
-  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    updateLater();
-  }
-
-  @Override
-  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    updateLater();
   }
 
   @Override
@@ -123,15 +130,16 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     return myCurrentIcon;
   }
 
-  //if smb call hide widget then it removed from status bar ans dispose method called.
+  // if smb call hide widget then it removed from status bar and dispose method called.
   // if we do not override dispose IDE call EditorWidget dispose method and set connection to null.
-  //next, if we repeat hide/show dispose eth will be callees several times,but connection will be null -> NPE or already disposed message.
+  // next, if we repeat hide/show dispose eth will be callees several times,but connection will be null -> NPE or already disposed message.
   @Override
   public void dispose() {
     if (!isDisposed()) {
       super.dispose();
     }
   }
+
   public static class Listener implements VcsRepositoryMappingListener, HgWidgetUpdater {
     private final Project myProject;
 
@@ -194,7 +202,9 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
 
     @Override
     public @NotNull String getDisplayName() {
-      return myIsIncoming ? HgBundle.message("hg4idea.status.bar.incoming.widget.name") : HgBundle.message("hg4idea.status.bar.outgoing.widget.name");
+      return myIsIncoming
+             ? HgBundle.message("hg4idea.status.bar.incoming.widget.name")
+             : HgBundle.message("hg4idea.status.bar.outgoing.widget.name");
     }
   }
 }

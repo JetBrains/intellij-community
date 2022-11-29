@@ -14,10 +14,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
@@ -41,7 +38,7 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -66,7 +63,25 @@ abstract class EditorBasedStatusBarPopup(
   private val isWriteableFileRequired: Boolean,
 ) : EditorBasedWidget(project), Multiframe, CustomStatusBarWidget {
   private val popupState = PopupState.forPopup()
-  private val component: JPanel
+
+  private val component: Lazy<JPanel> = lazy {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      EDT.assertIsEdt()
+    }
+    val component = createComponent()
+    component.isVisible = false
+
+    object : ClickListener() {
+      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+        update()
+        StatusBarPopupShown.log(project, this@EditorBasedStatusBarPopup.javaClass)
+        showPopup(e)
+        return true
+      }
+    }.installOn(component, true)
+
+    component
+  }
 
   var isActionEnabled = false
     protected set
@@ -78,22 +93,10 @@ abstract class EditorBasedStatusBarPopup(
   private var editor = WeakReference<Editor?>(null)
 
   init {
-    component = createComponent()
-    component.isVisible = false
-    object : ClickListener() {
-      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
-        update()
-        StatusBarPopupShown.log(project, this@EditorBasedStatusBarPopup.javaClass)
-        showPopup(e)
-        return true
-      }
-    }.installOn(component, true)
-    component.border = JBUI.CurrentTheme.StatusBar.Widget.border()
-
     @Suppress("DEPRECATION")
     ApplicationManager.getApplication().coroutineScope.launch {
       update
-        .debounce(200.milliseconds)
+        .debounce(300.milliseconds)
         .collectLatest(::doUpdate)
     }.cancelOnDispose(this)
   }
@@ -111,17 +114,6 @@ abstract class EditorBasedStatusBarPopup(
   }
 
   protected open fun createComponent(): JPanel = WithIconAndArrows()
-
-  override fun selectionChanged(event: FileEditorManagerEvent) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      return
-    }
-
-    val newFile = event.newFile
-    val fileEditor = if (newFile == null) null else FileEditorManager.getInstance(project).getSelectedEditor(newFile)
-    editor = WeakReference((fileEditor as? TextEditor)?.editor)
-    fileChanged(newFile)
-  }
 
   @ApiStatus.Internal
   fun setEditor(editor: Editor?) {
@@ -145,20 +137,34 @@ abstract class EditorBasedStatusBarPopup(
 
   protected open fun handleFileChange(file: VirtualFile?) {}
 
-  override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-    fileChanged(file)
-  }
-
-  override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-    fileChanged(file)
-  }
-
   override fun copy(): StatusBarWidget = createInstance(project)
 
   override fun getPresentation(): WidgetPresentation? = null
 
   override fun install(statusBar: StatusBar) {
-    super.install(statusBar)
+    super<EditorBasedWidget>.install(statusBar)
+
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+        fileChanged(file)
+      }
+
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        fileChanged(file)
+      }
+
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          return
+        }
+
+        val newFile = event.newFile
+        val fileEditor = if (newFile == null) null else FileEditorManager.getInstance(project).getSelectedEditor(newFile)
+        editor = WeakReference((fileEditor as? TextEditor)?.editor)
+        fileChanged(newFile)
+      }
+    })
+
     registerCustomListeners()
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
@@ -223,16 +229,17 @@ abstract class EditorBasedStatusBarPopup(
       }
     }
 
-  override fun getComponent(): JComponent = component
+  override fun getComponent(): JComponent = component.value
 
   protected open val isEmpty: Boolean
     get() {
-      return (component as? WithIconAndArrows)?.let { textPanel ->
+      return (component.value as? WithIconAndArrows)?.let { textPanel ->
         textPanel.text.isNullOrEmpty() && !textPanel.hasIcon()
       } ?: false
     }
 
   protected open fun updateComponent(state: WidgetState) {
+    val component = component.value
     component.toolTipText = state.toolTip
     (component as? WithIconAndArrows)?.let { textPanel ->
       textPanel.setTextAlignment(Component.CENTER_ALIGNMENT)
@@ -284,14 +291,17 @@ abstract class EditorBasedStatusBarPopup(
 
   private fun applyUpdate(finishUpdate: Runnable?, file: VirtualFile?, state: WidgetState) {
     if (state === WidgetState.NO_CHANGE_MAKE_VISIBLE) {
-      component.isVisible = true
+      component.value.isVisible = true
       return
     }
     if (state === WidgetState.HIDDEN) {
-      component.isVisible = false
+      if (component.isInitialized()) {
+        component.value.isVisible = false
+      }
       return
     }
 
+    val component = component.value
     component.isVisible = true
     isActionEnabled = state.isActionEnabled && isEnabledForFile(file)
     component.isEnabled = isActionEnabled

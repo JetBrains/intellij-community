@@ -7,6 +7,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -54,13 +55,7 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    updatePosition(getEditor());
-  }
-
-  @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return StatusBar.StandardWidgets.POSITION_PANEL;
   }
 
@@ -75,8 +70,7 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText == null ? "" : myText;
   }
 
@@ -90,7 +84,7 @@ public class PositionPanel extends EditorBasedWidget
     String toolTip = UIBundle.message("go.to.line.command.name");
     String shortcut = getShortcutText();
 
-    if (!Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(shortcut)) {
+    if (StringUtil.isNotEmpty(shortcut) && !Registry.is("ide.helptooltip.enabled")) {
       return toolTip + " (" + shortcut + ")";
     }
     return toolTip;
@@ -106,7 +100,9 @@ public class PositionPanel extends EditorBasedWidget
     return mouseEvent -> {
       Project project = getProject();
       Editor editor = getFocusedEditor();
-      if (editor == null) return;
+      if (editor == null) {
+        return;
+      }
 
       CommandProcessor.getInstance().executeCommand(
         project,
@@ -124,6 +120,14 @@ public class PositionPanel extends EditorBasedWidget
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
+
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        updatePosition(getEditor());
+      }
+    });
+
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     myQueue = new MergingUpdateQueue("PositionPanel", 100, true, null, this);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
@@ -134,13 +138,13 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public void selectionChanged(@NotNull final SelectionEvent e) {
+  public void selectionChanged(final @NotNull SelectionEvent e) {
     Editor editor = e.getEditor();
     if (isFocusedEditor(editor)) updatePosition(editor);
   }
 
   @Override
-  public void caretPositionChanged(@NotNull final CaretEvent e) {
+  public void caretPositionChanged(final @NotNull CaretEvent e) {
     Editor editor = e.getEditor();
     // When multiple carets exist in editor, we don't show information about caret positions
     if (editor.getCaretModel().getCaretCount() == 1 && isFocusedEditor(editor)) updatePosition(editor);

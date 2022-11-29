@@ -1251,9 +1251,9 @@
 
     <statusBarWidgetFactory id="vfsRefreshWidget" implementation="com.intellij.openapi.wm.impl.status.VfsRefreshIndicatorWidgetFactory" order="first"/>
     <statusBarWidgetFactory id="positionWidget" implementation="com.intellij.openapi.wm.impl.status.PositionPanelWidgetFactory"/>
-    <statusBarWidgetFactory id="lineSeparatorWidget" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory" order="after positionWidget"/>
-    <statusBarWidgetFactory id="encodingWidget" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory" order="after lineSeparatorWidget"/>
-    <statusBarWidgetFactory id="powerStatus" implementation="com.intellij.openapi.wm.impl.status.PowerSaveStatusWidgetFactory" order="after encodingWidget"/>
+    <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory" order="after positionWidget"/>
+    <statusBarWidgetFactory id="Encoding" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory" order="after LineSeparator"/>
+    <statusBarWidgetFactory id="powerStatus" implementation="com.intellij.openapi.wm.impl.status.PowerSaveStatusWidgetFactory" order="after Encoding"/>
     <statusBarWidgetFactory id="largeFileEncodingWidget" implementation="com.intellij.largeFilesEditor.encoding.LargeFileEncodingWidgetFactory" order="after powerStatus"/>
     <statusBarWidgetFactory id="InsertOverwrite" implementation="com.intellij.openapi.wm.impl.status.ColumnSelectionModeWidgetFactory" order="after largeFileEncodingWidget"/>
     <statusBarWidgetFactory id="CodeStyleStatusBarWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory" order="after InsertOverwrite"/>
@@ -1393,7 +1393,7 @@
     <editorNotificationProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileRegexSearchNotificationProvider"/>
     <statusBarWidgetFactory id="light.edit.large.file.encoding.widget"
                             implementation="com.intellij.largeFilesEditor.encoding.LightEditLargeFileEncodingWidgetFactory"
-                            order="after lineSeparatorWidget"/>
+                            order="after LineSeparator"/>
     <experimentalFeature id="new.large.text.file.viewer" percentOfUsers="100">
       <description>A special viewer for large files. Opens automatically for text files with size more than 20Mb (default).
       </description>

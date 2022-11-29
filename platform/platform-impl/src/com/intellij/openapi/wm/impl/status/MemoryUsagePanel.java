@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -66,12 +65,6 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
       myFuture = null;
     }
   }
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) { }
-
-  @Override
-  public void dispose() { }
 
   @Override
   public @Nullable WidgetPresentation getPresentation() {

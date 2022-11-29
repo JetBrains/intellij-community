@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
@@ -24,9 +24,8 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     super(project, true);
   }
 
-  @NotNull
   @Override
-  protected WidgetState getWidgetState(@Nullable VirtualFile file) {
+  protected @NotNull WidgetState getWidgetState(@Nullable VirtualFile file) {
     if (file == null) {
       return WidgetState.HIDDEN;
     }
@@ -36,9 +35,8 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     return new WidgetState(toolTipText, panelText, true);
   }
 
-  @Nullable
   @Override
-  protected ListPopup createPopup(@NotNull DataContext context) {
+  protected @Nullable ListPopup createPopup(@NotNull DataContext context) {
     AnAction group = ActionManager.getInstance().getAction("ChangeLineSeparators");
     if (!(group instanceof ActionGroup)) {
       return null;
@@ -53,15 +51,13 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     );
   }
 
-  @NotNull
   @Override
-  protected StatusBarWidget createInstance(@NotNull Project project) {
+  protected @NotNull StatusBarWidget createInstance(@NotNull Project project) {
     return new LineSeparatorPanel(project);
   }
 
-  @NotNull
   @Override
-  public String ID() {
+  public @NotNull String ID() {
     return StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL;
   }
 }

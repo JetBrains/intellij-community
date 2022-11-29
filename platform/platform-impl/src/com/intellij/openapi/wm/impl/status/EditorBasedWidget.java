@@ -2,10 +2,11 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,8 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorManagerListener {
-
+public abstract class EditorBasedWidget implements StatusBarWidget {
   protected final @NotNull Project myProject;
 
   protected StatusBar myStatusBar;
@@ -34,13 +34,10 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
   }
 
   protected @Nullable Editor getEditor() {
-    Editor editor = StatusBarUtil.getCurrentTextEditor(myStatusBar);
-    if (editor != null) {
-      return editor;
-    }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     }
+
     FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(myStatusBar);
     return fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
   }
@@ -52,7 +49,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
            WindowManager.getInstance().getStatusBar(editor.getComponent(), editor.getProject()) == myStatusBar;
   }
 
-  @Nullable Component getFocusedComponent() {
+  final @Nullable Component getFocusedComponent() {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) {
       IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
@@ -64,19 +61,20 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     return focusOwner;
   }
 
-  @Nullable Editor getFocusedEditor() {
+  final @Nullable Editor getFocusedEditor() {
     Component component = getFocusedComponent();
     Editor editor = component instanceof EditorComponentImpl ? ((EditorComponentImpl)component).getEditor() : getEditor();
     return editor != null && !editor.isDisposed() ? editor : null;
   }
 
   protected @Nullable VirtualFile getSelectedFile() {
-    Editor editor = getEditor();
-    if (editor == null) {
-      return null;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Editor textEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+      return textEditor == null ? null : textEditor.getVirtualFile();
     }
-    Document document = editor.getDocument();
-    return FileDocumentManager.getInstance().getFile(document);
+
+    FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(myStatusBar);
+    return fileEditor instanceof TextEditor ? fileEditor.getFile() : null;
   }
 
   protected final @NotNull Project getProject() {
@@ -89,14 +87,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
            statusBar.getProject().equals(myProject) : "Cannot install widget from one project on status bar of another project";
 
     this.myStatusBar = statusBar;
-    Disposer.register(this.myStatusBar, this);
-
-    if (myProject.isDisposed()) {
-      return;
-    }
-
     myConnection = myProject.getMessageBus().connect(this);
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
   }
 
   @Override

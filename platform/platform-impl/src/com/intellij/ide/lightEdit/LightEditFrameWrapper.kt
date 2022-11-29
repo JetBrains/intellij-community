@@ -114,9 +114,7 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
-    return LightEditRootPane(frame = frame, parentDisposable = this)
-  }
+  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(frame = frame, parentDisposable = this)
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
@@ -125,12 +123,11 @@ internal class LightEditFrameWrapper(
     statusBar.addWidget(LightEditPositionWidget(project, editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
     statusBar.addWidget(LightEditAutosaveWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
     statusBar.addWidget(LightEditEncodingWidgetWrapper(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this)
-    statusBar.addWidget(LightEditLineSeparatorWidgetWrapper(project), StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
-                        this)
+    statusBar.addWidget(widget = LightEditLineSeparatorWidgetWrapper(project),
+                        anchor = StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
+                        parentDisposable = this)
     PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
-    val statusBarWidgetManager = project.service<StatusBarWidgetsManager>()
-    statusBarWidgetManager.init { statusBar }
-    Disposer.register(statusBar) { statusBarWidgetManager.disableAllWidgets() }
+    project.service<StatusBarWidgetsManager>().init { statusBar }
   }
 
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
@@ -178,8 +175,8 @@ internal class LightEditFrameWrapper(
     override val mainMenuActionGroup: ActionGroup
       get() = LightEditMainMenuHelper().mainMenuActionGroup
 
-    override fun createStatusBar(frame: IdeFrame): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frame, false) {
+    override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
+      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowsWidget = false) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }

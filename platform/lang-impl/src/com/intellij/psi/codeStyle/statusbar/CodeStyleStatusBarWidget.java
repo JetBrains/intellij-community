@@ -56,12 +56,10 @@ public final class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup im
     }
   }
 
-
   private static @Nullable CodeStyleStatusBarUIContributor getUiContributor(@NotNull TransientCodeStyleSettings settings) {
     final CodeStyleSettingsModifier modifier = settings.getModifier();
     return modifier != null ? modifier.getStatusBarUiContributor(settings) : null;
   }
-
 
   private static @Nullable CodeStyleStatusBarUIContributor getUiContributor(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
     FileIndentOptionsProvider provider = findProvider(file, indentOptions);
@@ -84,15 +82,15 @@ public final class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup im
   }
 
   private static WidgetState createWidgetState(@NotNull PsiFile psiFile,
-                                               final @NotNull IndentOptions indentOptions,
+                                               @NotNull IndentOptions indentOptions,
                                                @Nullable CodeStyleStatusBarUIContributor uiContributor) {
     if (uiContributor != null) {
-      return new MyWidgetState(uiContributor.getTooltip(), uiContributor.getStatusText(psiFile), psiFile, indentOptions, uiContributor);
+      return new MyWidgetState(uiContributor.getTooltip(), uiContributor.getStatusText(psiFile), uiContributor);
     }
     else {
       String indentInfo = IndentStatusBarUIContributor.getIndentInfo(indentOptions);
       String tooltip = IndentStatusBarUIContributor.createTooltip(indentInfo, null);
-      return new MyWidgetState(tooltip, indentInfo, psiFile, indentOptions, null);
+      return new MyWidgetState(tooltip, indentInfo, null);
     }
   }
 
@@ -182,19 +180,13 @@ public final class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup im
   }
 
   private static final class MyWidgetState extends WidgetState {
-    private final @NotNull IndentOptions myIndentOptions;
     private final @Nullable CodeStyleStatusBarUIContributor myContributor;
-    private final @NotNull PsiFile myPsiFile;
 
     private MyWidgetState(@NlsContexts.Tooltip String toolTip,
                           @NlsContexts.StatusBarText String text,
-                          @NotNull PsiFile psiFile,
-                          @NotNull IndentOptions indentOptions,
                           @Nullable CodeStyleStatusBarUIContributor uiContributor) {
       super(toolTip, text, true);
-      myIndentOptions = indentOptions;
       myContributor = uiContributor;
-      myPsiFile = psiFile;
       if (uiContributor != null) {
         setIcon(uiContributor.getIcon());
       }
@@ -202,14 +194,6 @@ public final class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup im
 
     public @Nullable CodeStyleStatusBarUIContributor getContributor() {
       return myContributor;
-    }
-
-    public @NotNull IndentOptions getIndentOptions() {
-      return myIndentOptions;
-    }
-
-    public @NotNull PsiFile getPsiFile() {
-      return myPsiFile;
     }
   }
 

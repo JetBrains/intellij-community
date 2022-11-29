@@ -80,7 +80,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, windowWatcher)
 
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosingBeforeSave(project: Project) {
+      override fun projectClosing(project: Project) {
         getFrameHelper(project)?.let {
           releaseFrame(it)
         }

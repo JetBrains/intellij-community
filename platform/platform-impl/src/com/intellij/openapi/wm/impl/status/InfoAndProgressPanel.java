@@ -58,7 +58,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 
-public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener, Disposable {
+public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener {
   @ApiStatus.Internal
   public enum AutoscrollLimit {
     NOT_ALLOWED, ALLOW_ONCE, UNLIMITED
@@ -134,7 +134,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   };
 
-  InfoAndProgressPanel(UISettings uiSettings) {
+  InfoAndProgressPanel(@NotNull UISettings uiSettings) {
     setOpaque(false);
     setBorder(JBUI.Borders.empty());
 

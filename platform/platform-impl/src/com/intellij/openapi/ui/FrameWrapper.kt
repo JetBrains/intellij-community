@@ -58,12 +58,6 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     private set
 
   protected var statusBar: StatusBar? = null
-    set(value) {
-      field?.let {
-        Disposer.dispose(it)
-      }
-      field = value
-    }
 
   init {
     if (project != null) {
@@ -195,17 +189,12 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     }
 
     val frame = frame
-    val statusBar = statusBar
     this.frame = null
     preferredFocusedComponent = null
     project = null
     component = null
     images = emptyList()
     isDisposed = true
-
-    if (statusBar != null) {
-      Disposer.dispose(statusBar)
-    }
 
     if (frame != null) {
       frame.isVisible = false

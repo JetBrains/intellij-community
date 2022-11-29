@@ -432,13 +432,13 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun setTabsPlacement(tabPlacement: Int) {
-    for (window in this.windows.toList()) {
+    for (window in windows) {
       window.setTabsPlacement(tabPlacement)
     }
   }
 
   fun setTabLayoutPolicy(scrollTabLayout: Int) {
-    for (window in this.windows.toList()) {
+    for (window in windows) {
       window.setTabLayoutPolicy(scrollTabLayout)
     }
   }
@@ -501,9 +501,8 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val windows = getWindows()
-      for (i in windows.indices) {
-        windows.get(i).updateFileBackgroundColor(file, color)
+      for (window in windows) {
+        window.updateFileBackgroundColor(file, color)
       }
     }
   }

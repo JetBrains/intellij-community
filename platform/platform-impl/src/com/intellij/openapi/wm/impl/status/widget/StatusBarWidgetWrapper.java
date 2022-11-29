@@ -23,8 +23,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public interface StatusBarWidgetWrapper {
-  @NotNull
-  static JComponent wrap(@NotNull StatusBarWidget.WidgetPresentation presentation) {
+  static @NotNull JComponent wrap(@NotNull StatusBarWidget.WidgetPresentation presentation) {
     if (presentation instanceof StatusBarWidget.IconPresentation) {
       return new StatusBarWidgetWrapper.Icon((StatusBarWidget.IconPresentation)presentation);
     }
@@ -54,7 +53,7 @@ public interface StatusBarWidgetWrapper {
   final class MultipleTextValues extends TextPanel.WithIconAndArrows implements StatusBarWidgetWrapper {
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
-    public MultipleTextValues(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
+    public MultipleTextValues(final @NotNull StatusBarWidget.MultipleTextValuesPresentation presentation) {
       myPresentation = presentation;
       setVisible(StringUtil.isNotEmpty(myPresentation.getSelectedValue()));
       setTextAlignment(Component.CENTER_ALIGNMENT);
@@ -93,9 +92,8 @@ public interface StatusBarWidgetWrapper {
       setWidgetTooltip(this, myPresentation.getTooltipText(), myPresentation.getShortcutText());
     }
 
-    @NotNull
     @Override
-    public StatusBarWidget.WidgetPresentation getPresentation() {
+    public @NotNull StatusBarWidget.WidgetPresentation getPresentation() {
       return myPresentation;
     }
   }
@@ -103,7 +101,7 @@ public interface StatusBarWidgetWrapper {
   final class Text extends TextPanel implements StatusBarWidgetWrapper {
     private final StatusBarWidget.TextPresentation myPresentation;
 
-    public Text(@NotNull final StatusBarWidget.TextPresentation presentation) {
+    public Text(final @NotNull StatusBarWidget.TextPresentation presentation) {
       myPresentation = presentation;
       setTextAlignment(presentation.getAlignment());
       setVisible(!myPresentation.getText().isEmpty());
@@ -114,9 +112,8 @@ public interface StatusBarWidgetWrapper {
       }
     }
 
-    @NotNull
     @Override
-    public StatusBarWidget.WidgetPresentation getPresentation() {
+    public @NotNull StatusBarWidget.WidgetPresentation getPresentation() {
       return myPresentation;
     }
 
@@ -132,7 +129,7 @@ public interface StatusBarWidgetWrapper {
   final class Icon extends TextPanel.WithIconAndArrows implements StatusBarWidgetWrapper {
     private final StatusBarWidget.IconPresentation myPresentation;
 
-    public Icon(@NotNull final StatusBarWidget.IconPresentation presentation) {
+    public Icon(final @NotNull StatusBarWidget.IconPresentation presentation) {
       myPresentation = presentation;
       setTextAlignment(Component.CENTER_ALIGNMENT);
       setIcon(myPresentation.getIcon());
@@ -144,9 +141,8 @@ public interface StatusBarWidgetWrapper {
       }
     }
 
-    @NotNull
     @Override
-    public StatusBarWidget.WidgetPresentation getPresentation() {
+    public @NotNull StatusBarWidget.WidgetPresentation getPresentation() {
       return myPresentation;
     }
 

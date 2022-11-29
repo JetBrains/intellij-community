@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
@@ -33,25 +32,6 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
 
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget?>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
-
-  init {
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosed(project: Project) {
-        // remove all widgets - frame maybe reused for another project
-        // must be not as a part of dispose, because statusBar will be null
-        val statusBar = WindowManager.getInstance().getStatusBar(project)
-        synchronized(widgetFactories) {
-          for ((factory, widget) in widgetFactories) {
-            val key = (widget ?: continue).ID()
-            factory.disposeWidget(widget)
-            statusBar?.removeWidget(key)
-          }
-          widgetFactories.clear()
-          widgetIdMap.clear()
-        }
-      }
-    })
-  }
 
   fun updateAllWidgets() {
     synchronized(widgetFactories) {
@@ -110,7 +90,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
             statusBar.addRightWidget(widget, anchor)
           }
           else {
-            @Suppress("DEPRECATION", "removal")
+            @Suppress("DEPRECATION")
             statusBar.addWidget(widget, anchor)
           }
         }
@@ -204,7 +184,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
       .filter { !isLightEditProject || it is LightEditCompatible }
       .toList()
 
-    val widgets = synchronized(widgetFactories) {
+    val widgets: List<Pair<StatusBarWidget, String>> = synchronized(widgetFactories) {
       val pendingFactories = availableFactories.toMutableList()
       @Suppress("removal", "DEPRECATION")
       StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) { StatusBarWidgetProviderToFactoryAdapter(project, it) }
@@ -234,13 +214,11 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
       val statusBar = statusBarSupplier()
       runActivity("status bar widgets adding") {
         if (statusBar is IdeStatusBarImpl) {
-          for ((widget, anchor) in widgets) {
-            statusBar.addRightWidget(widget, anchor)
-          }
+          statusBar.addRightWidgets(widgets, this@StatusBarWidgetsManager)
         }
         else {
           for ((widget, anchor) in widgets) {
-            @Suppress("DEPRECATION", "removal")
+            @Suppress("DEPRECATION")
             statusBar.addWidget(widget, anchor)
           }
         }

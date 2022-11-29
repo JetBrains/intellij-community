@@ -108,11 +108,5 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
     public JComponent getComponent() {
       return myComponent;
     }
-
-    @Override
-    public void install(@NotNull StatusBar statusBar) { }
-
-    @Override
-    public void dispose() { }
   }
 }

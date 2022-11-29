@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
@@ -85,9 +84,6 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     UIUtil.dispose(myIcon);
     myMessagePool.removeListener(this);
   }
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) { }
 
   @Override
   public JComponent getComponent() {

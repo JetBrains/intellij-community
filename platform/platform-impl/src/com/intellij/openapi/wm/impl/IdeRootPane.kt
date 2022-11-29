@@ -61,7 +61,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
   internal var statusBar: IdeStatusBarImpl? = null
     private set
 
-  private var statusBarDisposed = false
   private val northPanel = JBBox.createVerticalBox()
   internal var navBarStatusWidgetComponent: JComponent? = null
     private set
@@ -283,10 +282,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
    */
   override fun removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      if (!statusBarDisposed) {
-        statusBarDisposed = true
-        Disposer.dispose(statusBar!!)
-      }
       jMenuBar = null
       if (helper is DecoratedHelper) {
         val customFrameTitlePane = helper.customFrameTitlePane
@@ -378,17 +373,16 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
   }
 
-  fun createAndConfigureStatusBar(frame: IdeFrame, parentDisposable: Disposable) {
-    val statusBar = createStatusBar(frame)
+  internal fun createAndConfigureStatusBar(frameHelper: ProjectFrameHelper) {
+    val statusBar = createStatusBar(frameHelper)
     this.statusBar = statusBar
-    Disposer.register(parentDisposable, statusBar)
     updateStatusBarVisibility()
     contentPane!!.add(statusBar, BorderLayout.SOUTH)
   }
 
-  protected open fun createStatusBar(frame: IdeFrame): IdeStatusBarImpl {
-    val addToolWindowsWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders
-    return IdeStatusBarImpl(frame, addToolWindowsWidget)
+  protected open fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
+    return IdeStatusBarImpl(frameHelper = frameHelper,
+                            addToolWindowsWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders)
   }
 
   val statusBarHeight: Int
@@ -402,6 +396,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       toolbar = createToolbar()
       northPanel.add(toolbar, 0)
     }
+
     val uiSettings = UISettings.shadowInstance
     val isNewToolbar = ExperimentalUI.isNewUI()
     val visible = ((isNewToolbar && !isToolbarInHeader || !isNewToolbar && uiSettings.showMainToolbar) && !uiSettings.presentationMode)

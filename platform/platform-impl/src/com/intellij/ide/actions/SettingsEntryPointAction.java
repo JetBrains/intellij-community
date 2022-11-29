@@ -345,9 +345,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     public @NotNull Icon getIcon() {
       return getActionIcon();
     }
-
-    @Override
-    public void dispose() { }
   }
 
   public interface ActionProvider {

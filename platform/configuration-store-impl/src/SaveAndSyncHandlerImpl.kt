@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.Disposer
@@ -263,22 +262,24 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       }
 
       val project = (componentManager as? Project)?.takeIf { !it.isDefault }
-      ProgressManager.getInstance().run(object : Task.Modal(project, getProgressTitle(componentManager), /* canBeCancelled = */ false) {
-        override fun run(indicator: ProgressIndicator) {
-          indicator.isIndeterminate = true
+      runBlockingModal(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+                       title = getProgressTitle(componentManager),
+                       cancellation = TaskCancellation.nonCancellable()
+      ) {
+        // ensure that is fully cancelled
+        currentJob?.join()
 
-          runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) {
-            isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
-          }
+        isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
 
-          if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
-            val stateStore = project.stateStore
-            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
-            // update last modified for all project files that were modified between project open and close
+        if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
+          val stateStore = project.stateStore
+          val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
+          // update last modified for all project files that were modified between project open and close
+          withContext(Dispatchers.IO) {
             ConversionService.getInstance()?.saveConversionResult(path)
           }
         }
-      })
+      }
     }
 
     if (isAutoSaveCancelled) {

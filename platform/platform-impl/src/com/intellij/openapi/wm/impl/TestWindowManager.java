@@ -33,10 +33,10 @@ public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
 
   @Override
-  public void doNotSuggestAsParent(final Window window) { }
+  public void doNotSuggestAsParent(Window window) { }
 
   @Override
-  public Window suggestParentWindow(final @Nullable Project project) {
+  public Window suggestParentWindow(@Nullable Project project) {
     return null;
   }
 
@@ -176,12 +176,7 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public IdeFrame getFrame() {
-      return null;
-    }
-
-    @Override
-    public StatusBar findChild(Component c) {
+    public StatusBar findChild(@NotNull Component c) {
       return null;
     }
 
@@ -224,13 +219,10 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public void dispose() { }
-
-    @Override
     public void updateWidget(@NotNull String id) { }
 
     @Override
-    public StatusBarWidget getWidget(String id) {
+    public StatusBarWidget getWidget(@NotNull String id) {
       return myWidgetMap.get(id);
     }
 
