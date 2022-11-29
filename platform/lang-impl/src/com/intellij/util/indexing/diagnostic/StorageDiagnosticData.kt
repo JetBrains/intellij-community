@@ -229,13 +229,24 @@ object StorageDiagnosticData {
 
     val uncachedFileAccess = otelMeter.counterBuilder("FilePageCache.uncachedFileAccess").buildObserver()
     val maxRegisteredFiles = otelMeter.gaugeBuilder("FilePageCache.maxRegisteredFiles").ofLongs().buildObserver()
-    val maxCacheSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.maxCacheSizeInBytes").ofLongs().buildObserver()
     val pageHit = otelMeter.counterBuilder("FilePageCache.pageHit").buildObserver()
     val pageFastCacheHit = otelMeter.counterBuilder("FilePageCache.pageFastCacheHit").buildObserver()
     val pageMiss = otelMeter.counterBuilder("FilePageCache.pageMiss").buildObserver()
     val pageLoad = otelMeter.counterBuilder("FilePageCache.pageLoad").buildObserver()
     val disposedBuffers = otelMeter.counterBuilder("FilePageCache.disposedBuffers").buildObserver()
-    val capacityInBytes = otelMeter.gaugeBuilder("FilePageCache.capacityInBytes").ofLongs().buildObserver()
+    
+    val totalCachedSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.totalCachedSizeInBytes")
+      .setUnit("bytes")
+      .setDescription("Total size of all pages currently cached")
+      .ofLongs().buildObserver();
+    val maxCacheSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.maxCacheSizeInBytes")
+      .setUnit("bytes")
+      .setDescription("Max size of all cached pages observed since application start")
+      .ofLongs().buildObserver()
+    val capacityInBytes = otelMeter.gaugeBuilder("FilePageCache.capacityInBytes")
+      .setUnit("bytes")
+      .setDescription("Cache capacity, configured on application startup")
+      .ofLongs().buildObserver()
 
     otelMeter.batchCallback(
       {
@@ -249,6 +260,7 @@ object StorageDiagnosticData {
         pageLoad.record(stats.pageCacheStats.pageLoad.toLong())
         disposedBuffers.record(stats.pageCacheStats.disposedBuffers.toLong())
         capacityInBytes.record(stats.pageCacheStats.capacityInBytes)
+        totalCachedSizeInBytes.record(stats.pageCacheStats.totalCachedSizeInBytes)
       },
       uncachedFileAccess, maxRegisteredFiles, maxCacheSizeInBytes,
       pageHit, pageFastCacheHit, pageMiss, pageLoad,

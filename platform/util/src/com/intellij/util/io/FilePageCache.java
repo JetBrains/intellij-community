@@ -42,7 +42,7 @@ import static com.intellij.util.io.PagedFileStorage.MB;
  * <br>
  * <br>
  * Page cache keeps limit on number of pages being cached: {@linkplain #cachedSizeLimit}. As the limit is
- * reached, oldest pages are evicted from cache (and flushed to disk). Pages also evicted with their owner
+ * reached, the oldest pages are evicted from cache (and flushed to disk). Pages also evicted with their owner
  * {@linkplain PagedFileStorage} re-registration {@linkplain #removeStorage(long)}
  * <p>
  */
@@ -120,25 +120,26 @@ final class FilePageCache {
   private final LinkedHashMap<Long, DirectBufferWrapper> pagesToRemoveByPageId = new LinkedHashMap<>();
 
   private final long cachedSizeLimit;
-  /**
-   * Total size of all pages currently cached (i.e. in .pagesByPageId, not in .pagesToRemoveByPageId), bytes
-   */
+  /** Total size of all pages currently cached (i.e. in .pagesByPageId, not in .pagesToRemoveByPageId), bytes */
   private long totalSizeCached;
 
 
   //stats counters:
-  // file channel wasn't cached
+
+  /** how many times file channel was accessed bypassing cache (see {@link PagedFileStorage#useChannel}) */
   private volatile int myUncachedFileAccess;
-  //page found in local PagedFileStorage cache
+  /** page found in local PagedFileStorage cache */
   private int myFastCacheHits;
-  //page found in this cache
+  /** page found in this cache */
   private int myHits;
-  //page wasn't cached, and load by evicting other page (i.e. cache is full)
+  /** page wasn't cached, and load by evicting other page (i.e. cache is full) */
   private int myMisses;
-  //page wasn't cached, and load anew (i.e. cache is not full yet)
+  /** page wasn't cached, and load anew (i.e. cache is not full yet) */
   private int myLoad;
 
+  /** max size of all pages, since application start */
   private long myMaxLoadedSize;
+  /** max number of all files (PagedFileStorage), since application start */
   private volatile int myMaxRegisteredFiles;
   private volatile int myMappingChangeCount;
 
@@ -425,6 +426,7 @@ final class FilePageCache {
                                            myUncachedFileAccess,
                                            myMaxRegisteredFiles,
                                            myMaxLoadedSize,
+                                           totalSizeCached,
                                            myHits,
                                            myFastCacheHits,
                                            myMisses,
