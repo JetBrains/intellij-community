@@ -1,11 +1,7 @@
 <idea-plugin implementation-detail="false">
     <id>org.jetbrains.compose.desktop.ide.theme</id>
-    <name>CfD IJ Theme</name>
+    <name>Jewel</name>
     <vendor>JetBrains</vendor>
-
-    <dependencies>
-        <plugin id="org.jetbrains.compose.desktop.ide"/>
-    </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="org.jetbrains.jewel.theme.idea.ProjectLifecycle"/>

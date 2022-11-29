@@ -10,7 +10,7 @@ kotlin {
     target {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "17"
                 freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn", "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
             }
         }
@@ -27,8 +27,8 @@ kotlin {
 intellij {
     pluginName.set("Jewel")
     version.set("LATEST-EAP-SNAPSHOT")
-    plugins.set(listOf("org.jetbrains.kotlin", "org.jetbrains.compose.desktop.ide:1.1.1"))
-    version.set("2022.1.4")
+    plugins.set(listOf("org.jetbrains.kotlin"))
+    version.set("223.7571.123-EAP-SNAPSHOT") // IJ 22.3 RC2
 }
 
 repositories {
@@ -38,7 +38,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(compose.desktop.currentOs) {
+    implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
     }
     implementation(projects.themes.intellij) {

@@ -11,7 +11,7 @@ kotlin {
     target {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "17"
             }
         }
     }
@@ -30,7 +30,6 @@ dependencies {
         exclude(group = "org.jetbrains.compose.material")
     }
     implementation(projects.library)
-    implementation(projects.themes.toolbox)
     implementation(projects.themes.intellij.standalone)
     api(libs.compose.components.splitpane)
 }
