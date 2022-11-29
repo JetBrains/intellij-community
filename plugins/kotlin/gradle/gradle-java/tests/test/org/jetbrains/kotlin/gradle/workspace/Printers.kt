@@ -5,18 +5,32 @@ package org.jetbrains.kotlin.gradle.workspace
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 
 class WorkspaceModelPrinter(
     private val moduleContributors: List<ModulePrinterContributor>
 ) {
-    fun print(project: Project, projectRoot: File): String {
+    fun print(project: Project, projectRoot: File, testConfiguration: TestConfiguration): String {
         val printer = Printer(StringBuilder())
-        val context = PrinterContext(printer, project, projectRoot)
+        val context = PrinterContext(printer, project, projectRoot, testConfiguration)
         context.processModules()
 
+        printer.printTestConfiguration(testConfiguration)
+
         return printer.toString()
+    }
+
+    private fun Printer.printTestConfiguration(
+        testConfiguration: TestConfiguration
+    ) {
+        val testConfigurationDescription = testConfiguration.renderHumanReadableFeaturesConfigurations()
+        if (testConfigurationDescription.isNotBlank()) {
+            println()
+            println("Test configuration:")
+            println(testConfigurationDescription)
+        }
     }
 
     private fun PrinterContext.processModules() {
@@ -38,6 +52,7 @@ data class PrinterContext(
     val printer: Printer,
     val project: Project,
     val projectRoot: File,
+    val testConfiguration: TestConfiguration,
 )
 
 internal fun Printer.indented(block: () -> Unit) {
