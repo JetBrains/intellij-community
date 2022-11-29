@@ -3,35 +3,68 @@ package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import java.io.File
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.FacetSettingsFilteringConfiguration
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.FacetSettingsFilteringTestFeature
+import org.jetbrains.kotlin.platform.TargetPlatform
+import kotlin.reflect.KProperty1
+
+private typealias FacetField = KProperty1<KotlinFacetSettings, *>
 
 class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
     override fun PrinterContext.process(module: Module) = with(printer) {
         val facetSettings = runReadAction {
-          KotlinFacetSettingsProvider.getInstance(module.project)
-            ?.getSettings(module)
+            KotlinFacetSettingsProvider.getInstance(module.project)
+                ?.getSettings(module)
         } ?: return
 
-        indented {
-            println("Settings from the Kotlin facet:")
-            indented {
-                println("Target platform: ${module.platform}")
-                println("External project ID: ${facetSettings.externalProjectId}")
-                println("Language level: ${facetSettings.languageLevel}")
-                println("API level: ${facetSettings.apiLevel}")
-                println("MPP version: ${facetSettings.mppVersion?.name.orEmpty()}")
-                println("dependsOn module names:")
-                indented { facetSettings.dependsOnModuleNames.sorted().forEach(printer::println) }
-                println("Additional visible module names:")
-                indented { facetSettings.additionalVisibleModuleNames.sorted().forEach(printer::println) }
+        val configuration = testConfiguration.getConfiguration(FacetSettingsFilteringTestFeature)
 
-                val additionalArguments = facetSettings.compilerSettings?.additionalArguments?.removeAbsolutePaths(projectRoot)
-                println("Additional compiler arguments: ${additionalArguments.orEmpty()}")
+        val fieldsToPrint = configuration.computeFieldsToPrint()
+
+        indented {
+            for (field in fieldsToPrint) {
+                val fieldValue = field.get(facetSettings)
+                if (fieldValue == null || fieldValue is Collection<*> && fieldValue.isEmpty()) continue
+
+                when (fieldValue) {
+                    is TargetPlatform ->
+                        println(field.name + " = " + fieldValue.componentPlatforms.joinToStringWithSorting(separator = "/"))
+
+                    is Collection<*> ->
+                        println(field.name + " = " + fieldValue.joinToStringWithSorting() )
+
+                    else -> println(field.name + " = " + fieldValue)
+                }
             }
         }
     }
 
-    private fun String.removeAbsolutePaths(projectRoot: File): String = replace(projectRoot.toString(), "")
+    private fun FacetSettingsFilteringConfiguration.computeFieldsToPrint(): Set<FacetField> {
+        if (includedFacetFields != null) return includedFacetFields!!.ensureOnlyKnownFields()
+        if (excludedFacetFields != null) return ALL_FACET_FIELDS_TO_PRINT - excludedFacetFields!!.ensureOnlyKnownFields()
+        return ALL_FACET_FIELDS_TO_PRINT
+    }
+
+    private fun Set<FacetField>.ensureOnlyKnownFields(): Set<FacetField> {
+        val diff = this - ALL_FACET_FIELDS_TO_PRINT
+        require(diff.isEmpty()) {
+            "Unknown KotlinFacetSettings fields requested: ${diff.joinToString { it.name } }\n" +
+                    "Please, add them to `KotlinFaceSettingsPrinterContributor.ALL_FACET_FIELDS_TO_PRINT"
+        }
+        return this
+    }
+
+    companion object {
+        private val ALL_FACET_FIELDS_TO_PRINT = setOf<FacetField>(
+            KotlinFacetSettings::externalProjectId,
+            KotlinFacetSettings::languageLevel,
+            KotlinFacetSettings::apiLevel,
+            KotlinFacetSettings::mppVersion,
+            KotlinFacetSettings::dependsOnModuleNames,
+            KotlinFacetSettings::additionalVisibleModuleNames,
+            KotlinFacetSettings::targetPlatform
+        )
+    }
 }
