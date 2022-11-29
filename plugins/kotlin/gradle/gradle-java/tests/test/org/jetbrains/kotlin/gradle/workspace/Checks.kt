@@ -32,7 +32,7 @@ fun checkWorkspaceModel(
     val filesWithExpectedTestData = findExpectedTestDataFiles(expectedTestDataDir, kotlinClassifier, gradleVersion, checkModes)
 
     for ((expectedFile, mode) in filesWithExpectedTestData) {
-        val actualWorkspaceModelText = mode.printer.build().print(project, actualTestProjectRoot, testConfiguration)
+        val actualWorkspaceModelText = mode.printer.build().print(project, actualTestProjectRoot, testConfiguration, kotlinPluginVersion)
             .replace(kotlinPluginVersion.toString(), "{{KGP_VERSION}}")
 
         // NB: KotlinTestUtils handle non-existent expectedFile fine
