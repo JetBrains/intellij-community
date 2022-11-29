@@ -10,14 +10,14 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 
-final class DumbServiceGuiTaskQueue extends MergingQueueGuiExecutor<DumbModeTask> {
+final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask> {
   private final DumbServiceHeavyActivities myHeavyActivities;
   private StructuredIdeActivity activity;
 
-  DumbServiceGuiTaskQueue(@NotNull Project project,
-                          @NotNull DumbServiceMergingTaskQueue queue,
-                          @NotNull DumbServiceHeavyActivities heavyActivities,
-                          @NotNull DumbTaskListener listener) {
+  DumbServiceGuiExecutor(@NotNull Project project,
+                         @NotNull DumbServiceMergingTaskQueue queue,
+                         @NotNull DumbServiceHeavyActivities heavyActivities,
+                         @NotNull DumbTaskListener listener) {
     super(project, queue, listener);
     myHeavyActivities = heavyActivities;
   }

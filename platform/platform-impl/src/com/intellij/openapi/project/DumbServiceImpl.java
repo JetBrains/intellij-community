@@ -65,7 +65,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
   private final DumbServiceMergingTaskQueue myTaskQueue;
-  private final DumbServiceGuiTaskQueue myGuiDumbTaskRunner;
+  private final DumbServiceGuiExecutor myGuiDumbTaskRunner;
   private final DumbServiceSyncTaskQueue mySyncDumbTaskRunner;
   private final DumbServiceHeavyActivities myHeavyActivities;
   private final DumbServiceAlternativeResolveTracker myAlternativeResolveTracker;
@@ -75,7 +75,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private volatile @Nullable Thread myWaitIntolerantThread;
 
-  private class DumbTaskListener implements DumbServiceGuiTaskQueue.DumbTaskListener {
+  private class DumbTaskListener implements DumbServiceGuiExecutor.DumbTaskListener {
     /*
      * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
      * always a failure of DumbServiceGuiTaskQueue.
@@ -110,7 +110,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
     myHeavyActivities = new DumbServiceHeavyActivities();
-    myGuiDumbTaskRunner = new DumbServiceGuiTaskQueue(myProject, myTaskQueue, myHeavyActivities, new DumbTaskListener());
+    myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, myHeavyActivities, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
