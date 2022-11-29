@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.text.VersionComparatorUtil
 import java.nio.file.Files
 
@@ -42,6 +43,9 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
     if (file == null || !Files.exists(file)) {
       extensionsRootType.extractBundledResources(pluginId, "")
       file = extensionsRootType.findResource(pluginId, "predefinedExternalAnnotations.json")
+      if (file != null) {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+      }
       if (file == null || !Files.exists(file)) {
         return emptyMap()
       }
