@@ -27,6 +27,7 @@ abstract class AttachTableCell(
   private var myLastKnownWidth = -1
   private var myLastKnownDisplayText = ""
 
+  @Nls
   protected abstract fun getTextToDisplay(): String
 
   open fun getIcon(): Icon? = null

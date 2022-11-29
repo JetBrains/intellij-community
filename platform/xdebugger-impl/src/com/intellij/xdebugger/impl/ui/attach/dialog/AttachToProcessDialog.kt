@@ -39,6 +39,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresenta
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Container
 import java.awt.event.*
@@ -202,7 +203,7 @@ open class AttachToProcessDialog(
     }
   }
 
-  private fun updateProblemStripe(text: String? = null) {
+  private fun updateProblemStripe(@Nls text: String? = null) {
     if (text == null) {
       setErrorInfoAll(emptyList())
       return

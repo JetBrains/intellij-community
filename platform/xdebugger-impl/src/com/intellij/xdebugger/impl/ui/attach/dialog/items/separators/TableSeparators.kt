@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
@@ -98,7 +99,7 @@ abstract class TableGroupHeaderSeparator(private val hideLine: Boolean) : Separa
   }
 }
 
-class TableGroupHeaderFirstColumnSeparator(title: String?, hideLine: Boolean) : TableGroupHeaderSeparator(hideLine) {
+class TableGroupHeaderFirstColumnSeparator(@Nls title: String?, hideLine: Boolean) : TableGroupHeaderSeparator(hideLine) {
   init {
     caption = title
     setCaptionCentered(false)

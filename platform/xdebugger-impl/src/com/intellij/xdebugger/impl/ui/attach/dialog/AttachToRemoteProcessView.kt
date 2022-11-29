@@ -187,7 +187,7 @@ internal class AttachToRemoteProcessView(private val project: Project,
 
     override fun update(e: AnActionEvent) {
       e.presentation.icon = selectedHost?.getIcon()
-      e.presentation.text = StringUtil.trimMiddle(selectedHost?.toString() ?: "", 30)
+      e.presentation.text = StringUtil.trimMiddle(selectedHost?.getPresentation() ?: "", 30)
       e.presentation.isEnabledAndVisible = hosts.any()
     }
 
