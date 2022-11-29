@@ -25,8 +25,9 @@ class GradleJvmCompatibilityUpToDateTest : LightPlatformTestCase() {
   fun `test ensures generated file is up to date to compatibility json`() {
     val tempFile = Files.createTempFile(getTestName(true), "");
     val srcRoot = File(PathManager.getHomePath(true));
-    val generatedSrcRoot = File(srcRoot, "community/plugins/gradle/generated")
-    val filesList = generatedSrcRoot.walkTopDown().iterator().asSequence().filter { it.isFile }.toList();
+    val communityRoot = if (File(srcRoot, "community").isDirectory) File(srcRoot, "community") else srcRoot
+    val generatedSrcRoot = File(communityRoot, "plugins/gradle/generated")
+    val filesList = generatedSrcRoot.walkTopDown().iterator().asSequence().filter { it.isFile }.filter { it.name != "GradleIcons.java" }.toList();
     TestCase.assertEquals("Should be exactly 1 file in " + generatedSrcRoot.absolutePath, 1, filesList.size)
     var copyrightLine = filesList[0].readLines()[0];
     assertTrue(copyrightLine.startsWith("//"))
