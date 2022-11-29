@@ -76,7 +76,7 @@ class DeclarativeInlayHintsPass(
           val lineEndOffset = editor.document.getLineEndOffset(position.line)
           val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingEolElements, inlayData, lineEndOffset)
           if (!updated) {
-            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled, inlayData.payloads?.associate { it.payloadName to it.payload })
+            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled, createPayloads(inlayData))
             val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId)
             val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, true, renderer)
             if (inlay != null) {
@@ -87,7 +87,7 @@ class DeclarativeInlayHintsPass(
         is InlineInlayPosition -> {
           val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingInlineElements, inlayData, position.offset)
           if (!updated) {
-            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled)
+            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled, createPayloads(inlayData))
             val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId)
             val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
             if (inlay != null) {
@@ -103,6 +103,9 @@ class DeclarativeInlayHintsPass(
 
     DeclarativeInlayHintsPassFactory.updateModificationStamp(editor, myFile)
   }
+
+  private fun createPayloads(inlayData: InlayData) =
+    inlayData.payloads?.associate { it.payloadName to it.payload }
 
   private fun deleteNotPreservedInlays(offsetToExistingInlays: Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>) {
     for (inlays in offsetToExistingInlays.values) {
