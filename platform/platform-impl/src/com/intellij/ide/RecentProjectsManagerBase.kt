@@ -434,9 +434,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
     disableUpdatingRecentInfo.set(true)
     try {
-      val isOpened = if (openPaths.size == 1 ||
-                         ApplicationManager.getApplication().isHeadlessEnvironment ||
-                         WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
+      val isOpened = if (openPaths.size == 1 || isOpenProjectsOneByOneRequired()) {
         openOneByOne(java.util.List.copyOf(openPaths), index = 0, someProjectWasOpened = false)
       }
       else {
@@ -448,6 +446,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       WelcomeFrame.showIfNoProjectOpened(null)
       disableUpdatingRecentInfo.set(false)
     }
+  }
+
+  // open for Rider
+  protected open fun isOpenProjectsOneByOneRequired(): Boolean {
+    return ApplicationManager.getApplication().isHeadlessEnvironment || WindowManagerEx.getInstanceEx().getFrameHelper(null) != null
   }
 
   private suspend fun openOneByOne(openPaths: List<Entry<String, RecentProjectMetaInfo>>,
@@ -474,9 +477,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   // open for Rider
   protected open fun isValidProjectPath(file: Path) = ProjectUtilCore.isValidProjectPath(file)
 
-  // open for Rider
-  @Suppress("MemberVisibilityCanBePrivate")
-  protected suspend fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
+  private suspend fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
     val toOpen = ArrayList<Pair<Path, RecentProjectMetaInfo>>(openPaths.size)
     for (entry in openPaths) {
       val path = Path.of(entry.key)
