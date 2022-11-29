@@ -178,10 +178,12 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   private val fileTitleUpdateChannel: MergingUpdateChannel<VirtualFile?> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
-    val splitters = getAllSplitters()
-    for (file in toUpdate) {
-      for (each in splitters) {
-        each.updateFileName(file)
+    withContext(Dispatchers.EDT) {
+      val splitters = getAllSplitters()
+      for (file in toUpdate) {
+        for (each in splitters) {
+          each.updateFileName(file)
+        }
       }
     }
   }
@@ -261,8 +263,12 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   private fun processFileUpdateRequests() {
     @Suppress("DEPRECATION")
-    project.coroutineScope.launch(CoroutineName("FileEditorManagerImpl file update")) {
+    val coroutineScope = project.coroutineScope
+    coroutineScope.launch(CoroutineName("FileEditorManagerImpl file update")) {
       fileUpdateChannel.start(receiveFilter = ::isFileOpen)
+    }.cancelOnDispose(this)
+    coroutineScope.launch(CoroutineName("FileEditorManagerImpl file title update")) {
+      fileTitleUpdateChannel.start(receiveFilter = { file -> file == null || isFileOpen(file) })
     }.cancelOnDispose(this)
   }
 
