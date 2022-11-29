@@ -9,7 +9,6 @@ import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.PsiModifiableRenameUsage
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.suggested.createSmartPointer
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
