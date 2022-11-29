@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -38,34 +37,33 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
 internal class ProjectResolutionFacade(
-    private val debugString: String,
-    private val resolverDebugName: String,
-    val project: Project,
-    val globalContext: GlobalContextImpl,
-    val settings: PlatformAnalysisSettings,
-    val reuseDataFrom: ProjectResolutionFacade?,
-    val moduleFilter: (IdeaModuleInfo) -> Boolean,
-    dependencies: List<ModificationTracker>,
-    private val invalidateOnOOCB: Boolean,
-    val syntheticFiles: Collection<KtFile> = listOf(),
-    val allModules: Collection<IdeaModuleInfo>? = null // null means create resolvers for modules from idea model
+  private val debugString: String,
+  private val resolverDebugName: String,
+  val project: Project,
+  val globalContext: GlobalContextImpl,
+  val settings: PlatformAnalysisSettings,
+  val reuseDataFrom: ProjectResolutionFacade?,
+  val moduleFilter: (IdeaModuleInfo) -> Boolean,
+  dependencies: List<Any>,
+  private val invalidateOnOOCB: Boolean,
+  val syntheticFiles: Collection<KtFile> = listOf(),
+  val allModules: Collection<IdeaModuleInfo>? = null // null means create resolvers for modules from idea model
 ) {
-
-    private class DataHolder<T>(val value: T, val dependencies: LongArray)
-
-    private var resolverProviderHolder: DataHolder<ResolverForProject<IdeaModuleInfo>>? = null
+    private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
+        {
+            val resolverProvider = computeModuleResolverProvider()
+            val allDependencies = if (invalidateOnOOCB) {
+                resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+            } else {
+                resolverForProjectDependencies
+            }
+            CachedValueProvider.Result.create(resolverProvider, allDependencies)
+        },
+        /* trackValue = */ false
+    )
 
     private val cachedResolverForProject: ResolverForProject<IdeaModuleInfo>
-        get() = globalContext.storageManager.compute {
-            val dependencies = resolverProviderDependenciesTimestamps
-
-            val holder = resolverProviderHolder
-            if (holder?.dependencies.contentEquals(dependencies)) return@compute holder!!.value
-
-            val resolverProvider: ResolverForProject<IdeaModuleInfo> = computeModuleResolverProvider()
-            resolverProviderHolder = DataHolder(resolverProvider, dependencies)
-            resolverProvider
-        }
+        get() = globalContext.storageManager.compute { cachedValue.value }
 
     private val analysisResultsLock = ReentrantLock()
     private val analysisResultsSimpleLock = CancellableSimpleLock(analysisResultsLock,
@@ -121,21 +119,6 @@ internal class ProjectResolutionFacade(
     )
 
     private val resolverForProjectDependencies = dependencies + globalContext.exceptionTracker
-
-    private val resolverProviderDependencies = if (invalidateOnOOCB) {
-        resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
-    } else {
-        resolverForProjectDependencies
-    }
-
-    private val resolverProviderDependenciesTimestamps
-        get(): LongArray {
-            val dependencies = LongArray(resolverProviderDependencies.size)
-            for ((index, modificationTracker) in resolverProviderDependencies.withIndex()) {
-                dependencies[index] = modificationTracker.modificationCount
-            }
-            return dependencies
-        }
 
     private fun computeModuleResolverProvider(): ResolverForProject<IdeaModuleInfo> {
         val delegateResolverForProject: ResolverForProject<IdeaModuleInfo> =

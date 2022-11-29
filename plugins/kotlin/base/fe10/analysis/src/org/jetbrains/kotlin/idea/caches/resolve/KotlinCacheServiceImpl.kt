@@ -2,14 +2,10 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.ProjectTopics
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiCodeFragment
@@ -83,13 +79,7 @@ fun createPlatformAnalysisSettings(
     }
 }
 
-class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleRootListener, Disposable {
-
-    init {
-        val connection = project.messageBus.connect(this)
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
-    }
-
+class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getResolutionFacade(element: KtElement): ResolutionFacade {
         val file = element.fileForElement()
         if (file.isScript()) {
@@ -634,13 +624,5 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
         val contextFile = (contextElement as? KtElement)?.containingKtFile
             ?: throw AssertionError("Analyzing kotlin code fragment of type ${this::class.java} with java context of type ${contextElement::class.java}")
         return if (contextFile is KtCodeFragment) contextFile.getContextFile() else contextFile
-    }
-
-    override fun beforeRootsChange(event: ModuleRootEvent) {
-        globalFacadesPerPlatformAndSdk.clear()
-    }
-
-    override fun dispose() {
-        globalFacadesPerPlatformAndSdk.clear()
     }
 }
