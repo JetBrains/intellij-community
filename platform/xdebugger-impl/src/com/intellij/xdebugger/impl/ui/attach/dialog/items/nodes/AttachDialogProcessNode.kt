@@ -17,7 +17,7 @@ class AttachDialogProcessNode(
   override fun getProcessItem(): AttachDialogProcessItem = item
 
   override fun getValueAtColumn(column: Int): Any {
-    return columnsLayout.createCell(column, this, filters)
+    return columnsLayout.createCell(column, this, filters, false)
   }
 
   override fun getRenderer(column: Int): TableCellRenderer? = null

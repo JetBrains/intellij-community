@@ -36,7 +36,7 @@ internal class AttachTreeNodeWrapper(
                                        hasFocus: Boolean) {
       val attachTreeProcessNode = value as? AttachDialogProcessNode ?: throw IllegalStateException(
         "value of type ${value?.javaClass?.simpleName} should not be passed here")
-      val cell = columnsLayout.createCell(0, attachTreeProcessNode, filters)
+      val cell = columnsLayout.createCell(0, attachTreeProcessNode, filters, true)
       val (text, tooltip) = cell.getPresentation(this, (getIndentLevel() + 1) * JBUI.scale(18))
       val table = (tree as? TreeTableTree)?.treeTable as? JBTable ?: throw IllegalStateException("can't get parent table")
       this.append(text, modifyAttributes(cell.getTextAttributes(), table, row))

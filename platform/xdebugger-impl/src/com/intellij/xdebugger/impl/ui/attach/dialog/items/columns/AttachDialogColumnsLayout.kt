@@ -10,7 +10,7 @@ abstract class AttachDialogColumnsLayout {
 
   abstract fun getColumnInfos(): List<AttachDialogColumnInfo>
 
-  abstract fun createCell(columnIndex: Int, node: AttachDialogProcessNode, filters: AttachToProcessElementsFilters): AttachTableCell
+  abstract fun createCell(columnIndex: Int, node: AttachDialogProcessNode, filters: AttachToProcessElementsFilters, isInsideTree: Boolean): AttachTableCell
 
   fun getColumnsCount(): Int = getColumnInfos().size
 

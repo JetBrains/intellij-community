@@ -24,9 +24,13 @@ class AttachDialogDefaultColumnsLayout : AttachDialogColumnsLayout() {
 
   override fun getColumnInfos(): List<AttachDialogColumnInfo> = columnInfos
 
-  override fun createCell(columnIndex: Int, node: AttachDialogProcessNode, filters: AttachToProcessElementsFilters): AttachTableCell {
+  override fun createCell(
+    columnIndex: Int,
+    node: AttachDialogProcessNode,
+    filters: AttachToProcessElementsFilters,
+    isInsideTree: Boolean): AttachTableCell {
     return when (columnIndex) {
-      0 -> ExecutableCell(node, filters, this)
+      0 -> ExecutableCell(node, filters, this, !isInsideTree)
       1 -> PidCell(node, filters, this)
       2 -> DebuggersCell(node, filters, this)
       3 -> CommandLineCell(node, filters, this)
