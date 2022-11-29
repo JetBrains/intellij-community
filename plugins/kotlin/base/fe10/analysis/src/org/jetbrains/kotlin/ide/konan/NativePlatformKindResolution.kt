@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
 import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
 import org.jetbrains.kotlin.analyzer.ResolverForProject
+import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataModuleDescriptorFactory
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.functions.functionInterfacePackageFragmentProvider
@@ -16,22 +17,21 @@ import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
+import org.jetbrains.kotlin.descriptors.konan.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.ide.konan.analyzer.NativeResolverForModuleFactory
 import org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
 import org.jetbrains.kotlin.idea.klib.CachingIdeKlibMetadataLoader
 import org.jetbrains.kotlin.incremental.components.LookupTracker
+import org.jetbrains.kotlin.konan.util.KlibMetadataFactories
 import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
-import org.jetbrains.kotlin.library.metadata.KlibMetadataFactories
-import org.jetbrains.kotlin.library.metadata.KlibMetadataModuleDescriptorFactory
 import org.jetbrains.kotlin.library.metadata.NullFlexibleTypeDeserializer
-import org.jetbrains.kotlin.library.metadata.impl.KlibMetadataModuleDescriptorFactoryImpl
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.resolve.CompilerDeserializationConfiguration
 import org.jetbrains.kotlin.resolve.TargetEnvironment
+import org.jetbrains.kotlin.serialization.konan.impl.KlibMetadataModuleDescriptorFactoryImpl
 import org.jetbrains.kotlin.storage.StorageManager
 
 class NativePlatformKindResolution : IdePlatformKindResolution {
