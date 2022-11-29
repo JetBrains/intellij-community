@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -158,8 +159,9 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       var name by string(CodeStyleScheme.DEFAULT_SCHEME_NAME)
       var isProjectLevel by property(false)
     }
-    var visualFormattingLayerScheme by property(SchemeState())
-    @get:ReportValue var useVisualFormattingLayer by property(false)
+    var visualFormattingChosenScheme by property(SchemeState())
+    @get:ReportValue var enableVisualFormatting by property(true)
+    @get:ReportValue var useActiveSchemeForVisualFormatting by property(true)
     @get:ReportValue var showLigatures by property(EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures())
     @get:ReportValue var increaseLineSpacing by property(false)
     @get:ReportValue var showRenderedDocs by property(true)
@@ -170,27 +172,43 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
   }
 
-  fun getVisualFormattingLayerCodeStyleSettings(project: Project?): CodeStyleSettings {
-    val codeStyleSchemes = CodeStyleSchemes.getInstance()
-    return if (visualFormattingLayerScheme.name == CodeStyleScheme.PROJECT_SCHEME_NAME
-               && visualFormattingLayerScheme.isProjectLevel) {
-      CodeStyleSettingsManager.getInstance(project).mainProjectCodeStyle
+  fun getVisualFormattingCodeStyleSettings(project: Project): CodeStyleSettings? {
+    return if (enableVisualFormatting) {
+      if (useActiveSchemeForVisualFormatting) {
+        CodeStyle.getSettings(project)
+      }
+      else {
+        val codeStyleSchemes = CodeStyleSchemes.getInstance()
+        if (visualFormattingChosenScheme.name == CodeStyleScheme.PROJECT_SCHEME_NAME
+            && visualFormattingChosenScheme.isProjectLevel) {
+          CodeStyleSettingsManager.getInstance(project).mainProjectCodeStyle
+        }
+        else {
+          visualFormattingChosenScheme.name?.let { codeStyleSchemes.findSchemeByName(it)?.codeStyleSettings }
+        } ?: codeStyleSchemes.defaultScheme.codeStyleSettings
+      }
     }
     else {
-      visualFormattingLayerScheme.name?.let { codeStyleSchemes.findSchemeByName(it)?.codeStyleSettings }
-    } ?: codeStyleSchemes.defaultScheme.codeStyleSettings
+      null
+    }
   }
 
-  var visualFormattingLayerScheme: State.SchemeState
-    get() = state.visualFormattingLayerScheme
+  var visualFormattingChosenScheme: State.SchemeState
+    get() = state.visualFormattingChosenScheme
     set(value) {
-      state.visualFormattingLayerScheme = value
+      state.visualFormattingChosenScheme = value
     }
 
-  var useVisualFormattingLayer: Boolean
-    get() = state.useVisualFormattingLayer
+  var useActiveSchemeForVisualFormatting: Boolean
+    get() = state.useActiveSchemeForVisualFormatting
     set(value) {
-      state.useVisualFormattingLayer = value
+      state.useActiveSchemeForVisualFormatting = value
+    }
+
+  var enableVisualFormatting: Boolean
+    get() = state.enableVisualFormatting
+    set(value) {
+      state.enableVisualFormatting = value
     }
 
   var showLigatures: Boolean
