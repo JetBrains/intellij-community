@@ -7,18 +7,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEntry
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.utils.Printer
 
 interface ModulePrinterContributor {
-    fun process(module: Module, printer: Printer)
+    fun PrinterContext.process(module: Module)
 }
 
 class NoopModulePrinterContributor : ModulePrinterContributor {
-    override fun process(module: Module, printer: Printer) = Unit
+    override fun PrinterContext.process(module: Module) = Unit
 }
 
 class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
-    override fun process(module: Module, printer: Printer) = with(printer) {
+    override fun PrinterContext.process(module: Module) = with(printer) {
         val facetSettings = runReadAction { KotlinFacetSettingsProvider.getInstance(module.project)
             ?.getSettings(module) }
             ?: return
@@ -41,7 +40,7 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
 }
 
 class SanitizingOrderEntryPrinterContributor : ModulePrinterContributor {
-    override fun process(module: Module, printer: Printer) = with(printer) {
+    override fun PrinterContext.process(module: Module) = with(printer) {
         val orderEntries = runReadAction { ModuleRootManager.getInstance(module).orderEntries }
             .map(OrderEntry::toPrinterEntity)
         val sanitizedEntries = replaceNativeDistributionOrderEntries(orderEntries)
