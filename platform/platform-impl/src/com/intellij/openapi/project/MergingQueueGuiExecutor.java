@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Single-threaded executor for MergingTaskQueue.
+ * Single-threaded executor for {@link MergingTaskQueue}.
  */
 public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
 
@@ -143,7 +143,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    * Start task queue processing in this thread under progress indicator. If background thread is already running, this method does nothing
    * and returns immediately.
    */
-  public final void runBackgroundProcess(ProgressIndicator visibleIndicator) {
+  public final void runBackgroundProcess(@NotNull ProgressIndicator visibleIndicator) {
     boolean started = isRunning.compareAndSet(false, true);
     if (!started) return;
 
@@ -163,7 +163,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     }
   }
 
-  private void runBackgroundProcessWithSuspender(ProgressIndicator visibleIndicator) {
+  private void runBackgroundProcessWithSuspender(@NotNull ProgressIndicator visibleIndicator) {
     // Only one thread can execute this method at the same time at this point.
 
     try {
@@ -202,11 +202,11 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     }, task.getIndicator());
   }
 
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  public MergingTaskQueue<T> getTaskQueue() {
+  public @NotNull MergingTaskQueue<T> getTaskQueue() {
     return myTaskQueue;
   }
 }
