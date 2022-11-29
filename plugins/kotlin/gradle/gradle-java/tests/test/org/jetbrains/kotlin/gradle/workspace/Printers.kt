@@ -10,15 +10,15 @@ import org.jetbrains.kotlin.utils.Printer
 class WorkspaceModelPrinter(
     private val moduleContributors: List<ModulePrinterContributor>
 ) {
-    private val printer = Printer(StringBuilder())
-
     fun print(project: Project): String {
-        processModules(project)
+        val printer = Printer(StringBuilder())
+        val context = PrinterContext(printer, project)
+        context.processModules()
 
         return printer.toString()
     }
 
-    private fun processModules(project: Project) {
+    private fun PrinterContext.processModules() {
         if (moduleContributors.isEmpty()) return
 
         printer.println("MODULES")
@@ -27,11 +27,13 @@ class WorkspaceModelPrinter(
         printer.indented {
             for (module in modules.sortedBy { it.name }) {
                 printer.println(module.name)
-                moduleContributors.forEach { it.process(module, printer) }
+                moduleContributors.forEach { with(it) { process(module) } }
             }
         }
     }
 }
+
+data class PrinterContext(val printer: Printer, val project: Project)
 
 internal fun Printer.indented(block: () -> Unit) {
     pushIndent()
