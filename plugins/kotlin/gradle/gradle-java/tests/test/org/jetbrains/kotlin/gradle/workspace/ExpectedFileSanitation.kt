@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.gradle.workspace
 
-import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 
 private enum class SanitationState {
     TAKE, TAKE_ON_THIS_HOST, EXCLUDE;
@@ -21,10 +19,7 @@ private enum class SanitationState {
  * ```
  * `{{KGP_VERSION}}` stubs will be replaced by the KGP version used in a test
  */
-internal fun sanitizeExpectedFile(
-    text: String,
-    kotlinPluginVersion: KotlinToolingVersion,
-): String = buildString {
+internal fun sanitizeExpectedFile(text: String): String = buildString {
     var currentState = SanitationState.TAKE
 
     for ((index, line) in text.lines().withIndex()) {
@@ -34,10 +29,10 @@ internal fun sanitizeExpectedFile(
             currentState = nextState
         } else {
             checkUnexpectedCommands(currentState, line, index + 1)
-            appendLine(sanitizeLine(line, kotlinPluginVersion))
+            appendLine(line)
         }
     }
-}
+}.trim()
 
 private fun nextState(currentState: SanitationState, nextLine: String): SanitationState = when (currentState) {
     SanitationState.TAKE -> {
@@ -72,20 +67,14 @@ private fun checkUnexpectedCommands(currentState: SanitationState, nextLine: Str
     }
 }
 
-private fun sanitizeLine(line: String, kotlinPluginVersion: KotlinToolingVersion): String =
-    line.replace(kgpVersionPlaceholderPattern, kotlinPluginVersion.toString())
-
 private const val LINUX_HOST_CLASSIFIER = "LINUX"
 private const val WINDOWS_HOST_CLASSIFIER = "WINDOWS"
 private const val MACOS_HOST_CLASSIFIER = "MACOS"
 
 private val hostAlternatives = listOf(LINUX_HOST_CLASSIFIER, MACOS_HOST_CLASSIFIER, WINDOWS_HOST_CLASSIFIER)
 
-private const val KGP_VERSION = "KGP_VERSION"
-
 private val platformDependentBlockPattern = "^#\\s*(${hostAlternatives.joinToString("|")})\\s*$".toRegex()
 private val blockEndPattern = "^#END\\s*$".toRegex()
-private val kgpVersionPlaceholderPattern = "\\{\\s*\\{\\s*$KGP_VERSION\\s*}\\s*}".toRegex()
 
 private fun getHostClassifier() = when {
     HostManager.hostIsMingw -> WINDOWS_HOST_CLASSIFIER
