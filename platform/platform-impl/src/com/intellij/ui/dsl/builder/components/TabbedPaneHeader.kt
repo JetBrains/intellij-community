@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder.components
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
@@ -61,5 +62,9 @@ private class HeaderTabbedPaneUI : DarculaTabbedPaneUI() {
 
   override fun getOffset(): Int {
     return 0
+  }
+
+  override fun getTabLabelShiftY(tabPlacement: Int, tabIndex: Int, isSelected: Boolean): Int {
+    return JBUI.scale(1)
   }
 }
