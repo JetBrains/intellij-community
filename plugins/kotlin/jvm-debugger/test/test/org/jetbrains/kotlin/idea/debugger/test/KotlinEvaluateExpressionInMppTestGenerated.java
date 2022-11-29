@@ -767,6 +767,16 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoLambdaWithDestructuring.kt");
             }
 
+            @TestMetadata("stepIntoNestedInlineLambdasWithDestructuring.kt")
+            public void testStepIntoNestedInlineLambdasWithDestructuring() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoNestedInlineLambdasWithDestructuring.kt");
+            }
+
+            @TestMetadata("stepIntoOneLineLambdaWithDestructuring.kt")
+            public void testStepIntoOneLineLambdaWithDestructuring() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoOneLineLambdaWithDestructuring.kt");
+            }
+
             @TestMetadata("stepIntoSamLambdaWithDestructuring.kt")
             public void testStepIntoSamLambdaWithDestructuring() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoSamLambdaWithDestructuring.kt");

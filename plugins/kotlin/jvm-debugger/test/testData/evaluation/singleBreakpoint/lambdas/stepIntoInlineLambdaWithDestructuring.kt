@@ -30,3 +30,4 @@ fun main() {
 }
 
 // PRINT_FRAME
+// SHOW_KOTLIN_VARIABLES

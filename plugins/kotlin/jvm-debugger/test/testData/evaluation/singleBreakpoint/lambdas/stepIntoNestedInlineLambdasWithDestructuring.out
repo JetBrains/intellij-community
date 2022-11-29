@@ -1,0 +1,35 @@
+// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR
+LineBreakpoint created at stepIntoNestedInlineLambdasWithDestructuring.kt:17
+Run Java
+Connected to the target VM
+stepIntoNestedInlineLambdasWithDestructuring.kt:17
+stepIntoNestedInlineLambdasWithDestructuring.kt:28
+Compile bytecode for x + y
+InlineStackFrame lambda 'inlineBar' in 'main' (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+    JavaValue[local] x: int = 1 (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+    JavaValue[local] y: int = 1 (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+InlineStackFrame inlineBar (stepIntoNestedInlineLambdasWithDestructuring.kt:17)
+    JavaValue[local] b: destructurableClasses.B = destructurableClasses.B@hashCode
+        DummyMessageValueNode = Class has no properties
+InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+    JavaValue[local] x: int = 1 (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+    JavaValue[local] y: int = 1 (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+InlineStackFrame inlineFoo (stepIntoNestedInlineLambdasWithDestructuring.kt:8)
+    JavaValue[local] b: destructurableClasses.B = destructurableClasses.B@hashCode
+        DummyMessageValueNode = Class has no properties
+InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoNestedInlineLambdasWithDestructuring.kt:27)
+    JavaValue[local] x: int = 1 (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+    JavaValue[local] y: int = 1 (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+InlineStackFrame inlineFoo (stepIntoNestedInlineLambdasWithDestructuring.kt:8)
+    JavaValue[local] b: destructurableClasses.B = destructurableClasses.B@hashCode
+        DummyMessageValueNode = Class has no properties
+InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoNestedInlineLambdasWithDestructuring.kt:26)
+    JavaValue[local] x: int = 1 (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+    JavaValue[local] y: int = 1 (stepIntoNestedInlineLambdasWithDestructuring.kt:28)
+InlineStackFrame inlineFoo (stepIntoNestedInlineLambdasWithDestructuring.kt:8)
+    JavaValue[local] b: destructurableClasses.B = destructurableClasses.B@hashCode
+        DummyMessageValueNode = Class has no properties
+KotlinStackFrame (stepIntoNestedInlineLambdasWithDestructuring.kt:21)
+Disconnected from the target VM
+
+Process finished with exit code 0

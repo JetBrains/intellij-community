@@ -6,16 +6,9 @@ stepIntoInlineLambdaWithDestructuring.kt:14
 stepIntoInlineLambdaWithDestructuring.kt:28
 Compile bytecode for a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
 InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoInlineLambdaWithDestructuring.kt:28)
-    JavaValue[local] $i$f$inlineFoo: int = undefined
-    JavaValue[local] a$iv: destructurableClasses.A = A(x=1, y=1) (stepIntoInlineLambdaWithDestructuring.kt:18)
-        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
-        JavaValue[field] y: int = 1 (destructurableClasses.kt:4)
-    JavaValue[local] b$iv: destructurableClasses.B = destructurableClasses.B@hashCode (stepIntoInlineLambdaWithDestructuring.kt:18)
-        DummyMessageValueNode = Class has no properties
-    JavaValue[local] i: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:23)
-    JavaValue[local] d: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:20)
     JavaValue[local] c: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:19)
-    JavaValue[local] $i$a$-inlineFoo-StepIntoInlineLambdaWithDestructuringKt$main$1: int = undefined
+    JavaValue[local] d: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:20)
+    JavaValue[local] i: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:23)
     JavaValue[local] a: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:18)
     JavaValue[local] b: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:18)
     JavaValue[local] e: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:20)
@@ -29,51 +22,12 @@ InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoInlineLambdaWithDestructu
     JavaValue[local] n: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:27)
     JavaValue[local] o: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:27)
 InlineStackFrame inlineFoo (stepIntoInlineLambdaWithDestructuring.kt:14)
-    JavaValue[local] $i$f$inlineFoo: int = undefined
-    JavaValue[local] a$iv: destructurableClasses.A = A(x=1, y=1) (stepIntoInlineLambdaWithDestructuring.kt:18)
+    JavaValue[local] a: destructurableClasses.A = A(x=1, y=1) (stepIntoInlineLambdaWithDestructuring.kt:18)
         JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
         JavaValue[field] y: int = 1 (destructurableClasses.kt:4)
-    JavaValue[local] b$iv: destructurableClasses.B = destructurableClasses.B@hashCode (stepIntoInlineLambdaWithDestructuring.kt:18)
+    JavaValue[local] b: destructurableClasses.B = destructurableClasses.B@hashCode (stepIntoInlineLambdaWithDestructuring.kt:18)
         DummyMessageValueNode = Class has no properties
-    JavaValue[local] i: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:23)
-    JavaValue[local] d: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:20)
-    JavaValue[local] c: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:19)
-    JavaValue[local] $i$a$-inlineFoo-StepIntoInlineLambdaWithDestructuringKt$main$1: int = undefined
-    JavaValue[local] a: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:18)
-    JavaValue[local] b: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:18)
-    JavaValue[local] e: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:20)
-    JavaValue[local] f: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:21)
-    JavaValue[local] g: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:21)
-    JavaValue[local] h: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:22)
-    JavaValue[local] j: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:24)
-    JavaValue[local] k: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:24)
-    JavaValue[local] l: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:25)
-    JavaValue[local] m: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:26)
-    JavaValue[local] n: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:27)
-    JavaValue[local] o: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:27)
 KotlinStackFrame (stepIntoInlineLambdaWithDestructuring.kt:18)
-    JavaValue[local] $i$f$inlineFoo: int = undefined
-    JavaValue[local] a$iv: destructurableClasses.A = A(x=1, y=1) (stepIntoInlineLambdaWithDestructuring.kt:18)
-        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
-        JavaValue[field] y: int = 1 (destructurableClasses.kt:4)
-    JavaValue[local] b$iv: destructurableClasses.B = destructurableClasses.B@hashCode (stepIntoInlineLambdaWithDestructuring.kt:18)
-        DummyMessageValueNode = Class has no properties
-    JavaValue[local] i: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:23)
-    JavaValue[local] d: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:20)
-    JavaValue[local] c: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:19)
-    JavaValue[local] $i$a$-inlineFoo-StepIntoInlineLambdaWithDestructuringKt$main$1: int = undefined
-    JavaValue[local] a: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:18)
-    JavaValue[local] b: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:18)
-    JavaValue[local] e: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:20)
-    JavaValue[local] f: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:21)
-    JavaValue[local] g: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:21)
-    JavaValue[local] h: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:22)
-    JavaValue[local] j: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:24)
-    JavaValue[local] k: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:24)
-    JavaValue[local] l: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:25)
-    JavaValue[local] m: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:26)
-    JavaValue[local] n: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:27)
-    JavaValue[local] o: int = 1 (stepIntoInlineLambdaWithDestructuring.kt:27)
 Disconnected from the target VM
 
 Process finished with exit code 0
