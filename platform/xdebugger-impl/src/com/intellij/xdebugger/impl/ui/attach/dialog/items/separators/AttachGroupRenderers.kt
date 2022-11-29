@@ -1,6 +1,6 @@
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.separators
 
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.list.AttachToProcessListGroupBase
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogGroupNode
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTable
@@ -13,9 +13,9 @@ internal class AttachGroupFirstColumnRenderer : TableCellRenderer {
                                              hasFocus: Boolean,
                                              row: Int,
                                              column: Int): JComponent {
-    if (value !is AttachToProcessListGroupBase) throw IllegalStateException(
-      "Expected the element of type ${AttachToProcessListGroupBase::class.java.simpleName} but received ${value?.javaClass?.simpleName}")
-    return TableGroupHeaderFirstColumnSeparator(value.groupName, value.isFirstGroup)
+    if (value !is AttachDialogGroupNode) throw IllegalStateException(
+      "Expected the element of type ${AttachDialogGroupNode::class.java.simpleName} but received ${value?.javaClass?.simpleName}")
+    return TableGroupHeaderFirstColumnSeparator(value.message, value.isFirstGroup)
   }
 }
 
@@ -26,8 +26,8 @@ internal class AttachGroupColumnRenderer : TableCellRenderer {
                                              hasFocus: Boolean,
                                              row: Int,
                                              column: Int): Component {
-    if (value !is AttachToProcessListGroupBase) throw IllegalStateException(
-      "Expected the element of type ${AttachToProcessListGroupBase::class.java.simpleName} but received ${value?.javaClass?.simpleName}")
+    if (value !is AttachDialogGroupNode) throw IllegalStateException(
+      "Expected the element of type ${AttachDialogGroupNode::class.java.simpleName} but received ${value?.javaClass?.simpleName}")
     return TableGroupHeaderColumnSeparator(value.isFirstGroup)
   }
 }
@@ -39,8 +39,8 @@ internal class AttachGroupLastColumnRenderer : TableCellRenderer {
                                              hasFocus: Boolean,
                                              row: Int,
                                              column: Int): Component {
-    if (value !is AttachToProcessListGroupBase) throw IllegalStateException(
-      "Expected the element of type ${AttachToProcessListGroupBase::class.java.simpleName} but received ${value?.javaClass?.simpleName}")
+    if (value !is AttachDialogGroupNode) throw IllegalStateException(
+      "Expected the element of type ${AttachDialogGroupNode::class.java.simpleName} but received ${value?.javaClass?.simpleName}")
     return TableGroupHeaderLastColumnSeparator(value.isFirstGroup)
   }
 }

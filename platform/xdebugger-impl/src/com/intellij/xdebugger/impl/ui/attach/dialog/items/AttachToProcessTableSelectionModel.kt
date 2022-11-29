@@ -1,12 +1,12 @@
 package com.intellij.xdebugger.impl.ui.attach.dialog.items
 
 import com.intellij.ui.table.JBTable
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachSelectionIgnoredNode
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.AttachTreeNodeWrapper
 import java.awt.Rectangle
 import javax.swing.DefaultListSelectionModel
 import javax.swing.ListSelectionModel
 import javax.swing.table.TableModel
-
-internal interface AttachSelectionIgnoredNode
 
 internal interface AttachNodeContainer<TNodeType> {
   fun getAttachNode(): TNodeType
@@ -93,11 +93,14 @@ internal inline fun <reified TNodeType> TableModel.getValueAt(row: Int): TNodeTy
   if (row < 0 || row >= rowCount) {
     return null
   }
-  return when (val value = getValueAt(row, 0)) {
-    is TNodeType -> value
-    is AttachNodeContainer<*> -> value.getAttachNode() as? TNodeType
-    else -> null
-  }
+  return tryCastValue<TNodeType>(getValueAt(row, 0))
+}
+
+internal inline fun <reified TNodeType> tryCastValue(value: Any) = when (value) {
+  is TNodeType -> value
+  is AttachNodeContainer<*> -> value.getAttachNode() as? TNodeType
+  is AttachTreeNodeWrapper -> value.node as? TNodeType
+  else -> null
 }
 
 internal fun JBTable.focusFirst() {
