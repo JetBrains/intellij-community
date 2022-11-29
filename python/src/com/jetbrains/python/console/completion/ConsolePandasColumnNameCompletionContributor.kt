@@ -20,6 +20,7 @@ import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.PyExecuteConsoleCustomizer
 import com.jetbrains.python.console.PydevConsoleCommunication
 import com.jetbrains.python.console.PythonConsoleView
+import com.jetbrains.python.debugger.PyDebuggerException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -47,7 +48,7 @@ class ConsolePandasColumnNameCompletionContributor : CompletionContributor(), Du
           result.addAllElements(dataFrameCandidates.flatMap { candidate ->
             val columnsDataFrame = getDataFrameColumns(project, candidate.psiName, consoleCommunication)
             processDataFrameColumns(candidate.psiName, columnsDataFrame, candidate.needValidatorCheck,
-                                                                       parameters.position, project, false)
+                                    parameters.position, project, true)
           })
         }, ProgressManager.getInstance().progressIndicator)
       }
@@ -98,15 +99,20 @@ class ConsolePandasColumnNameRetrievalServiceImpl(val project: Project) : Consol
     if (!PyConsoleOptions.getInstance(project).isAutoCompletionEnabled) {
       return emptyList()
     }
-    val debugValue = consoleCommunication.evaluate(PANDAS_COLUMN_NAMES_CODE.format(name, name), true, true)
-    return when (debugValue.type) {
-      "str" -> debugValue.value?.let { parseDebugValue(it) } ?: emptyList()
-      "NameError" -> emptyList()
-      "SyntaxError" -> {
-        ConsolePandasColumnNameCompletionContributor.LOG.info(ConsolePandasColumnNameCompletionContributor.COMPLETION_LOG_MESSAGE + name)
-        emptyList()
+    try {
+      val debugValue = consoleCommunication.runCmd(PANDAS_COLUMN_NAMES_CODE.format(name, name), true)
+      return when (debugValue.type) {
+        "str" -> debugValue.value?.let { parseDebugValue(it) } ?: emptyList()
+        "NameError" -> emptyList()
+        "SyntaxError" -> {
+          ConsolePandasColumnNameCompletionContributor.LOG.info(ConsolePandasColumnNameCompletionContributor.COMPLETION_LOG_MESSAGE + name)
+          emptyList()
+        }
+        else -> emptyList()
       }
-      else -> emptyList()
+    }
+    catch (_: PyDebuggerException) {
+      return emptyList()
     }
   }
 

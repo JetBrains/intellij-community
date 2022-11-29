@@ -29,8 +29,8 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
-import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
+import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
@@ -545,6 +545,22 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         PyBundle.message("console.evaluating.expression.in.console"),
         "Error in evaluate():"
       );
+    }
+    else {
+      return null;
+    }
+  }
+
+  public PyDebugValue runCmd(String expression, boolean doTrunc) throws PyDebuggerException {
+    if (!isCommunicationClosed()) {
+      List<DebugValue> debugValues;
+      try {
+        debugValues = getPythonConsoleBackendClient().evaluate(expression, doTrunc);
+      }
+      catch (TException e) {
+        throw new PyDebuggerException(e.getMessage());
+      }
+      return createPyDebugValue(debugValues.iterator().next(), this);
     }
     else {
       return null;
