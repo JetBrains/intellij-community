@@ -8,26 +8,37 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
-import com.intellij.util.application
 import com.intellij.remoteDev.tests.modelGenerated.*
 import com.intellij.util.alsoIfNull
+import com.intellij.util.application
+import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.measureTimeMillis
 import com.jetbrains.rd.util.reactive.viewNotNull
 import org.jetbrains.annotations.ApiStatus
+import java.awt.image.BufferedImage
 import java.io.File
+import java.io.IOException
 import java.net.InetAddress
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 
 
@@ -52,6 +63,8 @@ abstract class DistributedTestHostBase() {
 
   companion object {
     private val logger = Logger.getInstance(DistributedTestHostBase::class.java)
+
+    const val screenshotOnFailureFileName = "ScreenshotOnFailure"
   }
 
   protected abstract val projectOrNull: Project?
@@ -152,6 +165,8 @@ abstract class DistributedTestHostBase() {
           }
           catch (ex: Throwable) {
             logger.warn("Test action ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully", ex)
+            if (!application.isHeadlessEnvironment)
+              actionTitle?.let { makeScreenshot("${it}_$screenshotOnFailureFileName") }
             return@set RdTask.faulted(ex)
           }
         }
@@ -180,6 +195,10 @@ abstract class DistributedTestHostBase() {
           threadDumpFile.writeText(threadDump)
         }
 
+        session.makeScreenshot.set { fileName ->
+          return@set makeScreenshot(fileName)
+        }
+
         // Initialize loggers
         DebugLogManager.getInstance().applyCategories(
           session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) }
@@ -193,6 +212,52 @@ abstract class DistributedTestHostBase() {
         session.ready.value = false
       }
     }
+  }
+
+  private fun makeScreenshot(fileName: String): Boolean {
+    if (application.isHeadlessEnvironment) {
+      error("Don't try making screenshots on application in headless mode.")
+    }
+
+    val result = CompletableFuture<Boolean>()
+    ApplicationManager.getApplication().invokeLater {
+      val frame = WindowManager.getInstance().getIdeFrame(project)
+      if (frame != null) {
+        val component = frame.component
+        val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+        component.printAll(img.createGraphics())
+        ApplicationManager.getApplication().executeOnPooledThread {
+          try {
+            result.complete(ImageIO.write(img, "png", File(PathManager.getLogPath()).resolve(
+              if (fileName.endsWith(".png")) fileName else "$fileName.png")))
+          }
+          catch (e: IOException) {
+            logger.info(e)
+          }
+        }
+      }
+      else
+        logger.info("Frame was empty when makeScreenshot was called")
+    }
+
+    IdeEventQueue.getInstance().flushQueue()
+
+    try {
+      if (result[45, TimeUnit.SECONDS])
+        logger.info("Screenshot is saved at: $fileName")
+      else
+        logger.info("No writers were found for screenshot")
+    }
+    catch (e: Throwable) {
+      when (e) {
+        is InterruptedException, is ExecutionException, is TimeoutException -> logger.info(e)
+        else -> {
+          logger.warn("Test action 'makeScreenshot' hasn't finished successfully", e)
+          return false
+        }
+      }
+    }
+    return true
   }
 
   private fun assertStateAfterTestMethod() {

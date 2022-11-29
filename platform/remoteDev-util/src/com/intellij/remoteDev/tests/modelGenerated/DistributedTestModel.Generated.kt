@@ -51,7 +51,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 8735956575571861475L
+        const val serializationHash = -603340022673479212L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -168,7 +168,8 @@ class RdTestSession private constructor(
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _shutdown: RdSignal<Unit>,
     private val _dumpThreads: RdSignal<Unit>,
-    private val _runNextAction: RdCall<Unit, Boolean>
+    private val _runNextAction: RdCall<Unit, Boolean>,
+    private val _makeScreenshot: RdCall<String, Boolean>
 ) : RdBindableBase() {
     //companion
     
@@ -187,7 +188,8 @@ class RdTestSession private constructor(
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _dumpThreads = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _runNextAction).withId(_id)
+            val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
+            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _runNextAction, _makeScreenshot).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -201,6 +203,7 @@ class RdTestSession private constructor(
             RdSignal.write(ctx, buffer, value._shutdown)
             RdSignal.write(ctx, buffer, value._dumpThreads)
             RdCall.write(ctx, buffer, value._runNextAction)
+            RdCall.write(ctx, buffer, value._makeScreenshot)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
@@ -212,6 +215,7 @@ class RdTestSession private constructor(
     val shutdown: ISignal<Unit> get() = _shutdown
     val dumpThreads: IAsyncSignal<Unit> get() = _dumpThreads
     val runNextAction: RdCall<Unit, Boolean> get() = _runNextAction
+    val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     //methods
     //initializer
     init {
@@ -228,6 +232,7 @@ class RdTestSession private constructor(
         bindableChildren.add("shutdown" to _shutdown)
         bindableChildren.add("dumpThreads" to _dumpThreads)
         bindableChildren.add("runNextAction" to _runNextAction)
+        bindableChildren.add("makeScreenshot" to _makeScreenshot)
     }
     
     //secondary constructor
@@ -245,7 +250,8 @@ class RdTestSession private constructor(
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdSignal<Unit>(FrameworkMarshallers.Void),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
+        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool)
     )
     
     //equals trait
@@ -263,6 +269,7 @@ class RdTestSession private constructor(
             print("shutdown = "); _shutdown.print(printer); println()
             print("dumpThreads = "); _dumpThreads.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
+            print("makeScreenshot = "); _makeScreenshot.print(printer); println()
         }
         printer.print(")")
     }
@@ -277,7 +284,8 @@ class RdTestSession private constructor(
             _sendException.deepClonePolymorphic(),
             _shutdown.deepClonePolymorphic(),
             _dumpThreads.deepClonePolymorphic(),
-            _runNextAction.deepClonePolymorphic()
+            _runNextAction.deepClonePolymorphic(),
+            _makeScreenshot.deepClonePolymorphic()
         )
     }
     //contexts
