@@ -1,4 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.refactoring.rename">
+  <dependencies>
+    <module name="kotlin.searching.k2"/>
+    <module name="kotlin.refactorings.k2"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
 
 <!--    <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDefaultRenameHandlerVetoCondition"/>-->
