@@ -106,7 +106,13 @@ enum class WorkspacePrintingMode(
             addContributor(KotlinFacetSettingsPrinterContributor())
         }
     ),
-    // TODO: module roots
+    SOURCE_ROOTS(
+        filePrefix = "source-roots",
+        description = "LIst of all all modules in a project with their source roots",
+        printer = WorkspaceModelPrinterFactory {
+            addContributor(ContentRootsContributor())
+        }
+    ),
 }
 
 private fun fileWithClassifyingParts(testDataDir: File, mode: WorkspacePrintingMode, classifyingParts: List<String>): File {
