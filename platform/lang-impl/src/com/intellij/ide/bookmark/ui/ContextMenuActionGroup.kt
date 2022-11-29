@@ -41,9 +41,6 @@ internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, Acti
         addGroup("ProjectViewPopupMenuRunGroup")
         actions.add(Separator())
         addGroup("VersionControlsGroup")
-        actions.add(Separator())
-        val selectAction = CustomActionsSchema.getInstance().getCorrectedAction("SelectInProjectView")
-        if (selectAction != null) actions.add(selectAction)
       }
     }
 

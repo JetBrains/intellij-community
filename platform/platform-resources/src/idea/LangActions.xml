@@ -266,6 +266,7 @@
                 class="com.intellij.ide.bookmark.actions.GroupCreateAction"/>
         <reference ref="BookmarksView.Rename"/>
         <separator/>
+        <reference ref="SelectInProjectView"/>
         <reference ref="ExpandAll"/>
         <reference ref="CollapseAll"/>
         <action id="BookmarksView.ShowPreview" icon="AllIcons.Actions.PreviewDetails"
