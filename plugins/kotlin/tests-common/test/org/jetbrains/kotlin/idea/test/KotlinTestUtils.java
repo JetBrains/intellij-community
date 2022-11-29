@@ -388,8 +388,8 @@ public class KotlinTestUtils {
 
             String expectedText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(StringUtil.convertLineSeparators(expected.trim()));
 
-            String sanitizedExpectedText = sanitizer.invoke(expectedText);
-            String sanitizedActualText = sanitizer.invoke(actualText);
+            String sanitizedExpectedText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(sanitizer.invoke(expectedText));
+            String sanitizedActualText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(sanitizer.invoke(actualText));
 
             if (!Objects.equals(sanitizedExpectedText, sanitizedActualText)) {
                 throw new FileComparisonFailure(message + ": " + expectedFile.getName(),
