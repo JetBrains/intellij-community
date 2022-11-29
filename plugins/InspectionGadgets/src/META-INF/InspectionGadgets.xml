@@ -2772,7 +2772,7 @@
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
-                     implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
+                     implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousDateFormat" enabledByDefault="true" level="WARNING"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.suspicious.date.format.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
