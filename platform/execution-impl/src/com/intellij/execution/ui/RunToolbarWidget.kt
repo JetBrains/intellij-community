@@ -45,10 +45,12 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupState
+import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -256,6 +258,11 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
     (list as? JBList<*>)?.setExpandableItemsEnabled(false)
   }
 
+  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
+    val popup = super.createPopup(parent, step, parentValue)
+    popup.setMinimumSize(JBDimension(MINIMAL_POPUP_WIDTH, 0))
+    return popup
+  }
 
   override fun shouldBeShowing(value: Any?): Boolean {
     if (!super.shouldBeShowing(value)) return false
