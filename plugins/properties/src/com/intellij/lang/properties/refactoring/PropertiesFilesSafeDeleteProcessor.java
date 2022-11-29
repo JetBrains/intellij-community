@@ -27,7 +27,7 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
   }
 
   @Override
-  public NonCodeUsageSearchInfo findUsages(@NotNull final PsiElement element, final PsiElement @NotNull [] allElementsToDelete, @NotNull final List<UsageInfo> result) {
+  public NonCodeUsageSearchInfo findUsages(@NotNull final PsiElement element, final PsiElement @NotNull [] allElementsToDelete, final @NotNull List<? super UsageInfo> result) {
     PropertiesFile file = (PropertiesFile) element;
     List<PsiElement> elements = new ArrayList<>();
     elements.add(file.getContainingFile());
@@ -57,12 +57,12 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
   }
 
   @Override
-  public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
+  public UsageInfo[] preprocessUsages(final @NotNull Project project, final UsageInfo @NotNull [] usages) {
     return usages;
   }
 
   @Override
-  public void prepareForDeletion(final PsiElement element) throws IncorrectOperationException {
+  public void prepareForDeletion(final @NotNull PsiElement element) throws IncorrectOperationException {
   }
 
   @Override

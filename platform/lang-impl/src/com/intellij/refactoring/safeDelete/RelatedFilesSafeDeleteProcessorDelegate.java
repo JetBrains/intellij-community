@@ -87,7 +87,7 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
   @Override
   public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element,
                                            PsiElement @NotNull [] allElementsToDelete,
-                                           @NotNull List<UsageInfo> result) {
+                                           @NotNull List<? super UsageInfo> result) {
     return null;
   }
 
@@ -103,12 +103,12 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
   }
 
   @Override
-  public UsageInfo[] preprocessUsages(Project project, final UsageInfo[] usages) {
+  public UsageInfo[] preprocessUsages(@NotNull Project project, final UsageInfo @NotNull [] usages) {
     return usages;
   }
 
   @Override
-  public void prepareForDeletion(PsiElement element) throws IncorrectOperationException {
+  public void prepareForDeletion(@NotNull PsiElement element) throws IncorrectOperationException {
   }
 
   @Override

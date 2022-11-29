@@ -35,12 +35,12 @@ public abstract class SafeDeleteProcessorDelegateBase implements SafeDeleteProce
   }
 
   @Nullable
-  public UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager, PsiElement[] elements) {
+  public UsageView showUsages(UsageInfo @NotNull [] usages, @NotNull UsageViewPresentation presentation, @NotNull UsageViewManager manager, PsiElement @NotNull [] elements) {
     return null;
   }
 
   @Nullable
-  public Collection<String> findConflicts(PsiElement element, PsiElement[] elements, UsageInfo[] usages) {
+  public Collection<String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] elements, UsageInfo @NotNull [] usages) {
     return findConflicts(element, elements);
   }
 }

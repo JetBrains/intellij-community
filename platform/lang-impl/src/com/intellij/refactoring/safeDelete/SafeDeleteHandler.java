@@ -46,36 +46,36 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, @NotNull PsiElement @NotNull [] elements, DataContext dataContext) {
     invoke(project, elements, PlatformCoreDataKeys.MODULE.getData(dataContext), true, null, null);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates) {
+  public static void invoke(@NotNull Project project, @NotNull PsiElement @NotNull [] elements, boolean checkDelegates) {
     invoke(project, elements, checkDelegates, null);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates, @Nullable final Runnable successRunnable) {
+  public static void invoke(@NotNull Project project, PsiElement @NotNull [] elements, boolean checkDelegates, @Nullable Runnable successRunnable) {
     invoke(project, elements, null, checkDelegates, successRunnable, null);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
-                            @Nullable final Runnable successRunnable) {
+  public static void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable Runnable successRunnable) {
     invoke(project, elements, module, checkDelegates, successRunnable, null);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
-                            @Nullable final Runnable successRunnable, @Nullable final  Runnable afterRefactoring) {
+  public static void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable Runnable successRunnable, @Nullable Runnable afterRefactoring) {
     invoke(project, elements, module, checkDelegates, successRunnable, afterRefactoring, false);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
-                            @Nullable final Runnable successRunnable, @Nullable final  Runnable afterRefactoring, boolean silent) {
+  public static void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable Runnable successRunnable, @Nullable Runnable afterRefactoring, boolean silent) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
       }
     }
-    final PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
+    PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
     Set<PsiElement> elementsSet = ContainerUtil.set(temptoDelete);
     Set<PsiElement> fullElementsSet = new LinkedHashSet<>();
 
@@ -103,11 +103,11 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet, true)) return;
 
-    final PsiElement[] elementsToDelete = PsiUtilCore.toPsiElementArray(fullElementsSet);
+    PsiElement[] elementsToDelete = PsiUtilCore.toPsiElementArray(fullElementsSet);
 
     if (ApplicationManager.getApplication().isUnitTestMode() || silent) {
       RefactoringSettings settings = RefactoringSettings.getInstance();
-      final SafeDeleteProcessor processor =
+      SafeDeleteProcessor processor =
         SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
                                            settings.SAFE_DELETE_SEARCH_IN_NON_JAVA, true);
       if (afterRefactoring != null) processor.setAfterRefactoringCallback(afterRefactoring);
@@ -115,18 +115,15 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       if (successRunnable != null) successRunnable.run();
     }
     else {
-      final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
-        @Override
-        public void run(final SafeDeleteDialog dialog) {
-          final SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
-            if (successRunnable != null) {
-              successRunnable.run();
-            }
-            dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-          }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
-          if (afterRefactoring != null) processor.setAfterRefactoringCallback(afterRefactoring);
-          processor.run();
-        }
+      SafeDeleteDialog.Callback callback = dialog -> {
+        SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
+          if (successRunnable != null) {
+            successRunnable.run();
+          }
+          dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+        }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
+        if (afterRefactoring != null) processor.setAfterRefactoringCallback(afterRefactoring);
+        processor.run();
       };
 
       SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);
@@ -134,7 +131,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     }
   }
 
-  public static @NlsContexts.DialogTitle String getRefactoringName() {
+  public static @NlsContexts.DialogTitle @NotNull String getRefactoringName() {
     return RefactoringBundle.message("safe.delete.title");
   }
 }

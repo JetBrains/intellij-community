@@ -41,7 +41,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     override fun findUsages(
         element: PsiElement,
         allElementsToDelete: Array<out PsiElement>,
-        result: MutableList<UsageInfo>
+        result: MutableList<in UsageInfo>
     ): NonCodeUsageSearchInfo {
 
         fun isInside (t: PsiElement, ancestors : Array<out PsiElement>) : Boolean =
@@ -106,7 +106,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         allElementsToDelete: Array<out PsiElement>,
         isInside: (t: PsiElement) -> Boolean,
         additionalElementsToDelete: ArrayList<PsiElement>,
-        result: MutableList<UsageInfo>
+        result: MutableList<in UsageInfo>
     ) {
         val overridden = arrayListOf<PsiElement>()
         val containingClass = element.containingClass()
@@ -161,7 +161,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     }
 
     private fun findCallArgumentsToDelete(
-        result: MutableList<UsageInfo>,
+        result: MutableList<in UsageInfo>,
         element: KtParameter,
         parameterIndexAsJavaCall: Int,
         ktElement: KtElement
@@ -225,11 +225,11 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         return null
     }
 
-    override fun preprocessUsages(project: Project?, usages: Array<out UsageInfo>?): Array<UsageInfo>? {
-        return usages?.map2Array { it }
+    override fun preprocessUsages(project: Project, usages: Array<out UsageInfo>): Array<UsageInfo> {
+        return usages.map2Array { it }
     }
 
-    override fun prepareForDeletion(element: PsiElement?) {
+    override fun prepareForDeletion(element: PsiElement) {
         when (element) {
             is KtTypeParameter -> {
                 deleteSeparatingComma(element)
