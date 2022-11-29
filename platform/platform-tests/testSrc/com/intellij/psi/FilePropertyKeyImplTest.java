@@ -56,16 +56,17 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
     VirtualFile file = tempDir.createVirtualFile(name, content);
 
     // this should be new physical file with no any data associated with it
-    assertTrue(file.getClass().getName(), file instanceof VirtualFileWithId);
-    assertNull(file.toString(), memKey.get(file));
-    assertNull(file.toString(), key.getPersistentValue(file));
+    assertTrue("VirtualFile should be VirtualFileWithId, actual type is " + file.getClass(), file instanceof VirtualFileWithId);
+    assertNull("File [" + file + "] should be fresh, no data associated with it", memKey.get(file));
+    assertNull("File [" + file + "] should be fresh, no data associated with it", key.getPersistentValue(file));
     return file;
   }
 
   @Test
   public void testLightVirtualFile() {
     LightVirtualFile file = new LightVirtualFile();
-    TestCase.assertFalse("Precondition failed", file instanceof VirtualFileWithId);
+    TestCase.assertFalse("VirtualFile should NOT be VirtualFileWithId, actual type is " + file.getClass(),
+                         file instanceof VirtualFileWithId);
 
     TestCase.assertTrue(key.setPersistentValue(file, sample1));
     TestCase.assertEquals(sample1, key.getPersistentValue(file));
