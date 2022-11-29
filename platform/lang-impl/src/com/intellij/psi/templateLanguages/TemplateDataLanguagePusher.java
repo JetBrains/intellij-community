@@ -29,7 +29,7 @@ public class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language>
 
   @NotNull
   @Override
-  public FilePropertyKey<Language> getFileDataKey() {
+  public FilePropertyKey<Language> getFilePropertyKey() {
     return KEY;
   }
 

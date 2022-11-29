@@ -32,7 +32,7 @@ public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<Langua
 
   @Override
   @NotNull
-  public FilePropertyKey<LanguageLevel> getFileDataKey() {
+  public FilePropertyKey<LanguageLevel> getFilePropertyKey() {
     return KEY;
   }
 

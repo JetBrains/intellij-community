@@ -295,7 +295,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private static <T> T findNewPusherValueFromParent(Project project, VirtualFile fileOrDir, FilePropertyPusher<? extends T> pusher) {
     final VirtualFile parent = fileOrDir.getParent();
     if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) {
-      final T userValue = pusher.getFileDataKey().getPersistentValue(parent);
+      final T userValue = pusher.getFilePropertyKey().getPersistentValue(parent);
       if (userValue != null) return userValue;
       return findNewPusherValue(project, parent, pusher, null);
     }

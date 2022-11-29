@@ -15,7 +15,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.sdk.pythonSdk
-import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -66,7 +65,7 @@ class PyPushingTest {
 
     val pusher = FilePropertyPusher.EP_NAME.findExtension(PythonLanguageLevelPusher::class.java)
     Assertions.assertThat(pusher).withFailMessage("Failed to find pusher").isNotNull
-    val key = pusher!!.fileDataKey
+    val key = pusher!!.filePropertyKey
     Assertions.assertThat(key.getPersistentValue(contentRootDir)).isEqualTo(languageLevel)
     Assertions.assertThat(key.getPersistentValue(excludedDir)).withFailMessage {
       "Directory $excludedDir is excluded before creation, " +

@@ -82,7 +82,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   }
 
   @Override
-  public @NotNull FilePropertyKey<LanguageLevel> getFileDataKey() {
+  public @NotNull FilePropertyKey<LanguageLevel> getFilePropertyKey() {
     return KEY;
   }
 

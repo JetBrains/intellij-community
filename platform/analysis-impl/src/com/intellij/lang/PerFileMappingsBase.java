@@ -102,7 +102,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Nullable
   public T getConfiguredMapping(@Nullable VirtualFile file) {
     FilePropertyPusher<T> pusher = getFilePropertyPusher();
-    return getMappingInner(file, pusher == null ? null : pusher.getFileDataKey(), false);
+    return getMappingInner(file, pusher == null ? null : pusher.getFilePropertyKey(), false);
   }
 
   @Nullable
@@ -228,7 +228,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     if (project != null && pusher != null) {
       for (VirtualFile oldFile : oldFiles) {
         if (oldFile == null) continue; // project
-        pusher.getFileDataKey().setPersistentValue(oldFile, null);
+        pusher.getFilePropertyKey().setPersistentValue(oldFile, null);
       }
       if (!project.isDefault()) {
         PushedFilePropertiesUpdater.getInstance(project).pushAll(pusher);
