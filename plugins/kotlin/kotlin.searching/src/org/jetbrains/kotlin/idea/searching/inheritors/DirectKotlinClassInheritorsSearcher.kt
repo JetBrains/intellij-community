@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
+import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, PsiElement> {
     @RequiresReadLock
@@ -46,19 +47,13 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
         val basePointer = runReadAction {
             analyze(baseClass) {
-                val baseSymbol = baseClass.getSymbol() as? KtClassOrObjectSymbol ?: return@runReadAction null
-                baseSymbol.createPointer()
+                (baseClass.getSymbol() as? KtClassOrObjectSymbol)?.createPointer()
             }
         } ?: return null
         val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
         return object : AbstractQuery<PsiElement>() {
             override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                names.forEach { name ->
-                    if (!runReadAction {
-                            processBaseName(name, consumer)
-                        }) return false
-                }
-                return true
+                return names.all { name -> runReadAction { processBaseName(name, consumer) } }
             }
 
             private fun processBaseName(name: String, consumer: Processor<in PsiElement>): Boolean {
@@ -66,22 +61,26 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                 KotlinSuperClassIndex
                     .get(name, project, noLibrarySourceScope)
                     .asSequence()
-                    .map { ktClassOrObject ->
-                        ProgressManager.checkCanceled()
-                        analyze(ktClassOrObject) {
-                            val baseSymbol = basePointer.restoreSymbol() ?: return@map null
-                            val ktSymbol = ktClassOrObject.getSymbol() as? KtClassOrObjectSymbol ?: return@map null
-                            if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) return@map null
-                            return@map if (ktSymbol.isSubClassOf(baseSymbol)) ktClassOrObject else null
-                        }
-                    }
+                    .filter { isValidInheritor(it) }
                     .forEach { candidate ->
                         ProgressManager.checkCanceled()
-                        if (candidate != null && !consumer.process(candidate)) {
+                        if (!consumer.process(candidate)) {
                             return false
                         }
                     }
                 return true
+            }
+
+            private fun isValidInheritor(ktClassOrObject: KtClassOrObject) : Boolean {
+                ProgressManager.checkCanceled()
+                analyze(ktClassOrObject) {
+                    val baseSymbol = basePointer.restoreSymbol() ?: return false
+                    val ktSymbol = ktClassOrObject.getSymbol() as? KtClassOrObjectSymbol ?: return false
+                    if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) {
+                        return false
+                    }
+                    return ktSymbol.isSubClassOf(baseSymbol)
+                }
             }
         }
     }

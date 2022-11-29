@@ -78,13 +78,13 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
         }
 
         private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiElement>): Boolean {
-           
+
             val searchScope = runReadAction { klass.useScope }
             if (searchScope is LocalSearchScope) {
                 return processLightClassLocalImplementations(klass, searchScope, consumer)
             }
 
-            return klass.findAllInheritors(searchScope).all { runReadAction { consumer.process(it)} }
+            return klass.findAllInheritors(searchScope).all { runReadAction { consumer.process(it) } }
         }
 
         private fun processLightClassLocalImplementations(
