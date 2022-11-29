@@ -54,6 +54,7 @@ import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.CircularProgressIndicator
+import org.jetbrains.jewel.theme.intellij.components.Divider
 import org.jetbrains.jewel.theme.intellij.components.GroupHeader
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
@@ -71,9 +72,6 @@ import org.jetbrains.jewel.theme.intellij.pxToDp
 import org.jetbrains.jewel.theme.intellij.styles.ButtonStyle
 import org.jetbrains.jewel.theme.intellij.styles.IntelliJButtonStyleVariations
 import org.jetbrains.jewel.theme.intellij.styles.SliderStyle
-import org.jetbrains.jewel.theme.toolbox.components.Divider
-import org.jetbrains.jewel.theme.toolbox.styles.DividerAppearance
-import org.jetbrains.jewel.theme.toolbox.styles.DividerStyle
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.event.WindowEvent
@@ -175,7 +173,7 @@ private fun WizardFooter(
     Box(
         modifier = modifier.height(47.pxToDp())
     ) {
-        Divider(style = DividerStyle(DividerAppearance(color = Color(if (IntelliJTheme.palette.isLight) 0xFFC0C0C0 else 0xFF323232))))
+        Divider(color = Color(if (IntelliJTheme.palette.isLight) 0xFFC0C0C0 else 0xFF323232))
 
         Row(
             modifier = Modifier.fillMaxSize().padding(horizontal = 14.pxToDp(), vertical = 12.pxToDp()),

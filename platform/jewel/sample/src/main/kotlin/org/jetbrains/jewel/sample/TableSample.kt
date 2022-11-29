@@ -10,7 +10,7 @@ import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
 import org.jetbrains.jewel.theme.intellij.components.Surface
 import org.jetbrains.jewel.theme.intellij.components.Table
 import org.jetbrains.jewel.theme.intellij.components.TableView
-import org.jetbrains.jewel.theme.toolbox.components.Text
+import org.jetbrains.jewel.theme.intellij.components.Text
 
 fun main() {
     singleWindowApplication {

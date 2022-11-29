@@ -1,8 +1,7 @@
-@file:OptIn(ExperimentalTime::class, ExperimentalComposeUiApi::class, ExperimentalSplitPaneApi::class)
+@file:OptIn(ExperimentalSplitPaneApi::class)
 
 package org.jetbrains.jewel.sample
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -37,10 +35,8 @@ import org.jetbrains.jewel.theme.intellij.components.TreeLayout
 import org.jetbrains.jewel.theme.intellij.components.asTree
 import org.jetbrains.skiko.Cursor
 import java.nio.file.Paths
-import kotlin.time.ExperimentalTime
 
 @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-@OptIn(ExperimentalFoundationApi::class)
 fun main() = singleWindowApplication {
     var isDarkTheme by remember { mutableStateOf(true) }
     IntelliJTheme(isDarkTheme) {

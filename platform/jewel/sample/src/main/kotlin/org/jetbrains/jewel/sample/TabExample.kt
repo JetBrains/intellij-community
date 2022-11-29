@@ -2,7 +2,6 @@
 
 package org.jetbrains.jewel.sample
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +26,6 @@ import org.jetbrains.jewel.theme.intellij.components.rememberTabContainerState
 import kotlin.time.ExperimentalTime
 
 @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-@OptIn(ExperimentalFoundationApi::class)
 fun main() = singleWindowApplication {
     var isDarkTheme by remember { mutableStateOf(true) }
     IntelliJTheme(isDarkTheme) {

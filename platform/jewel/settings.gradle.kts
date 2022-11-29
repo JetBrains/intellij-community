@@ -24,7 +24,6 @@ dependencyResolutionManagement {
 include(
     ":library",
     ":sample",
-    ":themes:toolbox",
     ":themes:intellij",
     ":themes:intellij:standalone",
     ":themes:intellij:idea"

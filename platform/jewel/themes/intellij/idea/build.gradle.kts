@@ -25,7 +25,7 @@ kotlin {
 }
 
 intellij {
-//    pluginName.set("Compose support for IJ UI development")
+    pluginName.set("Jewel")
     version.set("LATEST-EAP-SNAPSHOT")
     plugins.set(listOf("org.jetbrains.kotlin", "org.jetbrains.compose.desktop.ide:1.1.1"))
     version.set("2022.1.4")

@@ -14,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.intellij.openapi.project.DumbAware
@@ -30,6 +29,7 @@ import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.Checkbox
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.Divider
+import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
 import org.jetbrains.jewel.theme.intellij.components.Tab
 import org.jetbrains.jewel.theme.intellij.components.TabRow
 import org.jetbrains.jewel.theme.intellij.components.TabScope
@@ -44,7 +44,6 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
         Enabled, Disabled, Automatic, Unavailable
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         toolWindow.addComposePanel("Compose Demo") {
             IntelliJTheme(this) {
@@ -91,7 +90,7 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                         }
 
                         val tabState = rememberTabContainerState("1")
-                        TabRow(tabState, ) {
+                        TabRow(tabState) {
                             Section("1", "One")
                             Section("2", "Two")
                             Section("3", "Three")
@@ -104,23 +103,36 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                             }
                         }
 
-                        val radioState = remember { mutableStateOf(RadioSample.Automatic) }
+                        var radioState by remember { mutableStateOf(RadioSample.Automatic) }
                         Column(
                             Modifier.selectableGroup(),
                             verticalArrangement = Arrangement.spacedBy(IntelliJTheme.metrics.singlePadding)
                         ) {
-//                            RadioButtonRow(radioState, RadioSample.Automatic) {
-//                                Text("Automatic detection of the property", Modifier.alignByBaseline())
-//                            }
-//                            RadioButtonRow(radioState, RadioSample.Enabled) {
-//                                Text("Enable the property", Modifier.alignByBaseline())
-//                            }
-//                            RadioButtonRow(radioState, RadioSample.Disabled) {
-//                                Text("Disable the property", Modifier.alignByBaseline())
-//                            }
-//                            RadioButtonRow(radioState, RadioSample.Unavailable, enabled = false) {
-//                                Text("Unavailable", Modifier.alignByBaseline())
-//                            }
+                            RadioButtonRow(
+                                selected = radioState == RadioSample.Automatic,
+                                onClick = { radioState = RadioSample.Automatic }
+                            ) {
+                                Text("Automatic detection of the property", Modifier.alignByBaseline())
+                            }
+                            RadioButtonRow(
+                                selected = radioState == RadioSample.Enabled,
+                                onClick = { radioState = RadioSample.Enabled }
+                            ) {
+                                Text("Enable the property", Modifier.alignByBaseline())
+                            }
+                            RadioButtonRow(
+                                selected = radioState == RadioSample.Disabled,
+                                onClick = { radioState = RadioSample.Disabled }
+                            ) {
+                                Text("Disable the property", Modifier.alignByBaseline())
+                            }
+                            RadioButtonRow(
+                                selected = radioState == RadioSample.Unavailable,
+                                onClick = { radioState = RadioSample.Unavailable },
+                                enabled = false
+                            ) {
+                                Text("Unavailable", Modifier.alignByBaseline())
+                            }
                         }
                     }
                 }
