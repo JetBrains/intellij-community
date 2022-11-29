@@ -2,6 +2,8 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -15,10 +17,12 @@ import javax.swing.*;
 
 public class CustomEditInspectionToolsSettingsAction implements IntentionAction, Iconable {
   private final EditInspectionToolsSettingsAction myEditInspectionToolsSettingsAction;   // we delegate due to priority
+  private final HighlightDisplayKey myDisplayKey;
   private final Computable<@IntentionName String> myText;
 
   public CustomEditInspectionToolsSettingsAction(HighlightDisplayKey displayKey, Computable<@IntentionName String> text) {
     myEditInspectionToolsSettingsAction = new EditInspectionToolsSettingsAction(displayKey);
+    myDisplayKey = displayKey;
     myText = text;
   }
 
@@ -52,5 +56,10 @@ public class CustomEditInspectionToolsSettingsAction implements IntentionAction,
   @Override
   public Icon getIcon(@IconFlags int flags) {
     return myEditInspectionToolsSettingsAction.getIcon(flags);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(InspectionsBundle.message("edit.inspection.options.preview", HighlightDisplayKey.getDisplayNameByKey(myDisplayKey)));
   }
 }
