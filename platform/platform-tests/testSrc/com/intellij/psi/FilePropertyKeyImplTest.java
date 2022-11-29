@@ -31,6 +31,9 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
 
   private static final FilePropertyKey<String> STRING_KEY =
     FilePropertyKeyImpl.createPersistentStringKey("test_string_attr", new FileAttribute("string_key", 1, true));
+  private static final FilePropertyKey<Integer> INT_KEY =
+    FilePropertyKeyImpl.createPersistentIntKey("test_int_attr", "test_int_attr", 1);
+
   private static final FilePropertyKey<TestEnum> ENUM_KEY =
     FilePropertyKeyImpl.createPersistentEnumKey("test_enum_attr", "test_enum_attr", 1, TestEnum.class);
 
@@ -134,11 +137,11 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
   }
 
   @Test
-  public void testStringNotModifiedWhenPersisted(){
+  public void testStringNotModifiedWhenPersisted() {
     Assume.assumeTrue(key == STRING_KEY);
     VirtualFile file = createVirtualFile("Foo.java", "");
 
-    List<String> values = Arrays.asList("value", "s p a c e s", "," ,"", " ", "\t", "null", null);
+    List<String> values = Arrays.asList("value", "s p a c e s", ",", "", " ", "\t", "null", null);
     for (String value : values) {
       STRING_KEY.setPersistentValue(file, value);
       assertEquals("Should read exactly the same string (read from memory)", value, STRING_KEY.getPersistentValue(file));
@@ -157,6 +160,7 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
   public static Collection samples() {
     return Arrays.asList(new Object[][]{
       {STRING_KEY, "sample1", "sample2"},
+      {INT_KEY, 1, 42},
       {ENUM_KEY, TestEnum.ONE, TestEnum.TWO}
     });
   }
