@@ -114,7 +114,9 @@
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
     <registryKey defaultValue="false" key="indexing.use.indexable.files.index" restartRequired="true"
-                 description="Use separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` enabled to become enabled"/>
+                 description="Create separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` enabled to become enabled"/>
+    <registryKey defaultValue="false" key="indexing.fully.use.indexable.files.index" restartRequired="true"
+                 description="Always use IndexableFilesIndex when indexing; needs `indexing.use.indexable.files.index` enabled to become enabled"/>
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
@@ -1481,8 +1483,8 @@
     <postStartupActivity implementation="com.intellij.ide.script.IdeStartupScripts" order="last"/>
 
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor" order="first"/>
-    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalFilesContributor" order="last" id="aditionalFiles"/>
-    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after aditionalFiles"/>
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalFilesContributor" order="last" id="additionalFiles"/>
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after additionalFiles"/>
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 
     <registryKey defaultValue="true" description="Use IndexableEntityProviders to iterate project for indexing"

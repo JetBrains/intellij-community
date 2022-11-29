@@ -272,6 +272,27 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public void registerProjectFileSets(@NotNull Project project) {
+    if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
+      registerIndexableSet(new IndexableFileSet() {
+        @Override
+        public boolean isInSet(@NotNull VirtualFile file) {
+          return IndexableFilesIndex.getInstance(project).shouldBeIndexed(file);
+        }
+      }, project);
+      AdditionalIndexableFileSet additionalFilesContributor = new AdditionalIndexableFileSet(project);
+      registerIndexableSet(new IndexableFileSet() {
+        @Override
+        public boolean isInSet(@NotNull VirtualFile file) {
+          return additionalFilesContributor.isInSet(file);
+        }
+
+        @Override
+        public String toString() {
+          return "IndexableFileSet[AdditionalIndexableFileSet]";
+        }
+      }, project);
+      return;
+    }
     for (IndexableFilesContributor extension : IndexableFilesContributor.EP_NAME.getExtensions()) {
       Predicate<VirtualFile> contributorsPredicate = extension.getOwnFilePredicate(project);
       registerIndexableSet(new IndexableFileSet() {

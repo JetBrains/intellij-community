@@ -7,6 +7,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
@@ -26,18 +27,18 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.EntityIndexingServiceEx;
 import com.intellij.util.indexing.IndexableFilesIndex;
+import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
 import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SdkIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SyntheticLibraryIterableOriginImpl;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.EntityReference;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.*;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -121,6 +122,50 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       currentFile = currentFile.getParent();
     }
     return null;
+  }
+
+  @Override
+  public @NotNull List<IndexableFilesIterator> getIndexingIterators() {
+    List<IndexableFilesIterator> iterators =
+      new ArrayList<>(ContainerUtil.map(snapshotHandler.getResultingSnapshot(project).origins, origin -> origin.createIterator()));
+
+    List<IndexableSetContributorFilesIterator> indexableSetsIterators =
+      IndexableSetContributor.EP_NAME.getExtensionList().stream().flatMap((contributor) -> {
+        return ReadAction.nonBlocking(() -> {
+          return Arrays.asList(new IndexableSetContributorFilesIterator(contributor, project),
+                               new IndexableSetContributorFilesIterator(contributor));
+        }).expireWith(project).executeSynchronously().stream();
+      }).toList();
+
+    iterators.addAll(indexableSetsIterators);
+    return iterators;
+  }
+
+  @Override
+  public @NotNull Collection<IndexableFilesIterator> getModuleIndexingIterators(@NotNull ModuleEntity entity,
+                                                                                @NotNull EntityStorage entityStorage) {
+    ModuleBridge module = ModuleEntityUtils.findModule(entity, entityStorage);
+    if (module == null) {
+      return Collections.emptyList();
+    }
+    return ContainerUtil.mapNotNull(snapshotHandler.getResultingSnapshot(project).origins, origin -> {
+      if ((origin instanceof ModuleRootOrigin) && module.equals(((ModuleRootOrigin)origin).getModule())) {
+        return origin.createIterator();
+      }
+      return null;
+    });
+  }
+
+  @Override
+  @Nullable
+  public IndexableFilesIterator getSdkIterator(@NotNull Sdk sdk, @Nullable Collection<VirtualFile> rootsToFilter) {
+    return snapshotHandler.createSdkIterator(sdk, rootsToFilter, project);
+  }
+
+  @NotNull
+  @Override
+  public Collection<IndexableFilesIterator> getModuleIterators(@NotNull Module module, @NotNull List<? extends VirtualFile> rootsToFilter) {
+    return snapshotHandler.createModuleIterator(module, rootsToFilter);
   }
 
   private static class ResultingSnapshot {
@@ -444,6 +489,28 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     @NotNull
     public ModuleDependencyListener createModuleDependencyListener() {
       return new MyModuleDependencyListener();
+    }
+
+    @Nullable
+    public IndexableFilesIterator createSdkIterator(@NotNull Sdk sdk, @Nullable Collection<VirtualFile> rootsToFilter,
+                                                    @NotNull Project project) {
+      Snapshots snapshots = getSnapshotsWithInitializedNonWorkspaceSnapshot(project);
+      IndexableSetIterableOrigin sdkOrigin = snapshots.workspaceModelSnapshot.getSdkOrigin(sdk);
+      Set<VirtualFile> excludedFilesFromPolicies =
+        getExcludedFilesFromPolicies(snapshots.workspaceModelSnapshot, Objects.requireNonNull(snapshots.nonWorkspaceModelSnapshot));
+      Collection<VirtualFile> excludedFromModulesFiles = getExcludedFromModulesFiles(snapshots.nonWorkspaceModelSnapshot);
+      sdkOrigin = ResultingSnapshot.getPatchedOriginIfNeeded(sdkOrigin, snapshots.nonWorkspaceModelSnapshot,
+                                                             excludedFilesFromPolicies, excludedFromModulesFiles);
+      if (rootsToFilter == null) {
+        return sdkOrigin.createIterator();
+      }
+      SdkIterableOriginImpl filteredOrigin = ((SdkIterableOriginImpl)sdkOrigin).copyWithFilteredRoots(rootsToFilter);
+      return filteredOrigin == null ? null : filteredOrigin.createIterator();
+    }
+
+    @NotNull
+    public Collection<IndexableFilesIterator> createModuleIterator(Module module, Collection<? extends VirtualFile> rootsToFilter) {
+      return WorkspaceModelSnapshot.createModuleIterators(getResultingSnapshot(module.getProject()).origins, module, rootsToFilter);
     }
 
     private class MyModuleDependencyListener implements ModuleDependencyListener {

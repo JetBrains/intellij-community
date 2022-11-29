@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider.OriginChange;
 import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
+import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SdkIterableOriginImpl;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -298,6 +299,33 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
     }
   }
 
+  @NotNull
+  public IndexableSetIterableOrigin getSdkOrigin(@NotNull Sdk sdk) {
+    return sdkSnapshot.getSdkOrigin(sdk);
+  }
+
+  @NotNull
+  static Collection<IndexableFilesIterator> createModuleIterators(@NotNull Iterable<IndexableSetIterableOrigin> origins,
+                                                                  @NotNull Module module,
+                                                                  @Nullable Collection<? extends VirtualFile> filter) {
+    List<IndexableFilesIterator> result = new ArrayList<>();
+    for (IndexableSetIterableOrigin origin : origins) {
+      if (!(origin instanceof ModuleRootOrigin) || !module.equals(((ModuleRootOrigin)origin).getModule())) {
+        continue;
+      }
+      if (filter == null) {
+        result.add(origin.createIterator());
+      }
+      else {
+        ModuleRootIterableOriginImpl copy = ((ModuleRootIterableOriginImpl)origin).copyWithFilteredRoots(filter);
+        if (copy != null) {
+          result.add(copy.createIterator());
+        }
+      }
+    }
+    return result;
+  }
+
   private record ModifiableLibrariesSnapshot(MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies,
                                              Map<LibraryId, IndexableSetIterableOrigin> origins) {
     @NotNull
@@ -438,14 +466,9 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
       return origins.values();
     }
 
-    @Nullable
-    public IndexableFilesIterator createIterator(@NotNull Sdk sdk, @Nullable Collection<? extends VirtualFile> rootsToFilter) {
-      IndexableSetIterableOrigin origin = Objects.requireNonNull(origins.get(SdkId.create(sdk)), "Unknown SDK " + sdk);
-      if (rootsToFilter == null) {
-        return origin.createIterator();
-      }
-      SdkIterableOriginImpl filteredOrigin = ((SdkIterableOriginImpl)origin).copyWithFilteredRoots(rootsToFilter);
-      return filteredOrigin == null ? null : filteredOrigin.createIterator();
+    @NotNull
+    private IndexableSetIterableOrigin getSdkOrigin(@NotNull Sdk sdk) {
+      return Objects.requireNonNull(origins.get(SdkId.create(sdk)));
     }
 
     private SdkSnapshot createChangedIfNeeded(@NotNull VersionedStorageChange storageChange) {

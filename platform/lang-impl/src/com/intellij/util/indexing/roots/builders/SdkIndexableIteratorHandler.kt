@@ -45,7 +45,7 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     val result = mutableListOf<IndexableFilesIterator>()
     for (entry in unifiedBuilders.entries) {
       findSdk(entry.key.first, entry.key.second)?.apply {
-        result.addAll(entry.value.createIterator(this))
+        result.addAll(entry.value.createIterator(this, project))
       }
     }
     return result
@@ -56,12 +56,13 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
   private sealed interface Roots {
     fun merge(newRoot: Roots): Roots
-    fun createIterator(sdk: Sdk): Collection<IndexableFilesIterator>
+    fun createIterator(sdk: Sdk, project: Project): Collection<IndexableFilesIterator>
   }
 
   private object AllRoots : Roots {
     override fun merge(newRoot: Roots): Roots = this
-    override fun createIterator(sdk: Sdk): Collection<IndexableFilesIterator> = IndexableEntityProviderMethods.createIterators(sdk)
+    override fun createIterator(sdk: Sdk, project: Project): Collection<IndexableFilesIterator> =
+      IndexableEntityProviderMethods.createIterators(sdk, project)
   }
 
   private class ListOfRoots() : ArrayList<VirtualFile>(), Roots {
@@ -79,6 +80,7 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
       }
     }
 
-    override fun createIterator(sdk: Sdk): Collection<IndexableFilesIterator> = SdkIndexableFilesIteratorImpl.createIterators(sdk, this)
+    override fun createIterator(sdk: Sdk, project: Project): Collection<IndexableFilesIterator> =
+      SdkIndexableFilesIteratorImpl.createIterators(sdk, this, project)
   }
 }

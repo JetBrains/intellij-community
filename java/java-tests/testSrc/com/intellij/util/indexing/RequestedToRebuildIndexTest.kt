@@ -38,7 +38,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
     assertNotNull(moduleEntity)
-    val iterators = createIterators(moduleEntity, listOf(fileA), storage)
+    val iterators = createIterators(moduleEntity, listOf(fileA), storage, project)
     UnindexedFilesUpdater(myFixture.project, ArrayList(iterators), null,
                           "Partial reindex of one of two indexable files").queue()
   }

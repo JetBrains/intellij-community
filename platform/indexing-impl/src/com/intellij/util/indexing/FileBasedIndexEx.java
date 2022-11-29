@@ -560,6 +560,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (project instanceof LightEditCompatible) {
       return Collections.emptyList();
     }
+    if (IndexableFilesIndex.isIntegrationFullyEnabled() && allowedIteratorPatterns.isEmpty()) {
+      return IndexableFilesIndex.getInstance(project).getIndexingIterators();
+    }
     List<IndexableFilesIterator> providers = IndexableFilesContributor.EP_NAME
       .getExtensionList()
       .stream()

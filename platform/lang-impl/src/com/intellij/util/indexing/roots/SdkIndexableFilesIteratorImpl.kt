@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.SdkOriginImpl
@@ -18,6 +19,9 @@ import java.util.*
 @ApiStatus.Internal
 class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
                                                         private val rootsToIndex: Collection<VirtualFile>) : IndexableFilesIterator {
+  init {
+    assert(!IndexableFilesIndex.isIntegrationFullyEnabled()) { "Shouldn't be created with IndexableFilesIndex enabled" }
+  }
 
   override fun getDebugName() = "$sdkPresentableName ${sdk.name} ${sdk.homePath}"
 
@@ -45,24 +49,37 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
   }
 
   companion object {
-    fun createIterator(sdk: Sdk): SdkIndexableFilesIteratorImpl = SdkIndexableFilesIteratorImpl(sdk, getRootsToIndex(sdk))
+    fun createIterator(sdk: Sdk, project: Project): IndexableFilesIterator {
+      if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
+        return IndexableFilesIndex.getInstance(project).getSdkIterator(sdk, null)!!
+      }
+      return SdkIndexableFilesIteratorImpl(sdk, getRootsToIndex(sdk))
+    }
 
     fun getRootsToIndex(sdk: Sdk): Collection<VirtualFile> {
       val rootProvider = sdk.rootProvider
       return rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
     }
 
-    fun createIterators(sdk: Sdk, listOfRootsToFilter: List<VirtualFile>): Collection<IndexableFilesIterator> {
+    fun createIterators(sdk: Sdk, listOfRootsToFilter: List<VirtualFile>, project: Project): Collection<IndexableFilesIterator> {
+      if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
+        val sdkIterator = IndexableFilesIndex.getInstance(project).getSdkIterator(sdk, listOfRootsToFilter)
+        return if (sdkIterator == null) {
+          emptyList()
+        }
+        else {
+          listOf(sdkIterator)
+        }
+      }
       val sdkRoots = getRootsToIndex(sdk).toMutableList()
       val rootsToIndex = filterRootsToIterate(sdkRoots, listOfRootsToFilter)
 
-      val oldStyle: Collection<IndexableFilesIterator> = if (rootsToIndex.isEmpty()) {
+      return if (rootsToIndex.isEmpty()) {
         emptyList()
       }
       else {
         Collections.singletonList(SdkIndexableFilesIteratorImpl(sdk, rootsToIndex))
       }
-      return oldStyle
     }
 
     fun filterRootsToIterate(initialRoots: MutableList<VirtualFile>,

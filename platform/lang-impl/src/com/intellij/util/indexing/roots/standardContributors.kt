@@ -13,18 +13,20 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.indexing.AdditionalIndexableFileSet
+import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
 
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
+    assert(!IndexableFilesIndex.isIntegrationFullyEnabled()) { "Shouldn't be used with IndexableFilesIndex fully enabled" }
     val providers: List<IndexableFilesIterator>
     if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
@@ -58,7 +60,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
             is JdkOrderEntry -> {
               val sdk = orderEntry.jdk
               if (sdk != null && seenSdks.add(sdk)) {
-                providersCollection.add(SdkIndexableFilesIteratorImpl.createIterator(sdk))
+                providersCollection.add(SdkIndexableFilesIteratorImpl.createIterator(sdk, project))
               }
             }
           }
@@ -77,12 +79,20 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
 
   override fun getOwnFilePredicate(project: Project): Predicate<VirtualFile> {
     val projectFileIndex: ProjectFileIndex = ProjectFileIndex.getInstance(project)
+    val indexableFilesIndex: IndexableFilesIndex? = if (IndexableFilesIndex.isIntegrationFullyEnabled())
+      IndexableFilesIndex.getInstance(project)
+    else null
 
     return Predicate {
       if (LightEdit.owns(project)) {
         return@Predicate false
       }
-      if (projectFileIndex.isInContent(it) || projectFileIndex.isInLibrary(it)) {
+
+      if (indexableFilesIndex != null) {
+        return@Predicate indexableFilesIndex.shouldBeIndexed(it)
+      }
+
+      return@Predicate if (projectFileIndex.isInContent(it) || projectFileIndex.isInLibrary(it)) {
         !FileTypeManager.getInstance().isFileIgnored(it)
       }
       else false

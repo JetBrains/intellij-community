@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
 import com.intellij.util.indexing.roots.origin.SyntheticLibraryOriginImpl
@@ -15,6 +16,10 @@ internal class SyntheticLibraryIndexableFilesIteratorImpl(private val name: Stri
                                                           private val syntheticLibrary: SyntheticLibrary,
                                                           private val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryIndexableFilesIterator {
   constructor(syntheticLibrary: SyntheticLibrary) : this(getName(syntheticLibrary), syntheticLibrary, syntheticLibrary.allRoots)
+
+  init {
+    assert(!IndexableFilesIndex.isIntegrationFullyEnabled()) { "Shouldn't be created with IndexableFilesIndex enabled" }
+  }
 
   override fun getDebugName() = name.takeUnless { it.isNullOrEmpty() }?.let { "Synthetic library '$it'" }
                                 ?: syntheticLibrary.toString()
