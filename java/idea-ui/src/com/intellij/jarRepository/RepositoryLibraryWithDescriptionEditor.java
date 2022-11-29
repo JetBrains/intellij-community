@@ -150,9 +150,13 @@ public class RepositoryLibraryWithDescriptionEditor
 
   private void reloadLibraryDirectory(Project project, LibraryEx library) {
     try {
-      deleteAndReloadDependencies(project, library);
-      showBalloon(JavaUiBundle.message("popup.reload.success.result", library.getName()), MessageType.INFO);
-    } catch (IOException | UnsupportedOperationException e) {
+      deleteAndReloadDependencies(project, library).onError(e -> {
+        showBalloon(JavaUiBundle.message("popup.reload.failed.result", library.getName()), MessageType.ERROR);
+      }).onSuccess(roots -> {
+        showBalloon(JavaUiBundle.message("popup.reload.success.result", library.getName()), MessageType.INFO);
+      });
+    }
+    catch (IOException | UnsupportedOperationException e) {
       var error = e.getLocalizedMessage();
       showBalloon(error, MessageType.ERROR);
     }
