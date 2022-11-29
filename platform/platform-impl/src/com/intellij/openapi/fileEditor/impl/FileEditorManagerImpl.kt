@@ -787,6 +787,21 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
   }
 
+  private fun closeFileEditor(editor: FileEditor, moveFocus: Boolean = false) {
+    val file = editor.file ?: return
+    if (ClientId.isCurrentlyUnderLocalId) {
+      CommandProcessor.getInstance().executeCommand(project, {
+        openFileSetModificationCount.incrementAndGet()
+        for (each in getAllSplitters()) {
+          runBulkTabChange(each) { each.closeFileEditor(file, editor, moveFocus) }
+        }
+      }, "", null)
+    }
+    else {
+      clientFileEditorManager?.closeFile(file, false) // todo pass editor inside ?
+    }
+  }
+
   private val allClientFileEditorManagers: List<ClientFileEditorManager>
     get() = project.getServices(ClientFileEditorManager::class.java, ClientKind.REMOTE)
 
@@ -1803,10 +1818,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       else if (FileEditor.PROP_VALID == propertyName) {
         val valid = e.newValue as Boolean
         if (!valid) {
-          val composite = getComposite(e.source as FileEditor)
-          if (composite != null) {
-            closeFile(composite.file)
-          }
+          closeFileEditor(e.source as FileEditor)
         }
       }
     }

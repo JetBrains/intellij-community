@@ -543,6 +543,16 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   fun closeFile(file: VirtualFile, moveFocus: Boolean) {
     val windows = findWindows(file)
+    closeFileInWindows(file, windows, moveFocus)
+  }
+
+  internal fun closeFileEditor(file: VirtualFile, editor: FileEditor, moveFocus: Boolean) {
+    // we can't close individual tab in EditorComposite
+    val windows = windows.filter { it.composites.any { it.allEditors.contains(editor) } }
+    closeFileInWindows(file, windows, moveFocus)
+  }
+
+  private fun closeFileInWindows(file: VirtualFile, windows: List<EditorWindow>, moveFocus: Boolean) {
     if (windows.isEmpty()) {
       return
     }
