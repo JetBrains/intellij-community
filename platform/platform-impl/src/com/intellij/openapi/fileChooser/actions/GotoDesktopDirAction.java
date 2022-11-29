@@ -6,6 +6,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -19,6 +20,7 @@ import com.sun.jna.platform.win32.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
@@ -84,7 +86,12 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
     else if (SystemInfo.hasXdgOpen()) {
       String path = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-user-dir", "DESKTOP"));
       if (path != null && !path.isBlank()) {
-        return Path.of(path);
+        try {
+          return Path.of(path);
+        }
+        catch (InvalidPathException e) {
+          Logger.getInstance(GotoDesktopDirAction.class).error("str='" + path + "' JNU=" + System.getProperty("sun.jnu.encoding"), e);
+        }
       }
     }
 
