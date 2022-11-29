@@ -1,4 +1,4 @@
-package com.intellij.xdebugger.impl.ui.attach.dialog.items
+package com.intellij.xdebugger.impl.ui.attach.dialog.items.cells
 
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColoredTableCellRenderer
@@ -8,6 +8,7 @@ import com.intellij.ui.TableCellState
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.impl.ui.attach.dialog.getComponentFont
 import com.intellij.xdebugger.impl.ui.attach.dialog.getProcessName
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JTable
@@ -16,9 +17,8 @@ import javax.swing.border.Border
 
 
 abstract class AttachTableCell(
-  private val state: AttachColumnSettingsState,
-  private val index: Int,
-  @Nls private val columnName: String) {
+  val columnKey: String,
+  private val columnsLayout: AttachDialogColumnsLayout) {
 
   companion object {
     private val IGNORE_EXPAND_HANDLER_GAP = JBUI.scale(10)
@@ -39,7 +39,7 @@ abstract class AttachTableCell(
   open fun getTextAttributes(): SimpleTextAttributes = SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES
 
   fun getPresentation(component: SimpleColoredComponent, offset: Int = 0): Pair<String, String?> {
-    val width = state.getColumnWidth(index) - getTextStartOffset(component) - IGNORE_EXPAND_HANDLER_GAP
+    val width = columnsLayout.getColumnWidth(columnKey) - getTextStartOffset(component) - IGNORE_EXPAND_HANDLER_GAP
     val text = getTextToDisplay()
     if (myLastKnownWidth != width) {
       myLastKnownDisplayText = getProcessName(text, component.getFontMetrics(getComponentFont(component)), width - offset)
@@ -48,7 +48,7 @@ abstract class AttachTableCell(
                 if (text != myLastKnownDisplayText)
                   HtmlChunk.html()
                     .children(
-                      HtmlChunk.div("font-weight:bold;").child(HtmlChunk.text(columnName)),
+                      HtmlChunk.div("font-weight:bold;").child(HtmlChunk.text(columnsLayout.getColumnName(columnKey))),
                       HtmlChunk.br(),
                       HtmlChunk.text(text)
                     ).toString()

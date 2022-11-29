@@ -1,6 +1,6 @@
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes
 
-import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogColumnsState
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupColumnRenderer
@@ -12,7 +12,7 @@ import javax.swing.table.TableCellRenderer
 
 internal class AttachDialogGroupNode(
   @Nls val message: String?,
-  private val columnsState: AttachDialogColumnsState,
+  private val columnsLayout: AttachDialogColumnsLayout,
   private val relatedNodes: List<AttachDialogElementNode>): AttachDialogElementNode, AttachSelectionIgnoredNode {
 
   var isFirstGroup: Boolean = false
@@ -24,9 +24,10 @@ internal class AttachDialogGroupNode(
   override fun getValueAtColumn(column: Int): Any = this
 
   override fun getRenderer(column: Int): TableCellRenderer {
-    if (column >= columnsState.columnsCount || column < 0) throw IllegalStateException("Unexpected column index: $column")
+    val columnsCount = columnsLayout.getColumnsCount()
+    if (column >= columnsCount || column < 0) throw IllegalStateException("Unexpected column index: $column")
     if (column == 0) return AttachGroupFirstColumnRenderer()
-    if (column == columnsState.columnsCount - 1) return AttachGroupLastColumnRenderer()
+    if (column == columnsCount - 1) return AttachGroupLastColumnRenderer()
     return AttachGroupColumnRenderer()
   }
 

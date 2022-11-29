@@ -5,11 +5,14 @@ import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.speedSearch.FilteringTableModel
 import com.intellij.ui.table.JBTable
+import com.intellij.util.application
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogColumnsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.applyColumnsLayout
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElementNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogGroupNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode
@@ -21,24 +24,16 @@ import javax.swing.event.ListSelectionListener
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableColumnModel
 import javax.swing.table.TableCellRenderer
-import javax.swing.table.TableColumn
 import kotlin.coroutines.coroutineContext
 
 internal class AttachToProcessItemsList(itemNodes: List<AttachDialogElementNode>,
                                         private val filters: AttachToProcessElementsFilters,
+                                        columnsLayout: AttachDialogColumnsLayout,
                                         val state: AttachDialogState) :
-  JBTable(FilteringTableModel(AttachToProcessTableModel(itemNodes), Any::class.java),
-          AttachToProcessListColumnModel()), AttachToProcessItemsListBase {
+  JBTable(FilteringTableModel(AttachToProcessTableModel(itemNodes, columnsLayout.getColumnsCount()), Any::class.java),
+          AttachToProcessListColumnModel(columnsLayout)), AttachToProcessItemsListBase {
 
   init {
-    for (index in 0 until columnCount) {
-      val column = getColumn(index)
-      column.minWidth = AttachDialogState.COLUMN_MINIMUM_WIDTH
-      column.cellRenderer = AttachTableCellRenderer()
-      column.preferredWidth = state.attachListColumnSettings.getColumnWidth(index)
-      column.addPropertyChangeListener { if (it.propertyName == "width") state.attachListColumnSettings.setColumnWidth(index, it.newValue as Int) }
-    }
-
     setShowGrid(false)
     intercellSpacing = Dimension(0, 0)
 
@@ -101,21 +96,17 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachDialogElementNode>
   }
 }
 
-class AttachToProcessListColumnModel : DefaultTableColumnModel() {
+class AttachToProcessListColumnModel(columnsLayout: AttachDialogColumnsLayout) : DefaultTableColumnModel() {
   init {
-    val columnsCount = 4
-    addColumn(TableColumn(0).apply { identifier = 0; headerValue = XDebuggerBundle.message("xdebugger.attach.executable.column.name") })
-    addColumn(TableColumn(1).apply { identifier = 1; headerValue = XDebuggerBundle.message("xdebugger.attach.pid.column.name") })
-    addColumn(TableColumn(2).apply { identifier = 2; headerValue = XDebuggerBundle.message("xdebugger.attach.debuggers.column.name") })
-    addColumn(TableColumn(columnsCount - 1).apply { identifier = columnsCount - 1; headerValue = XDebuggerBundle.message("xdebugger.attach.command.line.column.name") })
+    applyColumnsLayout(columnsLayout)
   }
 }
 
-internal class AttachToProcessTableModel(private val itemNodes: List<AttachDialogElementNode>) : AbstractTableModel() {
+internal class AttachToProcessTableModel(private val itemNodes: List<AttachDialogElementNode>, private val columnsCount: Int) : AbstractTableModel() {
 
   override fun getRowCount(): Int = itemNodes.size
 
-  override fun getColumnCount(): Int = 4
+  override fun getColumnCount(): Int = columnsCount
 
   override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
     val value = itemNodes[rowIndex] as? AttachDialogElementNode ?:
@@ -129,11 +120,13 @@ internal suspend fun buildList(itemsInfo: AttachItemsInfo, dialogState: AttachDi
 
   val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
 
+  val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
+
   val itemNodes = mutableListOf<AttachDialogElementNode>()
   val recentItems = itemsInfo.recentItems
   if (recentItems.any()) {
-    val recentItemNodes = recentItems.map { AttachDialogProcessNode(it, filters, dialogState) }
-    val recentGroup = AttachDialogGroupNode(XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message"), AttachDialogColumnsState(), recentItemNodes).apply { isFirstGroup = true }
+    val recentItemNodes = recentItems.map { AttachDialogProcessNode(it, filters, columnsLayout) }
+    val recentGroup = AttachDialogGroupNode(XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message"), columnsLayout, recentItemNodes).apply { isFirstGroup = true }
     itemNodes.add(recentGroup)
     itemNodes.addAll(recentItemNodes)
   }
@@ -149,18 +142,18 @@ internal suspend fun buildList(itemsInfo: AttachItemsInfo, dialogState: AttachDi
       continue
     }
 
-    val itemNode = AttachDialogProcessNode(item, filters, dialogState)
+    val itemNode = AttachDialogProcessNode(item, filters, columnsLayout)
     allItems.add(itemNode)
   }
 
   val allItemsSorted = allItems.sortedBy { itemNode -> itemNode.getProcessItem().getGroups().minBy { it.order }.order }
   if (itemNodes.any()) {
-    itemNodes.add(AttachDialogGroupNode(XDebuggerBundle.message("xdebugger.attach.dialog.other.processes.message"), AttachDialogColumnsState(), allItemsSorted).apply {
+    itemNodes.add(AttachDialogGroupNode(XDebuggerBundle.message("xdebugger.attach.dialog.other.processes.message"), columnsLayout, allItemsSorted).apply {
       isFirstGroup = false
     })
   }
 
   itemNodes.addAll(allItemsSorted)
 
-  return AttachToProcessItemsList(itemNodes, filters, dialogState)
+  return AttachToProcessItemsList(itemNodes, filters, columnsLayout, dialogState)
 }

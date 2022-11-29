@@ -6,9 +6,8 @@ import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.treetable.TreeTableTree
 import com.intellij.util.ui.JBUI
-import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.ExecutableCell
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElementNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogGroupNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode
@@ -19,7 +18,7 @@ import javax.swing.JTree
 internal class AttachTreeNodeWrapper(
   val node: AttachDialogElementNode,
   private val filters: AttachToProcessElementsFilters,
-  private val dialogState: AttachDialogState,
+  private val columnsLayout: AttachDialogColumnsLayout,
   indentLevel: Int = 0) {
 
   private val children = mutableListOf<AttachTreeNodeWrapper>()
@@ -37,7 +36,7 @@ internal class AttachTreeNodeWrapper(
                                        hasFocus: Boolean) {
       val attachTreeProcessNode = value as? AttachDialogProcessNode ?: throw IllegalStateException(
         "value of type ${value?.javaClass?.simpleName} should not be passed here")
-      val cell = ExecutableCell(attachTreeProcessNode, filters, dialogState, false)
+      val cell = columnsLayout.createCell(0, attachTreeProcessNode, filters)
       val (text, tooltip) = cell.getPresentation(this, (getIndentLevel() + 1) * JBUI.scale(18))
       val table = (tree as? TreeTableTree)?.treeTable as? JBTable ?: throw IllegalStateException("can't get parent table")
       this.append(text, modifyAttributes(cell.getTextAttributes(), table, row))

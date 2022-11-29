@@ -11,13 +11,13 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.application
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogColumnsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.CommandLineCell
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.DebuggersCell
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.PidCell
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.*
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.applyColumnsLayout
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElementNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogGroupNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode
@@ -27,7 +27,6 @@ import javax.swing.JTree
 import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionListener
 import javax.swing.table.TableCellRenderer
-import javax.swing.table.TableColumn
 import kotlin.coroutines.coroutineContext
 
 private val logger = Logger.getInstance(AttachToProcessItemsTree::class.java)
@@ -35,22 +34,16 @@ private val logger = Logger.getInstance(AttachToProcessItemsTree::class.java)
 
 internal class AttachToProcessItemsTree(
   rootNode: AttachTreeNodeWrapper,
+  columnsLayout: AttachDialogColumnsLayout,
   dialogState: AttachDialogState,
   private val filters: AttachToProcessElementsFilters) : TreeTable(
-  FilteringTreeTableModel(AttachTreeModel(rootNode))), AttachToProcessItemsListBase {
+  FilteringTreeTableModel(AttachTreeModel(rootNode, columnsLayout))), AttachToProcessItemsListBase {
 
   init {
 
     tree.isRootVisible = false
 
-    for (index in 0 until columnCount) {
-      val column = getColumn(index)
-      column.minWidth = AttachDialogState.COLUMN_MINIMUM_WIDTH
-      column.preferredWidth = dialogState.attachTreeColumnSettings.getColumnWidth(index)
-      column.addPropertyChangeListener {
-        if (it.propertyName == "width") dialogState.attachTreeColumnSettings.setColumnWidth(index, it.newValue as Int)
-      }
-    }
+    applyColumnsLayout(columnsLayout)
     setTreeCellRenderer { tree, value, selected, expanded, leaf, row, hasFocus ->
       if (value !is AttachTreeNodeWrapper) throw IllegalStateException("Unexpected node type: ${value?.javaClass?.simpleName}")
       value.getTreeCellRendererComponent(tree, selected, expanded, leaf, row, hasFocus)
@@ -125,44 +118,21 @@ internal class AttachToProcessItemsTree(
     }
   }
 
-  private fun getColumn(index: Int): TableColumn = columnModel.getColumn(index)
-
   private fun getFilteringModel() = tableModel as FilteringTreeTableModel
 }
 
-internal class AttachTreeModel(private val rootNode: AttachTreeNodeWrapper) : BaseTreeModel<AttachTreeNodeWrapper>(), TreeTableModel {
+internal class AttachTreeModel(private val rootNode: AttachTreeNodeWrapper, private val columnsLayout: AttachDialogColumnsLayout) : BaseTreeModel<AttachTreeNodeWrapper>(), TreeTableModel {
 
   override fun getRoot(): Any = rootNode
 
   override fun getChildren(parent: Any?): List<AttachTreeNodeWrapper> = (parent as? AttachTreeNodeWrapper)?.getChildNodes()
                                                                         ?: emptyList()
 
-  override fun getColumnCount(): Int = 4
+  override fun getColumnCount(): Int = columnsLayout.getColumnsCount()
 
-  override fun getColumnName(column: Int): String {
-    return when (column) {
-      0 -> XDebuggerBundle.message("xdebugger.attach.executable.column.name")
-      1 -> XDebuggerBundle.message("xdebugger.attach.pid.column.name")
-      2 -> XDebuggerBundle.message("xdebugger.attach.debuggers.column.name")
-      3 -> XDebuggerBundle.message("xdebugger.attach.command.line.column.name")
-      else -> {
-        logger.error("Unexpected column index: $column")
-        ""
-      }
-    }
-  }
+  override fun getColumnName(column: Int): String = columnsLayout.getColumnName(columnsLayout.getColumnKey(column))
 
-  override fun getColumnClass(column: Int): Class<*> =
-    when (column) {
-      0 -> TreeTableModel::class.java
-      1 -> PidCell::class.java
-      2 -> DebuggersCell::class.java
-      3 -> CommandLineCell::class.java
-      else -> {
-        logger.error("Unexpected column index: $column")
-        Any::class.java
-      }
-    }
+  override fun getColumnClass(column: Int): Class<*> = if (column == 0) TreeTableModel::class.java else columnsLayout.getColumnClass(column)
 
   override fun getValueAt(node: Any?, column: Int): Any {
     if (node is AttachTreeNodeWrapper) return node.getValueAtColumn(column)
@@ -181,12 +151,12 @@ internal class AttachTreeModel(private val rootNode: AttachTreeNodeWrapper) : Ba
 
 private suspend fun prepareTreeElements(
   attachItemsInfo: AttachItemsInfo,
-  dialogState: AttachDialogState,
+  columnsLayout: AttachDialogColumnsLayout,
   filters: AttachToProcessElementsFilters): List<AttachTreeNodeWrapper> {
 
   val elements = attachItemsInfo.processItems
   val pidToElement = elements.map {
-    AttachDialogProcessNode(it, filters, dialogState)
+    AttachDialogProcessNode(it, filters, columnsLayout)
   }.associateBy { it.item.processInfo.pid }
   val builtNodes = mutableMapOf<Int, AttachTreeNodeWrapper>()
 
@@ -194,20 +164,20 @@ private suspend fun prepareTreeElements(
 
   val recentItems = attachItemsInfo.recentItems
   if (recentItems.any()) {
-    val recentItemNodes = recentItems.map { AttachDialogProcessNode(it, filters, dialogState) }
+    val recentItemNodes = recentItems.map { AttachDialogProcessNode(it, filters, columnsLayout) }
     val recentNode = AttachDialogGroupNode(
       XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message"),
-      AttachDialogColumnsState(),
+      columnsLayout,
       recentItemNodes)
-    topLevelNodes.add(AttachTreeNodeWrapper(recentNode, filters, dialogState))
-    topLevelNodes.addAll(recentItemNodes.map { AttachTreeNodeWrapper(it, filters, dialogState) })
+    topLevelNodes.add(AttachTreeNodeWrapper(recentNode, filters, columnsLayout))
+    topLevelNodes.addAll(recentItemNodes.map { AttachTreeNodeWrapper(it, filters, columnsLayout) })
     topLevelNodes.add(
       AttachTreeNodeWrapper(
         AttachDialogGroupNode(
           null,
           //XDebuggerBundle.message("xdebugger.attach.dialog.all.processes.message"),
-          AttachDialogColumnsState(),
-          listOf(recentNode)), filters, dialogState))
+          columnsLayout,
+          listOf(recentNode)), filters, columnsLayout))
   }
 
   for (item in pidToElement) {
@@ -220,7 +190,7 @@ private suspend fun prepareTreeElements(
     val visitedPids = mutableSetOf(pid)
 
     val attachTreeProcessNode = item.value
-    val treeElement = AttachTreeNodeWrapper(attachTreeProcessNode, filters, dialogState)
+    val treeElement = AttachTreeNodeWrapper(attachTreeProcessNode, filters, columnsLayout)
 
     builtNodes[pid] = treeElement
 
@@ -247,7 +217,7 @@ private suspend fun prepareTreeElements(
         topLevelNodes.add(currentTreeElement)
         break
       }
-      val parentTreeElement = AttachTreeNodeWrapper(parentElement, filters, dialogState)
+      val parentTreeElement = AttachTreeNodeWrapper(parentElement, filters, columnsLayout)
       builtNodes[parentPid] = parentTreeElement
       visitedPids.add(parentPid)
 
@@ -268,10 +238,11 @@ internal suspend fun buildTree(
   attachItemsInfo: AttachItemsInfo,
   dialogState: AttachDialogState): AttachToProcessItemsListBase {
   val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
-  val topLevelElements = prepareTreeElements(attachItemsInfo, dialogState, filters)
-  val rootNode = AttachTreeNodeWrapper(AttachTreeRootNode(), filters, dialogState, -1)
+  val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
+  val topLevelElements = prepareTreeElements(attachItemsInfo, columnsLayout, filters)
+  val rootNode = AttachTreeNodeWrapper(AttachTreeRootNode(), filters, columnsLayout, -1)
   topLevelElements.forEach { rootNode.addChild(it) }
-  return AttachToProcessItemsTree(rootNode, dialogState, filters)
+  return AttachToProcessItemsTree(rootNode, columnsLayout, dialogState, filters)
 }
 
 internal fun ListSelectionModel.selectNext() {

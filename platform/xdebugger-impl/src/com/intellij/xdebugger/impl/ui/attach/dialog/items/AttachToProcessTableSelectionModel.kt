@@ -21,7 +21,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
   }
 
   override fun setSelectionInterval(index0: Int, index1: Int) {
-    if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<Any>(index0) is AttachSelectionIgnoredNode) {
+    if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<AttachDialogElementNode>(index0) is AttachSelectionIgnoredNode) {
 
       val currentIndex = minSelectionIndex
       if (currentIndex < 0 || currentIndex >= table.rowCount) {
@@ -50,7 +50,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
   }
 
   override fun addSelectionInterval(index0: Int, index1: Int) {
-    if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<Any>(index0) is AttachSelectionIgnoredNode) {
+    if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<AttachDialogElementNode>(index0) is AttachSelectionIgnoredNode) {
       return
     }
     super.addSelectionInterval(index0, index1)
@@ -76,7 +76,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
 
   private fun getPreviousIndex(index0: Int): Int {
     var newIndex = index0 - 1
-    while (newIndex >= 0 && table.model.getValueAt<Any>(newIndex) is AttachSelectionIgnoredNode) {
+    while (newIndex >= 0 && table.model.getValueAt<AttachDialogElementNode>(newIndex) is AttachSelectionIgnoredNode) {
       newIndex--
     }
     return if (newIndex >= 0) newIndex else -1
@@ -84,7 +84,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
 
   private fun getNextIndex(index0: Int): Int {
     var newIndex = index0 + 1
-    while (newIndex < table.rowCount && table.model.getValueAt<Any>(newIndex) is AttachSelectionIgnoredNode) {
+    while (newIndex < table.rowCount && table.model.getValueAt<AttachDialogElementNode>(newIndex) is AttachSelectionIgnoredNode) {
       newIndex++
     }
     return if (newIndex < table.rowCount) newIndex else -1
