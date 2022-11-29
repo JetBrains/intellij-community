@@ -20,17 +20,17 @@ The plugin supports Kotlin 1.7 and lower.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
-    <h3>1.8.0-Beta</h3>
+    <h3>1.8.0-RC</h3>
     <ul>
       <li>Kotlin/JVM: removed old backend, the `-Xuse-old-backend` compiler option is no longer supported, support for Java 19 bytecode</li>
-      <li>Kotlin/Native: support for Xcode 14 and `watchosDeviceArm64` target, new `ObjCName`, `HiddenFromObjC` and `ShouldRefineInSwift` annotations to improve Objective-C and Swift interoperability, CocoaPods Gradle plugin dynamically links registered Kotlin frameworks by default</li>
+      <li>Kotlin/Native: support for Xcode 14.1 and `watchosDeviceArm64` target, new `ObjCName`, `HiddenFromObjC` and `ShouldRefineInSwift` annotations to improve Objective-C and Swift interoperability, CocoaPods Gradle plugin dynamically links registered Kotlin frameworks by default</li>
       <li>Kotlin/JS: stable IR compiler that uses incremental compilation by default, deprecated old backend, support for reporting when `yarn.lock` is updated during the CI process, Gradle plugin supports `kotlin.js.browser.karma.browsers` property to set browser test targets</li>
       <li>Compiler: Lombok compiler plugin supports the `@Builder` annotation</li>
       <li>Kotlin Multiplatform: new Android source set layout that can be enabled in Gradle plugin with `kotlin.mpp.androidSourceSetLayoutVersion=2` and includes new naming schema for `KotlinSourceSet` entities, naming change to compilation configurations created by the Kotlin Multiplatform Gradle plugin</li>
       <li>Gradle: ensured compatibility with Gradle 7.3, disable daemon fallback strategy with `kotlin.daemon.useFallbackStrategy`, exposed available Kotlin compiler options as Gradle lazy properties, minimum supported Gradle version is 6.8.3, minimum supported Android Gradle plugin version is 4.1.3</li>
       <li>Libraries: stable extensions for `java.util.Optional` in stdlib, stable `toTimeUnit()`, `toDurationUnit`, `cbrt()` functions, JVM target is 1.8 for stdlib, experimental enhancement of `TimeMark` allowing `elapsedNow` to be read from multiple `TimeMark`s simultaneously, added extension functions to `java.nio.file.Path` that can recursively copy or delete directories</li>
     </ul>
-    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.8.0-Beta">changelog</a>.
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.8.0-RC">changelog</a>.
     <br><br>
     <h3>1.7.20</h3>
     <ul>
