@@ -1,4 +1,0 @@
-SDK
-    Gradle JDK
-    Kotlin SDK
-
