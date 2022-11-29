@@ -547,8 +547,8 @@ internal object BranchesDashboardActions {
     }
   }
 
-  abstract class RemoteActionBase(@Nls(capitalization = Nls.Capitalization.Title) text: () -> String = { "" },
-                                  @Nls(capitalization = Nls.Capitalization.Sentence) private val description: () -> String = { "" },
+  abstract class RemoteActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
+                                  private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
                                   icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
 
@@ -580,8 +580,8 @@ internal object BranchesDashboardActions {
     }
   }
 
-  abstract class BranchesActionBase(@Nls(capitalization = Nls.Capitalization.Title) text: () -> String = { "" },
-                                    @Nls(capitalization = Nls.Capitalization.Sentence) private val description: () -> String = { "" },
+  abstract class BranchesActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
+                                    private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
                                     icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
 
