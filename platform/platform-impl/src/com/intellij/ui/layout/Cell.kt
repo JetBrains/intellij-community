@@ -213,6 +213,7 @@ fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
   return this
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
   return withBinding(JTextComponent::getText, JTextComponent::setText, modelBinding)
 }
@@ -253,6 +254,7 @@ abstract class Cell : BaseBuilder {
   val pushY = CCFlags.pushY
   val push = CCFlags.push
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun label(@Label text: String,
             style: UIUtil.ComponentStyle? = null,
             fontColor: UIUtil.FontColor? = null,
@@ -261,6 +263,7 @@ abstract class Cell : BaseBuilder {
     return component(label)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun label(@Label text: String,
             font: JBFont,
             fontColor: UIUtil.FontColor? = null): CellBuilder<JLabel> {
@@ -317,6 +320,7 @@ abstract class Cell : BaseBuilder {
     return checkBox(text, prop.toBinding(), comment)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun checkBox(@Checkbox text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
     return checkBox(text, PropertyBinding(getter, setter), comment)
   }
