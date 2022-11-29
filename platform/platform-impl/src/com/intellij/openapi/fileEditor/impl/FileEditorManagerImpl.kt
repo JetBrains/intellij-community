@@ -579,6 +579,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
   override fun updateFileColor(file: VirtualFile) {
+    if (!isInitialized.get()) {
+      return
+    }
+
     for (each in getAllSplitters()) {
       each.updateFileColor(file)
     }
@@ -1542,6 +1546,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   @RequiresEdt
   override fun getComposite(file: VirtualFile): EditorComposite? {
+    if (!isInitialized.get()) {
+      return null
+    }
+
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getComposite(file)
     }
@@ -1553,6 +1561,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
         return composite
       }
     }
+
     val originalFile = getOriginalFile(file)
     return getAllSplitters()
       .asSequence()
