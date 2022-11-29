@@ -378,8 +378,14 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
   private @Nullable DockContainer findContainerFor(DevicePoint devicePoint, @NotNull DockableContent<?> content) {
     List<DockContainer> containers = new ArrayList<>(getContainers());
-    containers.remove(myCurrentDragSession.myStartDragContainer);
-    containers.add(0, myCurrentDragSession.myStartDragContainer);
+    MyDragSession session = myCurrentDragSession;
+    if (session != null) {
+      DockContainer startDragContainer = session.myStartDragContainer;
+      if (startDragContainer != null) {
+        containers.remove(startDragContainer);
+        containers.add(0, startDragContainer);
+      }
+    }
 
     for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptArea();
