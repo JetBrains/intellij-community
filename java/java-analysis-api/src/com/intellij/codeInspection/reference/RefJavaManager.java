@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.ex.EntryPointsManager;
@@ -19,8 +18,8 @@ import org.jetbrains.uast.UParameter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
   @NonNls public static final String CLASS = "class";
@@ -32,7 +31,18 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @NonNls public static final String PACKAGE = "package";
   static final String FUNCTIONAL_EXPRESSION = "functional.expression";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
-  private final Set<String> myIgnoredLanguages = ContainerUtil.set(Registry.stringValue("ignored.jvm.languages").split(","));
+  private final List<Language> myLanguages;
+
+  protected RefJavaManager() {
+    List<Language> languages = new ArrayList<>(Language.findInstance(UastMetaLanguage.class).getMatchingLanguages());
+    for (String lang : ContainerUtil.set(Registry.stringValue("ignored.jvm.languages").split(","))) {
+      languages.removeIf(l -> l.isKindOf(lang));
+    }
+    if (!Registry.is("batch.jvm.inspections") && !ApplicationManager.getApplication().isUnitTestMode()) {
+      languages.removeIf(l -> l.isKindOf("kotlin"));
+    }
+    myLanguages = Collections.unmodifiableList(languages);
+  }
 
   public abstract RefImplicitConstructor getImplicitConstructor(String classFQName);
 
@@ -75,14 +85,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @NotNull
   @Override
   public Collection<Language> getLanguages() {
-    List<Language> languages = new ArrayList<>(Language.findInstance(UastMetaLanguage.class).getMatchingLanguages());
-    for (String lang : myIgnoredLanguages) {
-      languages.removeIf(l -> l.isKindOf(lang));
-    }
-    if (!Registry.is("batch.jvm.inspections") && !ApplicationManager.getApplication().isUnitTestMode()) {
-      languages.removeIf(l -> l.isKindOf("kotlin"));
-    }
-    return languages;
+    return myLanguages;
   }
 
   @NotNull
