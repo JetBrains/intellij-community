@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -329,7 +330,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       if (project != null) {
         val editor = InjectedDataKeys.EDITOR.getData(dataContext)
         if (editor != null && !project.isDisposed) {
-          val injectedFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)
+          val injectedFile = runReadAction { PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) }
           if (injectedFile != null) {
             return injectedFile.language
           }
