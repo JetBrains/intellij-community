@@ -14,20 +14,21 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.EntityIndexingServiceEx;
 import com.intellij.util.indexing.IndexableFilesIndex;
-import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
-import com.intellij.util.indexing.roots.origin.IndexableSetContributorIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SdkIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SyntheticLibraryIterableOriginImpl;
@@ -70,6 +71,19 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
         Sdk newProjectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
         return snapshot.projectJdkChanged(newProjectSdk);
       });
+    });
+    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        if (DirectoryIndexImpl.shouldResetOnEvents(events)) {
+          for (VFileEvent event : events) {
+            if (DirectoryIndexImpl.isIgnoredFileCreated(event)) {
+              snapshotHandler.resetSnapshots();
+              break;
+            }
+          }
+        }
+      }
     });
   }
 
@@ -116,14 +130,13 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     ResultingSnapshot(@NotNull WorkspaceModelSnapshot status,
                       @NotNull NonWorkspaceModelSnapshot snapshot) {
       Collection<IndexableSetIterableOrigin> origins = new ArrayList<>();
-      Set<VirtualFile> excludedModuleFilesFromPolicies = new HashSet<>(snapshot.excludedFilesFromPolicies);
-      excludedModuleFilesFromPolicies.addAll(
-        ContainerUtil.mapNotNull(snapshot.excludedModuleFilesFromPolicies, pointer -> pointer.getFile()));
+      Set<VirtualFile> excludedModuleFilesFromPolicies = getExcludedFilesFromPolicies(status, snapshot);
+      Collection<VirtualFile> excludedFromModulesFiles = getExcludedFromModulesFiles(snapshot);
       for (IndexableSetIterableOrigin origin : status.getOrigins()) {
-        origin = patchOriginIfNeeded(origin, snapshot, excludedModuleFilesFromPolicies);
+        origin = getPatchedOriginIfNeeded(origin, snapshot, excludedModuleFilesFromPolicies, excludedFromModulesFiles);
         origins.add(origin);
       }
-      origins.addAll(snapshot.indexableSetOrigins);
+      //origins.addAll(snapshot.indexableSetOrigins);
       origins.addAll(snapshot.syntheticLibrariesOrigins);
 
       ImmutableSetMultimap.Builder<VirtualFile, IndexableSetIterableOrigin> rootsBuilder = new ImmutableSetMultimap.Builder<>();
@@ -137,11 +150,12 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     }
 
     @NotNull
-    private static IndexableSetIterableOrigin patchOriginIfNeeded(@NotNull IndexableSetIterableOrigin origin,
-                                                                  @NotNull NonWorkspaceModelSnapshot snapshot,
-                                                                  @NotNull Set<? extends VirtualFile> excludedModuleFilesFromPolicies) {
+    private static IndexableSetIterableOrigin getPatchedOriginIfNeeded(@NotNull IndexableSetIterableOrigin origin,
+                                                                       @NotNull NonWorkspaceModelSnapshot snapshot,
+                                                                       @NotNull Set<? extends VirtualFile> excludedModuleFilesFromPolicies,
+                                                                       @NotNull Collection<VirtualFile> excludedFromModulesFiles) {
       if (origin instanceof SdkIterableOriginImpl) {
-        List<VirtualFile> excludedRootsForSdk = new ArrayList<>();
+        List<VirtualFile> excludedRootsForSdk = new ArrayList<>(excludedModuleFilesFromPolicies);
         for (Function<Sdk, List<VirtualFile>> exclusionFunction : snapshot.sdkExclusionFunctions) {
           List<VirtualFile> roots = exclusionFunction.fun(((SdkOrigin)origin).getSdk());
           if (roots != null && !roots.isEmpty()) {
@@ -152,20 +166,35 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
           return ((SdkIterableOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedRootsForSdk);
         }
       }
-      else if (origin instanceof ModuleRootIterableOriginImpl && !excludedModuleFilesFromPolicies.isEmpty()) {
-        return ((ModuleRootIterableOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedModuleFilesFromPolicies);
+      else if (origin instanceof ModuleRootIterableOriginImpl &&
+               (!excludedModuleFilesFromPolicies.isEmpty() || !excludedFromModulesFiles.isEmpty())) {
+        return ((ModuleRootIterableOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedModuleFilesFromPolicies,
+                                                                                      excludedFromModulesFiles);
       }
       return origin;
     }
   }
 
-  private record NonWorkspaceModelSnapshot(Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins,
+  @NotNull
+  private static Set<VirtualFile> getExcludedFilesFromPolicies(@NotNull WorkspaceModelSnapshot status,
+                                                               @NotNull NonWorkspaceModelSnapshot snapshot) {
+    Set<VirtualFile> excludedModuleFilesFromPolicies = new HashSet<>(snapshot.excludedFilesFromPolicies);
+    excludedModuleFilesFromPolicies.addAll(status.getExcludedRoots());
+    return excludedModuleFilesFromPolicies;
+  }
+
+  @NotNull
+  private static Collection<VirtualFile> getExcludedFromModulesFiles(@NotNull NonWorkspaceModelSnapshot snapshot) {
+    return ContainerUtil.mapNotNull(snapshot.excludedModuleFilesFromPolicies, pointer -> pointer.getFile());
+  }
+
+  private record NonWorkspaceModelSnapshot(//Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins,
                                            Collection<SyntheticLibraryIterableOriginImpl> syntheticLibrariesOrigins,
                                            Set<VirtualFile> excludedFilesFromPolicies,
                                            Set<VirtualFilePointer> excludedModuleFilesFromPolicies,
                                            List<@NotNull Function<Sdk, List<VirtualFile>>> sdkExclusionFunctions) {
     private NonWorkspaceModelSnapshot {
-      indexableSetOrigins = List.copyOf(indexableSetOrigins);
+      //indexableSetOrigins = List.copyOf(indexableSetOrigins);
       syntheticLibrariesOrigins = List.copyOf(syntheticLibrariesOrigins);
       excludedFilesFromPolicies = Set.copyOf(excludedFilesFromPolicies);
       excludedModuleFilesFromPolicies = Set.copyOf(excludedModuleFilesFromPolicies);
@@ -188,7 +217,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
           syntheticLibrariesOrigins.add(origin);
         }
       }
-      Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins = new ArrayList<>();
+     /* Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins = new ArrayList<>();
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
         Set<VirtualFile> roots = contributor.getAdditionalRootsToIndex();
         String presentableText = (contributor instanceof ItemPresentation) ? ((ItemPresentation)contributor).getPresentableText() : null;
@@ -199,7 +228,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
         Set<VirtualFile> projectRoots = contributor.getAdditionalProjectRootsToIndex(project);
         indexableSetOrigins.add(new IndexableSetContributorIterableOriginImpl(presentableText, debugName, true,
                                                                               contributor, projectRoots));
-      }
+      }*/
 
       Set<VirtualFile> excludedFilesFromPolicies = new HashSet<>();
       Set<VirtualFilePointer> excludedModuleFilesFromPolicies = new HashSet<>();
@@ -220,7 +249,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
           ContainerUtil.addAll(excludedModuleFilesFromPolicies, policy.getExcludeRootsForModule(model));
         }
       }
-      return new NonWorkspaceModelSnapshot(indexableSetOrigins, syntheticLibrariesOrigins, excludedFilesFromPolicies,
+      return new NonWorkspaceModelSnapshot(/*indexableSetOrigins,*/ syntheticLibrariesOrigins, excludedFilesFromPolicies,
                                            excludedModuleFilesFromPolicies, sdkExclusionFunctions);
     }
 
@@ -240,7 +269,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
             ContainerUtil.addAll(excludedModuleFilesFromPolicies, policy.getExcludeRootsForModule(model));
           }
         }
-        return new NonWorkspaceModelSnapshot(indexableSetOrigins, syntheticLibrariesOrigins, excludedFilesFromPolicies,
+        return new NonWorkspaceModelSnapshot(/*indexableSetOrigins, */syntheticLibrariesOrigins, excludedFilesFromPolicies,
                                              excludedModuleFilesFromPolicies, sdkExclusionFunctions);
       }
       return null;
@@ -254,7 +283,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     });
   }
 
-  public void beforeRootsChanged() {
+  public void resetNonWorkspacePart() {
     snapshotHandler.resetSnapshots();
   }
 
@@ -302,38 +331,48 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
 
     @NotNull
     private ResultingSnapshot getResultingSnapshot(@NotNull Project project) {
-      ResultingSnapshot resultingSnapshot;
-      NonWorkspaceModelSnapshot nonWorkspaceSnapshot;
-      int nonWorkspaceCounter;
-      WorkspaceModelSnapshot workspaceStatus;
-      int workspaceCounter;
+      Snapshots snapshots;
       while (true) {
         synchronized (LOCK) {
-          workspaceStatus = mySnapshots.workspaceModelSnapshot;
-          workspaceCounter = mySnapshots.workspaceModificationCounter;
-          nonWorkspaceSnapshot = mySnapshots.nonWorkspaceModelSnapshot;
-          nonWorkspaceCounter = mySnapshots.nonWorkspaceModificationCounter;
-          resultingSnapshot = mySnapshots.resultingSnapshot;
+          snapshots = mySnapshots;
         }
-        if (resultingSnapshot != null) return resultingSnapshot;
+        if (snapshots.resultingSnapshot != null) return snapshots.resultingSnapshot;
 
-        if (nonWorkspaceSnapshot == null) {
-          NonWorkspaceModelSnapshot snapshot =
-            ReadAction.nonBlocking(() -> NonWorkspaceModelSnapshot.buildSnapshot(project)).executeSynchronously();
-          synchronized (LOCK) {
-            if (mySnapshots.nonWorkspaceModificationCounter == nonWorkspaceCounter) {
-              mySnapshots = mySnapshots.copyWithNonWorkspaceSnapshot(snapshot);
-            }
+        if (snapshots.nonWorkspaceModelSnapshot == null) {
+          snapshots = getSnapshotsWithInitializedNonWorkspaceSnapshot(project);
+          if (snapshots.resultingSnapshot != null) return snapshots.resultingSnapshot;
+        }
+
+        ResultingSnapshot resultingSnapshot = new ResultingSnapshot(snapshots.workspaceModelSnapshot,
+                                                                    Objects.requireNonNull(snapshots.nonWorkspaceModelSnapshot));
+        synchronized (LOCK) {
+          if (mySnapshots.workspaceModificationCounter == snapshots.workspaceModificationCounter &&
+              mySnapshots.nonWorkspaceModificationCounter == snapshots.nonWorkspaceModificationCounter) {
+            mySnapshots = mySnapshots.copyWithResultingSnapshot(resultingSnapshot);
+            return resultingSnapshot;
           }
         }
-        else {
-          ResultingSnapshot snapshot = new ResultingSnapshot(workspaceStatus, nonWorkspaceSnapshot);
-          synchronized (LOCK) {
-            if (mySnapshots.workspaceModificationCounter == workspaceCounter &&
-                mySnapshots.nonWorkspaceModificationCounter == nonWorkspaceCounter) {
-              mySnapshots = mySnapshots.copyWithResultingSnapshot(snapshot);
-              return snapshot;
-            }
+      }
+    }
+
+    @NotNull
+    private Snapshots getSnapshotsWithInitializedNonWorkspaceSnapshot(@NotNull Project project) {
+      Snapshots snapshots;
+      while (true) {
+        synchronized (LOCK) {
+          snapshots = mySnapshots;
+        }
+        if (snapshots.nonWorkspaceModelSnapshot != null) return snapshots;
+
+        NonWorkspaceModelSnapshot nonWorkspaceModelSnapshot =
+          ReadAction.nonBlocking(() -> NonWorkspaceModelSnapshot.buildSnapshot(project)).executeSynchronously();
+        synchronized (LOCK) {
+          if (mySnapshots.nonWorkspaceModificationCounter == snapshots.nonWorkspaceModificationCounter) {
+            mySnapshots = mySnapshots.copyWithNonWorkspaceSnapshot(nonWorkspaceModelSnapshot);
+          }
+          else if (mySnapshots.nonWorkspaceModificationCounter > snapshots.nonWorkspaceModificationCounter &&
+                   mySnapshots.nonWorkspaceModelSnapshot != null) {
+            return mySnapshots;
           }
         }
       }

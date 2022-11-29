@@ -79,15 +79,19 @@ object IndexableFilesIterationMethods {
     exclusionCondition: Predicate<VirtualFile>,
     iterateAsContent: Boolean,
   ): Boolean {
+    val fileTypeRegistry = FileTypeRegistry.getInstance()
     if (!iterateAsContent) {
       val filters = IndexableFilesFilter.EP_NAME.extensionList
       val rootsSet = roots.toSet()
-      val finalFileFilter = fileFilter.and { shouldIndexFileIndependentlyFromProjectFileIndex(it, filters, rootsSet, exclusionCondition) }
+      val finalFileFilter = fileFilter.and {
+        !fileTypeRegistry.isFileIgnored(it) || roots.contains(it)
+      }.and {
+        shouldIndexFileIndependentlyFromProjectFileIndex(it, filters, rootsSet, exclusionCondition)
+      }
       return roots.all { root ->
         VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
       }
-    }//todo[lene] fix this iteration peculiarity
-    val fileTypeRegistry = FileTypeRegistry.getInstance()
+    }
     val contentIteratorEx = toContentIteratorEx(contentIterator)
     val filters = IndexableFilesFilter.EP_NAME.extensionList
     val rootsSet = roots.toSet()
@@ -97,7 +101,7 @@ object IndexableFilesIterationMethods {
           if (exclusionCondition.test(file)) {
             return SKIP_CHILDREN
           }
-          if (fileTypeRegistry.isFileIgnored(file)) {
+          if (fileTypeRegistry.isFileIgnored(file) && !roots.contains(file)) {
             return SKIP_CHILDREN
           }
           val accepted = fileFilter.accept(file) &&
@@ -112,7 +116,7 @@ object IndexableFilesIterationMethods {
           else skipTo(root)
         }
       })
-      return !Comparing.equal<VirtualFile>(result.skipToParent, root)
+      return@all !Comparing.equal<VirtualFile>(result.skipToParent, root)
     }
   }
 

@@ -21,20 +21,29 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.*
 import org.jetbrains.annotations.Nls
+import java.util.*
 
 internal data class ModuleRootOriginImpl(override val module: Module,
                                          override val roots: List<VirtualFile>) : ModuleRootOrigin
 
 internal class ModuleRootIterableOriginImpl(override val module: Module,
                                             override val roots: List<VirtualFile>,
-                                            excludedRoots: Collection<VirtualFile>) : ModuleRootOrigin,
-                                                                                      IndexableSetIterableOriginBase() {
+                                            excludedRoots: Collection<VirtualFile>,
+                                            excludeCondition: Condition<VirtualFile>?,
+                                            childContentRoots: Collection<VirtualFile>) : ModuleRootOrigin,
+                                                                                          IndexableSetIterableOriginBase() {
+  constructor(module: Module, roots: List<VirtualFile>, excludedRoots: Collection<VirtualFile>) :
+    this(module, roots, excludedRoots, null, emptyList())
+
   override val iterationRoots: Collection<VirtualFile>
     get() = roots
   override val exclusionData: ExclusionData = ExclusionData.createExclusionData(iterationRoots)
 
   init {
-    exclusionData.addRelevantExcludedRootsFromDirectoryIndexExcludePolicies(excludedRoots)
+    exclusionData.addRelevantExcludedRoots(excludedRoots, false)
+    exclusionData.addExcludedFileCondition(excludeCondition)
+    exclusionData.setExcludedRootsFromChildContentRoots(childContentRoots)
+    validate()
   }
 
 
@@ -57,17 +66,12 @@ internal class ModuleRootIterableOriginImpl(override val module: Module,
     return IndexingBundle.message("indexable.files.provider.scanning.module.name", module.name)
   }
 
-  fun copyWithAdditionalExcludedFiles(excludedFiles: Set<VirtualFile>): ModuleRootIterableOriginImpl {
+  fun copyWithAdditionalExcludedFiles(excludedFilesFromExclusionPolicies: Set<VirtualFile>,
+                                      excludedFromModulesFiles: Collection<VirtualFile>): ModuleRootIterableOriginImpl {
     val copy = ModuleRootIterableOriginImpl(module, roots, emptyList())
     copy.exclusionData.load(exclusionData)
-    copy.exclusionData.addRelevantExcludedRootsFromDirectoryIndexExcludePolicies(excludedFiles)
-    return copy
-  }
-
-  fun copyWithChildContentRoots(childContentRoots: Collection<VirtualFile>): ModuleRootIterableOriginImpl {
-    val copy = ModuleRootIterableOriginImpl(module, roots, emptyList())
-    copy.exclusionData.load(exclusionData)
-    copy.exclusionData.setExcludedRootsFromChildContentRoots(childContentRoots)
+    copy.exclusionData.addRelevantExcludedRoots(excludedFilesFromExclusionPolicies, true)
+    copy.exclusionData.addRelevantExcludedRoots(excludedFromModulesFiles, false)
     return copy
   }
 
@@ -94,7 +98,8 @@ internal class LibraryIterableOriginImpl(override val classRoots: List<VirtualFi
   override val exclusionData: ExclusionData = ExclusionData.createExclusionData(iterationRoots)
 
   init {
-    exclusionData.addRelevantExcludedRootsFromDirectoryIndexExcludePolicies(excludedRoots)
+    exclusionData.addRelevantExcludedRoots(excludedRoots, false)
+    validate()
   }
 
   override fun getDebugName() = "Library ${presentableLibraryName} " +
@@ -129,7 +134,11 @@ internal class SyntheticLibraryIterableOriginImpl(override val syntheticLibrary:
   override val exclusionData: ExclusionData = ExclusionData.createExclusionData(iterationRoots)
 
   init {
-    exclusionData.addRelevantExcludedRootsFromDirectoryIndexExcludePolicies(excludedRoots)
+    validate()
+  }
+
+  init {
+    exclusionData.addRelevantExcludedRoots(excludedRoots, true)
     exclusionData.addExcludedFileCondition(excludeCondition)
   }
 
@@ -161,6 +170,10 @@ internal class SdkIterableOriginImpl(override val sdk: Sdk,
     get() = rootsToIndex
   override val exclusionData: ExclusionData = ExclusionData.createExclusionData(iterationRoots)
 
+  init {
+    validate()
+  }
+
   override fun getDebugName() = "$sdkPresentableName ${sdk.name} ${rootsToIndex.joinToString { it.path }}"
 
   private val sdkPresentableName: String
@@ -175,7 +188,7 @@ internal class SdkIterableOriginImpl(override val sdk: Sdk,
   fun copyWithAdditionalExcludedFiles(excludedFiles: Collection<VirtualFile>): IndexableSetIterableOrigin {
     val copy = SdkIterableOriginImpl(sdk, rootsToIndex)
     copy.exclusionData.load(exclusionData)
-    copy.exclusionData.addRelevantExcludedRootsFromDirectoryIndexExcludePolicies(excludedFiles)
+    copy.exclusionData.addRelevantExcludedRoots(excludedFiles, true)
     return copy
   }
 
@@ -201,6 +214,10 @@ internal class IndexableSetContributorIterableOriginImpl(private val name: Strin
   override val iterationRoots: Collection<VirtualFile>
     get() = rootsToIndex
   override val exclusionData: ExclusionData = ExclusionData.getDummyExclusionData()
+
+  init {
+    validate()
+  }
 
   override fun getDebugName(): String {
     return "Indexable set contributor '$debugName' ${if (projectAware) "(project)" else "(non-project)"}"
@@ -232,6 +249,12 @@ abstract class IndexableSetIterableOriginBase : IndexableSetIterableOrigin() {
   abstract fun getRootsScanningProgressText(): @NlsContexts.ProgressText String
 
   override fun createIterator(): IndexableFilesIterator = MyIterator()
+
+  protected fun validate() {
+    for (iterationRoot in iterationRoots) {
+      Objects.requireNonNull(iterationRoot)
+    }
+  }
 
   inner class MyIterator : IndexableFilesIterator {
 

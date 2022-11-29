@@ -220,7 +220,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     try {
       (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
       if (IndexableFilesIndex.shouldBeUsed()) {
-        IndexableFilesIndexImpl.getInstanceImpl(myProject).beforeRootsChanged()
+        IndexableFilesIndexImpl.getInstanceImpl(myProject).resetNonWorkspacePart()
       }
       (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).resetCustomContributors()
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(myProject, fileTypes))
