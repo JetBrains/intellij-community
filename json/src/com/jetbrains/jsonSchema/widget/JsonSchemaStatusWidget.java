@@ -139,7 +139,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (DumbService.getInstance(project).isDumb()) {
       return WidgetStatus.ENABLED;
     }
-    if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(s -> s.isCandidateForSuppress(file, project))) {
+    if (ContainerUtil.exists(JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList(), s -> s.isCandidateForSuppress(file, project))) {
       return WidgetStatus.MAYBE_SUPPRESSED;
     }
     return WidgetStatus.ENABLED;
@@ -297,8 +297,8 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         mySuppressInfoRef.set(null);
       }
       else {
-        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream()
-          .anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
+        boolean suppress = ContainerUtil.exists(JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList(),
+                                                s -> s.suppressSwitcherWidget(file, myProject));
         mySuppressInfoRef.set(Pair.create(file, suppress));
       }
       super.update(null);
@@ -528,7 +528,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       String message = new HtmlBuilder()
         .append(HtmlChunk.tag("b").addText(JsonBundle.message("schema.widget.conflict.popup.title")))
         .append(HtmlChunk.br()).append(HtmlChunk.br())
-        .appendRaw(((MyWidgetState)state).getToolTip()).toString();
+        .appendRaw(state.getToolTip()).toString();
       JComponent label = HintUtil.createErrorLabel(message);
       BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(label);
       JComponent statusBarComponent = getComponent();

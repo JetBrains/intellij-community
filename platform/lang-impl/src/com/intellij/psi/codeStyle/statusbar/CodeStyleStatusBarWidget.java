@@ -186,11 +186,11 @@ public final class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup im
     private final @Nullable CodeStyleStatusBarUIContributor myContributor;
     private final @NotNull PsiFile myPsiFile;
 
-    protected MyWidgetState(@NlsContexts.Tooltip String toolTip,
-                            @NlsContexts.StatusBarText String text,
-                            @NotNull PsiFile psiFile,
-                            @NotNull IndentOptions indentOptions,
-                            @Nullable CodeStyleStatusBarUIContributor uiContributor) {
+    private MyWidgetState(@NlsContexts.Tooltip String toolTip,
+                          @NlsContexts.StatusBarText String text,
+                          @NotNull PsiFile psiFile,
+                          @NotNull IndentOptions indentOptions,
+                          @Nullable CodeStyleStatusBarUIContributor uiContributor) {
       super(toolTip, text, true);
       myIndentOptions = indentOptions;
       myContributor = uiContributor;
