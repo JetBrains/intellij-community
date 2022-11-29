@@ -19,8 +19,8 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.SetInspectionOptionFix;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptCheckbox;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -44,6 +44,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class TrivialIfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean ignoreChainedIf = false;
@@ -56,11 +59,11 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   @Override
-  public @NotNull InspectionOptionsPanel createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), "ignoreChainedIf");
-    panel.addCheckbox(InspectionGadgetsBundle.message("trivial.if.option.ignore.assert.statements"), "ignoreAssertStatements");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreChainedIf", InspectionGadgetsBundle.message("trivial.if.option.ignore.chained")),
+      checkbox("ignoreAssertStatements", InspectionGadgetsBundle.message("trivial.if.option.ignore.assert.statements"))
+    );
   }
 
   @Override
@@ -78,7 +81,8 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     List<InspectionGadgetsFix> fixes = new SmartList<>(new TrivialIfFix());
     String turnOffOption = (String)infos[0];
     if (turnOffOption != null) {
-      String message = StringUtil.unescapeXmlEntities(createOptionsPanel().getLabelForCheckbox(turnOffOption).toString());
+      OptCheckbox checkbox = (OptCheckbox)Objects.requireNonNull(getOptionsPane().findControl(turnOffOption));
+      String message = StringUtil.unescapeXmlEntities(checkbox.label().label());
       fixes.add(new DelegatingFix(new SetInspectionOptionFix(this, turnOffOption, message, true)));
     }
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
