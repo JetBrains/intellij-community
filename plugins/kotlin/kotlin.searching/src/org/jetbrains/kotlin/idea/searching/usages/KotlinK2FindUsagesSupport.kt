@@ -113,8 +113,10 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     }
 
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
-        // TODO: implement this
-        return emptyList()
+        if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return emptyList()
+        return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
+            (declaration.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols()?.mapNotNull { it.psi }?.toList().orEmpty()
+        }
     }
 
     override fun checkSuperMethods(
