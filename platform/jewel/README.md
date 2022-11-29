@@ -2,9 +2,8 @@
 
 <img alt="Jewel logo" src="art/jewel-logo.svg" width="20%"/>
 
-Jewel aims at recreating the _Darcula_ Swing Look and Feel used on the IntelliJ Platform into Compose for Desktop. For historical reasons, there is
-another theme, Toolbox, which is derived from the JetBrains Toolbox codebase. The themes share some concepts and the general structure, but not much
-in terms of code. All shared code is extracted to a separate module, `library`.
+Jewel aims at recreating the _Darcula_ Swing Look and Feel used on the IntelliJ Platform into Compose for Desktop. A bunch of shared code is extracted
+to a separate module, `library`.
 
 ## Project structure
 
@@ -17,7 +16,6 @@ The project is split in modules:
         1. `standalone` is the base theme and can be used in any Compose for Desktop project
         2. `idea` is a version of the theme that can be used in an IDEA plugin, and integrates with the IDE's Swing LaF and themes via a bridge (more
            on that later).
-    2. `toolbox` is the JetBrains Toolbox theme implementation. There is only a stand-alone implementation of this theme.
 
 ### Running the samples
 
