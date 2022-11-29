@@ -13,9 +13,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -115,5 +117,15 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
             assertEquals("kotlin.collections", ktFile.getPackageFqName().asString());
 
         }
+    }
+
+    /**
+     * Hooray, it fails! Check KT-55160 is closed, make this test green
+     * and remove {@link com.intellij.psi.tree.IStubFileElementType#isKotlinFragment()} workaround.
+     **/
+    public void testKT_55160hasNotBeenFixedYet() {
+        assertTrue(ReflectionUtil.isAssignable(IStubFileElementType.class, KtExpressionCodeFragmentType.class));
+        assertTrue(ReflectionUtil.isAssignable(IStubFileElementType.class, KtBlockCodeFragmentType.class));
+        assertTrue(ReflectionUtil.isAssignable(IStubFileElementType.class, KtBlockCodeFragmentType.class));
     }
 }
