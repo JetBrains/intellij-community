@@ -340,9 +340,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @return {@code null} if no UI options required.
    */
   public @Nullable JComponent createOptionsPanel() {
-    OptPane pane = getOptionsPane();
-    if (pane.components().isEmpty()) return null;
-    return InspectionOptionPaneRenderer.getInstance().render(this, pane);
+    return InspectionOptionPaneRenderer.getInstance().render(this);
   }
   
   public @NotNull OptPane getOptionsPane() {
