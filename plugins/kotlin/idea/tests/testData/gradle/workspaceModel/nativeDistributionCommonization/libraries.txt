@@ -1,3 +1,0 @@
-LIBRARIES
-    <Kotlin/Native Distribution Libraries Test Stub>
-
