@@ -1,5 +1,6 @@
 package org.jetbrains.completion.full.line.local.generation.search
 
+import org.jetbrains.completion.full.line.local.generation.logSoftmax
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -8,15 +9,18 @@ class FullLineSearchTest {
   private lateinit var search: FullLineBeamSearch
 
   private fun makeOneStep() {
-    search.step(arrayOf(doubleArrayOf(0.13, 0.4, 0.17, 0.1, 0.2)), IntArray(0))
+    val fakeLogProbs = arrayOf(doubleArrayOf(0.13, 0.4, 0.17, 0.1, 0.2))
+    logSoftmax(fakeLogProbs)
+    search.step(fakeLogProbs, IntArray(0))
   }
 
   private fun makeFiveSteps() {
-    val fakeLogProbs = doubleArrayOf(0.13, 0.4, 0.17, 0.1, 0.2)
+    val fakeLogProbs = arrayOf(doubleArrayOf (0.13, 0.4, 0.17, 0.1, 0.2))
+    logSoftmax(fakeLogProbs)
     var fakeLogProbsRepeat = 1
 
     for (i in 0..4) {
-      val stepResult = search.step(Array(fakeLogProbsRepeat) { fakeLogProbs }, IntArray(0))
+      val stepResult = search.step(Array(fakeLogProbsRepeat) { fakeLogProbs[0] }, IntArray(0))
       fakeLogProbsRepeat = stepResult.sortMask.size
     }
   }

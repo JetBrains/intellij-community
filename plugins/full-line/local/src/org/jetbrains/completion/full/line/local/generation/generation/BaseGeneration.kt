@@ -34,7 +34,7 @@ abstract class BaseGeneration<GenerationConfig : BaseGenerationConfig>(
   private var logSpellProb = ln(0.0001)
 
 
-  private fun maskPrefixes(scores: Array<DoubleArray>): Array<DoubleArray> {
+  private fun maskPrefixes(scores: Array<DoubleArray>) {
     prefixes?.forEachIndexed { i, (prefix, err_limit) ->
       if (prefix.isEmpty()) return@forEachIndexed
 
@@ -60,14 +60,14 @@ abstract class BaseGeneration<GenerationConfig : BaseGenerationConfig>(
       //                scores[i][j] = Double.NEGATIVE_INFINITY
       //            }
     } ?: initFail()
-
-    return scores
   }
 
   protected fun initLogProbs(context: IntArray, execContext: ExecutionContext) {
     val logProbs = model.initLastLogProbs(arrayOf(context), execContext)
     mems = logProbs.pastStates
-    nextLogProbs = maskPrefixes(logSoftmax(logProbs.logProbs))
+    maskPrefixes(logProbs.logProbs)
+    logSoftmax(logProbs.logProbs)
+    nextLogProbs = logProbs.logProbs
   }
 
   protected fun initState(prefix: String, config: GenerationConfig) {
@@ -104,7 +104,9 @@ abstract class BaseGeneration<GenerationConfig : BaseGenerationConfig>(
   protected fun updateLogProbs(data: IntArray, execContext: ExecutionContext) {
     val logProbs = model.getLastLogProbs(data, mems ?: initFail(), execContext)
     mems = logProbs.pastStates
-    nextLogProbs = maskPrefixes(logSoftmax(logProbs.logProbs))
+    maskPrefixes(logProbs.logProbs)
+    logSoftmax(logProbs.logProbs)
+    nextLogProbs = logProbs.logProbs
   }
 
   private fun updatePrefix(newTokensIds: IntArray) {

@@ -2,6 +2,8 @@ package org.jetbrains.completion.full.line.local.generation
 
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
+import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.random.Random
 
 class UtilsTest {
@@ -59,5 +61,66 @@ class UtilsTest {
       intArrayOf(1, 0)
     )
     assertArrayEquals(topk2d(column, 3, dim = 0), target)
+  }
+
+  @Test
+  fun testLogSoftmaxManual() {
+    val logits = Array(2) { i -> DoubleArray(3) { j -> (i * 3 + j).toDouble() } }
+    val pyTorchOut = arrayOf(doubleArrayOf(-2.4076, -1.4076, -0.4076), doubleArrayOf(-2.4076, -1.4076, -0.4076))
+
+    logSoftmax(logits, fast = false)
+    assert(isClose(logits, pyTorchOut, atol=1e-5))  // 1e-5 because printed values from PyTorch have such precision
+  }
+
+  @Test
+  fun testLogSoftmaxRandom() {
+    val logits = Array(6) { DoubleArray(16384) { Random.nextDouble() } }
+
+    logSoftmax(logits, fast = false)
+    assert(logits.all { arr -> arr.all { it.isFinite() } || isClose(arr.sumOf { exp(it) }, 1.0) })
+  }
+
+  @Test
+  fun testLogSoftmaxStabilitySimple() {
+    // https://discuss.pytorch.org/t/justification-for-logsoftmax-being-better-than-log-softmax/140130/3
+    val alpha = 100.0
+    val logits = arrayOf(doubleArrayOf (-alpha, 0.0, alpha))
+    val logitsFast = arrayOf(doubleArrayOf (-alpha, 0.0, alpha))
+
+    logSoftmax(logits, fast = false)
+    logSoftmax(logits, fast = true)
+    assert(logits[0].all { it.isFinite() })
+    assert(logitsFast[0].all { it.isFinite() })  // fails at alpha=1000
+  }
+
+  @Test
+  fun testLogSoftmaxStabilityHard() {
+    // https://discuss.pytorch.org/t/justification-for-logsoftmax-being-better-than-log-softmax/140130/3
+    val alpha = 1000.0
+    val logits = arrayOf(doubleArrayOf (-alpha, 0.0, alpha))
+
+    logSoftmax(logits, fast = false)
+    assert(logits[0].all { it.isFinite() })
+  }
+
+  @Test
+  fun testLogSoftmaxFastImplCloseness() {
+    val logitsA = Array(6) { DoubleArray(16384) { Random.nextDouble() } }
+    val logitsB = Array(6) { i -> logitsA[i].copyOf() }
+
+    logSoftmax(logitsA, fast = false)
+    logSoftmax(logitsB, fast = true)
+    assert(isClose(logitsA, logitsB, rtol=1e-4, atol=1e-7)) // minimum tolerance when the test is passing
+  }
+
+  private fun isClose(a: Array<DoubleArray>, b: Array<DoubleArray>, rtol: Double = 1e-5, atol: Double = 1e-8): Boolean {
+    return a.zip(b).all { (arrA, arrB) ->
+      arrA.zip(arrB).all { (elA, elB) -> isClose(elA, elB, rtol, atol) }
+    }
+  }
+
+  private fun isClose(a: Double, b: Double, rtol: Double = 1e-5, atol: Double = 1e-8): Boolean {
+    // https://pytorch.org/docs/stable/generated/torch.isclose.html
+    return abs(a - b) <= atol + rtol * abs(b)
   }
 }

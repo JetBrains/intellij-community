@@ -1,6 +1,5 @@
 package org.jetbrains.completion.full.line.local.generation.search
 
-import org.jetbrains.completion.full.line.local.generation.logSoftmax
 import org.jetbrains.completion.full.line.local.generation.sliceArray
 import org.jetbrains.completion.full.line.local.generation.topk1d
 import kotlin.math.exp
@@ -34,16 +33,14 @@ class FullLineBeamSearch(
     }
 
   override fun step(stepLogProbs: Array<DoubleArray>, context: IntArray?): Search.StepResult {
-    val logProbs = logSoftmax(stepLogProbs)
-    val logProbsLinearSize = logProbs.sumOf { it.size }
+    val logProbsLinearSize = stepLogProbs.sumOf { it.size }
     val newLogProbs = DoubleArray(logProbsLinearSize)
     var offset = 0
-    for (i in logProbs.indices) {
-      val probs = logProbs[i]
+    for (i in stepLogProbs.indices) {
+      val probs = stepLogProbs[i]
       val score = hypothesesScores[i]
       for (value in probs) {
-        val currentVal = value + score
-        newLogProbs[offset] = currentVal
+        newLogProbs[offset] = value + score
         offset++
       }
     }

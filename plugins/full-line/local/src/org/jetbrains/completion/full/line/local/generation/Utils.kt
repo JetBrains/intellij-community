@@ -1,22 +1,9 @@
 package org.jetbrains.completion.full.line.local.generation
 
 import java.util.*
-import kotlin.math.exp
 import kotlin.math.ln
+import kotlin.math.exp
 import kotlin.math.min
-
-internal fun IntArray.toLongArray(): LongArray {
-  return LongArray(size) { this[it].toLong() }
-}
-
-internal fun Array<IntArray>.toLongArray(): LongArray {
-  val arr = LongArray(this.sumOf { it.size })
-  var off = 0
-  for (block in this) {
-    for (value in block) arr[off++] = value.toLong()
-  }
-  return arr
-}
 
 internal fun IntArray.sliceArray(indices: IntArray): IntArray {
   val result = IntArray(indices.size)
@@ -44,16 +31,27 @@ internal fun <T> List<T>.slice(indices: IntArray): List<T> {
   return result
 }
 
-internal fun logSoftmax(scores: Array<DoubleArray>): Array<DoubleArray> {
-  val expScores = Array(scores.size) {
-    val curScores = scores[it]
-    DoubleArray(curScores.size) { i -> exp(curScores[i]) }
+internal fun logSoftmax(logits: Array<DoubleArray>, fast: Boolean = false) {
+  // https://github.com/pytorch/pytorch/blob/420b37f3c67950ed93cd8aa7a12e673fcfc5567b/aten/src/ATen/native/SoftMax.cpp#L41
+  val stableLogSumExps = DoubleArray(logits.size) { rowId ->
+      val maxLogit = logits[rowId].max()
+      when (fast) {
+        true -> maxLogit + ln(logits[rowId].sumOf { fastExp(it - maxLogit) })
+        false -> maxLogit + ln(logits[rowId].sumOf { exp(it - maxLogit) })
+    }
   }
-  for (score in expScores) {
-    val scoresSum = score.sum()
-    for (i in score.indices) score[i] = ln(score[i] / scoresSum)
+  for (rowId in logits.indices) {
+    val logitsRow = logits[rowId]
+    val logSumExp = stableLogSumExps[rowId]
+    for (colId in logitsRow.indices) {
+      logitsRow[colId] -= logSumExp
+    }
   }
-  return expScores
+}
+
+private fun fastExp(value: Double): Double {
+  val tmp = (1512775 * value + 1072632447).toLong()
+  return java.lang.Double.longBitsToDouble(tmp shl 32)
 }
 
 private data class IndexToValue(val index: Int, val value: Double) : Comparable<IndexToValue> {
