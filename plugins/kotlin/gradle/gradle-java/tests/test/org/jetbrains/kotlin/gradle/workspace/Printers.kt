@@ -3,9 +3,12 @@
 package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.FilterModulesTestFeature
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
@@ -39,13 +42,27 @@ class WorkspaceModelPrinter(
 
         printer.println("MODULES")
         val modules = runReadAction { ModuleManager.getInstance(project).modules }.toList()
+        val modulesFiltered = filterModules(modules)
 
         printer.indented {
-            for (module in modules.sortedBy { it.name }) {
+            for (module in modulesFiltered.sortedBy { it.name }) {
                 printer.println(module.name)
                 moduleContributors.forEach { with(it) { process(module) } }
             }
         }
+    }
+
+    private fun PrinterContext.filterModules(modules: List<Module>): List<Module> {
+        val config = testConfiguration.getConfiguration(FilterModulesTestFeature) ?: return modules
+
+        fun Module.shouldRemoveModule(): Boolean {
+            return config.includedModuleNames != null && name !in config.includedModuleNames!! ||
+                    name in config.excludedModuleNames.orEmpty() ||
+                    config.hideTestModules && isTestModule ||
+                    config.hideProductionModules && !isTestModule
+        }
+
+        return modules.filterNot { it.shouldRemoveModule() }
     }
 }
 
