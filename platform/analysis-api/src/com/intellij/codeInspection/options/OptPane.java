@@ -6,7 +6,9 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -17,6 +19,16 @@ import java.util.function.Predicate;
  * @param components list of components on the pane
  */
 public record OptPane(@NotNull List<@NotNull OptComponent> components) {
+  public OptPane {
+    Set<String> ids = new HashSet<>();
+    traverse(components, comp -> {
+      if (comp instanceof OptControl ctl && !ids.add(ctl.bindId())) {
+        throw new IllegalArgumentException("Repeating control identifier inside the pane: " + ctl.bindId());
+      }
+      return true;
+    });
+  }
+
   /**
    * An empty pane that contains no options at all
    */
