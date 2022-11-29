@@ -87,10 +87,4 @@
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.redundant.digit.class.element"
                      implementationClass="org.intellij.lang.regexp.inspection.RegExpRedundantClassElementInspection"/>
   </extensions>
-
-  <actions resource-bundle="messages.RegExpBundle">
-    <action id="open.regexp.dialog"
-            class="org.intellij.lang.regexp.inspection.custom.OpenRegExpDialogAction"
-            icon="AllIcons.Actions.Regex"/>
-  </actions>
 </idea-plugin>
