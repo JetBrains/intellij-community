@@ -105,11 +105,12 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     return pendingReviewRequestValue.value.thenCompose {
       val reviewId = it?.id
       if (reviewId == null) {
-        createReview(progressIndicator).thenCompose { review ->
+        reviewService.createReview(progressIndicator, pullRequestId).thenCompose { review ->
           reviewService.addComment(progressIndicator, pullRequestId, review.id, replyToCommentId, body).thenCompose { comment ->
-            submitReview(progressIndicator, review.id, GHPullRequestReviewEvent.COMMENT, null).thenApply {
-              comment
-            }
+            reviewService.submitReview(progressIndicator, pullRequestId, review.id, GHPullRequestReviewEvent.COMMENT, null)
+              .thenApply {
+                comment
+              }
           }.dropReviews().notifyReviews()
         }
       }
