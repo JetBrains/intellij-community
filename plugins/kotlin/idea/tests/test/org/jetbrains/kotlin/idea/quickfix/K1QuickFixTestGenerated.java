@@ -8493,6 +8493,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/expressions/removeUselessIsCheck.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckForNull.kt")
+        public void testRemoveUselessIsCheckForNull() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckForNull.kt");
+        }
+
         @TestMetadata("removeUselessIsCheckInWhen.kt")
         public void testRemoveUselessIsCheckInWhen() throws Exception {
             runTest("testData/quickfix/expressions/removeUselessIsCheckInWhen.kt");
@@ -8503,9 +8508,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/expressions/removeUselessIsCheckInWhenExpressionless.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckInWhenExpressionlessForNull.kt")
+        public void testRemoveUselessIsCheckInWhenExpressionlessForNull() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckInWhenExpressionlessForNull.kt");
+        }
+
         @TestMetadata("removeUselessIsCheckInWhenExpressionlessNegate.kt")
         public void testRemoveUselessIsCheckInWhenExpressionlessNegate() throws Exception {
             runTest("testData/quickfix/expressions/removeUselessIsCheckInWhenExpressionlessNegate.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckInWhenExpressionlessNegateForNull.kt")
+        public void testRemoveUselessIsCheckInWhenExpressionlessNegateForNull() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckInWhenExpressionlessNegateForNull.kt");
         }
 
         @TestMetadata("removeUselessIsCheckInWhenNegate.kt")
@@ -8516,6 +8531,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("removeUselessIsCheckNegate.kt")
         public void testRemoveUselessIsCheckNegate() throws Exception {
             runTest("testData/quickfix/expressions/removeUselessIsCheckNegate.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckNegateForNull.kt")
+        public void testRemoveUselessIsCheckNegateForNull() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckNegateForNull.kt");
         }
 
         @TestMetadata("unnecessaryNonNullAssertion1.kt")
