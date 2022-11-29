@@ -168,22 +168,37 @@ public final class DiffUtil {
 
   @Nullable
   public static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
+    EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
+
+    VirtualFile file = FileDocumentManager.getInstance().getFile(content.getDocument());
     FileType contentType = content.getContentType();
     VirtualFile highlightFile = content.getHighlightFile();
     Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
+    boolean hasContentType = contentType != null &&
+                             contentType != PlainTextFileType.INSTANCE &&
+                             contentType != UnknownFileType.INSTANCE;
 
-    EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
     if (language != null) {
       SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, highlightFile);
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
+
     if (highlightFile != null && highlightFile.isValid()) {
-      if ((contentType == null || contentType == PlainTextFileType.INSTANCE) ||
+      if (!hasContentType ||
           FileTypeRegistry.getInstance().isFileOfType(highlightFile, contentType) ||
           highlightFile instanceof LightVirtualFile) {
         return highlighterFactory.createEditorHighlighter(project, highlightFile);
       }
     }
+
+    if (file != null && file.isValid()) {
+      FileType type = file.getFileType();
+      boolean hasFileType = !type.isBinary() && type != PlainTextFileType.INSTANCE;
+      if (!hasContentType || hasFileType) {
+        return highlighterFactory.createEditorHighlighter(project, file);
+      }
+    }
+
     if (contentType != null) {
       return highlighterFactory.createEditorHighlighter(project, contentType);
     }

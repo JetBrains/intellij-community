@@ -436,7 +436,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                             @NotNull @NonNls @SystemIndependent String lightFilePath,
                                             boolean readOnly) {
     if (project == null || project.isDefault()) return null;
-    if (fileType == null || fileType.isBinary()) return null;
+    if (fileType != null && fileType.isBinary()) return null;
 
     LightVirtualFile file = new MyLightVirtualFile(lightFilePath, fileType, content);
     file.setWritable(!readOnly);
@@ -812,7 +812,10 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     @Override
     public @Nullable FileType getContentType() {
-      return myReferent != null ? myReferent.guessContentType() : null;
+      VirtualFile file = FileDocumentManager.getInstance().getFile(getDocument());
+      if (file != null) return file.getFileType();
+      if (myReferent != null) return myReferent.guessContentType();
+      return null;
     }
 
     @Override
@@ -940,7 +943,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
       @Override
       public @Nullable FileType guessContentType() {
-        return myFilePath.getFileType();
+        VirtualFile file = myFilePath.getVirtualFile();
+        if (file != null) return file.getFileType();
+        return null;
       }
     }
 
