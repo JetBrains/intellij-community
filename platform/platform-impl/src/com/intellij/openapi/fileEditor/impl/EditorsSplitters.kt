@@ -812,11 +812,13 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
 class EditorSplitterState(element: Element) {
   @JvmField
   val first: Element?
+
   @JvmField
   val second: Element?
 
   @JvmField
   val firstSplitter: EditorSplitterState?
+
   @JvmField
   val secondSplitter: EditorSplitterState?
 
@@ -825,6 +827,7 @@ class EditorSplitterState(element: Element) {
 
   @JvmField
   val isVertical: Boolean
+
   @JvmField
   val proportion: Float
 

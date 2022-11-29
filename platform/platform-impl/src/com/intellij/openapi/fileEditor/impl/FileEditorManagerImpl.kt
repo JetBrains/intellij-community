@@ -268,10 +268,13 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   companion object {
     private val LOG = logger<FileEditorManagerImpl>()
+
     @JvmField
     protected val DUMB_AWARE = Key.create<Boolean>("DUMB_AWARE")
+
     @JvmField
     val NOTHING_WAS_OPENED_ON_START = Key.create<Boolean>("NOTHING_WAS_OPENED_ON_START")
+
     @JvmField
     val CLOSING_TO_REOPEN = Key.create<Boolean>("CLOSING_TO_REOPEN")
 
@@ -281,6 +284,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
      */
     @JvmField
     val FORBID_PREVIEW_TAB = Key.create<Boolean>("FORBID_PREVIEW_TAB")
+
     @JvmField
     val OPEN_IN_PREVIEW_TAB = Key.create<Boolean>("OPEN_IN_PREVIEW_TAB")
 
@@ -292,6 +296,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     const val FILE_EDITOR_MANAGER = "FileEditorManager"
     const val EDITOR_OPEN_INACTIVE_SPLITTER = "editor.open.inactive.splitter"
     private val openFileSetModificationCount = AtomicInteger()
+
     @JvmField
     val OPEN_FILE_SET_MODIFICATION_COUNT = ModificationTracker { openFileSetModificationCount.get().toLong() }
 
