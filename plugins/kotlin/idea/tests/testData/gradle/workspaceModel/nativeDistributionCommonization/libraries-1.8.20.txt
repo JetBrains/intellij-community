@@ -1,4 +1,0 @@
-LIBRARIES
-    <Kotlin/Native Distribution Libraries Test Stub>
-    Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}
-
