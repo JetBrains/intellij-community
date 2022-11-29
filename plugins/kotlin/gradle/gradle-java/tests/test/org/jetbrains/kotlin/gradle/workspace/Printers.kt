@@ -6,15 +6,16 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 
 class WorkspaceModelPrinter(
     private val moduleContributors: List<ModulePrinterContributor>
 ) {
-    fun print(project: Project, projectRoot: File, testConfiguration: TestConfiguration): String {
+    fun print(project: Project, projectRoot: File, testConfiguration: TestConfiguration, kotlinGradlePluginVersion: KotlinToolingVersion): String {
         val printer = Printer(StringBuilder())
-        val context = PrinterContext(printer, project, projectRoot, testConfiguration)
+        val context = PrinterContext(printer, project, projectRoot, testConfiguration, kotlinGradlePluginVersion)
         context.processModules()
 
         printer.printTestConfiguration(testConfiguration)
@@ -53,6 +54,7 @@ data class PrinterContext(
     val project: Project,
     val projectRoot: File,
     val testConfiguration: TestConfiguration,
+    val kotlinGradlePluginVersion: KotlinToolingVersion,
 )
 
 internal fun Printer.indented(block: () -> Unit) {
