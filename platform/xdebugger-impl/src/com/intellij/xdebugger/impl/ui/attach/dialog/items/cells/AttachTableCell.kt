@@ -18,10 +18,10 @@ import javax.swing.border.Border
 
 abstract class AttachTableCell(
   val columnKey: String,
-  private val columnsLayout: AttachDialogColumnsLayout) {
+  val columnsLayout: AttachDialogColumnsLayout) {
 
   companion object {
-    private val IGNORE_EXPAND_HANDLER_GAP = JBUI.scale(10)
+    val IGNORE_EXPAND_HANDLER_GAP = JBUI.scale(10)
   }
 
   private var myLastKnownWidth = -1
@@ -37,6 +37,8 @@ abstract class AttachTableCell(
   open fun getTextStartOffset(component: SimpleColoredComponent): Int = 0
 
   open fun getTextAttributes(): SimpleTextAttributes = SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES
+
+  open fun getAlignment(): Int = SwingConstants.LEFT
 
   fun getPresentation(component: SimpleColoredComponent, offset: Int = 0): Pair<String, String?> {
     val width = columnsLayout.getColumnWidth(columnKey) - getTextStartOffset(component) - IGNORE_EXPAND_HANDLER_GAP
@@ -74,6 +76,7 @@ internal class AttachTableCellRenderer : ColoredTableCellRenderer() {
       append("", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES, value.getTextStartOffset(this), SwingConstants.LEFT)
     }
     append(presentation, value.getTextAttributes(), value.getTag())
+    appendTextPadding(value.columnsLayout.getColumnWidth(value.columnKey) - AttachTableCell.IGNORE_EXPAND_HANDLER_GAP, value.getAlignment())
     toolTipText = tooltip
     icon = valueIcon
   }
