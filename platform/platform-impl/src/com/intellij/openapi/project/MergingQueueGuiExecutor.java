@@ -179,6 +179,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
         try {
           processTasksWithProgress(suspender, visibleIndicator);
         }
+        catch (ProcessCanceledException pce) {
+          throw pce;
+        }
         catch (Throwable unexpected) {
           LOG.error(unexpected);
         }
