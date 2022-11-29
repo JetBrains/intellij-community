@@ -334,6 +334,9 @@
     <registryKey key="maven.consumer.pom.support" defaultValue="false"
                  description="Enable Maven consumer pom support"/>
 
+    <registryKey key="maven.server.force.resolve.dependencies.sequentially" defaultValue="false"
+                 description="Resolve maven dependencies sequentially (slow in case of many maven modules)"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>

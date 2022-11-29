@@ -179,6 +179,7 @@ class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun resolveProject(files: Collection<File>,
                               activeProfiles: Collection<String>,
                               inactiveProfiles: Collection<String>,
+                              forceResolveDependenciesSequentially: Boolean,
                               token: MavenToken?): Collection<MavenServerExecutionResult> {
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       object : BuildIssue {
