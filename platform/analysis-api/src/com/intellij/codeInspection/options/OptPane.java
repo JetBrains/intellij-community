@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * Options pane
+ * Top-level options pane with children components stacked vertically.
+ * This record does not implement {@link OptComponent} on purpose. It's expected that the pane is used
+ * as a top-level component only.
  *
  * @param components list of components on the pane
  */
@@ -51,7 +53,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   /* DSL */
 
   /**
-   * @param components components to add to the pane
+   * @param components components to add to the pane. Controls in the pane are stacked vertically.
    * @return the pane
    * @see InspectionProfileEntry#getOptionsPane()
    */
