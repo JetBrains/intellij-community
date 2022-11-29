@@ -483,9 +483,19 @@
       "verticalGap": 6
     },
 
-    "GotItTooltip.borderColor": {
-      "os.default": "Grey9",
-      "os.windows": "windowsPopupBorder"
+    "GotItTooltip": {
+      "background": "Grey2",
+      "borderColor": "Grey2",
+      "foreground": "Grey9",
+      "Header.foreground": "Grey13",
+      "linkForeground": "Blue9",
+      "Button": {
+        "foreground": "Grey13",
+        "startBackground": "Grey4",
+        "endBackground": "Grey4",
+        "startBorderColor": "Grey4",
+        "endBorderColor": "Grey4"
+      }
     },
 
     "ValidationTooltip": {

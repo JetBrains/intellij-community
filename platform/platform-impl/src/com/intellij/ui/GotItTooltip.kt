@@ -485,7 +485,7 @@ class GotItTooltip(@NonNls val id: String,
 
       val finalText = HtmlChunk.raw(header)
         .bold()
-        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors))))
+        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.headerForeground())))
         .wrapWith(HtmlChunk.html())
         .toString()
       panel.add(JBLabel(finalText), gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insetLeft(left))
@@ -511,8 +511,12 @@ class GotItTooltip(@NonNls val id: String,
 
     if (timeout <= 0) {
       val button = JButton(buttonLabel).apply {
+        if (ExperimentalUI.isNewUI()) {
+          font = JBFont.label().asBold()
+        }
         isFocusable = false
         isOpaque = false
+        foreground = JBUI.CurrentTheme.GotItTooltip.buttonForeground()
         putClientProperty("gotItButton", true)
         if (useContrastColors) {
           border = JBUI.Borders.empty(0, 0, 5, 0)
