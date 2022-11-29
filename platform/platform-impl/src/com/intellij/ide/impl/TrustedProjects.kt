@@ -267,7 +267,7 @@ interface TrustStateListener {
  * Adds a one-time listener of the project's trust state change: when the project becomes trusted, the listener is called and disconnected.
  */
 @JvmOverloads
-fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project) -> Unit) {
+fun onceWhenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project) -> Unit) {
   val messageBus = ApplicationManager.getApplication().messageBus
   val connection = if (parentDisposable == null) messageBus.connect() else messageBus.connect(parentDisposable)
   connection.subscribe(TrustStateListener.TOPIC, object : TrustStateListener {
@@ -279,11 +279,18 @@ fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project)
 }
 
 @JvmOverloads
-fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) {
-  whenProjectTrusted(parentDisposable) { project ->
-    listener.accept(project)
-  }
-}
+fun onceWhenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) =
+  onceWhenProjectTrusted(parentDisposable, listener::accept)
+
+@JvmOverloads
+@Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener)"))
+fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project) -> Unit) =
+  onceWhenProjectTrusted(parentDisposable, listener)
+
+@JvmOverloads
+@Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener::accept)"))
+fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) =
+  onceWhenProjectTrusted(parentDisposable, listener::accept)
 
 const val TRUSTED_PROJECTS_HELP_TOPIC = "Project_security"
 
