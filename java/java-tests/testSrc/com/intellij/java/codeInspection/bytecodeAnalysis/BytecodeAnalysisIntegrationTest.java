@@ -157,7 +157,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       }
     };
     rootPackage.accept(visitor);
-    System.err.println(ClassDataIndexer.ourIndexSizeStatistics);
+    LOG.debug(String.valueOf(ClassDataIndexer.ourIndexSizeStatistics));
     assertEmpty(diffs);
   }
 
