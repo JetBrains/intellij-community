@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,6 +13,7 @@ import java.util.Map;
 /**
  * A service that renders inspection options pane in Swing UI
  */
+@ApiStatus.Internal
 public interface InspectionOptionPaneRenderer {
   static InspectionOptionPaneRenderer getInstance() {
     return ApplicationManager.getApplication().getService(InspectionOptionPaneRenderer.class);
