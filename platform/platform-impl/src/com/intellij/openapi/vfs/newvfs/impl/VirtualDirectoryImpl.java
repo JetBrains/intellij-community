@@ -240,6 +240,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  @NotNull
   private VirtualFileSystemEntry createChild(int id, int nameId, @PersistentFS.Attributes int attributes, boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
 
