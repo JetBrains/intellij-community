@@ -4,8 +4,7 @@ package com.intellij.codeInspection.options;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.codeInspection.options.OptPane.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OptPaneTest {
   @Test
@@ -18,5 +17,18 @@ public class OptPaneTest {
                      checkbox("one", "One"), 
                      checkbox("two", "Two", 
                               checkbox("one", "Three"))));
+  }
+  
+  @Test
+  public void findControl() {
+    OptPane pane = pane(
+      checkbox("one", "One"),
+      checkbox("two", "Two",
+               checkbox("three", "Three"),
+               number("four", "Four", 0, 10)));
+    OptControl four = pane.findControl("four");
+    assertTrue(four instanceof OptNumber);
+    OptControl three = pane.findControl("three");
+    assertTrue(three instanceof OptCheckbox checkbox && checkbox.label().label().equals("Three"));
   }
 }
