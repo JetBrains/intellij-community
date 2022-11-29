@@ -49,7 +49,7 @@ class DeclarativeHintsTogglingOptionIntention(
         settings.setOptionEnabled(optionId, providerId, false)
       }
     }
-    DeclarativeInlayHintsPassFactory.scheduleRecompute(editor)
+    DeclarativeInlayHintsPassFactory.scheduleRecompute(editor, project)
   }
 
   enum class Mode(val messageKey: String) {

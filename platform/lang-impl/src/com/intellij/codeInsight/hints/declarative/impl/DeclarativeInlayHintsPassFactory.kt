@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.declarative.*
@@ -37,8 +38,9 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
       editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationCount(file))
     }
 
-    fun scheduleRecompute(editor: Editor) {
+    fun scheduleRecompute(editor: Editor, project: Project) {
       editor.putUserData(PSI_MODIFICATION_STAMP, null)
+      DaemonCodeAnalyzer.getInstance(project).restart()
     }
 
     private fun getCurrentModificationCount(file: PsiFile) = file.manager.modificationTracker.modificationCount
