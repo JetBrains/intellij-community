@@ -794,18 +794,19 @@ public final class PsiUtil extends PsiUtilCore {
   /**
    * @param place place to start traversal
    * @param aClass level to stop traversal
-   * @return element with static modifier enclosing place and enclosed by aClass (if not null)
+   * @return element with static modifier enclosing place and enclosed by aClass (if not null).
+   * Note that traversal goes through context elements.
    */
   @Nullable
   public static PsiModifierListOwner getEnclosingStaticElement(@NotNull PsiElement place, @Nullable PsiClass aClass) {
     LOG.assertTrue(aClass == null || !place.isPhysical() || PsiTreeUtil.isContextAncestor(aClass, place, false));
     PsiElement parent = place;
     while (parent != aClass) {
-      if (parent instanceof PsiFile) break;
+      if (parent == null || parent instanceof PsiFile && parent.getContext() == parent.getParent()) break;
       if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) {
         return (PsiModifierListOwner)parent;
       }
-      parent = parent.getParent();
+      parent = parent.getContext();
     }
     return null;
   }
