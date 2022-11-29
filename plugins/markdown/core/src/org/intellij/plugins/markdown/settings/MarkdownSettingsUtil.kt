@@ -2,7 +2,10 @@
 package org.intellij.plugins.markdown.settings
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.download.DownloadableFileService
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager
@@ -10,6 +13,7 @@ import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManag
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import javax.swing.JComponent
 import kotlin.io.path.absolutePathString
 
@@ -56,5 +60,11 @@ object MarkdownSettingsUtil {
       message = MarkdownBundle.message("markdown.settings.download.extension.notification.failure.content"),
     )
     return false
+  }
+
+  @RequiresReadLock
+  internal fun belongsToTheProject(project: Project, path: Path): Boolean {
+    val file = VfsUtil.findFile(path, true) ?: return false
+    return ProjectFileIndex.getInstance(project).isInProjectOrExcluded(file)
   }
 }

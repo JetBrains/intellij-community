@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.UnknownFileType
@@ -18,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
@@ -26,13 +26,17 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
+import com.intellij.util.io.isDirectory
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.*
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
+import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil.belongsToTheProject
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.annotations.Nls
+import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
+import kotlin.io.path.notExists
 
 class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
   MarkdownBundle.message("markdown.settings.name"),
@@ -136,35 +140,20 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   }
 
   private fun validateCustomStylesheetPath(builder: ValidationInfoBuilder, textField: TextFieldWithBrowseButton): ValidationInfo? {
-    return builder.run {
-      val fieldText = textField.text
-      when {
-        !FileUtil.exists(fieldText) -> error(MarkdownBundle.message("dialog.message.path.error", fieldText))
-        else -> null
-      }
+    val text = textField.text
+    val file = runCatching { Path.of(text) }.getOrNull()
+    if (file == null || file.notExists() || file.isDirectory()) {
+      return builder.error(MarkdownBundle.message("markdown.settings.stylesheet.path.validation.error"))
     }
+    if (!belongsToTheProject(project, file)) {
+      return builder.error(MarkdownBundle.message("markdown.settings.stylesheet.path.outside.project.error"))
+    }
+    return null
   }
 
   private fun Panel.customCssRow() {
     collapsibleGroup(MarkdownBundle.message("markdown.settings.css.title.name")) {
-      row {
-        val externalCssCheckBox = checkBox(MarkdownBundle.message("markdown.settings.external.css.path.label"))
-          .bindSelected(settings::useCustomStylesheetPath)
-          .gap(RightGap.SMALL)
-        textFieldWithBrowseButton()
-          .applyToComponent {
-            text = settings.customStylesheetPath ?: ""
-          }
-          .align(AlignX.FILL)
-          .enabledIf(externalCssCheckBox.selected)
-          .applyIfEnabled()
-          .validationOnInput(::validateCustomStylesheetPath)
-          .validationOnApply(::validateCustomStylesheetPath)
-          .apply {
-            onApply { settings.customStylesheetPath = component.text.takeIf { externalCssCheckBox.component.isSelected } }
-            onIsModified { externalCssCheckBox.component.isSelected && settings.customStylesheetPath != component.text }
-          }
-      }
+      externalCssPathRow()
       lateinit var editorCheckbox: Cell<JBCheckBox>
       row {
         editorCheckbox = checkBox(MarkdownBundle.message("markdown.settings.custom.css.text.label"))
@@ -184,6 +173,36 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         setEditorReadonlyState(isReadonly = !editorCheckbox.component.isSelected)
       }
     }
+  }
+
+  private fun Panel.externalCssPathRow(): Row {
+    return row {
+      val isDefaultProject = project.isDefault
+      val externalCssCheckBox = checkBox(MarkdownBundle.message("markdown.settings.external.css.path.label"))
+        .bindSelected(settings::useCustomStylesheetPath)
+        .enabled(!isDefaultProject)
+        .gap(RightGap.SMALL)
+      customCssTextFieldWithBrowserButton()
+        .align(AlignX.FILL)
+        .enabled(isDefaultProject)
+        .enabledIf(externalCssCheckBox.selected)
+        .applyIfEnabled()
+        .bindText(
+          getter = { settings.customStylesheetPath.orEmpty() },
+          setter = { settings.customStylesheetPath = it }
+        )
+      if (isDefaultProject) {
+        rowComment(comment = MarkdownBundle.message("markdown.settings.stylesheet.path.disabled.for.default.project"))
+      }
+    }
+  }
+
+  private fun Row.customCssTextFieldWithBrowserButton(): Cell<TextFieldWithBrowseButton> {
+    val field = textFieldWithBrowseButton(
+      project = project,
+      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("css")
+    )
+    return field.validationOnInput(::validateCustomStylesheetPath).validationOnApply(::validateCustomStylesheetPath)
   }
 
   private fun setEditorReadonlyState(isReadonly: Boolean) {
