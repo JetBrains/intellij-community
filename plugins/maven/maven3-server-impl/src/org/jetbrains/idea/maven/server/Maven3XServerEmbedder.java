@@ -760,13 +760,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @Override
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
                                                                @NotNull Collection<String> activeProfiles,
-                                                               @NotNull Collection<String> inactiveProfiles, MavenToken token)
+                                                               @NotNull Collection<String> inactiveProfiles,
+                                                               boolean forceResolveDependenciesSequentially, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
-    Collection<MavenExecutionResult> results =
-      doResolveProject(files, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), Collections.singletonList(listener));
+    Collection<MavenExecutionResult> results = doResolveProject(
+      files,
+      new ArrayList<>(activeProfiles),
+      new ArrayList<>(inactiveProfiles),
+      Collections.singletonList(listener),
+      forceResolveDependenciesSequentially);
+
     return ContainerUtilRt.map2List(results, result -> {
       try {
         return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
@@ -789,10 +795,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  public Collection<MavenExecutionResult> doResolveProject(@NotNull final Collection<File> files,
-                                                           @NotNull final List<String> activeProfiles,
-                                                           @NotNull final List<String> inactiveProfiles,
-                                                           final List<ResolutionListener> listeners) throws RemoteException {
+  private Collection<MavenExecutionResult> doResolveProject(@NotNull final Collection<File> files,
+                                                            @NotNull final List<String> activeProfiles,
+                                                            @NotNull final List<String> inactiveProfiles,
+                                                            final List<ResolutionListener> listeners,
+                                                            boolean forceResolveDependenciesSequentially) throws RemoteException {
     final File file = !files.isEmpty() ? files.iterator().next() : null;
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
@@ -857,7 +864,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         }
 
         boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
-        boolean runInParallel = canResolveDependenciesInParallel();
+        boolean runInParallel = canResolveDependenciesInParallel(forceResolveDependenciesSequentially);
         MavenServerParallelRunner.run(runInParallel, projectsToResolveDependencies.keySet(), project -> {
           MavenExecutionResult executionResult = projectsToResolveDependencies.get(project);
           final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
@@ -881,7 +888,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
    *
    * @return true if dependencies can be resolved in parallel for better performance
    */
-  private static boolean canResolveDependenciesInParallel() {
+  private static boolean canResolveDependenciesInParallel(boolean forceResolveDependenciesSequentially) {
+    if (forceResolveDependenciesSequentially) {
+      return false;
+    }
     String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
     if ("3.8.2".equals(mavenVersion) || "3.8.3".equals(mavenVersion)) {
       return false;

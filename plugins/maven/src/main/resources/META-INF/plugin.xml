@@ -338,6 +338,9 @@
     <registryKey key="maven.import.to.workspace.model.fast.facet.creation" defaultValue="false"
                  description="Create facets in a background thread instead of EDT"/>
 
+    <registryKey key="maven.server.force.resolve.dependencies.sequentially" defaultValue="false"
+                 description="Resolve maven dependencies sequentially (slow in case of many maven modules)"/>
+
     <registryKey key="maven.import.to.workspace.model.ignored.facet.importers" defaultValue=""
                  description="Comma-separated list of facet importer class names that should be ignored during import for better performance. E.g., JpaFacetImporter"/>
 
