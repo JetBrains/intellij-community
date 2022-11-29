@@ -77,7 +77,7 @@ enum class WorkspacePrintingMode(
         description = "List of all modules with Kotlin Facets and dependencies, list of all libraries and list all SDKs",
         printer = WorkspaceModelPrinterFactory {
             addContributor(KotlinFacetSettingsPrinterContributor())
-            addContributor(SanitizingOrderEntryPrinterContributor())
+            addContributor(OrderEntryPrinterContributor())
         }
     ),
     MODULES(
@@ -91,7 +91,7 @@ enum class WorkspacePrintingMode(
         filePrefix = "dependencies",
         description = "List of all modules in a project with their dependencies",
         printer = WorkspaceModelPrinterFactory {
-            addContributor(SanitizingOrderEntryPrinterContributor())
+            addContributor(OrderEntryPrinterContributor())
         }
 
     ),
