@@ -1,12 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.ide.plugins.PluginUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
@@ -14,8 +10,6 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -96,8 +90,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {
-      if (message != null && message.contains("unable to create") && message.contains("native thread")) return null;
-      if (message != null && message.contains("Metaspace")) return MemoryKind.METASPACE;
+      if (message != null) {
+        if (message.contains("unable to create") && message.contains("native thread")) return null;
+        if (message.contains("Metaspace")) return MemoryKind.METASPACE;
+        if (message.contains("direct buffer memory")) return MemoryKind.DIRECT_BUFFERS;
+      }
       return MemoryKind.HEAP;
     }
 

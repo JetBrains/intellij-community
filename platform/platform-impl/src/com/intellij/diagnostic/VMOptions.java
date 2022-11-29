@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.ide.IdeCoreBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,20 +40,21 @@ public final class VMOptions {
     HEAP("Xmx", "", "change.memory.max.heap"),
     MIN_HEAP("Xms", "", "change.memory.min.heap"),
     METASPACE("XX:MaxMetaspaceSize", "=", "change.memory.metaspace"),
+    DIRECT_BUFFERS("XX:MaxDirectMemorySize", "=", "change.memory.direct.buffers"),
     CODE_CACHE("XX:ReservedCodeCacheSize", "=", "change.memory.code.cache");
 
     public final @NlsSafe String optionName;
     public final String option;
     private final String labelKey;
 
-    MemoryKind(String name, String separator, @PropertyKey(resourceBundle = "messages.IdeCoreBundle") String key) {
+    MemoryKind(String name, String separator, @PropertyKey(resourceBundle = "messages.IdeBundle") String key) {
       optionName = name;
       option = '-' + name + separator;
       labelKey = key;
     }
 
     public @NlsContexts.Label String label() {
-      return IdeCoreBundle.message(labelKey);
+      return IdeBundle.message(labelKey);
     }
   }
 
