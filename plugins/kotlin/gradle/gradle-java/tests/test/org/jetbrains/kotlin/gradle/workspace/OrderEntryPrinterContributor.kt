@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEntry
 
-class SanitizingOrderEntryPrinterContributor : ModulePrinterContributor {
+class OrderEntryPrinterContributor : ModulePrinterContributor {
     override fun PrinterContext.process(module: Module) = with(printer) {
         val orderEntries = runReadAction { ModuleRootManager.getInstance(module).orderEntries }
             .map(OrderEntry::toPrinterEntity)
