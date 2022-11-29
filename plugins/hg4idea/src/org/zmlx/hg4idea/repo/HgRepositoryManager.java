@@ -5,7 +5,6 @@ import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
@@ -15,7 +14,7 @@ import java.util.List;
 
 public final class HgRepositoryManager extends AbstractRepositoryManager<HgRepository> {
   public HgRepositoryManager(@NotNull Project project) {
-    super(NotNullLazyValue.lazy(() -> HgVcs.getInstance(project)), project, HgUtil.DOT_HG);
+    super(project, HgVcs.getKey(), HgUtil.DOT_HG);
   }
 
   @Override

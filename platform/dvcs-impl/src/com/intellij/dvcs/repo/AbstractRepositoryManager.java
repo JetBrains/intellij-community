@@ -7,26 +7,33 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.Objects;
 
 public abstract class AbstractRepositoryManager<T extends Repository>
   implements RepositoryManager<T>, Disposable {
 
-  private final @NotNull Supplier<? extends AbstractVcs> myVcs;
+  private final @NotNull Project myProject;
+  private final @NotNull VcsKey myVcsKey;
   private final @NotNull String myRepoDirName;
   private final @NotNull VcsRepositoryManager myGlobalRepositoryManager;
 
-  protected AbstractRepositoryManager(@NotNull Supplier<? extends AbstractVcs> vcs, @NotNull Project project, @NotNull String repoDirName) {
+  protected AbstractRepositoryManager(@NotNull Project project,
+                                      @NotNull VcsKey vcsKey,
+                                      @NotNull @NonNls String repoDirName) {
     myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
-    myVcs = vcs;
+    myProject = project;
+    myVcsKey = vcsKey;
     myRepoDirName = repoDirName;
   }
 
@@ -120,7 +127,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   private @Nullable T validateAndGetRepository(@Nullable Repository repository) {
-    if (repository == null || !myVcs.get().equals(repository.getVcs())) {
+    if (repository == null || !myVcsKey.equals(repository.getVcs().getKeyInstanceMethod())) {
       return null;
     }
     return ReadAction.compute(() -> {
@@ -136,7 +143,8 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   public @NotNull AbstractVcs getVcs() {
-    return myVcs.get();
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).findVcsByName(myVcsKey.getName());
+    return Objects.requireNonNull(vcs);
   }
 
   /**

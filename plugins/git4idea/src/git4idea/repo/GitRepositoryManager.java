@@ -8,7 +8,6 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +37,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
   private volatile @Nullable GitRebaseSpec myOngoingRebaseSpec;
 
   public GitRepositoryManager(@NotNull Project project) {
-    super(NotNullLazyValue.lazy(() -> GitVcs.getInstance(project)), project, GitUtil.DOT_GIT);
+    super(project, GitVcs.getKey(), GitUtil.DOT_GIT);
 
     AsyncVfsEventsPostProcessor.getInstance().addListener(new GitUntrackedDirtyScopeListener(this), this);
   }
