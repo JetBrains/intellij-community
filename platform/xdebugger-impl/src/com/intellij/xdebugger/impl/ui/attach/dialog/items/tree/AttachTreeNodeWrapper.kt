@@ -6,7 +6,6 @@ import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.treetable.TreeTableTree
 import com.intellij.util.ui.JBUI
-import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.ExecutableCell
@@ -84,7 +83,6 @@ internal class AttachTreeNodeWrapper(
       is AttachDialogGroupNode -> JLabel(node.message)
       is AttachDialogProcessNode -> elementRenderer.getTreeCellRendererComponent(tree, node, selected, expanded, leaf, row, hasFocus)
       is AttachTreeRootNode -> JLabel()
-      is AttachTreeRecentNode -> JLabel(XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message"))
       else -> throw IllegalStateException("Unexpected node type: ${node.javaClass.simpleName}")
     }
   }

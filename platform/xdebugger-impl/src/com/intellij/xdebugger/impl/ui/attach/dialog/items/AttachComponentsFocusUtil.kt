@@ -57,4 +57,5 @@ internal fun JBTable.updateRowsHeight(from: Int = 0, to: Int = rowCount - 1) {
       setRowHeight(row, valueAt.getExpectedHeight())
     }
   }
+  updateUI()
 }

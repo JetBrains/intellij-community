@@ -21,8 +21,11 @@ abstract class TableGroupHeaderSeparator(private val hideLine: Boolean) : Separa
     private val LABEL_TOP_BOTTOM_INSETS = JBUI.scale(3)
     private val LINE_TOP_BOTTOM_INSETS = JBUI.scale(6)
 
-    fun getExpectedHeight(hideLine: Boolean): Int {
-      return LABEL_TOP_BOTTOM_INSETS * 2 + AttachDialogState.DEFAULT_ROW_HEIGHT + (if (hideLine) 0 else LINE_HEIGHT + LINE_TOP_BOTTOM_INSETS * 2)
+    fun getExpectedHeight(hideLine: Boolean, hasMessage: Boolean): Int {
+      return if (hasMessage)
+        LABEL_TOP_BOTTOM_INSETS * 2 + AttachDialogState.DEFAULT_ROW_HEIGHT + (if (hideLine) 0 else LINE_HEIGHT + LINE_TOP_BOTTOM_INSETS * 2)
+      else
+        AttachDialogState.DEFAULT_ROW_HEIGHT
     }
   }
 

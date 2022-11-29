@@ -74,9 +74,21 @@ internal class AttachToProcessItemsTree(
 
     TreeUtil.expandAll(this.tree)
     resetDefaultFocusTraversalKeys()
-    setRowHeight(AttachDialogState.DEFAULT_ROW_HEIGHT)
     installSelectionOnFocus()
+
+    setRowHeight(AttachDialogState.DEFAULT_ROW_HEIGHT)
     //installRowsHeightUpdater()
+    //
+    //tree.addTreeExpansionListener(object : TreeExpansionListener {
+    //  override fun treeExpanded(event: TreeExpansionEvent?) {
+    //    updateRowsHeight()
+    //  }
+    //
+    //  override fun treeCollapsed(event: TreeExpansionEvent?) {
+    //    updateRowsHeight()
+    //  }
+    //})
+
     application.invokeLater({ focusFirst() }, ModalityState.any())
   }
 
@@ -106,28 +118,11 @@ internal class AttachToProcessItemsTree(
   }
 
   private fun refilterSaveSelection() {
-    filters.clear()
-    val previouslySelectedRow = selectedRow
-    val selectedItem = if (previouslySelectedRow in 0 until rowCount)
-                         model.getValueAt<AttachDialogElementNode>(previouslySelectedRow)
-                       else
-                         null
-
-    getFilteringModel().refilter()
-    //updateRowsHeight()
-    TreeUtil.expandAll(this.tree)
-    updateUI()
-
-    if (selectedItem == null) return
-    for (index in 0 until rowCount) {
-      val valueAt = getValueAt(index, 0)
-      if (valueAt == selectedItem) {
-        selectionModel.setSelectionInterval(index, index)
-        return
-      }
+    refilterSaveSelection(filters) {
+      getFilteringModel().refilter()
+      TreeUtil.expandAll(this.tree)
+      updateUI()
     }
-
-    focusFirst()
   }
 
   private fun getColumn(index: Int): TableColumn = columnModel.getColumn(index)
@@ -140,7 +135,7 @@ internal class AttachTreeModel(private val rootNode: AttachTreeNodeWrapper) : Ba
   override fun getRoot(): Any = rootNode
 
   override fun getChildren(parent: Any?): List<AttachTreeNodeWrapper> = (parent as? AttachTreeNodeWrapper)?.getChildNodes()
-                                                                              ?: emptyList()
+                                                                        ?: emptyList()
 
   override fun getColumnCount(): Int = 4
 
@@ -200,9 +195,19 @@ private suspend fun prepareTreeElements(
   val recentItems = attachItemsInfo.recentItems
   if (recentItems.any()) {
     val recentItemNodes = recentItems.map { AttachDialogProcessNode(it, filters, dialogState) }
-    val recentNode = AttachTreeRecentNode(recentItemNodes)
+    val recentNode = AttachDialogGroupNode(
+      XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message"),
+      AttachDialogColumnsState(),
+      recentItemNodes)
     topLevelNodes.add(AttachTreeNodeWrapper(recentNode, filters, dialogState))
-    topLevelNodes.add(AttachTreeNodeWrapper(AttachDialogGroupNode(null, AttachDialogColumnsState(), listOf(recentNode)), filters, dialogState))
+    topLevelNodes.addAll(recentItemNodes.map { AttachTreeNodeWrapper(it, filters, dialogState) })
+    topLevelNodes.add(
+      AttachTreeNodeWrapper(
+        AttachDialogGroupNode(
+          null,
+          //XDebuggerBundle.message("xdebugger.attach.dialog.all.processes.message"),
+          AttachDialogColumnsState(),
+          listOf(recentNode)), filters, dialogState))
   }
 
   for (item in pidToElement) {

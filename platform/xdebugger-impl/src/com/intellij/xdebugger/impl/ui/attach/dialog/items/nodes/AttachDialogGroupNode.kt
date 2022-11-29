@@ -33,6 +33,6 @@ internal class AttachDialogGroupNode(
   override fun getProcessItem(): AttachDialogProcessItem? = null
 
   fun getExpectedHeight(): Int {
-    return TableGroupHeaderSeparator.getExpectedHeight(isFirstGroup)
+    return TableGroupHeaderSeparator.getExpectedHeight(isFirstGroup, !message.isNullOrBlank())
   }
 }

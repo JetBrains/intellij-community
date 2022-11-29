@@ -94,25 +94,10 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachDialogElementNode>
   private fun getFilteringModel(): FilteringTableModel<*> = model as FilteringTableModel<*>
 
   private fun refilterSaveSelection() {
-    filters.clear()
-    val previouslySelectedRow = selectedRow
-    val selectedItem = if (previouslySelectedRow in 0 until rowCount) model.getValueAt<AttachDialogElementNode>(previouslySelectedRow) else null
-    getFilteringModel().refilter()
-    updateRowsHeight()
-
-    var isFirstGroup = true
-    for (rowNumber in 0 until rowCount) {
-      val valueAtRow = model.getValueAt<AttachDialogElementNode>(rowNumber)
-      if (valueAtRow is AttachDialogGroupNode) {
-        valueAtRow.isFirstGroup = isFirstGroup
-        isFirstGroup = false
-      }
-      if (selectedItem != null && valueAtRow != null && selectedItem == valueAtRow) {
-        selectionModel.setSelectionInterval(rowNumber, rowNumber)
-      }
+    refilterSaveSelection(filters) {
+      getFilteringModel().refilter()
+      updateRowsHeight()
     }
-
-    focusFirst()
   }
 }
 
