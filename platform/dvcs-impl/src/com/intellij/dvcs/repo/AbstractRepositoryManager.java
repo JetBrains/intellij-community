@@ -4,6 +4,7 @@ package com.intellij.dvcs.repo;
 import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,16 +15,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class AbstractRepositoryManager<T extends Repository>
   implements RepositoryManager<T>, Disposable {
 
-  private final @NotNull AbstractVcs myVcs;
+  private final @NotNull Supplier<? extends AbstractVcs> myVcs;
   private final @NotNull String myRepoDirName;
   private final @NotNull VcsRepositoryManager myGlobalRepositoryManager;
 
-  protected AbstractRepositoryManager(@NotNull AbstractVcs vcs, @NotNull String repoDirName) {
-    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(vcs.getProject());
+  protected AbstractRepositoryManager(@NotNull Supplier<? extends AbstractVcs> vcs, @NotNull Project project, @NotNull String repoDirName) {
+    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
     myVcs = vcs;
     myRepoDirName = repoDirName;
   }
@@ -118,7 +120,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   private @Nullable T validateAndGetRepository(@Nullable Repository repository) {
-    if (repository == null || !myVcs.equals(repository.getVcs())) {
+    if (repository == null || !myVcs.get().equals(repository.getVcs())) {
       return null;
     }
     return ReadAction.compute(() -> {
@@ -134,7 +136,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   public @NotNull AbstractVcs getVcs() {
-    return myVcs;
+    return myVcs.get();
   }
 
   /**
