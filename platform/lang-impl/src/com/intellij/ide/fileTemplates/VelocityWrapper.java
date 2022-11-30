@@ -67,7 +67,9 @@ final class VelocityWrapper {
                                                                            "java.lang.System," +
                                                                            "java.lang.Thread," +
                                                                            "java.lang.ThreadGroup," +
-                                                                           "java.lang.ThreadLocal");
+                                                                           "java.lang.ThreadLocal," +
+                                                                           "java.lang.Class," +
+                                                                           "java.lang.ClassLoader");
 
       Velocity.setProperty("includes.resource.loader.instance", new ResourceLoader() {
         @Override
