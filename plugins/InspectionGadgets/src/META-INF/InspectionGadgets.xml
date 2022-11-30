@@ -285,6 +285,10 @@
                      key="new.string.buffer.with.char.argument.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.NewStringBufferWithCharArgumentInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MathRoundingWithIntArgument" bundle="messages.InspectionGadgetsBundle"
+                     key="math.rounding.with.int.argument.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.MathRoundingWithIntArgumentInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonShortCircuitBooleanExpression" shortName="NonShortCircuitBoolean"
                      bundle="messages.InspectionGadgetsBundle" key="non.short.circuit.boolean.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
