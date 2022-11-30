@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import java.util.*
 import kotlin.test.assertContains
 
 
@@ -58,7 +59,7 @@ class ImlCreationPropertyTest {
 
     val configurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     configurationManager.isEnabled = true
-    val rootFolder = tempDir.resolve("testProject")
+    val rootFolder = tempDir.resolve("testProject" + UUID.randomUUID().hashCode())
     val info = createProjectSerializers(rootFolder.toFile(), virtualFileManager, configurationManager)
     serializers = info.first
     configLocation = info.second
