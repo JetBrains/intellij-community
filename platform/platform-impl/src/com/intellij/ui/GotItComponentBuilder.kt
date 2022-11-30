@@ -20,6 +20,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.GotItComponentBuilder.Companion.EXTENDED_MAX_WIDTH
+import com.intellij.ui.GotItComponentBuilder.Companion.MAX_LINES_COUNT
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -321,7 +323,11 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     val textWidth = image?.let { img ->
       img.iconWidth - (iconOrStepLabel?.let { it.preferredSize.width + left } ?: 0)
     } ?: maxWidth
-    val description = LimitedWidthEditorPane(builder, textWidth, useContrastColors)
+    val description = LimitedWidthEditorPane(builder,
+                                             textWidth,
+                                             useContrastColors,
+                                             // allow to extend width only if there is no image and maxWidth was not changed by developer
+                                             allowWidthExtending = image == null && maxWidth == MAX_WIDTH)
     descriptionConsumer(description)
     panel.add(description,
               gc.setColumn(column).anchor(GridBagConstraints.LINE_START)
@@ -381,8 +387,19 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   companion object {
     internal const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
 
+    internal const val MAX_LINES_COUNT = 5
+
+    /**
+     * Max width of the text if lines count is less than [MAX_LINES_COUNT]
+     */
     private val MAX_WIDTH: Int
       get() = JBUIScale.scale(280)
+
+    /**
+     * Max width of the text if lines count with [MAX_WIDTH] is equal or more than [MAX_LINES_COUNT]
+     */
+    internal val EXTENDED_MAX_WIDTH: Int
+      get() = JBUIScale.scale(328)
 
     @JvmStatic
     fun getArrowShift(): Int {
@@ -399,7 +416,10 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 }
 
-private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder, maxWidth: Int, useContrastColors: Boolean) : JEditorPane() {
+private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
+                                     maxWidth: Int,
+                                     useContrastColors: Boolean,
+                                     allowWidthExtending: Boolean) : JEditorPane() {
   init {
     foreground = JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
@@ -409,7 +429,12 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder, maxWidth: Int, us
     setTextAndUpdateLayout(htmlBuilder)
     if (getRootView().getPreferredSpan(X_AXIS) > maxWidth) {
       setTextAndUpdateLayout(htmlBuilder, maxWidth)
-      val width = rows().maxOfOrNull { it.getPreferredSpan(X_AXIS) } ?: maxWidth.toFloat()
+      var rows = getRows()
+      if (rows.size >= MAX_LINES_COUNT && allowWidthExtending) {
+        setTextAndUpdateLayout(htmlBuilder, EXTENDED_MAX_WIDTH)
+        rows = getRows()
+      }
+      val width = rows.maxOfOrNull { it.getPreferredSpan(X_AXIS) } ?: maxWidth.toFloat()
       setTextAndUpdateLayout(htmlBuilder, width.toInt())
     }
 
@@ -448,7 +473,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder, maxWidth: Int, us
     return (this.ui as TextUI).getRootView(this)
   }
 
-  private fun rows(): Collection<View> {
+  private fun getRows(): Collection<View> {
     return ArrayList<View>().also { visit(getRootView(), it) }
   }
 
