@@ -50,6 +50,9 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   val isPopup = showToolbar == null
 
+  fun interface EditSourceListener { fun onEditSource() }
+  private val editSourceListeners: MutableList<EditSourceListener> = mutableListOf()
+
   private val state = BookmarksViewState.getInstance(project)
   private val preview = DescriptorPreview(this, false, null)
 
@@ -201,6 +204,10 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
   }
 
+  fun addEditSourceListener(listener: EditSourceListener) {
+    editSourceListeners.add(listener)
+  }
+
   init {
     panel.addToCenter(createScrollPane(tree, true))
     panel.putClientProperty(OPEN_IN_PREVIEW_TAB, true)
@@ -231,8 +238,8 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
-    EditSourceOnEnterKeyHandler.install(tree)
-    EditSourceOnDoubleClickHandler.install(tree)
+    EditSourceOnEnterKeyHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }
+    EditSourceOnDoubleClickHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }
 
     val group = ContextMenuActionGroup(tree)
     val handler = PopupHandler.installPopupMenu(tree, group, ActionPlaces.BOOKMARKS_VIEW_POPUP)
