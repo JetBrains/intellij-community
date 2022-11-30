@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.application.AppUIExecutor;
@@ -26,7 +26,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -190,8 +189,8 @@ public class ExecutionPointHighlighter {
 
     TextAttributesKey attributesKey = myNotTopFrame ? DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES : DebuggerColors.EXECUTIONPOINT_ATTRIBUTES;
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
-    if (mySourcePosition instanceof HighlighterProvider) {
-      TextRange range = SlowOperations.allowSlowOperations(() -> ((HighlighterProvider)mySourcePosition).getHighlightRange());
+    if (mySourcePosition instanceof HighlighterProvider highlighterProvider) {
+      TextRange range = highlighterProvider.getHighlightRange();
       if (range != null) {
         myRangeHighlighter = markupModel
           .addRangeHighlighter(attributesKey, range.getStartOffset(), range.getEndOffset(), DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
