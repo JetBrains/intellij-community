@@ -21,6 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
@@ -40,6 +42,7 @@ import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibrary
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 
 import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.*;
@@ -69,13 +72,25 @@ public class RepositoryLibraryWithDescriptionEditor
       artifactKinds.add(ArtifactKind.ANNOTATIONS);
     }
 
+    final Project project = myEditorComponent.getProject();
+    assert project != null : "EditorComponent's project must not be null in order to be used with RepositoryLibraryWithDescriptionEditor";
+
     RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
       properties.getVersion(),
       artifactKinds, properties.isIncludeTransitiveDependencies(),
-      properties.getExcludedDependencies());
+      properties.getExcludedDependencies(), properties.isEnableSha256Checksum(),
+      RemoteRepositoriesConfiguration.getInstance(project).getRepositories(), properties.getJarRepositoryId());
 
-    final Project project = myEditorComponent.getProject();
-    assert project != null : "EditorComponent's project must not be null in order to be used with RepositoryLibraryWithDescriptionEditor";
+    boolean isGlobalLibrary = false;
+    LibraryEditor editor = myEditorComponent.getLibraryEditor();
+    if (editor instanceof ExistingLibraryEditor) {
+      Library library = ((ExistingLibraryEditor)editor).getLibrary();
+      if (library instanceof LibraryEx) {
+        LibraryEx libraryEx = (LibraryEx)library;
+        LibraryTable table = libraryEx.getTable();
+        isGlobalLibrary = table != null && LibraryTablesRegistrar.APPLICATION_LEVEL.equals(table.getTableLevel());
+      }
+    }
 
     RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
       project,
@@ -85,12 +100,17 @@ public class RepositoryLibraryWithDescriptionEditor
     if (!dialog.showAndGet()) {
       return;
     }
+
     myEditorComponent.getProperties().changeVersion(model.getVersion());
     myEditorComponent.getProperties().setIncludeTransitiveDependencies(model.isIncludeTransitiveDependencies());
     myEditorComponent.getProperties().setExcludedDependencies(model.getExcludedDependencies());
+    myEditorComponent.getProperties().setEnableSha256Checksum(model.isSha256ChecksumEnabled());
+    myEditorComponent.getProperties().setJarRepositoryId(model.getRemoteRepositoryId());
+
     if (wasGeneratedName) {
       myEditorComponent.renameLibrary(RepositoryLibraryType.getInstance().getDescription(properties));
     }
+
     final LibraryEditor libraryEditor = myEditorComponent.getLibraryEditor();
     final String copyTo = getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES));
     final Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(
@@ -98,7 +118,14 @@ public class RepositoryLibraryWithDescriptionEditor
     );
     libraryEditor.removeAllRoots();
     if (roots != null) {
+      myEditorComponent.getProperties().setArtifactsVerification(RepositoryLibraryUtils.buildRepositoryLibraryArtifactsVerification(
+        properties.getRepositoryLibraryDescriptor(),
+        roots)
+      );
+
       libraryEditor.addRoots(roots);
+    } else {
+      properties.setArtifactsVerification(Collections.emptyList());
     }
     myEditorComponent.updateRootsTree();
     updateDescription();
