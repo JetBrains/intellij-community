@@ -59,7 +59,7 @@ class Demo {
   class GenericLongClass<T1, T2> {}
 
   private static void pure(GenericLongClass<Integer, GenericLongClass<String, Integer>> object) {
-    var x<# : |GenericLongClass|<|Integer|, |GenericLongClass|<|String|, |Integer|>|> #> = object;
+    var x<# : |GenericLongClass|<|Integer|, |GenericLongClass|<...>|> #> = object;
   }
 }"""
     testAnnotations(text)
