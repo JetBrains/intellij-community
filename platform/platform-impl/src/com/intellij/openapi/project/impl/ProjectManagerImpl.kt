@@ -29,7 +29,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -1138,22 +1137,23 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
  *
  * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
  */
-private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
-  val trustedPaths = TrustedPaths.getInstance()
-  val trustedState = trustedPaths.getProjectPathTrustedState(projectStoreBaseDir)
+private fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
+  // The trusted state will be migrated inside getProjectTrustedState
+  val trustedState = getProjectTrustedState(listOf(projectStoreBaseDir), project)
   if (trustedState != ThreeState.UNSURE) {
+    // the trusted state of this project path is already known => proceed with opening
     return true
   }
 
-  @Suppress("DEPRECATION")
-  val previousTrustedState = project.service<TrustedProjectSettings>().trustedState
-  if (previousTrustedState != ThreeState.UNSURE) {
-    // we were asking about this project in the previous IDE version => migrate
-    trustedPaths.setProjectPathTrusted(projectStoreBaseDir, previousTrustedState.toBoolean())
-    return true
-  }
-
-  return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
+  return confirmOpeningOrLinkingUntrustedProject(
+    projectStoreBaseDir,
+    project,
+    IdeBundle.message("untrusted.project.open.dialog.title", project.name),
+    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
+    IdeBundle.message("untrusted.project.dialog.trust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+  )
 }
 
 private suspend fun initProject(file: Path,
@@ -1364,14 +1364,10 @@ private fun clearPerProjectDirsForProject(
  *
  * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
  */
-private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
-  val trustedState = TrustedPaths.getInstance().getProjectPathTrustedState(projectStoreBaseDir)
+private fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
+  val trustedState = getProjectTrustedState(listOf(projectStoreBaseDir), project = null)
   if (trustedState != ThreeState.UNSURE) {
     // the trusted state of this project path is already known => proceed with opening
-    return true
-  }
-
-  if (isProjectImplicitlyTrusted(projectStoreBaseDir)) {
     return true
   }
 
@@ -1387,7 +1383,15 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
     return true
   }
 
-  return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
+  return confirmOpeningOrLinkingUntrustedProject(
+    projectStoreBaseDir,
+    null,
+    IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName),
+    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
+    IdeBundle.message("untrusted.project.dialog.trust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+  )
 }
 
 private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
