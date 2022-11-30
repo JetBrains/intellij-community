@@ -663,6 +663,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     while (file != null) {
       val projectMetaInfo = state.additionalInfo.remove(file.systemIndependentPath)
       if (projectMetaInfo != null) {
+        modCounter.increment()
+        fireChangeEvent()
         break
       }
 
