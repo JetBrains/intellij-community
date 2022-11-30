@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
   private static final Set<String> CHECK_ANNOTATIONS = Set.of(
     "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
-  protected final MethodMatcher myMethodMatcher;
+  private final MethodMatcher myMethodMatcher;
   /**
    * @noinspection PublicField
    */
@@ -254,12 +254,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, stop);
     }
 
-    private PsiAnnotation findCheckReturnValueAnnotation(PsiMethod method) {
+    private static PsiAnnotation findCheckReturnValueAnnotation(PsiMethod method) {
       final PsiAnnotation annotation = MethodUtils.findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
       return annotation == null ? getAnnotationByShortNameCheckReturnValue(method) : annotation;
     }
 
-    private PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
+    private static PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
       for (PsiAnnotation psiAnnotation : method.getAnnotations()) {
         String qualifiedName = psiAnnotation.getQualifiedName();
         if (qualifiedName != null && "CheckReturnValue".equals(StringUtil.getShortName(qualifiedName))) {
@@ -269,7 +269,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       return null;
     }
 
-    private boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {
+    private static boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {
       String exception = null;
       if (call instanceof PsiMethodCallExpression) {
         exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst((PsiMethodCallExpression)call);
@@ -286,7 +286,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
                                   type -> InheritanceUtil.isInheritor(exceptionClass, type.getCanonicalText()));
     }
 
-    private boolean isHardcodedException(PsiExpression expression) {
+    private static boolean isHardcodedException(PsiExpression expression) {
       if (!(expression instanceof PsiMethodCallExpression)) return false;
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       if (STREAM_COLLECT.test(call)) {
@@ -308,7 +308,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isPureMethod(PsiMethod method, PsiExpression call) {
+    private static boolean isPureMethod(PsiMethod method, PsiExpression call) {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
@@ -344,7 +344,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       return SKIPPING_TEST_METHODS.test(methodCallExpression);
     }
 
-    private boolean hasTrivialReturnValue(PsiMethod method) {
+    private static boolean hasTrivialReturnValue(PsiMethod method) {
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
       ContractReturnValue nonFailingReturnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
       return nonFailingReturnValue != null &&
