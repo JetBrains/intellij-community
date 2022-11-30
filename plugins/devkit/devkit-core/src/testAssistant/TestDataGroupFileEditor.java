@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -114,11 +113,6 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements TextE
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
-  }
 
   @Override
   public @NotNull VirtualFile getFile() {

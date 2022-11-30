@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -93,11 +92,6 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
 
     @Override
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-    @Override
-    public StructureViewBuilder getStructureViewBuilder() {
-      return null;
-    }
 
     @Override
     public @NotNull VirtualFile getFile() {
