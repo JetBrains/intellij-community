@@ -11275,6 +11275,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/removeTypeParameter.kt");
             }
 
+            @TestMetadata("suspendFunction.kt")
+            public void testSuspendFunction() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/suspendFunction.kt");
+            }
+
+            @TestMetadata("suspendFunction2.kt")
+            public void testSuspendFunction2() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/suspendFunction2.kt");
+            }
+
             @TestMetadata("swapParametersGenericClass.kt")
             public void testSwapParametersGenericClass() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/swapParametersGenericClass.kt");
