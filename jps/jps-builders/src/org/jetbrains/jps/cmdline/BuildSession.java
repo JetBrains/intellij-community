@@ -66,7 +66,6 @@ final class BuildSession implements Runnable, CanceledStatus {
   private volatile ProjectDescriptor myProjectDescriptor;
   @NotNull
   private final BuildRunner myBuildRunner;
-  private final boolean myForceModelLoading;
   private final BuildType myBuildType;
   private final List<TargetTypeBuildScope> myScopes;
   private final boolean myLoadUnloadedModules;
@@ -116,7 +115,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myBuildRunner.setFilePaths(filePaths);
     myBuildRunner.setBuilderParams(builderParams);
-    myForceModelLoading =  Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
 
     if (myPreloadedData != null) {
       JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.buildSessionInitialized(myPreloadedData));
@@ -125,7 +123,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Starting build:");
       LOG.debug(" initial delta = " + (delta == null ? null : "FSEvent(ordinal = " + delta.getOrdinal() + ", changed = " + showFirstItemIfAny(delta.getChangedPathsList()) + ", deleted = " + delta.getDeletedPathsList() + ")"));
-      LOG.debug(" forceModelLoading = " + myForceModelLoading);
       LOG.debug(" loadUnloadedModules = " + myLoadUnloadedModules);
       LOG.debug(" preloadedData = " + myPreloadedData);
       LOG.debug(" buildType = " + myBuildType);
@@ -291,8 +288,10 @@ final class BuildSession implements Runnable, CanceledStatus {
       final boolean hasWorkFlag = fsStateStream != null? fsStateStream.readBoolean() : myPreloadedData.hasWorkToDo();
       LOG.debug("hasWorkFlag = " + hasWorkFlag);
       final boolean hasWorkToDoWithModules = hasWorkFlag || myInitialFSDelta == null;
-      if (!myForceModelLoading && (myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules
-          && scopeContainsModulesOnlyForIncrementalMake(myScopes) && !containsChanges(myInitialFSDelta)) {
+      if ((myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) &&
+          !hasWorkToDoWithModules &&
+          scopeContainsModulesOnlyForIncrementalMake(myScopes) &&
+          !containsChanges(myInitialFSDelta)) {
 
         final DataInputStream storedFsData;
         if (myPreloadedData != null) {
