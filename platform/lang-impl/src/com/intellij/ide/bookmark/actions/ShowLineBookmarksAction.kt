@@ -5,7 +5,6 @@ import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.observable.util.whenFocusLost
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAwareAction
@@ -13,6 +12,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.JBUI
+import java.awt.event.FocusEvent
+import javax.swing.JButton
+import javax.swing.JTextField
 
 internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messagePointer("show.bookmarks.action.text")) {
   private val popupState = PopupState.forPopup()
@@ -53,7 +55,9 @@ internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
       .createPopup()
 
     panel.tree.whenFocusLost {
-      if (it.oppositeComponent is EditorComponentImpl) {
+      if (it.cause == FocusEvent.Cause.ACTIVATION &&
+          it.oppositeComponent !is JButton &&
+          it.oppositeComponent !is JTextField) {
         popup.closeOk(null)
       }
     }
