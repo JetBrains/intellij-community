@@ -359,6 +359,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
         if (annotatedElement is KtCallableDeclaration) {
             annotatedElement.typeReference?.getType()?.let { return it }
+            annotatedElement.getReturnType()?.let { return it }
         }
         if (annotatedElement is KtProperty) {
             annotatedElement.initializer?.let { it.getType(it.analyze()) }?.let { return it }
