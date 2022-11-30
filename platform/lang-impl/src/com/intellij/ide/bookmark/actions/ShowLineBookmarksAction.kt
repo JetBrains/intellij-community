@@ -5,6 +5,8 @@ import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.observable.util.whenFocusLost
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -49,6 +51,12 @@ internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
       .setResizable(true)
       .setNormalWindowLevel(true)
       .createPopup()
+
+    panel.tree.whenFocusLost {
+      if (it.oppositeComponent is EditorComponentImpl) {
+        popup.closeOk(null)
+      }
+    }
 
     Disposer.register(popup, panel)
     popupState.prepareToShow(popup)
