@@ -49,6 +49,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER;
+
 public class IgnoreResultOfCallInspection extends BaseInspection {
   private static final CallMatcher STREAM_COLLECT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
@@ -74,6 +76,14 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall("org.mockito.Mockito", "verify"),
       CallMatcher.instanceCall("org.jmock.Expectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
         .parameterTypes("T"));
+
+  private static final CallMatcher SKIPPING_TEST_METHODS =
+    CallMatcher.anyOf(
+      CallMatcher.staticCall("org.assertj.core.api.Assertions", "assertThatThrownBy", "catchThrowable", "catchThrowableOfType"),
+      CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertDoesNotThrow", "assertThrows", "assertThrowsExactly"),
+      CallMatcher.staticCall("org.junit.Assert", "assertThrows")
+    );
+
   private static final Set<String> CHECK_ANNOTATIONS = Set.of(
     "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
   protected final MethodMatcher myMethodMatcher;
@@ -226,6 +236,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
           return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
         }
       }
+      if (isInTestContainer(call)) return false;
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
         return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
@@ -305,6 +316,32 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (!(call instanceof PsiCallExpression) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(call);
       return result != null && result.cannotFailByContract((PsiCallExpression)call);
+    }
+
+    private static boolean isInTestContainer(PsiExpression call) {
+      PsiElement psiElement = PsiTreeUtil.getParentOfType(call, PsiLambdaExpression.class, PsiAnonymousClass.class);
+      PsiElement expressionList;
+      if (psiElement instanceof PsiLambdaExpression lambdaContainer) {
+        PsiType lambdaType = lambdaContainer.getFunctionalInterfaceType();
+        if (lambdaType == null || InheritanceUtil.isInheritor(lambdaType, JAVA_UTIL_FUNCTION_SUPPLIER)) return false;
+        PsiElement skipParenthesizedExprUp = PsiUtil.skipParenthesizedExprUp(lambdaContainer);
+        if (skipParenthesizedExprUp == null) return false;
+        expressionList = PsiUtil.skipParenthesizedExprUp(skipParenthesizedExprUp.getParent());
+      }
+      else if (psiElement instanceof PsiAnonymousClass psiAnonymousClass) {
+        if (!LambdaUtil.isFunctionalType(psiAnonymousClass.getBaseClassType()) ||
+            InheritanceUtil.isInheritor(psiAnonymousClass, JAVA_UTIL_FUNCTION_SUPPLIER)) return false;
+        if (!(psiAnonymousClass.getParent() instanceof PsiNewExpression psiNewExpression)) return false;
+        PsiElement skipParenthesizedExprUp = PsiUtil.skipParenthesizedExprUp(psiNewExpression);
+        if (skipParenthesizedExprUp == null) return false;
+        expressionList = PsiUtil.skipParenthesizedExprUp(skipParenthesizedExprUp.getParent());
+      }
+      else {
+        return false;
+      }
+      if (!(expressionList instanceof PsiExpressionList psiExpressionList) ||
+          !(psiExpressionList.getParent() instanceof PsiMethodCallExpression methodCallExpression)) return false;
+      return SKIPPING_TEST_METHODS.test(methodCallExpression);
     }
 
     private boolean hasTrivialReturnValue(PsiMethod method) {
