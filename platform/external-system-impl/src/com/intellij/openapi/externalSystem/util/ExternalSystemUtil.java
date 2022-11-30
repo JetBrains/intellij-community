@@ -317,7 +317,7 @@ public final class ExternalSystemUtil {
       localSettings.getProjectSyncType().get(externalProjectPath) == PREVIEW ? IMPORT : RE_IMPORT;
     localSettings.getProjectSyncType().put(externalProjectPath, syncType);
 
-    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, projectName, externalProjectPath, importSpec);
+    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, externalProjectPath, importSpec);
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 
@@ -495,7 +495,8 @@ public final class ExternalSystemUtil {
 
           LOG.info("External project [" + externalProjectPath + "] resolution task started");
           final long startTS = System.currentTimeMillis();
-          resolveProjectTask.execute(indicator, taskListener);
+          String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+          DumbService.getInstance(project).suspendIndexingAndRun(title, () -> resolveProjectTask.execute(indicator, taskListener));
           LOG.info("External project [" + externalProjectPath + "] resolution task executed in " +
                    (System.currentTimeMillis() - startTS) + " ms.");
           handExecutionResult(externalSystemTaskActivator, eventDispatcher, finishSyncEventSupplier);
