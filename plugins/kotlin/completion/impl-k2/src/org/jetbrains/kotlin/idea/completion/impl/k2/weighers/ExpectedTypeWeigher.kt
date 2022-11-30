@@ -32,7 +32,7 @@ internal object ExpectedTypeWeigher {
     }
 
 
-    private var LookupElement.matchesExpectedType by UserDataProperty(Key<MatchesExpectedType>("MATCHES_EXPECTED_TYPE"))
+    var LookupElement.matchesExpectedType by UserDataProperty(Key<MatchesExpectedType>("MATCHES_EXPECTED_TYPE"))
 
     enum class MatchesExpectedType {
         MATCHES, NON_TYPABLE, NOT_MATCHES, ;

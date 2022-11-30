@@ -11,10 +11,10 @@ import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithBooleanEqualsFix;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.codeInspection.ui.InspectionOptionContainer;
-import com.intellij.codeInspection.ui.OptionAccessor;
+import com.intellij.codeInspection.options.OptCustom;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiPrecedenceUtil;
@@ -24,35 +24,24 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
 import com.siyeh.ig.dataflow.CreateNullBranchFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.java.JavaBundle.message;
-import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
-import static javax.swing.SwingConstants.TOP;
 
-public class DataFlowInspection extends DataFlowInspectionBase {
+public class DataFlowInspection extends DataFlowInspectionBase implements InspectionOptionPaneRenderer.CustomComponentProvider {
   private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel();
-  }
 
   @Override
   protected LocalQuickFix createMutabilityViolationFix(PsiElement violation, boolean onTheFly) {
@@ -213,102 +202,27 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
   }
 
-  private final class OptionsPanel extends JPanel implements InspectionOptionContainer {
-    private static final int BUTTON_OFFSET = 20;
-    private final JButton myConfigureAnnotations;
-    private final Map<String, @Nls String> myCheckboxes = new HashMap<>();
-    private final OptionAccessor.Default myAccessor = new OptionAccessor.Default(DataFlowInspection.this);
+  @Override
+  public @NotNull JComponent getCustomOptionComponent(@NotNull OptCustom control, @NotNull JComponent parent) {
+    return NullableNotNullDialog.createConfigureAnnotationsButton(parent);
+  }
 
-    private OptionsPanel() {
-      super(new GridBagLayout());
-
-      GridBagConstraints gc = new GridBagConstraints();
-      gc.weighty = 0;
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.anchor = GridBagConstraints.NORTHWEST;
-
-      JCheckBox suggestNullables = createCheckBoxWithHTML(
-        message("inspection.data.flow.nullable.quickfix.option"),
-        "SUGGEST_NULLABLE_ANNOTATIONS");
-
-      JCheckBox treatUnknownMembersAsNullable = createCheckBoxWithHTML(
-        message("inspection.data.flow.treat.non.annotated.members.and.parameters.as.nullable"),
-        "TREAT_UNKNOWN_MEMBERS_AS_NULLABLE");
-
-      JCheckBox reportNullArguments = createCheckBoxWithHTML(
-        message("inspection.data.flow.report.not.null.required.parameter.with.null.literal.argument.usages"),
-        "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER");
-
-      JCheckBox reportNullableMethodsReturningNotNull = createCheckBoxWithHTML(
-        message("inspection.data.flow.report.nullable.methods.that.always.return.a.non.null.value"),
-        "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL");
-
-      JCheckBox ignoreAssertions = createCheckBoxWithHTML(
-        message("inspection.data.flow.ignore.assert.statements"),
-        "IGNORE_ASSERT_STATEMENTS");
-
-      JCheckBox reportUnsoundWarnings = createCheckBoxWithHTML(
-        message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths"),
-        "REPORT_UNSOUND_WARNINGS");
-
-      gc.insets = JBInsets.emptyInsets();
-      gc.gridy = 0;
-      add(suggestNullables, gc);
-
-      myConfigureAnnotations = NullableNotNullDialog.createConfigureAnnotationsButton(this);
-      gc.gridy++;
-      gc.fill = GridBagConstraints.NONE;
-      gc.insets.left = BUTTON_OFFSET;
-      gc.insets.bottom = 15;
-      add(myConfigureAnnotations, gc);
-
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.weighty = 1;
-      gc.insets.left = 0;
-      gc.gridy++;
-      add(treatUnknownMembersAsNullable, gc);
-
-      gc.gridy++;
-      add(reportNullArguments, gc);
-
-      gc.gridy++;
-      add(reportNullableMethodsReturningNotNull, gc);
-
-      gc.gridy++;
-      add(ignoreAssertions, gc);
-
-      gc.gridy++;
-      add(reportUnsoundWarnings, gc);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension preferred = super.getPreferredSize();
-      if (!isPreferredSizeSet()) {
-        // minimize preferred width to align HTML text within ScrollPane
-        Dimension size = myConfigureAnnotations.getPreferredSize();
-        preferred.width = size.width + BUTTON_OFFSET;
-      }
-      return preferred;
-    }
-
-    @Override
-    public @NotNull HtmlChunk getLabelForCheckbox(@NotNull String property) {
-      String label = myCheckboxes.get(property);
-      if (label == null) {
-        throw new IllegalArgumentException("Invalid property name: " + property);
-      }
-      return HtmlChunk.raw(label);
-    }
-
-    private JCheckBox createCheckBoxWithHTML(@Nls String text, String accessorId) {
-      myCheckboxes.put(accessorId, text);
-      JCheckBox box = new JCheckBox(wrapInHtml(text));
-      box.setVerticalTextPosition(TOP);
-      box.setSelected(myAccessor.getOption(accessorId));
-      box.getModel().addItemListener(event -> myAccessor.setOption(accessorId, box.isSelected()));
-      return box;
-    }
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("SUGGEST_NULLABLE_ANNOTATIONS",
+               message("inspection.data.flow.nullable.quickfix.option")),
+      checkbox("TREAT_UNKNOWN_MEMBERS_AS_NULLABLE",
+               message("inspection.data.flow.treat.non.annotated.members.and.parameters.as.nullable")),
+      checkbox("REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER",
+               message("inspection.data.flow.report.not.null.required.parameter.with.null.literal.argument.usages")),
+      checkbox("REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
+               message("inspection.data.flow.report.nullable.methods.that.always.return.a.non.null.value")),
+      checkbox("IGNORE_ASSERT_STATEMENTS",
+               message("inspection.data.flow.ignore.assert.statements")),
+      checkbox("REPORT_UNSOUND_WARNINGS",
+               message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
+      custom("CONFIGURE_ANNOTATIONS")
+    );
   }
 }

@@ -16,8 +16,8 @@ import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -52,6 +52,7 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE,
                    "before.checkin.cleanup.code",
                    "before.checkin.cleanup.code.profile")
+      .withCheckinHandler(this)
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
@@ -75,7 +76,7 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
     val profile = getProfile()
     val scope = AnalysisScope(project, files)
     return withContext(Dispatchers.Default + textToDetailsSinkContext(coroutineContext.progressSink)) {
-      runUnderIndicator {
+      coroutineToIndicator {
         val indicator = ProgressManager.getGlobalProgressIndicator()
         globalContext.findProblems(scope, profile, indicator) { true }
       }
@@ -107,7 +108,7 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
       runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors, sink))
 
       withContext(Dispatchers.IO + noTextSinkContext(sink)) {
-        runUnderIndicator {
+        coroutineToIndicator {
           // TODO get rid of SequentialModalProgressTask
           runner.doRun(ProgressManager.getGlobalProgressIndicator())
         }

@@ -1,4 +1,5 @@
-from typing import Any, Generator, Iterable
+from collections.abc import Generator, Iterable
+from typing import Any
 
 from pkg_resources import EntryPoint
 from pygments.filter import Filter

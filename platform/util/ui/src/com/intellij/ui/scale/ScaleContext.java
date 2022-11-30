@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.ui.JreHiDpiUtil;
@@ -22,7 +22,7 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
  * @see ScaleContextAware
  * @author tav
  */
-@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "deprecation"})
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class ScaleContext extends UserScaleContext {
   protected Scale sysScale = SYS_SCALE.of(JBUIScale.sysScale());
 
@@ -54,12 +54,14 @@ public class ScaleContext extends UserScaleContext {
   }
 
   /**
-   * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
+   * Creates a context based on the component's system scale and sticks to it via the {@link #update()} method.
    */
-  public static @NotNull ScaleContext create(@Nullable Component comp) {
-    final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(comp)));
-    if (comp != null) ctx.compRef = new WeakReference<>(comp);
-    return ctx;
+  public static @NotNull ScaleContext create(@Nullable Component component) {
+    ScaleContext context = new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(component)));
+    if (component != null) {
+      context.compRef = new WeakReference<>(component);
+    }
+    return context;
   }
 
   /**
@@ -109,14 +111,12 @@ public class ScaleContext extends UserScaleContext {
    */
   @Override
   public double getScale(@NotNull ScaleType type) {
-    if (type == SYS_SCALE) return sysScale.value;
-    return super.getScale(type);
+    return type == SYS_SCALE ? sysScale.value : super.getScale(type);
   }
 
   @Override
   protected @NotNull Scale getScaleObject(@NotNull ScaleType type) {
-    if (type == SYS_SCALE) return sysScale;
-    return super.getScaleObject(type);
+    return type == SYS_SCALE ? sysScale : super.getScaleObject(type);
   }
 
   /**

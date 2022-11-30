@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo(p: Int, xxP1: String, xxP2: Int){}
 fun foo(p: Int, xxP1: String, xxP2: Char){}
 fun foo(p: Int, xxx: Any?){}

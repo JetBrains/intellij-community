@@ -392,7 +392,7 @@ public class HelpTooltip {
     };
   }
 
-  private ComponentPopupBuilder initPopupBuilder(JComponent tipPanel) {
+  private static ComponentPopupBuilder initPopupBuilder(@NotNull JComponent tipPanel) {
     return JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).
       setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
@@ -400,8 +400,7 @@ public class HelpTooltip {
       addUserData(PopupCornerType.RoundedTooltip);
   }
 
-  @NotNull
-  private MouseListener createIsOverTipMouseListener() {
+  private @NotNull MouseListener createIsOverTipMouseListener() {
     return new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
@@ -418,9 +417,8 @@ public class HelpTooltip {
     };
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public final JPanel createTipPanel() {
+  public final @NotNull JPanel createTipPanel() {
     JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
@@ -468,8 +466,7 @@ public class HelpTooltip {
     owner.removeMouseMotionListener(myMouseListener);
   }
 
-  @Nullable
-  public static HelpTooltip getTooltipFor(@NotNull JComponent owner) {
+  public static @Nullable HelpTooltip getTooltipFor(@NotNull JComponent owner) {
     return (HelpTooltip)owner.getClientProperty(TOOLTIP_PROPERTY);
   }
 
@@ -573,28 +570,31 @@ public class HelpTooltip {
 
     popupAlarm.addRequest(() -> {
       initialShowScheduled = false;
-      if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {
-        Component owner = e.getComponent();
-        String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
-        if (myPopup != null && !myPopup.isDisposed()) {
-          if (Strings.isEmpty(text) && Strings.isEmpty(myToolTipText)) {
-            return; // do nothing if a tooltip become empty
-          }
-          if (Objects.equals(text, myToolTipText)) {
-            return; // do nothing if a tooltip is not changed
-          }
-          myPopup.cancel(); // cancel previous popup before showing a new one
+      if (masterPopupOpenCondition != null && !masterPopupOpenCondition.getAsBoolean()) {
+        return;
+      }
+
+      Component owner = e.getComponent();
+      String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
+      if (myPopup != null && !myPopup.isDisposed()) {
+        if (Strings.isEmpty(text) && Strings.isEmpty(myToolTipText)) {
+          return; // do nothing if a tooltip become empty
         }
-        myToolTipText = text;
-        JComponent tipPanel = createTipPanel();
-        tipPanel.addMouseListener(createIsOverTipMouseListener());
-        ComponentPopupBuilder popupBuilder = initPopupBuilder(tipPanel);
-        myPopup = popupBuilder.createPopup();
-        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, tipPanel.getPreferredSize(), e.getPoint())));
-        if (!neverHide) {
-          int dismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
-          scheduleHide(true, dismissDelay);
+        if (Objects.equals(text, myToolTipText)) {
+          return; // do nothing if a tooltip is not changed
         }
+        myPopup.cancel(); // cancel previous popup before showing a new one
+      }
+
+      myToolTipText = text;
+      JComponent tipPanel = createTipPanel();
+      tipPanel.addMouseListener(createIsOverTipMouseListener());
+      ComponentPopupBuilder popupBuilder = initPopupBuilder(tipPanel);
+      myPopup = popupBuilder.createPopup();
+      myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, tipPanel.getPreferredSize(), e.getPoint())));
+      if (!neverHide) {
+        int dismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
+        scheduleHide(true, dismissDelay);
       }
     }, delay);
   }

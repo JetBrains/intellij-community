@@ -22,7 +22,7 @@ class PropertiesFiled(project: Project, info: PropertiesInfo) : ExtendableTextFi
 
   private val commandLinePropertiesProperty = AtomicProperty("")
   private val propertiesProperty = commandLinePropertiesProperty
-    .transform(map = ::parseProperties, comap = ::joinProperties)
+    .transform(map = ::parseProperties, backwardMap = ::joinProperties)
 
   var commandLineProperties by commandLinePropertiesProperty
   var properties by propertiesProperty

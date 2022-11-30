@@ -170,7 +170,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  private static void replaceWithUnknownRootType(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> unregisteredSerializers) {
+  private static void replaceWithUnknownRootType(Project project, Collection<? extends JpsModuleSourceRootPropertiesSerializer<?>> unregisteredSerializers) {
     if (unregisteredSerializers.isEmpty()) {
       return;
     }
@@ -199,7 +199,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  private static void updateCustomRootTypes(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> registeredSerializers) {
+  private static void updateCustomRootTypes(Project project, Collection<? extends JpsModuleSourceRootPropertiesSerializer<?>> registeredSerializers) {
     if (registeredSerializers.isEmpty()) {
       return;
     }
@@ -284,7 +284,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   }
 
   @NotNull
-  private static <T> Collection<T> loadExtensionsFrom(@NotNull Collection<ClassLoader> loaders, @NotNull Class<T> extensionClass) {
+  private static <T> Collection<T> loadExtensionsFrom(@NotNull Collection<? extends ClassLoader> loaders, @NotNull Class<T> extensionClass) {
     if (loaders.isEmpty()) {
       return Collections.emptyList();
     }

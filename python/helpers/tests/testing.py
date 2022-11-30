@@ -146,7 +146,7 @@ class HelpersTestCase(unittest.TestCase):
 
     def assertEqualsToFileContent(self, actual_text, expected_path):
         try:
-            with open(expected_path) as f:
+            with open(expected_path, encoding='utf-8') as f:
                 expected = f.read()
         except IOError as e:
             if e.errno == errno.ENOENT:
@@ -162,7 +162,7 @@ class HelpersTestCase(unittest.TestCase):
 
     def _dump_file(self, path, text):
         self.log.warning("Creating new file {}".format(path))
-        with open(path, 'w') as f:
+        with open(path, 'w', encoding='utf-8') as f:
             f.write(text)
 
     @contextmanager

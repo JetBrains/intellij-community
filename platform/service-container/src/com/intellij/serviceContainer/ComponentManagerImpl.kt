@@ -932,7 +932,9 @@ abstract class ComponentManagerImpl(
       Disposer.register(serviceParentDisposable, result)
     }
 
-    initializeComponent(result, null, pluginId)
+    if (result is PersistentStateComponent<*>) {
+      initializeComponent(result, null, pluginId)
+    }
     StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getActivityCategory(isExtension = false), pluginId.idString)
     return result
   }

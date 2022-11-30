@@ -59,7 +59,7 @@ class ChangeToMutableCollectionFix(property: KtProperty, private val type: Strin
         fun applyFix(property: KtProperty, type: KotlinType) {
             val initializer = property.initializer ?: return
             val fqName = initializer.resolveToCall()?.resultingDescriptor?.fqNameOrNull()?.asString()
-            val psiFactory = KtPsiFactory(property)
+            val psiFactory = KtPsiFactory(property.project)
             val mutableOf = mutableConversionMap[fqName]
             if (mutableOf != null) {
                 (initializer as? KtCallExpression)?.calleeExpression?.replaced(psiFactory.createExpression(mutableOf)) ?: return

@@ -47,7 +47,7 @@ class ReplaceContainsIntention : SelfTargetingRangeIntention<KtDotQualifiedExpre
         val argument = element.callExpression!!.valueArguments.single().getArgumentExpression()!!
         val receiver = element.receiverExpression
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         val prefixExpression = element.parent as? KtPrefixExpression
         val expression = if (prefixExpression != null && prefixExpression.operationToken == KtTokens.EXCL) {

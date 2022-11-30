@@ -27,9 +27,8 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     return properties.isForGeneratedSources() ? getGeneratedRootIcon() : getRootIcon();
   }
 
-  @Nullable
   @Override
-  public Icon getRootFileLayerIcon(@NotNull JavaSourceRootProperties properties) {
+  public @Nullable Icon getRootFileLayerIcon() {
     return AllIcons.Modules.SourceRootFileLayer;
   }
 

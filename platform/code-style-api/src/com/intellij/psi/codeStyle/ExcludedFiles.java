@@ -62,7 +62,7 @@ public class ExcludedFiles {
     return ContainerUtil.filter(myDescriptors, descriptor -> descriptorType.equals(descriptor.getType()));
   }
 
-  public void setDescriptors(@NotNull String descriptorType, @NotNull List<FileSetDescriptor> descriptors) {
+  public void setDescriptors(@NotNull String descriptorType, @NotNull List<? extends FileSetDescriptor> descriptors) {
     myDescriptors.removeIf(descriptor -> descriptorType.equals(descriptor.getType()));
     myDescriptors.addAll(descriptors);
     Collections.sort(myDescriptors, (d1, d2) -> {

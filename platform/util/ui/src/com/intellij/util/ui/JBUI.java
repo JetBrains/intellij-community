@@ -350,6 +350,8 @@ public final class JBUI {
       public static @NotNull Color hoverSeparatorColor() {
         return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
       }
+
+      public static final Color SEPARATOR_COLOR = JBColor.namedColor("ActionButton.separatorColor", CustomFrameDecorations.separatorForeground());
     }
 
     public static final class ActionsList {
@@ -821,6 +823,8 @@ public final class JBUI {
 
     public static final class Toolbar {
 
+      public static final Color SEPARATOR_COLOR = JBColor.namedColor("ToolBar.separatorColor", CustomFrameDecorations.separatorForeground());
+
       public static Insets toolbarButtonInsets(boolean isMainToolbar) {
         return isMainToolbar ? mainToolbarButtonInsets() : toolbarButtonInsets();
       }
@@ -1222,6 +1226,10 @@ public final class JBUI {
         }
       }
 
+      public static @NotNull Color headerForeground() {
+        return JBColor.namedColor("GotItTooltip.Header.foreground", foreground(false));
+      }
+
       public static @NotNull Color shortcutForeground(boolean useContrastColors) {
         if (useContrastColors) {
           return JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5);
@@ -1244,6 +1252,10 @@ public final class JBUI {
 
       public static @NotNull Color buttonBackgroundContrast() {
         return JBColor.namedColor("Tooltip.Learning.spanBackground", 0x0D5CBD, 0x0250B0);
+      }
+
+      public static @NotNull Color buttonForeground() {
+        return JBColor.namedColor("GotItTooltip.Button.foreground", JBColor.namedColor("Button.foreground"));
       }
 
       public static @NotNull Color buttonForegroundContrast() {

@@ -32,7 +32,8 @@ class JavaModuleSettingsIndexableEntityProvider implements ParentEntityDependent
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity oldEntity,
-                                                                                                   @NotNull JavaModuleSettingsEntity newEntity) {
+                                                                                                   @NotNull JavaModuleSettingsEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (!Objects.equals(newEntity.getLanguageLevelId(), oldEntity.getLanguageLevelId())) {
       return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().getSymbolicId());
     }

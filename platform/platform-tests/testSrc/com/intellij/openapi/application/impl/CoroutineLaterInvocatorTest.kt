@@ -6,43 +6,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.progress.timeoutRunBlocking
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import javax.swing.SwingUtilities
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.resume
 
-@TestApplication
-class CoroutineLaterInvocatorTest {
-
-  @BeforeEach
-  @AfterEach
-  fun checkNotModal() {
-    timeoutRunBlocking {
-      withContext(Dispatchers.EDT) {
-        assertFalse(LaterInvocator.isInModalContext()) {
-          "Expect no modal entries. Probably some of the previous tests didn't left their entries. " +
-          "Top entry is: " + LaterInvocator.getCurrentModalEntities().firstOrNull()
-        }
-      }
-    }
-  }
-
-  private suspend fun withDifferentInitialModalities(action: suspend CoroutineScope.() -> Unit) {
-    coroutineScope {
-      action()
-      withContext(ModalityState.any().asContextElement()) {
-        action()
-      }
-      withContext(ModalityState.NON_MODAL.asContextElement()) {
-        action()
-      }
-    }
-  }
+class CoroutineLaterInvocatorTest : ModalCoroutineTest() {
 
   @Test
   fun `modal context`(): Unit = timeoutRunBlocking {
@@ -100,7 +71,7 @@ class CoroutineLaterInvocatorTest {
     withDifferentInitialModalities {
       val modalCoroutine = launchModalCoroutineAndWait(cs = this@withDifferentInitialModalities)
       val anyCoroutine = launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {}
-      processSwingQueue()
+      processApplicationQueue()
       yield()
       assertTrue(anyCoroutine.isCompleted)
       modalCoroutine.cancel()
@@ -112,7 +83,7 @@ class CoroutineLaterInvocatorTest {
     withDifferentInitialModalities {
       val modalCoroutine = launchModalCoroutineAndWait(this)
       val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {}
-      processSwingQueue()
+      processApplicationQueue()
       assertFalse(nonModalCoroutine.isCompleted)
       modalCoroutine.cancel()
     }
@@ -122,7 +93,7 @@ class CoroutineLaterInvocatorTest {
   fun `modal delays default non-modal`(): Unit = timeoutRunBlocking {
     val modalCoroutine = launchModalCoroutineAndWait(this)
     val nonModalCoroutine = launch(Dispatchers.EDT) {} // modality is not specified
-    processSwingQueue()
+    processApplicationQueue()
     assertFalse(nonModalCoroutine.isCompleted)
     modalCoroutine.cancel()
   }
@@ -132,7 +103,7 @@ class CoroutineLaterInvocatorTest {
     withDifferentInitialModalities {
       val modalCoroutine = launchModalCoroutineAndWait(cs = this@withDifferentInitialModalities)
       val modalCoroutine2 = modalCoroutine {}
-      processSwingQueue()
+      processApplicationQueue()
       assertFalse(modalCoroutine2.isCompleted)
       modalCoroutine.cancel()
     }
@@ -146,7 +117,7 @@ class CoroutineLaterInvocatorTest {
           awaitCancellation()
         }
       }
-      processSwingQueue()
+      processApplicationQueue()
       assertFalse(modalCoroutine.isCompleted)
       modalCoroutine.cancel()
     }
@@ -190,6 +161,18 @@ class CoroutineLaterInvocatorTest {
   }
 }
 
+internal suspend fun withDifferentInitialModalities(action: suspend CoroutineScope.() -> Unit) {
+  coroutineScope {
+    action()
+    withContext(ModalityState.any().asContextElement()) {
+      action()
+    }
+    withContext(ModalityState.NON_MODAL.asContextElement()) {
+      action()
+    }
+  }
+}
+
 private suspend fun launchModalCoroutineAndWait(cs: CoroutineScope): Job {
   val modalEntered = Semaphore(1, 1)
   val modalCoroutine = cs.modalCoroutine {
@@ -206,8 +189,6 @@ private fun CoroutineScope.modalCoroutine(action: suspend CoroutineScope.() -> U
   }
 }
 
-private suspend fun processSwingQueue(): Unit = suspendCancellableCoroutine {
-  SwingUtilities.invokeLater {
-    it.resume(Unit)
-  }
+internal suspend fun processApplicationQueue() {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {}
 }

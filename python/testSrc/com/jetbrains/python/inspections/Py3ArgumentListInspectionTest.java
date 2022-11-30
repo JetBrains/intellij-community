@@ -18,6 +18,22 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     return ourPyLatestDescriptor;
   }
 
+  // PY-36158
+  public void testDataclassesStarImportNoUnexpectedArgumentWarning() {
+    doTestByText("""
+                   from dataclasses import *
+
+
+                   @dataclass(eq=True)
+                   class Foo:
+                       a: float
+                       b: float
+
+
+                   print(Foo(1, 2))
+                   """);
+  }
+
   // PY-50404
   public void testPassingKeywordArgumentsToParamSpec() {
     doTestByText("""

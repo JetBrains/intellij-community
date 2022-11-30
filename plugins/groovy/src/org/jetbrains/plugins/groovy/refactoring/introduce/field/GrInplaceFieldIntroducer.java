@@ -10,6 +10,7 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +27,8 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -48,7 +49,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     myLocalVar = GrIntroduceHandlerBase.resolveLocalVar(context);
     if (myLocalVar != null) {
       //myLocalVariable = myLocalVar;
-      ArrayList<String> result = ContainerUtil.newArrayList(myLocalVar.getName());
+      List<String> result = new SmartList<>(myLocalVar.getName());
 
       GrExpression initializer = myLocalVar.getInitializerGroovy();
       if (initializer != null) {

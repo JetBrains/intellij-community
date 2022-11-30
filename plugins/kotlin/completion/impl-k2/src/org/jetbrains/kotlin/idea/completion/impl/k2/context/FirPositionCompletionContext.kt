@@ -138,6 +138,25 @@ internal class FirCallableReferencePositionContext(
     override val explicitReceiver: KtExpression?
 ) : FirNameReferencePositionContext()
 
+/**
+ * Position in class body, on which member declaration or class initializer is expected
+ *
+ * Examples
+ * ```
+ * class A {
+ *   f<caret>
+ * }
+ *
+ * class B {
+ *   private <caret>
+ * }
+ * ```
+ */
+internal class FirMemberDeclarationExpectedPositionContext(
+    override val position: PsiElement,
+    val classBody: KtClassBody
+) : FirRawPositionCompletionContext()
+
 internal class FirUnknownPositionContext(
     override val position: PsiElement
 ) : FirRawPositionCompletionContext()
@@ -151,13 +170,17 @@ internal object FirPositionCompletionContextDetector {
     }
 
     private fun detectForPositionWithoutReference(position: PsiElement): FirRawPositionCompletionContext? {
-        val parent = position.parent
+        val parent = position.parent ?: return null
+        val grandparent = parent.parent
         return when {
             parent is KtClassLikeDeclaration && parent.nameIdentifier == position -> {
                 FirClassifierNamePositionContext(position, parent)
             }
             parent is KtParameter -> {
                 FirValueParameterPositionContext(position, parent)
+            }
+            parent is PsiErrorElement && grandparent is KtClassBody -> {
+                FirMemberDeclarationExpectedPositionContext(position, grandparent)
             }
             else -> null
         }
@@ -287,11 +310,6 @@ internal object FirPositionCompletionContextDetector {
         action: KtAnalysisSession.() -> Unit
     ) {
         return when (positionContext) {
-            is FirNameReferencePositionContext -> analyzeInDependedAnalysisSession(
-                basicContext.originalKtFile,
-                positionContext.nameExpression,
-                action = action
-            )
             is FirUnknownPositionContext,
             is FirImportDirectivePositionContext,
             is FirPackageDirectivePositionContext,
@@ -301,6 +319,16 @@ internal object FirPositionCompletionContextDetector {
             is FirClassifierNamePositionContext -> {
                 analyze(basicContext.originalKtFile, action = action)
             }
+            is FirNameReferencePositionContext -> analyzeInDependedAnalysisSession(
+                basicContext.originalKtFile,
+                positionContext.nameExpression,
+                action = action
+            )
+            is FirMemberDeclarationExpectedPositionContext -> analyzeInDependedAnalysisSession(
+                basicContext.originalKtFile,
+                positionContext.classBody,
+                action = action
+            )
         }
     }
 }

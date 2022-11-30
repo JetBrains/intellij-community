@@ -85,6 +85,7 @@
     <module name="kotlin.compiler-plugins.assignment.maven"/>
     <module name="kotlin.features-trainer"/>
     <module name="kotlin.j2k.post-processing"/>
+    <module name="kotlin.j2k.old.post-processing"/>
 
     <module name="kotlin.copyright"/>
     <module name="kotlin.injection"/>

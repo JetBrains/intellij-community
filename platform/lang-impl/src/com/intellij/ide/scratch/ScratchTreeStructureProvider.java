@@ -192,14 +192,14 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       return (DataProvider)slowId -> getSlowData(slowId, selected);
     }
     return null;
   }
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Collection<AbstractTreeNode<?>> selected) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Collection<? extends AbstractTreeNode<?>> selected) {
     if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
       AbstractTreeNode<?> single = JBIterable.from(selected).single();
       if (single instanceof MyRootNode) {

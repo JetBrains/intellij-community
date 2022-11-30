@@ -4,6 +4,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.ui.CheckBoxList
+import com.intellij.ui.CheckBoxListListener
+import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.bindSelected
@@ -13,6 +15,8 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.ThreeStateCheckBox.State
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import javax.swing.BoxLayout
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -50,7 +54,7 @@ internal object SettingsSyncPanelFactory {
                   descriptor.apply()
                 }
                 .onIsModified { descriptor.isModified() }
-              val c = comment(descriptor.description)
+              val c = comment(descriptor.description).visible(!descriptor.description.isEmpty())
               val subcategoryLink = configureLink(descriptor.secondaryGroup, c.component.font.size2D) {
                 topCheckBox.state = getGroupState(descriptor)
                 descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
@@ -108,7 +112,7 @@ internal object SettingsSyncPanelFactory {
                                 onCheckBoxChange: () -> Unit) {
     val panel = JPanel(BorderLayout())
     panel.border = JBUI.Borders.empty()
-    val checkboxList = CheckBoxList<SettingsSyncSubcategoryDescriptor> { i: Int, isSelected: Boolean ->
+    val checkboxList = PluginsCheckboxList(descriptors) { i: Int, isSelected: Boolean ->
       descriptors[i].isSelected = isSelected
       onCheckBoxChange()
     }
@@ -118,5 +122,25 @@ internal object SettingsSyncPanelFactory {
     scrollPane.border = JBUI.Borders.empty(5)
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, checkboxList)
     chooserBuilder.createPopup().showUnderneathOf(owner)
+  }
+
+  private class PluginsCheckboxList(
+    val descriptors: List<SettingsSyncSubcategoryDescriptor>,
+    listener : CheckBoxListListener) : CheckBoxList<SettingsSyncSubcategoryDescriptor>(listener) {
+
+    override fun adjustRendering(rootComponent: JComponent,
+                                 checkBox: JCheckBox?,
+                                 index: Int,
+                                 selected: Boolean,
+                                 hasFocus: Boolean): JComponent {
+      if (descriptors[index].isSubGroupEnd) {
+        val itemWrapper = JPanel()
+        itemWrapper.layout = BoxLayout(itemWrapper, BoxLayout.Y_AXIS)
+        itemWrapper.add(rootComponent)
+        itemWrapper.add(SeparatorComponent(5, JBUI.CurrentTheme.Popup.separatorColor(), null))
+        return itemWrapper
+      }
+      return rootComponent
+    }
   }
 }

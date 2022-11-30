@@ -30,6 +30,8 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ActionListener
@@ -37,7 +39,6 @@ import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import javax.swing.*
 
@@ -84,6 +85,9 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     show(true)
   }
 
+  protected open val isDockWindow: Boolean
+    get() = false
+
   fun createContents() {
     val frame = getFrame()
     if (frame is JFrame) {
@@ -109,7 +113,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     val focusListener = object : WindowAdapter() {
       override fun windowOpened(e: WindowEvent) {
         val focusManager = IdeFocusManager.getInstance(project)
-        val toFocus = focusManager.getLastFocusedFor(e.window) ?: preferredFocusedComponent ?: focusManager.getFocusTargetFor(component!!)
+        val toFocus = preferredFocusedComponent ?: focusManager.getLastFocusedFor(e.window) ?: focusManager.getFocusTargetFor(component!!)
         toFocus?.requestFocusInWindow()
       }
     }
@@ -128,7 +132,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       component?.let {
-        component = CustomFrameDialogContent.getCustomContentHolder(frame, it)
+        component = CustomFrameDialogContent.getCustomContentHolder(window = frame, content = it, isForDockContainerProvider = isDockWindow)
       }
     }
 
@@ -295,7 +299,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
 
     init {
       FrameState.setFrameStateListener(this)
-      glassPane = IdeGlassPaneImpl(getRootPane(), true)
+      glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
       if (SystemInfoRt.isMac && !(SystemInfo.isMacSystemMenu && java.lang.Boolean.getBoolean("mac.system.menu.singleton"))) {
         jMenuBar = IdeMenuBar.createMenuBar()
 
@@ -306,7 +310,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
 
     override fun isInFullScreen() = false
 
-    override fun toggleFullScreen(state: Boolean): CompletableFuture<*> = CompletableFuture.completedFuture(null)
+    override fun toggleFullScreen(state: Boolean): Job = CompletableDeferred(value = Unit)
 
     override fun addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {

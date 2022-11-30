@@ -54,6 +54,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID);
   public static final String JAVA_RESOURCE_ROOT_ID = "java-resource";
   public static final String JAVA_TEST_RESOURCE_ROOT_ID = "java-test-resource";
+  public static final String PRODUCTION_MODULE_NAME_ATTRIBUTE = "production-module";
 
   @Override
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
@@ -65,7 +66,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
     Element testModuleProperties = JDomSerializationUtil.findComponent(rootElement, "TestModuleProperties");
     if (testModuleProperties != null) {
-      String productionModuleName = testModuleProperties.getAttributeValue("production-module");
+      String productionModuleName = testModuleProperties.getAttributeValue(PRODUCTION_MODULE_NAME_ATTRIBUTE);
       if (productionModuleName != null) {
         getService().setTestModuleProperties(module, JpsElementFactory.getInstance().createModuleReference(productionModuleName));
       }

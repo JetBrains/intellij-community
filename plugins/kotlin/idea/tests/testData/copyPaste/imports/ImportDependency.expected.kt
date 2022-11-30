@@ -19,6 +19,6 @@ fun f(a: A, t: T) {
     E.ENTRY
 }
 
-fun f2(i: Outer.Inner, n: Outer.Nested, e: Outer.NestedEnum, o: Outer.NestedObj, t: Outer.NestedTrait, a: Outer.NestedAnnotation) {
+fun f2(i: Outer.Inner, n: Outer.Nested, e: Outer.NestedEnum, o: Outer.NestedObj, t: Outer.NestedInterface, a: Outer.NestedAnnotation) {
     ClassObject
 }

@@ -30,9 +30,11 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
 
   override fun createFilters(viewScope: CoroutineScope): List<JComponent> = listOf(
     DropDownComponentFactory(vm.stateFilterState)
-      .create(viewScope, GithubBundle.message("pull.request.list.filter.state"),
-              GHPRListSearchValue.State.values().asList(),
-              ::getShortText),
+      .create(viewScope,
+              filterName = GithubBundle.message("pull.request.list.filter.state"),
+              items = GHPRListSearchValue.State.values().asList(),
+              onSelect = {},
+              valuePresenter = ::getShortText),
     DropDownComponentFactory(vm.authorFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point, popupState ->
         showAsyncChooserPopup(point, popupState, { vm.getAuthors() }) {
@@ -52,11 +54,12 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
         }?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)
-      .create(viewScope, GithubBundle.message("pull.request.list.filter.review"),
-              GHPRListSearchValue.ReviewState.values().asList(),
-              ::getShortText) {
-        PopupItemPresentation.Simple(getFullText(it))
-      }
+      .create(viewScope,
+              filterName = GithubBundle.message("pull.request.list.filter.review"),
+              items = GHPRListSearchValue.ReviewState.values().asList(),
+              onSelect = {},
+              valuePresenter = ::getShortText,
+              popupItemPresenter = { PopupItemPresentation.Simple(getFullText(it)) })
   )
 
   override fun GHPRListQuickFilter.getQuickFilterTitle(): String = when (this) {

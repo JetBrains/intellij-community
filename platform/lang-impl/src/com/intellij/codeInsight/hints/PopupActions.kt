@@ -6,9 +6,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.codeInsight.hints.settings.Diff
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
+import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
@@ -88,8 +88,7 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String
   val selectedLanguage = (info as? MethodInfo)?.language ?: fileLanguage
 
   when (val pattern = getPattern(info)) {
-    null -> InlayHintsConfigurable.showSettingsDialogForLanguage(file.project, fileLanguage,
-                                                                 Predicate { it is ParameterInlayProviderSettingsModel })
+    null -> showInlaySettings(file.project, fileLanguage, Predicate { it is ParameterInlayProviderSettingsModel })
     else -> ExcludeListDialog(selectedLanguage, pattern).show()
   }
 }

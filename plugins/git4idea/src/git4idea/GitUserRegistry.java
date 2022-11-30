@@ -49,21 +49,26 @@ public final class GitUserRegistry implements Disposable, VcsMappingListener {
   public @Nullable VcsUser getOrReadUser(@NotNull VirtualFile root) {
     VcsUser user = myUserMap.get(root);
     if (user == null) {
-      try {
-        user = readCurrentUser(myProject, root);
-        if (user != null) {
-          myUserMap.put(root, user);
-        }
-      }
-      catch (VcsException e) {
-        LOG.warn("Could not retrieve user name in " + root, e);
+      user = readUser(root);
+      if (user != null) {
+        myUserMap.put(root, user);
       }
     }
     return user;
   }
 
+  public @Nullable VcsUser readUser(@NotNull VirtualFile root) {
+    try {
+      return readCurrentUser(myProject, root);
+    }
+    catch (VcsException e) {
+      LOG.warn("Could not retrieve user name in " + root, e);
+      return null;
+    }
+  }
+
   private static @Nullable VcsUser readCurrentUser(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    String userName = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
+    String userName = StringUtil.nullize(GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME));
     String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL));
     return userName == null ? null : project.getService(VcsLogObjectsFactory.class).createUser(userName, userEmail);
   }

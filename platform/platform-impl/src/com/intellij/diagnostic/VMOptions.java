@@ -197,7 +197,7 @@ public final class VMOptions {
   /**
    * Sets or deletes multiple options in one pass. See {@link #setOption(String, String)} for details.
    */
-  public static void setOptions(@NotNull List<Pair<@NotNull String, @Nullable String>> _options) throws IOException {
+  public static void setOptions(@NotNull List<? extends Pair<@NotNull String, @Nullable String>> _options) throws IOException {
     Path file = getUserOptionsFile();
     if (file == null) {
       throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ')');

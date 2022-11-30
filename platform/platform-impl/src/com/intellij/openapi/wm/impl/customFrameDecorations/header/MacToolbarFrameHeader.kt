@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
-import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
@@ -25,8 +26,8 @@ private const val GAP_FOR_BUTTONS = 80
 private const val DEFAULT_HEADER_HEIGHT = 40
 
 internal class MacToolbarFrameHeader(private val frame: JFrame,
-                                     private val root: JRootPane,
-                                     private val ideMenu: IdeMenuBar) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
+                                     private val root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
+  private val ideMenu: IdeMenuBar = IdeMenuBar()
   private var toolbar: MainToolbar?
 
   init {
@@ -50,31 +51,19 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     return toolbar
   }
 
-  override fun initToolbar() {
-    var tb = toolbar
-    if (tb == null) {
-      tb = createToolBar()
-      toolbar = tb
-    }
-    tb.init((frame as? IdeFrame)?.project)
+  override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
+    toolbar?.init(toolbarActionGroups)
   }
 
   override fun updateToolbar() {
-    removeToolbar()
-
-    val toolbar = createToolBar()
+    var toolbar = toolbar ?: return
+    remove(toolbar)
+    toolbar = createToolBar()
     this.toolbar = toolbar
-    toolbar.init((frame as? IdeFrame)?.project)
+    toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
 
     revalidate()
     updateCustomDecorationHitTestSpots()
-  }
-
-  override fun removeToolbar() {
-    val toolbar = toolbar ?: return
-    this.toolbar = null
-    remove(toolbar)
-    revalidate()
   }
 
   override fun windowStateChanged() {

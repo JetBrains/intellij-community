@@ -1,12 +1,14 @@
 import sys
 from _typeshed import StrOrBytesPath
 from asyncio.events import AbstractEventLoop
+from collections.abc import Sequence
 from os import stat_result
-from typing import Any, Sequence, Union, overload
+from typing import Any, overload
+from typing_extensions import TypeAlias
 
 from . import ospath as path
 
-_FdOrAnyPath = Union[int, StrOrBytesPath]
+_FdOrAnyPath: TypeAlias = int | StrOrBytesPath
 
 async def stat(
     path: _FdOrAnyPath,  # noqa: F811
@@ -43,7 +45,7 @@ async def mkdir(
     *,
     dir_fd: int | None = ...,
     loop: AbstractEventLoop | None = ...,
-    executor: Any = ...,  # noqa: F811
+    executor: Any = ...,
 ) -> None: ...
 async def makedirs(
     name: StrOrBytesPath, mode: int = ..., exist_ok: bool = ..., *, loop: AbstractEventLoop | None = ..., executor: Any = ...

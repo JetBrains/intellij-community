@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.ElementStatusTracker;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
@@ -118,10 +120,16 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     int offset = myEditor.getCaretModel().getOffset();
     Object o1 = findAcceptableElement(file.getViewProvider().findElementAt(offset, file.getLanguage()));
     Object o2 = offset == 0 ? o1 : findAcceptableElement(file.getViewProvider().findElementAt(offset - 1, file.getLanguage()));
-    if (o1 != o2 && o1 instanceof PsiElement && o2 instanceof PsiElement) {
-      if (PsiTreeUtil.isAncestor((PsiElement)o1, (PsiElement)o2, false)) return o2;
-    }
+    if (o1 != o2 && o1 instanceof PsiElement e1 && o2 instanceof PsiElement e2 && PsiTreeUtil.isAncestor(e1, e2, false)) return o2;
     return o1;
+  }
+
+  @Override
+  public @NotNull FileStatus getElementStatus(Object element) {
+    if (myEditor == null || myPsiFile == null) return FileStatus.NOT_CHANGED;
+    if (!(element instanceof PsiElement psiElement)) return FileStatus.NOT_CHANGED;
+    if (psiElement.getContainingFile() != myPsiFile) return FileStatus.NOT_CHANGED;
+    return ElementStatusTracker.getInstance(myPsiFile.getProject()).getElementStatus(psiElement);
   }
 
   protected @Nullable Object findAcceptableElement(PsiElement element) {

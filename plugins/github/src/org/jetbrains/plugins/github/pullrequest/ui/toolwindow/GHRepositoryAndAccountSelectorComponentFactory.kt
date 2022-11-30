@@ -63,8 +63,8 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
         }
       }.apply {
 
-        bindVisibility(scope, vm.githubLoginAvailableState)
         autoHideOnDisable = false
+        bindVisibility(scope, vm.githubLoginAvailableState)
         bindDisabled(scope, vm.busyState)
       },
       JButton(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")).apply {

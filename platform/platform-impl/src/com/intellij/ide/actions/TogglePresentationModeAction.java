@@ -17,10 +17,11 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import kotlin.Unit;
+import kotlinx.coroutines.CompletableDeferredKt;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Konstantin Bulenkov
@@ -62,18 +63,19 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
       return null;
     });
 
-    CompletableFuture<?> callback = project == null ? CompletableFuture.completedFuture(null) : tweakFrameFullScreen(project, inPresentation);
-    callback.whenComplete((o, throwable) -> {
+    Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
+    callback.invokeOnCompletion(__ -> {
       if (layoutStored) {
         restoreToolWindows(project, inPresentation);
       }
+      return Unit.INSTANCE;
     });
   }
 
-  private static CompletableFuture<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
+  private static @NotNull Job tweakFrameFullScreen(Project project, boolean inPresentation) {
     ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(IdeFrameImpl.getActiveFrame());
     if (frame == null) {
-      return CompletableFuture.completedFuture(null);
+      return CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE);
     }
 
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
@@ -85,7 +87,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
       final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
       return frame.toggleFullScreen("true".equalsIgnoreCase(value));
     }
-    return CompletableFuture.completedFuture(null);
+    return CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE);
   }
 
   private static boolean hideAllToolWindows(@NotNull ToolWindowManagerEx manager) {

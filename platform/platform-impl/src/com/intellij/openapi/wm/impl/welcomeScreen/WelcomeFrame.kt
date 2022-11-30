@@ -152,6 +152,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       }
 
       // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
+      @Suppress("DEPRECATION")
       ApplicationManager.getApplication().coroutineScope.launch {
         ActionManager.getInstance()
         if (SystemInfoRt.isMac) {
@@ -163,10 +164,12 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
         if (instance != null) {
           return@Runnable
         }
-        val frame = EP.computeSafeIfAny(WelcomeFrameProvider::createFrame)
+
+        val frame = EP.lazySequence().mapNotNull { it.createFrame() }.firstOrNull()
                     ?: throw IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point")
         val jFrame = frame as JFrame
         registerKeyboardShortcuts(jFrame.rootPane)
+        SplashManager.hideBeforeShow(jFrame)
         jFrame.isVisible = true
         IdeMenuBar.installAppMenuIfNeeded(jFrame)
         instance = frame
@@ -194,6 +197,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       }
 
       val show = prepareToShow() ?: return
+      @Suppress("DEPRECATION")
       app.coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
         val windowManager = WindowManager.getInstance() as WindowManagerImpl
         windowManager.disposeRootFrame()

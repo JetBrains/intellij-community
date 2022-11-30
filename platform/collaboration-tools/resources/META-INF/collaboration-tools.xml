@@ -1,5 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <iconMapper mappingFile="CollaborationToolsMappings.json"/>
+    <iconMapper mappingFile="CollaborationToolsIconMappings.json"/>
   </extensions>
 </idea-plugin>

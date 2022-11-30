@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,7 +7,6 @@ import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SlowOperations;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -37,18 +36,16 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     }
     XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    return SlowOperations.allowSlowOperations(() -> {
-      for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
-        for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
-          final VirtualFile file = position.getFile();
-          final int line = position.getLine();
-          if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
-            return true;
-          }
+    for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
+      for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
+        final VirtualFile file = position.getFile();
+        final int line = position.getLine();
+        if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
+          return true;
         }
       }
-      return false;
-    });
+    }
+    return false;
   }
 
   @Override

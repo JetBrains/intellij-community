@@ -69,7 +69,7 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
         fun applyTo(referenceExpression: KtNameReferenceExpression, fqName: FqName): KtElement {
             val qualifier = fqName.parent().quoteSegmentsIfNeeded()
             return referenceExpression.project.executeWriteCommand(KotlinBundle.message("add.full.qualifier"), groupId = null) {
-                val psiFactory = KtPsiFactory(referenceExpression)
+                val psiFactory = KtPsiFactory(referenceExpression.project)
                 when (val parent = referenceExpression.parent) {
                     is KtCallableReferenceExpression -> addOrReplaceQualifier(psiFactory, parent, qualifier)
                     is KtCallExpression -> replaceExpressionWithDotQualifier(psiFactory, parent, qualifier)

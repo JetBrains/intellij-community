@@ -699,7 +699,7 @@ public final class UIUtil {
   public static @NotNull Font getFont(@NotNull FontSize size, @Nullable Font base) {
     if (base == null) base = StartupUiUtil.getLabelFont();
 
-    return base.deriveFont(getFontSize(size));
+    return JBFont.create(base).deriveFont(getFontSize(size));
   }
 
   public static float getFontSize(@NotNull FontSize size) {
@@ -3499,5 +3499,17 @@ public final class UIUtil {
   public static boolean isXServerOnWindows() {
     // This is heuristics to detect using Cygwin/X or other build of X.Org server on Windows in a WSL 2 environment
     return SystemInfo.isXWindow && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
+  }
+
+  public static void applyDeprecatedBackground(@NotNull JComponent component) {
+    Color color = getDeprecatedBackground();
+    if (color != null) {
+      component.setBackground(color);
+      component.setOpaque(true);
+    }
+  }
+
+  private static @Nullable Color getDeprecatedBackground() {
+    return Registry.getColor("ui.deprecated.components.color", null);
   }
 }

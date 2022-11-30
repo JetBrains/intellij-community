@@ -17,7 +17,6 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -72,8 +71,8 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
 
   public void testOptimizeAndReformatOnlySelectedFiles() throws IOException {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
-    List<PsiFile> forProcessing = ContainerUtil.newArrayList(files.get(0), files.get(1));
-    List<PsiFile> noProcessing = ContainerUtil.newArrayList(files.get(2), files.get(3));
+    List<PsiFile> forProcessing = List.of(files.get(0), files.get(1));
+    List<PsiFile> noProcessing = List.of(files.get(2), files.get(3));
 
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
@@ -89,7 +88,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     List<PsiFile> files = createTestFiles(srcDir, classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
-    performReformatActionOnModule(module, ContainerUtil.newArrayList(srcDir));
+    performReformatActionOnModule(module, List.of(srcDir));
 
     checkFormationAndImportsOptimizationFor(files);
   }

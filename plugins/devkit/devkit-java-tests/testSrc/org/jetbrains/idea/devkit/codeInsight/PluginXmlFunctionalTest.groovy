@@ -722,7 +722,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testExtensionPointNameValidity() {
-    doHighlightingTest(getTestName(true) + ".xml")
+    doHighlightingTestWithWeakWarnings(getTestName(true) + ".xml")
   }
 
   void testExtensionPointValidity() {
@@ -863,10 +863,14 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.testHighlighting(true, false, false, filePaths)
   }
 
+  private void doHighlightingTestWithWeakWarnings(String... filePaths) {
+    myFixture.testHighlighting(true, false, true, filePaths)
+  }
+
   private static void assertLookupElement(LookupElement[] variants, String lookupText, String tailText, String typeText) {
     LookupElement lookupElement = variants.find { it.lookupString == lookupText }
     assertNotNull(toString(variants, "\n"), lookupElement)
-    
+
     def presentation = new LookupElementPresentation()
     lookupElement.renderElement(presentation)
 

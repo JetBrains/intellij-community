@@ -98,7 +98,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
 
     private fun coerceBoxing(value: Value?, type: AsmType): Result? {
         when {
-            value == null -> return Result(value)
+            value == null -> return Result(null)
             type == AsmType.VOID_TYPE -> return Result(context.vm.mirrorOfVoid())
             type.isBoxedType -> {
                 if (value.asmType().isBoxedType) {

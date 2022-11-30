@@ -72,8 +72,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   private boolean myHasMergeCommits = false;
   @NotNull private final List<Change> myChanges = new ArrayList<>();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new LinkedHashMap<>();
-  @Nullable private Collection<FilePath> myAffectedPaths;
-  @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
+  private @Nullable Collection<? extends FilePath> myAffectedPaths;
+  private @NotNull Consumer<? super StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   @Nullable private DiffPreviewController myEditorDiffPreviewController;
@@ -182,7 +182,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     updateModel(() -> myUpdateEmptyText = text -> text.setText(""));
   }
 
-  public void showText(@NotNull Consumer<StatusText> statusTextConsumer) {
+  public void showText(@NotNull Consumer<? super StatusText> statusTextConsumer) {
     updateModel(() -> myUpdateEmptyText = statusTextConsumer);
   }
 
@@ -192,7 +192,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     myUpdateEmptyText.accept(myViewer.getEmptyText());
   }
 
-  public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
+  public void setAffectedPaths(@Nullable Collection<? extends FilePath> paths) {
     myAffectedPaths = paths;
     myUpdateEmptyText.accept(myViewer.getEmptyText());
     myViewer.rebuildTree();
@@ -284,7 +284,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   }
 
   @NotNull
-  private List<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
+  private List<Change> collectAffectedChanges(@NotNull Collection<? extends Change> changes) {
     if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) return new ArrayList<>(changes);
     return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
       if (filePath.isDirectory()) {
@@ -350,7 +350,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return super.getData(dataId);
   }
 
-  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull Set<VirtualFile> roots, @NotNull VcsTreeModelData selectedData) {
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull Set<? extends VirtualFile> roots, @NotNull VcsTreeModelData selectedData) {
     if (VcsDataKeys.VCS.is(dataId)) {
       AbstractVcs rootsVcs = JBIterable.from(roots)
         .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))

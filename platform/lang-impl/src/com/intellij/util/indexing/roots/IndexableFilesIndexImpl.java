@@ -139,7 +139,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     @NotNull
     private static IndexableSetIterableOrigin patchOriginIfNeeded(@NotNull IndexableSetIterableOrigin origin,
                                                                   @NotNull NonWorkspaceModelSnapshot snapshot,
-                                                                  @NotNull Set<VirtualFile> excludedModuleFilesFromPolicies) {
+                                                                  @NotNull Set<? extends VirtualFile> excludedModuleFilesFromPolicies) {
       if (origin instanceof SdkIterableOriginImpl) {
         List<VirtualFile> excludedRootsForSdk = new ArrayList<>();
         for (Function<Sdk, List<VirtualFile>> exclusionFunction : snapshot.sdkExclusionFunctions) {
@@ -339,7 +339,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
 
-    public void updateWorkspaceSnapshot(Function<@NotNull WorkspaceModelSnapshot, @Nullable WorkspaceModelSnapshot> updater) {
+    public void updateWorkspaceSnapshot(Function<? super @NotNull WorkspaceModelSnapshot, @Nullable WorkspaceModelSnapshot> updater) {
       WorkspaceModelSnapshot status;
       int counter;
       while (true) {
@@ -358,7 +358,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
 
-    public void updateNonWorkspaceSnapshot(Function<@Nullable NonWorkspaceModelSnapshot, @Nullable NonWorkspaceModelSnapshot> updater) {
+    public void updateNonWorkspaceSnapshot(Function<? super @Nullable NonWorkspaceModelSnapshot, @Nullable NonWorkspaceModelSnapshot> updater) {
       NonWorkspaceModelSnapshot snapshot;
       int snapshotModificationCounter;
       while (true) {
@@ -383,7 +383,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       updateSnapshots(snapshots -> snapshots.copyWithNonWorkspaceSnapshot(null));
     }
 
-    private void updateSnapshots(@NotNull Function<Snapshots, Snapshots> updater) {
+    private void updateSnapshots(@NotNull Function<? super Snapshots, Snapshots> updater) {
       Snapshots snapshots;
       while (true) {
         synchronized (LOCK) {

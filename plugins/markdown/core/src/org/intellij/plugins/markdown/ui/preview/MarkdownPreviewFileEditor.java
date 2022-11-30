@@ -34,12 +34,13 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 public final class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private static final long PARSING_CALL_TIMEOUT_MS = 50L;
   private static final long RENDERING_DELAY_MS = 20L;
-  public static final Key<MarkdownHtmlPanel> PREVIEW_BROWSER = Key.create("PREVIEW_BROWSER");
+  public static final Key<WeakReference<MarkdownHtmlPanel>> PREVIEW_BROWSER = Key.create("PREVIEW_BROWSER");
 
   private final Project myProject;
   private final VirtualFile myFile;
@@ -288,7 +289,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     if (myHtmlPanelWrapper.isShowing()) myHtmlPanelWrapper.validate();
     myHtmlPanelWrapper.repaint();
     myLastRenderedHtml = "";
-    this.putUserData(PREVIEW_BROWSER, myPanel);
+    this.putUserData(PREVIEW_BROWSER, new WeakReference<>(myPanel));
     updateHtmlPooled();
   }
 

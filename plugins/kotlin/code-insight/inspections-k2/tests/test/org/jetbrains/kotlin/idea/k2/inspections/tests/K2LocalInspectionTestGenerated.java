@@ -251,6 +251,179 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate")
+    public static class EnumValuesSoftDeprecate extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("arrayAccessOperator.kt")
+        public void testArrayAccessOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/arrayAccessOperator.kt");
+        }
+
+        @TestMetadata("arrayAccessOperatorInBinaryExpression.kt")
+        public void testArrayAccessOperatorInBinaryExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/arrayAccessOperatorInBinaryExpression.kt");
+        }
+
+        @TestMetadata("arrayAssignOperator.kt")
+        public void testArrayAssignOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/arrayAssignOperator.kt");
+        }
+
+        @TestMetadata("arrayGetMethod.kt")
+        public void testArrayGetMethod() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/arrayGetMethod.kt");
+        }
+
+        @TestMetadata("arrayMethodNonSuitableForList.kt")
+        public void testArrayMethodNonSuitableForList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/arrayMethodNonSuitableForList.kt");
+        }
+
+        @TestMetadata("arraySizeMethod.kt")
+        public void testArraySizeMethod() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/arraySizeMethod.kt");
+        }
+
+        @TestMetadata("asListCall.kt")
+        public void testAsListCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/asListCall.kt");
+        }
+
+        @TestMetadata("callInsideEnumWithCast.kt")
+        public void testCallInsideEnumWithCast() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/callInsideEnumWithCast.kt");
+        }
+
+        @TestMetadata("callInsideEnumWithoutCast.kt")
+        public void testCallInsideEnumWithoutCast() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/callInsideEnumWithoutCast.kt");
+        }
+
+        @TestMetadata("callWithQualifiedClassName.kt")
+        public void testCallWithQualifiedClassName() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/callWithQualifiedClassName.kt");
+        }
+
+        @TestMetadata("equalsCheck.kt")
+        public void testEqualsCheck() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/equalsCheck.kt");
+        }
+
+        @TestMetadata("explicitTypeInGeneric.kt")
+        public void testExplicitTypeInGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/explicitTypeInGeneric.kt");
+        }
+
+        @TestMetadata("extensionMethodNonSutableForList.kt")
+        public void testExtensionMethodNonSutableForList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/extensionMethodNonSutableForList.kt");
+        }
+
+        @TestMetadata("extensionMethodSuitableForList.kt")
+        public void testExtensionMethodSuitableForList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/extensionMethodSuitableForList.kt");
+        }
+
+        @TestMetadata("featureDisabled.kt")
+        public void testFeatureDisabled() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/featureDisabled.kt");
+        }
+
+        @TestMetadata("forLoop.kt")
+        public void testForLoop() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/forLoop.kt");
+        }
+
+        @TestMetadata("functionWithGenericArg.kt")
+        public void testFunctionWithGenericArg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithGenericArg.kt");
+        }
+
+        @TestMetadata("functionWithOverrideForList.kt")
+        public void testFunctionWithOverrideForList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithOverrideForList.kt");
+        }
+
+        @TestMetadata("functionWithoutOverrideForList.kt")
+        public void testFunctionWithoutOverrideForList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithoutOverrideForList.kt");
+        }
+
+        @TestMetadata("listOfCallOnArray.kt")
+        public void testListOfCallOnArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/listOfCallOnArray.kt");
+        }
+
+        @TestMetadata("listOfCallOnVararg.kt")
+        public void testListOfCallOnVararg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/listOfCallOnVararg.kt");
+        }
+
+        @TestMetadata("listOfCallWithTwoArguments.kt")
+        public void testListOfCallWithTwoArguments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/listOfCallWithTwoArguments.kt");
+        }
+
+        @TestMetadata("methodReferenceNonSuitableForList.kt")
+        public void testMethodReferenceNonSuitableForList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/methodReferenceNonSuitableForList.kt");
+        }
+
+        @TestMetadata("methodReferenceSuitableForList.kt")
+        public void testMethodReferenceSuitableForList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/methodReferenceSuitableForList.kt");
+        }
+
+        @TestMetadata("noOptIn.kt")
+        public void testNoOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/noOptIn.kt");
+        }
+
+        @TestMetadata("objectMethod.kt")
+        public void testObjectMethod() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/objectMethod.kt");
+        }
+
+        @TestMetadata("propertyAssignment.kt")
+        public void testPropertyAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/propertyAssignment.kt");
+        }
+
+        @TestMetadata("qualifiedCallNoContext.kt")
+        public void testQualifiedCallNoContext() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/qualifiedCallNoContext.kt");
+        }
+
+        @TestMetadata("staticImport.kt")
+        public void testStaticImport() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/staticImport.kt");
+        }
+
+        @TestMetadata("staticImportReplaceWithoutCast.kt")
+        public void testStaticImportReplaceWithoutCast() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/staticImportReplaceWithoutCast.kt");
+        }
+
+        @TestMetadata("staticImportWithAlias.kt")
+        public void testStaticImportWithAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/staticImportWithAlias.kt");
+        }
+
+        @TestMetadata("toListCall.kt")
+        public void testToListCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/toListCall.kt");
+        }
+
+        @TestMetadata("valuesMethodReference.kt")
+        public void testValuesMethodReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/valuesMethodReference.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
     public static class ReplaceGetOrSet extends AbstractK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1219,6 +1392,252 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse")
+    public abstract static class WhenWithOnlyElse extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable")
+        public abstract static class SubjectVariable extends AbstractK2LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse")
+            public static class BlockElse extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("multiReference.kt")
+                public void testMultiReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse/multiReference.kt");
+                }
+
+                @TestMetadata("noReference.kt")
+                public void testNoReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse/noReference.kt");
+                }
+
+                @TestMetadata("noReference2.kt")
+                public void testNoReference2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse/noReference2.kt");
+                }
+
+                @TestMetadata("singleReference.kt")
+                public void testSingleReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse/singleReference.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression")
+            public static class BlockElseUsedAsExpression extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("multiReference.kt")
+                public void testMultiReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression/multiReference.kt");
+                }
+
+                @TestMetadata("noReference.kt")
+                public void testNoReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression/noReference.kt");
+                }
+
+                @TestMetadata("noReference2.kt")
+                public void testNoReference2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression/noReference2.kt");
+                }
+
+                @TestMetadata("singleReference.kt")
+                public void testSingleReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression/singleReference.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse")
+            public static class SingleElse extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("multiReference.kt")
+                public void testMultiReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/multiReference.kt");
+                }
+
+                @TestMetadata("multiReferenceUsedAsExpression.kt")
+                public void testMultiReferenceUsedAsExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/multiReferenceUsedAsExpression.kt");
+                }
+
+                @TestMetadata("noReference.kt")
+                public void testNoReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/noReference.kt");
+                }
+
+                @TestMetadata("noReference2.kt")
+                public void testNoReference2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/noReference2.kt");
+                }
+
+                @TestMetadata("noReferenceUsedAsExpression.kt")
+                public void testNoReferenceUsedAsExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/noReferenceUsedAsExpression.kt");
+                }
+
+                @TestMetadata("noReferenceUsedAsExpression2.kt")
+                public void testNoReferenceUsedAsExpression2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/noReferenceUsedAsExpression2.kt");
+                }
+
+                @TestMetadata("singleReference.kt")
+                public void testSingleReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/singleReference.kt");
+                }
+
+                @TestMetadata("singleReferenceUsedAsExpression.kt")
+                public void testSingleReferenceUsedAsExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/singleReferenceUsedAsExpression.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable")
+            public static class Uncategorized extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("hasAnnotation.kt")
+                public void testHasAnnotation() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasAnnotation.kt");
+                }
+
+                @TestMetadata("hasSameNameVariable.kt")
+                public void testHasSameNameVariable() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasSameNameVariable.kt");
+                }
+
+                @TestMetadata("hasSameNameVariable2.kt")
+                public void testHasSameNameVariable2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasSameNameVariable2.kt");
+                }
+
+                @TestMetadata("hasSameNameVariable3.kt")
+                public void testHasSameNameVariable3() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasSameNameVariable3.kt");
+                }
+
+                @TestMetadata("hasSameNameVariable4.kt")
+                public void testHasSameNameVariable4() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasSameNameVariable4.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse")
+        public static class Uncategorized extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexExpression.kt")
+            public void testComplexExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/complexExpression.kt");
+            }
+
+            @TestMetadata("emptyElseBranchBlock.kt")
+            public void testEmptyElseBranchBlock() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/emptyElseBranchBlock.kt");
+            }
+
+            @TestMetadata("hasOtherBranches.kt")
+            public void testHasOtherBranches() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/hasOtherBranches.kt");
+            }
+
+            @TestMetadata("notExpression.kt")
+            public void testNotExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/notExpression.kt");
+            }
+
+            @TestMetadata("simpleExpression.kt")
+            public void testSimpleExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/simpleExpression.kt");
+            }
+
+            @TestMetadata("userKotlinDotRun.kt")
+            public void testUserKotlinDotRun() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/userKotlinDotRun.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode")
+    public static class EqualsOrHashCode extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equals.kt");
+        }
+
+        @TestMetadata("equalsInExpectClass.kt")
+        public void testEqualsInExpectClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsInExpectClass.kt");
+        }
+
+        @TestMetadata("equalsWithKotlinAnyParam.kt")
+        public void testEqualsWithKotlinAnyParam() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinAnyParam.kt");
+        }
+
+        @TestMetadata("equalsWithKotlinAnyParam2.kt")
+        public void testEqualsWithKotlinAnyParam2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinAnyParam2.kt");
+        }
+
+        @TestMetadata("equalsWithKotlinBoolean.kt")
+        public void testEqualsWithKotlinBoolean() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinBoolean.kt");
+        }
+
+        @TestMetadata("hashCode.kt")
+        public void testHashCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/hashCode.kt");
+        }
+
+        @TestMetadata("hashCodeInChildClass.kt")
+        public void testHashCodeInChildClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/hashCodeInChildClass.kt");
+        }
+
+        @TestMetadata("hashCodeInExpectClass.kt")
+        public void testHashCodeInExpectClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/hashCodeInExpectClass.kt");
+        }
+
+        @TestMetadata("inheritClassWithTypeParam.kt")
+        public void testInheritClassWithTypeParam() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/inheritClassWithTypeParam.kt");
+        }
+
+        @TestMetadata("inheritUserDefinedClassAny.kt")
+        public void testInheritUserDefinedClassAny() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/inheritUserDefinedClassAny.kt");
+        }
+
+        @TestMetadata("superClassWithDifferentEquals.kt")
+        public void testSuperClassWithDifferentEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/superClassWithDifferentEquals.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -1615,6 +2034,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/divSanityTest.kt");
             }
 
+            @TestMetadata("doubleFloat.kt")
+            public void testDoubleFloat() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/doubleFloat.kt");
+            }
+
             @TestMetadata("dynamicEquals.kt")
             public void testDynamicEquals() throws Exception {
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/dynamicEquals.kt");
@@ -1638,6 +2062,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("equalsDoubleSmartCast.kt")
             public void testEqualsDoubleSmartCast() throws Exception {
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsDoubleSmartCast.kt");
+            }
+
+            @TestMetadata("equalsDoubleSmartCast2.kt")
+            public void testEqualsDoubleSmartCast2() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsDoubleSmartCast2.kt");
+            }
+
+            @TestMetadata("equalsDoubleSmartCast3.kt")
+            public void testEqualsDoubleSmartCast3() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsDoubleSmartCast3.kt");
             }
 
             @TestMetadata("equalsDoubleSmartCastFromGeneric.kt")

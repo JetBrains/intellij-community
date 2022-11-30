@@ -117,7 +117,7 @@ log "Signing whole app..."
 
 ditto -xk "$SIT_FILE" "$(dirname "$APP_DIRECTORY")"
 rm -rf "$SIT_FILE"
-codesign --verify --verbose "$APP_DIRECTORY"
+codesign --verify --deep --strict --verbose "$APP_DIRECTORY"
 
 log "Verifying java is not broken"
 find "$APP_DIRECTORY" \

@@ -20,20 +20,12 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     private val whitelist : Set<String> = setOf(
-        // TODO: multiResolve, getArgumentForParameter
-        "MultiResolve",
-        // TODO: multiResolve, getArgumentForParameter
-        "MultiResolveJava",
-        // TODO: multiResolve, getArgumentForParameter, return type for ambiguous call
+        // TODO: return type for ambiguous call
         "MultiResolveJavaAmbiguous",
-        // TODO: multiResolve
-        "MultiResolveInClass",
-        // TODO: multiResolve, return type for ambiguous call
+        // TODO: return type for ambiguous call
         "MultiConstructorResolve",
         // TODO: multiResolve
         "MultiInvokableObjectResolve",
-        // TODO: multiResolve
-        "MultiResolveJvmOverloads",
         // TODO: resolve annotation param to annotation ctor ??
         "ResolveCompiledAnnotation",
     )

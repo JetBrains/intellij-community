@@ -38,6 +38,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/commentsOnProperties.kt");
     }
 
+    @TestMetadata("companionInAnnotation.kt")
+    public void testCompanionInAnnotation() throws Exception {
+        runTest("testData/declaration/companionInAnnotation.kt");
+    }
+
     @TestMetadata("constructorProperties.kt")
     public void testConstructorProperties() throws Exception {
         runTest("testData/declaration/constructorProperties.kt");

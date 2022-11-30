@@ -24,7 +24,7 @@ import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
-import java.nio.file.InvalidPathException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -276,15 +276,22 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir) {
     try {
-      var result = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
-      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, attrs) -> {
-        var fsuAttrs = attrs != null ? copyWithCustomTimestamp(file, FileAttributes.fromNio(file, attrs)) : null;
-        result.put(file.getFileName().toString(), fsuAttrs);
+      var list = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
+
+      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, result) -> {
+        try {
+          var attrs = copyWithCustomTimestamp(file, FileAttributes.fromNio(file, result.get()));
+          list.put(file.getFileName().toString(), attrs);
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
         return true;
       });
-      return result;
+
+      return list;
     }
-    catch (InvalidPathException | SecurityException e) {
+    catch (IOException | RuntimeException e) {
       LOG.warn(e);
       return Map.of();
     }

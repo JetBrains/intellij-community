@@ -27711,10 +27711,10 @@
     <option name="tabs" path="Tabs and Indents" hit="Tabs and Indents" />
     <option name="case" path="Code Conversion" hit="Upper case" />
     <option name="upper" path="Code Conversion" hit="Upper case" />
-    <option name="class" path="PHPDoc" hit="Use fully-qualified class names" />
-    <option name="fully-qualified" path="PHPDoc" hit="Use fully-qualified class names" />
-    <option name="names" path="PHPDoc" hit="Use fully-qualified class names" />
-    <option name="use" path="PHPDoc" hit="Use fully-qualified class names" />
+    <option name="class" path="PHPDoc" hit="Use fully qualified class names" />
+    <option name="fully-qualified" path="PHPDoc" hit="Use fully qualified class names" />
+    <option name="names" path="PHPDoc" hit="Use fully qualified class names" />
+    <option name="use" path="PHPDoc" hit="Use fully qualified class names" />
     <option name="character" path="Tabs and Indents" hit="Use tab character" />
     <option name="tab" path="Tabs and Indents" hit="Use tab character" />
     <option name="use" path="Tabs and Indents" hit="Use tab character" />
@@ -34343,14 +34343,14 @@
     <option name="append" hit="Append default children" />
     <option name="children" hit="Append default children" />
     <option name="default" hit="Append default children" />
-    <option name="apply" hit="Apply renderer to objects of type (fully-qualified name):" />
-    <option name="fully-qualified" hit="Apply renderer to objects of type (fully-qualified name):" />
-    <option name="name" hit="Apply renderer to objects of type (fully-qualified name):" />
-    <option name="objects" hit="Apply renderer to objects of type (fully-qualified name):" />
-    <option name="of" hit="Apply renderer to objects of type (fully-qualified name):" />
-    <option name="renderer" hit="Apply renderer to objects of type (fully-qualified name):" />
-    <option name="to" hit="Apply renderer to objects of type (fully-qualified name):" />
-    <option name="type" hit="Apply renderer to objects of type (fully-qualified name):" />
+    <option name="apply" hit="Apply renderer to objects of type (fully qualified name):" />
+    <option name="fully-qualified" hit="Apply renderer to objects of type (fully qualified name):" />
+    <option name="name" hit="Apply renderer to objects of type (fully qualified name):" />
+    <option name="objects" hit="Apply renderer to objects of type (fully qualified name):" />
+    <option name="of" hit="Apply renderer to objects of type (fully qualified name):" />
+    <option name="renderer" hit="Apply renderer to objects of type (fully qualified name):" />
+    <option name="to" hit="Apply renderer to objects of type (fully qualified name):" />
+    <option name="type" hit="Apply renderer to objects of type (fully qualified name):" />
     <option name="java" hit="Java Type Renderers" />
     <option name="renderers" hit="Java Type Renderers" />
     <option name="type" hit="Java Type Renderers" />

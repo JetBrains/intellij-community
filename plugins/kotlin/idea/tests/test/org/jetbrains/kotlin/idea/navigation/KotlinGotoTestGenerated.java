@@ -50,14 +50,19 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
             runTest("testData/navigation/gotoClass/innerClass.kt");
         }
 
+        @TestMetadata("interfaceWithFunImplement.kt")
+        public void testInterfaceWithFunImplement() throws Exception {
+            runTest("testData/navigation/gotoClass/interfaceWithFunImplement.kt");
+        }
+
         @TestMetadata("localDeclarations.kt")
         public void testLocalDeclarations() throws Exception {
             runTest("testData/navigation/gotoClass/localDeclarations.kt");
         }
 
-        @TestMetadata("noImplementationTrait.kt")
-        public void testNoImplementationTrait() throws Exception {
-            runTest("testData/navigation/gotoClass/noImplementationTrait.kt");
+        @TestMetadata("noImplementationInterface.kt")
+        public void testNoImplementationInterface() throws Exception {
+            runTest("testData/navigation/gotoClass/noImplementationInterface.kt");
         }
 
         @TestMetadata("simpleClass.kt")
@@ -68,11 +73,6 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
         @TestMetadata("simpleObject.kt")
         public void testSimpleObject() throws Exception {
             runTest("testData/navigation/gotoClass/simpleObject.kt");
-        }
-
-        @TestMetadata("traitWithFunImplement.kt")
-        public void testTraitWithFunImplement() throws Exception {
-            runTest("testData/navigation/gotoClass/traitWithFunImplement.kt");
         }
 
         @TestMetadata("typealias.kt")

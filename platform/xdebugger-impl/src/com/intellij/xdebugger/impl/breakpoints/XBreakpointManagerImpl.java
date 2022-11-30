@@ -292,12 +292,13 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     sendBreakpointEvent(type, listener -> listener.breakpointRemoved(breakpoint));
   }
 
-  private void sendBreakpointEvent(XBreakpointType type, Consumer<XBreakpointListener<XBreakpoint<?>>> event) {
+  private void sendBreakpointEvent(XBreakpointType type, Consumer<? super XBreakpointListener<XBreakpoint<?>>> event) {
     if (myFirstLoadDone) {
       EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
       if (dispatcher != null) {
         //noinspection unchecked
-        event.consume(dispatcher.getMulticaster());
+        XBreakpointListener<XBreakpoint<?>> multicaster = dispatcher.getMulticaster();
+        event.consume(multicaster);
       }
       event.consume(getBreakpointDispatcherMulticaster());
     }

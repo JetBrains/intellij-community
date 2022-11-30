@@ -256,7 +256,7 @@ fun KtCallExpression.moveFunctionLiteralOutsideParentheses() {
 
 fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
     val rBrace = rBrace
-    val newLine = KtPsiFactory(this).createNewLine()
+    val newLine = KtPsiFactory(project).createNewLine()
     val anchor = if (rBrace == null) {
         val lastChild = lastChild
         lastChild as? PsiWhiteSpace ?: addAfter(newLine, lastChild)!!
@@ -312,7 +312,7 @@ fun PsiElement.deleteSingle() {
 
 fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
     companionObjects.firstOrNull()?.let { return it }
-    return appendDeclaration(KtPsiFactory(this).createCompanionObject())
+    return appendDeclaration(KtPsiFactory(project).createCompanionObject())
 }
 
 inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
@@ -570,7 +570,7 @@ fun KtSecondaryConstructor.getOrCreateBody(): KtBlockExpression {
 
     val delegationCall = getDelegationCall()
     val anchor = if (delegationCall.isImplicit) valueParameterList else delegationCall
-    val newBody = KtPsiFactory(this).createEmptyBody()
+    val newBody = KtPsiFactory(project).createEmptyBody()
     return addAfter(newBody, anchor) as KtBlockExpression
 }
 
@@ -583,7 +583,7 @@ fun KtParameter.dropDefaultValue() {
 fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): KtTypeParameter? {
     typeParameterList?.let { return it.addParameter(typeParameter) }
 
-    val list = KtPsiFactory(this).createTypeParameterList("<X>")
+    val list = KtPsiFactory(project).createTypeParameterList("<X>")
     list.parameters[0].replace(typeParameter)
     val leftAnchor = when (this) {
         is KtClass -> nameIdentifier
@@ -597,7 +597,7 @@ fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): K
 
 fun KtNamedFunction.getOrCreateValueParameterList(): KtParameterList {
     valueParameterList?.let { return it }
-    val parameterList = KtPsiFactory(this).createParameterList("()")
+    val parameterList = KtPsiFactory(project).createParameterList("()")
     val anchor = nameIdentifier ?: funKeyword!!
     return addAfter(parameterList, anchor) as KtParameterList
 }
@@ -625,17 +625,17 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
 fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
     defaultValue?.let { return it.replaced(newDefaultValue) }
 
-    val psiFactory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
     val eq = equalsToken ?: add(psiFactory.createEQ())
     return addAfter(newDefaultValue, eq) as KtExpression
 }
 
 fun KtModifierList.appendModifier(modifier: KtModifierKeywordToken) {
-    add(KtPsiFactory(this).createModifier(modifier))
+    add(KtPsiFactory(project).createModifier(modifier))
 }
 
 fun KtModifierList.normalize(): KtModifierList {
-    val psiFactory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
     return psiFactory.createEmptyModifierList().also { newList ->
         val modifiers = SmartList<PsiElement>()
         allChildren.forEach {

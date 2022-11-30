@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.io.Decompressor
-import com.intellij.util.io.ZipUtil
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -47,17 +46,17 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.FileOutputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
-import java.util.stream.Collectors
-import java.util.zip.ZipOutputStream
+import kotlin.io.path.setLastModifiedTime
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
   private val context = context as BuildContextImpl
@@ -73,25 +72,6 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
 
   override suspend fun buildDistributions() {
     buildDistributions(context)
-  }
-
-  override suspend fun buildDmg(macZipDir: Path) {
-    supervisorScope {
-      sequenceOf(JvmArchitecture.x64, JvmArchitecture.aarch64)
-        .map { arch ->
-          val macZip = find(directory = macZipDir, suffix = "${arch}.zip", context = context)
-          val builtModule = readBuiltinModulesFile(find(directory = macZipDir, suffix = "builtinModules.json", context = context))
-          async {
-            MacDistributionBuilder(context = context,
-                                   customizer = context.macDistributionCustomizer!!,
-                                   ideaProperties = null).buildAndSignDmgFromZip(macZip = macZip,
-                                                                                 macZipWithoutRuntime = null,
-                                                                                 arch = arch,
-                                                                                 builtinModule = builtModule)
-          }
-        }
-        .toList()
-    }.collectCompletedOrError()
   }
 
   override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>) {
@@ -271,6 +251,7 @@ private suspend fun layoutShared(context: BuildContext) {
       context.productProperties.copyAdditionalFiles(context, context.paths.getDistAll())
     }
   }
+  checkClassFiles(context.paths.distAllDir, context)
 }
 
 private fun findBrandingResource(relativePath: String, context: BuildContext): Path {
@@ -350,19 +331,6 @@ private class DistributionForOsTaskResult(@JvmField val builder: OsSpecificDistr
                                           @JvmField val arch: JvmArchitecture,
                                           @JvmField val outDir: Path)
 
-private fun find(directory: Path, suffix: String, context: BuildContext): Path {
-  Files.walk(directory).use { stream ->
-    val found = stream.filter { (it.fileName.toString()).endsWith(suffix) }.collect(Collectors.toList())
-    if (found.isEmpty()) {
-      context.messages.error("No file with suffix $suffix is found in $directory")
-    }
-    if (found.size > 1) {
-      context.messages.error("Multiple files with suffix $suffix are found in $directory:\n${found.joinToString(separator = "\n")}")
-    }
-    return found.first()
-  }
-}
-
 private suspend fun buildOsSpecificDistributions(context: BuildContext): List<DistributionForOsTaskResult> {
   val stepMessage = "build OS-specific distributions"
   if (context.options.buildStepsToSkip.contains(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)) {
@@ -373,6 +341,14 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
   val propertiesFile = patchIdeaPropertiesFile(context)
 
   return supervisorScope {
+    withContext(Dispatchers.IO) {
+      Files.walk(context.paths.distAllDir).use { tree ->
+        val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
+        tree.forEach {
+          it.setLastModifiedTime(fileTime)
+        }
+      }
+    }
     SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch) ->
       if (!context.shouldBuildDistributionForOS(os, arch)) {
         return@mapNotNull null
@@ -611,9 +587,9 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     spanBuilder("build platform and plugin JARs").useWithScope2<Unit> {
       val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
 
-      if (context.productProperties.buildDocAuthoringAssets)
+      if (context.productProperties.buildDocAuthoringAssets) {
         buildInspectopediaArtifacts(distributionJARsBuilder, context)
-
+      }
       if (context.shouldBuildDistributions()) {
         val entries = distributionJARsBuilder.buildJARs(context)
         if (context.productProperties.buildSourcesArchive) {
@@ -939,7 +915,7 @@ fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar")
   context.notifyArtifactBuilt(updaterJar)
 }
 
-private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
+private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateMultiPlatformProductJson(
@@ -995,10 +971,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     compress = context.options.compressZipFiles,
   )
 
-  coroutineScope {
-    launch { checkInArchive(archiveFile = targetFile, pathInArchive = "", context = context) }
-    launch { checkClassFiles(targetFile = targetFile, context = context) }
-  }
+  checkInArchive(archiveFile = targetFile, pathInArchive = "", context = context)
   context.notifyArtifactBuilt(targetFile)
   return targetFile
 }
@@ -1172,7 +1145,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         filterFileIfAlreadyInZip(relativePath, winX64DistDir.resolve(relativePath), zipFileUniqueGuard)
       }, entryCustomizer = entryCustomizer)
 
-      for (distFile in distFiles) {
+      for (distFile in distFiles.sortedWith(compareBy<DistFile> { it.relativePath }.thenBy { it.os }.thenBy { it.arch })) {
         // linux and windows: we don't add win and linux specific dist dirs for ARM, so, copy distFiles explicitly
         // macOS: we don't copy dist files for macOS distribution to avoid extra copy operation
         if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, distFile.file) == null) {
@@ -1212,9 +1185,7 @@ private suspend fun buildInspectopediaArtifacts(builder: DistributionJARsBuilder
                         ideClasspath = ideClasspath,
                         arguments = listOf("inspectopedia-generator", inspectionsPath.toAbsolutePath().toString()))
 
-  val targetFile = context.paths.artifactDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}.zip").toFile()
+  val targetFile = context.paths.artifactDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}.zip")
 
-  ZipOutputStream(FileOutputStream(targetFile)).use { zip ->
-    ZipUtil.addDirToZipRecursively(zip, targetFile, inspectionsPath.toFile(), "", null, null)
-  }
+  zipWithCompression(targetFile = targetFile, dirs = mapOf(inspectionsPath to ""))
 }

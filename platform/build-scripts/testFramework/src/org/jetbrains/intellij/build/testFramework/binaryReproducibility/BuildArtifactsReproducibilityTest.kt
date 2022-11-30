@@ -8,6 +8,7 @@ import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.extension
 import kotlin.io.path.writeText
 
 class BuildArtifactsReproducibilityTest {
@@ -25,7 +26,6 @@ class BuildArtifactsReproducibilityTest {
     }
     options.buildDateInSeconds = buildDateInSeconds
     options.randomSeedNumber = randomSeedNumber
-    options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES) // FIXME IJI-823 workaround
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
     options.buildMacArtifactsWithRuntime = true
     options.buildUnixSnaps = true
@@ -45,7 +45,11 @@ class BuildArtifactsReproducibilityTest {
       else -> build1.paths.projectHome
     }.resolve(".diff")
     val test = FileTreeContentComparison(diffDirectory, build1.paths.tempDir)
-    val result = test.assertTheSameDirectoryContent(build1.paths.artifactDir, build2.paths.artifactDir)
+    val result = test.assertTheSameDirectoryContent(
+      build1.paths.artifactDir,
+      build2.paths.artifactDir,
+      deleteBothAfterwards = true
+    )
     if (result.error != null) {
       build1.messages.artifactBuilt("$diffDirectory")
     }
@@ -58,7 +62,9 @@ class BuildArtifactsReproducibilityTest {
       .plus("-compared-files.txt")
       .let(diffDirectory::resolve)
     Files.createDirectories(report.parent)
-    val reportText = result.comparedFiles.joinToString(separator = "\n")
+    val reportText = result.comparedFiles
+      .sortedBy { it.extension }
+      .joinToString(separator = "\n")
     report.writeText(reportText)
     context.messages.artifactBuilt("$report")
     context.messages.info("Compared:\n$reportText")

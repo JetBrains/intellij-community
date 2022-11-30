@@ -197,6 +197,97 @@ internal object VeryLenientDateTimeExtractor {
         DateTimeFormatterBuilder().appendPattern(it).toFormatter(Locale.ENGLISH)
     }
 
+    private val timestampExtractor: FasterVersionTimestampExtractor = FasterVersionTimestampExtractor()
+
+    private class FasterVersionTimestampExtractor {
+        private val dateDividers = listOf("/", ".", "-", "")
+        private val timeDividers = listOf(":", ".", "-", "")
+        private val dateTimeSeparators = listOf("_", ".", "-", "T", "")
+        private val basePatterns = listOf(
+            "yyyy/MM/dd_HH:mm:ss",
+            "yyyy/MM/dd_HH:mm",
+            "yyyy/MM_HH:mm:ss",
+            "yyyy/MM_HH:mm",
+            "yyyy/MM/dd",
+            "yyyy/MM"
+        )
+
+        fun extractTimestamp(text: String): String? {
+            for (basePattern in basePatterns) {
+                val result = StringBuilder()
+                if (parseBasePattern(basePattern, ParsePosition(0), text, ParsePosition(0), result)) {
+                    return result.toString()
+                }
+            }
+            return null
+        }
+
+        private fun parseBasePattern(basePattern: String, patternPosition: ParsePosition, text: String, textPosition: ParsePosition, result: StringBuilder) : Boolean {
+            if (patternPosition.index >= basePattern.length) return true
+
+            if (parseToken(basePattern, patternPosition, text, textPosition, result)) {
+                return parseBasePattern(basePattern, patternPosition, text, textPosition, result)
+            }
+
+            return false
+        }
+
+        private fun parseToken(basePattern: String, patternPosition: ParsePosition, text: String, textPosition: ParsePosition, result: StringBuilder): Boolean {
+            when(basePattern[patternPosition.index]) {
+                'y' -> return parseDigits(4, {it <= thisYear + 1}, patternPosition, text, textPosition, result)
+                'M' -> return parseDigits(2, {it in 1..12}, patternPosition, text, textPosition, result)
+                'd' -> return parseDigits(2, {it in 1..31}, patternPosition, text, textPosition, result)
+                'H' -> return parseDigits(2, {it in 0..24}, patternPosition, text, textPosition, result)
+                'm' -> return parseDigits(2, {it in 0..60}, patternPosition, text, textPosition, result)
+                's' -> return parseDigits(2, {it in 0..60}, patternPosition, text, textPosition, result)
+                '/' -> return parseDivider(dateDividers, patternPosition, text, textPosition, result)
+                ':' -> return parseDivider(timeDividers, patternPosition, text, textPosition, result)
+                '_' -> return parseDivider(dateTimeSeparators, patternPosition, text, textPosition, result)
+                else -> return false
+            }
+        }
+
+        private fun parseDivider(dividers: List<String>, patternPosition: ParsePosition, text: String, textPosition: ParsePosition, result: StringBuilder): Boolean {
+            for (divider in dividers) {
+                if (parseDivider(divider, patternPosition, text, textPosition, result)) return true
+            }
+            return false
+        }
+
+        private fun parseDivider(divider: String, patternPosition: ParsePosition, text: String, textPosition: ParsePosition, result: StringBuilder): Boolean {
+            val num = divider.length
+            val stringBuilder = StringBuilder()
+            if (!readChars(num, text, textPosition, stringBuilder)) return false
+            if (stringBuilder.toString() != divider) return false
+
+            result.append(stringBuilder)
+            patternPosition.index++
+            textPosition.index += num
+            return true
+        }
+
+        private fun parseDigits(num: Int, validate: (Int) -> Boolean, patternPosition: ParsePosition, text: String, textPosition: ParsePosition, result: StringBuilder): Boolean {
+            val stringBuilder = StringBuilder()
+            if (!readChars(num, text, textPosition, stringBuilder)) return false
+            val stringValue = stringBuilder.toString()
+            if (!stringValue.all { char -> char.isDigit() }) return false
+            val intValue = stringValue.toInt()
+            if (!validate(intValue)) return false
+
+            result.append(stringValue)
+            patternPosition.index += num
+            textPosition.index += num
+            return true
+        }
+
+        private fun readChars(num: Int, text: String, textPosition: ParsePosition, out: StringBuilder) : Boolean {
+            if (num <= 0) return true
+            if (textPosition.index + num > text.length) return false
+            out.append(text.substring(textPosition.index, textPosition.index + num))
+            return true
+        }
+    }
+
     /**
      * The current year. Note that this value can, potentially, get out of date
      * if the JVM is started on year X and is still running when transitioning
@@ -212,7 +303,11 @@ internal object VeryLenientDateTimeExtractor {
      */
     private val thisYear = LocalDate.now().year
 
-    fun extractTimestampLookingPrefixOrNull(versionName: String) = formatters.asSequence()
+    fun extractTimestampLookingPrefixOrNull(versionName: String): String? {
+        return timestampExtractor.extractTimestamp(versionName)
+    }
+
+    fun extractTimestampLookingPrefixOrNull2(versionName: String) = formatters.asSequence()
         .mapNotNull {
             val parsePosition = ParsePosition(0)
             val result = kotlin.runCatching { it.parse(versionName, parsePosition) }

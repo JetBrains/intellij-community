@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.assertReadAccessAllowed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -18,10 +19,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
@@ -31,8 +35,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
+import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
@@ -47,10 +51,18 @@ private class LibraryDependencyCandidatesAndSdkInfos(
         sdkInfos += other.sdkInfos
     }
 
+    operator fun plusAssign(libraryDependencyCandidate: LibraryDependencyCandidate) {
+        libraryDependencyCandidates += libraryDependencyCandidate
+    }
+
+    operator fun plusAssign(sdkInfo: SdkInfo) {
+        sdkInfos += sdkInfo
+    }
+
     override fun toString(): String {
         return "[${Integer.toHexString(System.identityHashCode(this))}] libraryDependencyCandidates: ${
             libraryDependencyCandidates.map { it.libraries.map(LibraryInfo::name) }
-        } sdkInfos: $sdkInfos"
+        } sdkInfos: ${sdkInfos.map { it.sdk.name }}"
     }
 }
 
@@ -148,6 +160,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val connection = project.messageBus.connect(this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+            connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         }
 
@@ -185,23 +198,33 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 validityCondition = null
             )
         }
+
+        inner class ModelChangeListener : ModuleEntityChangeListener(project) {
+            override fun entitiesChanged(outdated: List<Module>) {
+                invalidate(writeAccessRequired = true)
+            }
+        }
+
     }
 
     private inner class ModuleDependenciesCache :
         SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project),
+        WorkspaceModelChangeListener,
         ProjectJdkTable.Listener,
         LibraryInfoListener,
         ModuleRootListener {
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
-            connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
+            connection.subscribe(WorkspaceModelTopics.CHANGED, this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         }
 
+        @RequiresReadLock
         override fun get(key: Module): LibraryDependencyCandidatesAndSdkInfos {
+            assertReadAccessAllowed()
             return internalGet(key, hashMapOf(), linkedSetOf(), hashMapOf())
         }
 
@@ -292,21 +315,21 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val infoCache = LibraryInfoCache.getInstance(project)
             ModuleRootManager.getInstance(module).orderEntries()
                 .process(object : RootPolicy<Unit>() {
-                    override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
-                        modulesToVisit.addAll(moduleSourceOrderEntry.rootModel.getModuleDependencies(true).toList())
+                    override fun visitModuleOrderEntry(moduleOrderEntry: ModuleOrderEntry, value: Unit) {
+                        moduleOrderEntry.module?.let(modulesToVisit::add)
                     }
 
                     override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                         checkCanceled()
                         val libraryEx = libraryOrderEntry.library.safeAs<LibraryEx>()?.takeUnless { it.isDisposed } ?: return
                         val candidate = LibraryDependencyCandidate.fromLibraryOrNull(infoCache[libraryEx]) ?: return
-                        libraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates += candidate
+                        libraryDependencyCandidatesAndSdkInfos += candidate
                     }
 
                     override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
                         checkCanceled()
                         jdkOrderEntry.jdk?.let { jdk ->
-                            libraryDependencyCandidatesAndSdkInfos.sdkInfos += SdkInfo(project, jdk)
+                            libraryDependencyCandidatesAndSdkInfos += SdkInfo(project, jdk)
                         }
                     }
                 }, Unit)
@@ -379,7 +402,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                     tmpResults[moduleToVisit] ?: internalGet(moduleToVisit, tmpResults, trace, loops = loops)
 
                 val moduleLibraryDependencyCandidatesAndSdkInfos = tmpResults.getValue(module)
-                moduleLibraryDependencyCandidatesAndSdkInfos += moduleToVisitLibraryDependencyCandidatesAndSdkInfos
+
+                // We should not include SDK from dependent modules
+                // see the traverse way of OrderEnumeratorBase#shouldAddOrRecurse for JdkOrderEntry
+                moduleLibraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates += moduleToVisitLibraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates
             }
 
             trace.remove(module)
@@ -409,6 +435,11 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         override fun rootsChanged(event: ModuleRootEvent) {
             if (event.isCausedByWorkspaceModelChangesOnly) return
 
+            // TODO: `invalidate()` to be drop when IDEA-298694 is fixed
+            //  Reason: unload modules are untracked with WorkspaceModel
+            invalidate(writeAccessRequired = true)
+            return
+
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
 
@@ -419,16 +450,26 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             )
         }
 
-        inner class ModelChangeListener : WorkspaceEntityChangeListener<ModuleEntity, Module>(project) {
-            override val entityClass: Class<ModuleEntity>
-                get() = ModuleEntity::class.java
+        override fun beforeChanged(event: VersionedStorageChange) {
+            val storageBefore = event.storageBefore
+            val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
 
-            override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-                entity.findModule(storage)
+            val outdatedModules = mutableSetOf<Module>()
+            for (change in changes) {
+                val moduleEntity = change.oldEntity ?: continue
+                collectOutdatedModules(moduleEntity, storageBefore, outdatedModules)
+            }
 
-            override fun entitiesChanged(outdated: List<Module>) {
-                // TODO: incorrect in case of transitive module dependency
-                invalidateKeys(outdated) { _, _ -> false }
+            invalidateKeys(outdatedModules)
+        }
+
+        private fun collectOutdatedModules(moduleEntity: ModuleEntity, storage: EntityStorage, outdatedModules: MutableSet<Module>) {
+            val module = moduleEntity.findModule(storage) ?: return
+
+            if (!outdatedModules.add(module)) return
+
+            storage.referrers(moduleEntity.symbolicId, ModuleEntity::class.java).forEach {
+                collectOutdatedModules(it, storage, outdatedModules)
             }
         }
 

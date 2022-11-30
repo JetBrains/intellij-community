@@ -62,7 +62,7 @@ private fun pluginXml(buildContext: BuildContext, version: String): String {
   <version>$version</version>
   <idea-version since-build="${version.substring(0, version.lastIndexOf('.'))}"/>
   <vendor>JetBrains</vendor>
-  <description>$productName Web Help for offline use.</description>
+  <description>$productName Web Help for offline use: when help is invoked, pages are delivered via built-in Web server. In the plugin settings (Settings | Tools | $productName Help), you can opt to always use built-in help, even when Internet connection is available.</description>
 
   <depends>$productModuleDep</depends>
   <resource-bundle>messages.BuiltInHelpBundle</resource-bundle>

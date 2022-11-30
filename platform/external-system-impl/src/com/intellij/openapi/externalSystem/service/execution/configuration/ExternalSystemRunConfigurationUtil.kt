@@ -30,6 +30,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.TextAccessor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
@@ -252,7 +254,9 @@ fun <S> SettingsFragmentsContainer<S>.addPathFragment(
       }
     },
     pathFragmentInfo.fileChooserDescriptor
-  ) { getPresentablePath(it.path) },
+      .withPathToTextConvertor(::getPresentablePath)
+      .withTextToPathConvertor(::getCanonicalPath)
+  ),
   pathFragmentInfo,
   { getPath().let(::getPresentablePath).nullize() },
   { setPath(it?.let(::getCanonicalPath) ?: "") },

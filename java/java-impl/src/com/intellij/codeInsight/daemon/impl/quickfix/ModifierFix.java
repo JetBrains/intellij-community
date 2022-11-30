@@ -6,11 +6,11 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -119,30 +119,6 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiModifierListOwner element = (PsiModifierListOwner)getStartElement();
-    PsiFile elementFile = element.getContainingFile();
-    if (elementFile == file.getOriginalFile()) {
-      if (!startInWriteAction()) {
-        PsiModifierListOwner copy = PsiTreeUtil.findSameElementInCopy(element, file);
-        PsiModifierList modifierList = copy.getModifierList();
-        if (modifierList == null) return IntentionPreviewInfo.EMPTY;
-        updateModifier(modifierList, copy);
-        modifierList.setModifierProperty(myModifier, myShouldHave);
-        return IntentionPreviewInfo.DIFF;
-      }
-      return super.generatePreview(project, editor, file);
-    }
-    PsiFile fileCopy = (PsiFile)elementFile.copy();
-    PsiModifierListOwner copy = PsiTreeUtil.findSameElementInCopy(element, fileCopy);
-    String copyText = copy.getText();
-    PsiModifierList modifierList = copy.getModifierList();
-    if (modifierList == null) return IntentionPreviewInfo.EMPTY;
-    updateModifier(modifierList, copy);
-    return new IntentionPreviewInfo.CustomDiff(elementFile.getFileType(), elementFile.getName(), copyText, copy.getText());
-  }
-
-  @Override
   public boolean isAvailable(@NotNull Project project,
                              @NotNull PsiFile file,
                              @Nullable Editor editor,
@@ -189,36 +165,43 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiModifierListOwner owner = PsiTreeUtil.findSameElementInCopy((PsiModifierListOwner)getStartElement(), file);
+    updateModifier(owner);
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     PsiModifierListOwner owner = (PsiModifierListOwner)startElement;
-    if (myStartInWriteAction || IntentionPreviewUtils.isPreviewElement(startElement)) {
-      PsiModifierList modifierList;
-      PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
-      if (variable != null && variable.isValid()) {
-        variable.normalizeDeclaration();
-        modifierList = variable.getModifierList();
-      } else {
-        modifierList = owner.getModifierList();
-      }
-      assert modifierList != null;
-      updateModifier(modifierList, modifierList.getParent());
+    if (myStartInWriteAction) {
+      updateModifier(owner);
       return;
     }
-    if (!IntentionPreviewUtils.prepareElementForWrite(startElement)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(startElement)) return;
     PsiModifierList modifierList = owner.getModifierList();
     assert modifierList != null;
     updateAccessInHierarchy(project, modifierList, owner);
-    IntentionPreviewUtils.write(() -> {
-      updateModifier(modifierList, owner);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      updateModifier(owner);
       UndoUtil.markPsiFileForUndo(modifierList.getContainingFile());
     });
   }
 
-  private void updateModifier(PsiModifierList modifierList, PsiElement owner) {
+  protected void updateModifier(PsiModifierListOwner owner) {
+    PsiVariable variable = ObjectUtils.tryCast(owner, PsiVariable.class);
+    PsiModifierList modifierList;
+    if (variable != null && variable.isValid()) {
+      variable.normalizeDeclaration();
+      modifierList = variable.getModifierList();
+    } else {
+      modifierList = owner.getModifierList();
+    }
+    if (modifierList == null) return;
     changeModifierList(modifierList);
     if (myShouldHave && owner instanceof final PsiMethod method) {
       if (PsiModifier.ABSTRACT.equals(myModifier)) {
@@ -258,17 +241,19 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
       if (accessLevel != PsiUtil.getAccessLevel(modifierList)) {
         final List<PsiModifierList> modifierLists = new ArrayList<>();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          OverridingMethodsSearch.search(method, method.getResolveScope(), true).forEach(
-            new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
-              @Override
-              public boolean execute(@NotNull PsiMethod inheritor) {
-                PsiModifierList list = inheritor.getModifierList();
-                if (BaseIntentionAction.canModify(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
-                  modifierLists.add(list);
+          ReadAction.run(() -> {
+            OverridingMethodsSearch.search(method, method.getResolveScope(), true).forEach(
+              new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
+                @Override
+                public boolean execute(@NotNull PsiMethod inheritor) {
+                  PsiModifierList list = inheritor.getModifierList();
+                  if (BaseIntentionAction.canModify(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
+                    modifierLists.add(list);
+                  }
+                  return true;
                 }
-                return true;
-              }
-            }));
+              }));
+          });
         }, JavaBundle.message("psi.search.overriding.progress"), true, project);
         if (!modifierLists.isEmpty() && Messages.showYesNoDialog(project,
                                                                  QuickFixBundle.message("change.inheritors.visibility.warning.text"),

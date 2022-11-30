@@ -430,7 +430,7 @@ public final class PluginManagerCore {
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableList()")
-  private static @NotNull List<Supplier<HtmlChunk>> preparePluginErrors(@NotNull List<Supplier<@NlsContexts.DetailedDescription String>> globalErrorsSuppliers) {
+  private static @NotNull List<Supplier<HtmlChunk>> preparePluginErrors(@NotNull List<? extends Supplier<@NlsContexts.DetailedDescription String>> globalErrorsSuppliers) {
     if (pluginLoadingErrors.isEmpty() && globalErrorsSuppliers.isEmpty()) {
       return new ArrayList<>();
     }
@@ -517,7 +517,13 @@ public final class PluginManagerCore {
         }
       }
 
-      DisabledPluginsState.Companion.setEnabledState(descriptors, enabled);
+      PluginEnabler pluginEnabler = PluginEnabler.getInstance();
+      if (enabled) {
+        pluginEnabler.enable(descriptors);
+      }
+      else {
+        pluginEnabler.disable(descriptors);
+      }
     }
     return applied;
   }
@@ -1154,7 +1160,7 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                          @NotNull Set<IdeaPluginDescriptorImpl> depProcessed,
+                                                          @NotNull Set<? super IdeaPluginDescriptorImpl> depProcessed,
                                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
                                                           @NotNull Function<? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
 
@@ -1165,14 +1171,15 @@ public final class PluginManagerCore {
   }
 
   private static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                           @NotNull Set<IdeaPluginDescriptorImpl> depProcessed,
+                                                           @NotNull Set<? super IdeaPluginDescriptorImpl> depProcessed,
                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                           @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+                                                           @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptorImpl, ? extends FileVisitResult> consumer) {
     for (PluginId dependencyId : getNonOptionalDependenciesIds(rootDescriptor)) {
       IdeaPluginDescriptorImpl descriptor = pluginIdMap.get(dependencyId);
       PluginId pluginId = descriptor != null ? descriptor.getPluginId() : dependencyId;
 
-      switch (consumer.apply(pluginId, descriptor)) {
+      FileVisitResult result = consumer.apply(pluginId, descriptor);
+      switch (result) {
         case TERMINATE:
           return false;
         case CONTINUE:

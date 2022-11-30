@@ -191,9 +191,7 @@ final class RefreshWorker {
             continue nextDir;
           }
           finally {
-            if (fs instanceof LocalFileSystemImpl) {
-              ((LocalFileSystemImpl)fs).clearListCache();
-            }
+            clearFsCache(fs);
           }
         }
         myProcessed.incrementAndGet();
@@ -233,12 +231,10 @@ final class RefreshWorker {
     myIoTime.addAndGet(System.nanoTime() - t);
 
     Set<String> newNames = new HashSet<>(dirList.keySet());
-    for (String persistedName : vfsNames) {
-      newNames.remove(persistedName);
-    }
+    vfsNames.forEach(newNames::remove);
 
     Set<String> deletedNames = new HashSet<>(vfsNames);
-    deletedNames.removeAll(dirList.keySet());
+    dirList.keySet().forEach(deletedNames::remove);
 
     ObjectOpenCustomHashSet<String> actualNames =
       dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(dirList.keySet(), false);
@@ -246,7 +242,7 @@ final class RefreshWorker {
       LOG.trace("current=" + vfsNames + " +" + newNames + " -" + deletedNames);
     }
 
-    List<ChildInfo> newKids = newNames.isEmpty() ? List.of() : new ArrayList<>(newNames.size());
+    List<ChildInfo> newKids = newNames.isEmpty() && deletedNames.isEmpty() ? List.of() : new ArrayList<>(newNames.size());
     for (String newName : newNames) {
       if (VfsUtil.isBadName(newName)) continue;
       FakeVirtualFile child = new FakeVirtualFile(dir, newName);
@@ -263,6 +259,7 @@ final class RefreshWorker {
       }
     }
 
+    clearFsCache(fs);
     checkCancelled(dir);
     if (isDirectoryChanged(dir, vfsChildren, vfsNames)) {
       return false;
@@ -344,6 +341,7 @@ final class RefreshWorker {
       existingMap.add(new Pair<>(child, getAttributes(fs, dirList, child)));
     }
 
+    clearFsCache(fs);
     checkCancelled(dir);
     if (isDirectoryChanged(dir, cached, wanted)) {
       return false;
@@ -436,6 +434,12 @@ final class RefreshWorker {
       else {
         scheduleDeletion(events, child);
       }
+    }
+  }
+
+  private static void clearFsCache(NewVirtualFileSystem fs) {
+    if (fs instanceof LocalFileSystemImpl) {
+      ((LocalFileSystemImpl)fs).clearListCache();
     }
   }
 

@@ -40,18 +40,19 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
 
   @NotNull
   @Override
-  public Promise<AbstractValueHint> createValueHintAsync(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
+  public CancellableHint createValueHintAsync(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null) {
-      return Promises.resolvedPromise(null);
+      return CancellableHint.resolved(null);
     }
 
     final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
     if (evaluator == null) {
-      return Promises.resolvedPromise(null);
+      return CancellableHint.resolved(null);
     }
     int offset = AbstractValueHint.calculateOffset(editor, point);
-    return getExpressionInfo(evaluator, project, type, editor, offset)
+    Promise<ExpressionInfo> infoPromise = getExpressionInfo(evaluator, project, type, editor, offset);
+    Promise<AbstractValueHint> hintPromise = infoPromise
       .thenAsync(expressionInfo -> {
         AsyncPromise<AbstractValueHint> resultPromise = new AsyncPromise<>();
         UIUtil.invokeLaterIfNeeded(() -> {
@@ -70,6 +71,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
         });
         return resultPromise;
       });
+    return new CancellableHint(hintPromise, infoPromise);
   }
 
 

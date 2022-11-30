@@ -75,7 +75,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   public void collectRefElements(PsiElement psiElement,
                                  @Nullable RenameProcessor renameProcessor,
                                  @NotNull String newName,
-                                 Collection<PsiElement> elementsToInvert) {
+                                 Collection<? super PsiElement> elementsToInvert) {
     final Collection<PsiReference> refs = ReferencesSearch.search(psiElement).findAll();
 
     for (PsiReference ref : refs) {

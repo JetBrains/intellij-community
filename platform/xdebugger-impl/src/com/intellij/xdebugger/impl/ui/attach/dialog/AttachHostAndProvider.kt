@@ -5,6 +5,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 
@@ -14,7 +15,9 @@ data class AttachHostAndProvider(
   val provider: XAttachHostProvider<out XAttachHost>,
   val project: Project,
   val dataHolder: UserDataHolder) {
-  override fun toString(): String {
+
+  @Nls
+  fun getPresentation(): String {
     val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemDisplayText(project, host, dataHolder)
   }

@@ -10,10 +10,6 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
-import com.intellij.ide.gdpr.ConsentOptions
-import com.intellij.ide.gdpr.EndUserAgreement
-import com.intellij.ide.gdpr.showDataSharingAgreement
-import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
@@ -43,10 +39,7 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.EnvironmentUtil
-import com.intellij.util.Java11Shim
-import com.intellij.util.PlatformUtils
-import com.intellij.util.ReflectionUtil
+import com.intellij.util.*
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.EDT
@@ -111,7 +104,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
   }
-  val euaDocumentDeferred = loadEuaDocument(appInfoDeferred)
   val pathDeferred = async(CoroutineName("config path computing") + Dispatchers.IO) {
     Pair(canonicalPath(PathManager.getConfigPath()), canonicalPath(PathManager.getSystemPath()))
   }
@@ -179,14 +171,12 @@ fun CoroutineScope.startApplication(args: List<String>,
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
 
-  val showEuaIfNeededJob = showEuaIfNeeded(euaDocumentDeferred, initLafJob)
-
   shellEnvDeferred = async(CoroutineName("environment loading") + Dispatchers.IO) {
     EnvironmentUtil.loadEnvironment()
   }
 
   if (!isHeadless) {
-    showSplashIfNeeded(initLafJob, showEuaIfNeededJob, appInfoDeferred, args)
+    showSplashIfNeeded(initLafJob, appInfoDeferred, args)
 
     // must happen after initUi
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
@@ -271,24 +261,21 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
     appStarter.prepareStart(args)
 
-    // before config importing and license check
-    showEuaIfNeededJob.join()
-
     if (!isHeadless && configImportNeededDeferred.await()) {
       initLafJob.join()
-      val imported = importConfig(
+      importConfig(
         args = args,
         log = logDeferred.await(),
         appStarter = appStarterDeferred.await(),
-        agreementShown = showEuaIfNeededJob,
       )
-      if (imported) {
+      if (!PlatformUtils.isRider()) {
         PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
       }
     }
-
-    // must be scheduled before starting app
-    schedulePluginDescriptorLoading.join()
+    else {
+      // must be scheduled before starting app
+      schedulePluginDescriptorLoading.join()
+    }
 
     // with main dispatcher (appStarter uses runBlocking - block main thread and not some coroutine thread)
     appStarter.start(args, appDeferred)
@@ -332,7 +319,6 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
 }
 
 private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
-                                              showEuaIfNeededJob: Deferred<Boolean>,
                                               appInfoDeferred: Deferred<ApplicationInfoEx>,
                                               args: List<String>) {
   if (AppMode.isLightEdit()) {
@@ -347,7 +333,6 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
 
     // before showEuaIfNeededJob to prepare during showing EUA dialog
     val runnable = prepareSplash(appInfoDeferred, args) ?: return@launch
-    showEuaIfNeededJob.join()
     withContext(RawSwingDispatcher) {
       runnable.run()
     }
@@ -389,26 +374,6 @@ fun getServer(): BuiltInServer? = socketLock?.getServer()
 @Synchronized
 fun getServerFutureAsync(): Deferred<BuiltInServer?> = socketLock?.serverFuture ?: CompletableDeferred(value = null)
 
-// On startup 2 dialogs must be shown:
-// - gdpr agreement
-// - eu(l)a
-private fun CoroutineScope.loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx>): Deferred<Any?>? {
-  if (AppMode.isHeadless()) {
-    return null
-  }
-
-  return async(CoroutineName("eua document") + Dispatchers.IO) {
-    val vendorAsProperty = System.getProperty("idea.vendor.name", "")
-    if (if (vendorAsProperty.isEmpty()) !appInfoDeferred.await().isVendorJetBrains else vendorAsProperty != "JetBrains") {
-      null
-    }
-    else {
-      val document = runActivity("eua getting") { EndUserAgreement.getLatestDocument() }
-      if (runActivity("eua is accepted checking") { document.isAccepted }) null else document
-    }
-  }
-}
-
 private fun runPreAppClass(log: Logger, args: List<String>) {
   val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
   runActivity("pre app class running") {
@@ -424,10 +389,7 @@ private fun runPreAppClass(log: Logger, args: List<String>) {
   }
 }
 
-private suspend fun importConfig(args: List<String>,
-                                 log: Logger,
-                                 appStarter: AppStarter,
-                                 agreementShown: Deferred<Boolean>): Boolean {
+private suspend fun importConfig(args: List<String>, log: Logger, appStarter: AppStarter) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -439,16 +401,17 @@ private suspend fun importConfig(args: List<String>,
   activity = activity.endAndStart("config importing")
   appStarter.beforeImportConfigs()
   val newConfigDir = PathManager.getConfigDir()
-  val veryFirstStartOnThisComputer = agreementShown.await()
+
   withContext(RawSwingDispatcher) {
-    if (UIManager.getLookAndFeel() !is IntelliJLaf) {
-      UIManager.setLookAndFeel(IntelliJLaf())
-    }
+    UIManager.setLookAndFeel(IntelliJLaf())
+  }
+
+  val veryFirstStartOnThisComputer = coroutineScope { prepareShowEuaIfNeededTask(loadEuaDocument(), asyncScope = this)?.invoke() ?: false }
+  withContext(RawSwingDispatcher) {
     ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
   }
   appStarter.importFinished(newConfigDir)
   activity.end()
-  return !PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()
 }
 
 // return type (LookAndFeel) is not specified to avoid class loading
@@ -586,48 +549,6 @@ private fun blockATKWrapper() {
     Logger.getInstance(StartupUiUtil::class.java).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219")
   }
   activity.end()
-}
-
-private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?, initUiJob: Job): Deferred<Boolean> {
-  val asyncScope = this
-  return async {
-    if (euaDocumentDeferred == null) {
-      return@async true
-    }
-
-    val document = euaDocumentDeferred.await() as EndUserAgreement.Document?
-
-    val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
-      EndUserAgreement.updateCachedContentToLatestBundledVersion()
-    }
-
-    suspend fun prepareAndExecuteInEdt(task: () -> Unit) {
-      updateCached.join()
-      initUiJob.join()
-      withContext(RawSwingDispatcher) {
-        UIManager.setLookAndFeel(IntelliJLaf())
-        task()
-      }
-    }
-
-    runActivity("eua showing") {
-      if (document != null) {
-        prepareAndExecuteInEdt {
-          showEndUserAndDataSharingAgreements(document)
-        }
-        true
-      }
-      else if (ConsentOptions.needToShowUsageStatsConsent()) {
-        prepareAndExecuteInEdt {
-          showDataSharingAgreement()
-        }
-        false
-      }
-      else {
-        false
-      }
-    }
-  }
 }
 
 private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {

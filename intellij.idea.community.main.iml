@@ -199,5 +199,7 @@
     <orderEntry type="module" module-name="intellij.fullLine.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.fullLine.kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.performanceTesting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.smart.update" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.analysis" scope="RUNTIME" />
   </component>
 </module>

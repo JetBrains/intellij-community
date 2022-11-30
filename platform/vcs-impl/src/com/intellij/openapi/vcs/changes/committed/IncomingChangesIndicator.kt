@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN
@@ -28,7 +27,7 @@ import kotlin.properties.Delegates.observable
 
 private val LOG = logger<IncomingChangesIndicator>()
 
-class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
+private class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
   companion object {
     const val ID = "IncomingChanges"
   }
@@ -42,10 +41,6 @@ class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
   }
 
   override fun createWidget(project: Project): StatusBarWidget = IncomingChangesIndicator(project)
-
-  override fun disposeWidget(widget: StatusBarWidget) {
-    Disposer.dispose(widget)
-  }
 
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 

@@ -3,19 +3,13 @@ package com.jetbrains.performancePlugin;
 import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.diagnostic.VMOptions;
 import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.ApplicationInitializedListener;
-import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditorInfo;
 import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.idea.LoggerFactory;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -24,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.InitProjectActivityJavaShim;
@@ -101,7 +94,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     if (TEST_SCRIPT_FILE_PATH != null && !ourScriptStarted) {
       ourScriptStarted = true;
       if (System.getProperty("ide.performance.screenshot") != null) {
-        registerScreenshotTaking(project, System.getProperty("ide.performance.screenshot"));
+        registerScreenshotTaking(System.getProperty("ide.performance.screenshot"));
       }
       LOG.info("Start Execution");
       PerformanceTestSpan.startSpan();
@@ -133,10 +126,10 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     }
   }
 
-  private static void registerScreenshotTaking(@NotNull Project project, String fileName) {
+  private static void registerScreenshotTaking(String fileName) {
     screenshotExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin screenshoter");
     screenshotExecutor.scheduleWithFixedDelay(()-> {
-      TakeScreenshotCommand.takeScreenshotOfFrame(project, fileName);
+      TakeScreenshotCommand.takeScreenshotOfFrame(fileName);
     }, 0, 1, TimeUnit.MINUTES);
   }
 
@@ -406,7 +399,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   public static void runScript(Project project, String script) {
     PlaybackRunner playback = new PlaybackRunnerExtended(script, new CommandLogger(), project);
     ActionCallback scriptCallback = playback.run();
-    runScript(scriptCallback, project);
+    runScript(scriptCallback);
   }
 
   private static void runScriptFromFile(Project project) {
@@ -414,10 +407,10 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     playback.setScriptDir(getTestFile().getParentFile());
     ActionCallback scriptCallback = playback.run();
     CommandsRunner.setStartActionCallback(scriptCallback);
-    runScript(scriptCallback, project);
+    runScript(scriptCallback);
   }
 
-  private static void runScript(ActionCallback scriptCallback, Project project) {
+  private static void runScript(ActionCallback scriptCallback) {
     scriptCallback
       .doWhenDone(() -> {
         LOG.info("Execution of the script has been finished successfully");
@@ -439,7 +432,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
         LOG.info(threadDump);
 
         if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-          TakeScreenshotCommand.takeScreenshotOfFrame(project, System.getProperty("ide.performance.screenshot.before.kill"));
+          TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.before.kill"));
         }
 
         if (MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR) {

@@ -119,7 +119,6 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
                           "<version>1</version>" +
-                          "" +
                           "  <dependency>" +
                           "    <groupId>somegroup</groupId>" +
                           "    <artifactId>artifact</artifactId>" +

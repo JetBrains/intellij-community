@@ -33,6 +33,7 @@ class CodeAnalysisCommand(text: String, line: Int) : AbstractCommand(text, line)
 
 
     busConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
+      @Suppress("TestOnlyProblems")
       override fun daemonFinished() {
         val myDaemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
         val editor = FileEditorManager.getInstance(project).selectedTextEditor

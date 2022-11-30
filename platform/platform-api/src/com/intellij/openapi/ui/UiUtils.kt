@@ -155,7 +155,7 @@ fun getPresentablePath(path: @NonNls String): @NlsSafe String {
 }
 
 @JvmOverloads
-fun getCanonicalPath(path: @NonNls String, removeLastSlash: Boolean = true): @NonNls String {
+fun getCanonicalPath(path: @NlsSafe String, removeLastSlash: Boolean = true): @NonNls String {
   return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
 }
 
@@ -163,66 +163,99 @@ fun JComponent.getTextWidth(text: @NlsSafe String): Int {
   return getFontMetrics(font).stringWidth(text)
 }
 
+/**
+ * Injects ellipsis into text if text width is more [maxTextWidth].
+ *
+ * @param text is text to shorten
+ * @param minTextPrefixLength is minimum number of symbol from text which should be present in before ellipsis.
+ * @param minTextSuffixLength is minimum number of symbol from text which should be present in after ellipsis.
+ * @param maxTextPrefixRatio is maximum ratio between text prefix and suffix.
+ * @param maxTextWidth is maximum text width in pixels or other metrics.
+ * @param getTextWidth is function which calculates text width in pixels.
+ * @param useEllipsisSymbol if false then text will be separated by three dots instead ascii ellipsis symbol.
+ *
+ * @see StringUtil.shortenTextWithEllipsis
+ */
 fun shortenTextWithEllipsis(
   text: String,
-  maxWidth: Int,
+  minTextPrefixLength: Int = 1,
+  minTextSuffixLength: Int = 1,
+  maxTextPrefixRatio: Float = 0.3f,
+  maxTextWidth: Int,
   getTextWidth: (String) -> Int,
-  getFullText: (String) -> String = { it },
   useEllipsisSymbol: Boolean = false
-): String {
-  val symbol = when (useEllipsisSymbol) {
+) = shortenText(
+  text = text,
+  minTextPrefixLength = minTextPrefixLength,
+  minTextSuffixLength = minTextSuffixLength,
+  maxTextPrefixRatio = maxTextPrefixRatio,
+  maxTextWidth = maxTextWidth,
+  getTextWidth = getTextWidth,
+  symbol = when (useEllipsisSymbol) {
     true -> StringUtil.ELLIPSIS
     else -> StringUtil.THREE_DOTS
   }
-  return shortenText(
-    text = text,
-    maxWidth = maxWidth,
-    getFullText = getFullText,
-    getTextWidth = getTextWidth,
-    getShortenText = { it, length ->
-      val maxLength = maxOf(length, symbol.length + 2)
-      val suffixLength = maxOf(1, (0.7 * (maxLength - symbol.length)).toInt())
-      StringUtil.shortenTextWithEllipsis(it, maxLength, suffixLength, symbol)
-    }
-  )
+)
+
+fun shortenText(
+  text: String,
+  minTextPrefixLength: Int = 1,
+  minTextSuffixLength: Int = 1,
+  maxTextPrefixRatio: Float = 0.3f,
+  maxTextWidth: Int,
+  getTextWidth: (String) -> Int,
+  symbol: String
+): @NlsSafe String {
+  val textWidth = getTextWidth(text)
+  if (textWidth <= maxTextWidth) {
+    return text
+  }
+  val minTextLength = symbol.length + minTextPrefixLength + minTextSuffixLength
+  val maxTextLength = symbol.length + text.length
+  val textLength = binarySearch(minTextLength, maxTextLength) {
+    val shortenText = shortenText(text, it, minTextPrefixLength, minTextSuffixLength, maxTextPrefixRatio, symbol)
+    getTextWidth(shortenText) <= maxTextWidth
+  }
+  val shortedText = shortenText(text, textLength, minTextPrefixLength, minTextSuffixLength, maxTextPrefixRatio, symbol)
+  if (textWidth <= getTextWidth(shortedText)) {
+    return text
+  }
+  return shortedText
 }
 
 private fun shortenText(
   text: String,
-  maxWidth: Int,
-  getFullText: (String) -> String,
-  getTextWidth: (String) -> Int,
-  getShortenText: (String, Int) -> String
-): @NlsSafe String {
-  val length = binarySearch(0, text.length) {
-    val shortenText = getShortenText(text, it)
-    getTextWidth(getFullText(shortenText)) <= maxWidth
+  maxTextLength: Int,
+  minTextPrefixLength: Int,
+  minTextSuffixLength: Int,
+  maxTextPrefixRatio: Float,
+  symbol: String
+): String {
+  val textLength = maxOf(0, maxTextLength - symbol.length - minTextPrefixLength - minTextSuffixLength)
+  val textPrefixLength = maxOf(minTextPrefixLength, (maxTextPrefixRatio * textLength).toInt())
+  val textSuffixLength = maxOf(minTextSuffixLength, textLength - textPrefixLength)
+  if (textPrefixLength + textSuffixLength >= text.length) {
+    return text
   }
-  return getFullText(getShortenText(text, length ?: 0))
+  return text.substring(0, textPrefixLength) + symbol + text.substring(text.length - textSuffixLength)
 }
 
 private fun binarySearch(
   startIndex: Int,
   finishIndex: Int,
-  isOk: (Int) -> Boolean
-): Int? {
-  if (!isOk(startIndex)) {
-    return null
-  }
-  if (isOk(finishIndex)) {
-    return finishIndex
-  }
-
+  condition: (Int) -> Boolean
+): Int {
   var leftIndex = startIndex
   var rightIndex = finishIndex
-  while (leftIndex + 1 < rightIndex) {
+  while (rightIndex - leftIndex > 1) {
     val index = (leftIndex + rightIndex) / 2
-    if (isOk(index)) {
-      leftIndex = index
-    }
-    else {
-      rightIndex = index
+    when (condition(index)) {
+      true -> leftIndex = index
+      else -> rightIndex = index
     }
   }
-  return leftIndex
+  return when (condition(rightIndex)) {
+    true -> rightIndex
+    else -> leftIndex
+  }
 }

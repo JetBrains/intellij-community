@@ -99,16 +99,16 @@ public class StubBuilderType {
    * only version. Providing unique externalId or adding a distinctive debugName when instantiating StubFileElementTypes can help.
    * @implNote this method is very expensive. One should consider implementing caching of results
    */
-  public static @NotNull List<StubFileElementType> getStubFileElementTypeFromVersion(@NotNull String version) {
+  public static @NotNull List<StubFileElementType<?>> getStubFileElementTypeFromVersion(@NotNull String version) {
     int externalIdDelimPos = version.indexOf(':');
     if (externalIdDelimPos == -1) {
       LOG.error("Version info is incomplete: " + version);
       externalIdDelimPos = version.length();
     }
     String externalId = version.substring(0, externalIdDelimPos);
-    List<StubFileElementType> matches = ContainerUtil.map(IElementType.enumerate(p -> {
+    List<StubFileElementType<?>> matches = ContainerUtil.map(IElementType.enumerate(p -> {
       return p instanceof StubFileElementType && ((StubFileElementType<?>)p).getExternalId().equals(externalId);
-    }), p -> (StubFileElementType)p);
+    }), p -> (StubFileElementType<?>)p);
     if (matches.size() > 1) {
       int stubVersionDelimPos = version.indexOf(':', externalIdDelimPos + 1);
       if (stubVersionDelimPos == -1) {

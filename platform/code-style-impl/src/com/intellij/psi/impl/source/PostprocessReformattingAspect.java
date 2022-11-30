@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.service.ExternalFormatProcessorAdapter;
@@ -43,7 +42,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.Function;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -773,7 +771,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
       final PsiFile file = viewProvider.getPsi(viewProvider.getBaseLanguage());
       FormattingService formattingService = FormattingServiceUtil.findService(file, false, false);
       commitDocument(viewProvider);
-      SlowOperations.allowSlowOperations(() -> formattingService.formatRanges(file, getRanges(formattingService), true, true));
+      formattingService.formatRanges(file, getRanges(formattingService), true, true);
     }
 
     private void commitDocument(@NotNull FileViewProvider viewProvider) {

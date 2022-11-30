@@ -3,64 +3,25 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 
-class KotlinSourceSetProto(
-    val name: String,
-    private val languageSettings: KotlinLanguageSettings,
-    private val sourceDirs: Set<File>,
-    private val resourceDirs: Set<File>,
-    private val regularDependencies: () -> Array<KotlinDependencyId>,
-    private val intransitiveDependencies: () -> Array<KotlinDependencyId>,
-    val dependsOnSourceSets: Set<String>,
-    val additionalVisibleSourceSets: Set<String>,
-    val androidSourceSetInfo: KotlinAndroidSourceSetInfo?
-) {
-    fun buildKotlinSourceSetImpl(
-        doBuildDependencies: Boolean,
-        allSourceSetsProtosByNames: Map<String, KotlinSourceSetProto>,
-    ) = KotlinSourceSetImpl(
-        name = name,
-        languageSettings = languageSettings,
-        sourceDirs = sourceDirs,
-        resourceDirs = resourceDirs,
-        regularDependencies = if (doBuildDependencies) regularDependencies() else emptyArray(),
-        intransitiveDependencies = if (doBuildDependencies) intransitiveDependencies() else emptyArray(),
-
-        // .toMutableSet, because Android IDE plugin depends on this
-        //  KotlinAndroidMPPGradleProjectResolver.kt: private fun KotlinMPPGradleModel.mergeSourceSets
-        declaredDependsOnSourceSets = dependsOnSourceSets.toMutableSet(),
-        allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames).toMutableSet(),
-        additionalVisibleSourceSets = additionalVisibleSourceSets.toMutableSet(),
-        androidSourceSetInfo = androidSourceSetInfo
-    )
-}
-
-fun KotlinSourceSetProto.allDependsOnSourceSets(sourceSetsByName: Map<String, KotlinSourceSetProto>): Set<String> {
-    return mutableSetOf<String>().apply {
-        addAll(dependsOnSourceSets)
-        dependsOnSourceSets.map(sourceSetsByName::getValue).forEach { dependsOnSourceSet ->
-            addAll(dependsOnSourceSet.allDependsOnSourceSets(sourceSetsByName))
-        }
-    }
-}
-
 class KotlinAndroidSourceSetInfoImpl(
     override val kotlinSourceSetName: String,
     override val androidSourceSetName: String,
     override val androidVariantNames: Set<String>
-): KotlinAndroidSourceSetInfo {
+) : KotlinAndroidSourceSetInfo {
     constructor(info: KotlinAndroidSourceSetInfo) : this(
         kotlinSourceSetName = info.kotlinSourceSetName,
         androidSourceSetName = info.androidSourceSetName,
-        androidVariantNames = info.androidVariantNames.toSet()
+        androidVariantNames = info.androidVariantNames.toMutableSet()
     )
 }
 
-class KotlinSourceSetImpl(
+class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) constructor(
     override val name: String,
     override val languageSettings: KotlinLanguageSettings,
     override val sourceDirs: Set<File>,
@@ -68,38 +29,31 @@ class KotlinSourceSetImpl(
     override val regularDependencies: Array<KotlinDependencyId>,
     override val intransitiveDependencies: Array<KotlinDependencyId>,
     override val declaredDependsOnSourceSets: Set<String>,
-    @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
     override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
-    actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
-    isTestComponent: Boolean = false,
+    override val actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
+    override var isTestComponent: Boolean = false,
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
 
+    @OptIn(KotlinGradlePluginVersionDependentApi::class)
     @Suppress("DEPRECATION")
     constructor(kotlinSourceSet: KotlinSourceSet) : this(
         name = kotlinSourceSet.name,
         languageSettings = KotlinLanguageSettingsImpl(kotlinSourceSet.languageSettings),
-        sourceDirs = HashSet(kotlinSourceSet.sourceDirs),
-        resourceDirs = HashSet(kotlinSourceSet.resourceDirs),
+        sourceDirs = kotlinSourceSet.sourceDirs.toMutableSet(),
+        resourceDirs = kotlinSourceSet.resourceDirs.toMutableSet(),
         regularDependencies = kotlinSourceSet.regularDependencies.clone(),
         intransitiveDependencies = kotlinSourceSet.intransitiveDependencies.clone(),
-        declaredDependsOnSourceSets = HashSet(kotlinSourceSet.declaredDependsOnSourceSets),
-        allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
-        additionalVisibleSourceSets = HashSet(kotlinSourceSet.additionalVisibleSourceSets),
+        declaredDependsOnSourceSets = kotlinSourceSet.declaredDependsOnSourceSets.toMutableSet(),
+        allDependsOnSourceSets = kotlinSourceSet.allDependsOnSourceSets.toMutableSet(),
+        additionalVisibleSourceSets = kotlinSourceSet.additionalVisibleSourceSets.toMutableSet(),
         androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
-        actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
-    ) {
-        this.isTestComponent = kotlinSourceSet.isTestComponent
-    }
-
-    override var actualPlatforms: KotlinPlatformContainer = actualPlatforms
-        internal set
-
-    override var isTestComponent: Boolean = isTestComponent
-        internal set
+        actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms),
+        isTestComponent = kotlinSourceSet.isTestComponent
+    )
 
     override fun toString() = name
 
@@ -139,7 +93,7 @@ data class KotlinCompilationOutputImpl(
     override val resourcesDir: File?
 ) : KotlinCompilationOutput {
     constructor(output: KotlinCompilationOutput) : this(
-        HashSet(output.classesDirs),
+        output.classesDirs.toMutableSet(),
         output.effectiveClassesDir,
         output.resourcesDir
     )
@@ -173,16 +127,14 @@ data class KotlinCompilationCoordinatesImpl(
     )
 }
 
-@Suppress("DEPRECATION_ERROR")
+@Suppress("DEPRECATION_ERROR", "OVERRIDE_DEPRECATION")
 data class KotlinCompilationImpl(
     override val name: String,
-    override val allSourceSets: Collection<KotlinSourceSet>,
-    override val declaredSourceSets: Collection<KotlinSourceSet>,
+    override val allSourceSets: Set<KotlinSourceSet>,
+    override val declaredSourceSets: Set<KotlinSourceSet>,
     override val dependencies: Array<KotlinDependencyId>,
     override val output: KotlinCompilationOutput,
-    @Suppress("OverridingDeprecatedMember", "DEPRECATION_ERROR")
     override val arguments: KotlinCompilationArguments,
-    @Suppress("OverridingDeprecatedMember", "DEPRECATION_ERROR")
     override val dependencyClasspath: Array<String>,
     override val cachedArgsInfo: CachedArgsInfo<*>,
     override val kotlinTaskProperties: KotlinTaskProperties,
@@ -224,19 +176,19 @@ data class KotlinCompilationImpl(
         private fun cloneSourceSetsWithCaching(
             sourceSets: Collection<KotlinSourceSet>,
             cloningCache: MutableMap<Any, Any>
-        ): List<KotlinSourceSet> =
+        ): Set<KotlinSourceSet> =
             sourceSets.map { initialSourceSet ->
                 (cloningCache[initialSourceSet] as? KotlinSourceSet) ?: KotlinSourceSetImpl(initialSourceSet).also {
                     cloningCache[initialSourceSet] = it
                 }
-            }
+            }.toMutableSet()
 
         private fun cloneCompilationCoordinatesWithCaching(
             coordinates: Set<KotlinCompilationCoordinates>,
             cloningCache: MutableMap<Any, Any>
         ): Set<KotlinCompilationCoordinates> = coordinates.map { initial ->
             cloningCache.getOrPut(initial) { KotlinCompilationCoordinatesImpl(initial) } as KotlinCompilationCoordinates
-        }.toSet()
+        }.toMutableSet()
     }
 }
 
@@ -310,16 +262,19 @@ data class ExtraFeaturesImpl(
     override val isHMPPEnabled: Boolean,
 ) : ExtraFeatures
 
-data class KotlinMPPGradleModelImpl(
+data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) constructor(
     override val sourceSetsByName: Map<String, KotlinSourceSet>,
     override val targets: Collection<KotlinTarget>,
     override val extraFeatures: ExtraFeatures,
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
+    override val dependencies: IdeaKotlinDependenciesContainer?,
     override val cacheAware: CompilerArgumentsCacheAware,
     override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf(),
     override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 ) : KotlinMPPGradleModel {
+
+    @OptIn(KotlinGradlePluginVersionDependentApi::class)
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
         sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
             (cloningCache[initialSourceSet] as? KotlinSourceSet) ?: KotlinSourceSetImpl(initialSourceSet.value)
@@ -336,6 +291,7 @@ data class KotlinMPPGradleModelImpl(
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
+        dependencies = mppModel.dependencies,
         cacheAware = CompilerArgumentsCacheAwareImpl(mppModel.cacheAware),
         kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) },
         kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse()
@@ -359,13 +315,11 @@ class KotlinPlatformContainerImpl() : KotlinPlatformContainer {
         get() = myPlatforms != null
 
     constructor(platform: KotlinPlatformContainer) : this() {
-        myPlatforms = HashSet(platform.platforms)
+        myPlatforms = platform.platforms.toMutableSet()
     }
 
     override val platforms: Set<KotlinPlatform>
         get() = myPlatforms ?: defaultCommonPlatform
-
-    override fun supports(simplePlatform: KotlinPlatform): Boolean = platforms.contains(simplePlatform)
 
     override fun pushPlatforms(platforms: Iterable<KotlinPlatform>) {
         myPlatforms = (myPlatforms ?: LinkedHashSet()).apply {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.MultiRootBranches;
@@ -14,7 +14,7 @@ import java.util.List;
 
 public final class HgRepositoryManager extends AbstractRepositoryManager<HgRepository> {
   public HgRepositoryManager(@NotNull Project project) {
-    super(HgVcs.getInstance(project), HgUtil.DOT_HG);
+    super(project, HgVcs.getKey(), HgUtil.DOT_HG);
   }
 
   @Override

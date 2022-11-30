@@ -90,7 +90,7 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val lambda = descriptor.psiElement as? KtLambdaExpression ?: return
             val body = lambda.functionLiteral.bodyExpression ?: return
-            val replaced = lambda.replaced(KtPsiFactory(lambda).createExpressionByPattern("run { $0 }", body.allChildren))
+            val replaced = lambda.replaced(KtPsiFactory(project).createExpressionByPattern("run { $0 }", body.allChildren))
             replaced.setTypeIfNeed()
         }
     }

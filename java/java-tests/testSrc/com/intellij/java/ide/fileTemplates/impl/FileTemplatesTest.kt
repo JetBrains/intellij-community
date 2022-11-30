@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.*
 
-@Suppress("UsePropertyAccessSyntax")
 internal class FileTemplatesTest : JavaProjectTestCase() {
   private var testConfigDir: Path? = null
 

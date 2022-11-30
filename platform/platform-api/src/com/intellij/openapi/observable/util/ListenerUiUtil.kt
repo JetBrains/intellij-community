@@ -66,9 +66,22 @@ fun JTree.whenTreeChanged(parentDisposable: Disposable? = null, listener: (TreeM
   model.whenTreeChanged(parentDisposable, listener)
 }
 
+fun JTree.onceWhenTreeChanged(parentDisposable: Disposable? = null, listener: (TreeModelEvent) -> Unit) {
+  model.onceWhenTreeChanged(parentDisposable, listener)
+}
+
 fun TreeModel.whenTreeChanged(parentDisposable: Disposable? = null, listener: (TreeModelEvent) -> Unit) {
   addTreeModelListener(parentDisposable, TreeModelAdapter.create { event, _ ->
     listener(event)
+  })
+}
+
+fun TreeModel.onceWhenTreeChanged(parentDisposable: Disposable? = null, listener: (TreeModelEvent) -> Unit) {
+  addTreeModelListener(parentDisposable, object : TreeModelAdapter() {
+    override fun process(event: TreeModelEvent, type: EventType) {
+      removeTreeModelListener(this)
+      listener(event)
+    }
   })
 }
 

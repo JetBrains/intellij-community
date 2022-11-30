@@ -799,7 +799,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     GlobalSearchScope scope2 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules2);
 
     List<String> expectedPaths =
-      ContainerUtil.newArrayList(getProjectPath() + "/m2/src/main/java", getProjectPath() + "/m2/src/test/java", libraryPath);
+      new ArrayList<>(List.of(getProjectPath() + "/m2/src/main/java", getProjectPath() + "/m2/src/test/java", libraryPath));
     if (new File(librarySrcPath).exists()) {
       expectedPaths.add(librarySrcPath);
     }

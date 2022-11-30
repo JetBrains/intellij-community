@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 class X {
     companion object {
         fun instance(): X = X()

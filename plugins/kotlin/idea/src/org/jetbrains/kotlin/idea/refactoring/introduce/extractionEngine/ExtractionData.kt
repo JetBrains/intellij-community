@@ -101,8 +101,8 @@ data class ExtractionData(
 
     val bindingContext: BindingContext? by lazy { commonParent.analyze() }
 
-    private val itFakeDeclaration by lazy { KtPsiFactory(originalFile).createParameter("it: Any?") }
-    private val synthesizedInvokeDeclaration by lazy { KtPsiFactory(originalFile).createFunction("fun invoke() {}") }
+    private val itFakeDeclaration by lazy { KtPsiFactory(project).createParameter("it: Any?") }
+    private val synthesizedInvokeDeclaration by lazy { KtPsiFactory(project).createFunction("fun invoke() {}") }
 
     init {
         markReferences()

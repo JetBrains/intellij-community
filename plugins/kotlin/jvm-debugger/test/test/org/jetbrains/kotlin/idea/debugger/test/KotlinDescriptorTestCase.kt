@@ -18,6 +18,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -130,7 +131,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     override fun tearDown() {
         runAll(
           ThrowableRunnable { KotlinEvaluator.LOG_COMPILATIONS = false },
-          ThrowableRunnable { oldValues?.revertValues() },
+          ThrowableRunnable { invokeAndWaitIfNeeded { oldValues?.revertValues() } },
           ThrowableRunnable { oldValues = null },
           ThrowableRunnable { detachLibraries() },
           ThrowableRunnable { logPropagator?.detach() },
@@ -181,7 +182,9 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         val preferences = DebuggerPreferences(myProject, wholeFileContents)
 
-        oldValues = SettingsMutators.mutate(preferences)
+        invokeAndWaitIfNeeded {
+            oldValues = SettingsMutators.mutate(preferences)
+        }
 
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")

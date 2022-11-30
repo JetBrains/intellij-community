@@ -83,7 +83,7 @@ public final class IconLoader {
   @ApiStatus.Internal
   public static @Nullable Icon loadCustomVersion(@NotNull CachedImageIcon icon, int width, int height) {
     ImageDataLoader resolver = icon.resolver;
-    URL url = resolver == null ? null : resolver.getURL();
+    URL url = resolver == null ? null : resolver.getUrl();
     String path = url == null ? null : url.toString();
     if (path != null && path.endsWith(".svg")) {
       String modified = path.substring(0, path.length() - 4) + "@" + width + "x" + height + ".svg";
@@ -278,7 +278,7 @@ public final class IconLoader {
     }
 
     @Override
-    public @Nullable URL getURL() {
+    public @Nullable URL getUrl() {
       ClassLoader classLoader = classLoaderRef.get();
       return classLoader == null ? null : classLoader.getResource(path);
     }
@@ -632,7 +632,8 @@ public final class IconLoader {
    * Creates new icon with the low-level CachedImageIcon changing
    */
   @ApiStatus.Internal
-  public static @NotNull Icon replaceCachedImageIcons(@NotNull Icon icon,@NotNull Function<CachedImageIcon, Icon> cachedImageIconReplacer) {
+  public static @NotNull Icon replaceCachedImageIcons(@NotNull Icon icon,
+                                                      @NotNull Function<? super CachedImageIcon, ? extends Icon> cachedImageIconReplacer) {
     IconReplacer replacer = new IconReplacer() {
       @Override
       @Contract("null -> null; !null -> !null")
@@ -1089,7 +1090,7 @@ public final class IconLoader {
 
     public final @Nullable URL getURL() {
       ImageDataLoader resolver = this.resolver;
-      return resolver == null ? null : resolver.getURL();
+      return resolver == null ? null : resolver.getUrl();
     }
 
     @Nullable

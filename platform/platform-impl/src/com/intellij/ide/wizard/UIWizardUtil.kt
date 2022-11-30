@@ -4,11 +4,13 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
@@ -131,6 +133,18 @@ fun NewProjectWizardStep.setupProjectSafe(
         errorMessage + "\n" + ex.message.toString(),
         UIBundle.message("error.project.wizard.new.project.title", context.isCreatingNewProjectInt)
       )
+    }
+  }
+}
+
+@ApiStatus.Internal
+fun whenProjectCreated(project: Project, action: () -> Unit) {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    action()
+  }
+  else {
+    StartupManager.getInstance(project).runAfterOpened {
+      ApplicationManager.getApplication().invokeLater(action, project.disposed)
     }
   }
 }

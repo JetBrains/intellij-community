@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.Disposable
@@ -139,7 +139,6 @@ class PySdkPathsTest {
 
     mockPythonPluginDisposable()
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }
-    runWriteActionAndWait { ProjectJdkTable.getInstance().addJdk(sdk) }
 
     val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
@@ -189,7 +188,6 @@ class PySdkPathsTest {
     )
       .also { module.pythonSdk = it }
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-    runWriteActionAndWait { ProjectJdkTable.getInstance().addJdk(sdk) }
 
     val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)

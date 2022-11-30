@@ -37,7 +37,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
   private volatile @Nullable GitRebaseSpec myOngoingRebaseSpec;
 
   public GitRepositoryManager(@NotNull Project project) {
-    super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
+    super(project, GitVcs.getKey(), GitUtil.DOT_GIT);
 
     AsyncVfsEventsPostProcessor.getInstance().addListener(new GitUntrackedDirtyScopeListener(this), this);
   }

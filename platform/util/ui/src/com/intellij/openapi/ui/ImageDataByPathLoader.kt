@@ -86,9 +86,8 @@ class ImageDataByPathLoader private constructor(val path: String,
     return ImageLoader.loadImage(path, parameters, null, classLoader, flags, !path.endsWith(".svg"))
   }
 
-  override fun getURL(): URL? {
-    return classLoader.getResource(path)
-  }
+  override val url: URL?
+    get() = classLoader.getResource(path)
 
   override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
     val isOriginal = original == null
@@ -109,9 +108,7 @@ class ImageDataByPathLoader private constructor(val path: String,
 
     if (path != other.path) return false
     if (classLoader != other.classLoader) return false
-    if (original != other.original) return false
-
-    return true
+    return original == other.original
   }
 
   override fun hashCode(): Int {

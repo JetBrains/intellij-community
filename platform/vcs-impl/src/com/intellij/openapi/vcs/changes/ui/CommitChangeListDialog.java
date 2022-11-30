@@ -170,7 +170,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull List<Change> changes,
+                                      @NotNull List<? extends Change> changes,
                                       @Nullable LocalChangeList initialSelection,
                                       @NotNull List<? extends CommitExecutor> executors,
                                       boolean showVcsCommit,
@@ -182,7 +182,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull List<Change> changes,
+                                      @NotNull List<? extends Change> changes,
                                       @NotNull Collection<?> included,
                                       @Nullable LocalChangeList initialSelection,
                                       @NotNull List<? extends CommitExecutor> executors,

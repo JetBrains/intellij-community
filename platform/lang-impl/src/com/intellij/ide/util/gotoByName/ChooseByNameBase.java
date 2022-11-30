@@ -66,10 +66,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.Consumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.Matcher;
@@ -142,6 +139,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   private boolean myClosedByShiftEnter;
   final int myInitialIndex;
+
+  private Function<Set<Object>, Object> myInitialSelection;
   @Nls private String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
   private final boolean myInitIsDone;
@@ -251,6 +250,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   @Override
   public ChooseByNameModel getModel() {
     return myModel;
+  }
+
+  public void setInitialSelection(Function<Set<Object>, Object> initialSelection) {
+    myInitialSelection = initialSelection;
   }
 
   public class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
@@ -1344,7 +1347,16 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> populateElements(elements));
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
-      AnchoredSet resultSet = new AnchoredSet(filter(elements));
+      Set<Object> objects = filter(elements);
+      Object selected;
+      if (myInitialSelection != null) {
+        selected = myInitialSelection.fun(objects);
+        myInitialSelection = null;
+      }
+      else {
+        selected = null;
+      }
+      AnchoredSet resultSet = new AnchoredSet(objects);
       return new Continuation(() -> {
         if (!checkDisposed() && !myProgress.isCanceled()) {
           CalcElementsThread currentBgProcess = myCalcElementsThread;
@@ -1353,7 +1365,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           showCard(cardToShow, 0);
 
           Set<Object> filtered = resultSet.getElements();
-          backgroundCalculationFinished(filtered, mySelectionPolicy);
+          backgroundCalculationFinished(filtered, selected == null ? mySelectionPolicy : new SelectObject(selected));
           myCallback.consume(filtered);
         }
       }, myModalityState);

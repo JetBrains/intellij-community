@@ -59,8 +59,8 @@ public final class HistoryEntry {
   }
 
   static @NotNull HistoryEntry createLight(@NotNull VirtualFile file,
-                                           @NotNull List<FileEditorProvider> providers,
-                                           @NotNull List<FileEditorState> states,
+                                           @NotNull List<? extends FileEditorProvider> providers,
+                                           @NotNull List<? extends FileEditorState> states,
                                            @NotNull FileEditorProvider selectedProvider,
                                            boolean preview) {
     VirtualFilePointer pointer = new LightFilePointer(file);
@@ -84,8 +84,8 @@ public final class HistoryEntry {
 
   static @NotNull HistoryEntry createHeavy(@NotNull Project project,
                                            @NotNull VirtualFile file,
-                                           @NotNull List<FileEditorProvider> providers,
-                                           @NotNull List<FileEditorState> states,
+                                           @NotNull List<? extends FileEditorProvider> providers,
+                                           @NotNull List<? extends FileEditorState> states,
                                            @NotNull FileEditorProvider selectedProvider,
                                            boolean preview) {
     if (project.isDisposed()) return createLight(file, providers, states, selectedProvider, preview);

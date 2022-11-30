@@ -115,14 +115,16 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
             if (areDuplicates(branch, otherBranch)) {
               isDuplicate[otherIndex] = true;
-              highlightDuplicate(otherBranch, branch);
+              if (canMerge(otherBranch, branch)) {
+                registerProblem(otherBranch, otherBranch.getCaseBranchMessage(), branch.newMergeCasesFix());
+              }
             }
           }
         }
       }
     }
 
-    private static boolean isMergeCasesFixAvailable(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
+    private static boolean canMerge(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
       if (duplicate.myBranchType == BranchType.UNMERGEABLE || original.myBranchType == BranchType.UNMERGEABLE) {
         return false;
       }
@@ -130,13 +132,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         return true;
       }
       return duplicate.myBranchType != BranchType.TYPE_TEST_PATTERN;
-    }
-
-    private void highlightDuplicate(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
-      LocalQuickFix fix = isMergeCasesFixAvailable(duplicate, original) ? original.newMergeCasesFix() : null;
-      if (fix != null || !duplicate.isEmptyRuleBody()) {
-        registerProblem(duplicate, duplicate.getCaseBranchMessage(), fix);
-      }
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase branch) {
@@ -573,8 +568,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     abstract LocalQuickFix newMergeWithDefaultFix();
 
-    abstract boolean isEmptyRuleBody();
-
     @Nullable
     Match match(BranchBase<?> other) {
       return getFinder().isDuplicate(other.myStatements[0], true);
@@ -734,11 +727,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    boolean isEmptyRuleBody() {
-      return false;
-    }
-
-    @Override
     LocalQuickFix newDeleteCaseFix() {
       return new DeleteRedundantBranchFix();
     }
@@ -873,11 +861,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     @Override
     LocalQuickFix newMergeWithDefaultFix() {
       return null;
-    }
-
-    @Override
-    boolean isEmptyRuleBody() {
-      return myStatements[0] instanceof PsiBlockStatement blockStatement && blockStatement.getCodeBlock().isEmpty();
     }
 
     @Override

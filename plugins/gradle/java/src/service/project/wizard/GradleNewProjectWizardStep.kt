@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.util.bindEnumStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -26,6 +27,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.lang.JavaVersion
 import icons.GradleIcons
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 import org.jetbrains.plugins.gradle.util.*
 import javax.swing.Icon
 
@@ -35,10 +37,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         ParentStep : NewProjectWizardBaseData {
 
   final override val sdkProperty = propertyGraph.property<Sdk?>(null)
-  final override val useKotlinDslProperty = propertyGraph.property(false)
+  final override val gradleDslProperty = propertyGraph.property(GradleDsl.KOTLIN)
+    .bindEnumStorage("NewProjectWizard.gradleDslState")
 
   final override var sdk by sdkProperty
-  final override var useKotlinDsl by useKotlinDslProperty
+  final override var gradleDsl by gradleDslProperty
 
   override fun createView(data: ProjectData) = GradleDataView(data)
 
@@ -52,15 +55,14 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .whenItemSelectedFromUi { logSdkChanged(sdk) }
       }.bottomGap(BottomGap.SMALL)
       row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
-        val renderer: (Boolean) -> String = {
+        segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY)) {
           when (it) {
-            true -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
-            else -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
+            GradleDsl.KOTLIN -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
+            GradleDsl.GROOVY -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
           }
         }
-        segmentedButton(listOf(false, true), renderer)
-          .bind(useKotlinDslProperty)
-          .whenItemSelectedFromUi { logDslChanged(it) }
+          .bind(gradleDslProperty)
+          .whenItemSelectedFromUi { logDslChanged(it == GradleDsl.KOTLIN) }
       }.bottomGap(BottomGap.SMALL)
     }
     super.setupUI(builder)

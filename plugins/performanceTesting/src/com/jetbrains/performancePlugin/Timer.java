@@ -150,16 +150,14 @@ public class Timer {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logValue(String key, long value) {
     if (value >= 0L) {
-      System.out.printf("##teamcity[buildStatisticValue key='%s' value='%d']", key, value);
-      System.out.println();
+      System.out.println("##teamcity[buildStatisticValue key='" + key + "' value='" + value + "']");
     }
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logValue(String key, double value) {
     if (value >= 0L) {
-      System.out.printf("##teamcity[buildStatisticValue key='%s' value='%f']", key, value);
-      System.out.println();
+      System.out.println("##teamcity[buildStatisticValue key='"+ key + "' value='" + value + "']");
     }
   }
 }

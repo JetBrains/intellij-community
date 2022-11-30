@@ -855,6 +855,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/inlineReified2.kt");
             }
 
+            @TestMetadata("interfaceFunction.kt")
+            public void testInterfaceFunction() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/interfaceFunction.kt");
+            }
+
             @TestMetadata("invisibleType.kt")
             public void testInvisibleType() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/invisibleType.kt");
@@ -1008,11 +1013,6 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("topLevelValUnderSmartCast.kt")
             public void testTopLevelValUnderSmartCast() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
-            }
-
-            @TestMetadata("traitFunction.kt")
-            public void testTraitFunction() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/traitFunction.kt");
             }
 
             @TestMetadata("unnecessaryNullabilityAnnotation.kt")
@@ -1720,54 +1720,6 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/refactoring/extractFunction/experimental")
-        public static class Experimental extends AbstractExtractionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("allOptInAnnotations.kt")
-            public void testAllOptInAnnotations() throws Exception {
-                runTest("testData/refactoring/extractFunction/experimental/allOptInAnnotations.kt");
-            }
-
-            @TestMetadata("containerOptInAnnotation.kt")
-            public void testContainerOptInAnnotation() throws Exception {
-                runTest("testData/refactoring/extractFunction/experimental/containerOptInAnnotation.kt");
-            }
-
-            @TestMetadata("filterOptInAnnotations.kt")
-            public void testFilterOptInAnnotations() throws Exception {
-                runTest("testData/refactoring/extractFunction/experimental/filterOptInAnnotations.kt");
-            }
-
-            @TestMetadata("filterPropagatingMarkers.kt")
-            public void testFilterPropagatingMarkers() throws Exception {
-                runTest("testData/refactoring/extractFunction/experimental/filterPropagatingMarkers.kt");
-            }
-
-            @TestMetadata("noExperimentalApi.kt")
-            public void testNoExperimentalApi() throws Exception {
-                runTest("testData/refactoring/extractFunction/experimental/noExperimentalApi.kt");
-            }
-
-            @TestMetadata("singleOptInAnnotation.kt")
-            public void testSingleOptInAnnotation() throws Exception {
-                runTest("testData/refactoring/extractFunction/experimental/singleOptInAnnotation.kt");
-            }
-
-            @TestMetadata("singlePropagatingMarker.kt")
-            public void testSinglePropagatingMarker() throws Exception {
-                runTest("testData/refactoring/extractFunction/experimental/singlePropagatingMarker.kt");
-            }
-
-            @TestMetadata("useExperimental16.kt")
-            public void testUseExperimental16() throws Exception {
-                runTest("testData/refactoring/extractFunction/experimental/useExperimental16.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/initializers")
         public abstract static class Initializers extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
@@ -1968,6 +1920,54 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("multilineNestedBinaryExpression2.kt")
             public void testMultilineNestedBinaryExpression2() throws Exception {
                 runTest("testData/refactoring/extractFunction/multiline/multilineNestedBinaryExpression2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/extractFunction/optIn")
+        public static class OptIn extends AbstractExtractionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("allOptInAnnotations.kt")
+            public void testAllOptInAnnotations() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/allOptInAnnotations.kt");
+            }
+
+            @TestMetadata("containerOptInAnnotation.kt")
+            public void testContainerOptInAnnotation() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/containerOptInAnnotation.kt");
+            }
+
+            @TestMetadata("filterOptInAnnotations.kt")
+            public void testFilterOptInAnnotations() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/filterOptInAnnotations.kt");
+            }
+
+            @TestMetadata("filterPropagatingMarkers.kt")
+            public void testFilterPropagatingMarkers() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkers.kt");
+            }
+
+            @TestMetadata("noExperimentalApi.kt")
+            public void testNoExperimentalApi() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/noExperimentalApi.kt");
+            }
+
+            @TestMetadata("singleOptInAnnotation.kt")
+            public void testSingleOptInAnnotation() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/singleOptInAnnotation.kt");
+            }
+
+            @TestMetadata("singlePropagatingMarker.kt")
+            public void testSinglePropagatingMarker() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/singlePropagatingMarker.kt");
+            }
+
+            @TestMetadata("useExperimental16.kt")
+            public void testUseExperimental16() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/useExperimental16.kt");
             }
         }
 
@@ -2457,6 +2457,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testTopLevelExpression() throws Exception {
                 runTest("testData/refactoring/extractFunction/script/TopLevelExpression.kts");
             }
+
+            @TestMetadata("topLevelFunction.kts")
+            public void testTopLevelFunction() throws Exception {
+                runTest("testData/refactoring/extractFunction/script/topLevelFunction.kts");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -2802,9 +2807,9 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceProperty/extractLazyToFile.kt");
             }
 
-            @TestMetadata("extractLazyToTrait.kt")
-            public void testExtractLazyToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyToTrait.kt");
+            @TestMetadata("extractLazyToInterface.kt")
+            public void testExtractLazyToInterface() throws Exception {
+                runTest("testData/refactoring/introduceProperty/extractLazyToInterface.kt");
             }
 
             @TestMetadata("extractLazyWithBlock.kt")
@@ -2857,9 +2862,9 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceProperty/extractWithGetterToFile.kt");
             }
 
-            @TestMetadata("extractWithGetterToTrait.kt")
-            public void testExtractWithGetterToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithGetterToTrait.kt");
+            @TestMetadata("extractWithGetterToInterface.kt")
+            public void testExtractWithGetterToInterface() throws Exception {
+                runTest("testData/refactoring/introduceProperty/extractWithGetterToInterface.kt");
             }
 
             @TestMetadata("extractWithInitializerAndBlock.kt")
@@ -2892,9 +2897,9 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceProperty/extractWithInitializerToFile.kt");
             }
 
-            @TestMetadata("extractWithInitializerToTrait.kt")
-            public void testExtractWithInitializerToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerToTrait.kt");
+            @TestMetadata("extractWithInitializerToInterface.kt")
+            public void testExtractWithInitializerToInterface() throws Exception {
+                runTest("testData/refactoring/introduceProperty/extractWithInitializerToInterface.kt");
             }
 
             @TestMetadata("extractWithParams.kt")

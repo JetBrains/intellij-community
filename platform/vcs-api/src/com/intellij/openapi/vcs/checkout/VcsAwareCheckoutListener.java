@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.checkout;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -11,5 +12,6 @@ import java.nio.file.Path;
 public interface VcsAwareCheckoutListener {
   ExtensionPointName<VcsAwareCheckoutListener> EP_NAME = new ExtensionPointName<>("com.intellij.vcsAwareCheckoutListener");
 
+  @RequiresBackgroundThread
   boolean processCheckedOutDirectory(Project project, @NotNull Path directory, VcsKey vcsKey);
 }

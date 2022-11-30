@@ -7,8 +7,8 @@ d.Outer.Inner
 d.Outer.Nested
 d.Outer.NestedAnnotation
 d.Outer.NestedEnum
+d.Outer.NestedInterface
 d.Outer.NestedObj
-d.Outer.NestedTrait
 d.T
 d.c
 d.ext

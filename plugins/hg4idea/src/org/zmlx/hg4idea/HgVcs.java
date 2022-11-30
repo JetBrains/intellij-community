@@ -57,12 +57,10 @@ import org.zmlx.hg4idea.util.HgVersion;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
 public class HgVcs extends AbstractVcs {
@@ -298,11 +296,10 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public List<CommitExecutor> getCommitExecutors() {
-    ArrayList<CommitExecutor> commitExecutors = newArrayList(myCommitAndPushExecutor);
     if (exists(HgUtil.getRepositoryManager(myProject).getRepositories(), r -> r.getRepositoryConfig().isMqUsed())) {
-      commitExecutors.add(myMqNewExecutor);
+      return List.of(myCommitAndPushExecutor, myMqNewExecutor);
     }
-    return commitExecutors;
+    return List.of(myCommitAndPushExecutor);
   }
 
   @Nullable

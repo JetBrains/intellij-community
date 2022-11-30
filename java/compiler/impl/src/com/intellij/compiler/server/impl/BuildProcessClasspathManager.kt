@@ -134,7 +134,7 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
         catch (ignored: IOException) {
         }
       }
-      LOG.error(PluginException("Cannot add '" + relativePath + "' from '" + plugin.name + ' ' + plugin.version + "'" + " to compiler classpath", plugin.pluginId))
+      LOG.error(PluginException("Cannot add '$relativePath' from '${plugin.name} ${plugin.version}' (plugin path: $baseFile) to compiler classpath", plugin.pluginId))
       return null
     }
 

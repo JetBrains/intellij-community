@@ -300,7 +300,7 @@ public final class EventLog {
     return removeCallback;
   }
 
-  private static void highlightTags(List<RangeMarker> markers, @NotNull EditorEx editor, int fontType) {
+  private static void highlightTags(List<? extends RangeMarker> markers, @NotNull EditorEx editor, int fontType) {
     if (!markers.isEmpty()) {
       MarkupModelEx model = editor.getMarkupModel();
       TextAttributes attributes = new TextAttributes(null, null, null, null, fontType);
@@ -393,8 +393,8 @@ public final class EventLog {
                                           AtomicBoolean showMore,
                                           Map<RangeMarker, HyperlinkInfo> links,
                                           List<RangeMarker> lineSeparators,
-                                          List<RangeMarker> boldMarkers,
-                                          List<RangeMarker> italicMarkers) {
+                                          List<? super RangeMarker> boldMarkers,
+                                          List<? super RangeMarker> italicMarkers) {
     String content = StringUtil.convertLineSeparators(text);
 
     int initialLen = document.getTextLength();
@@ -455,7 +455,7 @@ public final class EventLog {
     return hasHtml;
   }
 
-  private static String parseTag(List<RangeMarker> markers,
+  private static String parseTag(List<? super RangeMarker> markers,
                                  Document document,
                                  String content,
                                  Matcher tagMatcher,

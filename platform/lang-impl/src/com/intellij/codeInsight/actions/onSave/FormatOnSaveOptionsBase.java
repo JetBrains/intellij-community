@@ -137,7 +137,7 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
     myState.mySelectedFileTypes.clear();
   }
 
-  void setRunForSelectedFileTypes(@NotNull Collection<@NotNull FileType> fileTypes) {
+  void setRunForSelectedFileTypes(@NotNull Collection<? extends @NotNull FileType> fileTypes) {
     myState.myAllFileTypesSelected = false;
     myState.mySelectedFileTypes.clear();
     for (FileType fileType : fileTypes) {

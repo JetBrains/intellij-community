@@ -14,7 +14,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IdempotenceChecker;
-import com.intellij.util.containers.ContainerUtil;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
@@ -658,14 +657,14 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     MockTestLocator locator = new MockTestLocator(testFileLocation);
     mySimpleTest.setLocator(locator);
     assertEquals(testFileLocation, mySimpleTest.getLocation(project, allScope));
-    assertEquals(ContainerUtil.newArrayList(allScope), locator.myCalledSearchScopes);
+    assertEquals(List.of(allScope), locator.myCalledSearchScopes);
 
     assertEquals(testFileLocation, mySimpleTest.getLocation(project, allScope));
-    assertEquals(ContainerUtil.newArrayList(allScope), locator.myCalledSearchScopes);
+    assertEquals(List.of(allScope), locator.myCalledSearchScopes);
 
     GlobalSearchScope notAllScope = GlobalSearchScope.notScope(allScope);
     assertEquals(testFileLocation, mySimpleTest.getLocation(project, notAllScope));
-    assertEquals(ContainerUtil.newArrayList(allScope, notAllScope), locator.myCalledSearchScopes);
+    assertEquals(List.of(allScope, notAllScope), locator.myCalledSearchScopes);
 
     WriteAction.run(() -> {
       PsiDocumentManager.getInstance(project).getDocument(testFile).setText("");
@@ -673,13 +672,13 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     });
 
     assertNull(null, mySimpleTest.getLocation(project, allScope));
-    assertEquals(ContainerUtil.newArrayList(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
+    assertEquals(List.of(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
 
     assertNull(null, mySimpleTest.getLocation(project, allScope));
-    assertEquals(ContainerUtil.newArrayList(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
+    assertEquals(List.of(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
 
     assertNull(null, mySimpleTest.getLocation(project, allScope));
-    assertEquals(ContainerUtil.newArrayList(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
+    assertEquals(List.of(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
   }
 
   public void testNavigatable() {

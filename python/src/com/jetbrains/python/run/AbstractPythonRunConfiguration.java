@@ -47,6 +47,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
+  private Sdk mySdk = null;
   private boolean myUseModuleSdk;
   private boolean myAddContentRoots = true;
   private boolean myAddSourceRoots = true;
@@ -188,6 +189,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   @Override
   public String getSdkHome() {
+    if (mySdk != null) {
+      return mySdk.getHomePath();
+    }
     String sdkHome = mySdkHome;
     if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
       final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
@@ -206,16 +210,23 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
       if (sdk == null) return null;
       sdkHome = sdk.getHomePath();
     }
+    else if (mySdk != null) {
+      sdkHome = mySdk.getHomePath();
+    }
     else {
       sdkHome = getSdkHome();
     }
     return sdkHome;
   }
 
+  @Override
   @Nullable
   public Sdk getSdk() {
     if (myUseModuleSdk) {
       return PythonSdkUtil.findPythonSdk(getModule());
+    }
+    else if (mySdk != null) {
+      return mySdk;
     }
     else {
       return PythonSdkUtil.findSdkByPath(getSdkHome());
@@ -228,6 +239,12 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
     readEnvs(element);
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
+
+    final String sdkName = JDOMExternalizerUtil.readField(element, "SDK_NAME");
+    if (sdkName != null) {
+      mySdk = PythonSdkUtil.findSdkByKey(sdkName);
+    }
+
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
     final String addContentRoots = JDOMExternalizerUtil.readField(element, "ADD_CONTENT_ROOTS");
@@ -257,6 +274,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
     writeEnvs(element);
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
+    if (mySdk != null) {
+      JDOMExternalizerUtil.writeField(element, "SDK_NAME", mySdk.getName());
+    }
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
@@ -302,6 +322,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
+  public void setSdk(@Nullable Sdk sdk) {
+    mySdk = sdk;
+  }
+
+  @Override
   @Nullable
   @Transient
   public Module getModule() {
@@ -343,6 +368,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
     target.setSdkHome(source.getSdkHome());
+    target.setSdk(source.getSdk());
     target.setWorkingDirectory(source.getWorkingDirectory());
     target.setModule(source.getModule());
     target.setUseModuleSdk(source.isUseModuleSdk());

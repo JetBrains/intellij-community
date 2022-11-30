@@ -4,9 +4,11 @@ package com.intellij.codeInspection.test.junit
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.isInheritorOf
+import com.intellij.codeInspection.nonPreviewElement
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +18,7 @@ import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -211,9 +214,18 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
   }
 
   private fun transformSetUpOrTearDownMethod(method: UMethod) {
-    val fixModifierOverrideActions = createModifierActions(method, modifierRequest(JvmModifier.PUBLIC, true)) +
-                                     createChangeOverrideActions(method, shouldBePresent = false)
-    fixModifierOverrideActions.forEach { it.invoke(method.javaPsi.project, null, method.javaPsi.containingFile) }
+    val project = method.javaPsi.project
+    val nonPreviewElement = method.javaPsi.nonPreviewElement ?: return
+    val actions = createModifierActions(nonPreviewElement, modifierRequest(JvmModifier.PUBLIC, true)) +
+                  createChangeOverrideActions(nonPreviewElement, shouldBePresent = false)
+    actions.forEach {
+      if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+        it.generatePreview(project, IntentionPreviewUtils.getPreviewEditor() ?: return, method.sourcePsi?.containingFile ?: return)
+      }
+      else {
+        it.invoke(project, null, method.sourcePsi?.containingFile ?: return)
+      }
+    }
     method.accept(SuperCallRemoverVisitor(method.name))
   }
 
@@ -234,7 +246,13 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
             val qualified = node.valueArguments.first().asSafely<UQualifiedReferenceExpression>()
             if(qualified?.selector?.asSafely<UCallExpression>()?.isSuite() == false) return false // don't show conflict in preview
             val receiver = qualified?.receiver.asSafely<UReferenceExpression>() ?: return false
-            classLiterals.add(receiver.getQualifiedName() ?: return false)
+            val suiteClass = receiver.resolve().toUElementOfType<UClass>()?.javaPsi
+            val suiteFqn = if (InheritanceUtil.isInheritor(suiteClass, JUNIT_FRAMEWORK_TEST_CASE)) {
+              suiteClass?.qualifiedName
+            } else {
+              suiteClass?.containingClass?.qualifiedName // receiver was companion object
+            }
+            classLiterals.add(suiteFqn ?: return false)
           }
           addTestSuiteMatcher.uCallMatches(node) -> {
             val type = node.valueArguments

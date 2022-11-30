@@ -64,7 +64,8 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ContentRootEntity oldEntity,
-                                                                                                   @NotNull ContentRootEntity newEntity) {
+                                                                                                   @NotNull ContentRootEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (!(newEntity.getExcludedPatterns().equals(oldEntity.getExcludedPatterns()))) {
       return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getSymbolicId(), newEntity.getUrl());
     }
@@ -91,7 +92,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
   }
 
   @NotNull
-  static List<VirtualFileUrl> collectRootUrls(List<ContentRootEntity> newContentRoots) {
+  static List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
     return ContainerUtil.map(newContentRoots, o -> o.getUrl());
   }
 

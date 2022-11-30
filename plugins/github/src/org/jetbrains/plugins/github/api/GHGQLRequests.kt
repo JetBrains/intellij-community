@@ -8,10 +8,7 @@ import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
-import org.jetbrains.plugins.github.api.data.GHBranchProtectionRule
-import org.jetbrains.plugins.github.api.data.GHComment
-import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.GHRepository
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
@@ -20,6 +17,15 @@ import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThr
 import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 
 object GHGQLRequests {
+  object User {
+    fun find(server: GithubServerPath, login: String): GQLQuery<GHUser?> {
+      return GQLQuery.OptionalTraversedParsed(server.toGraphQLUrl(), GHGQLQueries.findUser,
+                                              mapOf("login" to login),
+                                              GHUser::class.java,
+                                              "user")
+    }
+  }
+
   object Organization {
 
     object Team {

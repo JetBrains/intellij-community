@@ -31,6 +31,7 @@ data class GitLabMergeRequestsFiltersValue(
     if (author != null) count++
     if (assignee != null) count++
     if (reviewer != null) count++
+    if (label != null) count++
     return count
   }
 

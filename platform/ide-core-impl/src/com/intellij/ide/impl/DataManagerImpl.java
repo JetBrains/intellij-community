@@ -204,7 +204,7 @@ public class DataManagerImpl extends DataManager {
     return result;
   }
 
-  private static @Nullable Object getRulesData(@NotNull String dataId, @NotNull List<GetDataRule> rules, @NotNull DataProvider provider) {
+  private static @Nullable Object getRulesData(@NotNull String dataId, @NotNull List<? extends GetDataRule> rules, @NotNull DataProvider provider) {
     for (GetDataRule rule : rules) {
       try {
         Object data = rule.getData(provider);
@@ -291,7 +291,7 @@ public class DataManagerImpl extends DataManager {
   @Override
   public @NotNull DataContext getDataContext() {
     Component component = null;
-    if (Registry.is("actionSystem.getContextByRecentMouseEvent")) {
+    if (Registry.is("actionSystem.getContextByRecentMouseEvent", false)) {
       component = IdeUiService.getInstance().getComponentFromRecentMouseEvent();
     }
     return getDataContext(component != null ? component : getFocusedComponent());

@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.intentions.JoinArgumentListIntention
+org.jetbrains.kotlin.idea.codeInsight.intentions.shared.JoinArgumentListIntention

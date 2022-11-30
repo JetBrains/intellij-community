@@ -8,7 +8,15 @@ import java.awt.Font
 @ApiStatus.NonExtendable
 interface CollapsibleRow : Row {
 
+  /**
+   * Expanded state of the row
+   */
   var expanded: Boolean
+
+  /**
+   * Packs windows height on expand and collapse
+   */
+  var packWindowHeight: Boolean
 
   fun setTitle(@NlsContexts.BorderTitle title: String)
 

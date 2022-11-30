@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.LabelUI;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -319,7 +318,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     if (ExperimentalUI.isNewUI()) {
       return JBFont.medium();
     } else {
-      return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
+      return RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font);
     }
   }
 

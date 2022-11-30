@@ -58,7 +58,7 @@ internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
 
   val nestedViewModelState: StateFlow<NestedViewModel> = connectionState.mapStateScoped(scope) { scope, connection ->
     if (connection != null) {
-      MergeRequests(scope, connection)
+      MergeRequests(scope, connection, accountManager)
     }
     else {
       val selectorVm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectsManager, accountManager, ::connect)
@@ -86,7 +86,11 @@ internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
   internal sealed interface NestedViewModel {
     class Selectors(val selectorVm: GitLabRepositoryAndAccountSelectorViewModel) : NestedViewModel
 
-    class MergeRequests(scope: CoroutineScope, connection: GitLabProjectConnection) : NestedViewModel {
+    class MergeRequests(
+      scope: CoroutineScope,
+      connection: GitLabProjectConnection,
+      accountManager: GitLabAccountManager
+    ) : NestedViewModel {
       private val avatarIconsProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(
         AsyncImageIconsProvider(scope, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
       )
@@ -103,7 +107,10 @@ internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
         scope,
         filterVm = filterVm,
         repository = connection.repo.repository.projectPath.name,
+        account = connection.account,
         avatarIconsProvider = avatarIconsProvider,
+        accountManager = accountManager,
+        tokenRefreshFlow = connection.tokenRefreshFlow,
         loaderSupplier = { filtersValue ->
           GitLabMergeRequestsListLoader(connection.apiClient, connection.repo.repository, filtersValue.toSearchQuery())
         }

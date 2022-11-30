@@ -1,14 +1,14 @@
 package t
 
-interface Trait
+interface Interface
 
 open class A {
-    companion object Companion : Trait {
+    companion object Companion : Interface {
 
     }
 }
 
-fun Trait.foo() {}
+fun Interface.foo() {}
 
 fun test() {
     <caret>A.foo()

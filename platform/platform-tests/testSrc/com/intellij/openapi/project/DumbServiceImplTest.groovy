@@ -87,7 +87,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         def e = new Exception()
         for (StackTraceElement element : e.stackTrace) {
-          if (element.toString().contains(DumbServiceGuiTaskQueue.class.simpleName)) {
+          if (element.toString().contains(DumbServiceGuiExecutor.class.simpleName)) {
             semaphore.up()
             return
           }

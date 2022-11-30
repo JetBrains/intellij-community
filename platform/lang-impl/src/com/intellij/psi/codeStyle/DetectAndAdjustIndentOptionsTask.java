@@ -82,7 +82,7 @@ class DetectAndAdjustIndentOptionsTask {
     if (!currentDefault.equals(myOptionsToAdjust)) {
       myOptionsToAdjust.setDetected(true);
       myOptionsToAdjust.setOverrideLanguageOptions(true);
-      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
+      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file.getVirtualFile());
     }
   }
 

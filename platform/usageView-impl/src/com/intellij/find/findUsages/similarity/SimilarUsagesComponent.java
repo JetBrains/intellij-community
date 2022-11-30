@@ -3,7 +3,10 @@ package com.intellij.find.findUsages.similarity;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
@@ -38,7 +41,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     Disposer.register(parent, this);
   }
 
-  public void renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
+  public void renderSimilarUsages(@NotNull Collection<? extends SimilarUsage> similarUsagesGroupUsages) {
     similarUsagesGroupUsages.stream().skip(myAlreadyProcessedUsages).limit(SNIPPET_LIMIT).forEach(usage -> {
       final UsageInfo info = usage.getUsageInfo();
       if (myOriginalUsage != info) {
@@ -50,31 +53,35 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
 
   private void renderUsage(@NotNull UsageInfo info) {
     PsiElement element = info.getElement();
-    if (element == null) return;
-    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(info.getElement(), info.getRangeInElement());
-    Disposer.register(this, codeSnippet);
-    Color color = codeSnippet.getEditor().getBackgroundColor();
-    add(getHeaderPanelForUsage(myOriginalUsage, info, color));
-    add(codeSnippet);
+    PsiFile file = info.getFile();
+    ProperTextRange rangeInElement = info.getRangeInElement();
     myAlreadyRenderedUsages++;
+    if (element == null || file == null || rangeInElement == null) return;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return;
+    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(element, rangeInElement);
+    Disposer.register(this, codeSnippet);
+    JPanel headerPanelForUsage = getHeaderPanelForUsage(virtualFile, element, codeSnippet.getEditor().getBackgroundColor());
+    if (myOriginalUsage==info) {
+      final SimpleColoredComponent component = new SimpleColoredComponent();
+      component.append(UsageViewBundle.message("similar.usages.the.original.usage.label"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      headerPanelForUsage.add(component);
+    }
+    add(headerPanelForUsage);
+    add(codeSnippet);
   }
 
   public void renderOriginalUsage() {
     renderUsage(myOriginalUsage);
   }
 
-  public @NotNull JPanel getHeaderPanelForUsage(@NotNull UsageInfo originalUsage,
-                                                @NotNull UsageInfo usageInfo,
+  public @NotNull JPanel getHeaderPanelForUsage(@NotNull VirtualFile virtualFile,
+                                                @NotNull PsiElement element,
                                                 @NotNull Color backGroundColor) {
     final JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
     header.setBackground(backGroundColor);
-    final JComponent link = new LocationLinkComponent(this, myUsageView, usageInfo).getComponent();
+    final JComponent link = new LocationLinkComponent(this, myUsageView, element, virtualFile).getComponent();
     header.add(link);
-    if (usageInfo == originalUsage) {
-      final SimpleColoredComponent component = new SimpleColoredComponent();
-      component.append(UsageViewBundle.message("similar.usages.the.original.usage.label"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      header.add(component);
-    }
     final Color color = new JBColor(Gray.xCD, Gray.x51);
     header.setBorder(JBUI.Borders.customLineTop(color));
     return header;
@@ -84,7 +91,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   public void dispose() {
   }
 
-  public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<SimilarUsage> usagesToRender) {
+  public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<? extends SimilarUsage> usagesToRender) {
     JScrollPane similarUsagesScrollPane = ScrollPaneFactory.createScrollPane(this, true);
     renderOriginalUsage();
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {

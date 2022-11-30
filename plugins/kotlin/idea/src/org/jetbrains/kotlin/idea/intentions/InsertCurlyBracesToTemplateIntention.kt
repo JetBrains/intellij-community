@@ -22,7 +22,7 @@ class InsertCurlyBracesToTemplateIntention : SelfTargetingOffsetIndependentInten
         val expression = element.expression ?: return
 
         with(RestoreCaret(expression, editor)) {
-            val wrapped = element.replace(KtPsiFactory(element).createBlockStringTemplateEntry(expression))
+            val wrapped = element.replace(KtPsiFactory(element.project).createBlockStringTemplateEntry(expression))
             val afterExpression = (wrapped as? KtStringTemplateEntryWithExpression)?.expression ?: return
 
             restoreCaret(afterExpression, defaultOffset = { it.endOffset })

@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -16,11 +18,13 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class AddOpenModifierIntention :
-    KotlinApplicableIntention<KtCallableDeclaration>(KtCallableDeclaration::class),
+    AbstractKotlinApplicableIntention<KtCallableDeclaration>(KtCallableDeclaration::class),
     LowPriorityAction {
 
     override fun getFamilyName(): String = KotlinBundle.message("make.open")
     override fun getActionName(element: KtCallableDeclaration): String = familyName
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean =
         (element is KtProperty || element is KtNamedFunction)

@@ -148,17 +148,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  /**
-   * Opens a system file manager with the given file's parent directory open and the file highlighted in it
-   * (note that not all platforms support highlighting).
-   */
+  /** @see #openFile(Path) */
   public static void openFile(@NotNull File file) {
     openFile(file.toPath());
   }
 
   /**
-   * Opens a system file manager with the given file's parent directory open and the file highlighted in it
-   * (note that not all platforms support highlighting).
+   * Opens a system file manager with the given file's parent directory loaded and the file highlighted in it
+   * (note that some platforms do not support the file highlighting).
    */
   public static void openFile(@NotNull Path file) {
     Path parent = file.toAbsolutePath().getParent();
@@ -170,15 +167,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  /**
-   * Opens a system file manager with the given directory open in it.
-   */
+  /** @see #openDirectory(Path) */
   public static void openDirectory(@NotNull File directory) {
     doOpen(directory.toPath(), null);
   }
 
   /**
-   * Opens a system file manager with the given directory open in it.
+   * Opens a system file manager with the given directory loaded in it.
    */
   public static void openDirectory(@NotNull Path directory) {
     doOpen(directory, null);
@@ -236,29 +231,29 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   private static void openViaShellApi(String dir, String toSelect) {
     if (LOG.isDebugEnabled()) LOG.debug("shell open: dir=" + dir + " toSelect=" + toSelect);
 
-    Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
-    Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
-    try {
-      WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, new WinDef.UINT(apIdl != null ? 1 : 0), apIdl, new WinDef.DWORD(0));
-      if (!WinError.S_OK.equals(result)) {
-        LOG.error("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
+      Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
+
+      Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
+      Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
+      WinDef.UINT cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
+      try {
+        WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
+        if (!WinError.S_OK.equals(result)) {
+          LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+        }
       }
-    }
-    finally {
-      if (apIdl != null) {
-        Shell32Ex.INSTANCE.ILFree(apIdl[0]);
+      finally {
+        if (apIdl != null) {
+          Shell32Ex.INSTANCE.ILFree(apIdl[0]);
+        }
+        Shell32Ex.INSTANCE.ILFree(pIdl);
       }
-      Shell32Ex.INSTANCE.ILFree(pIdl);
-    }
+    });
   }
 
   private interface Shell32Ex extends StdCallLibrary {
-    Shell32Ex INSTANCE = init();
-
-    private static Shell32Ex init() {
-      Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_MULTITHREADED);
-      return Native.load("shell32", Shell32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
-    }
+    Shell32Ex INSTANCE = Native.load("shell32", Shell32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
 
     Pointer ILCreateFromPath(String path);
     void ILFree(Pointer pIdl);
@@ -272,7 +267,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       try {
         CapturingProcessHandler handler;
         if (SystemInfo.isWindows) {
-          assert command.length == 1;
+          assert command.length == 1 : Arrays.toString(command);
           Process process = Runtime.getRuntime().exec(command[0]);  // no quoting/escaping is needed
           handler = new CapturingProcessHandler.Silent(process, null, command[0]);
         }

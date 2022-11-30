@@ -3,9 +3,11 @@ package com.intellij.ui.dsl.builder.components
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
+@Suppress("ReplaceRangeToWithUntil")
 @ApiStatus.Internal
 internal class TabbedPaneHeader : JBTabbedPane() {
 
@@ -23,6 +25,28 @@ internal class TabbedPaneHeader : JBTabbedPane() {
   override fun getMinimumSize(): Dimension {
     return preferredSize
   }
+
+  override fun getBaseline(width: Int, height: Int): Int {
+    var result = -1
+
+    for (i in 0..tabCount - 1) {
+      val component = getTabComponentAt(i)
+      val baseline = component.getBaseline(component.width, component.height)
+      if (baseline >= 0) {
+        val baselineInParent = component.y + baseline
+        if (result < 0) {
+          result = baselineInParent
+        }
+        else {
+          if (result != baselineInParent) {
+            return -1
+          }
+        }
+      }
+    }
+
+    return result
+  }
 }
 
 private class HeaderTabbedPaneUI : DarculaTabbedPaneUI() {
@@ -38,5 +62,9 @@ private class HeaderTabbedPaneUI : DarculaTabbedPaneUI() {
 
   override fun getOffset(): Int {
     return 0
+  }
+
+  override fun getTabLabelShiftY(tabPlacement: Int, tabIndex: Int, isSelected: Boolean): Int {
+    return JBUI.scale(1)
   }
 }

@@ -1,18 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.canRemoveByPsi
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeArgumentList
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.RemoveEmptyParenthesesFromLambdaCallApplicator
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-class RemoveEmptyParenthesesFromLambdaCallInspection :
-    AbstractKotlinApplicatorBasedInspection<KtValueArgumentList, KotlinApplicatorInput.Empty>(KtValueArgumentList::class) {
+class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinApplicableInspection<KtValueArgumentList>(KtValueArgumentList::class) {
+    override fun getProblemDescription(element: KtValueArgumentList): String =
+        KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
+
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")
+
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgumentList> = ApplicabilityRanges.SELF
 
-    override fun getInputProvider(): KotlinApplicatorInputProvider<KtValueArgumentList, KotlinApplicatorInput.Empty> =
-        inputProvider { KotlinApplicatorInput.Empty }
+    override fun isApplicableByPsi(element: KtValueArgumentList): Boolean = canRemoveByPsi(element)
 
-    override fun getApplicator(): KotlinApplicator<KtValueArgumentList, KotlinApplicatorInput.Empty> =
-        RemoveEmptyParenthesesFromLambdaCallApplicator.applicator
+    override fun apply(element: KtValueArgumentList, project: Project, editor: Editor?) {
+        removeArgumentList(element)
+    }
 }

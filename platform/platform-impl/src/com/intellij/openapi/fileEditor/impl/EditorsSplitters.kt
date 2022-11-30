@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
@@ -42,16 +43,14 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.util.Alarm
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
@@ -59,6 +58,7 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.ContainerEvent
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
+import java.lang.Runnable
 import java.lang.ref.Reference
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -66,6 +66,7 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
+import kotlin.time.Duration.Companion.milliseconds
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
@@ -75,9 +76,8 @@ private val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk
 
 @Suppress("LeakingThis")
 @DirtyUI
-open class EditorsSplitters internal constructor(val manager: FileEditorManagerImpl) : IdePanePanel(BorderLayout()),
+open class EditorsSplitters internal constructor(val manager: FileEditorManagerImpl) : JPanel(BorderLayout()),
                                                                                        UISettingsListener, Disposable {
-
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
@@ -88,19 +88,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
     }
 
-    @JvmStatic
-    fun isOpenedInBulk(file: VirtualFile) = file.getUserData(OPENED_IN_BULK) != null
-
-    @JvmStatic
-    fun createSplitter(orientation: Boolean, proportion: Float, minProp: Float, maxProp: Float): OnePixelSplitter {
-      return object : OnePixelSplitter(orientation, proportion, minProp, maxProp) {
-        override fun createDivider(): Divider {
-          val divider = super.createDivider()
-          divider.background = JBColor.namedColor("EditorPane.splitBorder", JBColor.border())
-          return divider
-        }
-      }
-    }
+    internal fun isOpenedInBulk(file: VirtualFile) = file.getUserData(OPENED_IN_BULK) != null
 
     @JvmStatic
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {
@@ -117,42 +105,24 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
       return false
     }
-
-    private val ACTIVATE_EDITOR_ON_ESCAPE_HANDLER = KeyEventPostProcessor { e ->
-      if (!e.isConsumed && KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR)) {
-        var target = e.component
-        while (target != null && (target !is Window || target is FloatingDecorator) && target !is EditorsSplitters) {
-          target = target.parent
-        }
-        if (target is IdeFrame) {
-          target.project?.let {
-            focusDefaultComponentInSplittersIfPresent(it)
-            e.consume()
-          }
-        }
-      }
-      false
-    }
-
-    private fun enableEditorActivationOnEscape() {
-      val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-      kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
-      kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
-    }
   }
 
-  var lastFocusGainedTime: Long = 0L
+  internal var lastFocusGainedTime: Long = 0L
     private set
 
   private val windows = CopyOnWriteArraySet<EditorWindow>()
 
-  // temporarily used during initialization
-  private val state = AtomicReference<EditorSplittersState?>()
+  // temporarily used during initialization of non-main editor splitters
+  private val state = AtomicReference<EditorSplitterState?>()
 
   @JvmField
   internal var insideChange: Int = 0
 
-  private val iconUpdaterAlarm = Alarm(this)
+  private val iconUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 200.milliseconds) { toUpdate ->
+    for (file in toUpdate) {
+      doUpdateFileIcon(file)
+    }
+  }
 
   val currentFile: VirtualFile?
     get() = if (currentWindow != null) currentWindow!!.selectedFile else null
@@ -182,8 +152,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       return virtualFiles
     }
 
-  private val filesToUpdateIconsFor = HashSet<VirtualFile>()
-
   init {
     background = JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor())
     val l = PropertyChangeListener { e ->
@@ -209,6 +177,11 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
     })
     enableEditorActivationOnEscape()
+
+    @Suppress("DEPRECATION")
+    manager.project.coroutineScope.launch(CoroutineName("EditorSplitters file icon update")) {
+      iconUpdateChannel.start()
+    }.cancelOnDispose(this)
   }
 
   override fun dispose() {
@@ -306,31 +279,44 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     return fileElement
   }
 
-  suspend fun restoreEditors(requestFocus: Boolean) {
-    val state = state.getAndSet(null) ?: return
-    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
-      val component = UIBuilder(this).process(state, topPanel)
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        runActivity("editor reopening post-processing") {
-          component.isFocusable = false
-          removeAll()
-          add(component, BorderLayout.CENTER)
+  suspend fun restoreEditors(onStartup: Boolean) {
+    restoreEditors(state = state.getAndSet(null) ?: return, onStartup = onStartup, anyEditorOpened = null)
+  }
 
-          validate()
-          val windows = windows.toList()
-          for (window in windows) {
-            // clear empty splitters
-            if (window.tabCount == 0) {
-              window.removeFromSplitter()
-            }
-            else {
-              (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+  @Internal
+  suspend fun restoreEditors(state: EditorSplitterState, onStartup: Boolean, anyEditorOpened: CompletableDeferred<Unit>?) {
+    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    val component = UIBuilder(this, anyEditorOpened).process(state, topPanel)
+    anyEditorOpened?.complete(Unit)
+    withContext(Dispatchers.EDT) {
+      runActivity("editor reopening post-processing") {
+        component.isFocusable = false
+        if (!onStartup) {
+          removeAll()
+        }
+        add(component, BorderLayout.CENTER)
+        validate()
+        val windows = windows.toList()
+        for (window in windows) {
+          // clear empty splitters
+          if (window.tabCount == 0) {
+            window.removeFromSplitter()
+          }
+          else {
+            (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+          }
+        }
+
+        if (onStartup) {
+          val composite = currentWindow?.selectedComposite ?: return@withContext
+          val selectedEditor = composite.selectedEditor
+          if (selectedEditor is TextEditor) {
+            AsyncEditorLoader.performWhenLoaded(selectedEditor.editor) {
+              composite.preferredFocusedComponent?.requestFocusInWindow()
             }
           }
-
-          if (requestFocus) {
-            currentWindow?.selectedComposite?.preferredFocusedComponent?.requestFocusInWindow()
+          else {
+            composite.preferredFocusedComponent?.requestFocusInWindow()
           }
         }
       }
@@ -354,9 +340,19 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
   }
 
-  fun closeAllFiles() {
+  fun closeAllFiles(repaint: Boolean = true) {
     val windows = windows.toList()
-    clear()
+    this.windows.clear()
+    for (window in windows) {
+      window.dispose()
+    }
+    removeAll()
+    currentWindow = null
+    // revalidate doesn't repaint correctly after "Close All"
+    if (repaint) {
+      repaint()
+    }
+
     for (window in windows) {
       for (file in window.fileList) {
         window.closeFile(file = file, disposeIfNeeded = false, transferFocus = false)
@@ -365,14 +361,14 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun openFilesAsync(): Job {
+    @Suppress("DEPRECATION")
     return manager.project.coroutineScope.launch {
-      restoreEditors(requestFocus = false)
+      restoreEditors(onStartup = false)
     }
   }
 
-  fun readExternal(element: Element) {
-    val editorSplittersState = EditorSplittersState(element)
-    state.set(editorSplittersState)
+  internal fun readExternal(element: Element) {
+    state.set(EditorSplitterState(element))
   }
 
   fun getSelectedEditors(): Array<FileEditor> {
@@ -385,35 +381,22 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun updateFileIcon(file: VirtualFile) {
-    updateFileIconLater(file)
+    iconUpdateChannel.queue(file)
   }
 
-  fun updateFileIconImmediately(file: VirtualFile, icon: Icon) {
+  internal fun updateFileIconImmediately(file: VirtualFile, icon: Icon) {
     for (window in findWindows(file)) {
       window.updateFileIcon(file, icon)
     }
   }
 
-  fun updateFileIconLater(file: VirtualFile) {
-    filesToUpdateIconsFor.add(file)
-    iconUpdaterAlarm.cancelAllRequests()
-    iconUpdaterAlarm.addRequest({
-                                  if (manager.project.isDisposed) return@addRequest
-                                  for (file1 in filesToUpdateIconsFor) {
-                                    updateFileIconAsynchronously(file1)
-                                  }
-                                  filesToUpdateIconsFor.clear()
-                                }, 200, ModalityState.stateForComponent(this))
-  }
-
-  private fun updateFileIconAsynchronously(file: VirtualFile) {
-    ReadAction
-      .nonBlocking<Icon> { IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, manager.project) }
-      .coalesceBy(this, "icon", file)
-      .expireWith(this)
-      .expireWhen { !file.isValid }
-      .finishOnUiThread(ModalityState.any()) { updateFileIconImmediately(file, it) }
-      .submit(NonUrgentExecutor.getInstance())
+  internal suspend fun doUpdateFileIcon(file: VirtualFile) {
+    val icon = readAction {
+      IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, manager.project)
+    }
+    withContext(Dispatchers.EDT) {
+      updateFileIconImmediately(file, icon)
+    }
   }
 
   fun updateFileColor(file: VirtualFile) {
@@ -468,6 +451,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         }
       }
     }
+
     val project = manager.project
     val frame = getFrame(project) ?: return
     val file = currentFile
@@ -475,46 +459,56 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       frame.setFileTitle(null, null)
     }
     else {
-      val ioFile = try {
-        if (file is LightVirtualFileBase) null else Path.of(file.presentableUrl)
-      }
-      catch (ignored: InvalidPathException) {
-        null
-      }
+      @Suppress("DEPRECATION")
+      project.coroutineScope.launch {
+        val title = readAction {
+          FrameTitleBuilder.getInstance().getFileTitle(project, file)
+        }
 
-      ReadAction.nonBlocking<String> { FrameTitleBuilder.getInstance().getFileTitle(project, file) }
-        .expireWith(this)
-        .finishOnUiThread(ModalityState.any()) { title: @NlsContexts.TabTitle String? -> frame.setFileTitle(title, ioFile) }
-        .submit(NonUrgentExecutor.getInstance())
+        val ioFile = try {
+          if (file is LightVirtualFileBase) null else Path.of(file.presentableUrl)
+        }
+        catch (ignored: InvalidPathException) {
+          null
+        }
+        withContext(Dispatchers.EDT) {
+          frame.setFileTitle(title, ioFile)
+        }
+      }
     }
   }
 
   protected open fun getFrame(project: Project): IdeFrameEx? {
     val frame = WindowManagerEx.getInstanceEx().getFrameHelper(project)
-    LOG.assertTrue((ApplicationManager.getApplication().isUnitTestMode
-                    || ApplicationManager.getApplication().isHeadlessEnvironment) || frame != null)
+    val app = ApplicationManager.getApplication()
+    LOG.assertTrue((app.isUnitTestMode || app.isHeadlessEnvironment) || frame != null)
     return frame
   }
 
   val isInsideChange: Boolean
     get() = insideChange > 0
 
-  fun updateFileBackgroundColorAsync(file: VirtualFile) {
+  internal fun updateFileBackgroundColorAsync(file: VirtualFile) {
+    @Suppress("DEPRECATION")
     manager.project.coroutineScope.launch {
-      val color = readAction {
-        EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
-      }
+      updateFileBackgroundColor(file)
+    }
+  }
 
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        val windows = getWindows()
-        for (i in windows.indices) {
-          windows.get(i).updateFileBackgroundColor(file, color)
-        }
+  internal suspend fun updateFileBackgroundColor(file: VirtualFile) {
+    val color = readAction {
+      EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
+    }
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val windows = getWindows()
+      for (i in windows.indices) {
+        windows.get(i).updateFileBackgroundColor(file, color)
       }
     }
   }
 
-  val splitCount: Int
+  internal val splitCount: Int
     get() = if (componentCount > 0) getSplitCount(getComponent(0) as JPanel) else 0
 
   internal open fun afterFileClosed(file: VirtualFile) {}
@@ -549,6 +543,16 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   fun closeFile(file: VirtualFile, moveFocus: Boolean) {
     val windows = findWindows(file)
+    closeFileInWindows(file, windows, moveFocus)
+  }
+
+  internal fun closeFileEditor(file: VirtualFile, editor: FileEditor, moveFocus: Boolean) {
+    // we can't close individual tab in EditorComposite
+    val windows = windows.filter { it.composites.any { it.allEditors.contains(editor) } }
+    closeFileInWindows(file, windows, moveFocus)
+  }
+
+  private fun closeFileInWindows(file: VirtualFile, windows: List<EditorWindow>, moveFocus: Boolean) {
     if (windows.isEmpty()) {
       return
     }
@@ -692,11 +696,14 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     return windows.asSequence().mapNotNull { it.getComposite(file) }.filterIsInstance<EditorWithProviderComposite>().toList()
   }
 
+  @RequiresEdt
   fun getAllComposites(file: VirtualFile): List<EditorComposite> = windows.mapNotNull { it.getComposite(file) }
 
   private fun findWindows(file: VirtualFile): List<EditorWindow> = windows.filter { it.getComposite(file) != null }
 
   fun getWindows(): Array<EditorWindow> = windows.toTypedArray()
+
+  internal fun getWindowSequence(): Sequence<EditorWindow> = windows.asSequence()
 
   // Collector for windows in tree ordering:
   // get root component and traverse splitters tree:
@@ -811,22 +818,26 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
   override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>) = fileDropHandler.canHandleDrop(transferFlavors)
 }
 
-internal class EditorSplittersState(element: Element) {
+@Internal
+class EditorSplitterState(element: Element) {
   @JvmField
   val first: Element?
+
   @JvmField
   val second: Element?
 
   @JvmField
-  val firstSplitter: EditorSplittersState?
+  val firstSplitter: EditorSplitterState?
+
   @JvmField
-  val secondSplitter: EditorSplittersState?
+  val secondSplitter: EditorSplitterState?
 
   @JvmField
   val files: List<FileEntry>
 
   @JvmField
   val isVertical: Boolean
+
   @JvmField
   val proportion: Float
 
@@ -844,8 +855,8 @@ internal class EditorSplittersState(element: Element) {
     first = splitterElement?.getChild("split-first")
     second = splitterElement?.getChild("split-second")
 
-    firstSplitter = first?.let { EditorSplittersState(it) }
-    secondSplitter = second?.let { EditorSplittersState(it) }
+    firstSplitter = first?.let { EditorSplitterState(it) }
+    secondSplitter = second?.let { EditorSplitterState(it) }
 
     isVertical = splitterElement?.getAttributeValue("split-orientation") == "vertical"
     proportion = splitterElement?.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
@@ -862,14 +873,14 @@ internal class EditorSplittersState(element: Element) {
   }
 }
 
-private class UIBuilder(private val splitters: EditorsSplitters) {
-  suspend fun process(state: EditorSplittersState, context: JPanel?): JPanel {
+private class UIBuilder(private val splitters: EditorsSplitters, private val firstEditorOpened: CompletableDeferred<Unit>? = null) {
+  suspend fun process(state: EditorSplitterState, context: JPanel?): JPanel {
     if (state.firstSplitter != null && state.secondSplitter != null) {
       return processSplitter(state, context)
     }
 
     val files = state.files
-    val trimmedFiles: List<EditorSplittersState.FileEntry>
+    val trimmedFiles: List<EditorSplitterState.FileEntry>
     var toRemove = files.size - EditorWindow.tabLimit
     if (toRemove <= 0) {
       trimmedFiles = files
@@ -889,7 +900,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     return processFiles(fileEntries = trimmedFiles, tabSizeLimit = state.tabSizeLimit, context = context)
   }
 
-  private suspend fun processFiles(fileEntries: List<EditorSplittersState.FileEntry>, tabSizeLimit: Int, context: JPanel?): JPanel {
+  private suspend fun processFiles(fileEntries: List<EditorSplitterState.FileEntry>, tabSizeLimit: Int, context: JPanel?): JPanel {
     val window = withContext(Dispatchers.EDT) {
       var editorWindow = context?.let(splitters::findWindowWith)
       if (editorWindow == null) {
@@ -933,10 +944,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
         val document = readAction {
           fileDocumentManager.getDocument(virtualFile)
         }
-        (fileEditorManager as FileEditorManagerImpl).openFileOnStartup(window = window,
-                                                                         virtualFile = virtualFile,
-                                                                         entry = entry,
-                                                                         options = openOptions)
+        fileEditorManager.openFileOnStartup(window = window, virtualFile = virtualFile, entry = entry, options = openOptions)
         // This is just to make sure document reference is kept on stack till this point
         // so that document is available for folding state deserialization in HistoryEntry constructor
         // and that document will be created only once during file opening
@@ -947,6 +955,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
       }
       finally {
         virtualFile.putUserData(OPENED_IN_BULK, null)
+        firstEditorOpened?.complete(Unit)
       }
       activity.end()
     }
@@ -961,6 +970,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     }
     else {
       fileEditorManager.addSelectionRecord(focusedFile, window)
+      @Suppress("DEPRECATION")
       fileEditorManager.project.coroutineScope.launch(Dispatchers.EDT) {
         window.getComposite(focusedFile)?.let {
           window.setComposite(it, true)
@@ -970,17 +980,17 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     return window.panel
   }
 
-  suspend fun processSplitter(state: EditorSplittersState, context: JPanel?): JPanel {
+  suspend fun processSplitter(state: EditorSplitterState, context: JPanel?): JPanel {
     if (context == null) {
       val firstComponent = process(state = state.firstSplitter!!, context = null)
       val secondComponent = process(state = state.secondSplitter!!, context = null)
       return withContext(Dispatchers.EDT) {
         val panel = JPanel(BorderLayout())
         panel.isOpaque = false
-        val splitter = EditorsSplitters.createSplitter(orientation = state.isVertical,
-                                                       proportion = state.proportion,
-                                                       minProp = 0.1f,
-                                                       maxProp = 0.9f)
+        val splitter = createSplitter(orientation = state.isVertical,
+                                      proportion = state.proportion,
+                                      minProp = 0.1f,
+                                      maxProp = 0.9f)
         splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
         panel.add(splitter, BorderLayout.CENTER)
         splitter.firstComponent = firstComponent
@@ -1006,6 +1016,28 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     process(state = state.secondSplitter!!, context = secondComponent)
     return context
   }
+}
+
+private val ACTIVATE_EDITOR_ON_ESCAPE_HANDLER = KeyEventPostProcessor { e ->
+  if (!e.isConsumed && KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR)) {
+    var target = e.component
+    while (target != null && (target !is Window || target is FloatingDecorator) && target !is EditorsSplitters) {
+      target = target.parent
+    }
+    if (target is IdeFrame) {
+      target.project?.let {
+        EditorsSplitters.focusDefaultComponentInSplittersIfPresent(it)
+        e.consume()
+      }
+    }
+  }
+  false
+}
+
+private fun enableEditorActivationOnEscape() {
+  val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+  kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
+  kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
 }
 
 private fun getSplitCount(component: JComponent): Int {
@@ -1064,4 +1096,14 @@ private fun getLastFocusedSplittersForProject(activeWindow: Window?, project: Pr
                           ?: return null
   return (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedSplitters()
          ?: getSplittersForProject(activeWindow, project)
+}
+
+internal fun createSplitter(orientation: Boolean, proportion: Float, minProp: Float, maxProp: Float): OnePixelSplitter {
+  return object : OnePixelSplitter(orientation, proportion, minProp, maxProp) {
+    override fun createDivider(): Divider {
+      val divider = super.createDivider()
+      divider.background = JBColor.namedColor("EditorPane.splitBorder", JBColor.border())
+      return divider
+    }
+  }
 }

@@ -278,7 +278,7 @@ public final class PushController implements Disposable {
       .mapNotNull(myView2Model.entrySet(), entry -> support.equals(entry.getValue().getSupport()) ? entry.getKey() : null);
   }
 
-  private static boolean hasLoadingNodes(@NotNull Collection<RepositoryNode> nodes) {
+  private static boolean hasLoadingNodes(@NotNull Collection<? extends RepositoryNode> nodes) {
     return ContainerUtil.exists(nodes, node -> node.isLoading());
   }
 

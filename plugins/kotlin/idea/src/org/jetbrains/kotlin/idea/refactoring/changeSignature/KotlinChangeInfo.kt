@@ -121,7 +121,7 @@ open class KotlinChangeInfo(
 
             val toRemove = BooleanArray(receiverShift + methodDescriptor.parametersCount) { true }
             if (hasReceiver) {
-                toRemove[0] = receiverParameterInfo == null && hasReceiver && originalReceiver !in getNonReceiverParameters()
+                toRemove[0] = receiverParameterInfo == null && originalReceiver !in getNonReceiverParameters()
             }
 
             for (parameter in newParameters) {
@@ -381,7 +381,7 @@ open class KotlinChangeInfo(
     fun getOrCreateJavaChangeInfos(): List<JavaChangeInfo>? {
         fun initCurrentSignatures(currentPsiMethods: List<PsiMethod>): List<JvmOverloadSignature> {
             val parameterInfoToPsi = methodDescriptor.original.parameters.zip(originalParameters).toMap()
-            val dummyParameter = KtPsiFactory(method).createParameter("dummy")
+            val dummyParameter = KtPsiFactory(method.project).createParameter("dummy")
             return makeSignatures(
                 parameters = newParameters,
                 psiMethods = currentPsiMethods,

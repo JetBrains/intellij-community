@@ -31,6 +31,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.roots.impl.FilePropertyPusher
+import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
@@ -823,7 +825,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
 
     assertTrue(foundId[0])
-    assertTrue(!foundStub[0])
+    assertTrue(foundStub[0])
   }
 
   void testNullProjectScope() throws Throwable {
@@ -1527,26 +1529,27 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void 'test stub index updated after language level change'() {
     def file = myFixture.addFileToProject("src1/A.java", "class A {}").virtualFile
+    def javaLanguageLevelKey = FilePropertyPusher.EP_NAME.findExtension(JavaLanguageLevelPusher.class).getFileDataKey()
 
-    def languageLevel = file.parent.getUserData(LanguageLevel.KEY)
+    def languageLevel = javaLanguageLevelKey.getPersistentValue(file.parent)
     assertNotNull(languageLevel)
     assertNotNull(findClass("A"))
 
     // be a :hacker:😀
     // do it manually somehow
     // seems property pushers are crazy, we know it from its name
-    file.parent.putUserData(LanguageLevel.KEY, null)
+    javaLanguageLevelKey.setPersistentValue(file.parent, null)
     // fire any event
     FileContentUtilCore.reparseFiles(file)
 
-    assertNull(file.parent.getUserData(LanguageLevel.KEY))
+    assertNull(javaLanguageLevelKey.getPersistentValue(file.parent))
     assertNull(findClass("A"))
 
     // and return everything to a normal state
-    file.parent.putUserData(LanguageLevel.KEY, languageLevel)
+    javaLanguageLevelKey.setPersistentValue(file.parent, languageLevel)
     FileContentUtilCore.reparseFiles(file)
 
-    assertNotNull(file.parent.getUserData(LanguageLevel.KEY))
+    assertNotNull(javaLanguageLevelKey.getPersistentValue(file.parent))
     assertNotNull(findClass("A"))
   }
 

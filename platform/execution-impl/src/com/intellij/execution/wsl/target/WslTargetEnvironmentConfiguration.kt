@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.target
 
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.PersistentTargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.readableFs.PathInfo
@@ -18,10 +19,13 @@ import kotlin.io.path.pathString
 
 class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTargetType.TYPE_ID),
                                             PersistentStateComponent<WslTargetEnvironmentConfiguration.MyState>,
+                                            PersistentTargetEnvironmentConfiguration,
                                             TargetConfigurationReadableFs,
                                             TargetConfigurationWithLocalFsAccess {
 
   override val asTargetConfig: TargetEnvironmentConfiguration = this
+
+  override val isPersistent: Boolean = true
 
   private var distributionMsId: String? = null
   var distribution: WSLDistribution?

@@ -21,6 +21,7 @@ class ReformatCheckinHandlerFactory : CheckinHandlerFactory() {
 class ReformatBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandler(project) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption(project, message("checkbox.checkin.options.reformat.code"), true, settings::REFORMAT_BEFORE_PROJECT_COMMIT)
+      .withCheckinHandler(this)
 
   override fun isEnabled(): Boolean = settings.REFORMAT_BEFORE_PROJECT_COMMIT
 

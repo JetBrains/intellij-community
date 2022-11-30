@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import kotlin.reflect.KClass
 
+@Deprecated("Please don't use this for new inspections. Use `KotlinApplicableInspection` or `KotlinApplicableInspectionWithContext` instead.")
 abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : KotlinApplicatorInput>(
     val elementType: KClass<PSI>
 ) : AbstractKotlinInspection() {

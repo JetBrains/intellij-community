@@ -21,6 +21,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -190,7 +191,8 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
         if (!ExpressionUtils.isEmptyStringLiteral(operand)) {
           continue;
         }
-        if (PsiUtil.isConstantExpression(expression)) {
+        if (PsiUtil.isConstantExpression(expression) &&
+            ContainerUtil.exists(operands, o -> !TypeUtils.isJavaLangString(o.getType()))) {
           return;
         }
         registerError(operand, operand);

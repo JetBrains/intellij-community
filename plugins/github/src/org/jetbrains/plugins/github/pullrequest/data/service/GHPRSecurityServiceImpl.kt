@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 
 class GHPRSecurityServiceImpl(private val sharedProjectSettings: GithubSharedProjectSettings,
+                              override val ghostUser: GHUser,
                               override val account: GithubAccount,
                               override val currentUser: GHUser,
                               private val currentUserTeams: List<GHTeam>,

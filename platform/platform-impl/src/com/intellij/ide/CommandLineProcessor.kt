@@ -46,7 +46,9 @@ import java.awt.Frame
 import java.awt.Window
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.text.ParseException
 import java.util.concurrent.CancellationException
+import kotlin.Result
 
 object CommandLineProcessor {
   private val LOG = logger<CommandLineProcessor>()
@@ -127,6 +129,7 @@ object CommandLineProcessor {
       else {
         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
       }
+      @Suppress("DEPRECATION")
       project.coroutineScope.launch(Dispatchers.EDT) {
         navigatable.navigate(true)
       }
@@ -148,6 +151,7 @@ object CommandLineProcessor {
 
   @ApiStatus.Internal
   fun scheduleProcessProtocolCommand(rawUri: @NlsSafe String) {
+    @Suppress("DEPRECATION")
     ApplicationManager.getApplication().coroutineScope.launch {
       processProtocolCommand(rawUri)
     }
@@ -177,6 +181,7 @@ object CommandLineProcessor {
 
     if (cliResult.message != null) {
       val title = IdeBundle.message("ide.protocol.cannot.title")
+      @Suppress("DEPRECATION")
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, cliResult.message!!, NotificationType.WARNING)
         .addAction(ShowLogAction.notificationAction())
         .notify(null)
@@ -186,13 +191,11 @@ object CommandLineProcessor {
 
   private val PROTOCOL_EP_NAME = ExtensionPointName<ProtocolHandler>("com.intellij.protocolHandler")
 
+  @Suppress("IfThenToElvis")
   private suspend fun processProtocol(scheme: String, query: String): CliResult {
-    for (handler in PROTOCOL_EP_NAME.lazySequence()) {
-      if (scheme == handler.scheme) {
-        return handler.process(query)
-      }
-    }
-    return CliResult(/* exitCode = */ 0, /* message = */ IdeBundle.message("ide.protocol.unsupported", scheme))
+    val handler = PROTOCOL_EP_NAME.lazySequence().find { scheme == it.scheme }
+    return if (handler != null) handler.process(query)
+           else CliResult(0, IdeBundle.message("ide.protocol.unsupported", scheme))
   }
 
   private suspend fun processInternalProtocol(query: String): CliResult {
@@ -308,8 +311,69 @@ object CommandLineProcessor {
     }
   }
 
-  private suspend fun processOpenFile(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
-    var projectAndCallback: CommandLineProcessorResult? = null
+  private sealed class ParsingResult(
+    val shouldWait: Boolean, // = args.contains(OPTION_WAIT),
+    val lightEditMode: Boolean,
+  )
+
+  private class OpenProjectResult(
+    val file: Path,
+    val line: Int = -1,
+    val column: Int = -1,
+    val tempProject: Boolean = false,
+    shouldWait: Boolean = false,
+    lightEditMode: Boolean = false,
+  ): ParsingResult(shouldWait, lightEditMode)
+
+  private class NoProjectResult(
+    shouldWait: Boolean = false,
+    lightEditMode: Boolean = false,
+  ): ParsingResult(shouldWait, lightEditMode)
+
+  private suspend fun processOpenFile(
+    args: List<String>,
+    currentDirectory: String?
+  ): CommandLineProcessorResult {
+    val parsedArgsResult = parseArgs(args, currentDirectory)
+    if (parsedArgsResult.isFailure) {
+      when (val e = parsedArgsResult.exceptionOrNull()) {
+        is ParseException -> return createError(IdeBundle.message("dialog.message.invalid.path", e.message))
+        else -> error("Unexpected exception during parsing arguments: $e")
+      }
+    }
+    return when (val parsedArgs = parsedArgsResult.getOrNull()) {
+      is OpenProjectResult -> {
+        openFileOrProject(file = parsedArgs.file,
+                          line = parsedArgs.line,
+                          column = parsedArgs.column,
+                          tempProject = parsedArgs.tempProject,
+                          shouldWait = parsedArgs.shouldWait,
+                          lightEditMode = parsedArgs.lightEditMode)
+      }
+      is NoProjectResult -> {
+        if (parsedArgs.shouldWait) {
+          CommandLineProcessorResult(
+            project = null,
+            result = CliResult(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
+          )
+        }
+        else if (parsedArgs.lightEditMode) {
+          LightEditService.getInstance().showEditorWindow()
+          CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
+        }
+        else {
+          CommandLineProcessorResult(project = null, future = OK_FUTURE)
+        }
+      }
+      else -> error("Unexpected parsing result: $parsedArgs")
+    }
+  }
+
+  private fun parseArgs(
+    args: List<String>,
+    currentDirectory: String?,
+  ): Result<ParsingResult> {
+    var result: OpenProjectResult? = null
     var line = -1
     var column = -1
     var tempProject = false
@@ -355,13 +419,16 @@ object CommandLineProcessor {
       if (StringUtilRt.isQuotedString(arg)) {
         arg = StringUtilRt.unquoteString(arg)
       }
-      val file = parseFilePath(arg, currentDirectory) ?: return createError(IdeBundle.message("dialog.message.invalid.path", arg))
-      projectAndCallback = openFileOrProject(file = file,
-                                             line = line,
-                                             column = column,
-                                             tempProject = tempProject,
-                                             shouldWait = shouldWait,
-                                             lightEditMode = lightEditMode)
+      val file = parseFilePath(arg, currentDirectory) ?: return Result.failure(ParseException(arg, i))
+
+      result = OpenProjectResult(
+        file = file,
+        line = line,
+        column = column,
+        tempProject = tempProject,
+        shouldWait = shouldWait,
+        lightEditMode = lightEditMode
+      )
       if (shouldWait) {
         break
       }
@@ -371,23 +438,12 @@ object CommandLineProcessor {
       i++
     }
 
-    projectAndCallback?.let {
-      return it
-    }
-
-    if (shouldWait) {
-      return CommandLineProcessorResult(
-        project = null,
-        result = CliResult(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
-      )
-    }
-    else if (lightEditMode) {
-      LightEditService.getInstance().showEditorWindow()
-      return CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
-    }
-    else {
-      return CommandLineProcessorResult(project = null, future = OK_FUTURE)
-    }
+    return Result.success(result
+      ?: NoProjectResult(
+          shouldWait = shouldWait,
+          lightEditMode = lightEditMode
+        )
+    )
   }
 
   private fun parseFilePath(path: String, currentDirectory: String?): Path? {

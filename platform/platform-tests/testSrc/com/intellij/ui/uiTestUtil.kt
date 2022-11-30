@@ -6,8 +6,9 @@ package com.intellij.ui
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
@@ -26,6 +27,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
@@ -81,7 +83,7 @@ internal suspend fun changeLafIfNeeded(lafName: String) {
     return
   }
 
-  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
     if (lafName == "Darcula") {
       // static init it is hell - UIUtil static init is called too early, so, call it to init properly
       // (otherwise null stylesheet added, and it leads to NPE on set comment text)

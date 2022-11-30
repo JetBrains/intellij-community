@@ -143,10 +143,12 @@ public final class JdkEx {
     return getTabbingModeInvocator() != null;
   }
 
-  public static boolean setTabbingMode(@NotNull Window window, @Nullable Runnable moveTabToNewWindowCallback) {
+  public static boolean setTabbingMode(@NotNull Window window, @NotNull String windowId, @Nullable Runnable moveTabToNewWindowCallback) {
     MethodInvocator invocator = getTabbingModeInvocator();
     if (invocator != null) {
       invocator.invoke(window);
+      ((RootPaneContainer)window).getRootPane().putClientProperty("JavaWindowTabbingIdentifier", windowId);
+
       if (moveTabToNewWindowCallback != null) {
         try {
           new MethodInvocator(false, Class.forName("java.awt.Window"), "setMoveTabToNewWindowCallback", Runnable.class)

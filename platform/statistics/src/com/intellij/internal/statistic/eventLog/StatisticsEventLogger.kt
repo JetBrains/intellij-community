@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -90,7 +91,11 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     }
   }
 
-  open val logger: StatisticsEventLogger by lazy { createLogger() }
+  private val emptyLogger: StatisticsEventLogger by lazy { EmptyStatisticsEventLogger() }
+  private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
+
+  open val logger: StatisticsEventLogger
+    get() = if (isRecordEnabled()) actualLogger else emptyLogger
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
@@ -114,13 +119,11 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   }
 
   private fun createLogger(): StatisticsEventLogger {
-    if (!isRecordEnabled()) {
-      return EmptyStatisticsEventLogger()
-    }
-
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
+    // Use `String?` instead of boolean flag for future expansion with other IDE modes
+    val ideMode = if(AppMode.isIsRemoteDevHost()) "RDH" else null
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     val config = eventLogConfiguration.getOrCreate(recorderId)
     val writer = StatisticsEventLogFileWriter(recorderId, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
@@ -132,7 +135,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
     val logger = StatisticsFileEventLogger(
       recorderId, config.sessionId, isHeadless, eventLogConfiguration.build, config.bucket.toString(), version.toString(),
-      throttledWriter, UsageStatisticsPersistenceComponent.getInstance(), createEventsMergeStrategy()
+      throttledWriter, UsageStatisticsPersistenceComponent.getInstance(), createEventsMergeStrategy(), ideMode
     )
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger

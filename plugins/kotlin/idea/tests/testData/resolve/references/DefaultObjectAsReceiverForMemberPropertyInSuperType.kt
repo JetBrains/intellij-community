@@ -1,11 +1,11 @@
 package t
 
-interface Trait {
+interface Interface {
     val some : Int get() = 1
 }
 
 open class A {
-    companion object Companion : Trait {
+    companion object Companion : Interface {
 
     }
 }

@@ -49,9 +49,9 @@ public final class StatusBarUtil {
       return null;
     }
 
-    FileEditor currentEditor = statusBar.getCurrentEditor();
+    var currentEditor = statusBar.getCurrentEditor();
     if (currentEditor != null) {
-      return currentEditor;
+      return currentEditor.get();
     }
 
     Project project = statusBar.getProject();
@@ -66,7 +66,7 @@ public final class StatusBarUtil {
     EditorsSplitters splitters;
     if (statusBar == WindowManager.getInstance().getStatusBar(project)) {
       // main - avoid getting DockManager
-      splitters = FileEditorManagerEx.getInstanceEx(project).getSplitters();
+      return FileEditorManagerEx.getInstanceEx(project).getSelectedEditor();
     }
     else {
       DockContainer dockContainer = DockManager.getInstance(project).getContainerFor(statusBar.getComponent(),

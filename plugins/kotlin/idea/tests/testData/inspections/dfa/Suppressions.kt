@@ -1,4 +1,8 @@
 // WITH_STDLIB
+fun returnInReturn(a: Boolean, b: Boolean): Boolean {
+    // KTIJ-23768
+    return a || return b
+}
 fun assertCall(x: Int, b: Boolean, c: Boolean) {
     if (x < 0) return
     if (Math.random() > 0.5) {

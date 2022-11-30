@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -577,6 +578,7 @@ public final class UpdateHighlightersUtil {
    * This method currently works in O(total highlighter count in file) time.
    */
   public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
     if (model == null) return;

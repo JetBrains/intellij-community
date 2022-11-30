@@ -152,7 +152,7 @@ public abstract class Configuration implements JDOMExternalizable {
   }
 
   public @NlsSafe @Nullable String getProblemDescriptor() {
-    return this.problemDescriptor;
+    return problemDescriptor;
   }
 
   public void setProblemDescriptor(String problemDescriptor) {

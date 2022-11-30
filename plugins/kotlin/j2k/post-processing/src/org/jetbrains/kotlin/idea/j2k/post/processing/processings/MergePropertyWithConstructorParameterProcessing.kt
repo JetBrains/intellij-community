@@ -115,7 +115,7 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         val (property, parameter, _) = this
 
         parameter.addBefore(property.valOrVarKeyword, parameter.nameIdentifier!!)
-        parameter.addAfter(KtPsiFactory(property).createWhiteSpace(), parameter.valOrVarKeyword!!)
+        parameter.addAfter(KtPsiFactory(property.project).createWhiteSpace(), parameter.valOrVarKeyword!!)
         parameter.rename(property.name!!)
         parameter.setVisibility(property.visibilityModifierTypeOrDefault())
         val commentSaver = CommentSaver(property, saveLineBreaks = true)
@@ -139,10 +139,10 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
     }
 
     private fun KtCallableDeclaration.rename(newName: String) {
-        val factory = KtPsiFactory(this)
+        val psiFactory = KtPsiFactory(project)
         val escapedName = newName.escaped()
         ReferencesSearch.search(this, LocalSearchScope(containingKtFile)).forEach {
-            it.element.replace(factory.createExpression(escapedName))
+            it.element.replace(psiFactory.createExpression(escapedName))
         }
         setName(escapedName)
     }

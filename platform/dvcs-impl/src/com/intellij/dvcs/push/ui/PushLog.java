@@ -409,7 +409,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     updateDetailsPanel(commitNodes);
   }
 
-  private void updateChangesView(@NotNull List<CommitNode> commitNodes) {
+  private void updateChangesView(@NotNull List<? extends CommitNode> commitNodes) {
     if (!commitNodes.isEmpty()) {
       myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.differences"));
     }
@@ -420,7 +420,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     myChangesBrowser.setCommitsToDisplay(commitNodes);
   }
 
-  private void updateDetailsPanel(@NotNull List<CommitNode> commitNodes) {
+  private void updateDetailsPanel(@NotNull List<? extends CommitNode> commitNodes) {
     if (commitNodes.size() == 1 && getSelectedTreeNodes().stream().noneMatch(it -> it instanceof RepositoryNode)) {
       VcsFullCommitDetails commitDetails = commitNodes.get(0).getUserObject();
       CommitPresentationUtil.CommitPresentation presentation =

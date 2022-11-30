@@ -19,7 +19,7 @@ sealed class PythonExecution {
 
   val envs: MutableMap<String, TargetEnvironmentFunction<String>> = mutableMapOf()
 
-  var charset: Charset = EncodingManager.getInstance().defaultCharset
+  var charset: Charset = EncodingManager.getInstance().defaultConsoleEncoding
 
   var inputFile: File? = null
 

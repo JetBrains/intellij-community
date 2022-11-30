@@ -28,7 +28,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipOutputStream
 
-@Suppress("UsePropertyAccessSyntax")
 class DecompressorTest {
   @Rule @JvmField var tempDir = TempDirectory()
 

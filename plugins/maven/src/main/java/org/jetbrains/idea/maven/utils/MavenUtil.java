@@ -159,6 +159,7 @@ public class MavenUtil {
   }
 
   public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
+    startTestRunnable(r);
 
     if (isNoBackgroundMode()) {
       runAndFinishTestRunnable(r);
@@ -170,6 +171,13 @@ public class MavenUtil {
     }
   }
 
+
+  private static void startTestRunnable(Runnable r) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) return;
+    synchronized (runnables) {
+      runnables.add(r);
+    }
+  }
 
   private static void runAndFinishTestRunnable(Runnable r) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -214,6 +222,7 @@ public class MavenUtil {
   }
 
   public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
+    startTestRunnable(r);
     if (isNoBackgroundMode()) {
       runAndFinishTestRunnable(r);
     }
@@ -224,6 +233,7 @@ public class MavenUtil {
 
 
   public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
+    startTestRunnable(r);
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       runAndFinishTestRunnable(r);
     }
@@ -238,6 +248,7 @@ public class MavenUtil {
   }
 
   public static void runDumbAware(@NotNull Project project, @NotNull Runnable r) {
+    startTestRunnable(r);
     if (DumbService.isDumbAware(r)) {
       runAndFinishTestRunnable(r);
     }
@@ -252,12 +263,14 @@ public class MavenUtil {
     }
 
     if (isNoBackgroundMode()) {
+      startTestRunnable(runnable);
       runAndFinishTestRunnable(runnable);
     }
     else if (project.isInitialized()) {
       runDumbAware(project, runnable);
     }
     else {
+      startTestRunnable(runnable);
       StartupManager.getInstance(project).runAfterOpened(() -> runAndFinishTestRunnable(runnable));
     }
   }

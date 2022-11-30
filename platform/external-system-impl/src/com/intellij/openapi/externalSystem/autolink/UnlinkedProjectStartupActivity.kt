@@ -214,7 +214,10 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     private val unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
     private val parentDisposable: Disposable
   ) : VirtualFileChangesListener {
+
     private lateinit var buildFiles: MutableSet<VirtualFile>
+
+    override fun isProcessRecursively() = true
 
     override fun init() {
       buildFiles = HashSet()

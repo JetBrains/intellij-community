@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.model.search.SearchService
 import com.intellij.model.search.Searcher
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -27,7 +28,7 @@ object DirectKotlinOverridingCallableSearch {
         val searchScope: SearchScope
     ) : com.intellij.model.search.SearchParameters<PsiElement> {
         override fun getProject(): Project {
-            return ktCallableDeclaration.project
+            return runReadAction { ktCallableDeclaration.project }
         }
 
         override fun areValid(): Boolean {
@@ -36,7 +37,7 @@ object DirectKotlinOverridingCallableSearch {
     }
 
     fun search(ktFunction: KtCallableDeclaration): Query<PsiElement> {
-        return search(ktFunction, ktFunction.useScope)
+        return search(ktFunction, runReadAction { ktFunction.useScope })
     }
 
     fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<PsiElement> {
@@ -60,21 +61,27 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
                 if (ktClassOrObject !is KtClassOrObject) EmptyQuery.getEmptyQuery()
                 else object : AbstractQuery<PsiElement>() {
                     override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                        val superFunction = analyze(parameters.ktCallableDeclaration) {
-                            parameters.ktCallableDeclaration.getSymbol()
+                        val superFunction = runReadAction {
+                            analyze(parameters.ktCallableDeclaration) {
+                                parameters.ktCallableDeclaration.getSymbol()
+                            }
                         }
-                        analyze(ktClassOrObject) {
-                            (ktClassOrObject.getSymbol() as KtClassOrObjectSymbol).getDeclaredMemberScope()
-                                .getCallableSymbols { it == parameters.ktCallableDeclaration.nameAsName }
-                                .forEach { overridingSymbol ->
-                                    val function = overridingSymbol.psi
-                                    if (function != null && 
-                                        overridingSymbol.getAllOverriddenSymbols().any { it == superFunction } && 
-                                        !consumer.process(function)) {
-                                        return false
+
+                        return runReadAction {
+                            analyze(ktClassOrObject) {
+                                (ktClassOrObject.getSymbol() as KtClassOrObjectSymbol).getDeclaredMemberScope()
+                                    .getCallableSymbols { it == parameters.ktCallableDeclaration.nameAsName }
+                                    .forEach { overridingSymbol ->
+                                        val function = overridingSymbol.psi
+                                        if (function != null &&
+                                            overridingSymbol.getAllOverriddenSymbols().any { it == superFunction } &&
+                                            !consumer.process(function)
+                                        ) {
+                                            return@runReadAction false
+                                        }
                                     }
-                                }
-                            return true
+                                return@runReadAction true
+                            }
                         }
                     }
                 }

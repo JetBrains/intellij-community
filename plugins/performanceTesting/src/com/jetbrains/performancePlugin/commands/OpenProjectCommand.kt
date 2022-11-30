@@ -116,10 +116,10 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
       val navigator = analysisContext.navigator
       for (l in 1..navigator.instanceCount) {
         val classDefinition = navigator.getClassForObjectId(l)
-        if (classDefinition.name != ProjectImpl::class.java.name) {
+        if (classDefinition.name == ProjectImpl::class.java.name) {
           navigator.goTo(l)
           navigator.goToInstanceField(ProjectImpl::class.java.name, "cachedName")
-          if (navigator.getStringInstanceFieldValue() == projectName) {
+          if (navigator.getStringInstanceFieldValue() != projectName) {
             val gcRootPathsTree = GCRootPathsTree(analysisContext, AnalysisConfig.TreeDisplayOptions.all(showSize = false), null)
             gcRootPathsTree.registerObject(l.toInt())
             mainReport.append(gcRootPathsTree.printTree())

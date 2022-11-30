@@ -25,6 +25,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -57,7 +58,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         val language = KotlinLanguage.INSTANCE
         val providerInfos =
             InlayHintsProviderFactory.EP.extensionList
-                .flatMap { it.getProvidersInfo(project) }
+                .flatMap { it.getProvidersInfo() }
                 .filter { it.language == language }
                 .mapNotNull { it.provider as? KotlinAbstractHintsProvider<KotlinAbstractHintsProvider.HintsSettings> }
         providerInfos.forEach {
@@ -124,6 +125,10 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             val pathToFiles = mapOf(*(sourceFilePaths zip psiFiles).toTypedArray())
 
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
+            if ((myFixture.file as? KtFile)?.isScript() == true) {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
+            }
+
             configureCodeStyleAndRun(project, { FormatSettingsUtil.createConfigurator(fileText, it).configureSettings() }) {
                 configureRegistryAndRun(fileText) {
                     try {

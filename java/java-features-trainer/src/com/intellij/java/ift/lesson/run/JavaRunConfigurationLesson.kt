@@ -18,7 +18,7 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
 
   override fun LessonContext.runTask() {
     task {
-      caret(3, 5)
+      caret(1, 1)
       highlightRunGutters()
     }
 
@@ -51,8 +51,8 @@ internal fun TaskContext.highlightRunGutters(highlightInside: Boolean = false, u
       else null
     }
     if (runGutterLines.size < 2) return@l null
-    val startLineIndex = runGutterLines.first()
-    val y = editor.visualLineToY(startLineIndex)
-    Rectangle(25, y, ui.width - 40, (runGutterLines.last() - startLineIndex + 1) * editor.lineHeight)
+    val startLineY = editor.visualLineToY(runGutterLines.first())
+    val endLineY = editor.visualLineToY(runGutterLines.last())
+    Rectangle(25, startLineY, ui.width - 40, endLineY - startLineY + editor.lineHeight)
   }
 }

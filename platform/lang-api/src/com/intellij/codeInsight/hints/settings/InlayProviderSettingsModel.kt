@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 /**
- * Model of settings of single language hints provider (Settings/Preferences | Editor | Inlay Hints).
+ * Model of settings of a single language hints provider (Settings/Preferences | Editor | Inlay Hints).
  *
  * @param isEnabled language is enabled in terms of [com.intellij.codeInsight.hints.InlayHintsSettings.hintsEnabled].
  * @param id unique model id
@@ -89,7 +89,7 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
   abstract fun getCaseDescription(case: ImmediateConfigurable.Case): String?
 
   /**
-   * Saves changed settings
+   * Saves changed settings, including [isEnabled]
    */
   abstract fun apply()
 
@@ -105,6 +105,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
 
   var isMergedNode: Boolean = false
 
+
+  @Deprecated("Not used in new UI")
   @get:NlsContexts.Checkbox
   abstract val mainCheckBoxLabel: String
 

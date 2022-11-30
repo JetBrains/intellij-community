@@ -20,12 +20,16 @@ internal class LongTextsDialog : DialogWrapper(false) {
     return arrayOf(okAction)
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     val times = 50
 
     return panel {
       row {
-        text("WordWrapInsideWordsIsNotSupported:" + "NoSpace".repeat(times))
+        text("WordWrapInsideWordsIsSupported:" + "NoSpace".repeat(times))
+      }
+
+      row {
+        text("WordWrapInsideWordsIsSupported:" + ("NoSpace".repeat(20) + " ").repeat(5) + "End")
       }
 
       group("Word Wrap") {

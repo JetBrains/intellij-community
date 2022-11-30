@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.precomputeExtensionModel
 import com.intellij.util.graph.*
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
@@ -280,6 +282,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
         ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
+          val workspaceFileIndex = if (WorkspaceFileIndexEx.IS_ENABLED) WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx else null
+          workspaceFileIndex?.unloadModules(modulesToUnload.map { it.first })
           for ((moduleEntity, module) in modulesToUnload) {
             fireBeforeModuleRemoved(module)
 
@@ -311,6 +315,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           // todo why we load modules in a write action
           runBlocking {
             loadModules(moduleEntitiesToLoad.asSequence(), null, true)
+            workspaceFileIndex?.loadModules(moduleEntitiesToLoad)
           }
         }
       }

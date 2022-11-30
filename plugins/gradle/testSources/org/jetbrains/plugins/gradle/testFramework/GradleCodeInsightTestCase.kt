@@ -30,7 +30,7 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     }
   }
 
-  private fun checkCaret(expression: String) {
+  protected fun checkCaret(expression: String) {
     assertTrue("<caret>" in expression, "Please define caret position in build script.")
   }
 
@@ -59,20 +59,21 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     }
   }
 
-  fun testCompletion(expression: String, checker: (Array<LookupElement>) -> Unit) {
+  fun testCompletion(fileName: String, expression: String, checker: (Array<LookupElement>) -> Unit) {
     checkCaret(expression)
-    val file = findOrCreateFile("build.gradle", expression)
+    val file = findOrCreateFile(fileName, expression)
     runInEdtAndWait {
       codeInsightFixture.configureFromExistingVirtualFile(file)
       checker(codeInsightFixture.completeBasic())
     }
   }
 
-  fun testCompletion(expression: String, vararg completionCandidates: String) = testCompletion(expression) {
+  fun testCompletion(expression: String, vararg completionCandidates: String, orderDependent: Boolean = true) = testCompletion("build.gradle", expression) {
     val lookup = listOf(*it)
     var startIndex = 0
     for (candidate in completionCandidates) {
-      val newIndex = lookup.subList(startIndex, lookup.size).indexOfFirst { it.lookupString == candidate }
+      val fromIndex = if (orderDependent) startIndex else 0
+      val newIndex = lookup.subList(fromIndex, lookup.size).indexOfFirst { it.lookupString == candidate }
       assertTrue(newIndex != -1, "Element '$candidate' must be in the lookup")
       startIndex = newIndex + 1
     }

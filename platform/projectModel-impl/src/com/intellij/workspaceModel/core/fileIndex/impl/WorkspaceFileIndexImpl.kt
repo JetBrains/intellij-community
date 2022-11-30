@@ -20,9 +20,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.*
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx {
   companion object {
@@ -57,9 +56,17 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                            includeExternalSourceSets: Boolean): WorkspaceFileSet? {
     return when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)) {
       is WorkspaceFileSetImpl -> info
-      is MultipleWorkspaceFileSets -> info.fileSets.first()
+      is MultipleWorkspaceFileSets -> info.find(null)
       else -> null
     }
+  }
+
+  override fun unloadModules(entities: List<ModuleEntity>) {
+    indexData?.unloadModules(entities)
+  }
+
+  override fun loadModules(entities: List<ModuleEntity>) {
+    indexData?.loadModules(entities)
   }
 
   override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(file: VirtualFile,
@@ -70,7 +77,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                                                                     customDataClass: Class<out D>): WorkspaceFileSetWithCustomData<D>? {
     val result = when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)) {
       is WorkspaceFileSetWithCustomData<*> -> info.takeIf { customDataClass.isInstance(it.data) }
-      is MultipleWorkspaceFileSets -> info.fileSets.find { customDataClass.isInstance(it.data) }
+      is MultipleWorkspaceFileSets -> info.find(customDataClass)
       else -> null
     }
     @Suppress("UNCHECKED_CAST")

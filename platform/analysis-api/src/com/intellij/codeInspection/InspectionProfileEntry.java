@@ -3,6 +3,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
@@ -23,7 +25,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
@@ -339,7 +340,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @return {@code null} if no UI options required.
    */
   public @Nullable JComponent createOptionsPanel() {
-    return null;
+    return InspectionOptionPaneRenderer.getInstance().render(this);
+  }
+  
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.EMPTY;
   }
 
   /**

@@ -4,7 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.isOpenedInBulk
@@ -42,7 +42,7 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
     private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
     private const val SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200
     private const val DOCUMENT_COMMIT_WAITING_TIME_MS = 5000L
-    private val LOG = Logger.getInstance(AsyncEditorLoader::class.java)
+    private val LOG = logger<AsyncEditorLoader>()
 
     private fun <T> resultInTimeOrNull(future: CompletableFuture<T>): T? {
       try {
@@ -70,6 +70,7 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
 
   @RequiresEdt
   fun start() {
+    @Suppress("DEPRECATION")
     val asyncLoading = project.coroutineScope.async(dispatcher) {
       doLoad()
     }
@@ -93,6 +94,7 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
     }
 
     editorComponent.startLoading()
+    @Suppress("DEPRECATION")
     project.coroutineScope.async(dispatcher) {
       val continuation = asyncLoading.await()
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {

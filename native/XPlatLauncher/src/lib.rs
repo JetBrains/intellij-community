@@ -38,12 +38,19 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::File;
 use std::path::PathBuf;
-use log::{debug, error, LevelFilter};
+use log::{debug, error, LevelFilter, warn};
 use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
 use anyhow::{bail, Result};
 use crate::remote_dev::RemoteDevLaunchConfiguration;
+
+#[cfg(target_os = "windows")] use {
+    windows::core::GUID,
+    windows::Win32::Foundation::HANDLE,
+    windows::Win32::UI::Shell::SHGetKnownFolderPath,
+    windows::Win32::UI::Shell::KF_FLAG_CREATE
+};
 
 pub fn main_lib() {
     let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
@@ -142,7 +149,7 @@ trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
 
     fn get_intellij_vm_options(&self) -> Result<Vec<String>>;
-    fn get_properties_file(&self) -> Result<PathBuf>;
+    fn get_properties_file(&self) -> Result<Option<PathBuf>>;
     fn get_class_path(&self) -> Result<Vec<String>>;
 
     fn prepare_for_launch(&self) -> Result<PathBuf>;
@@ -210,13 +217,13 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
 
     debug!("Resolving IDE properties file");
     // 1. properties file
-    match configuration.get_properties_file() {
-        Ok(p) => {
+    match configuration.get_properties_file()? {
+        Some(p) => {
             let path_string = p.to_string_lossy();
             let vm_option = format!("-Didea.properties.file={path_string}");
             full_vm_options.push(vm_option);
         }
-        Err(_) => {
+        None => {
             debug!("IDE properties file is not set, skipping setting vm option")
         }
     };
@@ -258,6 +265,147 @@ fn show_fail_to_start_message(title: &str, text: &str) {
         Err(e) => {
             // TODO: proper message
             error!("Failed to show error message: {e:?}")
+        }
+    }
+}
+
+
+#[cfg(target_os = "windows")]
+pub fn get_config_home() -> Result<PathBuf> {
+    unsafe {
+        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_cache_home() -> Result<PathBuf> {
+    unsafe {
+        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    Ok(None)
+}
+
+#[cfg(target_os = "windows")]
+pub unsafe fn get_known_folder_path(rfid: &GUID, human_readable: &str) -> Result<PathBuf> {
+    debug!("Calling SHGetKnownFolderPath");
+    let pwstr = unsafe {
+        SHGetKnownFolderPath(
+            rfid,
+            KF_FLAG_CREATE,
+            HANDLE(0)
+        )?
+    };
+
+    debug!("Converting PWSTR to u16 vec");
+    let path_wide_vec = unsafe {
+        pwstr.as_wide()
+    };
+
+    let folder_path = String::from_utf16(path_wide_vec)?;
+    debug!("SHGetKnownFolderPath path for known folder {human_readable}: {folder_path}");
+
+    Ok(PathBuf::from(folder_path))
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_config_home() -> Result<PathBuf> {
+    let result = get_user_home()
+        .join("Library")
+        .join("Application Support");
+
+    Ok(result)
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_cache_home() -> Result<PathBuf> {
+    let result = get_user_home()
+        .join("Library")
+        .join("Caches");
+
+    Ok(result)
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    let result = get_user_home()
+        .join("Logs");
+
+    Ok(Some(result))
+}
+
+// CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+#[cfg(target_os = "linux")]
+pub fn get_config_home() -> Result<PathBuf> {
+    let xdg_config_home = get_xdg_dir("XDG_CONFIG_HOME");
+
+    let result = match xdg_config_home {
+        Some(p) => { p }
+        None => { get_user_home().join(".config") }
+    };
+
+    Ok(result)
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_cache_home() -> Result<PathBuf> {
+    let xdg_cache_home = get_xdg_dir("XDG_CACHE_HOME");
+
+    let result = match xdg_cache_home {
+        Some(p) => { p }
+        None => { get_user_home().join(".cache") }
+    };
+
+    Ok(result)
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_logs_home() -> Result<Option<PathBuf>> {
+    Ok(None)
+}
+
+#[cfg(target_os = "linux")]
+fn get_xdg_dir(env_var_name: &str) -> Option<PathBuf> {
+    let xdg_dir = env::var(env_var_name).unwrap_or(String::from(""));
+    debug!("{env_var_name}={xdg_dir}");
+
+    if xdg_dir.is_empty() {
+        return None
+    }
+
+    let path = PathBuf::from(xdg_dir);
+    if !path.is_absolute() {
+        // TODO: consider change
+        warn!("{env_var_name} is not set to an absolute path ({path:?}), this is likely a misconfiguration");
+    }
+
+    Some(path)
+}
+
+// used in ${HOME}/.config
+// TODO: is this the same as env:
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn get_user_home() -> PathBuf {
+    // TODO: dirs::home_dir seems better then just simply using $HOME as it checks `getpwuid_r`
+
+    match env::var("HOME") {
+        Ok(s) => {
+            debug!("User home directory resolved as '{s}'");
+            let path = PathBuf::from(s);
+            if !path.is_absolute() {
+                warn!("User home directory is not absolute, this may be a misconfiguration");
+            }
+
+            path
+        }
+        Err(e) => {
+            // TODO: this seems wrong
+            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
+
+            PathBuf::from("/")
         }
     }
 }

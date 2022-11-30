@@ -27,6 +27,7 @@ fun Panel.extended(block: Panel.() -> Unit) {
   if (MLServerCompletionSettings.isExtended()) this.apply(block) else return
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.enableSubRowsIf(predicate: ComponentPredicate) {
   subRowsEnabled = predicate()
   predicate.addListener { subRowsEnabled = it }

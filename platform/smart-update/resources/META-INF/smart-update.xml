@@ -1,0 +1,13 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<idea-plugin>
+  <resource-bundle>messages.SmartUpdateBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.smartUpdate.IdeRestartedActivity"/>
+  </extensions>
+
+  <actions>
+      <action id="smart.update" class="com.intellij.smartUpdate.SmartUpdateAction">
+        <add-to-group group-id="VcsGroups"/>
+      </action>
+  </actions>
+</idea-plugin>

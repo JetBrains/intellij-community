@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
@@ -32,6 +33,25 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
 
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget?>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
+
+  init {
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosed(project: Project) {
+        // remove all widgets - frame maybe reused for another project
+        // must be not as a part of dispose, because statusBar will be null
+        val statusBar = WindowManager.getInstance().getStatusBar(project)
+        synchronized(widgetFactories) {
+          for ((factory, widget) in widgetFactories) {
+            val key = (widget ?: continue).ID()
+            factory.disposeWidget(widget)
+            statusBar?.removeWidget(key)
+          }
+          widgetFactories.clear()
+          widgetIdMap.clear()
+        }
+      }
+    })
+  }
 
   fun updateAllWidgets() {
     synchronized(widgetFactories) {
@@ -111,12 +131,6 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
   }
 
   override fun dispose() {
-    synchronized(widgetFactories) {
-      for (factory in widgetFactories.keys.toList()) {
-        disableWidget(factory)
-      }
-      widgetFactories.clear()
-    }
   }
 
   fun findWidgetFactory(widgetId: String): StatusBarWidgetFactory? = widgetIdMap.get(widgetId)

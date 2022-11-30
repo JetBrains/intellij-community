@@ -241,7 +241,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @NotNull
   private StructuredIdeActivity reportBuildStart(@NotNull ProjectTask projectTask,
-                                                 List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
+                                                 List<? extends Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
     Ref<Boolean> incremental = new Ref<>(null);
     AtomicInteger modules = new AtomicInteger(0);
     visitTask(projectTask, tasks -> {

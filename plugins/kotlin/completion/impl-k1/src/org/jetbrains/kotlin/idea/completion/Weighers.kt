@@ -11,8 +11,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.util.proximity.PsiProximityComparator
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.codeInsight.ENUM_VALUES_METHOD_NAME
+import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.completion.implCommon.weighers.EnumValuesSoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.SoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.smart.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
@@ -241,14 +242,18 @@ object K1SoftDeprecationWeigher : LookupElementWeigher(SoftDeprecationWeigher.WE
                 || isEnumValuesSoftDeprecatedMethod(declarationLookupObject, descriptor, languageVersionSettings)
     }
 
+    /**
+     * Lower soft-deprecated `Enum.values()` method in completion.
+     * See [KT-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
+     */
     private fun isEnumValuesSoftDeprecatedMethod(
         declarationLookupObject: DescriptorBasedDeclarationLookupObject,
         descriptor: DeclarationDescriptor,
         languageVersionSettings: LanguageVersionSettings
     ): Boolean {
-        return EnumValuesSoftDeprecationWeigher.weigherIsEnabled(languageVersionSettings) &&
+        return languageVersionSettings.isEnumValuesSoftDeprecateEnabled() &&
                 isEnumClass(descriptor.containingDeclaration) &&
-                EnumValuesSoftDeprecationWeigher.VALUES_METHOD_NAME == declarationLookupObject.name &&
+                ENUM_VALUES_METHOD_NAME == declarationLookupObject.name &&
                 // Don't touch user-declared methods with the name "values"
                 (descriptor as? CallableMemberDescriptor)?.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
     }

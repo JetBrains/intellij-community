@@ -80,7 +80,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private final FileTypeRegistry myRegistry;
   private final FileChooserDescriptor myDescriptor;
   private final Runnable myCallback;
-  private final Consumer<@Nullable @DialogMessage String> myErrorSink;
+  private final @NotNull Consumer<? super @Nullable @DialogMessage String> myErrorSink;
   private final @Nullable WatchService myWatcher;
   private final Map<Path, FileSystem> myOpenFileSystems;
 
@@ -101,7 +101,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor,
                        @NotNull Runnable callback,
-                       @NotNull Consumer<@Nullable @DialogMessage String> errorSink,
+                       @NotNull Consumer<? super @Nullable @DialogMessage String> errorSink,
                        Path @NotNull [] recentPaths) {
     super(new GridBagLayout());
 
@@ -371,8 +371,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (myCurrentDirectory != null) {
         var selection = myList.getSelectedValue();
         myModel.clear();
-        for (var i = 0; i < myCurrentContent.size(); i++) {
-          FsItem item = myCurrentContent.get(i);
+        for (var item : myCurrentContent) {
           if (show || item.visible) myModel.add(item);
         }
         myList.setSelectedValue(selection, true);
@@ -505,39 +504,53 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
 
     var selection = new AtomicReference<>(uplink);
-    PlatformNioHelper.visitDirectory(directory, (file, attrs) -> {
-      if (attrs == null) return true;
-
-      if (attrs.isSymbolicLink()) {
+    var error = new AtomicReference<String>();
+    try {
+      PlatformNioHelper.visitDirectory(directory, (file, result) -> {
+        BasicFileAttributes attrs;
         try {
-          attrs = new DelegatingFileAttributes(Files.readAttributes(file, BasicFileAttributes.class));
+          attrs = result.get();
         }
-        catch (IOException e) {
-          LOG.debug(e);
+        catch (Exception e) {
+          error.set(e.getMessage());
+          return true;
         }
-      }
 
-      var virtualFile = new LazyDirectoryOrFile(vfsDirectory, file, attrs);
-      if (!myDescriptor.isFileVisible(virtualFile, true)) {
-        return true;  // not hidden, just ignored
-      }
-      var visible = myDescriptor.isFileVisible(virtualFile, false);
-      var selectable = myDescriptor.isFileSelectable(virtualFile);
-      var icon = myDescriptor.getIcon(virtualFile);
-      var item = new FsItem(file, file.getFileName().toString(), attrs.isDirectory(), visible, selectable, icon);
-      update(id, cancelled, () -> {
-        myCurrentContent.add(item);
-        if (visible || myShowHiddenFiles) {
-          myModel.add(item);
+        if (attrs.isSymbolicLink()) {
+          try {
+            attrs = new DelegatingFileAttributes(Files.readAttributes(file, BasicFileAttributes.class));
+          }
+          catch (IOException e) {
+            LOG.debug(e);
+          }
         }
+
+        var virtualFile = new LazyDirectoryOrFile(vfsDirectory, file, attrs);
+        if (!myDescriptor.isFileVisible(virtualFile, true)) {
+          return true;  // not hidden, just ignored
+        }
+        var visible = myDescriptor.isFileVisible(virtualFile, false);
+        var selectable = myDescriptor.isFileSelectable(virtualFile);
+        var icon = myDescriptor.getIcon(virtualFile);
+        var item = new FsItem(file, file.getFileName().toString(), attrs.isDirectory(), visible, selectable, icon);
+        update(id, cancelled, () -> {
+          myCurrentContent.add(item);
+          if (visible || myShowHiddenFiles) {
+            myModel.add(item);
+          }
+        });
+
+        if (pathToSelect != null && file.equals(pathToSelect)) {
+          selection.set(item);
+        }
+
+        return !cancelled.get();
       });
-
-      if (pathToSelect != null && file.equals(pathToSelect)) {
-        selection.set(item);
-      }
-
-      return !cancelled.get();
-    });
+    }
+    catch (IOException | RuntimeException e) {
+      LOG.warn(directory.toString(), e);
+      error.set(e.getMessage());
+    }
 
     if (!cancelled.get()) {
       WatchKey watchKey = null;
@@ -556,6 +569,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         () -> {
           myList.setPaintBusy(false);
           myList.setSelectedValue(selection.get(), true);
+          reportError("file.chooser.cannot.load.dir", error);
           myWatchKey = _watchKey;
         },
         () -> { if (_watchKey != null) _watchKey.cancel(); });
@@ -627,8 +641,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         else if (myModel.getSize() > 0) {
           myList.setSelectedIndex(0);
         }
-        var message = error.get();
-        myErrorSink.accept(message != null ? UIBundle.message("file.chooser.cannot.load.roots", message) : null);
+        reportError("file.chooser.cannot.load.roots", error);
       });
     }
   }
@@ -695,6 +708,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         (active ? whenActive : whenCancelled).run();
       }
     });
+  }
+
+  private void reportError(String key, AtomicReference<String> error) {
+    String message = error.get();
+    myErrorSink.accept(message != null ? UIBundle.message(key, message) : null);
   }
 
   private static final class PathWrapper {

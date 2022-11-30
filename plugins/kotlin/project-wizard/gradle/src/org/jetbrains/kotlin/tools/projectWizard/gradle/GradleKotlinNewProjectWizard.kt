@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.kmpWizardLink
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleGroovyDsl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleKotlinDsl
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import java.io.File
 
@@ -42,10 +43,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
         private val addSampleCode by addSampleCodeProperty
-
-        init {
-            useKotlinDsl = true
-        }
 
         override fun setupSettingsUI(builder: Panel) {
             super.setupSettingsUI(builder)
@@ -68,7 +65,10 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 projectPath = "$path/$name",
                 projectName = name,
                 sdk = sdk,
-                buildSystemType = if (useKotlinDsl) GradleKotlinDsl else GradleGroovyDsl,
+                buildSystemType = when (gradleDsl) {
+                    GradleDsl.KOTLIN -> GradleKotlinDsl
+                    GradleDsl.GROOVY -> GradleGroovyDsl
+                },
                 projectGroupId = groupId,
                 artifactId = artifactId,
                 version = version,

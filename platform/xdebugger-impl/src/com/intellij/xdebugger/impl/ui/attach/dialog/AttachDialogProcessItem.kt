@@ -8,6 +8,7 @@ import com.intellij.util.application
 import com.intellij.xdebugger.attach.XAttachDebugger
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToProcessItem
+import org.jetbrains.annotations.Nls
 
 open class AttachDialogProcessItem protected constructor(
   val processInfo: ProcessInfo,
@@ -38,9 +39,11 @@ open class AttachDialogProcessItem protected constructor(
   val debuggers: List<XAttachDebugger>
     get() = allDebuggers.value
 
+  @get:Nls
   val executableText: String
     get() = presentationInfo.value.executableText
 
+  @get:Nls
   val commandLineText: String
     get() = presentationInfo.value.commandLineText
 

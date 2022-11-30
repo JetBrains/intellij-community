@@ -23,6 +23,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -38,6 +40,8 @@ import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isConstant
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
+import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -45,6 +49,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
 
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
@@ -476,7 +481,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
 
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
-            // TODO: do something with always false branches in exhaustive when statements
             // TODO: return x && y.let {return...}
             var parent = expression.parent
             if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
@@ -508,11 +512,13 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             if (isAlsoChain(expression) || isLetConstant(expression) || isUpdateChain(expression)) return true
             when (value) {
                 ConstantValue.TRUE -> {
+                    if (isAndOrConditionWithNothingOperand(expression, KtTokens.OROR)) return true
                     if (isSmartCastNecessary(expression, true)) return true
                     if (isPairingConditionInWhen(expression)) return true
                     if (isAssertion(parent, true)) return true
                 }
                 ConstantValue.FALSE -> {
+                    if (isAndOrConditionWithNothingOperand(expression, KtTokens.ANDAND)) return true
                     if (isSmartCastNecessary(expression, false)) return true
                     if (isAssertion(parent, false)) return true
                 }
@@ -526,7 +532,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         if (receiver is KtQualifiedExpression) {
                             receiver = receiver.selectorExpression
                         }
-                        if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtEnumEntry) {
+                        if (receiver is KtSimpleNameExpression &&
+                            receiver.resolveMainReferenceToDescriptors()
+                                .any { desc -> desc is ClassDescriptor && desc.kind == ClassKind.ENUM_ENTRY }
+                        ) {
                             // ordinal() call on explicit enum constant
                             return true
                         }
@@ -579,6 +588,13 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
             return expression.isUsedAsStatement(expression.analyze(BodyResolveMode.FULL))
+        }
+
+        // x || return y
+        private fun isAndOrConditionWithNothingOperand(expression: KtExpression, token: KtSingleValueToken): Boolean {
+            if (expression !is KtBinaryExpression || expression.operationToken != token) return false
+            val type = expression.right?.getKotlinType()
+            return type != null && type.isNothing()
         }
     }
 }

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.util.merge
 import java.util.*
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 
 private typealias LanguageFeatureMap = Map<LanguageFeature, LanguageFeature.State>
 private typealias AnalysisFlagMap = Map<AnalysisFlag<*>, Any>
@@ -58,7 +60,7 @@ val Project.languageVersionSettings: LanguageVersionSettings
 val PsiElement.languageVersionSettings: LanguageVersionSettings
     get() = if (project.serviceOrNull<ProjectFileIndex>() == null) {
         LanguageVersionSettingsImpl.DEFAULT
-    } else {
+    } else runReadAction {
         IDELanguageSettingsProvider.getLanguageVersionSettings(this.moduleInfo, project)
     }
 
@@ -106,6 +108,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
                 computeModuleLanguageVersionSettings(module),
                 KotlinCompilerSettingsTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project),
+                KotlinFacetModificationTracker.getInstance(project),
             )
         }
     }

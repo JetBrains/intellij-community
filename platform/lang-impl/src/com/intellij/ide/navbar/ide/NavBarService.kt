@@ -6,9 +6,9 @@ import com.intellij.ide.navbar.actions.NavBarActionHandler
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.ide.navbar.impl.pathToItem
-import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
+import com.intellij.ide.navbar.ui.showHint
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -43,8 +43,12 @@ internal class NavBarService(private val project: Project) : Disposable {
   }
 
   private val staticNavBarVm = StaticNavBarVmImpl(cs, project, UISettings.getInstance().isNavbarShown())
+  private var floatingBarJob: Job? = null
 
   fun uiSettingsChanged(uiSettings: UISettings) {
+    if (uiSettings.isNavbarShown()) {
+      floatingBarJob?.cancel()
+    }
     staticNavBarVm.isVisible = uiSettings.isNavbarShown()
   }
 
@@ -69,7 +73,7 @@ internal class NavBarService(private val project: Project) : Disposable {
   }
 
   private fun showFloatingNavbar(dataContext: DataContext) {
-    cs.launch(ModalityState.current().asContextElement()) {
+    val job = cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
         defaultModel(project)
       }
@@ -81,10 +85,16 @@ internal class NavBarService(private val project: Project) : Disposable {
           // wait while panel will fill itself with item components
           yield()
         }
-        FloatingModeHelper.showHint(dataContext, barScope, project, component)
+        showHint(dataContext, project, component)
         vm.selectTail()
         vm.showPopup()
       }
+    }
+
+    floatingBarJob = job
+
+    job.invokeOnCompletion {
+      floatingBarJob = null
     }
   }
 }

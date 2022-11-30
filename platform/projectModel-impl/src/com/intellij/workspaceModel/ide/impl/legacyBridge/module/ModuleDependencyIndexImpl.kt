@@ -125,9 +125,10 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
   override fun dispose() {
     if (project.isDefault) return
-
-    libraryTablesListener.unsubscribe()
-    jdkChangeListener.unsubscribe()
+    
+    //there is no need to send events since the project will be disposed anyway
+    libraryTablesListener.unsubscribe(false)
+    jdkChangeListener.unsubscribe(false)
   }
 
   private inner class ReferencedRootSetChangeListener : RootProvider.RootSetChangedListener {
@@ -221,14 +222,24 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     private fun getLibraryIdentifier(libraryTable: LibraryTable,
                                      libraryName: String) = "${libraryTable.tableLevel}$LIBRARY_NAME_DELIMITER$libraryName"
 
-    fun unsubscribe() {
+    fun unsubscribe(fireEvents: Boolean) {
       val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
       libraryTablesListener.getLibraryLevels().forEach { libraryLevel ->
         val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)
         libraryTable?.libraryIterator?.forEach {
+          if (fireEvents && hasDependencyOn(it)) {
+            eventDispatcher.multicaster.removedDependencyOn(it)
+          }
           it.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         }
         libraryTable?.removeListener(libraryTablesListener)
+      }
+      if (fireEvents) {
+        libraryTablesRegistrar.libraryTable.libraryIterator.forEach {
+          if (hasDependencyOn(it)) {
+            eventDispatcher.multicaster.removedDependencyOn(it)
+          }
+        }
       }
       librariesPerModuleMap.clear()
     }
@@ -367,8 +378,14 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     private fun isProjectSdk(jdk: Sdk) =
       jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName
 
-    fun unsubscribe() {
+    fun unsubscribe(fireEvents: Boolean) {
       watchedSdks.forEach {
+        if (fireEvents) {
+          @Suppress("UNCHECKED_CAST") val sdk = (it as Supplier<Sdk>).get()
+          if (hasDependencyOn(sdk)) {
+            eventDispatcher.multicaster.removedDependencyOn(sdk)
+          }
+        }
         it.removeRootSetChangedListener(rootSetChangeListener)
       }
       watchedSdks.clear()
@@ -376,8 +393,8 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
 
   override fun reset() {
-    libraryTablesListener.unsubscribe()
-    jdkChangeListener.unsubscribe()
+    libraryTablesListener.unsubscribe(true)
+    jdkChangeListener.unsubscribe(true)
     setupTrackedLibrariesAndJdks()
   }
 }

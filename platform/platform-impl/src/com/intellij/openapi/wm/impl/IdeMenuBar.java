@@ -2,6 +2,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.DynamicBundle;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -31,11 +33,12 @@ import com.intellij.ui.mac.screenmenu.MenuBar;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -68,7 +71,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   private final @Nullable ClockPanel myClockPanel;
   private final @Nullable MyExitFullScreenButton myButton;
-  private final @Nullable Animator myAnimator;
+  private final @Nullable MyAnimator myAnimator;
   private final @Nullable Timer myActivationWatcher;
   private final Alarm myUpdateAlarm = new Alarm();
   private @NotNull State myState = State.EXPANDED;
@@ -81,7 +84,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     return SystemInfoRt.isLinux ? new LinuxIdeMenuBar() : new IdeMenuBar();
   }
 
-  protected IdeMenuBar() {
+  @ApiStatus.Internal
+  public IdeMenuBar() {
     if (FrameInfoHelper.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
       myActivationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, new MyActionListener());
@@ -123,7 +127,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public Border getBorder() {
-   if(IdeFrameDecorator.isCustomDecorationActive()) {
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
       return JBUI.Borders.empty();
     }
 
@@ -143,7 +147,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       return JBUI.Borders.emptyBottom(1);
     }
 
-    return UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ? super.getBorder() : null;
+    UISettings uiSettings = UISettings.getInstance();
+    return uiSettings.getShowMainToolbar() || uiSettings.getShowNavigationBar() ? super.getBorder() : null;
   }
 
   @Override
@@ -270,28 +275,46 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   public void addNotify() {
     super.addNotify();
+
+    Activity activity = StartUpMeasurer.startActivity("ide menu bar init");
+    MenuBar screenMenuPeer;
     if (Menu.isJbScreenMenuEnabled()) {
-      myScreenMenuPeer = new MenuBar("MainMenu");
-      myScreenMenuPeer.setFrame(SwingUtilities.getWindowAncestor(this));
+      screenMenuPeer = new MenuBar("MainMenu");
+      myScreenMenuPeer = screenMenuPeer;
+      screenMenuPeer.setFrame(SwingUtilities.getWindowAncestor(this));
     }
-    ActionManagerEx.doWithLazyActionManager(actionManager -> {
-      if (myDisposable.isDisposed()) return;
-      doUpdateMenuActions(false, actionManager);
-      for (AnAction action : myVisibleActions) {
-        if (!(action instanceof ActionGroup)) continue;
-        PopupMenuPreloader.install(this, ActionPlaces.MAIN_MENU, null, () -> (ActionGroup)action);
-      }
-      actionManager.addTimerListener(myTimerListener);
-      Disposer.register(myDisposable, () -> actionManager.removeTimerListener(myTimerListener));
-    });
+    else {
+      screenMenuPeer = null;
+    }
 
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
+
+    IdeRootPane.Companion.executeWithPrepareActionManagerAndCustomActionScheme(myDisposable, actionManager -> {
+      Activity a = StartUpMeasurer.startActivity("ide menu bar actions init");
+      updateActions(actionManager, screenMenuPeer);
+      a.end();
+    });
+    activity.end();
+
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
+  }
+
+  @RequiresEdt
+  private void updateActions(@NotNull ActionManager actionManager, @Nullable MenuBar screenMenuPeer) {
+    List<AnAction> actions = doUpdateMenuActions(false, actionManager, screenMenuPeer);
+    for (AnAction action : actions) {
+      if (action instanceof ActionGroup) {
+        PopupMenuPreloader.install(this, ActionPlaces.MAIN_MENU, null, () -> (ActionGroup)action);
+      }
+    }
+    actionManager.addTimerListener(myTimerListener);
+    Disposer.register(myDisposable, () -> actionManager.removeTimerListener(myTimerListener));
   }
 
   @Override
   public void removeNotify() {
     if (myScreenMenuPeer != null) {
+      //noinspection SSBasedInspection
       myScreenMenuPeer.dispose();
       myScreenMenuPeer = null;
     }
@@ -363,11 +386,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   public void updateMenuActions(boolean forceRebuild) {
-    doUpdateMenuActions(forceRebuild, ActionManager.getInstance());
+    doUpdateMenuActions(forceRebuild, ActionManager.getInstance(), myScreenMenuPeer);
   }
 
   public void updateMenuActionsLazily(boolean forceRebuild) {
-    ActionManagerEx.doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager));
+    ActionManagerEx.doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager, myScreenMenuPeer));
   }
 
   // NOTE: for OSX only
@@ -394,33 +417,35 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     //}
   }
 
-  private void doUpdateMenuActions(boolean forceRebuild, @NotNull ActionManager manager) {
+  private @NotNull List<AnAction> doUpdateMenuActions(boolean forceRebuild, @NotNull ActionManager manager, @Nullable MenuBar screenMenuPeer) {
     boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
 
-    List<AnAction> myNewVisibleActions = new ArrayList<>();
+    List<AnAction> newVisibleActions = new ArrayList<>();
 
     Component targetComponent = IJSwingUtilities.getFocusedComponentInWindowOrSelf(this);
     DataContext dataContext = DataManager.getInstance().getDataContext(targetComponent);
-    expandActionGroup(dataContext, myNewVisibleActions, manager);
+    expandActionGroup(dataContext, newVisibleActions, manager);
 
-    if (!forceRebuild && !myPresentationFactory.isNeedRebuild() &&
-        myNewVisibleActions.equals(myVisibleActions)) {
+    if (!forceRebuild && !myPresentationFactory.isNeedRebuild() && newVisibleActions.equals(myVisibleActions)) {
       for (Component child : getComponents()) {
-        if (!(child instanceof ActionMenu)) continue;
-        ((ActionMenu)child).updateFromPresentation(enableMnemonics);
+        if (child instanceof ActionMenu) {
+          ((ActionMenu)child).updateFromPresentation(enableMnemonics);
+        }
       }
-      return;
+      return newVisibleActions;
     }
 
     // should rebuild UI
-    boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
-    myVisibleActions = myNewVisibleActions;
+    boolean changeBarVisibility = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
+    myVisibleActions = newVisibleActions;
 
     removeAll();
-    if (myScreenMenuPeer != null) myScreenMenuPeer.beginFill();
+    if (screenMenuPeer != null) {
+      screenMenuPeer.beginFill();
+    }
 
     boolean isDarkMenu = isDarkMenu();
-    for (AnAction action : myVisibleActions) {
+    for (AnAction action : newVisibleActions) {
       ActionMenu actionMenu =
         new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu, true);
 
@@ -429,13 +454,19 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         actionMenu.setFocusable(false);
       }
 
-      if (myScreenMenuPeer != null) myScreenMenuPeer.add(actionMenu.getScreenMenuPeer());
-      else add(actionMenu);
+      if (screenMenuPeer != null) {
+        screenMenuPeer.add(actionMenu.getScreenMenuPeer());
+      }
+      else {
+        add(actionMenu);
+      }
     }
 
     myPresentationFactory.resetNeedRebuild();
 
-    if (myScreenMenuPeer != null) myScreenMenuPeer.endFill();
+    if (screenMenuPeer != null) {
+      screenMenuPeer.endFill();
+    }
 
     updateAppMenu();
 
@@ -453,6 +484,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         frame.validate();
       }
     }
+
+    return newVisibleActions;
   }
 
   protected boolean isDarkMenu() {
@@ -466,7 +499,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   protected void paintBackground(Graphics g) {
-    if(IdeFrameDecorator.isCustomDecorationActive()) {
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
       Window window = SwingUtilities.getWindowAncestor(this);
       if (window instanceof IdeFrame) {
         boolean fullScreen = ((IdeFrame)window).isInFullScreen();
@@ -502,11 +535,15 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
                                  @NotNull List<? super AnAction> newVisibleActions,
                                  @NotNull ActionManager actionManager) {
     ActionGroup mainActionGroup = getMainMenuActionGroup();
-    if (mainActionGroup == null) return;
+    if (mainActionGroup == null) {
+      return;
+    }
     // the only code that does not reuse ActionUpdater (do not repeat that anywhere else)
     AnAction[] children = mainActionGroup.getChildren(null);
     for (AnAction action : children) {
-      if (!(action instanceof ActionGroup)) continue;
+      if (!(action instanceof ActionGroup)) {
+        continue;
+      }
       Presentation presentation = myPresentationFactory.getPresentation(action);
       AnActionEvent e = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, actionManager, 0);
       ActionUtil.performDumbAwareUpdate(action, e, false);

@@ -67,6 +67,7 @@ data class FilePageCacheStatistics(val cachedChannelsStatistics: CachedChannelsS
                                    val uncachedFileAccess: Int,
                                    val maxRegisteredFiles: Int,
                                    val maxCacheSizeInBytes: Long,
+                                   val totalCachedSizeInBytes: Long,
                                    val pageHit: Int,
                                    val pageFastCacheHit: Int,
                                    val pageMiss: Int,
@@ -81,6 +82,7 @@ data class FilePageCacheStatistics(val cachedChannelsStatistics: CachedChannelsS
            "capacityInBytes=$capacityInBytes, " +
            "disposedBuffers=$disposedBuffers " +
            "maxRegisteredFiles=$maxRegisteredFiles " +
-           "maxCacheSizeInBytes=$maxCacheSizeInBytes"
+           "maxCacheSizeInBytes=$maxCacheSizeInBytes" +
+           "totalSizeCachedBytes=$totalCachedSizeInBytes"
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.tests
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ex.QuickFixWrapper
@@ -55,9 +56,12 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     fileName: String = generateFileName()
   ) {
     configureByText("$fileName${lang.ext}", code)
-    val action = getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
-    val actualPreview = getIntentionPreviewText(action)
-    assertEquals(preview, actualPreview)
+    testPreview(preview, hint)
+  }
+
+  private fun JavaCodeInsightTestFixture.testPreview(expectedPreview: String, hint: String) {
+    val actualPreview = getIntentionPreviewText(getIntention(hint))
+    assertEquals(expectedPreview, actualPreview)
   }
 
   /**
@@ -129,8 +133,12 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   protected fun JavaCodeInsightTestFixture.runQuickFix(hint: String) {
-    val action = getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
+    val action = getIntention(hint)
     launchAction(action)
+  }
+
+  protected fun JavaCodeInsightTestFixture.getIntention(hint: String): IntentionAction {
+    return getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available")
   }
 
   protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(
@@ -142,14 +150,14 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     fileName: String = generateFileName()
   ) {
     configureByText("$fileName${lang.ext}", text)
-    assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
+    assertEmpty("Quickfix '$hint' is available but should not", myFixture.filterAvailableIntentions(hint))
   }
 
   protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(file: String, hint: String = InspectionsBundle.message(
     "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
   )) {
     configureByFile(file)
-    assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
+    assertEmpty("Quickfix '$hint' is available but should not", myFixture.filterAvailableIntentions(hint))
   }
 
   protected fun generateFileName() = getTestName(false).replace("[^a-zA-Z0-9\\.\\-]", "_")

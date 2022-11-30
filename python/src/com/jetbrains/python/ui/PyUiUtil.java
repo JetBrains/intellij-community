@@ -62,7 +62,7 @@ public class PyUiUtil {
 
       for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
         if (editor instanceof EditorEx && editor.getProject() == project) {
-          final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
+          final VirtualFile vFile = editor.getVirtualFile();
           if (vFile != null) {
             final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, vFile);
             ((EditorEx)editor).setHighlighter(highlighter);

@@ -15,13 +15,14 @@
  */
 package com.intellij.injected.editor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface EditorWindow extends UserDataHolderEx, Editor {
+public interface EditorWindow extends UserDataHolderEx, Editor, Disposable {
   boolean isValid();
 
   @NotNull

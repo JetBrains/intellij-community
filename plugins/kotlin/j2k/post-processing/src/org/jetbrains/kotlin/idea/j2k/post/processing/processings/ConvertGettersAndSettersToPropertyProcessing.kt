@@ -619,21 +619,21 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         klass: KtClassOrObject,
         propertiesData: List<PropertyData>
     ) {
-        val factory = KtPsiFactory(klass)
-        val accessors = propertiesData.filterGettersAndSetters(klass, factory)
+        val psiFactory = KtPsiFactory(klass.project)
+        val accessors = propertiesData.filterGettersAndSetters(klass, psiFactory)
 
         for ((property, getter, setter) in accessors) {
             val ktProperty = when (property) {
                 is RealProperty -> {
                     if (property.property.isVar != property.isVar) {
                         property.property.valOrVarKeyword.replace(
-                            if (property.isVar) factory.createVarKeyword() else factory.createValKeyword()
+                            if (property.isVar) psiFactory.createVarKeyword() else psiFactory.createValKeyword()
                         )
                     }
                     property.property
                 }
 
-                is FakeProperty -> factory.createProperty(property.name, property.type, property.isVar).let {
+                is FakeProperty -> psiFactory.createProperty(property.name, property.type, property.isVar).let {
                     val anchor = getter.safeAs<RealAccessor>()?.function ?: setter.cast<RealAccessor>().function
                     klass.addDeclarationBefore(it, anchor)
                 }
@@ -668,10 +668,10 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             val isOpen = getter.safeAs<RealGetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
                     || setter.safeAs<RealSetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
 
-            val ktGetter = addGetter(getter, ktProperty, factory, property.isFake)
+            val ktGetter = addGetter(getter, ktProperty, psiFactory, property.isFake)
             val ktSetter =
                 setter?.let {
-                    createSetter(it, ktProperty, factory, property.isFake)
+                    createSetter(it, ktProperty, psiFactory, property.isFake)
                 }
             val getterVisibility = getter.safeAs<RealGetter>()?.function?.visibilityModifierTypeOrDefault()
             if (getter is RealGetter) {
@@ -708,7 +708,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             }
 
             if (property is MergedProperty) {
-                ktProperty.renameTo(property.name, factory)
+                ktProperty.renameTo(property.name, psiFactory)
             }
             if (isOpen) {
                 ktProperty.addModifier(KtTokens.OPEN_KEYWORD)

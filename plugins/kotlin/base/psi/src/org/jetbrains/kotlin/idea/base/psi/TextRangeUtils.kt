@@ -6,3 +6,5 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 fun PsiElement.textRangeIn(other: PsiElement): TextRange = textRange.shiftLeft(other.startOffset)
+
+fun TextRange.relativeTo(element: PsiElement): TextRange = shiftLeft(element.startOffset)

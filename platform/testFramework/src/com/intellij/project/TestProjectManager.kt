@@ -128,7 +128,7 @@ open class TestProjectManager : ProjectManagerImpl() {
           runInitProjectActivities(project = project)
         }
         if (isRunStartUpActivitiesEnabled(project)) {
-          (StartupManager.getInstance(project) as StartupManagerImpl).runStartupActivities()
+          (StartupManager.getInstance(project) as StartupManagerImpl).runPostStartupActivities()
         }
       }
     }

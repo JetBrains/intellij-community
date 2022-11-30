@@ -1,8 +1,9 @@
 from _typeshed import Self
 from collections.abc import Iterable
 from typing import Any, ClassVar
+from typing_extensions import TypeAlias
 
-_Element = Any  # actually lxml.etree._Element
+_Element: TypeAlias = Any  # actually lxml.etree._Element
 
 class BaseElement:
     tag: ClassVar[str | None]

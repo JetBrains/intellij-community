@@ -1,4 +1,5 @@
 // FIR_COMPARISON
+// FIR_IDENTICAL
 class X
 
 fun f(x: X?){}

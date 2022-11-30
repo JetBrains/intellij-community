@@ -27,12 +27,12 @@ public final class VcsLogColorManagerImpl implements VcsLogColorManager {
   @NotNull private final Map<String, Color> myPaths2Colors;
   @NotNull private final List<FilePath> myPaths;
 
-  public VcsLogColorManagerImpl(@NotNull Set<VirtualFile> roots) {
+  public VcsLogColorManagerImpl(@NotNull Set<? extends VirtualFile> roots) {
     this(ContainerUtil.map(ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName)),
                            file -> VcsUtil.getFilePath(file)));
   }
 
-  public VcsLogColorManagerImpl(@NotNull Collection<FilePath> paths) {
+  public VcsLogColorManagerImpl(@NotNull Collection<? extends FilePath> paths) {
     myPaths = new ArrayList<>(paths);
     myPaths2Colors = new HashMap<>();
     for (int i = 0; i < myPaths.size(); i++) {

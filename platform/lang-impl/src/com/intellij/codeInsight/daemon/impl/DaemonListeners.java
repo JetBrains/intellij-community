@@ -87,6 +87,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public final class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance(DaemonListeners.class);
@@ -394,6 +395,11 @@ public final class DaemonListeners implements Disposable {
         if (file != null) {
           // force clearing all PSI caches, including those in WholeFileInspectionFactory
           PsiManager.getInstance(myProject).dropPsiCaches();
+          for (Editor editor : myActiveEditors) {
+            if (Objects.equals(editor.getVirtualFile(), file.getVirtualFile())) {
+              ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor, file);
+            }
+          }
         }
       }));
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));

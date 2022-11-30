@@ -65,13 +65,12 @@ public final class NavBarRootPaneExtension implements IdeRootPaneNorthExtension 
     }
 }
 
-final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPanel implements
-                                                                                    StatusBarCentralWidgetProvider {
+final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPanel implements StatusBarCentralWidgetProvider {
   private final Project myProject;
-  JComponent myNavigationBar;
   private JComponent myNavBarPanel;
   private JPanel myRunPanel;
   private Boolean myNavToolbarGroupExist;
+  JComponent myNavigationBar;
   JScrollPane myScrollPane;
 
   MyNavBarWrapperPanel(Project project) {
@@ -80,22 +79,20 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
     myProject = project;
 
     UISettings settings = UISettings.getInstance();
-    if (!ExperimentalUI.isNewUI() || (settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP)) {
+    if (!ExperimentalUI.isNewUI() || settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP) {
       add(getNavBarPanel(), BorderLayout.CENTER);
     }
     else {
       setVisible(false);
     }
 
-    putClientProperty(PANEL_KEY, myNavigationBar);
     revalidate();
 
     uiSettingsChanged(settings);
   }
 
-  @NotNull
   @Override
-  public JComponent createCentralStatusBarComponent() {
+  public @NotNull JComponent createCentralStatusBarComponent() {
     return getNavBarPanel();
   }
 
@@ -111,11 +108,12 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
       myNavigationBar = new ReusableNavBarPanel(myProject, true);
       ((NavBarPanel)myNavigationBar).getModel().setFixedComponent(true);
     }
+    putClientProperty(PANEL_KEY, myNavigationBar);
+
     myScrollPane = ScrollPaneFactory.createScrollPane(myNavigationBar);
     updateScrollBarFlippedState(null);
 
     myNavBarPanel = new NavBarContainer(new BorderLayout(), this);
-
     myNavBarPanel.add(myScrollPane, BorderLayout.CENTER);
     myNavBarPanel.setOpaque(!ExperimentalUI.isNewUI());
     myNavBarPanel.updateUI();
@@ -205,8 +203,7 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
       Insets insets = container.getInsets();
       Dimension d = c.getPreferredSize();
       Rectangle r = container.getBounds();
-      c.setBounds(insets.left, (r.height - d.height - insets.top - insets.bottom) / 2 + insets.top, r.width - insets.left - insets.right,
-                  d.height);
+      c.setBounds(insets.left, (r.height - d.height - insets.top - insets.bottom) / 2 + insets.top, r.width - insets.left - insets.right, d.height);
     }
   }
 

@@ -79,10 +79,6 @@
         <projectService serviceInterface="org.jetbrains.uast.kotlin.KotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
 
-        <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrar"
-            serviceImplementation="org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrarImpl"/>
-
       <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
                          bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
 

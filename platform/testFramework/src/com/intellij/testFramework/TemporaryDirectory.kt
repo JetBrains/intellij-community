@@ -27,9 +27,12 @@ import java.util.function.Predicate
 import kotlin.properties.Delegates
 
 /**
- * fileName argument is not used as is for generated file or dir name - sortable UID is added as suffix.
- * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
- * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
+ * Provides the possibility to create a temporary directory during a test.
+ * The directory is not actually created by default; call [createDir] to do that.
+ *
+ * * The `fileName` argument is not used as is for generated file or dir name - sortable UID is added as suffix.
+ * * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
+ * * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
  */
 open class TemporaryDirectory : ExternalResource() {
   private val paths = SmartList<Path>()
@@ -74,12 +77,11 @@ open class TemporaryDirectory : ExternalResource() {
     return super.apply(base, description)
   }
 
-  
   protected fun before(testName: String) {
     sanitizedName = testNameToFileName(testName)
     root = Paths.get(FileUtilRt.getTempDirectory())
   }
-  
+
   @ApiStatus.Internal
   fun init(commonPrefix: String, root: Path) {
     if (this.root != null) {
@@ -209,7 +211,7 @@ class TemporaryDirectoryExtension : TemporaryDirectory(), BeforeEachCallback, Af
   override fun afterEach(context: ExtensionContext?) {
     after()
   }
-  
+
   override fun beforeEach(context: ExtensionContext) {
     before(context.testMethod.map { it.name }.orElse(context.displayName))
   }

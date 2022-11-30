@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.CodeReviewTabs.bindTabText
 import com.intellij.collaboration.ui.codereview.CodeReviewTabs.bindTabUi
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor.onUiThread
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.tabs.JBTabs
@@ -14,6 +15,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +30,7 @@ internal class GHPRViewTabsFactory(private val project: Project,
   private val uiDisposable = Disposer.newDisposable().also {
     Disposer.register(disposable, it)
   }
-  private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement())
     .also { Disposer.register(uiDisposable) { it.cancel() } }
 
   fun create(infoComponent: JComponent,

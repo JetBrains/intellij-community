@@ -51,7 +51,7 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
 
   @Override
   public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element,
-                                                              @NotNull final Collection<PsiElement> allElementsToDelete,
+                                                              final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     if (!askUser || !(element instanceof PsiFile)) return Collections.emptyList();
 
@@ -87,13 +87,13 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
   @Override
   public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element,
                                            PsiElement @NotNull [] allElementsToDelete,
-                                           @NotNull List<UsageInfo> result) {
+                                           @NotNull List<? super UsageInfo> result) {
     return null;
   }
 
   @Override
   public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
-                                                              @NotNull Collection<PsiElement> allElementsToDelete) {
+                                                              @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return Collections.singleton(element);
   }
 
@@ -103,12 +103,12 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
   }
 
   @Override
-  public UsageInfo[] preprocessUsages(Project project, final UsageInfo[] usages) {
+  public UsageInfo[] preprocessUsages(@NotNull Project project, final UsageInfo @NotNull [] usages) {
     return usages;
   }
 
   @Override
-  public void prepareForDeletion(PsiElement element) throws IncorrectOperationException {
+  public void prepareForDeletion(@NotNull PsiElement element) throws IncorrectOperationException {
   }
 
   @Override

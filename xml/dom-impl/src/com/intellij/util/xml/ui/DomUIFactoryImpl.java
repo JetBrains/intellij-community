@@ -24,7 +24,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
-import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,12 +116,6 @@ public class DomUIFactoryImpl extends DomUIFactory {
   public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
     final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ReflectionUtil.getRawType(type));
     return factory == null ? null : factory.fun(wrapper);
-  }
-
-  @Override
-  public CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements) {
-    captionComponent.initErrorPanel(new DomElementsErrorPanel(elements));
-    return captionComponent;
   }
 
   @Override

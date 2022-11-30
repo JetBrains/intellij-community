@@ -39,6 +39,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testYieldLambda() { doParserTest("yield () -> {};"); }
   public void testYieldAssignment() { doParserTest("yield = 10;"); }
   public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
+  public void testYieldWithTextBlock() { doParserTest("yield \"\"\"foo\"\"\""); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
   public void testContinueNormal1() { doParserTest("continue LABEL;"); }

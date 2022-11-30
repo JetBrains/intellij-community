@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 /**
  * Represents a memory state of abstract interpreter.
@@ -132,6 +133,10 @@ public interface DfaMemoryState {
    * Forcibly sets the supplied dfType to given value if given value state can be memoized.
    * This is necessary to override some knowledge about the variable state. In most of the cases
    * {@link #meetDfType(DfaValue, DfType)} should be used as it narrows existing type.
+   * <p>
+   *   Use of this method is in general discouraged, as it doesn't update the type of known aliases,
+   *   which may cause subtle bugs. Consider using {@link #updateDfType(DfaValue, UnaryOperator)} instead.
+   * </p>
    *
    * @param value value to update.
    * @param dfType type to assign to value. Note that type might be adjusted, e.g. to be compatible with value declared PsiType.
@@ -139,10 +144,30 @@ public interface DfaMemoryState {
   void setDfType(@NotNull DfaValue value, @NotNull DfType dfType);
 
   /**
+   * Forcibly updates the dfType for given value if given value state can be memoized.
+   * Known aliases are updated as well. This is necessary to override some knowledge about the variable state.
+   * This may happen if contradiction is found and reported, but you want to continue the analysis, or
+   * if you need to adjust mutable property like object locality. In most of the cases {@link #meetDfType(DfaValue, DfType)} 
+   * should be used as it narrows existing type.
+   *
+   * @param value value to update.
+   * @param updater a function that accepts the current dfType and returns the updated one. May be called 
+   *                several times for every alias.
+   */
+  void updateDfType(@NotNull DfaValue value, @NotNull UnaryOperator<@NotNull DfType> updater);
+
+  /**
    * @param value value to get the type of
    * @return the DfType of the value within this memory state
    */
   @NotNull DfType getDfType(@NotNull DfaValue value);
+
+  /**
+   * @param value value to get the type of
+   * @return the DfType of the value within this memory state, including available information about derived variables, when possible
+   * @see com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor
+   */
+  @NotNull DfType getDfTypeIncludingDerived(@NotNull DfaValue value);
 
   /**
    * Forget values of all unstable fields that could be
@@ -175,7 +200,7 @@ public interface DfaMemoryState {
    *
    * @param filter filter to check whether the variable should be flushed
    */
-  void flushVariables(@NotNull Predicate<@NotNull DfaVariableValue> filter);
+  void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter);
 
   /**
    * Mark this state as ephemeral. See {@link #isEphemeral()} for details.

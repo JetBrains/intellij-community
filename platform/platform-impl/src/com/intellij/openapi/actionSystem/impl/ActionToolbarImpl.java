@@ -76,6 +76,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
    * should not be hidden by {@link com.intellij.ide.actions.ToggleToolbarAction}.
    */
   public static final String IMPORTANT_TOOLBAR_KEY = "ActionToolbarImpl.importantToolbar";
+  public static final String USE_BASELINE_KEY = "ActionToolbarImpl.baseline";
 
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
@@ -174,7 +175,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private final EventDispatcher<ActionToolbarListener> myListeners = EventDispatcher.create(ActionToolbarListener.class);
 
-  private @NotNull Function<String, Component> mySeparatorCreator = (name) -> new MySeparator(name);
+  private @NotNull Function<? super String, ? extends Component> mySeparatorCreator = (name) -> new MySeparator(name);
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false);
@@ -257,6 +258,44 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     for (Component component : getComponents()) {
       tweakActionComponentUI(component);
     }
+  }
+
+  @Override
+  public int getBaseline(int width, int height) {
+    if (getClientProperty(USE_BASELINE_KEY) != Boolean.TRUE || myLayoutPolicy != NOWRAP_LAYOUT_POLICY
+        || myOrientation != SwingConstants.HORIZONTAL) {
+      // Support only one layout now. Can be extended later
+      return super.getBaseline(width, height);
+    }
+
+    int componentCount = getComponentCount();
+    List<Rectangle> bounds = new ArrayList<>();
+    for (int i = 0; i < componentCount; i++) {
+      bounds.add(new Rectangle());
+    }
+    calculateBoundsNowrapImpl(bounds);
+
+    int baseline = -1;
+    for (int i = 0; i < componentCount; i++) {
+      Component component = getComponent(i);
+      if (component.isVisible()) {
+        Rectangle rect = bounds.get(i);
+        int b = component.getBaseline(rect.width, rect.height);
+        if (b >= 0) {
+          int baselineInParent = rect.y + b;
+          if (baseline < 0) {
+            baseline = baselineInParent;
+          }
+          else {
+            if (baseline != baselineInParent) {
+              return -1;
+            }
+          }
+        }
+      }
+    }
+
+    return baseline;
   }
 
   public @NotNull String getPlace() {
@@ -1031,7 +1070,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myActionButtonBorder = actionButtonBorder;
   }
 
-  public final void setSeparatorCreator(@NotNull Function<String, Component> separatorCreator) {
+  public final void setSeparatorCreator(@NotNull Function<? super String, ? extends Component> separatorCreator) {
     mySeparatorCreator = separatorCreator;
   }
 
@@ -1084,7 +1123,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected @NotNull Color getSeparatorColor() {
-    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
+    return JBUI.CurrentTheme.Toolbar.SEPARATOR_COLOR;
   }
 
   protected int getSeparatorHeight() {
@@ -1168,7 +1207,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     }
 
-    private int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String text, @Nullable Graphics graphics) {
+    private static int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String text, @Nullable Graphics graphics) {
       if (graphics == null) {
         return fontMetrics.stringWidth(text);
       }

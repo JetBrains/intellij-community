@@ -1273,6 +1273,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @Override
   public void loadState(@NotNull Element element) {
     synchronized (myDataLock) {
+      if (!myInitialUpdate) {
+        LOG.warn("Local changes overwritten");
+        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      }
+
       boolean areChangeListsEnabled = shouldEnableChangeLists();
       myWorker.setChangeListsEnabled(areChangeListsEnabled);
 

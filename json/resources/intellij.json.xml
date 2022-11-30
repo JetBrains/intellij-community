@@ -38,7 +38,7 @@
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
     <outerLanguageRangePatcher language="JSON" implementationClass="com.intellij.psi.templateLanguages.DefaultOuterLanguagePatcher"/>
     <statusBarWidgetFactory id="JSONSchemaSelector" implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory"
-                            order="after codeStyleWidget, before readOnlyWidget"/>
+                            order="after CodeStyleStatusBarWidget, before ReadOnlyAttribute"/>
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
 
     <!-- Code style and formatting -->

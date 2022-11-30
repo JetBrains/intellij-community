@@ -80,7 +80,7 @@ interface ExternalSystemProjectNotificationAware {
     fun isNotificationVisibleProperty(project: Project, systemId: ProjectSystemId): ObservableProperty<Boolean> {
       return object : ObservableProperty<Boolean> {
         override fun get() = systemId in getInstance(project).getSystemIds()
-        override fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) {
+        override fun afterChange(parentDisposable: Disposable?, listener: (Boolean) -> Unit) {
           whenNotificationChanged(project, parentDisposable) {
             listener(get())
           }

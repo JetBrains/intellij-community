@@ -91,6 +91,8 @@
 
     <applicationService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogPresentationService"/>
 
+    <applicationService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService"/>
+
     <projectService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessDialogFactory"/>
 
     <xdebugger.dialog.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultItemPresentationProvider"/>

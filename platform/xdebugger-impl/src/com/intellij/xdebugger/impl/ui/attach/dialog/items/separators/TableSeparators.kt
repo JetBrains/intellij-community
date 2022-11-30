@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
@@ -21,8 +22,11 @@ abstract class TableGroupHeaderSeparator(private val hideLine: Boolean) : Separa
     private val LABEL_TOP_BOTTOM_INSETS = JBUI.scale(3)
     private val LINE_TOP_BOTTOM_INSETS = JBUI.scale(6)
 
-    fun getExpectedHeight(hideLine: Boolean): Int {
-      return LABEL_TOP_BOTTOM_INSETS * 2 + AttachDialogState.DEFAULT_ROW_HEIGHT + (if (hideLine) 0 else LINE_HEIGHT + LINE_TOP_BOTTOM_INSETS * 2)
+    fun getExpectedHeight(hideLine: Boolean, hasMessage: Boolean): Int {
+      return if (hasMessage)
+        LABEL_TOP_BOTTOM_INSETS * 2 + AttachDialogState.DEFAULT_ROW_HEIGHT + (if (hideLine) 0 else LINE_HEIGHT + LINE_TOP_BOTTOM_INSETS * 2)
+      else
+        AttachDialogState.DEFAULT_ROW_HEIGHT
     }
   }
 
@@ -95,7 +99,7 @@ abstract class TableGroupHeaderSeparator(private val hideLine: Boolean) : Separa
   }
 }
 
-class TableGroupHeaderFirstColumnSeparator(title: String?, hideLine: Boolean) : TableGroupHeaderSeparator(hideLine) {
+class TableGroupHeaderFirstColumnSeparator(@Nls title: String?, hideLine: Boolean) : TableGroupHeaderSeparator(hideLine) {
   init {
     caption = title
     setCaptionCentered(false)

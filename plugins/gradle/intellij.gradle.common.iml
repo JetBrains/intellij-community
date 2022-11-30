@@ -2,6 +2,9 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
+    <content url="file://$MODULE_DIR$/generated">
+      <sourceFolder url="file://$MODULE_DIR$/generated" isTestSource="false" generated="true" />
+    </content>
     <content url="file://$MODULE_DIR$/resources">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>

@@ -22,7 +22,7 @@ public class PythonRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
-  public boolean characterNeedsEscaping(char c) {
+  public boolean characterNeedsEscaping(char c, boolean isInClass) {
     return c == '\"' || c == '\'';
   }
 

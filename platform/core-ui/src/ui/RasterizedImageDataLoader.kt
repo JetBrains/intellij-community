@@ -23,7 +23,7 @@ internal class RasterizedImageDataLoader(private val path: String,
                                          private val originalPath: String,
                                          private val originalClassLoaderRef: WeakReference<ClassLoader>,
                                          private val cacheKey: Int,
-                                         private val imageFlags: Int) : ImageDataLoader {
+                                         override val flags: Int) : ImageDataLoader {
   override fun loadImage(parameters: LoadIconParameters): Image? {
     val classLoader = classLoaderRef.get() ?: return null
     // use cache key only if path to image is not customized
@@ -38,7 +38,7 @@ internal class RasterizedImageDataLoader(private val path: String,
                        classLoader = classLoader,
                        isSvg = isSvg,
                        rasterizedCacheKey = cacheKey,
-                       imageFlags = imageFlags,
+                       imageFlags = flags,
                        isPatched = false)
       }
       else {
@@ -48,7 +48,7 @@ internal class RasterizedImageDataLoader(private val path: String,
                        classLoader = classLoader,
                        isSvg = isSvg,
                        rasterizedCacheKey = 0,
-                       imageFlags = imageFlags,
+                       imageFlags = flags,
                        isPatched = true)
       }
 
@@ -64,7 +64,8 @@ internal class RasterizedImageDataLoader(private val path: String,
     }
   }
 
-  override fun getURL() = classLoaderRef.get()?.getResource(path)
+  override val url: URL?
+    get() = classLoaderRef.get()?.getResource(path)
 
   override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
     val classLoader = classLoaderRef.get()
@@ -75,7 +76,7 @@ internal class RasterizedImageDataLoader(private val path: String,
                                               originalPath = this.originalPath,
                                               originalClassLoaderRef = originalClassLoaderRef,
                                               cacheKey = cacheKey,
-                                              imageFlags = imageFlags)
+                                              flags = flags)
                   }
                   else null
     if (patched.first.startsWith("file:/")) {
@@ -83,13 +84,11 @@ internal class RasterizedImageDataLoader(private val path: String,
       return ImageDataByUrlLoader(URL(patched.first), patched.first, effectiveClassLoader, false)
     }
     else {
-      return createPatched(this.originalPath, originalClassLoaderRef, patched, cacheKey, imageFlags)
+      return createPatched(this.originalPath, originalClassLoaderRef, patched, cacheKey, flags)
     }
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
-
-  override fun getFlags(): Int = imageFlags
 
   override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
@@ -106,7 +105,7 @@ internal fun createPatched(originalPath: String,
                                    originalPath = originalPath,
                                    originalClassLoaderRef = originalClassLoaderRef,
                                    cacheKey = cacheKey,
-                                   imageFlags = imageFlags)
+                                   flags = imageFlags)
 }
 
 private fun normalizePath(patchedPath: String): String {
@@ -206,17 +205,11 @@ private fun loadPatched(name: String,
   val dark = PatchedIconDescriptor("${name}_dark.$ext", if (isSvg) scale else 1f)
   val retina = PatchedIconDescriptor("$name@2x.$ext", if (isSvg) scale else 2f)
   val plain = PatchedIconDescriptor(path, if (isSvg) scale else 1f)
-  val descriptors = if (parameters.isStroke) {
-    listOf(stroke, plain)
-  }
-  else if (isRetina && parameters.isDark) {
-    listOf(retinaDark, dark, retina, plain)
-  }
-  else if (parameters.isDark) {
-    listOf(dark, plain)
-  }
-  else {
-    if (isRetina) listOf(retina, plain) else listOf(plain)
+  val descriptors = when {
+    parameters.isStroke -> listOf(stroke, plain)
+    isRetina && parameters.isDark -> listOf(retinaDark, dark, retina, plain)
+    parameters.isDark -> listOf(dark, plain)
+    else -> if (isRetina) listOf(retina, plain) else listOf(plain)
   }
 
   for (descriptor in descriptors) {

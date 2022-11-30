@@ -21,5 +21,5 @@ class OverriddenMergeableLineMarkerInfo(
 
     override fun canMergeWith(info: MergeableLineMarkerInfo<*>): Boolean = info is OverriddenMergeableLineMarkerInfo && info.icon == icon
 
-    override fun getCommonIcon(infos: MutableList<out MergeableLineMarkerInfo<*>>): Icon = infos.first().icon
+    override fun getCommonIcon(infos: List<MergeableLineMarkerInfo<*>>): Icon = infos.first().icon
 }

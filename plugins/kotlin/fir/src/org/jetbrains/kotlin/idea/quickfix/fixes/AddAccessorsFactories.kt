@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
@@ -31,7 +31,7 @@ object AddAccessorsFactories {
         target: KtProperty,
         private val addGetter: Boolean,
         private val addSetter: Boolean,
-    ) : KotlinApplicableQuickFix<KtProperty>(target) {
+    ) : AbstractKotlinApplicableQuickFix<KtProperty>(target) {
         override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
         override fun apply(element: KtProperty, project: Project, editor: Editor?, file: KtFile) =
             addAccessors(element, addGetter, addSetter, editor)

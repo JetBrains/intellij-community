@@ -11,12 +11,14 @@ import com.intellij.ide.*
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -60,11 +62,19 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
   runBlocking(rootTask()) {
-    doInitApplication(rawArgs, appDeferred)
+    val euaTaskDeferred = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("eua document") + Dispatchers.Default) {
+        prepareShowEuaIfNeededTask(loadEuaDocument(), asyncScope = this@runBlocking)
+      }
+    }
+    doInitApplication(rawArgs, appDeferred, euaTaskDeferred)
   }
 }
 
-private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>, euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
@@ -72,31 +82,54 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
 
   val (app, initLafJob) = initAppActivity.runChild("app waiting") {
     @Suppress("UNCHECKED_CAST")
-    appDeferred.await() as Pair<ApplicationImpl, Job?>
+    appDeferred.await() as Pair<ApplicationImpl, Job>
   }
 
-  initAppActivity.runChild("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(),
-                           app = app,
-                           precomputedExtensionModel = null,
-                           listenerCallbacks = null)
-  }
+  val loadIconMapping: Job? = coroutineScope {
+    initAppActivity.runChild("app component registration") {
+      app.registerComponents(modules = pluginSet.getEnabledModules(),
+                             app = app,
+                             precomputedExtensionModel = null,
+                             listenerCallbacks = null)
+    }
 
-  withContext(Dispatchers.IO) {
-    initConfigurationStore(app)
+    val loadIconMapping = if (app.isHeadlessEnvironment) {
+      null
+    }
+    else {
+      app.coroutineScope.launchAndMeasure("icon mapping loading") {
+        try {
+          service<IconMapLoader>().preloadIconMapping()
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
+      }
+    }
+
+    withContext(Dispatchers.IO) {
+      initConfigurationStore(app)
+    }
+
+    loadIconMapping
   }
 
   coroutineScope {
     // LaF must be initialized before app init because icons maybe requested and as result,
     // scale must be already initialized (especially important for Linux)
     runActivity("init laf waiting") {
-      initLafJob?.join()
+      initLafJob.join()
     }
+
+    euaTaskDeferred?.await()?.invoke()
 
     // executed in main thread
     launch {
+      loadIconMapping?.join()
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
-        // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
       }
       if (!app.isHeadlessEnvironment) {

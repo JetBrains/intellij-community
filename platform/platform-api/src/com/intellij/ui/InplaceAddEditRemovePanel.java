@@ -45,9 +45,10 @@ public abstract class InplaceAddEditRemovePanel<T> extends AddEditRemovePanel<T>
   protected void doEdit() {
     JBTable table = getTable();
     if (!table.isEditing()) {
-      int selected = table.getSelectedRow();
-      if (selected != -1) {
-        table.editCellAt(selected, 0);
+      int selectedRow = table.getSelectedRow();
+      int selectedColumn = table.getSelectedColumn();
+      if (selectedRow != -1 && selectedColumn != -1) {
+        table.editCellAt(selectedRow, selectedColumn);
       }
     }
   }

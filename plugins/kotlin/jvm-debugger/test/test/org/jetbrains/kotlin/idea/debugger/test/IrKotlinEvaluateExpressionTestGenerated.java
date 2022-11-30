@@ -1072,9 +1072,9 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/extractThis.kt");
             }
 
-            @TestMetadata("extractThisInTrait.kt")
-            public void testExtractThisInTrait() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/extractThisInTrait.kt");
+            @TestMetadata("extractThisInInterface.kt")
+            public void testExtractThisInInterface() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/extractThisInInterface.kt");
             }
 
             @TestMetadata("extractVariablesFromCall.kt")

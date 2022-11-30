@@ -36,7 +36,7 @@ class AddActualFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
 
         val codeStyleManager = CodeStyleManager.getInstance(project)
 
@@ -50,7 +50,7 @@ class AddActualFix(
         for (missedDeclaration in missedDeclarationPointers.mapNotNull { it.element }) {
             val actualDeclaration = try {
                 when (missedDeclaration) {
-                    is KtClassOrObject -> factory.generateClassOrObject(project, false, missedDeclaration, checker)
+                    is KtClassOrObject -> psiFactory.generateClassOrObject(project, false, missedDeclaration, checker)
                     is KtFunction, is KtProperty -> missedDeclaration.toDescriptor()?.safeAs<CallableMemberDescriptor>()?.let {
                         generateCallable(project, false, missedDeclaration, it, element, checker = checker)
                     }

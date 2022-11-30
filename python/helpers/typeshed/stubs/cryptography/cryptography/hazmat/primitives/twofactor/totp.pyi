@@ -1,7 +1,7 @@
 from cryptography.hazmat.backends.interfaces import HMACBackend
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 
-class TOTP(object):
+class TOTP:
     def __init__(
         self,
         key: bytes,

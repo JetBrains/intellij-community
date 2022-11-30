@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.flavors.conda;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.readableFs.PathInfo;
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -69,7 +70,11 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
                                @NotNull PyCondaFlavorData flavorData,
                                @Nullable TargetEnvironmentConfiguration targetConfig) {
     var condaPath = flavorData.getEnv().getFullCondaPathOnTarget();
-    return isFileExecutable(condaPath, targetConfig);
+    boolean executable = isFileExecutable(condaPath, targetConfig);
+    if (! executable) {
+      Logger.getInstance(CondaEnvSdkFlavor.class).warn("file not executable on conda flavor: "  + condaPath);
+    }
+    return executable;
   }
 
   @Override

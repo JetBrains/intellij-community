@@ -40,7 +40,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel {
     }
 
     @Override
-    public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+    public void changesMoved(final Collection<? extends Change> changes, final ChangeList fromList, final ChangeList toList) {
       rebuildWithAlarm(myAlarm);
     }
 
@@ -50,7 +50,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel {
     }
 
     private void updateTabName() {
-      AppUIUtil.invokeOnEdt(() -> {
+      AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
         setDisplayName(getTabName(myProject));
       });
     }

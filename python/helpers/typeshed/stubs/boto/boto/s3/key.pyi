@@ -1,4 +1,5 @@
-from typing import Any, Callable, Text, overload
+from collections.abc import Callable
+from typing import Any, overload
 
 class Key:
     DefaultContentType: str
@@ -45,16 +46,16 @@ class Key:
     def handle_addl_headers(self, headers): ...
     def open_read(
         self,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         query_args: str = ...,
         override_num_retries: Any | None = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
     ): ...
-    def open_write(self, headers: dict[Text, Text] | None = ..., override_num_retries: Any | None = ...): ...
+    def open_write(self, headers: dict[str, str] | None = ..., override_num_retries: Any | None = ...): ...
     def open(
         self,
         mode: str = ...,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         query_args: Any | None = ...,
         override_num_retries: Any | None = ...,
     ): ...
@@ -76,27 +77,27 @@ class Key:
     ): ...
     def startElement(self, name, attrs, connection): ...
     def endElement(self, name, value, connection): ...
-    def exists(self, headers: dict[Text, Text] | None = ...): ...
-    def delete(self, headers: dict[Text, Text] | None = ...): ...
+    def exists(self, headers: dict[str, str] | None = ...): ...
+    def delete(self, headers: dict[str, str] | None = ...): ...
     def get_metadata(self, name): ...
     def set_metadata(self, name, value): ...
     def update_metadata(self, d): ...
-    def set_acl(self, acl_str, headers: dict[Text, Text] | None = ...): ...
-    def get_acl(self, headers: dict[Text, Text] | None = ...): ...
-    def get_xml_acl(self, headers: dict[Text, Text] | None = ...): ...
-    def set_xml_acl(self, acl_str, headers: dict[Text, Text] | None = ...): ...
-    def set_canned_acl(self, acl_str, headers: dict[Text, Text] | None = ...): ...
+    def set_acl(self, acl_str, headers: dict[str, str] | None = ...): ...
+    def get_acl(self, headers: dict[str, str] | None = ...): ...
+    def get_xml_acl(self, headers: dict[str, str] | None = ...): ...
+    def set_xml_acl(self, acl_str, headers: dict[str, str] | None = ...): ...
+    def set_canned_acl(self, acl_str, headers: dict[str, str] | None = ...): ...
     def get_redirect(self): ...
-    def set_redirect(self, redirect_location, headers: dict[Text, Text] | None = ...): ...
-    def make_public(self, headers: dict[Text, Text] | None = ...): ...
+    def set_redirect(self, redirect_location, headers: dict[str, str] | None = ...): ...
+    def make_public(self, headers: dict[str, str] | None = ...): ...
     def generate_url(
         self,
         expires_in,
         method: str = ...,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         query_auth: bool = ...,
         force_http: bool = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
         expires_in_absolute: bool = ...,
         version_id: Any | None = ...,
         policy: Any | None = ...,
@@ -106,7 +107,7 @@ class Key:
     def send_file(
         self,
         fp,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
         query_args: Any | None = ...,
@@ -118,7 +119,7 @@ class Key:
     def set_contents_from_stream(
         self,
         fp,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         replace: bool = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
@@ -130,7 +131,7 @@ class Key:
     def set_contents_from_file(
         self,
         fp,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         replace: bool = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
@@ -145,7 +146,7 @@ class Key:
     def set_contents_from_filename(
         self,
         filename,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         replace: bool = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
@@ -156,8 +157,8 @@ class Key:
     ): ...
     def set_contents_from_string(
         self,
-        string_data: Text | bytes,
-        headers: dict[Text, Text] | None = ...,
+        string_data: str | bytes,
+        headers: dict[str, str] | None = ...,
         replace: bool = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
@@ -169,63 +170,63 @@ class Key:
     def get_file(
         self,
         fp,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
         torrent: bool = ...,
         version_id: Any | None = ...,
         override_num_retries: Any | None = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
     ): ...
     def get_torrent_file(
-        self, fp, headers: dict[Text, Text] | None = ..., cb: Callable[[int, int], Any] | None = ..., num_cb: int = ...
+        self, fp, headers: dict[str, str] | None = ..., cb: Callable[[int, int], Any] | None = ..., num_cb: int = ...
     ): ...
     def get_contents_to_file(
         self,
         fp,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
         torrent: bool = ...,
         version_id: Any | None = ...,
         res_download_handler: Any | None = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
     ): ...
     def get_contents_to_filename(
         self,
         filename,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
         torrent: bool = ...,
         version_id: Any | None = ...,
         res_download_handler: Any | None = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
     ): ...
     @overload
     def get_contents_as_string(
         self,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
         torrent: bool = ...,
         version_id: Any | None = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
         encoding: None = ...,
     ) -> bytes: ...
     @overload
     def get_contents_as_string(
         self,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         cb: Callable[[int, int], Any] | None = ...,
         num_cb: int = ...,
         torrent: bool = ...,
         version_id: Any | None = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
         *,
-        encoding: Text,
-    ) -> Text: ...
-    def add_email_grant(self, permission, email_address, headers: dict[Text, Text] | None = ...): ...
-    def add_user_grant(self, permission, user_id, headers: dict[Text, Text] | None = ..., display_name: Any | None = ...): ...
-    def set_remote_metadata(self, metadata_plus, metadata_minus, preserve_acl, headers: dict[Text, Text] | None = ...): ...
-    def restore(self, days, headers: dict[Text, Text] | None = ...): ...
+        encoding: str,
+    ) -> str: ...
+    def add_email_grant(self, permission, email_address, headers: dict[str, str] | None = ...): ...
+    def add_user_grant(self, permission, user_id, headers: dict[str, str] | None = ..., display_name: Any | None = ...): ...
+    def set_remote_metadata(self, metadata_plus, metadata_minus, preserve_acl, headers: dict[str, str] | None = ...): ...
+    def restore(self, days, headers: dict[str, str] | None = ...): ...

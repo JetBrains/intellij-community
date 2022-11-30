@@ -228,7 +228,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return Comparator.comparing((PsiElement element) -> index.isInContent(element.getContainingFile().getVirtualFile())).reversed();
   }
 
-  private static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<T> base) {
+  private static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<? super T> base) {
     return (e1, e2) -> ReadAction.compute(() -> base.compare(e1, e2));
   }
 }

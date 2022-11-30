@@ -178,7 +178,9 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       // A parenthesized enum switch case label is a compilation error
       familyName.equals("Create missing enum switch branches") ||
       familyName.equals("Reformat the whole file") ||
-      familyName.equals("Fix whitespace");
+      familyName.equals("Fix whitespace") ||
+      // For some reason, these intentions cause many unstable results.
+      familyName.equals("Put elements on multiple lines") || familyName.equals("Put elements on one line");
   }
 
   @NotNull

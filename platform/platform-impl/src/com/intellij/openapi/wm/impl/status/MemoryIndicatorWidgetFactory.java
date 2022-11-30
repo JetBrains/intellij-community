@@ -2,14 +2,13 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class MemoryIndicatorWidgetFactory implements StatusBarWidgetFactory {
+final class MemoryIndicatorWidgetFactory implements StatusBarWidgetFactory {
   @Override
   public @NotNull String getId() {
     return MemoryUsagePanel.WIDGET_ID;
@@ -33,11 +32,6 @@ public class MemoryIndicatorWidgetFactory implements StatusBarWidgetFactory {
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new MemoryUsagePanel();
-  }
-
-  @Override
-  public void disposeWidget(@NotNull StatusBarWidget widget) {
-    Disposer.dispose(widget);
   }
 
   @Override

@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -169,7 +170,7 @@ public class ShFileCompletionTest extends BasePlatformTestCase {
 
     assertNotNull("\nPossibly the single variant has been completed.\nFile after:\n" + myFixture
         .getFile().getText(), stringList);
-    Collection<String> varList = ContainerUtil.newArrayList(variants);
+    Collection<String> varList = new ArrayList<>(List.of(variants));
     if (checkType == CheckType.ORDERED_EQUALS) {
       assertOrderedEquals(stringList, variants);
     }

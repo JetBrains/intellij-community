@@ -20,7 +20,7 @@ internal class FacetEventsPublisher(private val project: Project) {
   init {
     val connection = project.messageBus.connect()
     connection.subscribe(ProjectTopics.MODULES, object : ModuleListener {
-      override fun modulesAdded(project: Project, modules: MutableList<Module>) {
+      override fun modulesAdded(project: Project, modules: List<Module>) {
         for (module in modules) {
           onModuleAdded(module)
         }

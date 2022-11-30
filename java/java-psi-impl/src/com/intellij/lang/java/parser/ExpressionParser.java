@@ -948,7 +948,15 @@ public class ExpressionParser {
       }
     }
 
-    final boolean closed = expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen");
+    boolean closed = true;
+    if (!expect(builder, JavaTokenType.RPARENTH)) {
+      if (first) {
+        error(builder, JavaPsiBundle.message("expected.rparen"));
+      } else {
+        error(builder, JavaPsiBundle.message("expected.comma.or.rparen"));
+      }
+      closed = false;
+    }
 
     list.done(JavaElementType.EXPRESSION_LIST);
     if (!closed) {

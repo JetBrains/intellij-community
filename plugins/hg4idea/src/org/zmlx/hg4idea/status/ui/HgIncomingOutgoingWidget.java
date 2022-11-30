@@ -183,11 +183,6 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     }
 
     @Override
-    public void disposeWidget(@NotNull StatusBarWidget widget) {
-      Disposer.dispose(widget);
-    }
-
-    @Override
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return true;
     }

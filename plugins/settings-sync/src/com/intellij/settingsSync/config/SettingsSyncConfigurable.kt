@@ -158,6 +158,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   override fun updateFromServerFinished(result: UpdateResult) {
     when (result) {
       is Success -> {
+        reset()
         SettingsSyncSettings.getInstance().syncEnabled = true
       }
       NoFileOnServer, FileDeletedFromServer -> {
@@ -226,14 +227,14 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       RESULT_DISABLE -> {
         SettingsSyncSettings.getInstance().syncEnabled = false
         updateStatusInfo()
-        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.DISABLED_ONLY)
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
       }
       RESULT_REMOVE_DATA_AND_DISABLE -> {
         disableAndRemoveData()
-        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
       }
       RESULT_CANCEL -> {
-        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.CANCEL)
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.CANCEL)
       }
     }
   }

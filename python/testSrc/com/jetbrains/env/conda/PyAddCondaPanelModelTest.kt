@@ -3,7 +3,9 @@ package com.jetbrains.env.conda
 
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.io.exists
 import com.jetbrains.getPythonVersion
@@ -17,12 +19,18 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers.*
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.nio.file.Path
 
 
+@RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class PyAddCondaPanelModelTest {
 
@@ -33,6 +41,23 @@ class PyAddCondaPanelModelTest {
   @JvmField
   @Rule
   val projectRule: ProjectRule = ProjectRule()
+
+
+  @Parameterized.Parameter(0)
+  @JvmField
+  var useLegacy: Boolean = false
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters
+    fun data(): Collection<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
+  }
+
+  @Before
+  fun before() {
+    Registry.get("use.python.for.local.conda").setValue(useLegacy)
+    Logger.getInstance(PyCondaSdkTest::class.java).info("Legacy: $useLegacy")
+  }
 
 
   @Test
@@ -52,6 +77,9 @@ class PyAddCondaPanelModelTest {
     model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
     model.condaActionCreateNewEnvRadioRwProp.set(true)
     model.condaActionUseExistingEnvRadioRwProp.set(false)
+
+    MatcherAssert.assertThat("No 3.9 suggested", model.languageLevels, hasItem(LanguageLevel.PYTHON39))
+    MatcherAssert.assertThat("2.6 suggested", model.languageLevels, not(hasItem(LanguageLevel.PYTHON26)))
     model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
     Assert.assertNotNull("Empty conda env name didn't lead to validation", model.getValidationError())
     model.newEnvNameRwProperty.set("d     f --- ")
@@ -82,8 +110,7 @@ class PyAddCondaPanelModelTest {
     model.condaActionUseExistingEnvRadioRwProp.set(false)
     model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
     model.newEnvNameRwProperty.set(name)
-    Assert.assertEquals("Name duplicate should lead to error",
-                        PyBundle.message("python.sdk.conda.problem.env.name.used"),
+    Assert.assertEquals("Name duplicate should lead to error", PyBundle.message("python.sdk.conda.problem.env.name.used"),
                         model.getValidationError())
 
   }

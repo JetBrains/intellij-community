@@ -168,9 +168,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
       @Override
       public void onCancel() {
-        UsageViewEx usageView = usageViewRef.get();
-        int count = usageView == null ? 0 : usageView.getUsagesCount();
-        reportSearchCompletedToFus(count, true);
+        reportSearchCompletedToFus(true);
         super.onCancel();
       }
 
@@ -179,36 +177,38 @@ public class UsageViewManagerImpl extends UsageViewManager {
       public NotificationInfo getNotificationInfo() {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
-        long duration = reportSearchCompletedToFus(count, false);
+        long duration = reportSearchCompletedToFus(false);
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
         LOG.debug(notification + " in " + duration + "ms.");
         return new NotificationInfo("Find Usages", UsageViewBundle.message("notification.title.find.usages.finished"), notification);
       }
 
-      private long reportSearchCompletedToFus(int count, boolean isCancelled) {
+      private long reportSearchCompletedToFus(boolean isCancelled) {
         long currentTS = System.nanoTime();
         long durationFirstResults = TimeUnit.NANOSECONDS.toMillis(firstItemFoundTS.get() - start);
         long duration = TimeUnit.NANOSECONDS.toMillis(currentTS - start);
 
 
         PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
-        if (element != null) {
-          Class<? extends PsiElement> targetClass = element.getClass();
-          Language language = ReadAction.compute(element::getLanguage);
-          SearchScope scope = null;
-
-          if (element instanceof DataProvider) {
-            scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
-          }
-          if (isCancelled) {
-            UsageViewStatisticsCollector.logSearchCancelled(myProject, targetClass, scope, language, count, durationFirstResults, duration,
-                                                            tooManyUsages.get(), CodeNavigateSource.FindToolWindow, usageViewRef.get());
-          }
-          else {
-            UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language, count, durationFirstResults, duration,
-                                                           tooManyUsages.get(), CodeNavigateSource.FindToolWindow, usageViewRef.get());
-          }
+        UsageViewEx view = usageViewRef.get();
+        Class<? extends PsiElement> targetClass = element != null ? element.getClass() : null;
+        Language language = element != null ? ReadAction.compute(element::getLanguage) : null;
+        SearchScope scope = null;
+        if (element instanceof DataProvider) {
+          scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
         }
+        int numberOfUsagesFound = view == null ? 0 : view.getUsagesCount();
+        if (isCancelled) {
+          UsageViewStatisticsCollector.logSearchCancelled(myProject, targetClass, scope, language, numberOfUsagesFound,
+                                                          durationFirstResults, duration,
+                                                          tooManyUsages.get(), CodeNavigateSource.FindToolWindow, view);
+        }
+        else {
+          UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language, numberOfUsagesFound,
+                                                         durationFirstResults, duration,
+                                                         tooManyUsages.get(), CodeNavigateSource.FindToolWindow, view);
+        }
+
         return duration;
       }
     };

@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.ide.DataManager;
@@ -103,6 +104,11 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @Override
   public String getGroupDisplayName() {
     return SSRBundle.message("structural.search.group.name");
+  }
+
+  @Override
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String @NotNull [] getGroupPath() {
+    return new String[] {InspectionsBundle.message("group.names.user.defined"), getGroupDisplayName()};
   }
 
   @Nullable

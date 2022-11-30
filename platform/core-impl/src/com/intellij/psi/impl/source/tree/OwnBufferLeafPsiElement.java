@@ -178,7 +178,7 @@ public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
     TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
     getTreeParent().replaceChildInternal(this, elementCopy);
     elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+    PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
 
     this.invalidate();
     return result;
@@ -238,7 +238,7 @@ public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
   @Override
   @NotNull
   public Project getProject() {
-    final PsiManager manager = getManager();
+    PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 
     return manager.getProject();
@@ -261,7 +261,7 @@ public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return this == another;
   }
 }

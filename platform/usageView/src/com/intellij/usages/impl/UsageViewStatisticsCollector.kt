@@ -35,21 +35,21 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 10)
-    val USAGE_VIEW = object : PrimitiveEventField<UsageView>() {
+    val GROUP = EventLogGroup("usage.view", 12)
+    val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
-      override fun addData(fuData: FeatureUsageData, value: UsageView) {
-        fuData.addData(name, value.id)
+      override fun addData(fuData: FeatureUsageData, value: UsageView?) {
+        value?.let { fuData.addData(name, value.id) }
       }
 
       override val validationRule: List<String>
         get() = listOf("{regexp#integer}")
     }
     private val REFERENCE_CLASS = EventFields.Class("reference_class")
-    private val USAGE_SHOWN = GROUP.registerEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language)
-    private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
     private val UI_LOCATION = EventFields.Enum("ui_location", CodeNavigateSource::class.java)
+    private val USAGE_SHOWN = GROUP.registerVarargEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language, UI_LOCATION)
+    private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
 
     private val itemChosen = GROUP.registerEvent("item.chosen", USAGE_VIEW, UI_LOCATION, EventFields.Language)
 
@@ -61,7 +61,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val FIRST_RESULT_TS = EventFields.Long("duration_first_results_ms")
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
 
-    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION)
+    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, EventFields.Language)
 
     private val searchCancelled = GROUP.registerVarargEvent("cancelled",
                                                             SYMBOL_CLASS,
@@ -101,13 +101,15 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     )
 
     @JvmStatic
-    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource) {
-      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source))
+    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language?) {
+      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), EventFields.Language.with(language))
     }
 
     @JvmStatic
-    fun logUsageShown(project: Project?, referenceClass: Class<out Any>, language: Language?, usageView:UsageView) {
-      USAGE_SHOWN.log(project, usageView, referenceClass, language)
+    fun logUsageShown(project: Project?, referenceClass: Class<out Any>, language: Language?, usageView: UsageView) {
+      USAGE_SHOWN.log(project, USAGE_VIEW.with(usageView), REFERENCE_CLASS.with(referenceClass), EventFields.Language.with(language),
+                      UI_LOCATION.with(
+                        if (usageView.presentation.isDetachedMode) CodeNavigateSource.ShowUsagesPopup else CodeNavigateSource.FindToolWindow))
     }
 
     @JvmStatic
@@ -140,7 +142,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun logSearchCancelled(project: Project?,
-                           targetClass: Class<*>,
+                           targetClass: Class<*>?,
                            scope: SearchScope?,
                            language: Language?,
                            results: Int,
@@ -148,7 +150,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                            duration: Long,
                            tooManyResult: Boolean,
                            source: CodeNavigateSource,
-                           usageView: UsageView) {
+                           usageView: UsageView?) {
       searchCancelled.log(project,
                           SYMBOL_CLASS.with(targetClass),
                           SEARCH_SCOPE.with(scope?.let { ScopeIdMapper.instance.getScopeSerializationId(it.displayName) }),
@@ -164,7 +166,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     @JvmStatic
     fun logSearchFinished(
       project: Project?,
-      targetClass: Class<*>,
+      targetClass: Class<*>?,
       scope: SearchScope?,
       language: Language?,
       results: Int,
@@ -172,7 +174,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
       duration: Long,
       tooManyResult: Boolean,
       source: CodeNavigateSource,
-      usageView : UsageView
+      usageView : UsageView?
     ) {
       searchFinished.log(project,
                          USAGE_VIEW.with(usageView),

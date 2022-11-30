@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@JvmDefaultWithCompatibility
 interface GradleExecutionAware : ExternalSystemExecutionAware {
   fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters? = null
   fun getDefaultBuildLayoutParameters(project: Project): BuildLayoutParameters? = null

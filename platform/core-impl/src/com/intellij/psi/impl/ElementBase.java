@@ -88,7 +88,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   private static Icon doComputeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
-    final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
+    Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       if (providersIcon instanceof RowIcon) {
         return providersIcon;
@@ -226,7 +226,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   public static int transformFlags(PsiElement element, @IconFlags int _flags) {
     int flags = BitUtil.clear(_flags, ICON_FLAG_READ_STATUS);
-    final boolean isLocked = BitUtil.isSet(_flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
+    boolean isLocked = BitUtil.isSet(_flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;
     return flags;
   }

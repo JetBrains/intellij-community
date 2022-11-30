@@ -117,7 +117,7 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
     return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion)
   }
 
-  fun setDiffPreviewInEditor(isInEditor: Boolean): SavedPatchesDiffPreview {
+  fun installDiffPreview(isInEditor: Boolean): SavedPatchesDiffPreview {
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
     val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, this)
     diffPreviewProcessor = newProcessor

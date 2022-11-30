@@ -940,7 +940,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void setTitleProducer(@Nullable Producer<Pair<Icon, String>> titleProducer) {
+  public void setTitleProducer(@Nullable Producer<? extends Pair<Icon, String>> titleProducer) {
     myTitleWrapper.removeAll();
     if (titleProducer != null) {
       ActionToolbar toolbar = ActionManager.getInstance()
@@ -1845,13 +1845,9 @@ public class JBTabsImpl extends JComponent
     for (TabInfo each : myHiddenInfos.keySet()) {
       result.add(getIndexInVisibleArray(each), each);
     }
-    if (isAlphabeticalMode()) {
-      result.sort(ABC_COMPARATOR);
-    }
 
-    myAllTabs = result;
-
-    return result;
+    myAllTabs = isAlphabeticalMode() ? sortTabsAlphabetically(result) : result;
+    return myAllTabs;
   }
 
   @Override
@@ -2288,20 +2284,28 @@ public class JBTabsImpl extends JComponent
   }
 
   protected List<TabInfo> getVisibleInfos() {
-    if (!AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
-      return isAlphabeticalMode() ? ContainerUtil.sorted(myVisibleInfos, ABC_COMPARATOR) : myVisibleInfos;
+    if (AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
+      groupPinnedFirst(myVisibleInfos);
     }
+    return isAlphabeticalMode() ? sortTabsAlphabetically(myVisibleInfos) : myVisibleInfos;
+  }
 
-    if (!isAlphabeticalMode()) {
-      return groupPinnedFirst(myVisibleInfos, null);
-    } else {
-      List<TabInfo> sortedCopy = new ArrayList<>(myVisibleInfos);
-      return groupPinnedFirst(sortedCopy, ABC_COMPARATOR);
+  private static List<TabInfo> sortTabsAlphabetically(List<TabInfo> tabs) {
+    int lastPinnedIndex = ContainerUtil.lastIndexOf(tabs, TabInfo::isPinned);
+    if (lastPinnedIndex == -1 || !AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
+      return ContainerUtil.sorted(tabs, ABC_COMPARATOR);
+    }
+    else {
+      List<TabInfo> sortedCopy = new ArrayList<>(tabs);
+      sortedCopy.subList(0, lastPinnedIndex + 1).sort(ABC_COMPARATOR);
+      sortedCopy.subList(lastPinnedIndex + 1, sortedCopy.size()).sort(ABC_COMPARATOR);
+      return sortedCopy;
     }
   }
 
-  private static List<TabInfo> groupPinnedFirst(List<TabInfo> infos, @Nullable Comparator<? super TabInfo> comparator) {
+  private void groupPinnedFirst(List<TabInfo> infos) {
     int firstNotPinned = -1;
+    boolean changed = false;
     for (int i = 0; i < infos.size(); i++) {
       TabInfo info = infos.get(i);
       if (info.isPinned()) {
@@ -2310,25 +2314,14 @@ public class JBTabsImpl extends JComponent
           infos.add(firstNotPinned, info);
           infos.set(i, tabInfo);
           firstNotPinned++;
+          changed = true;
         }
       } else if (firstNotPinned == -1) {
         firstNotPinned = i;
       }
     }
 
-    if (comparator != null) {
-      if (firstNotPinned != -1) {
-        List<TabInfo> pinned = infos.subList(0, firstNotPinned);
-        pinned.sort(comparator);
-        List<TabInfo> unpinned = infos.subList(firstNotPinned, infos.size());
-        unpinned.sort(comparator);
-        infos = new ArrayList<>(pinned);
-        infos.addAll(unpinned);
-      } else {
-        infos.sort(comparator);
-      }
-    }
-    return infos;
+    if (changed) resetTabsCache();
   }
 
   protected LayoutPassInfo getLastLayoutPass() {
@@ -2735,7 +2728,7 @@ public class JBTabsImpl extends JComponent
     @Override
     protected void paintComponent(Graphics g) {
       Graphics2D g2d = (Graphics2D)g;
-      g2d.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      g2d.setColor(JBUI.CurrentTheme.ActionButton.SEPARATOR_COLOR);
       LinePainter2D.paint(g2d, 0, 0, 0, getHeight());
     }
 
@@ -4022,7 +4015,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private final class TitleAction extends AnAction implements CustomComponentAction {
-    private final Producer<Pair<Icon, String>> myTitleProvider;
+    private final @NotNull Producer<? extends Pair<Icon, String>> myTitleProvider;
     private final JLabel myLabel = new JLabel() {
       @Override
       public Dimension getPreferredSize() {
@@ -4039,7 +4032,7 @@ public class JBTabsImpl extends JComponent
       }
     };
 
-    private TitleAction(@NotNull Producer<Pair<Icon, String>> titleProvider) {
+    private TitleAction(@NotNull Producer<? extends Pair<Icon, String>> titleProvider) {
       myTitleProvider = titleProvider;
     }
 

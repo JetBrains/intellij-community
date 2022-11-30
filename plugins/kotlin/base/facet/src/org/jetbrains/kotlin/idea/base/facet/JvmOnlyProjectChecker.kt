@@ -28,7 +28,7 @@ class JvmOnlyProjectChecker(project: Project) : SynchronizedFineGrainedValueCach
     }
 
     internal class ModelChangeListener(project: Project) : ModuleEntityChangeListener(project) {
-        override fun entitiesChanged(outdated: List<Module>) = getInstance(project).invalidate()
+        override fun entitiesChanged(outdated: List<Module>) = getInstance(project).invalidate(writeAccessRequired = true)
     }
 
     companion object {

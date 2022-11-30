@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 
 class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
   override val externalSystemId = GradleConstants.SYSTEM_ID
@@ -43,9 +44,9 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     override var stdOut: Boolean = true
     private val lineProcessor: LineProcessor
     private val myRootReader: BuildOutputInstantReaderImpl
-    private var myCurrentReader: BuildOutputInstantReaderImpl
-    private val tasksOutputReaders = mutableMapOf<String, BuildOutputInstantReaderImpl>()
-    private val tasksEventIds = mutableMapOf<String, Any>()
+    private val tasksOutputReaders: MutableMap<String, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+    private val tasksEventIds: MutableMap<String, Any> = ConcurrentHashMap()
+    private val redefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
 
     init {
       val deferredRootEvents = mutableListOf<BuildEvent>()
@@ -68,16 +69,15 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         override fun closeAndGetFuture(): CompletableFuture<Unit> =
           super.closeAndGetFuture().whenComplete { _, _ -> deferredRootEvents.forEach { myBuildProgressListener.onEvent(buildId, it) } }
       }
-      var isBuildException = false
-      myCurrentReader = myRootReader
+
       lineProcessor = object : LineProcessor() {
+        private var myCurrentReader: BuildOutputInstantReaderImpl = myRootReader
         override fun process(line: String) {
           val cleanLine = removeLoggerPrefix(line)
           // skip Gradle test runner output
           if (cleanLine.startsWith("<ijLog>")) return
 
           if (cleanLine.startsWith("> Task :")) {
-            isBuildException = false
             val taskName = cleanLine.removePrefix("> Task ").substringBefore(' ')
             myCurrentReader = tasksOutputReaders[taskName] ?: myRootReader
           }
@@ -85,10 +85,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
                    cleanLine.startsWith("FAILURE: Build failed") ||
                    cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
                    cleanLine.startsWith("BUILD SUCCESSFUL")) {
-            isBuildException = false
             myCurrentReader = myRootReader
           }
-          if (isBuildException && myCurrentReader == myRootReader) return
 
           myCurrentReader.appendln(cleanLine)
           if (myCurrentReader != myRootReader) {
@@ -103,11 +101,13 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       super.onEvent(buildId, event)
       if (event.parentId != buildId) return
       if (event is StartEvent) {
-        tasksOutputReaders[event.message]?.close() // multiple invocations of the same task during the build session
-
-        val parentEventId = event.id
-        tasksOutputReaders[event.message] = BuildOutputInstantReaderImpl(buildId, parentEventId, myBuildProgressListener, parsers)
-        tasksEventIds[event.message] = parentEventId
+        val eventId = event.id
+        val oldValue = tasksOutputReaders.put(event.message,
+                                              BuildOutputInstantReaderImpl(buildId, eventId, myBuildProgressListener, parsers))
+        if (oldValue != null) {  // multiple invocations of the same task during the build session
+          redefinedReaders.add(oldValue)
+        }
+        tasksEventIds[event.message] = eventId
       }
       else if (event is FinishEvent) {
         // unreceived output is still possible after finish task event but w/o long pauses between chunks
@@ -118,10 +118,14 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun closeAndGetFuture(): CompletableFuture<*> {
       lineProcessor.close()
-      val futures = mutableListOf<CompletableFuture<Unit>>()
-      tasksOutputReaders.forEach { (_, reader) -> reader.closeAndGetFuture().let { futures += it } }
-      futures += myRootReader.closeAndGetFuture()
+      val futures = (tasksOutputReaders.values.asSequence()
+                     + redefinedReaders.asSequence()
+                     + sequenceOf(myRootReader))
+        .map { it.closeAndGetFuture() }
+        .toList()
+
       tasksOutputReaders.clear()
+      redefinedReaders.clear()
       return CompletableFuture.allOf(*futures.toTypedArray())
     }
 

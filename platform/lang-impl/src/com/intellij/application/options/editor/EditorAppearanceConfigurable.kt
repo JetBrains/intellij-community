@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.PropertyBinding
-import com.intellij.ui.layout.asRange
 import com.intellij.ui.layout.toBinding
 import com.intellij.util.PlatformUtils
 

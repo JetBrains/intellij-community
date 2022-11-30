@@ -157,7 +157,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @NotNull
-  protected Runnable apply(@NotNull final List<FineMergeLineFragment> fragments, @Nullable FoldingModelSupport.Data foldingState) {
+  protected Runnable apply(final @NotNull List<? extends FineMergeLineFragment> fragments, @Nullable FoldingModelSupport.Data foldingState) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
       clearDiffPresentation();
@@ -346,7 +346,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    protected void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<SimpleThreesideDiffChange> changes) {
+    protected void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<? extends SimpleThreesideDiffChange> changes) {
       if (!isEditable(myModifiedSide)) return;
 
       String title = DiffBundle.message("message.use.selected.changes.command", e.getPresentation().getText());
@@ -410,7 +410,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     protected abstract Icon getIcon(@NotNull ThreeSide side);
 
     @RequiresWriteLock
-    protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<SimpleThreesideDiffChange> changes);
+    protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<? extends SimpleThreesideDiffChange> changes);
 
     private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
       if (getChanges().isEmpty()) return false;

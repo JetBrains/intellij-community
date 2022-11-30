@@ -1,4 +1,14 @@
 // WITH_STDLIB
+fun castToJvm() {
+    // KTIJ-23656
+    try {
+        println()
+    }
+    catch (e: Exception) {
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        e as java.lang.Throwable
+    }
+}
 fun divisionByZero(x: Int) {
     val result = try { 100 / x } catch(ex: ArithmeticException) { 200 }
     if (result == 200) {

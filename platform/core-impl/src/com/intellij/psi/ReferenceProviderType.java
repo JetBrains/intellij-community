@@ -19,7 +19,7 @@ public final class ReferenceProviderType {
   private static final KeyedExtensionCollector<PsiReferenceProvider, ReferenceProviderType> COLLECTOR =
     new KeyedExtensionCollector<PsiReferenceProvider, ReferenceProviderType>(EP_NAME) {
       @Override
-      protected @NotNull String keyToString(final @NotNull ReferenceProviderType key) {
+      protected @NotNull String keyToString(@NotNull ReferenceProviderType key) {
         return key.myId;
       }
     };

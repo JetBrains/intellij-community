@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -25,8 +24,9 @@ class KotlinScriptDependencyIndexableEntityProvider : IndexableEntityProvider.Ex
     }
 
     override fun getReplacedEntityIteratorBuilders(
-        oldEntity: KotlinScriptEntity,
-        newEntity: KotlinScriptEntity
+      oldEntity: KotlinScriptEntity,
+      newEntity: KotlinScriptEntity,
+      project: Project
     ): Collection<IndexableEntityProvider.IndexableIteratorBuilder> {
         val notYetIndexed = newEntity.dependencies.toSet() - oldEntity.dependencies.toSet()
         return buildList {

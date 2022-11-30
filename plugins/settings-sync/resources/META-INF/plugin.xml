@@ -45,6 +45,7 @@
     <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.settingsSync.SettingsSyncStateStatistics"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.settingsSync.SettingsSyncEventsStatistics"/>
+    <iconMapper mappingFile="SettingsSyncIconMappings.json"/>
     </extensions>
 
   <applicationListeners>
@@ -63,8 +64,12 @@
               icon="AllIcons.General.Settings"/>
     </group>
 
-    <action id="SettingsSyncStatusAction" class="com.intellij.settingsSync.config.SettingsSyncStatusAction">
+    <action id="SettingsSyncSeparator" class="com.intellij.openapi.actionSystem.Separator">
       <add-to-group group-id="SettingsEntryPointGroup" anchor="after" relative-to-action="WelcomeScreen.Plugins"/>
+    </action>
+
+    <action id="SettingsSyncStatusAction" class="com.intellij.settingsSync.config.SettingsSyncStatusAction">
+      <add-to-group group-id="SettingsEntryPointGroup" anchor="after" relative-to-action="SettingsSyncSeparator"/>
     </action>
 
     <action id="SettingsSyncOpenSettingsAction" class="com.intellij.settingsSync.config.SettingsSyncOpenSettingsAction$Simple">

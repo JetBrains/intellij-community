@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import java.util.function.Consumer
 
+@ApiStatus.NonExtendable
 abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
 
   override fun newLine() = NewLineElement

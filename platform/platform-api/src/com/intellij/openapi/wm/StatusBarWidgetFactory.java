@@ -3,6 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,9 @@ public interface StatusBarWidgetFactory {
    */
   @NotNull StatusBarWidget createWidget(@NotNull Project project);
 
-  void disposeWidget(@NotNull StatusBarWidget widget);
+  default void disposeWidget(@NotNull StatusBarWidget widget) {
+    Disposer.dispose(widget);
+  }
 
   /**
    * Returns whether the widget can be enabled on the given status bar right now.

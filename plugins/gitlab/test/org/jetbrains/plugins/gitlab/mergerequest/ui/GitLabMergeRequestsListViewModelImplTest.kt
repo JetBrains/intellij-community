@@ -28,9 +28,12 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `loading state`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "", avatarIconsProvider = mock(), delayingLoader {
-      emptyList<GitLabMergeRequestShortDTO>() to true
-    })
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
+                                                  account = mock(),
+                                                  avatarIconsProvider = mock(),
+                                                  accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
+                                                  delayingLoader { emptyList<GitLabMergeRequestShortDTO>() to true })
 
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
@@ -49,9 +52,12 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `reset while loading`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "", avatarIconsProvider = mock(), delayingLoader {
-      emptyList<GitLabMergeRequestShortDTO>() to true
-    })
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
+                                                  account = mock(),
+                                                  avatarIconsProvider = mock(),
+                                                  accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
+                                                  delayingLoader { emptyList<GitLabMergeRequestShortDTO>() to true })
 
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
@@ -72,9 +78,12 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `reset after loading`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "", avatarIconsProvider = mock(), delayingLoader {
-      emptyList<GitLabMergeRequestShortDTO>() to true
-    })
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
+                                                  account = mock(),
+                                                  avatarIconsProvider = mock(),
+                                                  accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
+                                                  delayingLoader { emptyList<GitLabMergeRequestShortDTO>() to true })
 
     with(vm) {
       val updates = cs.asyncCollectLast(listDataFlow)
@@ -96,9 +105,12 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `request processing continues after loading cancellation`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "", avatarIconsProvider = mock(), delayingLoader {
-      throw CancellationException()
-    })
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
+                                                  account = mock(),
+                                                  avatarIconsProvider = mock(),
+                                                  accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
+                                                  delayingLoader { throw CancellationException() })
 
     with(vm) {
       requestMore()
@@ -116,9 +128,12 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   @Test
   fun `error state`() = runTest {
     val cs = childScope()
-    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "", avatarIconsProvider = mock(), delayingLoader {
-      error("test")
-    })
+    val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
+                                                  account = mock(),
+                                                  avatarIconsProvider = mock(),
+                                                  accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
+                                                  delayingLoader { error("test") })
 
     with(vm) {
       assertNull(errorState.value)

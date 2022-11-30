@@ -9,28 +9,25 @@ import javax.swing.*
 internal class CustomFrameDialogContent private constructor(private val window: Window,
                                                             private val header: CustomHeader, content: Container) : JPanel() {
   companion object {
-    @JvmStatic
-    fun getCustomContentHolder(window: Window,
-                               content: JComponent): JComponent {
-      return CustomFrameDialogContent(window, CustomHeader.create(window), content)
+    fun getCustomContentHolder(window: Window, content: JComponent, isForDockContainerProvider: Boolean): JComponent {
+      val header = if (window is JFrame) DefaultFrameHeader(window, isForDockContainerProvider) else DialogHeader(window)
+      return CustomFrameDialogContent(window = window, header = header, content = content)
     }
 
     fun getCustomContentHolder(window: Window, content: JComponent, header: CustomHeader): JComponent {
       checkContent(window, content) ?: return content
-      return CustomFrameDialogContent(window, header, content)
+      return CustomFrameDialogContent(window = window, header = header, content = content)
     }
 
-    private fun checkContent(window: Window,
-                             content: JComponent): JComponent? {
-      if (content is CustomFrameDialogContent) return null
+    private fun checkContent(window: Window, content: JComponent): JComponent? {
+      if (content is CustomFrameDialogContent) {
+        return null
+      }
 
       return when (window) {
-          is JWindow -> window.rootPane
-          is JDialog -> {
-              if (window.isUndecorated) null
-              else window.rootPane
-          }
-          is JFrame -> window.rootPane
+        is JWindow -> window.rootPane
+        is JDialog -> window.rootPane.takeIf { !window.isUndecorated }
+        is JFrame -> window.rootPane
         else -> null
       }
     }
@@ -43,7 +40,9 @@ internal class CustomFrameDialogContent private constructor(private val window: 
   }
 
   fun updateLayout() {
-    if (window is JDialog && window.isUndecorated) header.isVisible = false
+    if (window is JDialog && window.isUndecorated) {
+      header.isVisible = false
+    }
   }
 
   val headerHeight: Int

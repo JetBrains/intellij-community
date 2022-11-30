@@ -130,7 +130,12 @@ class EclipseProjectDetector extends ProjectDetector {
 
   static String[] getWorkspaces(String prefs) throws IOException {
     Properties properties = new Properties();
-    properties.load(new StringReader(prefs));
+    try {
+      properties.load(new StringReader(prefs));
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn(e);
+    }
     String workspaces = properties.getProperty("RECENT_WORKSPACES");
     return workspaces == null ? ArrayUtil.EMPTY_STRING_ARRAY : workspaces.split("\\n");
   }

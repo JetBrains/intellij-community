@@ -45,7 +45,7 @@ class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactor
                     element.importDirective?.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve()) {
                     is KtClassOrObject ->
                         if (!forHighlightUsages) {
-                            createFindUsagesHandler(resolvedElement, forHighlightUsages)
+                            createFindUsagesHandler(resolvedElement, forHighlightUsages = false)
                         } else NULL_HANDLER
                     is KtNamedFunction, is KtProperty, is KtConstructor<*> ->
                         createFindUsagesHandler(resolvedElement, forHighlightUsages)

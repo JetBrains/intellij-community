@@ -32,7 +32,9 @@ PageBreak = RowBreak
 
 class ColBreak(RowBreak):
     tagname: str
-    count: Any
-    manualBreakCount: Any
+    @property
+    def count(self): ...
+    @property
+    def manualBreakCount(self): ...
     brk: Any
     __attrs__: Any

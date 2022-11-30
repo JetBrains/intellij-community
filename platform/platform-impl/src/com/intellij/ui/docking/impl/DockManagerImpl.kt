@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
@@ -451,6 +452,9 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     val dockContentUiContainer: JPanel
     var toolWindowPane: ToolWindowPane? = null
 
+    override val isDockWindow: Boolean
+      get() = true
+
     init {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment && container !is DockContainer.Dialog) {
         val statusBar = WindowManager.getInstance().getStatusBar(project)
@@ -488,7 +492,11 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     }
 
     fun setupToolWindowPane() {
-      if (ApplicationManager.getApplication().isUnitTestMode || getFrame() !is JFrame || toolWindowPane != null) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return
+      }
+      val frame = getFrame() as? JFrame ?: return
+      if (toolWindowPane != null) {
         return
       }
 
@@ -503,7 +511,10 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         buttonManager = ToolWindowPaneOldButtonManager(paneId)
       }
       val containerComponent = container.containerComponent
-      toolWindowPane = ToolWindowPane((getFrame() as JFrame), this, paneId, buttonManager)
+      toolWindowPane = ToolWindowPane(frame = frame, parentDisposable = this, paneId = paneId, buttonManager = buttonManager)
+      val toolWindowManagerImpl = ToolWindowManager.getInstance(project) as ToolWindowManagerImpl
+      toolWindowManagerImpl.addToolWindowPane(toolWindowPane!!, this)
+
       toolWindowPane!!.setDocumentComponent(containerComponent)
       dockContentUiContainer.remove(containerComponent)
       dockContentUiContainer.add(toolWindowPane!!, BorderLayout.CENTER)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
-public final class GotoHomeAction extends FileChooserAction implements LightEditCompatible {
+final class GotoHomeAction extends FileChooserAction implements LightEditCompatible {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) { }
 

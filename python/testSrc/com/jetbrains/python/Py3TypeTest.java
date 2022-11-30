@@ -293,7 +293,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAiter() {
-    doTest("AsyncGenerator[int, Any]",
+    doTest("AsyncIterator[int]",
            """
              async def asyncgen():
                  yield 42
@@ -302,7 +302,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAnext() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("Awaitable[int]",
            """
              async def asyncgen():
                  yield 42
@@ -321,7 +321,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorAsend() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("Awaitable[int]",
            """
              async def asyncgen():
                  yield 42
@@ -1540,6 +1540,56 @@ public class Py3TypeTest extends PyTestCase {
              d = {'foo': 42}
              for expr in d.values():
                  pass""");
+  }
+
+  // PY-55734
+  public void testEnumValueType() {
+    doTest("int",
+           """
+             from enum import IntEnum, auto
+                          
+             class State(IntEnum):
+                 A = auto()
+                 B = auto()
+                          
+             def foo(arg: State):
+                 expr = arg.value
+             """);
+  }
+
+  // PY-16622
+  public void testVariableEnumValueType() {
+    doTest("str",
+           """
+             from enum import Enum
+                          
+                          
+             class IDE(Enum):
+                 DS = 'DataSpell'
+                 PY = 'PyCharm'
+                          
+                          
+             IDE_TO_CLEAR_SETTINGS_FOR = IDE.PY
+             expr = IDE_TO_CLEAR_SETTINGS_FOR.value
+             """);
+  }
+
+  // PY-16622
+  public void testFunctionReturnEnumIntValueType() {
+    doTest("int",
+           """
+             from enum import Enum
+                          
+             class Fruit(Enum):
+                 Apple = 1
+                 Banana = 2
+                 
+             def f():
+                 return Fruit.Apple
+                 
+             res = f()
+             expr = res.value
+             """);
   }
 
   private void doTest(final String expectedType, final String text) {

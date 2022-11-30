@@ -495,7 +495,7 @@ public class TestCaseLoader {
            matchesCurrentBucket(className);
   }
 
-  public void fillTestCases(String rootPackage, List<Path> classesRoots) {
+  public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
     long t = System.nanoTime();
 
     for (Path classesRoot : classesRoots) {

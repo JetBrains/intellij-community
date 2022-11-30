@@ -13,11 +13,11 @@ class Outer {
     }
     object NestedObj {
     }
-    interface NestedTrait {
+    interface NestedInterface {
     }
     annotation class NestedAnnotation
 }
 
-<selection>fun f(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedTrait, aa: NestedAnnotation) {
+<selection>fun f(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedInterface, aa: NestedAnnotation) {
     Outer().Inner2()
 }</selection>

@@ -220,6 +220,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/Inner.kt");
         }
 
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            runTest("testData/copyPaste/imports/Interface.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("testData/copyPaste/imports/Invoke.kt");
@@ -353,11 +358,6 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("TopLevelProperty.kt")
         public void testTopLevelProperty() throws Exception {
             runTest("testData/copyPaste/imports/TopLevelProperty.kt");
-        }
-
-        @TestMetadata("Trait.kt")
-        public void testTrait() throws Exception {
-            runTest("testData/copyPaste/imports/Trait.kt");
         }
 
         @TestMetadata("TypeArgForUnresolvedCall.kt")
@@ -578,6 +578,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/Inner.kt");
         }
 
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            runTest("testData/copyPaste/imports/Interface.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("testData/copyPaste/imports/Invoke.kt");
@@ -711,11 +716,6 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("TopLevelProperty.kt")
         public void testTopLevelProperty() throws Exception {
             runTest("testData/copyPaste/imports/TopLevelProperty.kt");
-        }
-
-        @TestMetadata("Trait.kt")
-        public void testTrait() throws Exception {
-            runTest("testData/copyPaste/imports/Trait.kt");
         }
 
         @TestMetadata("TypeArgForUnresolvedCall.kt")

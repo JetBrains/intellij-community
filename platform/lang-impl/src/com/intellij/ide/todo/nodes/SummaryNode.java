@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,58 +23,54 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class SummaryNode extends BaseToDoNode<ToDoSummary> {
-
   public SummaryNode(Project project, @NotNull ToDoSummary value, TodoTreeBuilder builder) {
     super(project, value, builder);
   }
 
   @Override
   public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
-    return ReadAction.compute(() -> {
-      ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
+    ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
 
-      final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-      if (myToDoSettings.isModulesShown()) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    if (myToDoSettings.isModulesShown()) {
+      for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
+        final PsiFile psiFile = i.next();
+        if (psiFile == null) { // skip invalid PSI files
+          continue;
+        }
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        createModuleTodoNodeForFile(children, projectFileIndex, virtualFile);
+      }
+    }
+    else {
+      if (myToDoSettings.getIsPackagesShown()) {
+        if (myBuilder instanceof CurrentFileTodosTreeBuilder) {
+          final Iterator<? extends PsiFile> allFiles = myBuilder.getAllFiles();
+          if (allFiles.hasNext()) {
+            children.add(new TodoFileNode(myProject, allFiles.next(), myBuilder, false));
+          }
+        }
+        else {
+          TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, null, myBuilder);
+        }
+      }
+      else {
         for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
           final PsiFile psiFile = i.next();
           if (psiFile == null) { // skip invalid PSI files
             continue;
           }
-          final VirtualFile virtualFile = psiFile.getVirtualFile();
-          createModuleTodoNodeForFile(children, projectFileIndex, virtualFile);
+          TodoFileNode fileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
+          if (getTreeStructure().accept(psiFile) && !children.contains(fileNode)) {
+            children.add(fileNode);
+          }
         }
       }
-      else {
-        if (myToDoSettings.getIsPackagesShown()) {
-          if (myBuilder instanceof CurrentFileTodosTreeBuilder) {
-            final Iterator<? extends PsiFile> allFiles = myBuilder.getAllFiles();
-            if (allFiles.hasNext()) {
-              children.add(new TodoFileNode(myProject, allFiles.next(), myBuilder, false));
-            }
-          }
-          else {
-            TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, null, myBuilder);
-          }
-        }
-        else {
-          for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
-            final PsiFile psiFile = i.next();
-            if (psiFile == null) { // skip invalid PSI files
-              continue;
-            }
-            TodoFileNode fileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
-            if (getTreeStructure().accept(psiFile) && !children.contains(fileNode)) {
-              children.add(fileNode);
-            }
-          }
-        }
       }
       children.sort(TodoFileDirAndModuleComparator.INSTANCE);
       return children;
-    });
   }
 
-  @RequiresReadLock
   protected void createModuleTodoNodeForFile(ArrayList<? super AbstractTreeNode<?>> children, ProjectFileIndex projectFileIndex, VirtualFile virtualFile) {
     Module module = projectFileIndex.getModuleForFile(virtualFile);
     if (module != null) {

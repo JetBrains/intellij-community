@@ -195,7 +195,7 @@ fun KotlinPsiRange.getPhysicalTextRange(): TextRange {
 
 fun ExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpression {
     return with(this) {
-        val psiFactory = KtPsiFactory(replacement)
+        val psiFactory = KtPsiFactory(replacement.project)
         val parent = startEntry.parent
 
         psiFactory.createStringTemplate(prefix).entries.singleOrNull()?.let { parent.addBefore(it, startEntry) }
@@ -234,7 +234,7 @@ fun <T : KtDeclaration> insertDeclaration(declaration: T, targetSibling: PsiElem
 
     @Suppress("UNCHECKED_CAST")
     return (targetContainer.addBefore(declaration, anchor) as T).apply {
-        targetContainer.addBefore(KtPsiFactory(declaration).createWhiteSpace("\n\n"), anchor)
+        targetContainer.addBefore(KtPsiFactory(declaration.project).createWhiteSpace("\n\n"), anchor)
     }
 }
 

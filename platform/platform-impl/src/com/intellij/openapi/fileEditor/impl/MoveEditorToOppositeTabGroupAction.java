@@ -14,7 +14,8 @@ import java.util.List;
 public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
   private final boolean myCloseSource;
 
-  public MoveEditorToOppositeTabGroupAction() {
+  @SuppressWarnings("unused")
+  MoveEditorToOppositeTabGroupAction() {
     this(true);
   }
 
@@ -38,13 +39,13 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
 
     List<EditorWindow> siblings = window.getSiblings();
     if (siblings.size() == 1) {
-      final EditorComposite editorComposite = window.getSelectedComposite();
-      final HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
+      EditorComposite editorComposite = window.getSelectedComposite();
+      HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
       vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
       if (myCloseSource) {
         window.closeFile(vFile, true, false);
       }
-      ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3(siblings.get(0), vFile, true, entry);
+      ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3$intellij_platform_ide_impl(siblings.get(0), vFile, true, entry);
       vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
     }
   }

@@ -44,10 +44,9 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
    When you invoke **Build Project** for the first time, IntelliJ IDEA should suggest downloading it automatically.
 2. If the _Maven_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
-3. _**Speed Tip:**_ If you have enough RAM on your computer,
-   [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
-   to enable the "Compile independent modules in parallel" option and set "User-local build process heap size" to 3000.
-   These changes will greatly reduce compilation time.
+3. Make sure you have at least 8GB of RAM on your computer. With the bare minimum of RAM, disable "Compile independent modules in parallel"
+   option in [the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html). With notably more memory
+   available, increase "User-local build process heap size" to 3000 - that will greatly reduce compilation time.
 
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.

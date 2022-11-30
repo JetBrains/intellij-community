@@ -6,8 +6,10 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.fileEditor.impl.EditorSplitterState
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -17,12 +19,8 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.write
-import com.intellij.util.ui.EDT
-import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
   @JvmField
@@ -76,16 +74,8 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     val map = ExpandMacroToPathMap()
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, testDataPath)
     map.substitute(rootElement, true, true)
-    manager!!.loadState(rootElement)
-    val future = manager!!.mainSplitters.openFilesAsync().asCompletableFuture()
-    while (true) {
-      try {
-        future.get(100, TimeUnit.MILLISECONDS)
-        return
-      }
-      catch (e: TimeoutException) {
-        EDT.dispatchAllInvocationEvents()
-      }
+    runBlockingModal(project, "") {
+      manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement), onStartup = false, anyEditorOpened = null)
     }
   }
 }

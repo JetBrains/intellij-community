@@ -43,14 +43,15 @@ fun <X> withJob(job: Job, action: () -> X): X = withCurrentJob(job, action)
  */
 @Internal
 fun <T> ensureCurrentJob(action: (Job) -> T): T {
-  return ensureCurrentJobInner(allowOrphan = false, action)
+  return ensureCurrentJob(allowOrphan = false, action)
 }
 
-internal fun <T> ensureCurrentJobAllowingOrphan(action: (Job) -> T): T {
-  return ensureCurrentJobInner(allowOrphan = true, action)
+@Internal
+fun <T> ensureCurrentJobAllowingOrphan(action: (Job) -> T): T {
+  return ensureCurrentJob(allowOrphan = true, action)
 }
 
-private fun <T> ensureCurrentJobInner(allowOrphan: Boolean, action: (Job) -> T): T {
+internal fun <T> ensureCurrentJob(allowOrphan: Boolean, action: (Job) -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
     return ensureCurrentJob(indicator, action)

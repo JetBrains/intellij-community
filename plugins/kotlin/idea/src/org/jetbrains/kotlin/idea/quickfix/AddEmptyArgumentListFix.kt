@@ -17,7 +17,7 @@ class AddEmptyArgumentListFix(callExpression: KtCallExpression) : KotlinQuickFix
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val callExpression = this.element ?: return
         val calleeExpression = callExpression.calleeExpression ?: return
-        val emptyArgumentList = KtPsiFactory(callExpression).createValueArgumentListByPattern("()")
+        val emptyArgumentList = KtPsiFactory(project).createValueArgumentListByPattern("()")
         callExpression.addAfter(emptyArgumentList, calleeExpression)
     }
 

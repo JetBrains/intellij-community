@@ -8,7 +8,7 @@ public class LimitedRangeHighlighterIterator extends HighlighterIteratorWrapper 
   private final int myEndOffset;
 
 
-  public LimitedRangeHighlighterIterator(final HighlighterIterator original, final int startOffset, final int endOffset) {
+  LimitedRangeHighlighterIterator(final HighlighterIterator original, final int startOffset, final int endOffset) {
     super(original);
     myStartOffset = startOffset;
     myEndOffset = endOffset;

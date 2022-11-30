@@ -10,9 +10,11 @@ import java.util.function.IntPredicate;
 
 /**
  * Container for set of pairs (value, valueOriginId).
- * Used in inverted indexes, which have structure [value -> (key, keySourceId)*], so could be
- * implemented as (persistent) Map[Value, ValueContainer[Key]).
- * (There is a bit of mess with keys-values names, since in inverted index keys effectively switch roles
+ * <br/>
+ * Used in inverted indexes: inverted index has structure [value -> (key, keySourceId)*], so it is implemented
+ * as (persistent) Map[Value -> ValueContainer[Key]).
+ * <br/>
+ * (There is a bit of mess with keys/values labels, since in inverted index keys effectively switch roles
  * with values)
  *
  * @author Eugene Zhuravlev

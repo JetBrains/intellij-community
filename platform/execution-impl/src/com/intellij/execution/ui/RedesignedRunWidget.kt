@@ -3,6 +3,7 @@ package com.intellij.execution.ui
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
+import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
@@ -90,6 +91,10 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
   private fun isSomeRunningNow(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
     val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstanceIfCreated(project)?.selectedConfiguration
+
+    (selectedConfiguration?.configuration as? CompoundRunConfiguration)?.let {
+      return it.hasRunningSingletons(null)
+    }
 
     if (selectedConfiguration == null) {
       if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project) || DumbService.isDumb(project)) {
@@ -194,7 +199,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   override fun getButtonArc(): JBValue = JBValue.Float(8f)
 }
 
-private const val MINIMAL_POPUP_WIDTH = 270
+internal const val MINIMAL_POPUP_WIDTH = 270
 private abstract class TogglePopupAction : ToggleAction {
 
   constructor()

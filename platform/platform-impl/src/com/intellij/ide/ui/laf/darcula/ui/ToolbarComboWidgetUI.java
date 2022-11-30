@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.JBColor;
@@ -16,7 +15,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -78,7 +76,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
       }
 
       String text = combo.getText();
-      if (!StringUtil.isEmpty(text)) {
+      if (!StringUtil.isEmpty(text) && maxTextWidth > 0) {
         g2.setColor(c.getForeground());
         Rectangle textRect = new Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height);
         drawText(c, text, g2, textRect);
@@ -169,7 +167,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     return paintRect.width - otherElementsWidth;
   }
 
-  private static int calcIconsWidth(List<Icon> icons, int gapBetweenIcons) {
+  private static int calcIconsWidth(List<? extends Icon> icons, int gapBetweenIcons) {
     int res = 0;
     for (Icon icon : icons) {
       if (res > 0) res += gapBetweenIcons;
@@ -179,10 +177,10 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static void doClip(Rectangle bounds, int shift) {
-    bounds.setBounds(bounds.x + shift, bounds.y, bounds.width - shift, bounds.height);
+    bounds.setBounds(bounds.x + shift, bounds.y, Math.max(bounds.width - shift, 0), bounds.height);
   }
 
-  private static Rectangle paintIcons(List<Icon> icons, JComponent c, Graphics g, Rectangle bounds, int gapBetweenIcons) {
+  private static Rectangle paintIcons(List<? extends Icon> icons, JComponent c, Graphics g, Rectangle bounds, int gapBetweenIcons) {
     if (icons.isEmpty()) return new Rectangle();
 
     int maxHeight = 0;

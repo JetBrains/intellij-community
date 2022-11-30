@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -18,10 +19,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.FileTime
+import java.util.concurrent.TimeUnit
+import kotlin.io.path.setLastModifiedTime
 import kotlin.time.Duration.Companion.hours
 
-private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistributionCustomizer, context: BuildContext) {
-  val targetFilePath = context.paths.artifactDir.resolve("silent.config")
+private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistributionCustomizer, context: BuildContext, suffix: String) {
+  val targetFilePath = context.paths.artifactDir.resolve("silent$suffix.config")
   if (Files.exists(targetFilePath)) {
     return
   }
@@ -58,15 +62,27 @@ private fun getFileAssociations(customizer: WindowsDistributionCustomizer): List
   return customizer.fileAssociations.map { if (it.startsWith(".")) it else ".$it" }
 }
 
+private val isDockerAvailable by lazy {
+    runBlocking {
+      try {
+        runProcess(listOf("docker", "--version"), inheritOut = true)
+        true
+      }
+      catch (e: Exception) {
+        false
+      }
+    }
+}
+
 @Suppress("SpellCheckingInspection")
 internal suspend fun buildNsisInstaller(winDistPath: Path,
                                         additionalDirectoryToInclude: Path,
                                         suffix: String,
                                         customizer: WindowsDistributionCustomizer,
-                                        jreDir: Path,
+                                        runtimeDir: Path,
                                         context: BuildContext): Path? {
-  if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
-    Span.current().addEvent("Windows installer can be built only under Windows or Linux")
+  if (SystemInfoRt.isMac && !isDockerAvailable) {
+    Span.current().addEvent("Windows installer cannot be built on macOS without Docker")
     return null
   }
 
@@ -74,15 +90,15 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
   val outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
   Span.current().setAttribute(outFileName, outFileName)
 
-  val box = context.paths.tempDir.resolve("winInstaller${suffix}")
+  val box = context.paths.tempDir.resolve("winInstaller$suffix")
   //noinspection SpellCheckingInspection
   val nsiConfDir = box.resolve("nsiconf")
   withContext(Dispatchers.IO) {
     Files.createDirectories(nsiConfDir)
     copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
-    generateInstallationConfigFileForSilentMode(customizer, context)
+    generateInstallationConfigFileForSilentMode(customizer, context, suffix)
 
-    if (SystemInfoRt.isLinux) {
+    if (!SystemInfoRt.isWindows) {
       val ideaNsiPath = nsiConfDir.resolve("idea.nsi")
       Files.writeString(ideaNsiPath, BuildUtils.replaceAll(text = Files.readString(ideaNsiPath),
                                                            replacements = mapOf("\${IMAGES_LOCATION}\\" to "\${IMAGES_LOCATION}/"),
@@ -93,14 +109,16 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     generator.addDirectory(context.paths.distAllDir.toString())
     generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/*.vmoptions"))
     generator.addDirectory(additionalDirectoryToInclude.toString())
-    generator.addDirectory(jreDir.toString())
+    generator.addDirectory(runtimeDir.toString())
     generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
     generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh"))
 
     prepareConfigurationFiles(nsiConfDir = nsiConfDir, winDistPath = winDistPath, customizer = customizer, context = context)
     for (it in customizer.customNsiConfigurationFiles) {
       val file = Path.of(it)
-      Files.copy(file, nsiConfDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
+      val copy = nsiConfDir.resolve(file.fileName)
+      Files.copy(file, copy, StandardCopyOption.REPLACE_EXISTING)
+      copy.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }
 
     // Log final nsi directory to make debugging easier
@@ -120,34 +138,44 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
       if (SystemInfoRt.isWindows) {
         runProcess(
           args = listOf(
-            "${box}/NSIS/makensis.exe",
+            "$box/NSIS/makensis.exe",
             "/V2",
-            "/DCOMMUNITY_DIR=${communityHome}",
+            "/DCOMMUNITY_DIR=$communityHome",
             "/DIPR=${customizer.associateIpr}",
             "/DOUT_DIR=${context.paths.artifacts}",
-            "/DOUT_FILE=${outFileName}",
-            "${box}/nsiconf/idea.nsi",
+            "/DOUT_FILE=$outFileName",
+            "$box/nsiconf/idea.nsi",
           ),
           workingDir = box,
           timeout = timeout,
         )
       }
       else {
-        val makeNsis = "${box}/NSIS/Bin/makensis${if (JvmArchitecture.currentJvmArch == JvmArchitecture.x64) "" else "-${JvmArchitecture.currentJvmArch.fileSuffix}"}"
+        val makeNsis = "$box/NSIS/Bin/makensis${if (JvmArchitecture.currentJvmArch == JvmArchitecture.x64) "" else "-${JvmArchitecture.currentJvmArch.fileSuffix}"}"
         NioFiles.setExecutable(Path.of(makeNsis))
+        val args = if (SystemInfoRt.isMac) {
+          arrayOf(
+            "docker", "run", "--rm",
+            "--volume=$communityHome:$communityHome:ro",
+            "--volume=${context.paths.buildOutputDir}:${context.paths.buildOutputDir}",
+            "--workdir=$box",
+            "ubuntu:18.04"
+          )
+        }
+        else emptyArray()
         runProcess(
           args = listOf(
-            makeNsis,
+            *args, makeNsis,
             "-V2",
-            "-DCOMMUNITY_DIR=${communityHome}",
+            "-DCOMMUNITY_DIR=$communityHome",
             "-DIPR=${customizer.associateIpr}",
             "-DOUT_DIR=${context.paths.artifacts}",
-            "-DOUT_FILE=${outFileName}",
-            "${box}/nsiconf/idea.nsi",
+            "-DOUT_FILE=$outFileName",
+            "$box/nsiconf/idea.nsi",
           ),
           workingDir = box,
           timeout = timeout,
-          additionalEnvVariables = mapOf("NSISDIR" to "${box}/NSIS"),
+          additionalEnvVariables = mapOf("NSISDIR" to "$box/NSIS"),
         )
       }
     }

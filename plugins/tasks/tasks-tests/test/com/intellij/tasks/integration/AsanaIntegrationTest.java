@@ -19,7 +19,6 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.generic.GenericRepository;
 import com.intellij.tasks.generic.GenericRepositoryType;
 import com.intellij.tasks.generic.GenericTask;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -93,10 +92,8 @@ public class AsanaIntegrationTest extends GenericSubtypeTestCase {
     // Don't forget to extract summary here, even though it doesn't happen actually when myRepository#getIssues is called
     myRepository.setDownloadTasksInSeparateRequests(false);
     Task[] tasks = myRepository.getActiveResponseHandler().parseIssues(TASK_LIST_RESPONSE, 50);
-    List<Task> expected = ContainerUtil.newArrayList(
-      new GenericTask("5479650606120", "Task #1", myRepository),
-      new GenericTask("5202014833559", "Task #2", myRepository)
-    );
+    List<Task> expected = List.of(new GenericTask("5479650606120", "Task #1", myRepository),
+                                  new GenericTask("5202014833559", "Task #2", myRepository));
     assertTasksEqual(expected, Arrays.asList(tasks));
   }
 

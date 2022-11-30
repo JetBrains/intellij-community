@@ -21,13 +21,13 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 
 public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
-  private final BiConsumer<@NotNull String, @NotNull List<? super VirtualFile>> myFillDirectoriesByPackage;
-  private final BiPredicate<@NotNull VirtualFile, @NotNull String> myPackageDirectoryFilter;
+  private final @NotNull BiConsumer<? super @NotNull String, ? super @NotNull List<? super VirtualFile>> myFillDirectoriesByPackage;
+  private final @NotNull BiPredicate<? super @NotNull VirtualFile, ? super @NotNull String> myPackageDirectoryFilter;
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = new ConcurrentHashMap<>();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
 
-  public PackageDirectoryCacheImpl(@NotNull BiConsumer<@NotNull String, @NotNull List<? super VirtualFile>> fillDirectoriesByPackage,
-                                   @NotNull BiPredicate<@NotNull VirtualFile, @NotNull String> packageDirectoryFilter) {
+  public PackageDirectoryCacheImpl(@NotNull BiConsumer<? super @NotNull String, ? super @NotNull List<? super VirtualFile>> fillDirectoriesByPackage,
+                                   @NotNull BiPredicate<? super @NotNull VirtualFile, ? super @NotNull String> packageDirectoryFilter) {
     myFillDirectoriesByPackage = fillDirectoriesByPackage;
     myPackageDirectoryFilter = packageDirectoryFilter;
   }

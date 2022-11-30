@@ -69,7 +69,7 @@ public class CompositeElement extends TreeElement {
     while(compositeElement != null) {
       compositeElement.clearCaches();
       if (!(compositeElement instanceof PsiElement)) {
-        final PsiElement psi = compositeElement.myWrapper;
+        PsiElement psi = compositeElement.myWrapper;
         if (psi instanceof ASTDelegatePsiElement) {
           ((ASTDelegatePsiElement)psi).subtreeChanged();
         }
@@ -132,7 +132,7 @@ public class CompositeElement extends TreeElement {
         offset = elementTextLength - offset;
       }
       while (child != null) {
-        final int textLength = child.getTextLength();
+        int textLength = child.getTextLength();
         if (textLength > offset || !fwd && textLength >= offset) {
           if (child instanceof LeafElement) {
             if (child instanceof ForeignLeafPsiElement) {
@@ -154,13 +154,13 @@ public class CompositeElement extends TreeElement {
 
   @Nullable
   public PsiElement findPsiChildByType(@NotNull IElementType type) {
-    final ASTNode node = findChildByType(type);
+    ASTNode node = findChildByType(type);
     return node == null ? null : node.getPsi();
   }
 
   @Nullable
   public PsiElement findPsiChildByType(@NotNull TokenSet types) {
-    final ASTNode node = findChildByType(types);
+    ASTNode node = findChildByType(types);
     return node == null ? null : node.getPsi();
   }
 
@@ -223,9 +223,9 @@ public class CompositeElement extends TreeElement {
   public char @NotNull [] textToCharArray() {
     assertReadAccessAllowed();
 
-    final int len = getTextLength();
+    int len = getTextLength();
     char[] buffer = new char[len];
-    final int endOffset;
+    int endOffset;
     try {
       endOffset = AstBufferUtil.toBuffer(this, buffer, 0);
     }
@@ -301,8 +301,8 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  protected int textMatches(@NotNull final CharSequence buffer, final int start) {
-    final int[] curOffset = {start};
+  protected int textMatches(@NotNull CharSequence buffer, int start) {
+    int[] curOffset = {start};
     acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       public void visitLeaf(LeafElement leaf) {
@@ -363,7 +363,7 @@ public class CompositeElement extends TreeElement {
     if (count == 0) {
       return EMPTY_ARRAY;
     }
-    final ASTNode[] result = new ASTNode[count];
+    ASTNode[] result = new ASTNode[count];
     count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (filter == null || filter.contains(child.getElementType())) {
@@ -567,12 +567,12 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void addChild(@NotNull ASTNode child, @Nullable final ASTNode anchorBefore) {
+  public void addChild(@NotNull ASTNode child, @Nullable ASTNode anchorBefore) {
     LOG.assertTrue(anchorBefore == null || ((TreeElement)anchorBefore).getTreeParent() == this, "anchorBefore == null || anchorBefore.getTreeParent() == parent");
     TreeUtil.ensureParsed(getFirstChildNode());
     TreeUtil.ensureParsed(child);
-    final TreeElement last = ((TreeElement)child).getTreeNext();
-    final TreeElement first = (TreeElement)child;
+    TreeElement last = ((TreeElement)child).getTreeNext();
+    TreeElement first = (TreeElement)child;
 
     removeChildrenInner(first, last);
 
@@ -587,9 +587,9 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void addLeaf(@NotNull final IElementType leafType, @NotNull CharSequence leafText, final ASTNode anchorBefore) {
+  public void addLeaf(@NotNull IElementType leafType, @NotNull CharSequence leafText, ASTNode anchorBefore) {
     FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
-    final LeafElement leaf = ASTFactory.leaf(leafType, holder.getCharTable().intern(leafText));
+    LeafElement leaf = ASTFactory.leaf(leafType, holder.getCharTable().intern(leafText));
     CodeEditUtil.setNodeGenerated(leaf, true);
     holder.rawAddChildren(leaf);
 
@@ -614,9 +614,9 @@ public class CompositeElement extends TreeElement {
   @Override
   public void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     LOG.assertTrue(((TreeElement)oldChild).getTreeParent() == this);
-    final TreeElement oldChild1 = (TreeElement)oldChild;
-    final TreeElement newChildNext = ((TreeElement)newChild).getTreeNext();
-    final TreeElement newChild1 = (TreeElement)newChild;
+    TreeElement oldChild1 = (TreeElement)oldChild;
+    TreeElement newChildNext = ((TreeElement)newChild).getTreeNext();
+    TreeElement newChild1 = (TreeElement)newChild;
 
     if(oldChild1 == newChild1) return;
 
@@ -629,10 +629,10 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void replaceAllChildrenToChildrenOf(@NotNull final ASTNode anotherParent) {
+  public void replaceAllChildrenToChildrenOf(@NotNull ASTNode anotherParent) {
     TreeUtil.ensureParsed(getFirstChildNode());
     TreeUtil.ensureParsed(anotherParent.getFirstChildNode());
-    final ASTNode firstChild = anotherParent.getFirstChildNode();
+    ASTNode firstChild = anotherParent.getFirstChildNode();
     ChangeUtil.prepareAndRunChangeAction(
       event -> remove((TreeChangeEventImpl)event, (TreeElement)anotherParent.getFirstChildNode(), null),
       (TreeElement)anotherParent);
@@ -659,7 +659,7 @@ public class CompositeElement extends TreeElement {
   }
 
   public void removeAllChildren() {
-    final TreeElement child = getFirstChildNode();
+    TreeElement child = getFirstChildNode();
     if (child != null) {
       removeRange(child, null);
     }
@@ -699,8 +699,8 @@ public class CompositeElement extends TreeElement {
   }
 
   protected PsiElement createPsiNoLock() {
-    final Language lang = getElementType().getLanguage();
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    Language lang = getElementType().getLanguage();
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (parserDefinition != null) {
       return parserDefinition.createElement(this);
     }
@@ -751,7 +751,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public final void applyReplaceFileOnReparse(@NotNull PsiFile psiFile, @NotNull FileASTNode newNode) {
     if (getFirstChildNode() != null) rawRemoveAllChildren();
-    final ASTNode firstChildNode = newNode.getFirstChildNode();
+    ASTNode firstChildNode = newNode.getFirstChildNode();
     if (firstChildNode != null) rawAddChildren((TreeElement)firstChildNode);
     ((PsiFileImpl) psiFile).calcTreeElement().setCharTable(newNode.getCharTable());
     subtreeChanged();
@@ -764,7 +764,7 @@ public class CompositeElement extends TreeElement {
   }
 
   public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
-    final TreeElement last = getLastChildNode();
+    TreeElement last = getLastChildNode();
     if (last == null){
       TreeElement chainLast = rawSetParents(first, this);
       setFirstChildNode(first);
@@ -795,9 +795,9 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  private static void repairRemovedElement(@NotNull CompositeElement oldParent, final TreeElement oldChild) {
+  private static void repairRemovedElement(@NotNull CompositeElement oldParent, TreeElement oldChild) {
     if(oldChild == null) return;
-    final FileElement treeElement = DummyHolderFactory.createHolder(oldParent.getManager(), null, false).getTreeElement();
+    FileElement treeElement = DummyHolderFactory.createHolder(oldParent.getManager(), null, false).getTreeElement();
     treeElement.rawAddChildren(oldChild);
   }
 
@@ -827,8 +827,8 @@ public class CompositeElement extends TreeElement {
     removeChildrenInner(child, child.getTreeNext());
   }
 
-  private static void removeChildrenInner(@NotNull TreeElement first, final TreeElement last) {
-    final FileElement fileElement = TreeUtil.getFileElement(first);
+  private static void removeChildrenInner(@NotNull TreeElement first, TreeElement last) {
+    FileElement fileElement = TreeUtil.getFileElement(first);
     if (fileElement != null) {
       ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {
         remove((TreeChangeEventImpl)destinationTreeChange, first, last);

@@ -124,7 +124,7 @@ private fun ClassDescriptor.getTypeConstraint(): TypeConstraint {
         "kotlin.DoubleArray" -> TypeConstraints.exact(PsiType.DOUBLE.createArrayType())
         else -> {
             val classDef = KtClassDef(this)
-            if (kind == ClassKind.OBJECT && classDef.isFinal) {
+            if (kind == ClassKind.OBJECT) {
                 TypeConstraints.singleton(classDef)
             } else {
                 TypeConstraints.exactClass(classDef).instanceOf()

@@ -1,14 +1,8 @@
-import sys
-from typing import Any, Iterable, Text
+from collections.abc import Iterable
+from io import BytesIO
+from typing import Any
 
 from .common import _LikeBytes
-
-if sys.version_info >= (3, 0):
-    from io import BytesIO
-else:
-    from StringIO import StringIO
-
-    BytesIO = StringIO[bytes]
 
 class Message:
     big_int: int
@@ -27,7 +21,7 @@ class Message:
     def get_int64(self) -> int: ...
     def get_mpint(self) -> int: ...
     def get_string(self) -> bytes: ...
-    def get_text(self) -> Text: ...
+    def get_text(self) -> str: ...
     def get_binary(self) -> bytes: ...
     def get_list(self) -> list[str]: ...
     def add_bytes(self, b: bytes) -> Message: ...

@@ -238,7 +238,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
-  fun testExactDuplicatesDisableChangeSignature(){
+  fun testLiteralDuplicates(){
     doTest()
   }
 

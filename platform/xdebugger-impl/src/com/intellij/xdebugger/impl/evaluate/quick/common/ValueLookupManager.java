@@ -23,7 +23,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 
@@ -35,6 +34,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
 
   private final Project myProject;
   private final Alarm myAlarm;
+  private QuickEvaluateHandler.CancellableHint myCancellableHint = null;
   private AbstractValueHint myRequest = null;
   private boolean myListening;
 
@@ -53,7 +53,15 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
 
   @Override
   public void mouseExited(@NotNull EditorMouseEvent e) {
+    cancelAll();
+  }
+
+  private void cancelAll() {
     myAlarm.cancelAllRequests();
+    if (myCancellableHint != null) {
+      myCancellableHint.tryCancel();
+      myCancellableHint = null;
+    }
   }
 
   @Override
@@ -71,7 +79,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     if (e.getArea() != EditorMouseEventArea.EDITING_AREA ||
         DISABLE_VALUE_LOOKUP.get(editor) == Boolean.TRUE ||
         type == null) {
-      myAlarm.cancelAllRequests();
+      cancelAll();
       return;
     }
 
@@ -99,7 +107,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
 
   private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, @NotNull final ValueHintType type) {
     final Rectangle area = editor.getScrollingModel().getVisibleArea();
-    myAlarm.cancelAllRequests();
+    cancelAll();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
       if (Registry.is("debugger.valueTooltipAutoShow")) {
         myAlarm.addRequest(() -> {
@@ -137,21 +145,21 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
                           @NotNull Editor editor,
                           @NotNull Point point,
                           @NotNull ValueHintType type) {
-    myAlarm.cancelAllRequests();
+    cancelAll();
     if (editor.isDisposed() || !handler.canShowHint(myProject)) {
       return;
     }
     if (myRequest != null && myRequest.isInsideHint(editor, point)) {
       return;
     }
-    Promise<AbstractValueHint> hintPromise;
+
     try {
-      hintPromise = handler.createValueHintAsync(myProject, editor, point, type);
+      myCancellableHint = handler.createValueHintAsync(myProject, editor, point, type);
     }
     catch (IndexNotReadyException e) {
       return;
     }
-    hintPromise.onSuccess(hint -> {
+    myCancellableHint.hintPromise().onSuccess(hint -> {
       if (hint == null) {
         UIUtil.invokeLaterIfNeeded(this::hideHint);
         return;

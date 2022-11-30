@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
@@ -14,6 +15,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,10 +33,12 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class MavenLegacyModuleImporter {
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
@@ -144,6 +148,19 @@ public final class MavenLegacyModuleImporter {
 
       if (suitableImporters.isEmpty()) return null;
 
+      // this is an option to turn off importing some facets for better performance
+      var ignoredImportersString = Registry.stringValue("maven.import.to.workspace.model.ignored.facet.importers");
+      if (!Strings.isNullOrEmpty(ignoredImportersString)) {
+        var ignoredImporters = Arrays
+          .stream(ignoredImportersString.split(","))
+          .map(s -> s.trim().toLowerCase())
+          .collect(Collectors.toSet());
+        suitableImporters = suitableImporters.stream()
+          .filter(importer -> !ignoredImporters.contains(importer.getClass().getSimpleName().toLowerCase()))
+          .toList();
+        if (suitableImporters.isEmpty()) return null;
+      }
+
       return new ExtensionImporter(module, mavenTree, mavenProject, changes, mavenProjectToModuleName, suitableImporters);
     }
 
@@ -173,72 +190,86 @@ public final class MavenLegacyModuleImporter {
                                             new ModifiableModelsProviderProxyWrapper(myModifiableModelsProvider)));
     }
 
+    private void doConfigurationStep(Runnable step) {
+      if (Registry.is("maven.import.to.workspace.model.fast.facet.creation")) {
+        step.run();
+      } else {
+        MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), step);
+      }
+    }
+
     void preConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
-      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
-        if (myModule.isDisposed()) return;
+      doConfigurationStep(() -> doPreConfig(counters));
+    }
 
-        final ModuleType moduleType = ModuleType.get(myModule);
+    private void doPreConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+      if (myModule.isDisposed()) return;
 
-        for (final MavenImporter importer : myImporters) {
-          try {
-            if (importer.getModuleType() == moduleType) {
-              measureImporterTime(importer, counters, true, () -> {
-                importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
-              });
-            }
-          }
-          catch (Exception e) {
-            MavenLog.LOG.error("Exception in MavenImporter.preConfig, skipping it.", e);
+      final ModuleType moduleType = ModuleType.get(myModule);
+
+      for (final MavenImporter importer : myImporters) {
+        try {
+          if (importer.getModuleType() == moduleType) {
+            measureImporterTime(importer, counters, true, () -> {
+              importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
+            });
           }
         }
-      });
+        catch (Exception e) {
+          MavenLog.LOG.error("Exception in MavenImporter.preConfig, skipping it.", e);
+        }
+      }
     }
 
     void config(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
-      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
-        if (myModule.isDisposed()) return;
-        final ModuleType<?> moduleType = ModuleType.get(myModule);
-        for (final MavenImporter importer : myImporters) {
-          if (importer.getModuleType() == moduleType) {
-            try {
-              measureImporterTime(importer, counters, false, () -> {
-                importer.process(myModifiableModelsProvider,
-                                 myModule,
-                                 myRootModelAdapter,
-                                 myMavenProjectsTree,
-                                 myMavenProject,
-                                 myMavenProjectChanges,
-                                 myMavenProjectToModuleName,
-                                 postTasks);
-                });
-              }
-              catch (Exception e) {
-                MavenLog.LOG.error("Exception in MavenImporter.config, skipping it.", e);
-              }
+      doConfigurationStep(() -> doConfig(postTasks, counters));
+    }
+
+    private void doConfig(List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+      if (myModule.isDisposed()) return;
+      final ModuleType<?> moduleType = ModuleType.get(myModule);
+      for (final MavenImporter importer : myImporters) {
+        if (importer.getModuleType() == moduleType) {
+          try {
+            measureImporterTime(importer, counters, false, () -> {
+              importer.process(myModifiableModelsProvider,
+                               myModule,
+                               myRootModelAdapter,
+                               myMavenProjectsTree,
+                               myMavenProject,
+                               myMavenProjectChanges,
+                               myMavenProjectToModuleName,
+                               postTasks);
+              });
+            }
+            catch (Exception e) {
+              MavenLog.LOG.error("Exception in MavenImporter.config, skipping it.", e);
             }
           }
-        });
+        }
     }
 
     void postConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
-      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
-        if (myModule.isDisposed()) return;
+      doConfigurationStep(() -> doPostConfig(counters));
+    }
 
-        final ModuleType moduleType = ModuleType.get(myModule);
+    private void doPostConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
+      if (myModule.isDisposed()) return;
 
-        for (final MavenImporter importer : myImporters) {
-          try {
-            if (importer.getModuleType() == moduleType) {
-              measureImporterTime(importer, counters, false, () -> {
-                importer.postProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
-              });
-            }
-          }
-          catch (Exception e) {
-            MavenLog.LOG.error("Exception in MavenImporter.postConfig, skipping it.", e);
+      final ModuleType moduleType = ModuleType.get(myModule);
+
+      for (final MavenImporter importer : myImporters) {
+        try {
+          if (importer.getModuleType() == moduleType) {
+            measureImporterTime(importer, counters, false, () -> {
+              importer.postProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
+            });
           }
         }
-      });
+        catch (Exception e) {
+          MavenLog.LOG.error("Exception in MavenImporter.postConfig, skipping it.", e);
+        }
+      }
     }
 
     private static void measureImporterTime(MavenImporter importer,

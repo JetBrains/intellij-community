@@ -26,7 +26,7 @@ public class ObjectStubTree<T extends Stub> {
   private boolean myHasBackReference;
   private final List<T> myPlainList;
 
-  public ObjectStubTree(final @NotNull ObjectStubBase<?> root, boolean withBackReference) {
+  public ObjectStubTree(@NotNull ObjectStubBase<?> root, boolean withBackReference) {
     myRoot = root;
     myPlainList = enumerateStubs(root);
     if (withBackReference) {
@@ -50,9 +50,9 @@ public class ObjectStubTree<T extends Stub> {
   @ApiStatus.Internal
   public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@Nullable Function<? super StubIndexKey<?, ?>, ? extends HashingStrategy<Object>> keyHashingStrategyFunction) {
     StubIndexSink sink = new StubIndexSink(keyHashingStrategyFunction);
-    final List<T> plainList = getPlainListFromAllRoots();
+    List<T> plainList = getPlainListFromAllRoots();
     for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {
-      final Stub stub = plainList.get(i);
+      Stub stub = plainList.get(i);
       sink.myStubIdx = i;
       StubSerializationUtil.getSerializer(stub).indexStub(stub, sink);
     }
@@ -110,7 +110,7 @@ public class ObjectStubTree<T extends Stub> {
     }
 
     @Override
-    public void occurrence(final @NotNull StubIndexKey indexKey, @NotNull Object value) {
+    public void occurrence(@NotNull StubIndexKey indexKey, @NotNull Object value) {
       Map<Object, int[]> map = myResult.get(indexKey);
       if (map == null) {
         map = myHashingStrategyFunction == null ? new HashMap<>() : CollectionFactory.createCustomHashingStrategyMap(myHashingStrategyFunction.apply((StubIndexKey<?, ?>)indexKey));

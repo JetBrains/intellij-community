@@ -429,8 +429,10 @@ public abstract class NotNullVerifyingInstrumenterTest {
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
     File testFile = IdeaTestUtil.findSourceFile((JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH) + testName);
     File classesDir = tempDir.newDirectory("output");
-    List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
-    if (withDebugInfo) args.add("-g");
+    List<String> args = List.of("-cp", annotation.classes.getPath());
+    if (withDebugInfo) {
+      args = ContainerUtil.append(args, "-g");
+    }
     IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
     File[] files = classesDir.listFiles();

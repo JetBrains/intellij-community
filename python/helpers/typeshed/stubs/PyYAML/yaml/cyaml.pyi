@@ -1,6 +1,7 @@
 from _typeshed import SupportsRead
 from collections.abc import Mapping, Sequence
-from typing import IO, Any, Union
+from typing import IO, Any
+from typing_extensions import TypeAlias
 
 from ._yaml import CEmitter, CParser
 from .constructor import BaseConstructor, FullConstructor, SafeConstructor, UnsafeConstructor
@@ -9,7 +10,7 @@ from .resolver import BaseResolver, Resolver
 
 __all__ = ["CBaseLoader", "CSafeLoader", "CFullLoader", "CUnsafeLoader", "CLoader", "CBaseDumper", "CSafeDumper", "CDumper"]
 
-_Readable = SupportsRead[Union[str, bytes]]
+_Readable: TypeAlias = SupportsRead[str | bytes]
 
 class CBaseLoader(CParser, BaseConstructor, BaseResolver):
     def __init__(self, stream: str | bytes | _Readable) -> None: ...

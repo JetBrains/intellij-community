@@ -203,7 +203,7 @@ public final class RecSplitGenerator<T> {
    * @param collection the collection
    * @return the hash function description
    */
-  public ByteBuffer generate(Collection<T> collection, IntFunction<? extends ByteBuffer> byteBufferAllocator) {
+  public ByteBuffer generate(Collection<? extends T> collection, IntFunction<? extends ByteBuffer> byteBufferAllocator) {
     int keyCount = collection.size();
     int averageBucketSize = settings.getAverageBucketSize();
     int bucketCount = RecSplitSettings.getBucketCount(keyCount, averageBucketSize);

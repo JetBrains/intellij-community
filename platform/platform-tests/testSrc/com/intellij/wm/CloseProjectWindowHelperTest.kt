@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.wm
 
 import com.intellij.openapi.project.Project
@@ -33,7 +33,7 @@ class CloseProjectWindowHelperTest {
     assertThat(helper.wasShowWelcomeFrameIfNoProjectOpenedCalled).isTrue()
   }
 
-  // well, not clear is listener will be called for case when no opened  prtojects atllall, but just t o be sure
+  // well, not clear is listener will be called for case when no opened  projects atl all, but just t o be sure
   @Test
   fun `on Windows closing if no opened projects leads to exit`() {
     val helper = object : TestCloseProjectWindowHelper() {

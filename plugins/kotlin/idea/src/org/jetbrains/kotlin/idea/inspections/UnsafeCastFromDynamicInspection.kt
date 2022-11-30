@@ -51,7 +51,7 @@ private class CastExplicitlyFix(@SafeFieldForPreview private val type: KotlinTyp
         val expression = descriptor.psiElement as? KtExpression ?: return
         val typeName = type.constructor.declarationDescriptor?.name ?: return
         val pattern = if (type.isMarkedNullable) "$0 as? $1" else "$0 as $1"
-        val newExpression = KtPsiFactory(expression).createExpressionByPattern(pattern, expression, typeName)
+        val newExpression = KtPsiFactory(project).createExpressionByPattern(pattern, expression, typeName)
         expression.replace(newExpression)
     }
 }

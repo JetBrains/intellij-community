@@ -25,7 +25,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -191,21 +190,13 @@ public class NavigationGutterIconBuilder<T> {
   /**
    * @deprecated Use {{@link #createGutterIcon(AnnotationHolder, PsiElement)}} instead
    */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public Annotation install(@NotNull DomElementAnnotationHolder holder, @Nullable DomElement element) {
-    if (!myLazy && myTargets.getValue().isEmpty() || element == null) return null;
-    return doInstall(holder.createAnnotation(element, HighlightSeverity.INFORMATION, null), element.getManager().getProject());
-  }
-
-  /**
-   * @deprecated Use {{@link #createGutterIcon(AnnotationHolder, PsiElement)}} instead
-   */
   @Nullable
   @Deprecated
   public Annotation install(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
     if (!myLazy && myTargets.getValue().isEmpty() || element == null) return null;
-    return doInstall(holder.createInfoAnnotation(element, null), element.getProject());
+    return holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+      .gutterIconRenderer(createGutterIconRenderer(element.getProject(), null))
+      .needsUpdateOnTyping(false).createAnnotation();
   }
 
   public void createGutterIcon(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
@@ -218,14 +209,6 @@ public class NavigationGutterIconBuilder<T> {
       .gutterIconRenderer(renderer)
       .needsUpdateOnTyping(false)
       .create();
-  }
-
-  @NotNull
-  private Annotation doInstall(@NotNull Annotation annotation, @NotNull Project project) {
-    NavigationGutterIconRenderer renderer = createGutterIconRenderer(project, null);
-    annotation.setGutterIconRenderer(renderer);
-    annotation.setNeedsUpdateOnTyping(false);
-    return annotation;
   }
 
   @NotNull

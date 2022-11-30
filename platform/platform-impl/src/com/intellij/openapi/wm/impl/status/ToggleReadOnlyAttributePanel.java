@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -28,13 +29,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.function.Supplier;
 
 public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
   private StatusBar myStatusBar;
 
   @Override
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     if (!isReadonlyApplicable()) {
       return null;
     }
@@ -43,8 +44,7 @@ public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multi
   }
 
   @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return StatusBar.StandardWidgets.READONLY_ATTRIBUTE_PANEL;
   }
 
@@ -127,16 +127,24 @@ public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multi
     return file != null && !file.getFileSystem().isReadOnly();
   }
 
-  @Nullable
-  private Project getProject() {
+  private @Nullable Project getProject() {
     return myStatusBar != null ? myStatusBar.getProject() : null;
   }
 
-  @Nullable
-  private VirtualFile getCurrentFile() {
-    final Project project = getProject();
-    if (project == null) return null;
-    EditorsSplitters splitters = FileEditorManagerEx.getInstanceEx(project).getSplittersFor(myStatusBar.getComponent());
-    return splitters.getCurrentFile();
+  private @Nullable VirtualFile getCurrentFile() {
+    Project project = getProject();
+    if (project == null) {
+      return null;
+    }
+
+    Supplier<@Nullable FileEditor> editorSupplier = myStatusBar.getCurrentEditor();
+    if (editorSupplier == null) {
+      EditorsSplitters splitters = FileEditorManagerEx.getInstanceEx(project).getSplittersFor(myStatusBar.getComponent());
+      return splitters.getCurrentFile();
+    }
+    else {
+      FileEditor editor = editorSupplier.get();
+      return editor == null ? null : editor.getFile();
+    }
   }
 }

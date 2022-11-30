@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.NameCommentsByArgument
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal class AddNamesInCommentToJavaCallArgumentsIntention
-    : KotlinApplicableIntentionWithContext<KtCallElement, AddNamesInCommentToJavaCallArgumentsIntention.Context>(KtCallElement::class) {
+    : AbstractKotlinApplicableIntentionWithContext<KtCallElement, AddNamesInCommentToJavaCallArgumentsIntention.Context>(KtCallElement::class) {
 
     class Context(val nameCommentsByArgument: NameCommentsByArgument)
 

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.model.search.SearchService
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
@@ -16,7 +17,7 @@ object DirectKotlinClassInheritorsSearch {
         val includeAnonymous: Boolean = true
     ) : com.intellij.model.search.SearchParameters<PsiElement> {
         override fun getProject(): Project {
-            return ktClass.project
+            return runReadAction { ktClass.project }
         }
 
         override fun areValid(): Boolean {
@@ -25,7 +26,7 @@ object DirectKotlinClassInheritorsSearch {
     }
 
     fun search(klass: KtClass): Query<PsiElement> {
-        return search(SearchParameters(klass, klass.useScope))
+        return search(SearchParameters(klass, runReadAction { klass.useScope }))
     }
 
     fun search(klass: KtClass, searchScope: SearchScope): Query<PsiElement> {

@@ -221,7 +221,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
-    toolbar.setTargetComponent(myGraphTable);
+    toolbar.setTargetComponent(this);
 
     Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
@@ -233,7 +233,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     DefaultActionGroup rightCornerGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP);
     ActionToolbar rightCornerToolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, rightCornerGroup, true);
-    rightCornerToolbar.setTargetComponent(myGraphTable);
+    rightCornerToolbar.setTargetComponent(this);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
 
     JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[pref:pref, right]", "center"));

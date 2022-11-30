@@ -18,7 +18,7 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
 
     importProject {
       withMavenCentral()
-      applyPlugin("'java'")
+      applyPlugin("java")
       addPostfix("""
         import java.lang.management.ManagementFactory;
         import java.lang.management.RuntimeMXBean;

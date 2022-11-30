@@ -66,7 +66,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
-  private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
 
   private final NewMappings myMappings;
@@ -94,7 +93,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myProject = project;
     myExcludedIndex = FileIndexFacade.getInstance(project);
 
-    mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
     myMappings = new NewMappings(myProject, this);
@@ -105,6 +103,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return (ProjectLevelVcsManagerImpl)getInstance(project);
   }
 
+  @TestOnly
   public void registerVcs(AbstractVcs vcs) {
     AllVcses.getInstance(myProject).registerManually(vcs);
   }
@@ -210,6 +209,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return root != null ? new VcsRoot(root.vcs, root.root) : null;
   }
 
+  @TestOnly
   public void unregisterVcs(@NotNull AbstractVcs vcs) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
       // unlikely
@@ -337,7 +337,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @RequiresEdt
   @Override
-  public @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo, boolean canceled) {
+  public @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
+                                                        String displayActionName,
+                                                        ActionInfo actionInfo,
+                                                        boolean canceled) {
     if (!myProject.isOpen() || myProject.isDisposed()) return null;
     ContentManager contentManager = getContentManager();
     if (contentManager == null) {
@@ -427,7 +430,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
-    mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
+    ProjectLevelVcsManagerSerialization.writeExternalUtil(element, myOptionsAndConfirmations);
     if (myHaveLegacyVcsConfiguration) {
       element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
     }
@@ -436,7 +439,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void loadState(@NotNull Element state) {
-    mySerialization.readExternalUtil(state, myOptionsAndConfirmations);
+    ProjectLevelVcsManagerSerialization.readExternalUtil(state, myOptionsAndConfirmations);
     final Attribute attribute = state.getAttribute(SETTINGS_EDITED_MANUALLY);
     if (attribute != null) {
       try {

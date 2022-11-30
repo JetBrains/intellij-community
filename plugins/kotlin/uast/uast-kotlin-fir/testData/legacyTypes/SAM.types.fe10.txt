@@ -36,7 +36,7 @@ UFile (package = ) [import java.lang.Thread...]
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable(l@ { ...})] : PsiType:Runnable
                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
                 USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
-                ULabeledExpression (label = l) [l@ { ...}]
+                ULabeledExpression (label = l) [l@ { ...}] : PsiType:Function0<? extends Unit>
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                         UBlockExpression [{...}]
                             UReturnExpression [return] : PsiType:Void

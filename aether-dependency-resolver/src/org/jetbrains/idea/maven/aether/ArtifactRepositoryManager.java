@@ -35,6 +35,7 @@ import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -112,6 +113,12 @@ public final class ArtifactRepositoryManager {
     myRemoteRepositories.addAll(remoteRepositories);
     mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline);
     myRetry = retry;
+  }
+
+  @ApiStatus.Internal
+  public boolean isValidArchive(File archive) {
+    var localRepositoryManager = mySessionFactory.sessionTemplate.getLocalRepositoryManager();
+    return ((StrictLocalRepositoryManager) localRepositoryManager).isValidArchive(archive);
   }
 
   private static final class RepositorySystemSessionFactory {

@@ -7,10 +7,13 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 public interface AllVcsesI {
+  @TestOnly
   void registerManually(@NotNull AbstractVcs vcs);
 
+  @TestOnly
   void unregisterManually(@NotNull AbstractVcs vcs);
 
   AbstractVcs getByName(@NotNull @NonNls String name);

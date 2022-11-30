@@ -150,7 +150,7 @@ public class HwFacadeHelper {
     activateIfNeeded(JCEFAccessor.getHwBrowsers());
   }
 
-  private void activateIfNeeded(@NotNull List<CefBrowser> browsers) {
+  private void activateIfNeeded(@NotNull List<? extends CefBrowser> browsers) {
     if (isActive() || !Registry.is("ide.browser.jcef.hwfacade.enabled") || !isCefAppActive() || !myTarget.isShowing() || SystemInfo.isLinux) {
       return;
     }

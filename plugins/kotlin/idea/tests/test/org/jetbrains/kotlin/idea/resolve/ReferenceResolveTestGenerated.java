@@ -696,6 +696,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/JavaEnumValueOf.kt");
         }
 
+        @TestMetadata("JavaImplicitConstructor.kt")
+        public void testJavaImplicitConstructor() throws Exception {
+            runTest("testData/resolve/references/JavaImplicitConstructor.kt");
+        }
+
         @TestMetadata("JavaParameter.kt")
         public void testJavaParameter() throws Exception {
             runTest("testData/resolve/references/JavaParameter.kt");

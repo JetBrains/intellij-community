@@ -32,7 +32,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -126,6 +126,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
     LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(Runnable { updateTrackingSettings() }, this)
+    VcsBaseContentProvider.EP_NAME.addChangeListener(project, { onEverythingChanged() }, this)
 
     updatePartialChangeListsAvailability()
 
@@ -908,7 +909,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   private class RefreshRequest(val document: Document, val loader: LineStatusTrackerContentLoader) {
     override fun equals(other: Any?): Boolean = other is RefreshRequest && document == other.document
     override fun hashCode(): Int = document.hashCode()
-    override fun toString(): String = "RefreshRequest: " + (FileDocumentManager.getInstance().getFile(document)?.path ?: "unknown") // NON-NLS
+    override fun toString(): String {
+      return "RefreshRequest: " + (FileDocumentManager.getInstance().getFile(document)?.path ?: "unknown") // NON-NLS
+    }
   }
 
   private class RefreshData(val content: TrackerContent,
@@ -1222,7 +1225,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
       isScheduled = true
       scope.launch {
         ClientId.withClientId(ClientId.localId) {
-          runUnderIndicator {
+          coroutineToIndicator {
             handleRequests()
           }
         }
@@ -1361,7 +1364,7 @@ private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerCont
 
 private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
-    if (!VcsFileStatusProvider.getInstance(project).isSupported(file)) return false
+    if (!LineStatusTrackerBaseContentUtil.isSupported(project, file)) return false
 
     val status = FileStatusManager.getInstance(project).getStatus(file)
     if (status == FileStatus.ADDED ||
@@ -1374,7 +1377,7 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
   }
 
   override fun getContentInfo(project: Project, file: VirtualFile): ContentInfo? {
-    val baseContent = VcsFileStatusProvider.getInstance(project).getBaseRevision(file) ?: return null
+    val baseContent = LineStatusTrackerBaseContentUtil.getBaseRevision(project, file) ?: return null
     return BaseRevisionContentInfo(baseContent, file.charset)
   }
 
@@ -1409,9 +1412,20 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
   private class BaseRevisionContent(val text: CharSequence) : TrackerContent
 }
 
+/**
+ * Allows overriding created trackers for partucular files.
+ *
+ * Trackers are created on EDT on request (ex: when [Editor] is opened).
+ * Providers may implement [LineStatusTrackerContentLoader] to use [LineStatusTrackerManager] mechanism for loading necessary
+ * information on a pooled thread.
+ *
+ * @see LineStatusTrackerSettingListener
+ */
 interface LocalLineStatusTrackerProvider {
   fun isTrackedFile(project: Project, file: VirtualFile): Boolean
   fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean
+
+  @RequiresEdt
   fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>?
 
   companion object {

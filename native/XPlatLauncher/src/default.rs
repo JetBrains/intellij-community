@@ -6,7 +6,8 @@ use std::path::{Path, PathBuf};
 use log::{debug, warn};
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
-use crate::{LaunchConfiguration, ProductInfo};
+
+use crate::{get_config_home, LaunchConfiguration, ProductInfo};
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
@@ -31,26 +32,25 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         result.extend_from_slice(additional_jvm_arguments);
 
         for i in 0..result.len() {
-            result[i] = self.expand_ide_home(&result[i]);
+            result[i] = self.expand_vars(&result[i])?;
         }
 
         Ok(result)
     }
 
-    fn get_properties_file(&self) -> Result<PathBuf> {
+    fn get_properties_file(&self) -> Result<Option<PathBuf>> {
         let env_var_name = self.product_info.productCode.to_string() + "_PROPERTIES";
         let properties_path_from_env_var = get_path_from_env_var(&env_var_name);
 
-        match &properties_path_from_env_var {
-            Ok(x) => {
-                debug!("IDE properties env var env_var_name is set to {x:?}")
-            }
-            Err(e) => {
-                debug!("IDE properties env var {env_var_name} doesn't seem to be set, details: {e}");
+        let properties_file = match properties_path_from_env_var {
+            Ok(x) => Some(x),
+            Err(_) => {
+                debug!("Properties env var {env_var_name} is not set, skipping reading properties file from it");
+                None
             }
         };
 
-        properties_path_from_env_var
+        Ok(properties_file)
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
@@ -79,7 +79,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
                 }
             };
 
-            let expanded = self.expand_ide_home(&item_canonical_path);
+            let expanded = self.expand_vars(&item_canonical_path)?;
 
             canonical_class_path.push(expanded);
         }
@@ -115,7 +115,7 @@ impl DefaultLaunchConfiguration {
         let ide_bin = ide_home.join("bin");
         debug!("Resolved ide bin dir as '{ide_bin:?}'");
 
-        let config_home = get_config_home();
+        let config_home = get_config_home()?;
         debug!("Resolved config home as '{config_home:?}'");
 
         let product_info = get_product_info(&ide_home)?;
@@ -298,9 +298,7 @@ impl DefaultLaunchConfiguration {
         let content = read_file_to_end(jre_path_file.as_path())?;
         let user_jre_path = Path::new(content.as_str());
 
-        let java_executable = user_jre_path
-            .join("bin")
-            .join("java");
+        let java_executable = get_bin_java_path(&user_jre_path);
 
         match is_executable::is_executable(&java_executable) {
             true => { Ok(java_executable) }
@@ -316,12 +314,12 @@ impl DefaultLaunchConfiguration {
     fn get_java_executable_from_java_root_env_var(&self, env_var_name: &str) -> Result<PathBuf> {
         let env_var_value = env::var(env_var_name)?;
 
-        if !env_var_value.is_empty() {
+        if env_var_value.is_empty() {
             bail!("Env var {env_var_value} is not set, skipping JDK detection from it");
         }
 
         let product_jdk_dir = Path::new(env_var_value.as_str());
-        let java_executable = product_jdk_dir.join("bin").join("java");
+        let java_executable = get_bin_java_path(product_jdk_dir);
 
         if !java_executable.exists() {
             bail!("Java executable from JDK {java_executable:?} does not exist");
@@ -470,14 +468,15 @@ impl DefaultLaunchConfiguration {
         is_readable(os_specific_vm_options)
     }
 
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    fn expand_ide_home(&self, value: &str) -> String {
-        value.to_string()
-    }
+    fn expand_vars(&self, value: &str) -> Result<String> {
+        let (from, to) = match env::consts::OS {
+            "macos"   => ("$APP_PACKAGE/Contents", self.ide_home.to_string_lossy()),
+            "windows" => ("%IDE_HOME%", self.ide_home.to_string_lossy()),
+            "linux"   => return Ok(value.to_string()),
+            unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
+        };
 
-    #[cfg(target_os = "windows")]
-    fn expand_ide_home(&self, value: &str) -> String {
-        value.replace("%IDE_HOME%", &self.ide_home.to_string_lossy())
+        Ok(value.replace(from, &to))
     }
 }
 
@@ -573,70 +572,4 @@ fn get_ide_home(current_exe: &Path) -> Result<PathBuf> {
     }
 
     bail!("Failed to resolve ide_home in {max_lookup_count} attempts")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_config_home() -> PathBuf {
-    // TODO: see LoadVMOptions
-    PathBuf::from("C:\\tmp")
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_config_home() -> PathBuf {
-    get_user_home().join(".config")
-}
-
-// CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
-#[cfg(target_os = "linux")]
-pub fn get_config_home() -> PathBuf {
-    let xdg_config_home = get_xdg_config_home();
-
-    match xdg_config_home {
-        Some(p) => { p }
-        None => { get_user_home().join(".config") }
-    }
-}
-
-#[cfg(target_os = "linux")]
-fn get_xdg_config_home() -> Option<PathBuf> {
-    let xdg_config_home = env::var("XDG_CONFIG_HOME").unwrap_or(String::from(""));
-    debug!("XDG_CONFIG_HOME={xdg_config_home}");
-
-    if xdg_config_home.is_empty() {
-        return None
-    }
-
-    let path = PathBuf::from(xdg_config_home);
-    if !path.is_absolute() {
-        // TODO: consider change
-        warn!("XDG_CONFIG_HOME is not set to an absolute path, this may be a misconfiguration");
-    }
-
-    Some(path)
-}
-
-
-// used in ${HOME}/.config
-// TODO: is this the same as env:
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn get_user_home() -> PathBuf {
-    // TODO: dirs::home_dir seems better then just simply using $HOME as it checks `getpwuid_r`
-
-    match env::var("HOME") {
-        Ok(s) => {
-            debug!("User home directory resolved as '{s}'");
-            let path = PathBuf::from(s);
-            if !path.is_absolute() {
-                warn!("User home directory is not absolute, this may be a misconfiguration");
-            }
-
-            path
-        }
-        Err(e) => {
-            // TODO: this seems wrong
-            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
-
-            PathBuf::from("/")
-        }
-    }
 }

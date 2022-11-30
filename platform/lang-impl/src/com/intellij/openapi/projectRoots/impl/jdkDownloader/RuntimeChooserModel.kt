@@ -23,7 +23,7 @@ object RuntimeChooserAdvancedJbrSelectedSectionSeparator : RuntimeChooserItem()
 
 internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: (Y) -> Unit) {
   action(get())
-  afterChange(action, lifetime)
+  afterChange(lifetime, action)
 }
 
 class RuntimeChooserModel {

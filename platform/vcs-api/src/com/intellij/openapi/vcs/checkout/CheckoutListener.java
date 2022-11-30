@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -14,5 +15,6 @@ public interface CheckoutListener {
   /**
    * Executed in a pooled thread, not in EDT.
    */
+  @RequiresBackgroundThread
   boolean processCheckedOutDirectory(@NotNull Project project, @NotNull Path directory);
 }

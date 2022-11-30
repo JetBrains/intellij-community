@@ -114,7 +114,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
       }
 
       @Override
-      public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+      public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
         // clear cache
         myProcessorsProfilesMap = null;
       }

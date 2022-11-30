@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -47,6 +48,8 @@ import java.util.*;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
 public final class ComponentPropertiesCollector {
+  private static final Logger LOG = Logger.getInstance(ComponentPropertiesCollector.class);
+
   private static final List<String> PROPERTIES = Arrays.asList(
     "ui", "getLocation", "getLocationOnScreen",
     "getSize", "isOpaque", "getBorder",
@@ -153,7 +156,12 @@ public final class ComponentPropertiesCollector {
 
     UiInspectorContextProvider contextProvider = UiInspectorUtil.getProvider(component);
     if (contextProvider != null) {
-      myProperties.addAll(contextProvider.getUiInspectorContext());
+      try {
+        myProperties.addAll(contextProvider.getUiInspectorContext());
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     StringBuilder classHierarchy = new StringBuilder();

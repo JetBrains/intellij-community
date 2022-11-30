@@ -112,6 +112,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<IndexWritingFile> ourWritingIndexFile = new ThreadLocal<>();
   private static final ThreadLocal<VirtualFile> ourFileToBeIndexed = new ThreadLocal<>();
 
+  private static final boolean FORBID_LOOKUP_IN_NON_CANCELLABLE_SECTIONS =
+    SystemProperties.getBooleanProperty("forbid.index.lookup.in.non.cancellable.section", false);
+
   @ApiStatus.Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
 
@@ -761,11 +764,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       LOG.info("FileBasedIndex is currently shutdown because: " + shutdownReason);
       return false;
     }
+    if (FORBID_LOOKUP_IN_NON_CANCELLABLE_SECTIONS && ProgressManager.getInstance().isInNonCancelableSection()) {
+      LOG.error("Indexes should not be accessed in non-cancellable section");
+    }
+
     ProgressManager.checkCanceled();
     SlowOperations.assertSlowOperationsAreAllowed();
     getChangedFilesCollector().ensureUpToDate();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-
     NoAccessDuringPsiEvents.checkCallContext(indexId);
 
     if (!needsFileContentLoading(indexId)) {
@@ -1035,10 +1041,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
   }
 
+  @ApiStatus.Internal
   @NotNull
-  private static DocumentContent findLatestContent(@NotNull Document document, @Nullable PsiFile dominantContentFile) {
-    // TODO seems we should choose the source with highest stamp!
-    return dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()
+  public static DocumentContent findLatestContent(@NotNull Document document, @Nullable PsiFile dominantContentFile) {
+    return dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() > document.getModificationStamp()
            ? new PsiContent(document, dominantContentFile)
            : new AuthenticContent(document);
   }

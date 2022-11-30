@@ -11,8 +11,10 @@ import com.intellij.internal.statistic.utils.StatisticsUtil.roundDuration
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -183,7 +185,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       val actionClassName = if (info.isSafeToReport()) action.javaClass.name else DEFAULT_ID
       var actionId = getActionId(info, action)
       if (action is ActionWithDelegate<*>) {
-        val delegate = (action as ActionWithDelegate<*>).delegate
+        val delegate = ActionUtil.getDelegateChainRoot(action)
         val delegateInfo = getPluginInfo(delegate.javaClass)
         actionId = if (delegate is AnAction) {
           getActionId(delegateInfo, delegate)
@@ -328,7 +330,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       if (project != null) {
         val editor = InjectedDataKeys.EDITOR.getData(dataContext)
         if (editor != null && !project.isDisposed) {
-          val injectedFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)
+          val injectedFile = runReadAction { PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) }
           if (injectedFile != null) {
             return injectedFile.language
           }

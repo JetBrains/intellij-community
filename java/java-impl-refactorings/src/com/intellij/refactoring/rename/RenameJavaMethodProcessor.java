@@ -341,7 +341,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   @Override
   public void substituteElementToRename(@NotNull PsiElement element,
                                         @NotNull final Editor editor,
-                                        @NotNull final Pass<PsiElement> renameCallback) {
+                                        final @NotNull Pass<? super PsiElement> renameCallback) {
     final PsiMethod psiMethod = (PsiMethod)element;
     if (psiMethod.isConstructor()) {
       final PsiClass containingClass = psiMethod.getContainingClass();

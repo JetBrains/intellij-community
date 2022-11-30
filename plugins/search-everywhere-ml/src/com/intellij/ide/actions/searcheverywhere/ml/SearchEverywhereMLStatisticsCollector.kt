@@ -17,18 +17,23 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.round
 
-internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
+@ApiStatus.Internal
+@IntellijInternalApi
+class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
   override fun getGroup(): EventLogGroup {
     return GROUP
   }
 
-  fun onItemSelected(project: Project?, seSessionId: Int, searchIndex: Int,
+  internal fun onItemSelected(project: Project?, seSessionId: Int, searchIndex: Int,
                      shouldLogFeatures: Boolean, experimentGroup: Int,
                      orderByMl: Boolean,
                      elementIdProvider: SearchEverywhereMlItemIdProvider,
@@ -52,7 +57,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     )
   }
 
-  fun onSearchFinished(project: Project?, seSessionId: Int, searchIndex: Int,
+  internal fun onSearchFinished(project: Project?, seSessionId: Int, searchIndex: Int,
                        shouldLogFeatures: Boolean, experimentGroup: Int,
                        orderByMl: Boolean,
                        elementIdProvider: SearchEverywhereMlItemIdProvider,
@@ -73,7 +78,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     )
   }
 
-  fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
+  internal fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
                         shouldLogFeatures: Boolean,
                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                         context: SearchEverywhereMLContextInfo,
@@ -286,7 +291,9 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     private val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = EventFields.Int("totalItems")
     private val TYPED_BACKSPACES_DATA_KEY = EventFields.Int("typedBackspaces")
     private val SELECTED_INDEXES_DATA_KEY = EventFields.IntList("selectedIndexes")
-    private val SELECTED_ELEMENTS_DATA_KEY = EventFields.IntList("selectedIds")
+
+    @VisibleForTesting
+    val SELECTED_ELEMENTS_DATA_KEY = EventFields.IntList("selectedIds")
     private val SELECTED_ELEMENTS_CONSISTENT = EventFields.Boolean("isConsistent")
 
     private val IS_MIXED_LIST = EventFields.Boolean("isMixedList")
@@ -301,7 +308,8 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     internal val CONTRIBUTOR_ID_KEY = EventFields.String("contributorId", SE_TABS)
     internal val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
 
-    private val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
+    @VisibleForTesting
+    val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
       "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_ID_KEY, ML_WEIGHT_KEY
     )
 
@@ -309,7 +317,8 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
                                                     *SearchEverywhereContributorFeaturesProvider.getFeaturesDeclarations().toTypedArray())
 
     // events
-    private val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
+    @VisibleForTesting
+    val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
     private val SEARCH_RESTARTED = registerEvent("searchRestarted")
 
     private fun createFeaturesEventObject(): ObjectEventField {

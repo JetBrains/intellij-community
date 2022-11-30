@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -73,7 +72,6 @@ import java.util.*;
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
-import static com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
@@ -141,7 +139,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     initColumnModel();
     onColumnOrderSettingChanged();
     setRootColumnSize();
-    myGraphCommitCellRenderer = (GraphCommitCellRenderer)myTableColumns.get(Commit.INSTANCE).getCellRenderer();
+    myGraphCommitCellRenderer = getGraphCommitCellRenderer();
     VcsLogColumnManager.getInstance().addCurrentColumnsListener(this, new MyCurrentColumnsListener());
     VcsLogColumnManager.getInstance().addColumnModelListener(this, (column, index) -> {
       getModel().fireTableStructureChanged();
@@ -313,8 +311,32 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private TableColumn createTableColumn(VcsLogColumn<?> column) {
     TableColumn tableColumn = new TableColumn(VcsLogColumnManager.getInstance().getModelIndex(column));
     tableColumn.setResizable(column.isResizable());
-    tableColumn.setCellRenderer(column.createTableCellRenderer(this));
+    tableColumn.setCellRenderer(createColumnRenderer(column));
     return tableColumn;
+  }
+
+  @NotNull
+  private TableCellRenderer createColumnRenderer(VcsLogColumn<?> column) {
+    TableCellRenderer renderer = column.createTableCellRenderer(this);
+    if (ExperimentalUI.isNewUI() && column != Root.INSTANCE) {
+      renderer = new VcsLogNewUiTableCellRenderer(renderer);
+    }
+    return renderer;
+  }
+
+  @NotNull
+  private GraphCommitCellRenderer getGraphCommitCellRenderer() {
+    VcsLogCellRenderer cellRenderer = getVcsLogCellRenderer(getCommitColumn());
+    return (GraphCommitCellRenderer)Objects.requireNonNull(cellRenderer);
+  }
+
+  @Nullable
+  private static VcsLogCellRenderer getVcsLogCellRenderer(@NotNull TableColumn column) {
+    TableCellRenderer renderer = column.getCellRenderer();
+    if (renderer instanceof VcsLogNewUiTableCellRenderer) {
+      renderer = ((VcsLogNewUiTableCellRenderer)renderer).getDelegate();
+    }
+    return renderer instanceof VcsLogCellRenderer ? (VcsLogCellRenderer)renderer : null;
   }
 
   @NotNull
@@ -361,9 +383,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int index = column.getModelIndex();
     VcsLogColumn<?> logColumn = VcsLogColumnManager.getInstance().getColumn(index);
 
-    TableCellRenderer columnRenderer = myTableColumns.get(logColumn).getCellRenderer();
-    if (columnRenderer instanceof VcsLogCellRenderer) {
-      Integer width = ((VcsLogCellRenderer)columnRenderer).getPreferredWidth(this);
+    VcsLogCellRenderer cellRenderer = getVcsLogCellRenderer(column);
+    if (cellRenderer != null) {
+      Integer width = cellRenderer.getPreferredWidth(this);
       if (width != null) {
         return width;
       }
@@ -396,8 +418,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       maxValueWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxValueWidth);
     }
 
-    int horizontalPadding = columnRenderer instanceof SimpleColoredComponent ?
-                            VcsLogUiUtil.getHorizontalTextPadding((SimpleColoredComponent)columnRenderer) : 0;
+    int horizontalPadding = cellRenderer instanceof SimpleColoredComponent ?
+                            VcsLogUiUtil.getHorizontalTextPadding((SimpleColoredComponent)cellRenderer) : 0;
     int width = Math.min(maxValueWidth + horizontalPadding, JBUIScale.scale(MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH));
     if (unloaded * 2 <= maxRowsToCheck) myInitializedColumns.add(logColumn);
     return width;
@@ -434,11 +456,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     TableColumn tableColumn = getTableColumn(column);
     if (tableColumn == null) return null;
 
-    TableCellRenderer renderer = tableColumn.getCellRenderer();
-    if (!(renderer instanceof VcsLogCellRenderer)) {
-      return null;
-    }
-    return ((VcsLogCellRenderer)renderer).getCellController();
+    VcsLogCellRenderer cellRenderer = getVcsLogCellRenderer(tableColumn);
+    return cellRenderer == null ? null : cellRenderer.getCellController();
   }
 
   @NotNull
@@ -538,25 +557,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           if (i != selectedRows.length - 1) sb.append("\n");
         }
         return sb.toString();
-      })
-      .ifEq(VCS_LOG_COMMIT_SELECTION).thenGet(() -> {
-        return getSelection();
-      })
-      .ifEq(VcsDataKeys.VCS_REVISION_NUMBER).thenGet(() -> {
-        List<CommitId> hashes = getSelection().getCommits();
-        if (hashes.isEmpty()) return null;
-        return VcsLogUtil.convertToRevisionNumber(Objects.requireNonNull(getFirstItem(hashes)).getHash());
-      })
-      .ifEq(VcsDataKeys.VCS_REVISION_NUMBERS).thenGet(() -> {
-        List<CommitId> hashes = getSelection().getCommits();
-        if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-        return ContainerUtil.map(hashes,
-                                 commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
-      })
-      .ifEq(VcsDataKeys.VCS_COMMIT_SUBJECTS).thenGet(() -> {
-        List<VcsCommitMetadata> metadata = getSelection().getCachedMetadata();
-        if (metadata.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-        return ContainerUtil.map2Array(metadata, String.class, data -> data.getSubject());
       })
       .orNull();
   }
@@ -821,11 +821,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @NotNull
     private static Color getBackground() {
       return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ToolWindow.background() : UIUtil.getListBackground();
-    }
-
-    @NotNull
-    private static Color getSelectionBackground(boolean hasFocus) {
-      return hasFocus ? SELECTION_BACKGROUND : SELECTION_BACKGROUND_INACTIVE;
     }
   }
 
@@ -1101,6 +1096,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       myInitializedColumns.remove(column);
       onColumnOrderSettingChanged();
     }
+  }
+
+
+  @NotNull
+  public static Color getSelectionBackground(boolean hasFocus) {
+    return hasFocus ? SELECTION_BACKGROUND : SELECTION_BACKGROUND_INACTIVE;
   }
 
   @NotNull

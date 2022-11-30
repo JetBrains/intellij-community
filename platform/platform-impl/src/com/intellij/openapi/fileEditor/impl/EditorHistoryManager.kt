@@ -89,7 +89,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       return
     }
 
-    val editorManager = FileEditorManagerEx.getInstanceEx(project)
+    val editorManager = FileEditorManagerEx.getInstanceExIfCreated(project) ?: return
     val editorComposite = editorManager.getComposite(file)
     var editors = editorComposite?.allEditors ?: emptyList()
     var oldProviders = editorComposite?.allProviders ?: emptyList()

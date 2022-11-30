@@ -179,8 +179,8 @@ class SmartStepTargetVisitor(
                     parameter,
                     callerMethodOrdinal,
                     methodDescriptor.containsInlineClassInValueArguments(),
-                    true,
-                    methodDescriptor.getMethodName()
+                    methodDescriptor.name.asString(),
+                    (methodDescriptor as? FunctionDescriptor)?.isSuspend ?: false
                 )
             )
         }

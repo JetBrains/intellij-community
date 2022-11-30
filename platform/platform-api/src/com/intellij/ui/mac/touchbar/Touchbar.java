@@ -64,15 +64,15 @@ public class Touchbar {
   public static void setButtonActions(@NotNull JComponent component, JButton[] buttons) {
     setButtonActions(component, Arrays.asList(buttons));
   }
-  public static void setButtonActions(@NotNull JComponent component, Collection<JButton> buttons) {
+  public static void setButtonActions(@NotNull JComponent component, Collection<? extends JButton> buttons) {
     setButtonActions(component, buttons, null, null);
   }
-  public static void setButtonActions(@NotNull JComponent component, Collection<JButton> buttons, Collection<JButton> principal, JButton defaultButton) {
+  public static void setButtonActions(@NotNull JComponent component, Collection<? extends JButton> buttons, Collection<? extends JButton> principal, JButton defaultButton) {
     setButtonActions(component, buttons, principal, defaultButton, null);
   }
   public static void setButtonActions(@NotNull JComponent component,
-                                      Collection<JButton> buttons,
-                                      Collection<JButton> principal,
+                                      Collection<? extends JButton> buttons,
+                                      Collection<? extends JButton> principal,
                                       JButton defaultButton,
                                       @Nullable ActionGroup extraActions) {
     if (!SystemInfo.isMac || ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return;
@@ -111,7 +111,7 @@ public class Touchbar {
   private static final Key<ActionGroup> ACTION_GROUP_KEY = Key.create("Touchbar.ActionGroup.key");
   private static final boolean EXPAND_OPTION_BUTTONS = Boolean.getBoolean("Touchbar.expand.option.button");
 
-  private static @NotNull DefaultActionGroup buildActionsFromButtons(Collection<JButton> buttons,
+  private static @NotNull DefaultActionGroup buildActionsFromButtons(Collection<? extends JButton> buttons,
                                                                      JButton defaultButton,
                                                                      boolean isPrincipal) {
     final DefaultActionGroup result = new DefaultActionGroup();

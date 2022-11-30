@@ -13,7 +13,7 @@ public class UrlFilePath extends LocalFilePath {
   }
 
   public UrlFilePath(@NotNull String url, boolean isDirectory) {
-    super(url, isDirectory);
+    super(url, isDirectory, null);
   }
 
   @Override

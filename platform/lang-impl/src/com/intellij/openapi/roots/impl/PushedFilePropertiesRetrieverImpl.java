@@ -30,7 +30,7 @@ final class PushedFilePropertiesRetrieverImpl implements PushedFilePropertiesRet
       else {
         vfsObject = file;
       }
-      property = vfsObject.getUserData(extension.getFileDataKey());
+      property = extension.getFileDataKey().getPersistentValue(vfsObject);
       if (property != null) {
         if (properties == null) {
           properties = new ArrayList<>();

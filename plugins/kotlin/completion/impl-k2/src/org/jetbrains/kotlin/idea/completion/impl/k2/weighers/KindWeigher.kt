@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.PackagePartLookupO
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
 internal object KindWeigher {
@@ -19,6 +20,7 @@ internal object KindWeigher {
         ENUM_MEMBER,
         CALLABLE,
         KEYWORD,
+        NAMED_ARGUMENT,
         DEFAULT,
         PACKAGES
     }
@@ -39,6 +41,7 @@ internal object KindWeigher {
                 is KeywordLookupObject -> Weight.KEYWORD
                 is PackagePartLookupObject -> Weight.PACKAGES
                 is KotlinCallableLookupObject -> Weight.CALLABLE
+                is NamedArgumentLookupObject -> Weight.NAMED_ARGUMENT
                 else -> Weight.DEFAULT
             }
         }

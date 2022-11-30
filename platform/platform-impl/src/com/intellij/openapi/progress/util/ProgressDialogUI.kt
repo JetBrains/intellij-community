@@ -159,6 +159,9 @@ internal class ProgressDialogUI : Disposable {
 @Contract(pure = true)
 private fun fitTextToLabel(fullText: String?, label: JLabel): String {
   if (fullText.isNullOrEmpty()) return " "
+  if (fullText.startsWith("<html>") && fullText.endsWith("</html>")) {
+    return fullText // Don't truncate if the text is HTML
+  }
   var newFullText = StringUtil.last(fullText, 500, true).toString() // avoid super long strings
   while (label.getFontMetrics(label.font).stringWidth(newFullText) > label.width) {
     val sep = newFullText.indexOf(File.separatorChar, 4)

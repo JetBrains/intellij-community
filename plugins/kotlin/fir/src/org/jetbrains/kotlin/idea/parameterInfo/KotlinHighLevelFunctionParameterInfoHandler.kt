@@ -12,12 +12,13 @@ import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
@@ -27,7 +28,7 @@ import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.checkWithAttachment
 import java.awt.Color
 import kotlin.reflect.KClass
@@ -141,33 +142,26 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         val callElement = argumentList.parent as? KtElement ?: return
         analyze(callElement) {
-            val (valueArguments, arguments) = when (callElement) {
-                is KtCallElement -> {
-                    val valueArguments = callElement.valueArgumentList?.arguments
-                    Pair(valueArguments, valueArguments?.map { it.getArgumentExpression() } ?: listOf())
-                }
-                is KtArrayAccessExpression -> Pair(null, callElement.indexExpressions)
-                else -> return@analyze
-            }
-            val candidatesWithMapping = collectCallCandidates(callElement)
-            val hasMultipleApplicableBestCandidates = candidatesWithMapping.count { it.isApplicableBestCandidate } > 1
+            if (callElement !is KtCallElement && callElement !is KtArrayAccessExpression) return@analyze
+
+            val arguments = CallParameterInfoProvider.getArgumentOrIndexExpressions(callElement)
+            val valueArguments = (callElement as? KtCallElement)?.valueArgumentList?.arguments
+
+            val candidates = collectCallCandidates(callElement)
+            val hasMultipleApplicableBestCandidates = candidates.count { candidate -> candidate.withMapping.isApplicableBestCandidate } > 1
 
             for ((index, objectToView) in context.objectsToView.withIndex()) {
                 val candidateInfo = objectToView as? CandidateInfo ?: continue
 
-                if (index >= candidatesWithMapping.size) {
+                if (index >= candidates.size) {
                     // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
                     return
                 }
-                val (candidateSignature, argumentMapping, isApplicableBestCandidate) = candidatesWithMapping[index]
+                val (candidateSignature, argumentMapping, isApplicableBestCandidate) = candidates[index].withMapping
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
-                val isArraySetCall = candidateSignature.symbol.callableIdIfNonLocal?.let {
-                    val isSet = it.callableName == OperatorNameConventions.SET
-                    isSet && callElement is KtArrayAccessExpression
-                } ?: false
+                val isArraySetCall = CallParameterInfoProvider.isArraySetCall(callElement, candidateSignature)
                 val valueParameters = candidateSignature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
-                val setValueParameter = if (isArraySetCall) candidateSignature.valueParameters.last() else null
 
                 // TODO: When resolvedCall is KtFunctionalTypeVariableCall, the candidate is FunctionN.invoke() and parameter names are "p1", "p2", etc.
                 // We need to get the type of the target variable, and retrieve the parameter names from the type (KtFunctionalType).
@@ -187,12 +181,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     }
                 }
 
-                val argumentToParameterIndex = LinkedHashMap<KtExpression, Int>(argumentMapping.size).apply {
-                    for ((argumentExpression, parameterForArgument) in argumentMapping) {
-                        if (parameterForArgument == setValueParameter) continue
-                        put(argumentExpression, parameterToIndex.getValue(parameterForArgument))
-                    }
-                }
+                val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(
+                    callElement,
+                    candidateSignature,
+                    argumentMapping
+                )
 
                 // Determine the parameter to be highlighted.
                 val highlightParameterIndex = calculateHighlightParameterIndex(
@@ -203,21 +196,31 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     parameterToIndex
                 )
 
-                val hasTypeMismatchBeforeCurrent = calculateHasTypeMismatchBeforeCurrent(
-                    arguments,
-                    currentArgumentIndex,
+                val hasTypeMismatchBeforeCurrent = CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(
+                    callElement,
                     argumentMapping,
-                    setValueParameter
+                    currentArgumentIndex
                 )
 
                 // We want to highlight the candidate green if it is the only best/final candidate selected and is applicable.
                 // However, if there is only one candidate available, we want to highlight it green regardless of its applicability.
-                val shouldHighlightGreen = (isApplicableBestCandidate && !hasMultipleApplicableBestCandidates)
-                        || candidatesWithMapping.size == 1
+                val shouldHighlightGreen = (isApplicableBestCandidate && !hasMultipleApplicableBestCandidates) || candidates.size == 1
+
+                val firstArgumentInNamedMode = when (callElement) {
+                    is KtCallElement -> CallParameterInfoProvider.firstArgumentInNamedMode(
+                        callElement,
+                        candidateSignature,
+                        argumentMapping,
+                        callElement.languageVersionSettings
+                    )
+
+                    else -> null
+                }
 
                 candidateInfo.callInfo = CallInfo(
                     callElement,
                     valueArguments,
+                    firstArgumentInNamedMode,
                     arguments,
                     argumentToParameterIndex,
                     valueParameters.size,
@@ -262,8 +265,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 append(": ")
             }
 
-            val returnType = parameter.returnType.takeUnless { it is KtClassErrorType } ?: parameter.symbol.returnType
-            append(returnType.render(KtTypeRendererOptions.SHORT_NAMES))
+            val returnType = parameter.returnType.takeUnless { it is KtErrorType } ?: parameter.symbol.returnType
+            append(returnType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
 
             parameter.symbol.defaultValue?.let { defaultValue ->
                 append(" = ")
@@ -273,9 +276,9 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
     }
 
     private fun calculateHighlightParameterIndex(
-        arguments: List<KtExpression>,
+        arguments: List<KtExpression?>,
         currentArgumentIndex: Int,
-        argumentToParameterIndex: LinkedHashMap<KtExpression, Int>,
+        argumentToParameterIndex: Map<KtExpression, Int>,
         argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
         parameterToIndex: Map<KtVariableLikeSignature<KtValueParameterSymbol>, Int>
     ): Int? {
@@ -295,25 +298,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             else -> null
         }
         return highlightParameterIndex
-    }
-
-    private fun KtAnalysisSession.calculateHasTypeMismatchBeforeCurrent(
-        arguments: List<KtExpression>,
-        currentArgumentIndex: Int,
-        argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
-        setValueParameter: KtVariableLikeSignature<KtValueParameterSymbol>?
-    ): Boolean {
-        for ((index, argument) in arguments.withIndex()) {
-            if (index >= currentArgumentIndex) break
-            val parameterForArgument = argumentMapping[argument] ?: continue
-            if (parameterForArgument == setValueParameter) continue
-
-            val argumentType = argument.getKtType() ?: error("Argument should have a KtType")
-            if (argumentType.isNotSubTypeOf(parameterForArgument.returnType)) {
-                return true
-            }
-        }
-        return false
     }
 
     override fun updateUI(itemToShow: CandidateInfo, context: ParameterInfoUIContext) {
@@ -375,9 +359,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         val callInfo = itemToShow.callInfo ?: return false
         with(callInfo) {
-            val supportsMixedNamedArgumentsInTheirOwnPosition =
-                callElement.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
-
             // TODO: This matches FE 1.0 plugin behavior. Consider just returning false here
             checkWithAttachment(
                 arguments.size >= currentArgumentIndex,
@@ -443,12 +424,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 if (valueArguments != null) {
                     for (valueArgument in valueArguments) {
                         val parameterIndex = argumentToParameterIndex[valueArgument.getArgumentExpression()]
-                        if (valueArgument.isNamed() &&
-                            !(supportsMixedNamedArgumentsInTheirOwnPosition && parameterIndex != null && parameterIndex == argumentIndex)
-                        ) {
-                            // "Named mode" (all arguments should be named) begins when there is a named argument NOT in their own position
-                            // or a named argument is unmapped (i.e., non-existent name),
-                            // or named arguments in their own position is not supported.
+                        if (valueArgument == firstArgumentInNamedMode){
                             namedMode = true
                         }
 
@@ -532,8 +508,9 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
     data class CallInfo(
         val callElement: KtElement,
         val valueArguments: List<KtValueArgument>?,
-        val arguments: List<KtExpression>,
-        val argumentToParameterIndex: LinkedHashMap<KtExpression, Int>,
+        val firstArgumentInNamedMode: KtValueArgument?,
+        val arguments: List<KtExpression?>,
+        val argumentToParameterIndex: Map<KtExpression, Int>,
         val valueParameterCount: Int,
         val parameterIndexToText: Map<Int, String>,
         val shouldHighlightGreen: Boolean,

@@ -25,7 +25,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.util.containers.MultiMap
 
 internal object CodeAnalysisBeforeCheckinShowOnlyNew {
-  val LOG = logger<CodeAnalysisBeforeCheckinShowOnlyNew>()
+  private val LOG = logger<CodeAnalysisBeforeCheckinShowOnlyNew>()
 
   @JvmStatic
   fun runAnalysis(project: Project, selectedFiles: List<VirtualFile>, progressIndicator: ProgressIndicator) : List<CodeSmellInfo> {

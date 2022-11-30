@@ -22,13 +22,13 @@ public interface VcsFileListenerContextHelper {
     return project.getService(VcsFileListenerContextHelper.class);
   }
 
-  void ignoreDeleted(@NotNull Collection<FilePath> filePath);
+  void ignoreDeleted(@NotNull Collection<? extends FilePath> filePath);
 
   boolean isDeletionIgnored(@NotNull FilePath filePath);
 
-  void ignoreAdded(@NotNull Collection<FilePath> filePaths);
+  void ignoreAdded(@NotNull Collection<? extends FilePath> filePaths);
 
-  void ignoreAddedRecursive(@NotNull Collection<FilePath> filePaths);
+  void ignoreAddedRecursive(@NotNull Collection<? extends FilePath> filePaths);
 
   boolean isAdditionIgnored(@NotNull FilePath filePath);
 

@@ -31,7 +31,7 @@ public interface VcsPreservingExecutor {
    * The implementation of saving/loading depends on the underlying VCS
    */
   static void executeOperation(@NotNull Project project,
-                               @NotNull Collection<VirtualFile> rootsToSave,
+                               @NotNull Collection<? extends VirtualFile> rootsToSave,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle,
                                @NotNull ProgressIndicator indicator,
                                @NotNull Runnable operation) {

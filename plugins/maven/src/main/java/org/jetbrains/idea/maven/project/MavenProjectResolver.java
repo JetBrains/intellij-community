@@ -28,6 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.ParallelRunner;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
@@ -138,37 +139,55 @@ public class MavenProjectResolver {
 
     context.putUserData(UNRESOLVED_ARTIFACTS, problems.unresolvedArtifacts);
 
-    for (MavenProjectReaderResult result : results) {
-      MavenProject mavenProjectCandidate = null;
-      for (MavenProject mavenProject : mavenProjects) {
-        MavenId mavenId = result.mavenModel.getMavenId();
-        if (mavenProject.getMavenId().equals(mavenId)) {
-          mavenProjectCandidate = mavenProject;
-          break;
-        }
-        else if (mavenProject.getMavenId().equals(mavenId.getGroupId(), mavenId.getArtifactId())) {
-          mavenProjectCandidate = mavenProject;
-        }
+    doResolve(project, results, mavenProjects, generalSettings, embedder, context);
+  }
+
+  private void doResolve(@NotNull Project project,
+                         @NotNull Collection<MavenProjectReaderResult> results,
+                         @NotNull Collection<MavenProject> mavenProjects,
+                         @NotNull MavenGeneralSettings generalSettings,
+                         @NotNull MavenEmbedderWrapper embedder,
+                         @NotNull ResolveContext context) throws MavenProcessCanceledException {
+    ParallelRunner.<MavenProjectReaderResult, MavenProcessCanceledException>runInParallelRethrow(results, result -> {
+        doResolve(project, result, mavenProjects, generalSettings, embedder, context);
+    });
+  }
+
+  private void doResolve(@NotNull Project project,
+                         @NotNull MavenProjectReaderResult result,
+                         @NotNull Collection<MavenProject> mavenProjects,
+                         @NotNull MavenGeneralSettings generalSettings,
+                         @NotNull MavenEmbedderWrapper embedder,
+                         @NotNull ResolveContext context) throws MavenProcessCanceledException {
+    MavenProject mavenProjectCandidate = null;
+    for (MavenProject mavenProject : mavenProjects) {
+      MavenId mavenId = result.mavenModel.getMavenId();
+      if (mavenProject.getMavenId().equals(mavenId)) {
+        mavenProjectCandidate = mavenProject;
+        break;
       }
-
-      if (mavenProjectCandidate == null) continue;
-
-      MavenProject.Snapshot snapshot = mavenProjectCandidate.getSnapshot();
-      mavenProjectCandidate
-        .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
-      if (result.nativeMavenProject != null) {
-        PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
-
-        for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
-          eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
-        }
+      else if (mavenProject.getMavenId().equals(mavenId.getGroupId(), mavenId.getArtifactId())) {
+        mavenProjectCandidate = mavenProject;
       }
-      // project may be modified by MavenImporters, so we need to collect the changes after them:
-      MavenProjectChanges changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot);
-
-      mavenProjectCandidate.getProblems(); // need for fill problem cache
-      myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
     }
+
+    if (mavenProjectCandidate == null) return;
+
+    MavenProject.Snapshot snapshot = mavenProjectCandidate.getSnapshot();
+    var resetArtifacts = MavenProjectReaderResult.shouldResetDependenciesAndFolders(result);
+    mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false);
+    if (result.nativeMavenProject != null) {
+      PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
+
+      for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
+        eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
+      }
+    }
+    // project may be modified by MavenImporters, so we need to collect the changes after them:
+    MavenProjectChanges changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot);
+
+    mavenProjectCandidate.getProblems(); // need for fill problem cache
+    myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
   }
 
   public Set<MavenPlugin> resolvePlugins(@NotNull MavenProject mavenProject,

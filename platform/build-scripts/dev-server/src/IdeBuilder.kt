@@ -25,6 +25,7 @@ import org.jetbrains.xxh3.Xx3UnencodedString
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
@@ -75,17 +76,30 @@ internal class IdeBuilder(internal val pluginBuilder: PluginBuilder,
 
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest, isServerMode: Boolean): IdeBuilder {
   val runDir = withContext(Dispatchers.IO) {
-    val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
-      checkBuildModulesModificationAndMark(productConfiguration, request.productionClassOutput)
+    var rootDir = request.homePath.resolve("out/dev-run")
+    // if symlinked to ram disk, use real path for performance reasons and avoid any issues in ant/other code
+    if (Files.exists(rootDir)) {
+      // toRealPath must be called only on existing file
+      rootDir = rootDir.toRealPath()
     }
-    createRunDirForProduct(homePath = request.homePath,
-                           usePluginCache = usePluginCache,
-                           request = request)
+
+    val classifier = if (request.isIdeProfileAware) computeAdditionalModulesFingerprint(request.additionalModules) else ""
+    val runDir = rootDir.resolve((if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier)
+    // on start delete everything to avoid stale data
+    if (Files.isDirectory(runDir)) {
+      val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
+        checkBuildModulesModificationAndMark(productConfiguration, request.productionClassOutput)
+      }
+      prepareExistingRunDirForProduct(runDir = runDir, usePluginCache = usePluginCache)
+    }
+    else {
+      Files.createDirectories(runDir)
+      Span.current().addEvent("plugin cache is not reused because run dir doesn't exist")
+    }
+    runDir
   }
 
-  val context = createBuildContext(productConfiguration = productConfiguration,
-                                   request = request,
-                                   runDir = runDir)
+  val context = createBuildContext(productConfiguration = productConfiguration, request = request, runDir = runDir)
 
   val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
 
@@ -117,10 +131,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
   }
 
-  // initial building
-  val pluginBuilder = PluginBuilder(outDir = request.productionClassOutput,
-                                    pluginCacheRootDir = pluginCacheRootDir,
-                                    context = context)
+  val pluginBuilder = PluginBuilder(outDir = request.productionClassOutput, pluginCacheRootDir = pluginCacheRootDir, context = context)
   coroutineScope {
     withContext(Dispatchers.IO) {
       Files.createDirectories(pluginRootDir)
@@ -322,39 +333,37 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
   return if (result.startsWith('-')) result else "-$result"
 }
 
-private fun createRunDirForProduct(homePath: Path, usePluginCache: Boolean, request: BuildRequest): Path {
-  // if symlinked to ram disk, use real path for performance reasons and avoid any issues in ant/other code
-  var rootDir = homePath.resolve("out/dev-run")
-  if (Files.exists(rootDir)) {
-    // toRealPath must be called only on existing file
-    rootDir = rootDir.toRealPath()
-  }
-
-  val classifier = if (request.isIdeProfileAware) computeAdditionalModulesFingerprint(request.additionalModules) else ""
-  val runDir = rootDir.resolve((if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier)
-  // on start delete everything to avoid stale data
-  if (!Files.isDirectory(runDir)) {
-    Files.createDirectories(runDir)
-    return runDir
-  }
-
-  Files.newDirectoryStream(runDir).use { stream ->
-    for (child in stream) {
-      if (usePluginCache && child.endsWith("plugins")) {
-        // move to cache
-        val pluginCache = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
-        NioFiles.deleteRecursively(pluginCache)
-        Files.move(child, pluginCache)
+private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePluginCache: Boolean) {
+  launch {
+    for (child in Files.newDirectoryStream(runDir).use { it.sorted() }) {
+      if (child.endsWith("plugins") || child.endsWith(PLUGIN_CACHE_DIR_NAME)) {
+        continue
       }
-      if (child.endsWith("log")) {
-        clearDirContent(child)
+
+      if (Files.isDirectory(child)) {
+        doClearDirContent(child)
       }
       else {
-        NioFiles.deleteRecursively(child)
+        Files.delete(child)
       }
     }
   }
-  return runDir
+  launch {
+    val pluginCacheDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
+    val pluginDir = runDir.resolve("plugins")
+    NioFiles.deleteRecursively(pluginCacheDir)
+    if (usePluginCache) {
+      // move to cache
+      try {
+        Files.move(pluginDir, pluginCacheDir)
+      }
+      catch (ignore: NoSuchFileException) {
+      }
+    }
+    else {
+      NioFiles.deleteRecursively(pluginDir)
+    }
+  }
 }
 
 private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot {

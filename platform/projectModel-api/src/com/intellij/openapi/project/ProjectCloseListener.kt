@@ -13,12 +13,13 @@ interface ProjectCloseListener {
   }
 
   /**
-   * Invoked on project close
+   * Invoked on project close. Works only if subscribed to an application message bus,
+   * because, at this point, project-level bus connections are disconnected.
    */
   fun projectClosed(project: Project) {}
 
   /**
-   * Invoked on project close before any closing activities
+   * Invoked on project close before any closing activities.
    */
   fun projectClosing(project: Project) {}
 

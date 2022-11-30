@@ -40,7 +40,11 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
     // Init a list VM with mocked loader
     GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
-                                         avatarIconsProvider = mock(), loaderSupplier = loaderSupplierMock)
+                                         account = mock(),
+                                         avatarIconsProvider = mock(),
+                                         accountManager = mock(),
+                                         tokenRefreshFlow = mock(),
+                                         loaderSupplier = loaderSupplierMock)
     verify(loaderSupplierMock, times(1)).invoke(GitLabMergeRequestsFiltersValue.DEFAULT)
     clearInvocations(loaderSupplierMock)
 
@@ -71,7 +75,11 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
     // Init a list VM with mocked loader
     GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
-                                         avatarIconsProvider = mock(), loaderSupplier = loaderSupplierMock)
+                                         account = mock(),
+                                         avatarIconsProvider = mock(),
+                                         accountManager = mock(),
+                                         tokenRefreshFlow = mock(),
+                                         loaderSupplier = loaderSupplierMock)
 
     val filterValueStateMerged = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.MERGED)
     filterVm.searchState.value = filterValueStateMerged
@@ -95,7 +103,11 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     val loaderSupplierMock = mock<(GitLabMergeRequestsFiltersValue) -> GitLabMergeRequestsListLoader>()
 
     GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
-                                         avatarIconsProvider = mock(), loaderSupplier = loaderSupplierMock)
+                                         account = mock(),
+                                         avatarIconsProvider = mock(),
+                                         accountManager = mock(),
+                                         tokenRefreshFlow = mock(),
+                                         loaderSupplier = loaderSupplierMock)
 
     val user = GitLabUserDTO(id = "", username = "", name = "", avatarUrl = "", webUrl = "")
     val member = GitLabMemberDTO(id = "", user = user, accessLevel = AccessLevel(GitLabAccessLevel.GUEST.name))

@@ -497,7 +497,7 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  private void runCustomProcessors(@NotNull AWTEvent event, @NotNull List<EventDispatcher> processors) {
+  private void runCustomProcessors(@NotNull AWTEvent event, @NotNull List<? extends EventDispatcher> processors) {
     for (EventDispatcher each : processors) {
       try {
         each.dispatch(event);
@@ -851,14 +851,24 @@ public final class IdeEventQueue extends EventQueue {
 
   private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
     for (EventDispatcher eachDispatcher : myDispatchers) {
-      if (eachDispatcher.dispatch(e)) {
-        return true;
+      try {
+        if (eachDispatcher.dispatch(e)) {
+          return true;
+        }
+      }
+      catch (Throwable t) {
+        processException(t);
       }
     }
 
     for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionsIfPointIsRegistered()) {
-      if (eachDispatcher.dispatch(e)) {
-        return true;
+      try {
+        if (eachDispatcher.dispatch(e)) {
+          return true;
+        }
+      }
+      catch (Throwable t) {
+        processException(t);
       }
     }
 
@@ -901,9 +911,11 @@ public final class IdeEventQueue extends EventQueue {
   private void defaultDispatchEvent(@NotNull AWTEvent e) {
     try {
       maybeReady();
+      MouseEvent me = e instanceof MouseEvent ? (MouseEvent)e : null;
       KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
       boolean consumed = ke == null || ke.isConsumed();
-      if (e instanceof MouseEvent && (((MouseEvent)e).isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED)) {
+      if (me != null && (me.isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED) ||
+          ke != null && ke.getKeyCode() == KeyEvent.VK_CONTEXT_MENU) {
         myPopupTriggerTime = System.currentTimeMillis();
       }
       super.dispatchEvent(e);
@@ -968,7 +980,19 @@ public final class IdeEventQueue extends EventQueue {
 
   // return true if consumed
   @ApiStatus.Internal
-  public static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
+  public static boolean consumeUnrelatedEvent(@Nullable Component modalComponent, @NotNull AWTEvent event) {
+    if (modalComponent == null) {
+      if (event instanceof InputEvent && event.getSource() instanceof Component) {
+        if (Logs.LOG.isDebugEnabled()) {
+          Logs.LOG.debug("pumpEventsForHierarchy.consumed: " + event);
+        }
+        ((InputEvent)event).consume();
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
     boolean consumed = false;
     if (event instanceof InputEvent) {
       Object s = event.getSource();

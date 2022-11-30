@@ -2,13 +2,12 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.externalSystem.util.*
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.file.VirtualFileUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.util.isGradleAtLeast
-import org.jetbrains.plugins.gradle.testFramework.util.isGradleOlderThan
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
 
 abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
@@ -24,18 +23,15 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   fun findOrCreateFile(relativePath: String, text: String): VirtualFile {
     gradleFixture.fileFixture.snapshot(relativePath)
     return runWriteActionAndGet {
-      val file = projectRoot.findOrCreateFile(relativePath)
-      file.text = text
-      FileDocumentManager.getInstance().getDocument(file)?.let {
-        PsiDocumentManager.getInstance(project).commitDocument(it)
-      }
+      val file = VirtualFileUtil.findOrCreateFile(projectRoot, relativePath)
+      VirtualFileUtil.reloadDocument(file)
+      VirtualFileUtil.setTextContent(file, text)
+      VirtualFileUtil.commitDocument(project, file)
       file
     }
   }
 
   fun getFile(relativePath: String): VirtualFile {
-    return runReadAction {
-      projectRoot.getFile(relativePath)
-    }
+    return VirtualFileUtil.getFile(projectRoot, relativePath)
   }
 }

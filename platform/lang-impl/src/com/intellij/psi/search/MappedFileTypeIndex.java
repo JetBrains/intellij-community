@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.SystemProperties;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -238,6 +240,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           myDataBuffer.flip();
           return myDataBuffer.getShort();
         }
+        catch (ClosedChannelException cce) {
+          throw new ProcessCanceledException(cce);
+        }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
         }
@@ -253,6 +258,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           while (bytesWritten < ELEMENT_BYTES) {
             bytesWritten += myFileChannel.write(myDataBuffer, offsetInFile(inputId) + bytesWritten);
           }
+        }
+        catch (ClosedChannelException cce) {
+          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -277,6 +285,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
               myElementsCount += zeroBufSize / ELEMENT_BYTES;
             }
           }
+        }
+        catch (ClosedChannelException cce) {
+          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -325,6 +336,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           //noinspection NonAtomicOperationOnVolatileField
           myModificationsCounter++;
         }
+        catch (ClosedChannelException cce) {
+          throw new ProcessCanceledException(cce);
+        }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
         }
@@ -333,6 +347,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       public void flush() throws StorageException {
         try {
           myFileChannel.force(true);
+        }
+        catch (ClosedChannelException cce) {
+          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));

@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.arguments.*
 import org.jetbrains.kotlin.idea.projectModel.*
 
 internal fun createKotlinMPPGradleModel(
+    dependencies: IdeaKotlinDependenciesContainer? = null,
     dependencyMap: Map<KotlinDependencyId, KotlinDependency> = emptyMap(),
     sourceSets: Set<KotlinSourceSet> = emptySet(),
     targets: Iterable<KotlinTarget> = emptyList(),
@@ -17,6 +18,7 @@ internal fun createKotlinMPPGradleModel(
 ): KotlinMPPGradleModelImpl {
     return KotlinMPPGradleModelImpl(
         dependencyMap = dependencyMap,
+        dependencies = dependencies,
         sourceSetsByName = sourceSets.associateBy { it.name },
         targets = targets.toList(),
         extraFeatures = extraFeatures,

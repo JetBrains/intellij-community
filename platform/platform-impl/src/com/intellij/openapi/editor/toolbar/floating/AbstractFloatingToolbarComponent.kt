@@ -28,7 +28,7 @@ abstract class AbstractFloatingToolbarComponent(
     updateActionsImmediately(true)
   }
 
-  override fun actionsUpdated(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
+  override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
     super.actionsUpdated(forced, newVisibleActions)
     transparentComponent.fireActionsUpdated()
   }

@@ -657,24 +657,20 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  private inner class ResizeActionGroup : ActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true), DumbAware {
-    private val children by lazy<Array<AnAction>> {
-      // force creation
-      createContentIfNeeded()
-      val component = decorator
-      val toolWindow = this@ToolWindowImpl
-      arrayOf(
-        ResizeToolWindowAction.Left(toolWindow, component),
-        ResizeToolWindowAction.Right(toolWindow, component),
-        ResizeToolWindowAction.Up(toolWindow, component),
-        ResizeToolWindowAction.Down(toolWindow, component),
-        ActionManager.getInstance().getAction("MaximizeToolWindow")
+  private inner class ResizeActionGroup : DefaultActionGroup(
+    ActionsBundle.groupText("ResizeToolWindowGroup"),
+    ActionManager.getInstance().let { actionManager ->
+      listOf(
+        actionManager.getAction("ResizeToolWindowLeft"),
+        actionManager.getAction("ResizeToolWindowRight"),
+        actionManager.getAction("ResizeToolWindowUp"),
+        actionManager.getAction("ResizeToolWindowDown"),
+        actionManager.getAction("MaximizeToolWindow")
       )
+    }) {
+    init {
+      isPopup = true
     }
-
-    override fun getChildren(e: AnActionEvent?) = children
-
-    override fun isDumbAware() = true
   }
 
   private inner class RemoveStripeButtonAction :

@@ -2,7 +2,7 @@
 // ERROR: Unresolved reference: Nested
 // ERROR: Unresolved reference: NestedEnum
 // ERROR: Unresolved reference: NestedObj
-// ERROR: Unresolved reference: NestedTrait
+// ERROR: Unresolved reference: NestedInterface
 // ERROR: Unresolved reference: NestedAnnotation
 package to
 
@@ -15,7 +15,7 @@ class Outer {
     }
     object NestedObj {
     }
-    interface NestedTrait {
+    interface NestedInterface {
     }
     annotation class NestedAnnotation
 }
@@ -24,5 +24,5 @@ enum class E {
     ENTRY
 }
 
-fun f2(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedTrait, a: NestedAnnotation) {
+fun f2(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedInterface, a: NestedAnnotation) {
 }

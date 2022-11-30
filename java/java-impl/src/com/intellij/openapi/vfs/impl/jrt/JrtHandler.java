@@ -108,6 +108,13 @@ public class JrtHandler extends ArchiveHandler {
     EntryInfo entry = getEntryInfo(relativePath);
     if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
     Path path = getFileSystem().getPath("/modules/" + relativePath);
-    return Files.readAllBytes(path);
+    try {
+      return Files.readAllBytes(path);
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) throw (IOException)cause;
+      throw e;
+    }
   }
 }

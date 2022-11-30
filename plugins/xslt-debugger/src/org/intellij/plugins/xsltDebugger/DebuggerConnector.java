@@ -122,12 +122,10 @@ class DebuggerConnector implements Runnable {
       }
     }
 
-    if (lastException != null) {
-      Logger.getInstance(getClass().getName()).info("Could not connect to debugger", lastException);
+    Logger.getInstance(getClass().getName()).info("Could not connect to debugger", lastException);
 
-      if (lastException.getMessage() != null) {
-        myProcess.notifyTextAvailable("Connection error: " + lastException.getMessage() + "\n", ProcessOutputTypes.SYSTEM);
-      }
+    if (lastException.getMessage() != null) {
+      myProcess.notifyTextAvailable("Connection error: " + lastException.getMessage() + "\n", ProcessOutputTypes.SYSTEM);
     }
 
     return null;

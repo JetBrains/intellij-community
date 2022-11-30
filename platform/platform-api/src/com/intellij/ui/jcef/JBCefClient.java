@@ -626,9 +626,17 @@ public final class JBCefClient implements JBCefDisposable {
                                           String request_url,
                                           CefSSLInfo sslInfo,
                                           CefCallback callback) {
-          return myRequestHandler.handleBoolean(browser, handler -> {
-            return handler.onCertificateError(browser, cert_error, request_url, sslInfo, callback);
-          });
+          List<CefRequestHandler> handlers = myRequestHandler.get(browser);
+          if (handlers == null) {
+            return false;
+          }
+
+          boolean result = false;
+          for (CefRequestHandler handler: handlers) {
+            result |= handler.onCertificateError(browser, cert_error, request_url, sslInfo, callback);
+          }
+
+          return result;
         }
 
         @Override

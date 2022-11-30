@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.Gray;
@@ -304,7 +305,7 @@ public final class ListPluginComponent extends JPanel {
     return new InstallButton(false, upgradeRequired);
   }
 
-  private void createEnableDisableButton(@NotNull Supplier<IdeaPluginDescriptor> descriptorFunction) {
+  private void createEnableDisableButton(@NotNull Supplier<? extends IdeaPluginDescriptor> descriptorFunction) {
     myEnableDisableButton = createEnableDisableButton(__ -> {
       List<IdeaPluginDescriptor> descriptors = List.of(descriptorFunction.get());
       if (myPluginModel.getState(myPlugin).isDisabled()) {
@@ -387,9 +388,11 @@ public final class ListPluginComponent extends JPanel {
       }
     }
 
-    String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
-    if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+    if (!myPlugin.isBundled()) {
+      String vendor = StringUtil.defaultIfEmpty(Strings.trim(myPlugin.getVendor()), Strings.trim(myPlugin.getOrganization()));
+      if (!StringUtil.isEmptyOrSpaces(vendor)) {
+        myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+      }
     }
   }
 
@@ -1083,12 +1086,12 @@ public final class ListPluginComponent extends JPanel {
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
                                                                                                                       @NotNull List<? extends ListPluginComponent> selection,
-                                                                                                                      @NotNull Function<ListPluginComponent, IdeaPluginDescriptor> function) {
+                                                                                                                      @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
     return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel, action, true, selection, function);
   }
 
   private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection,
-                                                                                                              @NotNull Function<ListPluginComponent, IdeaPluginDescriptor> function) {
+                                                                                                              @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
     return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, true, this, selection, function);
   }
 

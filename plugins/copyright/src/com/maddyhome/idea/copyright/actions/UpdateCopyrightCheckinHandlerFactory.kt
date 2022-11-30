@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.actions
 
 import com.intellij.copyright.CopyrightBundle
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -29,6 +29,7 @@ private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandl
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
     return BooleanCommitOption(project, CopyrightBundle.message("before.checkin.update.copyright"), false,
                                settings::UPDATE_COPYRIGHT)
+      .withCheckinHandler(this)
   }
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
@@ -37,7 +38,7 @@ private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandl
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     withContext(Dispatchers.Default) {
-      runUnderIndicator {
+      coroutineToIndicator {
         val psiFiles = runReadAction { getPsiFiles(commitInfo.committedVirtualFiles) }
         UpdateCopyrightProcessor(project, null, psiFiles, false).run()
       }

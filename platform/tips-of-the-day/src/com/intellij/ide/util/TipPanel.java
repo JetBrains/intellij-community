@@ -261,7 +261,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     });
   }
 
-  private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<TextParagraph> tipContent) {
+  private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<? extends TextParagraph> tipContent) {
     saveCurrentTipLikenessState();
     myCurrentLikenessState = getLikenessState(tip);
     myCurrentTip = tip;
@@ -290,7 +290,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     ClientProperty.put(this, CURRENT_TIP_KEY, myCurrentTip.fileName);
   }
 
-  private void adjustTextPaneBorder(List<TextParagraph> tipContent) {
+  private void adjustTextPaneBorder(List<? extends TextParagraph> tipContent) {
     if (tipContent.isEmpty()) return;
     TextParagraph last = tipContent.get(tipContent.size() - 1);
     List<TextPart> parts = last.getTextParts();

@@ -7,6 +7,7 @@ import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 
 interface GHPRSecurityService {
+  val ghostUser: GHUser
   val account: GithubAccount
   val currentUser: GHUser
 

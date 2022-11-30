@@ -292,7 +292,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return ourDataKeysIndices.size();
   }
 
-  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull List<Component> components,
+  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull List<? extends Component> components,
                                                                   @NotNull FList<ProviderData> initial,
                                                                   @NotNull DataManagerImpl dataManager,
                                                                   DataKey<?> @NotNull [] keys) {

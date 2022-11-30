@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -40,6 +41,10 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
     private var addSampleCode by addSampleCodeProperty
+
+    init {
+      gradleDsl = GradleDsl.GROOVY
+    }
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)

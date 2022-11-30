@@ -75,7 +75,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     }
 
     private inline fun <reified T:KtElement> factory(context: PsiElement, f: KtPsiFactory.() -> T): T {
-        val psiFactory = KtPsiFactory(context, true)
+        val psiFactory = KtPsiFactory(context.project, true)
         val result = psiFactory.f()
         (result.containingFile as KtFile).analysisContext = context
         return result

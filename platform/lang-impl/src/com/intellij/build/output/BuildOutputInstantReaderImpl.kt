@@ -143,7 +143,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
       if (line != null || state.get() == State.Closed) break
       if (!waitIfNotClosed) return null
     }
-    if (line == null) return line
+    if (line == null) return null
     readLinesBuffer.addFirst(line)
     if (readLinesBuffer.size > pushBackBufferSize) {
       readLinesBuffer.removeLast()

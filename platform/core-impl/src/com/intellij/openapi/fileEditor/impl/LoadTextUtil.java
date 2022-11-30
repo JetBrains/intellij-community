@@ -512,6 +512,7 @@ public final class LoadTextUtil {
       return getTextByBinaryPresentation(bytes, file);
     }
     catch (IOException e) {
+      LOG.debug(e);
       return Strings.EMPTY_CHAR_SEQUENCE;
     }
   }

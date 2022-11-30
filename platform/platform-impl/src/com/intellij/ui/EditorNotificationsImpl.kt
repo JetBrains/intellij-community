@@ -177,7 +177,7 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
       // delay for debounce
       delay(100)
 
-      if (!file.isValid) {
+      if (!readAction { file.isValid }) {
         return@launch
       }
 
@@ -192,6 +192,9 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
         coroutineContext.ensureActive()
 
         try {
+          if (project.isDisposed) {
+            return@launch
+          }
           val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
 
           coroutineContext.ensureActive()

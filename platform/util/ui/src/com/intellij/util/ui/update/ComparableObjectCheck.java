@@ -2,6 +2,7 @@
 package com.intellij.util.ui.update;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -17,18 +18,10 @@ public final class ComparableObjectCheck {
 
     Object[] my = me.getEqualityObjects();
     Object[] his = ((ComparableObject) him).getEqualityObjects();
-
-    if (his.length == 0 || my.length != his.length) {
+    if (his.length == 0) {
       return false;
     }
-
-    for (int i = 0; i < my.length; i++) {
-      if (!Comparing.equal(my[i], his[i])) {
-        return false;
-      }
-    }
-
-    return true;
+    return ArrayUtil.areEqual(my, his, Comparing::equal);
   }
 
   public static int hashCode(ComparableObject me, int superCode) {

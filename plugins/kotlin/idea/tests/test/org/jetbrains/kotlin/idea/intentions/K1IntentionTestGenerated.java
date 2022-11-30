@@ -8141,6 +8141,26 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToBlockBody/annotatedExprInParentheses.kt");
         }
 
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/comment.kt");
+        }
+
+        @TestMetadata("comment2.kt")
+        public void testComment2() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/comment2.kt");
+        }
+
+        @TestMetadata("comment3.kt")
+        public void testComment3() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/comment3.kt");
+        }
+
+        @TestMetadata("comment4.kt")
+        public void testComment4() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/comment4.kt");
+        }
+
         @TestMetadata("explicitlyNonUnitFun.kt")
         public void testExplicitlyNonUnitFun() throws Exception {
             runTest("testData/intentions/convertToBlockBody/explicitlyNonUnitFun.kt");
@@ -8189,6 +8209,26 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("getterTypeInferred.kt")
         public void testGetterTypeInferred() throws Exception {
             runTest("testData/intentions/convertToBlockBody/getterTypeInferred.kt");
+        }
+
+        @TestMetadata("getterWithComment.kt")
+        public void testGetterWithComment() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/getterWithComment.kt");
+        }
+
+        @TestMetadata("getterWithComment2.kt")
+        public void testGetterWithComment2() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/getterWithComment2.kt");
+        }
+
+        @TestMetadata("getterWithComment3.kt")
+        public void testGetterWithComment3() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/getterWithComment3.kt");
+        }
+
+        @TestMetadata("getterWithComment4.kt")
+        public void testGetterWithComment4() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/getterWithComment4.kt");
         }
 
         @TestMetadata("getterWithThrow.kt")
@@ -9394,6 +9434,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("onlyForStrings.kt")
         public void testOnlyForStrings() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/onlyForStrings.kt");
+        }
+
+        @TestMetadata("plusOperatorReturnsString.kt")
+        public void testPlusOperatorReturnsString() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/plusOperatorReturnsString.kt");
         }
 
         @TestMetadata("requiresPlusOperator.kt")
@@ -10693,6 +10738,36 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/importAllMembers/EnumMembers.kt");
         }
 
+        @TestMetadata("EnumSyntheticMethods.kt")
+        public void testEnumSyntheticMethods() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods2.kt")
+        public void testEnumSyntheticMethods2() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods2.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods3.kt")
+        public void testEnumSyntheticMethods3() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods3.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods4.kt")
+        public void testEnumSyntheticMethods4() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods4.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods5.kt")
+        public void testEnumSyntheticMethods5() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods5.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods6.kt")
+        public void testEnumSyntheticMethods6() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods6.kt");
+        }
+
         @TestMetadata("ImportAllMembersInImport.kt")
         public void testImportAllMembersInImport() throws Exception {
             runTest("testData/intentions/importAllMembers/ImportAllMembersInImport.kt");
@@ -11054,6 +11129,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("inapplicableTypeNotInferred.kt")
         public void testInapplicableTypeNotInferred() throws Exception {
             runTest("testData/intentions/insertExplicitTypeArguments/inapplicableTypeNotInferred.kt");
+        }
+
+        @TestMetadata("inferredIntersectionTypeFromElvis.kt")
+        public void testInferredIntersectionTypeFromElvis() throws Exception {
+            runTest("testData/intentions/insertExplicitTypeArguments/inferredIntersectionTypeFromElvis.kt");
+        }
+
+        @TestMetadata("inferredTypeFromElvis.kt")
+        public void testInferredTypeFromElvis() throws Exception {
+            runTest("testData/intentions/insertExplicitTypeArguments/inferredTypeFromElvis.kt");
         }
 
         @TestMetadata("insertImportForArg.kt")
@@ -14067,6 +14152,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         public void testRedeclarationPropertyConflict() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflict.kt");
         }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/script.kts");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -14935,6 +15025,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeAllArgumentNames/simple.kt");
         }
 
+        @TestMetadata("trailingLambdaArgument.kt")
+        public void testTrailingLambdaArgument() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/trailingLambdaArgument.kt");
+        }
+
         @TestMetadata("varargIsLast.kt")
         public void testVarargIsLast() throws Exception {
             runTest("testData/intentions/removeAllArgumentNames/varargIsLast.kt");
@@ -15002,6 +15097,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             @TestMetadata("arrayForVararg2.kt")
             public void testArrayForVararg2() throws Exception {
                 runTest("testData/intentions/removeArgumentName/arrayForVararg2.kt");
+            }
+
+            @TestMetadata("arrayForVararg3.kt")
+            public void testArrayForVararg3() throws Exception {
+                runTest("testData/intentions/removeArgumentName/arrayForVararg3.kt");
             }
 
             @TestMetadata("arrayLiteral.kt")
@@ -15462,9 +15562,9 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/onOverride.kt");
         }
 
-        @TestMetadata("onOverrideInTrait.kt")
-        public void testOnOverrideInTrait() throws Exception {
-            runTest("testData/intentions/removeExplicitType/onOverrideInTrait.kt");
+        @TestMetadata("onOverrideInInterface.kt")
+        public void testOnOverrideInInterface() throws Exception {
+            runTest("testData/intentions/removeExplicitType/onOverrideInInterface.kt");
         }
 
         @TestMetadata("onPropertyAccessor.kt")
@@ -17768,9 +17868,39 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/get.kt");
         }
 
+        @TestMetadata("getAnd.kt")
+        public void testGetAnd() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getAnd.kt");
+        }
+
+        @TestMetadata("getAnd2.kt")
+        public void testGetAnd2() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getAnd2.kt");
+        }
+
+        @TestMetadata("getIf.kt")
+        public void testGetIf() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getIf.kt");
+        }
+
+        @TestMetadata("getIf2.kt")
+        public void testGetIf2() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getIf2.kt");
+        }
+
         @TestMetadata("getImplicitReceiver.kt")
         public void testGetImplicitReceiver() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/getImplicitReceiver.kt");
+        }
+
+        @TestMetadata("getOr.kt")
+        public void testGetOr() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getOr.kt");
+        }
+
+        @TestMetadata("getOr2.kt")
+        public void testGetOr2() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getOr2.kt");
         }
 
         @TestMetadata("getReservedWord1.kt")
@@ -17788,9 +17918,24 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/getSafeCall.kt");
         }
 
+        @TestMetadata("getWithPublicFieldNameMatchingPropertyName.kt")
+        public void testGetWithPublicFieldNameMatchingPropertyName() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getWithPublicFieldNameMatchingPropertyName.kt");
+        }
+
         @TestMetadata("isGet.kt")
         public void testIsGet() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/isGet.kt");
+        }
+
+        @TestMetadata("isGetWithNonBooleanReturnType.kt")
+        public void testIsGetWithNonBooleanReturnType() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/isGetWithNonBooleanReturnType.kt");
+        }
+
+        @TestMetadata("isGetWithNullableBooleanReturnType.kt")
+        public void testIsGetWithNullableBooleanReturnType() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/isGetWithNullableBooleanReturnType.kt");
         }
 
         @TestMetadata("isSet.kt")
@@ -17806,6 +17951,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("nonVoidSetter2.kt")
         public void testNonVoidSetter2() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter2.kt");
+        }
+
+        @TestMetadata("nonVoidSetter3.kt")
+        public void testNonVoidSetter3() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter3.kt");
+        }
+
+        @TestMetadata("nonVoidSetter4.kt")
+        public void testNonVoidSetter4() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter4.kt");
+        }
+
+        @TestMetadata("nonVoidSetter5.kt")
+        public void testNonVoidSetter5() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter5.kt");
         }
 
         @TestMetadata("propertyTypeIsMoreSpecific1.kt")
@@ -17876,6 +18036,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("setSafeCall.kt")
         public void testSetSafeCall() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/setSafeCall.kt");
+        }
+
+        @TestMetadata("setWithProtectedSuperField.kt")
+        public void testSetWithProtectedSuperField() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/setWithProtectedSuperField.kt");
         }
 
         @TestMetadata("smartCast.kt")

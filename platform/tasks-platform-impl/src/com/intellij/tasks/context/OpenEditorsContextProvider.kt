@@ -3,6 +3,7 @@ package com.intellij.tasks.context
 
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
+import com.intellij.openapi.fileEditor.impl.EditorSplitterState
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
@@ -11,7 +12,7 @@ import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
 import org.jdom.Element
 
-internal class OpenEditorsContextProvider : WorkingContextProvider() {
+private class OpenEditorsContextProvider : WorkingContextProvider() {
   override fun getId(): String = "editors"
 
   override fun getDescription(): String = TaskBundle.message("open.editors.and.positions")
@@ -26,8 +27,7 @@ internal class OpenEditorsContextProvider : WorkingContextProvider() {
     val fileEditorManager = getFileEditorManager(project)
     if (fileEditorManager != null) {
       runBlockingModal(project, TaskBundle.message("open.editors.and.positions")) {
-        fileEditorManager.loadState(element)
-        fileEditorManager.mainSplitters.restoreEditors(requestFocus = false)
+        fileEditorManager.mainSplitters.restoreEditors(state = EditorSplitterState(element), onStartup = false, anyEditorOpened = null)
       }
     }
     val dockState = element.getChild("state")

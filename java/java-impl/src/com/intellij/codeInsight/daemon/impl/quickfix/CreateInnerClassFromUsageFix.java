@@ -2,12 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -16,7 +13,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -185,18 +181,9 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     final Project project = aClass.getProject();
     if (deconstructionList.getDeconstructionComponents().length != 0) {
       TemplateBuilderImpl templateBuilder = createRecordHeaderTemplate(aClass, deconstructionList);
-      aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
-      final Template template = templateBuilder.buildTemplate();
-      template.setToReformat(true);
-
-      final Editor editor = CreateFromUsageBaseFix.positionCursor(project, aClass.getContainingFile(), aClass);
-      if (editor == null) return;
-
-      Segment textRange = aClass.getTextRange();
-      editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-      CreateFromUsageBaseFix.startTemplate(editor, template, project, null, text);
+      CreateFromUsageBaseFix.startTemplate(project, aClass, templateBuilder.buildTemplate(), text);
     }
-    else if (!IntentionPreviewUtils.isPreviewElement(deconstructionList)) {
+    else {
       CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
     }
   }

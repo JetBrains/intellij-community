@@ -105,7 +105,7 @@ public abstract class LightElement extends PsiElementBase {
 
   @Override
   public boolean isValid() {
-    final PsiElement navElement = getNavigationElement();
+    PsiElement navElement = getNavigationElement();
     if (navElement != this) {
       return navElement.isValid();
     }

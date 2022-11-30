@@ -70,7 +70,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return hasMessages(kinds, element -> true);
   }
 
-  public boolean hasMessages(@NotNull Set<ErrorTreeElementKind> kinds, Predicate<ErrorTreeElement> filter) {
+  public boolean hasMessages(@NotNull Set<ErrorTreeElementKind> kinds, Predicate<? super ErrorTreeElement> filter) {
     synchronized (myLock) {
       for (Map.Entry<ErrorTreeElementKind, List<ErrorTreeElement>> entry : mySimpleMessages.entrySet()) {
         if (kinds.contains(entry.getKey())) {

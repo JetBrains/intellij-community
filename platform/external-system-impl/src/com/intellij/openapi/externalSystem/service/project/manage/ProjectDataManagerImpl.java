@@ -204,7 +204,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static void runFinalTasks(
     @NotNull Project project,
     @Nullable String projectPath,
-    @NotNull List<Runnable> tasks
+    @NotNull List<? extends Runnable> tasks
   ) {
     var topic = project.getMessageBus()
       .syncPublisher(ProjectDataImportListener.TOPIC);
@@ -212,10 +212,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     topic.onFinalTasksStarted(projectPath);
     try {
       ContainerUtil.reverse(tasks).forEach(Runnable::run);
-      topic.onFinalTasksFinished(projectPath);
     }
     catch (Exception e) {
       LOG.warn(e);
+    }
+    finally {
+      topic.onFinalTasksFinished(projectPath);
     }
   }
 

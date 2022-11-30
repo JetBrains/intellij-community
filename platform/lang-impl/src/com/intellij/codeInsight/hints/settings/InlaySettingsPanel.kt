@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
@@ -47,6 +48,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   companion object {
     @kotlin.jvm.JvmField
     val PREVIEW_KEY = Key.create<Any>("inlay.preview.key")
+
+    fun getFileTypeForPreview(model: InlayProviderSettingsModel): LanguageFileType {
+      return model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
+    }
   }
 
   init {
@@ -281,7 +286,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
-    val fileType = model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
+    val fileType = getFileTypeForPreview(model)
     ReadAction.nonBlocking(Callable {
       val file = model.createFile(project, fileType, editor.document)
       val continuation = model.collectData(editor, file)

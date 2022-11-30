@@ -23,7 +23,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -71,7 +71,8 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
    */
   private final Map<String, String> iconCustomizations = new HashMap<>();
 
-  private final Map<String, @Nls String> idToName = new LinkedHashMap<>();
+  private final Object lock = new Object();
+  private final Map<String, @Nls String> idToName;
   private final Map<String, ActionGroup> idToActionGroup = new HashMap<>();
   private final Set<String> extGroupIds = new HashSet<>();
 
@@ -81,6 +82,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   private int modificationStamp = 0;
 
   public CustomActionsSchema() {
+    Map<String, @Nls String> idToName = new LinkedHashMap<>();
     idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle());
     if (ToolbarSettings.getInstance().isAvailable()) {
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar());
@@ -104,13 +106,14 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     idToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu());
     idToName.put(IdeActions.GROUP_NAVBAR_TOOLBAR, ActionsTreeUtil.getNavigationBarToolbar());
 
-    fillExtGroups();
-    CustomizableActionGroupProvider.EP_NAME.addChangeListener(this::fillExtGroups, null);
+    fillExtGroups(idToName, extGroupIds);
+    CustomizableActionGroupProvider.EP_NAME.addChangeListener(() -> fillExtGroups(idToName, extGroupIds), null);
 
     idToName.putAll(additionalIdToName);
+    this.idToName = idToName;
   }
 
-  private void fillExtGroups() {
+  private static void fillExtGroups(@NotNull Map<String, String> idToName, @NotNull Set<String> extGroupIds) {
     for (String id : extGroupIds) {
       idToName.remove(id);
     }
@@ -118,7 +121,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
     List<Pair<String, @Nls String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar = (groupId, groupTitle) -> {
-      extList.add(Pair.create(groupId, groupTitle));
+      extList.add(new Pair<>(groupId, groupTitle));
     };
     for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensionList()) {
       provider.registerGroups(registrar);
@@ -136,7 +139,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     // Need to sync new items with global instance (if it has been created)
     CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionSchema != null) {
-      customActionSchema.idToName.put(itemId, itemName);
+      synchronized (customActionSchema.lock) {
+        customActionSchema.idToName.put(itemId, itemName);
+      }
     }
   }
 
@@ -146,7 +151,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     // Need to sync new items with global instance (if it has been created)
     CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionSchema != null) {
+      synchronized (customActionSchema.lock) {
         customActionSchema.idToName.remove(itemId);
+      }
     }
   }
 
@@ -175,20 +182,22 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public void copyFrom(CustomActionsSchema result) {
-    idToActionGroup.clear();
-    actions.clear();
-    Set<String> ids = new HashSet<>(iconCustomizations.keySet());
-    iconCustomizations.clear();
+    synchronized (lock) {
+      idToActionGroup.clear();
+      actions.clear();
+      Set<String> ids = new HashSet<>(iconCustomizations.keySet());
+      iconCustomizations.clear();
 
-    for (ActionUrl actionUrl : result.actions) {
-      addAction(actionUrl.copy());
+      for (ActionUrl actionUrl : result.actions) {
+        addAction(actionUrl.copy());
+      }
+      actions.sort(ActionUrlComparator.INSTANCE);
+
+      iconCustomizations.putAll(result.iconCustomizations);
+      ids.forEach(id -> {
+        iconCustomizations.putIfAbsent(id, null);
+      });
     }
-    actions.sort(ActionUrlComparator.INSTANCE);
-
-    iconCustomizations.putAll(result.iconCustomizations);
-    ids.forEach(id -> {
-      iconCustomizations.putIfAbsent(id, null);
-    });
   }
 
   public boolean isModified(CustomActionsSchema schema) {
@@ -214,49 +223,53 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   @Override
   public void loadState(@NotNull Element element) {
-    idToActionGroup.clear();
-    actions.clear();
-    iconCustomizations.clear();
-    DefaultJDOMExternalizer.readExternal(this, element);
-    Element schElement = element;
-    String activeName = element.getAttributeValue(ACTIVE);
-    if (activeName != null) {
-      for (Element toolbarElement : element.getChildren(ACTIONS_SCHEMA)) {
-        for (Element o : toolbarElement.getChildren("option")) {
-          if (Comparing.strEqual(o.getAttributeValue("name"), "myName") &&
-              Comparing.strEqual(o.getAttributeValue("value"), activeName)) {
-            schElement = toolbarElement;
-            break;
+    boolean reload;
+
+    synchronized (lock) {
+      idToActionGroup.clear();
+      actions.clear();
+      iconCustomizations.clear();
+
+      DefaultJDOMExternalizer.readExternal(this, element);
+
+      Element schElement = element;
+      String activeName = element.getAttributeValue(ACTIVE);
+      if (activeName != null) {
+        for (Element toolbarElement : element.getChildren(ACTIONS_SCHEMA)) {
+          for (Element o : toolbarElement.getChildren("option")) {
+            if (Comparing.strEqual(o.getAttributeValue("name"), "myName") && Comparing.strEqual(o.getAttributeValue("value"), activeName)) {
+              schElement = toolbarElement;
+              break;
+            }
           }
         }
       }
-    }
-    for (Element groupElement : schElement.getChildren(GROUP)) {
-      ActionUrl url = new ActionUrl();
-      url.readExternal(groupElement);
-      addAction(url);
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error(IdeBundle.message("custom.option.testmode", actions.toString()));
-    }
-
-    for (Element action : element.getChildren(ELEMENT_ACTION)) {
-      String actionId = action.getAttributeValue(ATTRIBUTE_ID);
-      String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
-      if (actionId != null) {
-        iconCustomizations.put(actionId, iconPath);
+      for (Element groupElement : schElement.getChildren(GROUP)) {
+        ActionUrl url = new ActionUrl();
+        url.readExternal(groupElement);
+        addAction(url);
       }
-    }
 
-    boolean reload = !isFirstLoadState;
-    if (isFirstLoadState) {
-      isFirstLoadState = false;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(IdeBundle.message("custom.option.testmode", actions.toString()));
+      }
+
+      for (Element action : element.getChildren(ELEMENT_ACTION)) {
+        String actionId = action.getAttributeValue(ATTRIBUTE_ID);
+        String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
+        if (actionId != null) {
+          iconCustomizations.put(actionId, iconPath);
+        }
+      }
+
+      reload = !isFirstLoadState;
+      if (isFirstLoadState) {
+        isFirstLoadState = false;
+      }
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
       initActionIcons();
-
       if (reload) {
         setCustomizationSchemaForCurrentProjects();
       }
@@ -264,7 +277,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public void clearFirstLoadState() {
-    isFirstLoadState = false;
+    synchronized (lock) {
+      isFirstLoadState = false;
+    }
   }
 
   public static void setCustomizationSchemaForCurrentProjects() {
@@ -309,54 +324,69 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public @Nullable AnAction getCorrectedAction(String id) {
-    if (!idToName.containsKey(id)) {
-      return ActionManager.getInstance().getAction(id);
-    }
+    synchronized (lock) {
+      if (!idToName.containsKey(id)) {
+        return ActionManager.getInstance().getAction(id);
+      }
 
-    ActionGroup existing = idToActionGroup.get(id);
-    if (existing != null) {
-      return existing;
+      ActionGroup existing = idToActionGroup.get(id);
+      if (existing != null) {
+        return existing;
+      }
     }
 
     ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
-    if (actionGroup != null) { // if a plugin is disabled
-      String name = idToName.get(id);
-      ActionGroup corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true);
-      idToActionGroup.put(id, corrected);
-      return corrected;
+    if (actionGroup != null) {
+      // if a plugin is disabled
+      synchronized (lock) {
+        String name = idToName.get(id);
+        ActionGroup corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true);
+        idToActionGroup.put(id, corrected);
+        return corrected;
+      }
     }
     return null;
   }
 
   public @Nullable String getDisplayName(@NotNull String id) {
-    return idToName.get(id);
+    synchronized (lock) {
+      return idToName.get(id);
+    }
   }
 
   public void invalidateCustomizedActionGroup(String groupId) {
-    ActionGroup group = idToActionGroup.get(groupId);
+    ActionGroup group;
+    synchronized (lock) {
+      group = idToActionGroup.get(groupId);
+    }
     if (group instanceof CustomisedActionGroup) {
-      ((CustomisedActionGroup) group).resetChildren();
+      ((CustomisedActionGroup)group).resetChildren();
     }
   }
 
   public void fillCorrectedActionGroups(@NotNull DefaultMutableTreeNode root) {
     ActionManager actionManager = ActionManager.getInstance();
-    List<String> path = ContainerUtil.newArrayList("root");
+    List<String> path = new SmartList<>("root");
 
-    for (Map.Entry<String, @Nls String> entry : idToName.entrySet()) {
-      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(entry.getKey());
-      if (actionGroup != null) {
-        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createCorrectedGroup(actionGroup, entry.getValue(), path, actions)));
+    synchronized (lock) {
+      for (Map.Entry<String, @Nls String> entry : idToName.entrySet()) {
+        ActionGroup actionGroup = (ActionGroup)actionManager.getAction(entry.getKey());
+        if (actionGroup != null) {
+          root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createCorrectedGroup(actionGroup, entry.getValue(), path, actions)));
+        }
       }
     }
   }
 
-  public void fillActionGroups(DefaultMutableTreeNode root) {
+  public void fillActionGroups(@NotNull DefaultMutableTreeNode root) {
     ActionManager actionManager = ActionManager.getInstance();
-    for (String id : idToName.keySet()) {
-      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
-      if (actionGroup != null) { //J2EE/Commander plugin was disabled
-        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, idToName.get(id), null, null, true, null, false)));
+    synchronized (lock) {
+      for (String id : idToName.keySet()) {
+        ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
+        if (actionGroup != null) {
+          //J2EE/Commander plugin was disabled
+          root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, idToName.get(id), null, null, true, null, false)));
+        }
       }
     }
   }
@@ -436,13 +466,18 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   void initActionIcons() {
-    ActionManager actionManager = ActionManager.getInstance();
-    for (String actionId : iconCustomizations.keySet()) {
-      AnAction action = actionManager.getActionOrStub(actionId);
-      if (action == null || action instanceof ActionStub) continue;
-      initActionIcon(action, actionId, actionManager);
-      PresentationFactory.updatePresentation(action);
+    if (!iconCustomizations.isEmpty()) {
+      ActionManager actionManager = ActionManager.getInstance();
+      for (String actionId : iconCustomizations.keySet()) {
+        AnAction action = actionManager.getActionOrStub(actionId);
+        if (action == null || action instanceof ActionStub) {
+          continue;
+        }
+        initActionIcon(action, actionId, actionManager);
+        PresentationFactory.updatePresentation(action);
+      }
     }
+
     ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(null);
     if (frame != null) {
       frame.updateView();

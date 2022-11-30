@@ -21,10 +21,10 @@ import java.awt.event.MouseEvent;
 /**
  * "Power save mode: enabled/disabled" icon in the status bar
  */
-public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
+final class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
   private static final String ID = "PowerSaveMode";
 
-  public PowerSaveStatusWidgetFactory() {
+  PowerSaveStatusWidgetFactory() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, () -> {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
@@ -54,9 +54,6 @@ public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new PowerWidget();
   }
-
-  @Override
-  public void disposeWidget(@NotNull StatusBarWidget widget) { }
 
   @Override
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {

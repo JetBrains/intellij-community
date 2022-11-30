@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.maven.testFramework.MavenDomTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -24,6 +25,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   @Override
@@ -998,7 +1000,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsDoNotInclude(myProjectPom, "project.groupId");
   }
 
-  private void readWithProfiles(String... profiles) {
+  private void readWithProfiles(String... profiles) throws Exception {
     if (isNewImportingProcess) {
       readWithProfilesViaImportFlow(profiles);
     }
@@ -1009,11 +1011,11 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   @Override
-  protected void readProjects() {
+  protected void readProjects() throws Exception {
     readWithProfiles();
   }
 
-  private void readWithProfilesViaImportFlow(String... profiles) {
+  private void readWithProfilesViaImportFlow(String... profiles) throws Exception {
     MavenImportFlow flow = new MavenImportFlow();
     MavenInitialImportContext initialImportContext =
       flow.prepareNewImport(myProject,
@@ -1023,7 +1025,9 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                             Arrays.asList(profiles),
                             Collections.emptyList());
     myProjectsManager.initForTests();
-    myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
-    myProjectsManager.setProjectsTree(myReadContext.getProjectsTree());
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      myProjectsManager.setProjectsTree(myReadContext.getProjectsTree());
+    }).get(10, TimeUnit.SECONDS);
   }
 }

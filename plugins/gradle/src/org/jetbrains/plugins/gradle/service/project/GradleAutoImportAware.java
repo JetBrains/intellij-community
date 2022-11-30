@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -117,6 +118,17 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     // add project-specific gradle.properties
     GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath);
     files.add(new File(projectSettings == null ? projectPath : projectSettings.getExternalProjectPath(), "gradle.properties"));
+
+    //add version catalog toml files
+    var node = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath);
+    if (node != null) {
+      var versionCatalog = ExternalSystemApiUtil.find(node, BuildScriptClasspathData.VERSION_CATALOGS);
+      if (versionCatalog != null) {
+        for (String catalogFile : versionCatalog.getData().getCatalogsLocations().values()) {
+          files.add(new File(catalogFile));
+        }
+      }
+    }
 
     // add wrapper config file
     if (projectSettings != null && projectSettings.getDistributionType() == DistributionType.DEFAULT_WRAPPED) {

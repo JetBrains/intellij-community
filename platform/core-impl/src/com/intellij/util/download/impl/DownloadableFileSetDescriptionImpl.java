@@ -19,16 +19,17 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class DownloadableFileSetDescriptionImpl<F extends DownloadableFileDescription> implements DownloadableFileSetDescription {
-  protected final List<F> myFiles;
+  protected final List<? extends F> myFiles;
   protected final String myVersionString;
   private final String myName;
 
   public DownloadableFileSetDescriptionImpl(@NotNull String name,
                                             @NotNull String versionString,
-                                            @NotNull List<F> files) {
+                                            @NotNull List<? extends F> files) {
     myName = name;
     myVersionString = versionString;
     myFiles = files;
@@ -49,6 +50,6 @@ public class DownloadableFileSetDescriptionImpl<F extends DownloadableFileDescri
   @NotNull
   @Override
   public List<F> getFiles() {
-    return myFiles;
+    return Collections.unmodifiableList(myFiles);
   }
 }

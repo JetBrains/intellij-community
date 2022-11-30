@@ -45,7 +45,7 @@ abstract class ReplaceSizeCheckIntention(textGetter: () -> String) : SelfTargeti
         fun newExpression(): KtExpression {
             val excl = if (negate) "!" else ""
             val receiver = if (targetExpression is KtDotQualifiedExpression) "${targetExpression.receiverExpression.text}." else ""
-            return KtPsiFactory(targetExpression).createExpression("$excl$receiver$newFunctionCall")
+            return KtPsiFactory(targetExpression.project).createExpression("$excl$receiver$newFunctionCall")
         }
     }
 

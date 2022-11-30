@@ -30,6 +30,10 @@ internal data class SelectIndex(private val selectedIndex: Int) : SelectionPolic
   override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) = listOf(selectedIndex)
 }
 
+internal data class SelectObject(private val selected: Any) : SelectionPolicy {
+  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) = listOf(model.items.indexOf(selected))
+}
+
 internal object PreserveSelection : SelectionPolicy {
   override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int> {
     val chosenElements = popup.currentChosenInfo?.chosenElements.orEmpty()

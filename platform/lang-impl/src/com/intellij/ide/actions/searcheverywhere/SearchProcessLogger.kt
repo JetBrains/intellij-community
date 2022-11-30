@@ -7,7 +7,7 @@ class SearchProcessLogger : SearchAdapter() {
 
   private val reportedContributors = mutableSetOf<SearchEverywhereContributor<*>>()
 
-  override fun elementsAdded(list: MutableList<out SearchEverywhereFoundElementInfo>) = list.forEach { reportOnce(it.contributor) }
+  override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>) = list.forEach { reportOnce(it.contributor) }
 
   override fun searchStarted(contributors: MutableCollection<out SearchEverywhereContributor<*>>) = reportedContributors.clear()
 

@@ -1990,13 +1990,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   void resetMousePointer() {
-    if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) return;
+    if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) {
+      return;
+    }
 
     UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
   }
 
   void validateMousePointer(@NotNull MouseEvent e) {
-    if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) return;
+    if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) {
+      return;
+    }
 
     FoldRegion foldingAtCursor = findFoldingAnchorAt(e.getX(), e.getY());
     setActiveFoldRegions(getGroupRegions(foldingAtCursor));

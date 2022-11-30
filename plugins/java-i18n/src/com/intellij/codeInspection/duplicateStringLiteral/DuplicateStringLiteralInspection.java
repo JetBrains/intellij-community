@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
@@ -378,6 +379,27 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     @Override
     public String getFamilyName() {
       return JavaI18nBundle.message("inspection.duplicates.navigate.to.occurrences");
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiElement element = previewDescriptor.getPsiElement();
+      if (element instanceof PsiLiteralExpression literal) {
+        final PsiExpression[] duplicates = getDuplicateLiterals(project, literal, true);
+        if (duplicates.length < 10) {
+          return new IntentionPreviewInfo.Html(JavaI18nBundle.message(
+            "inspection.duplicates.navigate.to.occurrences.preview",
+            duplicates.length,
+            literal.getText()
+          ));
+        }
+        return new IntentionPreviewInfo.Html(JavaI18nBundle.message(
+          "inspection.duplicates.navigate.to.many.occurrences.preview",
+          duplicates.length,
+          literal.getText()
+        ));
+      }
+      return IntentionPreviewInfo.EMPTY;
     }
   }
 

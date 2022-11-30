@@ -27,6 +27,9 @@
                         serviceImplementation="com.intellij.model.psi.impl.PsiSymbolServiceImpl"/>
     <applicationService serviceInterface="com.intellij.navigation.SymbolNavigationService"
                         serviceImplementation="com.intellij.codeInsight.navigation.impl.SymbolNavigationServiceImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.codeInspection.ui.InspectionOptionPaneRenderer"
+      serviceImplementation="com.intellij.codeInspection.ui.SwingOptPaneRenderer"/>
 
     <psi.declarationProvider implementation="com.intellij.model.psi.impl.DefaultPsiSymbolDeclarationProvider" order="last"/>
 
@@ -104,6 +107,10 @@
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
     <registryKey defaultValue="false" key="scanning.in.smart.mode" restartRequired="false"
                  description="Scan project in smart mode under regular progress indicator."/>
+    <registryKey defaultValue="false" key="retrieve.pushed.properties.from.vfs" restartRequired="true"
+                 description="Retrieve previously pushed properties from VFS (via PersistentKey) if the value is urgently needed before pushers complete their work."/>
+    <registryKey defaultValue="false" key="cache.nulls.for.pushed.properties" restartRequired="true"
+                 description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
     <registryKey defaultValue="false" key="indexing.use.indexable.files.index" restartRequired="true"
@@ -207,8 +214,8 @@
                         serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
-    <projectService serviceInterface="com.intellij.psi.search.PredefinedSearchScopeProvider"
-                    serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.search.PredefinedSearchScopeProvider"
+                        serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
 
     <applicationService serviceInterface="com.intellij.model.psi.PsiSymbolReferenceService"
                         serviceImplementation="com.intellij.model.psi.impl.PsiSymbolReferenceServiceImpl"/>
@@ -263,7 +270,7 @@
 
     <applicationService serviceInterface="com.intellij.formatting.InjectedFormattingOptionsService"
                         serviceImplementation="com.intellij.formatting.InjectedFormattingOptionsServiceImpl"/>
-    
+
     <projectConfigurable groupId="editor"
                          id="editor.reader.mode" key="title.reader.mode"
                          bundle="messages.LangBundle"
@@ -394,6 +401,12 @@
 
     <projectService serviceImplementation="com.intellij.codeInsight.actions.AsyncActionExecutionService" />
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionInlaySettingProvider" />
+    <registryKey defaultValue="true" description="Enable declarative inlay hints" key="inlays.declarative.hints" restartRequired="true" />
+
+    <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintsSettingsProvider" />
+    <projectService serviceImplementation="com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings" />
+    <projectService serviceImplementation="com.intellij.codeInsight.hints.chain.DeclarativeCallChainInlaySettings" />
+    <intentionMenuContributor implementation="com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingIntentionMenuContributor" />
 
     <projectService serviceImplementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionCacheService" />
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory"/>
@@ -407,8 +420,9 @@
     <moduleService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                    serviceImplementation="com.intellij.configurationStore.ModuleStoreImpl"
                    testServiceImplementation="com.intellij.configurationStore.TestModuleStore"/>
-    <moduleService serviceInterface="com.intellij.openapi.roots.TestModuleProperties"
-                   serviceImplementation="com.intellij.openapi.roots.impl.TestModulePropertiesImpl"/>
+
+    <registryKey defaultValue="true" key="workspace.model.test.properties.bridge" restartRequired="true"
+                 description="Provides bridges for TestModuleProperties via WorkspaceModel" />
 
     <moduleService serviceImplementation="com.intellij.openapi.module.impl.ModuleImpl$DeprecatedModuleOptionManager"/>
     <moduleService serviceInterface="com.intellij.openapi.components.PathMacroManager" serviceImplementation="com.intellij.openapi.components.impl.ModulePathMacroManager"/>
@@ -439,9 +453,12 @@
 
     <!--  Inlay hints  -->
     <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
+    <editorFactoryMouseListener implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayEditorMouseListener"/>
     <editorFactoryMouseListener implementation="com.intellij.codeInsight.hints.presentation.listeners.InlayEditorMouseListener"/>
     <editorFactoryMouseMotionListener implementation="com.intellij.codeInsight.hints.presentation.listeners.InlayEditorMouseMotionListener"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsMouseMotionListener"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.InlayHintsPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory"/>
 
     <projectConfigurable provider="com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableProvider"
                          id="inlay.hints"
@@ -456,10 +473,13 @@
     <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory"/>
     <codeInsight.codeVisionProviderFactory implementation="com.intellij.codeInsight.codeVision.DefaultCodeVisionProviderFactory"/>
     <codeInsight.codeVisionProviderFactory implementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProviderFactory"/>
+    <codeInsight.inlayHintsSwitch implementation="com.intellij.codeInsight.hints.InlayHintsProviderSwitch"/>
+    <codeInsight.inlayHintsSwitch implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionSwitch"/>
     <config.inlayGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionGlobalSettingsProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionInheritorsSettingsProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionProblemsSettingsProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionUsagesSettingsProvider"/>
+    <codeInsight.declarativeInlayProviderFactory implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintsDefaultProviderFactory"/>
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager"/>
 
     <applicationService serviceInterface="com.intellij.framework.detection.FileContentPattern$ParseXml"
@@ -1235,14 +1255,14 @@
     <statusBarWidgetFactory id="encodingWidget" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory" order="after lineSeparatorWidget"/>
     <statusBarWidgetFactory id="powerStatus" implementation="com.intellij.openapi.wm.impl.status.PowerSaveStatusWidgetFactory" order="after encodingWidget"/>
     <statusBarWidgetFactory id="largeFileEncodingWidget" implementation="com.intellij.largeFilesEditor.encoding.LargeFileEncodingWidgetFactory" order="after powerStatus"/>
-    <statusBarWidgetFactory id="selectionModeWidget" implementation="com.intellij.openapi.wm.impl.status.ColumnSelectionModeWidgetFactory" order="after largeFileEncodingWidget"/>
-    <statusBarWidgetFactory id="codeStyleWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory" order="after selectionModeWidget"/>
-    <statusBarWidgetFactory id="readOnlyWidget" implementation="com.intellij.openapi.wm.impl.status.ReadOnlyAttributeWidgetFactory" order="after codeStyleWidget"/>
-    <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory" order="after readOnlyWidget"/>
-    <statusBarWidgetFactory id="notificationsWidget" implementation="com.intellij.notification.impl.widget.NotificationWidgetFactory" order="after inspectionProfileWidget"/>
-    <statusBarWidgetFactory id="fatalErrorWidget" implementation="com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory" order="after notificationsWidget"/>
-    <statusBarWidgetFactory id="writeActionWidget" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory" order="after fatalErrorWidget"/>
-    <statusBarWidgetFactory id="memoryUsageWidget" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory" order="last"/>
+    <statusBarWidgetFactory id="InsertOverwrite" implementation="com.intellij.openapi.wm.impl.status.ColumnSelectionModeWidgetFactory" order="after largeFileEncodingWidget"/>
+    <statusBarWidgetFactory id="CodeStyleStatusBarWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory" order="after InsertOverwrite"/>
+    <statusBarWidgetFactory id="ReadOnlyAttribute" implementation="com.intellij.openapi.wm.impl.status.ReadOnlyAttributeWidgetFactory" order="after CodeStyleStatusBarWidget"/>
+    <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory" order="after ReadOnlyAttribute"/>
+    <statusBarWidgetFactory id="Notifications" implementation="com.intellij.notification.impl.widget.NotificationWidgetFactory" order="after inspectionProfileWidget"/>
+    <statusBarWidgetFactory id="FatalError" implementation="com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory" order="after Notifications"/>
+    <statusBarWidgetFactory id="WriteThread" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory" order="after FatalError"/>
+    <statusBarWidgetFactory id="Memory" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory" order="last"/>
     <statusBarWidgetFactory id="settingsEntryPointWidget" implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager" order="last"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
@@ -1498,6 +1518,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter"/>
 
     <advancedSetting id="ide.suppress.double.click.handler" default="false" groupKey="group.advanced.settings.ui"/>
+    <advancedSetting id="ide.similar.usages.clustering.enable" default="true" groupKey="group.advanced.settings.find"/>
     <advancedSetting id="ide.usages.page.size" default="100" groupKey="group.advanced.settings.find"/>
     <advancedSetting id="bigger.font.in.project.view" default="false" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="editor.comment.line.caret.down" default="true" groupKey="group.advanced.settings.editor"/>

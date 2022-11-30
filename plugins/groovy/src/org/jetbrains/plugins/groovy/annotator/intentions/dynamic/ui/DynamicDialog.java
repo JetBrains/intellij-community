@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -41,7 +40,7 @@ import java.util.List;
 public abstract class DynamicDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicDialog.class);
 
-  private JComboBox myClassComboBox;
+  private JComboBox<String> myClassComboBox;
   private JPanel myPanel;
   private JComboBox myTypeComboBox;
   private JLabel myTypeLabel;
@@ -184,14 +183,7 @@ public abstract class DynamicDialog extends DialogWrapper {
         type = TypesUtil.boxPrimitiveType(type, typeElement.getManager(), ProjectScope.getAllScope(myProject));
       }
 
-      final String typeQualifiedName = type.getCanonicalText();
-
-      if (typeQualifiedName != null) {
-        mySettings.setType(typeQualifiedName);
-      }
-      else {
-        mySettings.setType(type.getPresentableText());
-      }
+      mySettings.setType(type.getCanonicalText());
     }
 
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myContext.getContainingFile());
@@ -199,7 +191,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       UndoManager.getInstance(myProject).undoableActionPerformed(new GlobalUndoableAction(document) {
         @Override
-        public void undo() throws UnexpectedUndoException {
+        public void undo() {
 
           final DItemElement itemElement;
           if (mySettings.isMethod()) {
@@ -233,7 +225,7 @@ public abstract class DynamicDialog extends DialogWrapper {
         }
 
         @Override
-        public void redo() throws UnexpectedUndoException {
+        public void redo() {
           addElement(mySettings);
         }
       });

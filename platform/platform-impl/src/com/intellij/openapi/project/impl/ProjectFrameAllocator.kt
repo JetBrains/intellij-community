@@ -1,69 +1,67 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
-import com.intellij.diagnostic.StartUpPerformanceService
-import com.intellij.diagnostic.launchAndMeasure
-import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.*
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.util.RunOnceUtil
 import com.intellij.idea.SplashManager
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.impl.withModalContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.fileEditor.impl.restoreOpenedFiles
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.util.ProgressDialogUI
-import com.intellij.openapi.progress.util.ProgressDialogWrapper
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.platform.ProjectSelfieUtil
-import com.intellij.ui.IdeUICustomization
-import com.intellij.ui.ScreenUtil
-import com.intellij.ui.scale.ScaleContext
+import com.intellij.problems.WolfTheProblemSolver
+import com.intellij.toolWindow.computeToolWindowBeans
+import com.intellij.ui.*
+import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Dimension
-import java.awt.Frame
-import java.awt.Image
-import java.awt.Window
+import java.awt.*
 import java.io.EOFException
 import java.nio.file.Path
-import javax.swing.SwingUtilities
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
+import javax.swing.*
 import kotlin.math.min
+import kotlin.time.Duration.Companion.seconds
+
+private typealias FrameAllocatorTask<T> = suspend CoroutineScope.(saveTemplateJob: Job?, initFrame: (project: Project) -> Unit) -> T
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open suspend fun <T : Any> run(task: suspend CoroutineScope.(saveTemplateJob: Job?) -> T): T {
+  open suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T {
     return coroutineScope {
-      task(saveTemplateAsync(options))
+      task(saveTemplateAsync(options)) {}
     }
   }
-
-  /**
-   * Project is loaded and is initialized, project services and components can be accessed.
-   * But start-up and post start-up activities are not yet executed.
-   * Executed under a modal progress dialog.
-   */
-  open fun CoroutineScope.projectLoaded(project: Project): Deferred<Job?>? = null
 
   open suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
@@ -74,7 +72,7 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
 
 private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
   if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
-    return launch(Dispatchers.IO) {
+    return launch(Dispatchers.IO + CoroutineName("save default project")) {
       saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
     }
   }
@@ -83,136 +81,181 @@ private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
   }
 }
 
-internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
+internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 
-  override suspend fun <T : Any> run(task: suspend CoroutineScope.(saveTemplateJob: Job?) -> T): T {
+  override suspend fun <T : Any> run(task: FrameAllocatorTask<T>): T {
     return coroutineScope {
-      val deferredWindow = async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        val frameManager = createFrameManager()
-        val frameHelper = frameManager.createFrameHelper(this@ProjectUiFrameAllocator)
-        frameHelper.init(installPainters = false)
-        val window = frameManager.getWindow()
-        // implOptions == null - not via recents project - show frame immediately
-        if (options.showFrameAsap || options.implOptions == null) {
-          frameManager.getWindow().isVisible = true
-        }
-
-        deferredProjectFrameHelper.complete(frameHelper)
-        window
+      val debugTask = launch {
+        delay(10.seconds)
+        logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
       }
 
-      withModalContext {
-        // execute saveTemplateAsync under modal progress - write-safe context for saving template settings
-        val saveTemplateDeferred = saveTemplateAsync(options)
+      val finished = AtomicBoolean()
+      val frameLoadingStateRef = AtomicReference<MutableLoadingState?>()
+      val loadingScope = this
+      val job = coroutineContext.job
+      launchAndMeasure("project frame creating") {
+        createFrameManager { _, loadingState ->
+          if (finished.get()) {
+            loadingState.loading.complete(Unit)
+          }
+          else {
+            frameLoadingStateRef.set(loadingState)
+            loadingScope.launch {
+              try {
+                loadingState.loading.join()
+              }
+              catch (ignore: CancellationException) {
+              }
+              if (loadingState.loading.isCancelled) {
+                job.cancel()
+              }
+            }
+          }
+        }
+      }
 
-        val showIndicatorJob = showModalIndicatorForProjectLoading(
-          windowDeferred = deferredWindow,
-          title = getProgressTitle(),
-          isVisibleManaged = options.isVisibleManaged,
-        )
+      val saveTemplateDeferred = saveTemplateAsync(options)
+
+      @Suppress("DEPRECATION")
+      val deferredToolbarActionGroups = ApplicationManager.getApplication().coroutineScope.async {
+        runActivity("toolbar action groups computing") {
+          MainToolbar.computeActionGroups()
+        }
+      }
+
+      // use current context for executing async tasks to make sure that we pass correct modality
+      // if someone uses runBlockingModal to call openProject
+      val anyEditorOpened = CompletableDeferred<Unit>()
+      try {
+        val startOfWaitingForReadyFrame = AtomicLong(-1)
+        val result = task(saveTemplateDeferred) { project ->
+          launchAndMeasure("fileEditorProvider preloading", Dispatchers.IO) {
+            FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList
+          }
+
+          async(CoroutineName("init project frame and restore editors")) {
+            launch(CoroutineName("assign project to frame")) {
+              val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
+              val frameHelper = deferredProjectFrameHelper.await()
+              withContext(Dispatchers.EDT) {
+                runActivity("project frame assigning") {
+                  windowManager.assignFrame(frameHelper, project)
+                  frameHelper.setProject(project)
+                }
+              }
+            }
+
+            val reopeningEditorJob = launch(CoroutineName("restoreEditors")) {
+              restoreEditors(project = project, deferredProjectFrameHelper = deferredProjectFrameHelper, anyEditorOpened = anyEditorOpened)
+            }
+            reopeningEditorJob.invokeOnCompletion {
+              // make sure that anyEditorOpened is completed even if some error occurred
+              anyEditorOpened.complete(Unit)
+            }
+
+            launch(CoroutineName("initFrame")) {
+              initFrame(deferredProjectFrameHelper = deferredProjectFrameHelper,
+                        project = project,
+                        reopeningEditorJob = reopeningEditorJob,
+                        deferredToolbarActionGroups = deferredToolbarActionGroups)
+            }
+
+            reopeningEditorJob
+          }.invokeOnCompletion {
+            // make sure that anyEditorOpened is completed even if some error occurred
+            try {
+              anyEditorOpened.complete(Unit)
+            }
+            finally {
+              val start = startOfWaitingForReadyFrame.get()
+              if (start != -1L) {
+                StartUpMeasurer.addCompletedActivity(start, "editor reopening and frame waiting", ActivityCategory.DEFAULT, null)
+              }
+            }
+          }
+        }
+        startOfWaitingForReadyFrame.set(System.nanoTime())
+        result
+      }
+      finally {
+        finished.set(true)
         try {
-          task(saveTemplateDeferred)
+          try {
+            anyEditorOpened.join()
+          }
+          finally {
+            frameLoadingStateRef.get()?.loading?.complete(Unit)
+          }
         }
         finally {
-          showIndicatorJob.cancel()
+          debugTask.cancel()
         }
       }
     }
   }
 
-  @NlsContexts.ProgressTitle
-  private fun getProgressTitle(): String {
-    val projectName = options.projectName ?: (projectStoreBaseDir.fileName ?: projectStoreBaseDir).toString()
-    return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)
-  }
-
-  // executed in EDT
-  private fun createFrameManager(): ProjectUiFrameManager {
-    options.frameManager?.let {
-      return it
-    }
-
-    (WindowManager.getInstance() as WindowManagerImpl).removeAndGetRootFrame()?.let { freeRootFrame ->
-      return object : ProjectUiFrameManager {
-        override suspend fun createFrameHelper(allocator: ProjectUiFrameAllocator) = freeRootFrame
-
-        override fun getWindow() = freeRootFrame.frameOrNull!!
-      }
-    }
-
-    return runActivity("create a frame") {
-      val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
-      if (preAllocated == null) {
-        val frameInfo = options.frameInfo
-        if (frameInfo == null) {
-          DefaultProjectUiFrameManager(frame = createNewProjectFrame(null))
-        }
-        else {
-          SingleProjectUiFrameManager(frameInfo = frameInfo, frame = createNewProjectFrame(frameInfo))
-        }
-      }
-      else {
-        SplashProjectUiFrameManager(preAllocated)
-      }
-    }
-  }
-
-  override fun CoroutineScope.projectLoaded(project: Project): Deferred<Job?> {
-    // we must assign frame to project under modal dialog
-    return async {
+  private suspend fun createFrameManager(watcher: (frameHelper: ProjectFrameHelper, loadingState: MutableLoadingState) -> Unit) {
+    var frame = options.frame
+    if (frame == null) {
       val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
-      val frameHelper = deferredProjectFrameHelper.await()
-
-      val fileEditorManager = project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl ?: return@async null
-
-      service<StartUpPerformanceService>().addActivityListener(project)
-
-      withContext(Dispatchers.EDT) {
-        runActivity("project frame assigning") {
-          windowManager.assignFrame(frameHelper, project)
-          frameHelper.setProject(project)
-        }
-
-        val editorComponent = fileEditorManager.init()
-        frameHelper.rootPane!!.getToolWindowPane().setDocumentComponent(editorComponent)
-        // not as a part of a project modal dialog
-        @Suppress("DEPRECATION")
-        val reopeningEditorJob = project.coroutineScope.launchAndMeasure("editor reopening") {
-          restoreOpenedFiles(fileEditorManager = fileEditorManager,
-                             editorComponent = editorComponent,
-                             project = project,
-                             frameHelper = frameHelper)
-        }
-
-        async {
-          frameHelper.installDefaultProjectStatusBarWidgets(project)
-          frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project))
-        }
-
-        @Suppress("DEPRECATION")
-        project.coroutineScope.launchAndMeasure("tool window pane creation") {
-          val toolWindowManager = ToolWindowManager.getInstance(project = project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
-          toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob)
-        }
-        @Suppress("DEPRECATION")
-        project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          val rootPane = frameHelper.rootPane!!
-          runActivity("north components updating") {
-            rootPane.updateNorthComponents()
-          }
-
-          runActivity("toolbar updating") {
-            rootPane.initOrCreateToolbar(project)
-          }
-
-          if (!options.isVisibleManaged) {
-            frameHelper.frameOrNull?.isVisible = true
-          }
-        }
-        reopeningEditorJob
-      }
+      frame = windowManager.removeAndGetRootFrame()
     }
+
+    if (frame != null) {
+      val loadingState = MutableLoadingState(withContext(Dispatchers.IO) {
+        readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId, device = frame.graphicsConfiguration.device)
+      })
+      val frameHelper = withContext(Dispatchers.EDT) {
+        ProjectFrameHelper(frame = frame, loadingState = loadingState)
+      }
+
+      watcher(frameHelper, loadingState)
+
+      // in a separate EDT task, as EDT is used for write actions and frame initialization should not slow down project opening
+      withContext(Dispatchers.EDT) {
+        frameHelper.init()
+      }
+      deferredProjectFrameHelper.complete(frameHelper)
+      return
+    }
+
+    val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
+    if (preAllocated != null) {
+      val frameHelper = withContext(Dispatchers.EDT) {
+        val loadingState = MutableLoadingState(selfie = null)
+        val frameHelper = ProjectFrameHelper(frame = preAllocated, loadingState = loadingState)
+        watcher(frameHelper, loadingState)
+        frameHelper.init()
+        frameHelper
+      }
+      deferredProjectFrameHelper.complete(frameHelper)
+      return
+    }
+
+    val frameInfo = options.frameInfo ?: RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)?.frame
+    val frameProducer = createNewProjectFrame(frameInfo = frameInfo)
+    val loadingState = MutableLoadingState(withContext(Dispatchers.IO) {
+      readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId, device = frameProducer.deviceOrDefault)
+    })
+    val frameHelper = withContext(Dispatchers.EDT) {
+      val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
+      // must be after preInit (frame decorator is required to set full screen mode)
+      frameHelper.frame.isVisible = true
+      if (frameInfo != null && frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+        frameHelper.toggleFullScreen(true)
+      }
+      frameHelper
+    }
+
+    watcher(frameHelper, loadingState)
+
+    // in a separate EDT task, as EDT is used for write actions and frame initialization should not slow down project opening
+    withContext(Dispatchers.EDT) {
+      frameHelper.init()
+    }
+    deferredProjectFrameHelper.complete(frameHelper)
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
@@ -227,7 +270,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     withContext(Dispatchers.EDT) {
       if (cannotConvertException != null) {
         Messages.showErrorDialog(
-          frameHelper?.frameOrNull,
+          frameHelper?.frame,
           IdeBundle.message("error.cannot.convert.project", cannotConvertException.message),
           IdeBundle.message("title.cannot.convert.project")
         )
@@ -235,167 +278,170 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
       if (frameHelper != null) {
         // projectLoaded was called, but then due to some error, say cancellation, still projectNotLoaded is called
-        if (frameHelper.project == null) {
-          Disposer.dispose(frameHelper)
-        }
-        else {
-          WindowManagerEx.getInstanceEx().releaseFrame(frameHelper)
-        }
+        Disposer.dispose(frameHelper)
       }
     }
   }
 }
 
-@Suppress("DuplicatedCode")
-private fun CoroutineScope.showModalIndicatorForProjectLoading(
-  windowDeferred: Deferred<Window>,
-  title: @NlsContexts.ProgressTitle String,
-  isVisibleManaged: Boolean,
-): Job {
-  return launch(Dispatchers.IO) {
-    delay(300L)
-    val mainJob = this@showModalIndicatorForProjectLoading.coroutineContext.job
-    val window = windowDeferred.await()
+private suspend fun restoreEditors(project: Project,
+                                   deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>,
+                                   anyEditorOpened: CompletableDeferred<Unit>) {
+  val fileEditorManager = project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl ?: return
+
+  service<StartUpPerformanceService>().addActivityListener(project)
+  val (editorComponent, editorState) = withContext(Dispatchers.EDT) { fileEditorManager.init() }
+
+  val frameHelper = coroutineScope {
+    // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
+    launch {
+      project.serviceAsync<WolfTheProblemSolver>().join()
+      project.serviceAsync<DaemonCodeAnalyzer>().join()
+    }
+
+    val frameHelper = deferredProjectFrameHelper.await()
+    launch(Dispatchers.EDT) {
+      frameHelper.rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
+    }
+
+    if (editorState == null) {
+      anyEditorOpened.complete(Unit)
+    }
+    else {
+      runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
+        editorComponent.restoreEditors(state = editorState, onStartup = true, anyEditorOpened = anyEditorOpened)
+      }
+    }
+
     withContext(Dispatchers.EDT) {
-      val ui = ProgressDialogUI()
-      ui.progressBar.isIndeterminate = true
-      ui.initCancellation(TaskCancellation.cancellable()) {
-        mainJob.cancel("button cancel")
+      frameHelper.rootPane.statusBar?.setEditorProvider {
+        fileEditorManager.selectedEditor
       }
-      ui.backgroundButton.isVisible = false
-      ui.updateTitle(title)
-      val dialog = ProgressDialogWrapper(
-        panel = ui.panel,
-        cancelAction = {
-          mainJob.cancel("dialog cancel")
-        },
-        peerFactory = { GlassPaneDialogWrapperPeer(window, it) }
-      )
-      dialog.setUndecorated(true)
-      dialog.pack()
-      launch { // will be run in an inner event loop
-        val focusComponent = ui.cancelButton
-        val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
-        focusComponent.requestFocusInWindow()
-        try {
-          awaitCancellation()
-        }
-        finally {
-          previousFocusOwner?.requestFocusInWindow()
-        }
-      }.invokeOnCompletion {
-        dialog.close(DialogWrapper.OK_EXIT_CODE)
-      }
-      if (!isVisibleManaged) {
-        window.isVisible = true
-      }
-      // will spin an inner event loop
-      dialog.show()
+    }
+    frameHelper
+  }
+
+  @Suppress("DEPRECATION")
+  project.coroutineScope.launch {
+    val hasOpenFiles = fileEditorManager.hasOpenFiles()
+    if (!hasOpenFiles) {
+      EditorsSplitters.stopOpenFilesActivity(project)
+    }
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      // read state of dockable editors
+      fileEditorManager.initDockableContentFactory()
+
+      frameHelper.postInit()
+      hasOpenFiles
+    }
+
+    if (!hasOpenFiles && !isNotificationSilentMode(project)) {
+      project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
+      findAndOpenReadmeIfNeeded(project)
     }
   }
 }
 
-private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo) {
-  val bounds = frameInfo.bounds?.let { FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it) }
-  val frame = frameHelper.frameOrNull!!
-  if (bounds != null && FrameInfoHelper.isMaximized(frameInfo.extendedState) && frame.extendedState == Frame.NORMAL) {
-    frame.rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
-  }
-  if (bounds != null) {
-    frame.bounds = bounds
-  }
-  frame.extendedState = frameInfo.extendedState
+private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
+                                     project: Project,
+                                     reopeningEditorJob: Job,
+                                     deferredToolbarActionGroups: Deferred<List<Pair<ActionGroup, String>>>) {
+  launchAndMeasure("tool window pane creation") {
+    val toolWindowManager = project.serviceAsync<ToolWindowManager>().await() as? ToolWindowManagerImpl ?: return@launchAndMeasure
 
-  if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-    frameHelper.toggleFullScreen(true)
+    val taskListDeferred = async {
+      runActivity("toolwindow init command creation") {
+        computeToolWindowBeans(project)
+      }
+    }
+    val frameHelper = deferredProjectFrameHelper.await()
+    toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob, taskListDeferred = taskListDeferred)
   }
+
+  launch {
+    val frameHelper = deferredProjectFrameHelper.await()
+    val toolbarActionGroups = deferredToolbarActionGroups.await()
+    withContext(Dispatchers.EDT) {
+      runActivity("toolbar init") {
+        frameHelper.rootPane.initToolbar(toolbarActionGroups)
+      }
+
+      runActivity("north components updating") {
+        frameHelper.rootPane.updateNorthComponents()
+      }
+    }
+  }
+
+  launch {
+    val frameHelper = deferredProjectFrameHelper.await()
+
+    frameHelper.installDefaultProjectStatusBarWidgets(project)
+    frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
+  }
+}
+
+internal interface ProjectFrameProducer {
+  val device: GraphicsDevice?
+
+  val deviceOrDefault: GraphicsDevice
+    get() = device ?: GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
+
+  fun create(): IdeFrameImpl
 }
 
 @ApiStatus.Internal
-internal fun createNewProjectFrame(frameInfo: FrameInfo?): IdeFrameImpl {
-  val frame = IdeFrameImpl()
-  SplashManager.hideBeforeShow(frame)
-
+internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer {
   val deviceBounds = frameInfo?.bounds
   if (deviceBounds == null) {
     val size = ScreenUtil.getMainScreenBounds().size
     size.width = min(1400, size.width - 20)
     size.height = min(1000, size.height - 40)
-    frame.size = size
-    frame.setLocationRelativeTo(null)
+    return object : ProjectFrameProducer {
+      override val device = null
+
+      override fun create(): IdeFrameImpl {
+        val frame = IdeFrameImpl()
+        SplashManager.hideBeforeShow(frame)
+        frame.size = size
+        frame.minimumSize = Dimension(340, frame.minimumSize.height)
+        frame.setLocationRelativeTo(null)
+        return frame
+      }
+    }
   }
   else {
-    val bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
+    val boundsAndDevice = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
     val state = frameInfo.extendedState
     val isMaximized = FrameInfoHelper.isMaximized(state)
-    if (isMaximized && frame.extendedState == Frame.NORMAL) {
-      frame.rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
-    }
-    frame.bounds = bounds
-    frame.extendedState = state
-  }
+    val graphicsDevice = boundsAndDevice.second
+    return object : ProjectFrameProducer {
+      override val device = graphicsDevice
 
-  frame.minimumSize = Dimension(340, frame.minimumSize.height)
-  return frame
+      override fun create(): IdeFrameImpl {
+        val frame = IdeFrameImpl()
+        SplashManager.hideBeforeShow(frame)
+        if (isMaximized && frame.extendedState == Frame.NORMAL) {
+          frame.normalBounds = boundsAndDevice.first
+        }
+        frame.bounds = boundsAndDevice.first
+        frame.extendedState = state
+        frame.minimumSize = Dimension(340, frame.minimumSize.height)
+        return frame
+      }
+    }
+  }
 }
 
 internal interface ProjectUiFrameManager {
   // executed in EDT
   suspend fun createFrameHelper(allocator: ProjectUiFrameAllocator): ProjectFrameHelper
-
-  fun getWindow(): Window
 }
 
-private class SplashProjectUiFrameManager(private val frame: IdeFrameImpl) : ProjectUiFrameManager {
-  override fun getWindow() = frame
-
-  override suspend fun createFrameHelper(allocator: ProjectUiFrameAllocator): ProjectFrameHelper {
-    runActivity("project frame initialization") {
-      return ProjectFrameHelper(frame, null)
-    }
-  }
-}
-
-private class DefaultProjectUiFrameManager(private val frame: IdeFrameImpl) : ProjectUiFrameManager {
-  override fun getWindow() = frame
-
-  override suspend fun createFrameHelper(allocator: ProjectUiFrameAllocator): ProjectFrameHelper {
-    runActivity("project frame initialization") {
-      val info = RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(allocator.projectStoreBaseDir)
-      val frameInfo = info?.frame
-      val frameHelper = ProjectFrameHelper(frame, readProjectSelfie(info?.projectWorkspaceId, frame))
-      // must be after preInit (frame decorator is required to set full screen mode)
-      if (frameInfo?.bounds == null) {
-        (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfoHelper.info?.let {
-          restoreFrameState(frameHelper, it)
-        }
-      }
-      else {
-        restoreFrameState(frameHelper, frameInfo)
-      }
-      return frameHelper
-    }
-  }
-}
-
-private class SingleProjectUiFrameManager(private val frameInfo: FrameInfo, private val frame: IdeFrameImpl) : ProjectUiFrameManager {
-  override fun getWindow() = frame
-
-  override suspend fun createFrameHelper(allocator: ProjectUiFrameAllocator): ProjectFrameHelper {
-    runActivity("project frame initialization") {
-      val frameHelper = ProjectFrameHelper(frame, readProjectSelfie(allocator.options.projectWorkspaceId, frame))
-      if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-        frameHelper.toggleFullScreen(true)
-      }
-      return frameHelper
-    }
-  }
-}
-
-private fun readProjectSelfie(projectWorkspaceId: String?, frame: IdeFrameImpl): Image? {
-  if (projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state", false)) {
+private fun readProjectSelfie(projectWorkspaceId: String?, device: GraphicsDevice): Image? {
+  if (projectWorkspaceId != null && ProjectSelfieUtil.isEnabled) {
     try {
-      return ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, ScaleContext.create(frame))
+      return ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, device)
     }
     catch (e: Throwable) {
       if (e.cause !is EOFException) {
@@ -409,14 +455,36 @@ private fun readProjectSelfie(projectWorkspaceId: String?, frame: IdeFrameImpl):
 internal val OpenProjectTask.frameInfo: FrameInfo?
   get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
 
-internal val OpenProjectTask.frameManager: ProjectUiFrameManager?
-  get() = (implOptions as OpenProjectImplOptions?)?.frameManager
-
-private val OpenProjectTask.isVisibleManaged: Boolean
-  get() = (implOptions as OpenProjectImplOptions?)?.isVisibleManaged ?: false
+internal val OpenProjectTask.frame: IdeFrameImpl?
+  get() = (implOptions as OpenProjectImplOptions?)?.frame
 
 internal data class OpenProjectImplOptions(
+  @JvmField val recentProjectMetaInfo: RecentProjectMetaInfo,
   @JvmField val frameInfo: FrameInfo? = null,
-  @JvmField val frameManager: ProjectUiFrameManager? = null,
-  @JvmField val isVisibleManaged: Boolean = false,
+  @JvmField val frame: IdeFrameImpl? = null,
 )
+
+private fun findAndOpenReadmeIfNeeded(project: Project) {
+  if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
+    return
+  }
+
+  RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart") {
+    val projectDir = project.guessProjectDir() ?: return@runOnceForProject
+    val files = mutableListOf(".github/README.md", "README.md", "docs/README.md")
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      files += files.map { it.lowercase() }
+    }
+    val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return@runOnceForProject
+    if (!readme.isDirectory) {
+      @Suppress("DEPRECATION")
+      project.coroutineScope.launch(Dispatchers.EDT) {
+        TextEditorWithPreview.openPreviewForFile(project, readme)
+      }
+    }
+  }
+}
+
+private class MutableLoadingState(override var selfie: Image?) : FrameLoadingState {
+  override val loading: CompletableDeferred<Unit> = CompletableDeferred()
+}

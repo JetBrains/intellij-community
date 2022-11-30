@@ -170,19 +170,3 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
   }
   return result
 }
-
-@Deprecated("Use NodeCommandLineUtil.initRemoteVmConnectionSync instead")
-@Throws(ExecutionException::class)
-fun initRemoteVmConnectionSync(connection: RemoteVmConnection<*>, debugPort: Int): Vm {
-  val address = InetSocketAddress(InetAddress.getLoopbackAddress(), debugPort)
-  val vmPromise = connection.open(address)
-  val vm: Vm
-  try {
-    vm = vmPromise.blockingGet(30, TimeUnit.SECONDS)!!
-  }
-  catch (e: Exception) {
-    throw ExecutionException(XDebuggerBundle.message("script.debugger.error.cannot.connect", address), e)
-  }
-
-  return vm
-}

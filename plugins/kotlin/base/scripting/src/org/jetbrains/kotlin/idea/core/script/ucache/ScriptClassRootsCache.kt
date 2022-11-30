@@ -127,13 +127,8 @@ class ScriptClassRootsCache(
             }
         }
 
-        allDependenciesClassFiles = mutableSetOf<VirtualFile>().also { result ->
-            classes.mapNotNullTo(result) { it.toVFile() }
-        }
-
-        allDependenciesSources = mutableSetOf<VirtualFile>().also { result ->
-            sources.mapNotNullTo(result) { it.toVFile() }
-        }
+        allDependenciesClassFiles = classes.mapNotNull { it.toVFile() }.filterRedundantDependencies()
+        allDependenciesSources = sources.mapNotNull { it.toVFile() }.filterRedundantDependencies()
     }
 
     val allDependenciesClassFilesScope = compose(allDependenciesClassFiles.toList() + sdks.nonIndexedClassRoots)
@@ -174,7 +169,7 @@ class ScriptClassRootsCache(
                 hasOldRoots = old.hasNewRoots(this),
                 updatedScripts = getChangedScripts(old),
                 oldRoots = old.allDependenciesClassFiles + old.allDependenciesSources,
-                newRoots = allDependenciesClassFiles + allDependenciesSources,
+                newRoots = (allDependenciesClassFiles + allDependenciesSources).filterRedundantDependencies(),
                 oldSdkRoots = old.sdks.nonIndexedClassRoots + old.sdks.nonIndexedSourceRoots,
                 newSdkRoots = sdks.nonIndexedClassRoots + sdks.nonIndexedSourceRoots
             )
@@ -246,8 +241,8 @@ class ScriptClassRootsCache(
         override val oldSdkRoots: Collection<VirtualFile> = emptyList()
 
         override val newRoots: Collection<VirtualFile>
-            get() = cache.allDependenciesClassFiles +
-                    cache.allDependenciesSources
+            get() = (cache.allDependenciesClassFiles +
+                    cache.allDependenciesSources).filterRedundantDependencies()
 
         override val newSdkRoots: Collection<VirtualFile>
             get() = cache.sdks.nonIndexedClassRoots +

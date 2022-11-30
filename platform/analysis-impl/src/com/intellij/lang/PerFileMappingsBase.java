@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -24,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
@@ -111,7 +111,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Nullable
-  private T getMappingInner(@Nullable VirtualFile file, @Nullable Key<T> pusherKey, boolean forHierarchy) {
+  private T getMappingInner(@Nullable VirtualFile file, @Nullable FilePropertyKey<T> pusherKey, boolean forHierarchy) {
     if (file instanceof VirtualFileWindow) {
       VirtualFileWindow window = (VirtualFileWindow)file;
       file = window.getDelegate();
@@ -120,11 +120,11 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     if (Comparing.equal(originalFile, file)) originalFile = null;
 
     if (file != null) {
-      T pushedValue = pusherKey == null ? null : file.getUserData(pusherKey);
+      T pushedValue = pusherKey == null ? null : pusherKey.getPersistentValue(file);
       if (pushedValue != null) return pushedValue;
     }
     if (originalFile != null) {
-      T pushedValue = pusherKey == null ? null : originalFile.getUserData(pusherKey);
+      T pushedValue = pusherKey == null ? null : pusherKey.getPersistentValue(originalFile);
       if (pushedValue != null) return pushedValue;
     }
     synchronized (myMappings) {
@@ -228,7 +228,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     if (project != null && pusher != null) {
       for (VirtualFile oldFile : oldFiles) {
         if (oldFile == null) continue; // project
-        oldFile.putUserData(pusher.getFileDataKey(), null);
+        pusher.getFileDataKey().setPersistentValue(oldFile, null);
       }
       if (!project.isDefault()) {
         PushedFilePropertiesUpdater.getInstance(project).pushAll(pusher);

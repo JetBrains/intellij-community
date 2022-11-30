@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -27,12 +28,15 @@ import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemPr
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -50,17 +54,20 @@ import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsage
 public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask {
 
   private final AtomicReference<DataNode<ProjectData>> myExternalProject = new AtomicReference<>();
-
+  private String myProjectName;
   @NotNull private final String myProjectPath;
   private final boolean myIsPreviewMode;
   @Nullable private final String myVmOptions;
   @Nullable private final String myArguments;
   @Nullable private final ProjectResolverPolicy myResolverPolicy;
 
+
   public ExternalSystemResolveProjectTask(@NotNull Project project,
+                                          @NotNull @BuildEventsNls.Title String projectName,
                                           @NotNull String projectPath,
                                           @NotNull ImportSpec importSpec) {
     super(importSpec.getExternalSystemId(), ExternalSystemTaskType.RESOLVE_PROJECT, project, projectPath);
+    myProjectName = projectName;
     myProjectPath = projectPath;
     myIsPreviewMode = importSpec.isPreviewMode();
     myVmOptions = importSpec.getVmOptions();
@@ -112,7 +119,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     StructuredIdeActivity activity =
       externalSystemTaskStarted(ideProject, getExternalSystemId(), ResolveProject, environmentConfigurationProvider);
     try {
-      DataNode<ProjectData> project = resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings, myResolverPolicy);
+      DataNode<ProjectData> project = pauseIndexingAndResolveProjectNode(id, resolver, settings);
       if (project != null) {
         myExternalProject.set(project);
 
@@ -137,6 +144,23 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       progressNotificationManager.onEnd(id);
       activity.finished();
     }
+  }
+
+  private DataNode<ProjectData> pauseIndexingAndResolveProjectNode(ExternalSystemTaskId id,
+                                        RemoteExternalSystemProjectResolver resolver,
+                                        ExternalSystemExecutionSettings settings) {
+    String title = ExternalSystemBundle.message("progress.refresh.text", myProjectName, getExternalSystemId().getReadableName());
+    Ref<DataNode<ProjectData>> projectRef = new Ref<>();
+
+    DumbService.getInstance(getIdeProject()).suspendIndexingAndRun(title, () -> {
+      try {
+        projectRef.set(resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings, myResolverPolicy));
+      }
+      catch (RemoteException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    return projectRef.get();
   }
 
   @Override

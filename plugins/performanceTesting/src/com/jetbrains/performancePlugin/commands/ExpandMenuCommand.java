@@ -16,9 +16,11 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.List;
 
 
 abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
@@ -27,8 +29,7 @@ abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
   }
 
   @Override
-  protected void execute(@NotNull ActionCallback callback,
-                         @NotNull PlaybackContext context) throws Exception {
+  protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context)  {
     ActionManager actionManager = ActionManager.getInstance();
     Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner(); // real focused component (editor/project view/..)
     DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(focusedComponent));
@@ -38,9 +39,10 @@ abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
         totalSpan.addEvent(action.getClass().getSimpleName());
         if (!(action instanceof ActionGroup group)) return JBIterable.empty();
         String groupSpanName = ObjectUtils.coalesce(actionManager.getId(group), group.getTemplateText(), group.getClass().getName());
-        return TraceUtil.computeWithSpanThrows(PerformanceTestSpan.TRACER, groupSpanName, groupSpan -> {
-          return Utils.expandActionGroup(group, new PresentationFactory(), dataContext, getPlace());
-        });
+        Span groupSpan = PerformanceTestSpan.TRACER.spanBuilder(groupSpanName).startSpan();
+        List<AnAction> actions = Utils.expandActionGroup(group, new PresentationFactory(), dataContext, getPlace());
+        groupSpan.end();
+        return actions;
       }).withRoots(mainMenu.getChildren(null)).traverse().size();
     });
     callback.setDone();

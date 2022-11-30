@@ -281,7 +281,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (PsiExpression expression : getOccurrences()) {
         LOG.assertTrue(expression.isValid(), expression.getText());
@@ -295,7 +295,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+  protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
     if (!isReplaceAllOccurrences()) {
       final PsiExpression expr = getExpr();
       if (expr == null && !myReplaceSelf || expr != null && expr.getParent() == getVariable()) {

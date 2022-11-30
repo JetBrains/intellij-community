@@ -240,12 +240,15 @@ weakref.ref.__call__
 webbrowser.UnixBrowser.remote_action  # always overridden in inheriting class
 webbrowser.UnixBrowser.remote_action_newtab  # always overridden in inheriting class
 webbrowser.UnixBrowser.remote_action_newwin  # always overridden in inheriting class
-wsgiref.types  # Doesn't exist, see comments in file
 xml.parsers.expat.expat_CAPI
 
 # ==========
 # Allowlist entries that cannot or should not be fixed
 # ==========
+_collections_abc.AsyncGenerator.asend  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
+_collections_abc.AsyncGenerator.__anext__  # async at runtime, deliberately not in the stub, see #7491
+_collections_abc.AsyncGenerator.aclose  # async at runtime, deliberately not in the stub, see #7491
+_collections_abc.AsyncIterator.__anext__  # async at runtime, deliberately not in the stub, see #7491
 _pydecimal.*  # See comments in file
 _weakref.ProxyType.__bytes__  # Doesn't really exist
 ast.NodeVisitor.visit_\w+  # Methods are discovered dynamically, see #3796

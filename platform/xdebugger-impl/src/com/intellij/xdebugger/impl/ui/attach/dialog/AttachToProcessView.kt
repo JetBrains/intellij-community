@@ -30,7 +30,6 @@ import kotlinx.coroutines.*
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.JComponent
@@ -44,7 +43,6 @@ internal abstract class AttachToProcessView(
   private val attachDebuggerProviders: List<XAttachDebuggerProvider>) {
 
   companion object {
-    val DEFAULT_DIMENSION = Dimension(800, 400)
     private val logger = Logger.getInstance(AttachToProcessView::class.java)
   }
 

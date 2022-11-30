@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private final PyIdeCommonOptionsPanel content;
   private String mySelectedSdkHome = null;
+  private Sdk mySelectedSdk = null;
 
   private JComponent labelAnchor;
   private final Project myProject;
@@ -51,7 +52,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     content = new PyIdeCommonOptionsPanel(data, showModules, myPythonSdks);
 
     content.workingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
-                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
+                                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
     if (!showModules) {
       setModule(modules[0]);
     }
@@ -138,6 +139,16 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     mySelectedSdkHome = sdkHome;
   }
 
+  @Override
+  public @Nullable Sdk getSdk() {
+    return (Sdk)content.interpreterComboBox.getSelectedItem();
+  }
+
+  @Override
+  public void setSdk(@Nullable Sdk sdk) {
+    mySelectedSdk = sdk;
+  }
+
   @Nullable
   @Override
   public Module getModule() {
@@ -184,6 +195,10 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void setUseModuleSdk(boolean useModuleSdk) {
+    if (mySelectedSdk != null) {
+      content.interpreterComboBox.setSelectedItem(useModuleSdk ? null : mySelectedSdk);
+      return;
+    }
     content.interpreterComboBox.setSelectedItem(useModuleSdk ? null : PythonSdkUtil.findSdkByPath(myPythonSdks, mySelectedSdkHome));
   }
 

@@ -46,7 +46,6 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.PropertyBinding
-import com.intellij.ui.layout.asRange
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
@@ -268,16 +267,16 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           comment(message("checkbox.enable.richcopy.comment"))
         }
         row(message("combobox.richcopy.color.scheme")) {
+          val editorColorsManager = EditorColorsManager.getInstance()
           val schemes = listOf(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER) +
-                        EditorColorsManager.getInstance().allSchemes.map { Scheme.getBaseName(it.name) }
+                        editorColorsManager.allSchemes.map { Scheme.getBaseName(it.name) }
           comboBox<String>(
             DefaultComboBoxModel(schemes.toTypedArray()),
             renderer = SimpleListCellRenderer.create("") {
               when (it) {
                 RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER ->
                   message("combobox.richcopy.color.scheme.active")
-                EditorColorsScheme.DEFAULT_SCHEME_NAME -> EditorColorsScheme.DEFAULT_SCHEME_ALIAS
-                else -> it
+                else -> editorColorsManager.getScheme(it)?.displayName ?: it
               }
             }
           ).bindItem(richCopySettings::getSchemeName, richCopySettings::setSchemeName)

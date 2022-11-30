@@ -2903,18 +2903,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "p3",
-    "name": "intellij.smart.update",
-    "n": "i.smart.update",
-    "package": "com.intellij.smartUpdate",
-    "sourceModule": "intellij.smart.update",
-    "descriptor": "plugins/smart-update/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.idea.smartUpdate",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cmA",
     "n": "com.jetbrains.space"
   }

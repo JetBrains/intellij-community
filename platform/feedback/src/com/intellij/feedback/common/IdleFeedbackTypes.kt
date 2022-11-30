@@ -9,93 +9,28 @@ import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
 import com.intellij.feedback.new_ui.state.NewUIInfoService
 import com.intellij.feedback.new_ui.state.NewUIInfoState
-import com.intellij.feedback.npw.bundle.NPWFeedbackBundle
-import com.intellij.feedback.npw.dialog.ProjectCreationFeedbackDialog
-import com.intellij.feedback.npw.state.ProjectCreationInfoService
-import com.intellij.feedback.npw.state.ProjectCreationInfoState
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.*
 import java.time.Duration
 import java.time.LocalDateTime
 
 enum class IdleFeedbackTypes {
-  PROJECT_CREATION_FEEDBACK {
-    private val unknownProjectTypeName = "UNKNOWN"
-    private val testProjectTypeName = "TEST"
-    private val maxNumberNotificationShowed = 3
-    override val suitableIdeVersion: String = "2022.1"
-
-    override fun isSuitable(): Boolean {
-      val projectCreationInfoState = ProjectCreationInfoService.getInstance().state
-
-      return isIdeEAP() &&
-             checkIdeIsSuitable() &&
-             checkIdeVersionIsSuitable() &&
-             checkProjectCreationFeedbackNotSent(projectCreationInfoState) &&
-             checkProjectCreated(projectCreationInfoState) &&
-             checkNotificationNumberNotExceeded(projectCreationInfoState)
-    }
-
-    private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isIdeaUltimate() || PlatformUtils.isIdeaCommunity()
-    }
-
-    private fun checkProjectCreationFeedbackNotSent(state: ProjectCreationInfoState): Boolean {
-      return !state.feedbackSent
-    }
-
-    private fun checkProjectCreated(state: ProjectCreationInfoState): Boolean {
-      return state.lastCreatedProjectBuilderId != null
-    }
-
-    private fun checkNotificationNumberNotExceeded(state: ProjectCreationInfoState): Boolean {
-      return state.numberNotificationShowed < maxNumberNotificationShowed
-    }
-
-    override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(
-        "Feedback In IDE",
-        NPWFeedbackBundle.message("notification.created.project.request.feedback.title"),
-        NPWFeedbackBundle.message("notification.created.project.request.feedback.content"))
-    }
-
-    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return ProjectCreationFeedbackDialog(project, getLastCreatedProjectTypeName(forTest), forTest)
-    }
-
-    private fun getLastCreatedProjectTypeName(forTest: Boolean): String {
-      if (forTest) {
-        return testProjectTypeName
-      }
-
-      val projectCreationInfoState = ProjectCreationInfoService.getInstance().state
-      return projectCreationInfoState.lastCreatedProjectBuilderId ?: unknownProjectTypeName
-    }
-
-    override fun updateStateAfterNotificationShowed() {
-      val projectCreationInfoState = ProjectCreationInfoService.getInstance().state
-      projectCreationInfoState.numberNotificationShowed += 1
-    }
-  },
   NEW_UI_FEEDBACK {
     override val suitableIdeVersion: String = "2022.3"
-    private val lastDayCollectFeedback = LocalDate(2022, 11, 15)
+    private val lastDayCollectFeedback = LocalDate(2022, 12, 31)
     private val maxNumberNotificationShowed = 1
     private val minNumberDaysElapsed = 5
 
     override fun isSuitable(): Boolean {
       val newUIInfoState = NewUIInfoService.getInstance().state
 
-
-      return isIdeEAP() &&
-             checkIdeIsSuitable() &&
+      return checkIdeIsSuitable() &&
              checkIsNoDeadline() &&
              checkIdeVersionIsSuitable() &&
              checkFeedbackNotSent(newUIInfoState) &&
@@ -104,7 +39,7 @@ enum class IdleFeedbackTypes {
     }
 
     private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isIdeaUltimate() || PlatformUtils.isIdeaCommunity()
+      return !PlatformUtils.isRider()
     }
 
     private fun checkIsNoDeadline(): Boolean {

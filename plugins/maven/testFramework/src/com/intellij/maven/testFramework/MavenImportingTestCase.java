@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
@@ -696,7 +697,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     });
   }
 
-  protected void readProjects() {
+  protected void readProjects() throws Exception {
     readProjects(myProjectsManager.getProjectsFiles());
   }
 
@@ -857,5 +858,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   private CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return CodeStyle.createTestSettings();
     return CodeStyle.getSettings(myProject);
+  }
+
+  protected void waitForSmartMode() {
+    AsyncPromise<Void> promise = new AsyncPromise<>();
+    DumbService.getInstance(myProject).smartInvokeLater(() -> {
+      promise.setResult(null);
+    });
+    edt(() -> waitForPromise(promise, 60_000));
   }
 }

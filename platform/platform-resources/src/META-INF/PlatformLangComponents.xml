@@ -115,8 +115,6 @@
 
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
     
-    <postStartupActivity implementation="com.intellij.ide.RecentProjectsManagerBase$MyProjectPostStartupActivity"/>
-
     <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
                     serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl" preload="await"/>
 

@@ -45,7 +45,7 @@ public class JavaPatternCompletionUtil {
    * @param psiClass class for which patterns should be suggested
    * @implNote currently, it suggests at most one record deconstruction pattern
    */
-  public static void addPatterns(@NotNull Consumer<LookupElement> lookupElements, @NotNull PsiElement context, @NotNull PsiClass psiClass) {
+  public static void addPatterns(@NotNull Consumer<? super LookupElement> lookupElements, @NotNull PsiElement context, @NotNull PsiClass psiClass) {
     if (!psiClass.isRecord() || psiClass.getRecordComponents().length == 0 || psiClass.getName() == null) return;
     // TODO: support deconstruction with type parameters
     if (psiClass.getTypeParameters().length > 0) return;

@@ -1,0 +1,146 @@
+[
+  {
+    "ideVersion": "1-2023",
+    "supportedJavaVersions": [
+      "5",
+      "6"
+    ],
+    "supportedGradleVersions": [
+      "1",
+      "2"
+    ],
+    "compatibility": [
+      {
+        "java": "5-6",
+        "gradle": "1-2"
+      }
+    ]
+  },
+  {
+    "ideVersion": "2023.1 EAP-INF",
+    "supportedJavaVersions": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19"
+    ],
+    "supportedGradleVersions": [
+      "3.0",
+      "3.1",
+      "3.2",
+      "3.3",
+      "3.4",
+      "3.5",
+      "4.0",
+      "4.1",
+      "4.2",
+      "4.3",
+      "4.4",
+      "4.5",
+      "4.5.1",
+      "4.6",
+      "4.7",
+      "4.8",
+      "4.9",
+      "4.10",
+      "4.10.3",
+      "5.0",
+      "5.1",
+      "5.2",
+      "5.3",
+      "5.3.1",
+      "5.4",
+      "5.4.1",
+      "5.5",
+      "5.5.1",
+      "5.6",
+      "5.6.2",
+      "6.0",
+      "6.0.1",
+      "6.1",
+      "6.2",
+      "6.3",
+      "6.4",
+      "6.5",
+      "6.6",
+      "6.7",
+      "6.8",
+      "6.8.3",
+      "6.9",
+      "7.0",
+      "7.1",
+      "7.2",
+      "7.3",
+      "7.4",
+      "7.5",
+      "7.5.1"
+    ],
+    "compatibility": [
+      {
+        "java": "6-8",
+        "gradle": "INF-5.0",
+        "comment": "https://docs.gradle.org/5.0/release-notes.html#potential-breaking-changes"
+      },
+      {
+        "java": "8-9",
+        "gradle": "INF-5.1,7.2-INF",
+        "comment": " Gradle older than 2.0 unofficially compatible with Java 8. Gradle from 5.1 to 7.1 and Java 8 aren't compatible: https://github.com/gradle/gradle/issues/8285"
+      },
+      {
+        "java": "9-10",
+        "gradle": "4.3-INF"
+      },
+      {
+        "java": "10-11",
+        "gradle": "4.7-INF"
+      },
+      {
+        "java": "11-12",
+        "gradle": "5.0-INF"
+      },
+      {
+        "java": "12-13",
+        "gradle": "5.4-INF"
+      },
+      {
+        "java": "13-14",
+        "gradle": "6.0-INF"
+      },
+      {
+        "java": "14-15",
+        "gradle": "6.3-INF"
+      },
+      {
+        "java": "15-16",
+        "gradle": "6.7-INF",
+        "comment": "Many builds might work with Java 15 but there are some known issues: https://github.com/gradle/gradle/issues/13532"
+      },
+      {
+        "java": "16-17",
+        "gradle": "7.0-INF"
+      },
+      {
+        "java": "17-18",
+        "gradle": "7.2-INF",
+        "comment": "Gradle 7.2 and Java 17 are partially compatible: https://github.com/gradle/gradle/issues/16857"
+      },
+      {
+        "java": "18-19",
+        "gradle": "7.5-INF"
+      },
+      {
+        "java": "19-INF",
+        "gradle": "7.6-INF"
+      }
+    ]
+  }
+]

@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
@@ -136,6 +138,11 @@ fun KtExpression.guessTypes(
     allowErrorTypes: Boolean = false
 ): Array<KotlinType> {
     fun isAcceptable(type: KotlinType) = allowErrorTypes || !ErrorUtils.containsErrorType(type)
+
+    val lambda = getStrictParentOfType<KtLambdaExpression>()
+    if (this.isLastStatementOf(lambda)) {
+        lambda?.expectedReturnType(context)?.let { return arrayOf(it) }
+    }
 
     if (coerceUnusedToUnit
         && this !is KtDeclaration
@@ -258,6 +265,16 @@ fun KtExpression.guessTypes(
             } ?: arrayOf() // can't infer anything
         }
     }
+}
+
+private fun KtExpression.isLastStatementOf(lambda: KtLambdaExpression?): Boolean =
+    this == lambda?.bodyExpression?.statements?.lastOrNull()
+
+private fun KtLambdaExpression.expectedReturnType(context: BindingContext): KotlinType? {
+    val argument = parent as? KtValueArgument ?: return null
+    val call = argument.getStrictParentOfType<KtCallExpression>() ?: return null
+    val parameter = call.getResolvedCall(context)?.getParameterForArgument(argument)
+    return parameter?.type?.arguments?.lastOrNull()?.type
 }
 
 private fun KotlinType.getFunctionType() = if (isFunctionType) this else supertypes().firstOrNull { it.isFunctionType }

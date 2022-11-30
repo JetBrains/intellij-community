@@ -84,7 +84,7 @@ internal class IdeHeartbeatEventReporter : ProjectPostStartupActivity {
 
 internal class UILatencyLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("performance", 65)
+    private val GROUP = EventLogGroup("performance", 66)
     internal val SYSTEM_CPU_LOAD = Int("system_cpu_load")
     internal val SWAP_LOAD = Int("swap_load")
     internal val CPU_TIME = Int("cpu_time_ms")

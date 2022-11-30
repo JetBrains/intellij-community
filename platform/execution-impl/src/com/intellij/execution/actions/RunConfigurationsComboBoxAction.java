@@ -69,6 +69,12 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return Registry.is("run.current.file.item.in.run.configurations.combobox");
   }
 
+  private static boolean hasRunSubActions(@NotNull Project project) {
+    return hasRunCurrentFileItem(project) ||
+           ExperimentalUI.isNewUI() ||
+           PlatformUtils.isCLion();
+  }
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -251,8 +257,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @ApiStatus.Internal
   public static void addRunConfigurations(DefaultActionGroup allActionsGroup,
                                           Project project,
-                                          Function<RunnerAndConfigurationSettings, AnAction> createAction,
-                                          Function<@NlsSafe String, DefaultActionGroup> createFolder) {
+                                          Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
+                                          Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder) {
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
@@ -514,7 +520,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
       // Secondary menu for the existing run configurations is not directly related to the 'Run Current File' feature.
       // We may reconsider changing this to `if (!RunManager.getInstance(project).isRunWidgetActive()) { addSubActions(); }`
-      if (hasRunCurrentFileItem(project)) {
+      if (hasRunSubActions(project)) {
         addSubActions();
       }
     }

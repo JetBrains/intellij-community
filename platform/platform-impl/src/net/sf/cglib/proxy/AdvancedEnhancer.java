@@ -651,7 +651,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
     }
   }
 
-  private void emitConstructors(ClassEmitter ce, List<MethodInfo> constructors) {
+  private void emitConstructors(ClassEmitter ce, List<? extends MethodInfo> constructors) {
     boolean seenNull = false;
     for (final MethodInfo constructor : constructors) {
       CodeEmitter e = EmitUtils.begin_method(ce, constructor, Constants.ACC_PUBLIC);

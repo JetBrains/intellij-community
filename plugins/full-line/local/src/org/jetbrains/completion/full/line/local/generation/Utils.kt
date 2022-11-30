@@ -56,11 +56,19 @@ internal fun logSoftmax(scores: Array<DoubleArray>): Array<DoubleArray> {
   return expScores
 }
 
-//TODO definitely there should be a better algorithm
+private data class IndexToValue(val index: Int, val value: Double) : Comparable<IndexToValue> {
+  override fun compareTo(other: IndexToValue): Int = -compareValues(this.value, other.value)
+}
+
 internal fun topk1d(data: DoubleArray, size: Int): IntArray {
-  val pairedData = Array(data.size) { Pair(data[it], it) }
-  Arrays.parallelSort(pairedData) { fst: Pair<Double, Int>, snd: Pair<Double, Int> -> -fst.first.compareTo(snd.first) }
-  return IntArray(size) { pairedData[it].second }
+  val newData = mutableListOf<IndexToValue>()
+  for ((index, value) in data.withIndex()) {
+    if (value != Double.NEGATIVE_INFINITY) {
+      newData.add(IndexToValue(index, value))
+    }
+  }
+  val queue = PriorityQueue(newData)
+  return IntArray(min(size, queue.size)) { queue.poll().index }
 }
 
 internal fun topk2d(data: Array<DoubleArray>, size: Int, dim: Int = 0): Array<IntArray> {

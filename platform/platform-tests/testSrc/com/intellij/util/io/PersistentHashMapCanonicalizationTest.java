@@ -35,9 +35,9 @@ public class PersistentHashMapCanonicalizationTest {
   @Rule
   public final TemporaryFolder tmpDirectory = new TemporaryFolder();
 
-  private final Function<List<String>, List<String>> sorter;
+  private final Function<? super List<String>, ? extends List<String>> sorter;
 
-  public PersistentHashMapCanonicalizationTest(final Function<List<String>, List<String>> sorter) { this.sorter = sorter; }
+  public PersistentHashMapCanonicalizationTest(final Function<? super List<String>, ? extends List<String>> sorter) { this.sorter = sorter; }
 
   private static List<String> stableSortByStringCompare(final List<String> keys) {
     final List<String> keysCopy = new ArrayList<>(keys);
@@ -46,7 +46,7 @@ public class PersistentHashMapCanonicalizationTest {
   }
 
 
-  public static <K> List<K> stableSortBySerializedBytes(final List<K> keys,
+  public static <K> List<K> stableSortBySerializedBytes(final List<? extends K> keys,
                                                         final DataExternalizer<K> externalizer) {
     return keys.stream()
       .map(key -> new Pair<>(key, keyToBytes(externalizer, key)))
@@ -228,7 +228,7 @@ public class PersistentHashMapCanonicalizationTest {
 
   private <K, V> PersistentHashMap<K, V> canonicalize(
     final @NotNull PersistentHashMap<K, V> originalMap,
-    final @NotNull Function<List<K>, List<K>> stableSorter) throws IOException {
+    final @NotNull Function<? super List<K>, ? extends List<K>> stableSorter) throws IOException {
     //'Canonical' version of PersistentMap is the map with the same key-values, but added in strict
     // deterministic order (natural string order in this case).
     final PersistentMapBase<K, V> mapImpl = originalMap.getImpl();

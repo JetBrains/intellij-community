@@ -35,9 +35,11 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenc
 import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
+import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
@@ -46,6 +48,10 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.projectModel.FullJdk
+import org.jetbrains.kotlin.projectModel.KotlinSdk
+import org.jetbrains.kotlin.projectModel.ResolveSdk
+import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
@@ -249,7 +255,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val libraries = List(50) { index -> projectLibrary("kotlin-stdlib-$index", TestKotlinArtifacts.kotlinStdlib.jarRoot) }
         val features = libraries.map {
             executeOnPooledThread {
-                val value: List<LibraryInfo> = cache[it]
+                val value: List<LibraryInfo> = runReadAction { cache[it] }
                 resultSet.add(value)
             }
         }
@@ -455,15 +461,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             dLibInfo,
         )
 
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
-
         assertDependencies(
             lib = s0LibInfo,
             aLibInfo,
@@ -577,15 +574,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             d.production,
             dLibInfo,
         )
-
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
 
         assertDependencies(
             lib = s0LibInfo,
@@ -734,16 +722,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             m1.production,
             m6LibInfo,
         )
-
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                "LibraryInfo '${lib.name}' dependencies",
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
 
         assertDependencies(
             lib = m0LibInfo,
@@ -934,16 +912,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             m8LibInfo,
         )
 
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                "LibraryInfo '${lib.name}' dependencies",
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
-
         assertDependencies(
             lib = m01LibInfo,
             m01LibInfo, m0LibInfo, m10LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo, m8LibInfo
@@ -1088,16 +1056,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             m7LibInfo,
         )
 
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                "LibraryInfo '${lib.name}' dependencies",
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
-
         assertDependencies(
             lib = m0LibInfo,
             m0LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
@@ -1109,7 +1067,317 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
                 m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
             )
         }
+
+        // drop module in the middle of the loop
+        ModuleRootModificationUtil.updateModel(m4) { model: ModifiableRootModel ->
+            val entry = model.findModuleOrderEntry(m5) ?: error("unable to find m5")
+            model.removeOrderEntry(entry)
+        }
+
+        m4.production.assertDependenciesEqual(
+            m4.production,
+            // m5 is dropped
+            // m5.production,
+            m4LibInfo,
+        )
+
+        assertDependencies(lib = m1LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo)
+        assertDependencies(lib = m2LibInfo, m2LibInfo, m3LibInfo, m4LibInfo)
+        assertDependencies(lib = m3LibInfo, m3LibInfo, m4LibInfo)
+        assertDependencies(lib = m4LibInfo, m4LibInfo)
+
+        assertDependencies(lib = m6LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m6LibInfo, m7LibInfo)
+        assertDependencies(lib = m7LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m7LibInfo)
     }
+
+    fun testMppCase() {
+        /**
+        ```mermaid
+        graph
+        common --> STDLIB_COMMON
+        js --> common
+        js --> STDLIB_JS
+        js --> KOTLIN_SDK
+        jvmNoSdk --> common
+        jvmNoSdk --> STDLIB_JVM
+        jvmWithSdk --> common
+        jvmWithSdk --> STDLIB_JVM
+        jvmWithSdk --> FULL_JDK
+        native --> common
+        common --> KOTLIN_SDK
+        ```
+         */
+
+        KotlinSdkType.setUpIfNeeded(testRootDisposable)
+
+        val common = module("common")
+        val js = module("js")
+        val jvmNoSdk = module("jvmNoSdk")
+        val jvmWithSdk = module("jvmWithSdk")
+        val native = module("native")
+
+        js.addDependency(common)
+        jvmNoSdk.addDependency(common)
+        jvmWithSdk.addDependency(common)
+        native.addDependency(common)
+
+        val stdlibCommon = projectLibrary("stdlibCommon", classesRoot = TestKotlinArtifacts.kotlinStdlibCommon.jarRoot)
+        val stdlibCommonLibInfo = stdlibCommon.toLibraryInfo()
+
+        common.addDependency(stdlibCommon)
+        common.addDependency(KotlinSdk, testRootDisposable)
+        jvmWithSdk.addDependency(KotlinSdk, testRootDisposable)
+
+        val kotlinSdkInfo = common.toSdkInfo(KotlinSdk) ?: error("no KotlinSDK")
+
+        val stdlibJs = projectLibrary("stdlibJs", classesRoot = TestKotlinArtifacts.kotlinStdlibJs.jarRoot)
+        val stdlibJsInfo = stdlibJs.toLibraryInfo()
+
+        js.addDependency(stdlibJs)
+        js.addDependency(KotlinSdk, testRootDisposable)
+
+        val stdlibJvm = projectLibrary("stdlibJvm", classesRoot = TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        val stdlibJvmLibInfo = stdlibJvm.toLibraryInfo()
+
+        jvmNoSdk.addDependency(stdlibJvm)
+
+        val fakeLib = projectLibraryWithFakeRoot("fakeLib")
+        jvmNoSdk.addDependency(fakeLib)
+        val fakeLibLibraryInfo = fakeLib.toLibraryInfo()
+
+        jvmWithSdk.addDependency(stdlibJvm)
+
+        jvmWithSdk.addDependency(FullJdk, testRootDisposable)
+        val fullSdkInfo = jvmWithSdk.toSdkInfo(FullJdk) ?: error("no FullJdk")
+
+        common.production.assertDependenciesEqual(
+            kotlinSdkInfo,
+            common.production,
+            stdlibCommonLibInfo
+        )
+
+        js.production.assertDependenciesEqual(
+            kotlinSdkInfo,
+            js.production,
+            common.production,
+            stdlibJsInfo
+        )
+
+        jvmNoSdk.production.assertDependenciesEqual(
+            jvmNoSdk.production,
+            common.production,
+            stdlibJvmLibInfo,
+            fakeLibLibraryInfo
+        )
+
+        jvmWithSdk.production.assertDependenciesEqual(
+            fullSdkInfo,
+            jvmWithSdk.production,
+            common.production,
+            stdlibJvmLibInfo,
+        )
+
+        assertDependencies(
+            lib = stdlibCommonLibInfo,
+            expectedSdkInfos = listOf(kotlinSdkInfo),
+            stdlibCommonLibInfo
+        )
+
+        assertDependencies(
+            lib = stdlibJsInfo,
+            expectedSdkInfos = listOf(kotlinSdkInfo),
+            stdlibCommonLibInfo, stdlibJsInfo
+        )
+
+        assertDependencies(
+            lib = fakeLibLibraryInfo,
+            expectedSdkInfos = listOf(),
+            fakeLibLibraryInfo, stdlibCommonLibInfo, stdlibJvmLibInfo
+        )
+
+        assertDependencies(
+            lib = stdlibJvmLibInfo,
+            expectedSdkInfos = listOf(fullSdkInfo),
+            stdlibCommonLibInfo, stdlibJvmLibInfo
+        )
+
+        assertDependencies(
+            lib = stdlibJvmLibInfo,
+            expectedSdkInfos = listOf(fullSdkInfo),
+            stdlibCommonLibInfo, stdlibJvmLibInfo
+        )
+    }
+
+
+    fun testModuleChainInvalidation() {
+        /**
+        ```mermaid
+        graph
+        M0 --> M1
+        M1 --> M2
+        M2 --> M3
+        M3 --> M4
+        M1 --> M5
+        M5 --> M6
+        M5 --> M7
+        ```
+         */
+        val m0 = module("m0")
+        val m1 = module("m1")
+        val m2 = module("m2")
+        val m3 = module("m3")
+        val m4 = module("m4")
+        val m5 = module("m5")
+        val m6 = module("m6")
+        val m7 = module("m7")
+
+        m0.addDependency(m1)
+        m1.addDependency(m2)
+        m2.addDependency(m3)
+        m3.addDependency(m4)
+        m1.addDependency(m5)
+        m5.addDependency(m6)
+        m5.addDependency(m7)
+
+        val m0Lib = projectLibrary("m0Lib", classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        val m0LibInfo = m0Lib.toLibraryInfo()
+
+        m0.addDependency(m0Lib)
+
+        val m1Lib = projectLibrary("m1Lib", classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot)
+        val m1LibInfo = m1Lib.toLibraryInfo()
+
+        m1.addDependency(m1Lib)
+
+        val m2Lib = projectLibrary("m2Lib", classesRoot = TestKotlinArtifacts.kotlinAnnotationsJvm.jarRoot)
+        val m2LibInfo = m2Lib.toLibraryInfo()
+
+        m2.addDependency(m2Lib)
+
+        val m3Lib = projectLibrary("m3Lib", classesRoot = TestKotlinArtifacts.kotlinTestJunit.jarRoot)
+        val m3LibInfo = m3Lib.toLibraryInfo()
+
+        m3.addDependency(m3Lib)
+
+        val m4Lib = projectLibrary("m4Lib", classesRoot = TestKotlinArtifacts.parcelizeRuntime.jarRoot)
+        val m4LibInfo = m4Lib.toLibraryInfo()
+
+        m4.addDependency(m4Lib)
+
+        val m5Lib = projectLibrary("m5Lib", classesRoot = TestKotlinArtifacts.jsr305.jarRoot)
+        val m5LibInfo = m5Lib.toLibraryInfo()
+
+        m5.addDependency(m5Lib)
+
+        val m6Lib = projectLibrary("m6Lib", classesRoot = TestKotlinArtifacts.kotlinTest.jarRoot)
+        val m6LibInfo = m6Lib.toLibraryInfo()
+
+        m6.addDependency(m6Lib)
+
+        val m7Lib = projectLibrary("m7Lib", classesRoot = TestKotlinArtifacts.kotlinScriptRuntime.jarRoot)
+        val m7LibInfo = m7Lib.toLibraryInfo()
+
+        m7.addDependency(m7Lib)
+
+        m0.production.assertDependenciesEqual(
+            m0.production,
+            m1.production,
+            m0LibInfo,
+        )
+
+        m1.production.assertDependenciesEqual(
+            m1.production,
+            m2.production,
+            m5.production,
+            m1LibInfo,
+        )
+
+        m2.production.assertDependenciesEqual(
+            m2.production,
+            m3.production,
+            m2LibInfo,
+        )
+
+        m3.production.assertDependenciesEqual(
+            m3.production,
+            m4.production,
+            m3LibInfo,
+        )
+
+        m4.production.assertDependenciesEqual(
+            m4.production,
+            m4LibInfo,
+        )
+
+        m5.production.assertDependenciesEqual(
+            m5.production,
+            m6.production,
+            m7.production,
+            m5LibInfo,
+        )
+
+        m6.production.assertDependenciesEqual(
+            m6.production,
+            m6LibInfo,
+        )
+
+        m7.production.assertDependenciesEqual(
+            m7.production,
+            m7LibInfo,
+        )
+
+        assertDependencies(
+            lib = m0LibInfo,
+            m0LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
+        )
+
+        assertDependencies(
+            lib = m1LibInfo,
+            m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
+        )
+
+        assertDependencies(
+            lib = m2LibInfo,
+            m2LibInfo, m3LibInfo, m4LibInfo
+        )
+
+        assertDependencies(
+            lib = m3LibInfo,
+            m3LibInfo, m4LibInfo
+        )
+
+        assertDependencies(
+            lib = m5LibInfo,
+            m5LibInfo, m6LibInfo, m7LibInfo
+        )
+
+        // it has to drop m2, m1, m0
+        ModuleRootModificationUtil.updateModel(m1) { model: ModifiableRootModel ->
+            val entry = model.findModuleOrderEntry(m2) ?: error("unable to find m2")
+            model.removeOrderEntry(entry)
+        }
+
+        assertDependencies(
+            lib = m1LibInfo,
+            m1LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
+        )
+
+        assertDependencies(
+            lib = m2LibInfo,
+            m2LibInfo, m3LibInfo, m4LibInfo
+        )
+
+        assertDependencies(
+            lib = m3LibInfo,
+            m3LibInfo, m4LibInfo
+        )
+
+        assertDependencies(
+            lib = m5LibInfo,
+            m5LibInfo, m6LibInfo, m7LibInfo
+        )
+    }
+
 
     fun testExportedDependency() {
         val (a, b, c) = modules()
@@ -1762,6 +2030,30 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         error("Couldn't find source folder in ${module.name}")
     }
 
+    private fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
+        val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(lib)
+        assertEquals(
+            "LibraryInfo '${lib.name}' dependencies",
+            expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
+            dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+        )
+    }
+
+    private fun assertDependencies(lib: LibraryInfo, expectedSdkInfos: List<SdkInfo>, vararg expectedLibraries: LibraryInfo) {
+        val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(lib)
+        assertEquals(
+            "LibraryInfo '${lib.name}' dependencies",
+            expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
+            dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+        )
+
+        assertEquals(
+            "LibraryInfo '${lib.name}' sdk dependency",
+            expectedSdkInfos.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+            dependencies.sdk.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+        )
+    }
+
     private fun createFileInProject(fileName: String): VirtualFile {
         return runWriteAction {
             getVirtualFile(createTempFile(fileName, "")).copy(this, VfsUtil.findFileByIoFile(File(project.basePath!!), true)!!, fileName)
@@ -1786,6 +2078,20 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         get() = testSourceInfo!!
 
     private fun LibraryEx.toLibraryInfo(): LibraryInfo = LibraryInfoCache.getInstance(project)[this].first()
+
+    private fun Module.toSdkInfo(sdk: ResolveSdk?): SdkInfo? {
+        val findOrGetCachedSdk = SdkInfoCache.getInstance(project).findOrGetCachedSdk(this.production)
+        if (sdk != null) {
+            check(when(sdk) {
+                FullJdk -> findOrGetCachedSdk?.sdk == PluginTestCaseBase.jdk(TestJdkKind.FULL_JDK)
+                KotlinSdk -> findOrGetCachedSdk?.sdk?.sdkType == KotlinSdkType.INSTANCE
+                else -> false
+            }) {
+                "module '$name' has to have '$sdk' SDK"
+            }
+        }
+        return findOrGetCachedSdk
+    }
 
     private fun module(name: String, hasProductionRoot: Boolean = true, hasTestRoot: Boolean = true): Module {
         return createModuleFromTestData(createTempDirectory().absolutePath, name, StdModuleTypes.JAVA, false).apply {

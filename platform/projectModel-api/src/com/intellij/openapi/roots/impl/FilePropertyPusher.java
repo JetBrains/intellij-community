@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FilePropertyKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public interface FilePropertyPusher<T> {
    * from {@link VirtualFile#getUserData(Key)}.
    */
   @NotNull
-  Key<T> getFileDataKey();
+  FilePropertyKey<T> getFileDataKey();
 
   boolean pushDirectoriesOnly();
 

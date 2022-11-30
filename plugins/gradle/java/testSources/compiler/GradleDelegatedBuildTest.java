@@ -20,10 +20,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.PathUtil.toSystemDependentName;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.util.Arrays.asList;
 
 public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
@@ -204,11 +202,11 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     compileModules("project.main");
 
     String langPart = isGradleOlderThan("4.0") ? "build/classes" : "build/classes/java";
-    List<String> expected = newArrayList(path(langPart + "/main"),
-                                         path("api/" + langPart + "/main"),
-                                         path("impl/" + langPart + "/main"),
-                                         path("api/build/libs/api.jar"),
-                                         path("impl/build/libs/impl.jar"));
+    List<String> expected = new ArrayList<>(List.of(path(langPart + "/main"),
+                                    path("api/" + langPart + "/main"),
+                                    path("impl/" + langPart + "/main"),
+                                    path("api/build/libs/api.jar"),
+                                    path("impl/build/libs/impl.jar")));
 
     if (isGradleOlderThan("3.3")) {
       expected.addAll(asList(path("build/dependency-cache"),
@@ -254,8 +252,8 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
         public int method() { return 42; }  public int methodX() { return 42; }}""", false);
     compileModules("project.test");
 
-    expected = newArrayList(path(langPart + "/main"),
-                            path(langPart + "/test"));
+    expected = new ArrayList<>(List.of(path(langPart + "/main"),
+                       path(langPart + "/test")));
 
     if (isGradleOlderThan("3.3")) {
       expected.add(path("build/dependency-cache"));

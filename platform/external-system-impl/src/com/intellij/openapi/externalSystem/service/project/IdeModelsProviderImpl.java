@@ -298,7 +298,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     }
 
     Iterable<String> generate() {
-      List<String> names;
+      List<String> names = new ArrayList<>();
       String prefix = myModule.getGroup();
       File modulePath = new File(myModule.getLinkedExternalProjectPath());
       if (modulePath.isFile()) {
@@ -306,10 +306,11 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       }
 
       if (prefix == null || startsWith(myModule.getInternalName(), prefix)) {
-        names = ContainerUtil.newArrayList(myModule.getInternalName());
+        names.add(myModule.getInternalName());
       }
       else {
-        names = ContainerUtil.newArrayList(myModule.getInternalName(), prefix + myDelimiter + myModule.getInternalName());
+        names.add(myModule.getInternalName());
+        names.add(prefix + myDelimiter + myModule.getInternalName());
       }
 
       String name = names.get(0);

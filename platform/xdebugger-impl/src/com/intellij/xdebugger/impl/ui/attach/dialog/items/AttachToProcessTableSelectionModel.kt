@@ -1,12 +1,14 @@
 package com.intellij.xdebugger.impl.ui.attach.dialog.items
 
 import com.intellij.ui.table.JBTable
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElementNode
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogGroupNode
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachSelectionIgnoredNode
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.AttachTreeNodeWrapper
 import java.awt.Rectangle
 import javax.swing.DefaultListSelectionModel
 import javax.swing.ListSelectionModel
 import javax.swing.table.TableModel
-
-internal interface AttachSelectionIgnoredNode
 
 internal interface AttachNodeContainer<TNodeType> {
   fun getAttachNode(): TNodeType
@@ -19,7 +21,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
   }
 
   override fun setSelectionInterval(index0: Int, index1: Int) {
-    if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<Any>(index0) is AttachSelectionIgnoredNode) {
+    if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<AttachDialogElementNode>(index0) is AttachSelectionIgnoredNode) {
 
       val currentIndex = minSelectionIndex
       if (currentIndex < 0 || currentIndex >= table.rowCount) {
@@ -48,7 +50,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
   }
 
   override fun addSelectionInterval(index0: Int, index1: Int) {
-    if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<Any>(index0) is AttachSelectionIgnoredNode) {
+    if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<AttachDialogElementNode>(index0) is AttachSelectionIgnoredNode) {
       return
     }
     super.addSelectionInterval(index0, index1)
@@ -74,7 +76,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
 
   private fun getPreviousIndex(index0: Int): Int {
     var newIndex = index0 - 1
-    while (newIndex >= 0 && table.model.getValueAt<Any>(newIndex) is AttachSelectionIgnoredNode) {
+    while (newIndex >= 0 && table.model.getValueAt<AttachDialogElementNode>(newIndex) is AttachSelectionIgnoredNode) {
       newIndex--
     }
     return if (newIndex >= 0) newIndex else -1
@@ -82,7 +84,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
 
   private fun getNextIndex(index0: Int): Int {
     var newIndex = index0 + 1
-    while (newIndex < table.rowCount && table.model.getValueAt<Any>(newIndex) is AttachSelectionIgnoredNode) {
+    while (newIndex < table.rowCount && table.model.getValueAt<AttachDialogElementNode>(newIndex) is AttachSelectionIgnoredNode) {
       newIndex++
     }
     return if (newIndex < table.rowCount) newIndex else -1
@@ -93,11 +95,14 @@ internal inline fun <reified TNodeType> TableModel.getValueAt(row: Int): TNodeTy
   if (row < 0 || row >= rowCount) {
     return null
   }
-  return when (val value = getValueAt(row, 0)) {
-    is TNodeType -> value
-    is AttachNodeContainer<*> -> value.getAttachNode() as? TNodeType
-    else -> null
-  }
+  return tryCastValue<TNodeType>(getValueAt(row, 0))
+}
+
+internal inline fun <reified TNodeType> tryCastValue(value: Any?) = when (value) {
+  is TNodeType -> value
+  is AttachNodeContainer<*> -> value.getAttachNode() as? TNodeType
+  is AttachTreeNodeWrapper -> value.node as? TNodeType
+  else -> null
 }
 
 internal fun JBTable.focusFirst() {
@@ -109,4 +114,28 @@ internal fun JBTable.focusFirst() {
   if (model.rowCount > 0) {
     selectionModel.setSelectionInterval(0, 0)
   }
+}
+
+internal fun JBTable.refilterSaveSelection(filters: AttachToProcessElementsFilters, refilter: () -> Unit) {
+  filters.clear()
+  val previouslySelectedRow = selectedRow
+  val selectedItem = if (previouslySelectedRow in 0 until rowCount)
+                        model.getValueAt<AttachDialogElementNode>(previouslySelectedRow)
+                      else
+                        null
+  refilter()
+
+  var isFirstGroup = true
+  for (rowNumber in 0 until rowCount) {
+    val valueAtRow = model.getValueAt<AttachDialogElementNode>(rowNumber)
+    if (valueAtRow is AttachDialogGroupNode) {
+      valueAtRow.isFirstGroup = isFirstGroup
+      isFirstGroup = false
+    }
+    if (selectedItem != null && valueAtRow != null && selectedItem == valueAtRow) {
+      selectionModel.setSelectionInterval(rowNumber, rowNumber)
+    }
+  }
+
+  focusFirst()
 }

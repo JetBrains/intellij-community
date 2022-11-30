@@ -259,12 +259,18 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
         val addedChildrenSet = addedChildrenMap[connectionId] ?: emptySet()
         val updatedAddedChildren = addedChildrenSet.mapNotNull { childrenMapper(it) }
-        mutableChildren.addAll(updatedAddedChildren)
+        if (connectionId.isOneToOne && updatedAddedChildren.isNotEmpty()) {
+          mutableChildren.clear()
+          mutableChildren.add(updatedAddedChildren.single())
+        }
+        else {
+          mutableChildren.addAll(updatedAddedChildren)
+        }
 
         val removedChildrenSet = removedChildrenMap[connectionId] ?: emptySet()
         for (removedChild in removedChildrenSet) {
           // This method may return false if this child is already removed
-          mutableChildren.remove(removedChild)
+          mutableChildren.remove(childrenMapper(removedChild))
         }
 
         // .... Update if something changed
@@ -299,7 +305,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       }
     }
     else {
-      if (target.entityDataById(child.id) != null) {
+      if (replaceMap.inverse()[child.id.asThis()] == null && target.entityDataById(child.id) != null) {
         child
       }
       else null

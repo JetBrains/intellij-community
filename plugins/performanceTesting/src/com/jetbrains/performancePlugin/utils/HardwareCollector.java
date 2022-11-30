@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 public class HardwareCollector implements TroubleInfoCollector {
-  List<String> info = new ArrayList<>();
+  final List<String> info = new ArrayList<>();
 
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {

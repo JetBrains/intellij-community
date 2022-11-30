@@ -20,7 +20,7 @@ public class PostCommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeB
 
   public PostCommitChecksTodosTreeBuilder(@NotNull JTree tree,
                                           @NotNull Project project,
-                                          @NotNull Collection<Change> changes,
+                                          @NotNull Collection<? extends Change> changes,
                                           @NotNull Collection<? extends TodoItem> todoItems) {
     super(tree, project, todoItems);
 

@@ -673,12 +673,7 @@ public class AnnotationUtil {
       if (initializers1.length != initializers2.length) {
         return false;
       }
-      for (int i = 0; i < initializers1.length; i++) {
-        if (!equal(initializers1[i], initializers2[i])) {
-          return false;
-        }
-      }
-      return true;
+      return ArrayUtil.areEqual(initializers1, initializers2, AnnotationUtil::equal);
     }
     if (value1 != null && value2 != null) {
       final PsiConstantEvaluationHelper constantEvaluationHelper =

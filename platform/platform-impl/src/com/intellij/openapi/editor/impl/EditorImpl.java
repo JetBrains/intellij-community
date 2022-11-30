@@ -60,8 +60,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -69,6 +67,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.mac.MacGestureSupportInstaller;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.paint.PaintUtil;
@@ -350,10 +349,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myScrollingToCaret;
 
-  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind) {
+  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind, @Nullable VirtualFile file) {
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
+    myVirtualFile = file;
     myScheme = createBoundColorSchemeDelegate(null);
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myIsViewer = viewer;
@@ -488,6 +488,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       return Collections.emptyIterator();
     });
+    myPanel.putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
 
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
@@ -625,9 +626,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
     int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), 0, textLength);
 
-    if (getGutterComponentEx().getCurrentAccessibleLine() != null &&
-        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer()))
-    {
+    if (myGutterComponent.getCurrentAccessibleLine() != null &&
+        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer())) {
       escapeGutterAccessibleLine(start, end);
     }
     int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
@@ -857,8 +857,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFile(VirtualFile vFile) {
-    myVirtualFile = vFile;
-    reinitSettings();
+    // yes, compare by instance
+    //noinspection UseVirtualFileEquals
+    if (vFile != myVirtualFile) {
+      myVirtualFile = vFile;
+      reinitSettings();
+    }
   }
 
   @Override
@@ -1327,10 +1331,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void setHighlighter(final @NotNull EditorHighlighter highlighter) {
-    if (isReleased) return; // do not set highlighter to the released editor
+  public void setHighlighter(@NotNull EditorHighlighter highlighter) {
+    if (isReleased) {
+      // do not set highlighter to the released editor
+      return;
+    }
+
     assertIsDispatchThread();
-    final Document document = getDocument();
+    Document document = getDocument();
     Disposer.dispose(myHighlighterDisposable);
 
     document.addDocumentListener(highlighter);
@@ -1360,7 +1368,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public @NotNull EditorGutterComponentImpl getGutterComponentEx() {
+  public @NotNull EditorGutterComponentEx getGutterComponentEx() {
     return myGutterComponent;
   }
 
@@ -1521,7 +1529,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       float newUInormLineHeight = (float)Registry.doubleValue("ide.new.ui.editor.normalized.line.height");
       float standardNormalizedLineHeight = ExperimentalUI.isNewUI() ? newUInormLineHeight : 16.0f;
       float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
-      return normLineHeight / JBUIScale.scale((float)standardNormalizedLineHeight);
+      return normLineHeight / JBUIScale.scale(standardNormalizedLineHeight);
     }
     return 1.0f;
   }
@@ -1700,7 +1708,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    if (getGutterComponentEx().getCurrentAccessibleLine() != null) {
+    if (myGutterComponent.getCurrentAccessibleLine() != null) {
       escapeGutterAccessibleLine(e.getOffset(), e.getOffset() + e.getNewLength());
     }
 
@@ -1741,7 +1749,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int endVisLine = offsetToVisualLine(offsetEnd);
     int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
     if (startVisLine <= line && endVisLine >= line) {
-      getGutterComponentEx().escapeCurrentAccessibleLine();
+      myGutterComponent.escapeCurrentAccessibleLine();
     }
   }
 
@@ -2021,9 +2029,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Color getBackgroundColor() {
-    if (myForcedBackground != null) return myForcedBackground;
-
-    return getBackgroundIgnoreForced();
+    return myForcedBackground == null ? getBackgroundIgnoreForced() : myForcedBackground;
   }
 
   @Override
@@ -4570,20 +4576,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setEditorFontSize(float fontSize) {
-      if (fontSize < MIN_FONT_SIZE) fontSize = MIN_FONT_SIZE;
-      if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
-      if (fontSize == myFontSize) return;
+      if (fontSize < MIN_FONT_SIZE) {
+        fontSize = MIN_FONT_SIZE;
+      }
+      if (fontSize > myMaxFontSize) {
+        fontSize = myMaxFontSize;
+      }
+      if (fontSize == myFontSize) {
+        return;
+      }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Font size overridden for " + EditorImpl.this, new Throwable());
       }
       myFontPreferencesAreSetExplicitly = false;
 
       IdeScaleTransformer scaleTransformer = IdeScaleTransformer.INSTANCE;
-      if (!scaleTransformer.isEditorFontSizeForced() &&
-        fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) myFontSize = FONT_SIZE_TO_IGNORE;
-      else myFontSize = fontSize;
+      if (!scaleTransformer.isEditorFontSizeForced() && fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) {
+        myFontSize = FONT_SIZE_TO_IGNORE;
+      }
+      else {
+        myFontSize = fontSize;
+      }
 
-      reinitFontsAndSettings();
+      reinitFonts();
+      reinitSettings();
     }
 
     void resetEditorFontSize() {
@@ -4741,7 +4757,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 new Point(
                   mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
                   mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
-                ), editor.getGutterComponentEx().getDragImage((GutterIconRenderer)attachedObject), painterListenersDisposable
+                ), editor.myGutterComponent.getDragImage((GutterIconRenderer)attachedObject), painterListenersDisposable
               );
               IdeGlassPaneUtil.installPainter(
                 editorComponent,
@@ -4962,9 +4978,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
     if (myProject != null) {
-      if (event.getPsiFile() != null) {
-        PsiFile editorFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(getDocument());
-        if (editorFile != event.getPsiFile()) return;
+      VirtualFile eventFile = event.getVirtualFile();
+      if (eventFile != null && !eventFile.equals(getVirtualFile())) {
+        return;
       }
       int oldTabSize = EditorUtil.getTabSize(this);
       mySettings.reinitSettings();
@@ -5179,7 +5195,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static class NullEditorHighlighter extends EmptyEditorHighlighter {
+  private static final class NullEditorHighlighter extends EmptyEditorHighlighter {
     private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
 
     NullEditorHighlighter() {

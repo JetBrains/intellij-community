@@ -10,10 +10,7 @@ import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.*
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.HelpID
@@ -64,6 +61,7 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
+import kotlin.Pair
 import kotlin.math.min
 import org.jetbrains.kotlin.idea.util.ElementKind
 
@@ -105,7 +103,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         private val bindingContext: BindingContext,
         private val resolutionFacade: ResolutionFacade
     ) {
-        private val psiFactory = KtPsiFactory(expression)
+        private val psiFactory = KtPsiFactory(expression.project)
 
         var propertyRef: KtDeclaration? = null
         var reference: SmartPsiElementPointer<KtExpression>? = null
@@ -533,7 +531,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(occurrenceContainer)
 
-        val callback = Pass<OccurrencesChooser.ReplaceChoice> { replaceChoice ->
+        val callback = Pass.create { replaceChoice: OccurrencesChooser.ReplaceChoice ->
             val allReplaces = when (replaceChoice) {
                 OccurrencesChooser.ReplaceChoice.ALL -> allOccurrences
                 else -> listOf(expression)

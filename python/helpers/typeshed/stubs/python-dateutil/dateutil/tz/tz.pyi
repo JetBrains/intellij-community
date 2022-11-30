@@ -1,10 +1,10 @@
 import datetime
-from typing import IO, Any, Text, TypeVar, Union
+from typing import Any, Protocol, TypeVar
+from typing_extensions import Literal
 
 from ..relativedelta import relativedelta
 from ._common import _tzinfo as _tzinfo, enfold as enfold, tzname_in_python2 as tzname_in_python2, tzrangebase as tzrangebase
 
-_FileObj = Union[str, Text, IO[str], IO[Text]]
 _DT = TypeVar("_DT", bound=datetime.datetime)
 
 ZERO: datetime.timedelta
@@ -53,8 +53,14 @@ class _ttinfo:
     __hash__: Any
     def __ne__(self, other): ...
 
+class _TZFileReader(Protocol):
+    # optional attribute:
+    # name: str
+    def read(self, __size: int) -> bytes: ...
+    def seek(self, __target: int, __whence: Literal[1]) -> object: ...
+
 class tzfile(_tzinfo):
-    def __init__(self, fileobj: _FileObj, filename: Text | None = ...) -> None: ...
+    def __init__(self, fileobj: str | _TZFileReader, filename: str | None = ...) -> None: ...
     def is_ambiguous(self, dt: datetime.datetime | None, idx: int | None = ...) -> bool: ...
     def utcoffset(self, dt: datetime.datetime | None) -> datetime.timedelta | None: ...
     def dst(self, dt: datetime.datetime | None) -> datetime.timedelta | None: ...
@@ -69,9 +75,9 @@ class tzrange(tzrangebase):
     hasdst: bool
     def __init__(
         self,
-        stdabbr: Text,
+        stdabbr: str,
         stdoffset: int | datetime.timedelta | None = ...,
-        dstabbr: Text | None = ...,
+        dstabbr: str | None = ...,
         dstoffset: int | datetime.timedelta | None = ...,
         start: relativedelta | None = ...,
         end: relativedelta | None = ...,
@@ -81,12 +87,17 @@ class tzrange(tzrangebase):
 
 class tzstr(tzrange):
     hasdst: bool
-    def __init__(self, s: bytes | _FileObj, posix_offset: bool = ...) -> None: ...
+    def __init__(self, s: str, posix_offset: bool = ...) -> None: ...
     @classmethod
     def instance(cls, name, offset) -> tzoffset: ...
 
+class _ICalReader(Protocol):
+    # optional attribute:
+    # name: str
+    def read(self) -> str: ...
+
 class tzical:
-    def __init__(self, fileobj: _FileObj) -> None: ...
+    def __init__(self, fileobj: str | _ICalReader) -> None: ...
     def keys(self): ...
     def get(self, tzid: Any | None = ...): ...
 
@@ -98,7 +109,7 @@ def datetime_ambiguous(dt: datetime.datetime, tz: datetime.tzinfo | None = ...) 
 def resolve_imaginary(dt: datetime.datetime) -> datetime.datetime: ...
 
 class _GetTZ:
-    def __call__(self, name: Text | None = ...) -> datetime.tzinfo | None: ...
-    def nocache(self, name: Text | None) -> datetime.tzinfo | None: ...
+    def __call__(self, name: str | None = ...) -> datetime.tzinfo | None: ...
+    def nocache(self, name: str | None) -> datetime.tzinfo | None: ...
 
 gettz: _GetTZ

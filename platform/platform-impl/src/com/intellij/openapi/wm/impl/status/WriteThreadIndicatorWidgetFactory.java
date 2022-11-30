@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -25,7 +24,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory {
+public final class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory {
   private static final String ID = "WriteThread";
 
   @Override
@@ -46,11 +45,6 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new WriteThreadWidget();
-  }
-
-  @Override
-  public void disposeWidget(@NotNull StatusBarWidget widget) {
-    Disposer.dispose(widget);
   }
 
   @Override

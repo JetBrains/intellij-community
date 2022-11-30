@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -51,8 +52,7 @@ public class LanguageTextField extends EditorTextField {
   public LanguageTextField(@Nullable Language language,
                            @Nullable Project project,
                            @NotNull String value,
-                           @NotNull DocumentCreator documentCreator)
-  {
+                           @NotNull DocumentCreator documentCreator) {
     this(language, project, value, documentCreator, true);
   }
 
@@ -95,10 +95,15 @@ public class LanguageTextField extends EditorTextField {
       assert fileType != null;
 
       final long stamp = LocalTimeCounter.currentTime();
-      final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false);
+      final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, "", stamp, true, false);
       documentCreator.customizePsiFile(psiFile);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
       assert document != null;
+      if (!value.isEmpty()) {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          document.setText(value); // do not put initial value into backing LightVirtualFile.contentsToByteArray
+        });
+      }
       return document;
     }
     else {

@@ -449,9 +449,28 @@ fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCo
   getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
 }
 
+/**
+ * Returns whether this [Sdk] seems valid or not.
+ *
+ * The actual check logic is located in [PythonSdkFlavor.sdkSeemsValid] and its overrides. In general, the method check whether the path to
+ * the Python binary stored in this [Sdk] exists and the corresponding file can be executed. This check can be performed both locally and
+ * on a target. The latter case takes place when [PythonSdkAdditionalData] of this [Sdk] implements [PyTargetAwareAdditionalData] and the
+ * corresponding target provides file system operations (by implementing the interface
+ * [com.intellij.execution.target.readableFs.TargetConfigurationReadableFs]).
+ *
+ * Note that if [PythonSdkAdditionalData] of this [Sdk] is [PyRemoteSdkAdditionalData] this method does not do any checks and returns
+ * `true`. This behavior may be improved in the future by generating [TargetEnvironmentConfiguration] based on the present
+ * [PyRemoteSdkAdditionalData].
+ *
+ * @see PythonSdkFlavor.sdkSeemsValid
+ */
 val Sdk.sdkSeemsValid: Boolean
-  get() = getOrCreateAdditionalData().flavorAndData
-    .sdkSeemsValid(this, (sdkAdditionalData as? PyDetectedSdkAdditionalData)?.temporaryConfiguration ?: targetEnvConfiguration)
+  get() {
+    val pythonSdkAdditionalData = getOrCreateAdditionalData()
+    if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return true
+    return pythonSdkAdditionalData.flavorAndData
+      .sdkSeemsValid(this, (pythonSdkAdditionalData as? PyDetectedSdkAdditionalData)?.temporaryConfiguration ?: targetEnvConfiguration)
+  }
 
 private val SDK_PYTHON_PATH = Key<FullPathOnTarget>("SDK_PYTHON_PATH")
 

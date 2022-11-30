@@ -556,7 +556,7 @@ class KotlinBuildScriptManipulator(
         createFile("dummy.kts", text).script?.blockExpression?.firstChild as KtScriptInitializer
 
     private val PsiElement.psiFactory: KtPsiFactory
-        get() = KtPsiFactory(this)
+        get() = KtPsiFactory(project)
 
     private fun getCompileDependencySnippet(
         groupId: String,

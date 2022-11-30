@@ -78,13 +78,13 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
         }
 
         private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiElement>): Boolean {
-           
+
             val searchScope = runReadAction { klass.useScope }
             if (searchScope is LocalSearchScope) {
                 return processLightClassLocalImplementations(klass, searchScope, consumer)
             }
 
-            return klass.findAllInheritors(klass.useScope).all { consumer.process(it) }
+            return klass.findAllInheritors(searchScope).all { runReadAction { consumer.process(it) } }
         }
 
         private fun processLightClassLocalImplementations(
@@ -125,9 +125,9 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
             declaration: KtCallableDeclaration,
             scope: SearchScope,
             consumer: Processor<PsiElement>
-        ): Boolean = runReadAction {
+        ): Boolean = ReadAction.nonBlocking(Callable {
             processPropertyImplementationsMethods(declaration, scope, consumer)
-        }
+        }).executeSynchronously()
 
         private fun processActualDeclarations(declaration: KtDeclaration, consumer: Processor<PsiElement>): Boolean = runReadAction {
             if (!declaration.isExpectDeclaration()) true

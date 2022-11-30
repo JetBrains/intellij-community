@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.FileStringPropertyPusher;
+import com.intellij.FilePropertyPusherBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -10,24 +10,26 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.psi.FilePropertyKey;
+import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 /**
  * @author Konstantin.Ulitin
  */
-public class TemplateDataLanguagePusher implements FileStringPropertyPusher<Language> {
-  public static final Key<Language> KEY = Key.create("TEMPLATE_DATA_LANGUAGE");
+public class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language> {
+  private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 4, true);
+  public static final FilePropertyKey<Language> KEY =
+    FilePropertyKeyImpl.createPersistentStringKey("TEMPLATE_DATA_LANGUAGE", PERSISTENCE,
+                                                  TemplateDataLanguagePusher::asString, TemplateDataLanguagePusher::fromString);
 
   @NotNull
   @Override
-  public Key<Language> getFileDataKey() {
+  public FilePropertyKey<Language> getFileDataKey() {
     return KEY;
   }
 
@@ -69,21 +71,12 @@ public class TemplateDataLanguagePusher implements FileStringPropertyPusher<Lang
     return true;
   }
 
-  private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 3, true);
-
-  @Override
-  public @NotNull FileAttribute getAttribute() {
-    return PERSISTENCE;
-  }
-
-  @Override
-  public String asString(@NotNull Language property) throws IOException {
+  private static String asString(@NotNull Language property) {
     return property.getID();
   }
 
   @NotNull
-  @Override
-  public Language fromString(String id) throws IOException {
+  private static Language fromString(@NotNull String id) {
     Language lang = Language.findLanguageByID(id);
     return ObjectUtils.notNull(lang, Language.ANY);
   }

@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.CodeInsightUtil.positionCursor
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupEditor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupMethodBody
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
@@ -54,10 +54,12 @@ internal class CreateMethodAction(
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
     val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
-    val physicalRequest = request as? CreateMethodFromJavaUsageRequest ?: return IntentionPreviewInfo.EMPTY
-    val copyCall = PsiTreeUtil.findSameElementInCopy(physicalRequest.call, file)
-    val copyRequest = CreateMethodFromJavaUsageRequest(copyCall, physicalRequest.modifiers)
-    JavaMethodRenderer(project, abstract, copyClass, copyRequest).doMagic()
+    val previewRequest = if (request is CreateMethodFromJavaUsageRequest) {
+      val physicalRequest = request as? CreateMethodFromJavaUsageRequest ?: return IntentionPreviewInfo.EMPTY
+      val copyCall = PsiTreeUtil.findSameElementInCopy(physicalRequest.call, file)
+      CreateMethodFromJavaUsageRequest(copyCall, physicalRequest.modifiers)
+    } else request
+    JavaMethodRenderer(project, abstract, copyClass, previewRequest).doMagic()
     return IntentionPreviewInfo.DIFF
   }
 

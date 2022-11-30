@@ -223,9 +223,10 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
     private fun getDeclaration(descriptor: ClassifierDescriptor, project: Project): PsiElement? {
         if (descriptor is FunctionClassDescriptor) {
+            val contextElement = element ?: error("Context element is not found")
             val psiFactory = KtPsiFactory(project)
             val syntheticClass = psiFactory.createClass(IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(descriptor))
-            return psiFactory.createAnalyzableFile("${descriptor.name.asString()}.kt", "", element!!).add(syntheticClass)
+            return psiFactory.createFile("${descriptor.name.asString()}.kt", "").add(syntheticClass)
         }
         return DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
     }

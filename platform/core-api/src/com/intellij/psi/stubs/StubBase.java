@@ -90,7 +90,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
-  public <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull final IElementType elementType, @NotNull final ArrayFactory<E> f) {
+  public <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull final IElementType elementType, final @NotNull ArrayFactory<? extends E> f) {
     List<StubElement> childrenStubs = getChildrenStubs();
     int count = countChildren(elementType, childrenStubs);
 
@@ -151,7 +151,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
-  public <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull final TokenSet filter, @NotNull final ArrayFactory<E> f) {
+  public <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull final TokenSet filter, final @NotNull ArrayFactory<? extends E> f) {
     List<StubElement> childrenStubs = getChildrenStubs();
     int count = countChildren(filter, childrenStubs);
 

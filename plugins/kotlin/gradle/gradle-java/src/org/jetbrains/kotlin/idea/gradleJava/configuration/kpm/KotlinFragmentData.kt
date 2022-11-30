@@ -7,9 +7,9 @@ import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.AbstractNamedData
 import com.intellij.serialization.PropertyMapping
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmDependency
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmLanguageSettings
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmPlatform
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmDependency
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmLanguageSettings
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.plugins.gradle.util.GradleConstants
 

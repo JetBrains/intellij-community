@@ -45,6 +45,7 @@ public class GoToCommand extends AbstractCommand {
         int lineStartOffset = document.getLineStartOffset(line);
         int lineLength = document.getLineEndOffset(line) - lineStartOffset;
         if (column > lineLength) {
+          //noinspection TestOnlyProblems
           WriteCommandAction.runWriteCommandAction(project, () ->
             document.insertString(lineStartOffset + lineLength,
                                   IntStream.range(0, column - lineLength).mapToObj(i -> " ").collect(Collectors.joining())));

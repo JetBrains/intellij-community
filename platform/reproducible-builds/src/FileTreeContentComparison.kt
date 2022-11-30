@@ -1,9 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.reproducibleBuilds.diffTool
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFileAttributeView
@@ -18,6 +23,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
                                 private val tempDir: Path = Files.createTempDirectory(this::class.java.simpleName)) {
   private companion object {
     fun process(vararg command: String, workDir: Path? = null, ignoreExitCode: Boolean = false): ProcessCallResult {
+      require(command.isNotEmpty())
       val process = ProcessBuilder(*command).directory(workDir?.toFile()).start()
       val output = process.inputStream.bufferedReader().use { it.readText() }
       if (!process.waitFor(10, TimeUnit.MINUTES)) {
@@ -30,13 +36,21 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
 
     class ProcessCallResult(val exitCode: Int, val stdOut: String)
 
-    val isUnsquashfsAvailable by lazy {
-      process("unsquashfs", "-help").exitCode == 0
+    private fun isAvailable(vararg command: String): Boolean = try {
+      process(*command, ignoreExitCode = true)
+      true
+    }
+    catch (e: IOException) {
+      System.err.println("${command.first()} is not available: ${e.message}")
+      false
     }
 
-    val isDiffoscopeAvailable by lazy {
-      process("diffoscope", "--version").exitCode == 0
-    }
+    val isJavapAvailable by lazy { isAvailable("javap", "-version") }
+    val isUnsquashfsAvailable by lazy { isAvailable("unsquashfs", "-help") }
+    val isDiffoscopeAvailable by lazy { isAvailable("diffoscope", "--version") }
+    val is7zAvailable by lazy { isAvailable("7z", "--help") }
+    val isUnzipAvailable by lazy { isAvailable("unzip", "--help") }
+    val gson: Gson = GsonBuilder().setPrettyPrinting().create()
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -47,7 +61,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       require(path2.exists())
       val test = FileTreeContentComparison()
       val assertion = when {
-        path1.isDirectory() && path2.isDirectory() -> test.assertTheSameDirectoryContent(path1, path2).error
+        path1.isDirectory() && path2.isDirectory() -> test.assertTheSameDirectoryContent(path1, path2, deleteBothAfterwards = false).error
         path1.isRegularFile() && path2.isRegularFile() -> test.assertTheSameFile(path1, path2)
         else -> throw IllegalArgumentException()
       }
@@ -70,7 +84,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     return assertTheSameFile(path1, path2, "$relativeFilePath")
   }
 
-  private fun assertTheSameFile(path1: Path, path2: Path, relativeFilePath: String = path1.name): AssertionError? {
+  fun assertTheSameFile(path1: Path, path2: Path, relativeFilePath: String = path1.name): AssertionError? {
     if (!Files.exists(path1) ||
         !Files.exists(path2) ||
         !path1.isRegularFile() ||
@@ -83,18 +97,39 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     val contentError = when (path1.extension) {
       "tar.gz", "gz", "tar" -> assertTheSameDirectoryContent(
         path1.unpackingDir().also { Decompressor.Tar(path1).extract(it) },
-        path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) }
+        path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) },
+        deleteBothAfterwards = true
       ).error ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
       "zip", "jar", "ijx", "sit" -> assertTheSameDirectoryContent(
         path1.unpackingDir().also { Decompressor.Zip(path1).withZipExtensions().extract(it) },
-        path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) }
-      ).error ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
+        path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) },
+        deleteBothAfterwards = true
+      ).error ?: run {
+        saveDiff(relativeFilePath, path1, path2)
+        AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
+      }
+      "exe" -> {
+        if (is7zAvailable) {
+          assertTheSameDirectoryContent(
+            path1.extractExe(path1.unpackingDir()),
+            path2.extractExe(path2.unpackingDir()),
+            deleteBothAfterwards = true
+          ).error ?: run {
+            saveDiff(relativeFilePath, path1, path2)
+            AssertionError("No difference in $relativeFilePath content.")
+          }
+        }
+        else {
+          println("7z should be installed to compare content of .exe, skipping")
+          compareChecksum(relativeFilePath, path1, path2)
+        }
+      }
       "dmg" -> {
         println(".dmg cannot be built reproducibly, content comparison is required")
         if (SystemInfo.isMac) {
           path1.mountDmg { dmg1Content ->
             path2.mountDmg { dmg2Content ->
-              assertTheSameDirectoryContent(dmg1Content, dmg2Content).error
+              assertTheSameDirectoryContent(dmg1Content, dmg2Content, deleteBothAfterwards = false).error
             }
           }
         }
@@ -108,19 +143,16 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
         if (isUnsquashfsAvailable) {
           assertTheSameDirectoryContent(
             path1.unSquash(path1.unpackingDir()),
-            path2.unSquash(path2.unpackingDir())
+            path2.unSquash(path2.unpackingDir()),
+            deleteBothAfterwards = true
           ).error
         }
         else {
           println("unsquashfs should be installed to compare content of .snap, skipping")
-          null
+          compareChecksum(relativeFilePath, path1, path2)
         }
       }
-      else -> if (path1.checksum() != path2.checksum()) {
-        saveDiff(relativeFilePath, path1, path2)
-        AssertionError("Checksum mismatch for $relativeFilePath")
-      }
-      else null
+      else -> compareChecksum(relativeFilePath, path1, path2)
     }
     if (path1.permissions() != path2.permissions()) {
       val permError = AssertionError("Permissions mismatch for $relativeFilePath: ${path1.permissions()} vs ${path2.permissions()}")
@@ -128,6 +160,13 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     }
     return contentError
   }
+
+  private fun compareChecksum(relativeFilePath: String, path1: Path, path2: Path): AssertionError? =
+    if (path1.checksum() != path2.checksum()) {
+      saveDiff(relativeFilePath, path1, path2)
+      AssertionError("Checksum mismatch for $relativeFilePath")
+    }
+    else null
 
   private fun saveDiff(relativePath: String, file1: Path, file2: Path) {
     fun fileIn(subdir: String, path: String = relativePath) =
@@ -159,11 +198,19 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       ?.readAttributes()?.permissions() ?: emptySet()
 
   private fun Path.writeContent(target: Path) {
-    when (extension) {
-      "jar", "zip", "tar.gz", "gz", "tar", "ijx", "sit" -> error("$this is expected to be already unpacked")
-      "class" -> target.writeText(process("javap", "-verbose", "$this").stdOut)
-      "dmg" -> target.writeText(process("7z", "l", "$this", ignoreExitCode = true).stdOut)
-      else -> copyTo(target, overwrite = true)
+    val content = when (extension) {
+      "tar.gz", "gz", "tar" -> error("$this is expected to be already unpacked")
+      "jar", "zip", "ijx", "sit" -> if (isUnzipAvailable) process("unzip", "-l", "$this").stdOut else null
+      "class" -> if (isJavapAvailable) process("javap", "-verbose", "$this").stdOut else null
+      "dmg", "exe" -> if (is7zAvailable) process("7z", "l", "$this").stdOut else null
+      "json", "manifest" -> gson.toJson(JsonParser.parseString(readText()))
+      else -> null
+    }
+    if (content != null) {
+      target.writeText(content)
+    }
+    else {
+      copyTo(target, overwrite = true)
     }
   }
 
@@ -207,16 +254,23 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     return target
   }
 
+  private fun Path.extractExe(target: Path): Path {
+    process("7z", "x", "-bd", "$this", workDir = target)
+    return target
+  }
+
   private fun Path.listDirectory(): List<Path> {
     require(isDirectory()) {
       "$this is expected to be directory"
     }
     return Files.walk(this).use { paths ->
-      paths.filter { it.name != ".DS_Store" }.toList()
+      paths.filter { it.name != ".DS_Store" }
+        .filter { it.name != ".CacheDeleteDiscardedCaches" }
+        .toList()
     }
   }
 
-  fun assertTheSameDirectoryContent(dir1: Path, dir2: Path): ComparisonResult {
+  fun assertTheSameDirectoryContent(dir1: Path, dir2: Path, deleteBothAfterwards: Boolean): ComparisonResult {
     val listing1 = dir1.listDirectory()
     val listing2 = dir2.listDirectory()
     val relativeListing1 = listing1.map(dir1::relativize)
@@ -233,6 +287,10 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       .filterNot { it.isDirectory() }
       .map(dir1::relativize)
       .minus(listingDiff.toSet())
+    if (deleteBothAfterwards) {
+      NioFiles.deleteRecursively(dir1)
+      NioFiles.deleteRecursively(dir2)
+    }
     return ComparisonResult(comparedFiles, error)
   }
 

@@ -62,8 +62,18 @@ fun <T> ObservableMutableProperty<T>.bind(property: ObservableMutableProperty<T>
   }
 }
 
+fun <P : ObservableMutableProperty<Int>> P.bindIntStorage(propertyName: String): P = apply {
+  toStringIntProperty()
+    .bindStorage(propertyName)
+}
+
 fun <P : ObservableMutableProperty<Boolean>> P.bindBooleanStorage(propertyName: String): P = apply {
-  transform({ it.toString() }, { it.toBoolean() })
+  toStringBooleanProperty()
+    .bindStorage(propertyName)
+}
+
+inline fun <reified T : Enum<T>, P : ObservableMutableProperty<T>> P.bindEnumStorage(propertyName: String): P = apply {
+  toStringEnumProperty()
     .bindStorage(propertyName)
 }
 

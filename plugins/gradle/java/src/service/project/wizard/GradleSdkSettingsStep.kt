@@ -6,7 +6,11 @@ import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.findGradleVersion
+import org.jetbrains.plugins.gradle.util.isSupported
+import org.jetbrains.plugins.gradle.util.suggestGradleVersion
 
 class GradleSdkSettingsStep(
   private val settingsStep: SettingsStep,
@@ -41,6 +45,7 @@ class GradleSdkSettingsStep(
       return true
     }
     val preferredGradleVersion = getPreferredGradleVersion()
+    val matrix = GradleJvmSupportMatrix.INSTANCE
     return MessageDialogBuilder.yesNo(
       title = GradleBundle.message(
         "gradle.settings.wizard.unsupported.jdk.title",
@@ -49,8 +54,8 @@ class GradleSdkSettingsStep(
       message = GradleBundle.message(
         "gradle.settings.wizard.unsupported.jdk.message",
         javaVersion.toFeatureString(),
-        MINIMUM_SUPPORTED_JAVA.toFeatureString(),
-        MAXIMUM_SUPPORTED_JAVA.toFeatureString(),
+        matrix.minSupportedJava().toFeatureString(),
+        matrix.maxSupportedJava().toFeatureString(),
         preferredGradleVersion.version))
       .asWarning()
       .ask(component)

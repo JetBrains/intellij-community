@@ -122,7 +122,7 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
       myBusConnection = project.getMessageBus().connect();
       myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
         @Override
-        public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+        public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
           reloadModules();
         }
 

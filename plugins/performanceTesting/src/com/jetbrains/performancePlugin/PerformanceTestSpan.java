@@ -24,6 +24,6 @@ public class PerformanceTestSpan {
 
   public static Context getContext(){
     if (performanceTestSpan != null) return Context.current().with(performanceTestSpan);
-    return null;
+    return Context.current();
   }
 }

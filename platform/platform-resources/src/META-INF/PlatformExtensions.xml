@@ -19,7 +19,7 @@
     <appStarter id="-version" implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter id="listBundledPlugins" implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
     <appStarter id="installPlugins" implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
-    <appStarter id="warmup" implementation="com.intellij.warmup.ProjectIndexesWarmup"/>
+    <appStarter id="warmup" implementation="com.intellij.warmup.ProjectCachesWarmup"/>
     <appStarter id="buildEventsScheme" implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter"/>
     <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
     <appStarter id="dumpLaunchParameters" implementation="com.intellij.internal.statistic.utils.DumpLaunchParametersStarter"/>
@@ -266,7 +266,6 @@
     <applicationService serviceImplementation="com.intellij.diff.impl.DiffSettingsHolder"/>
     <applicationService serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
     <applicationService serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
-    <applicationService serviceImplementation="com.intellij.diff.vcs.DiffVcsFacade"/>
     <applicationService serviceImplementation="com.intellij.diff.DiffApplicationSettings"/>
     <applicationConfigurable groupId="tools" id="diff.base"
                              bundle="messages.DiffBundle"
@@ -701,6 +700,12 @@
                          id="backspace.for.selection" order="after backspace.lookup"/>
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
                          id="delete.in.column.mode"/>
+    <editorActionHandler
+      action="EditorDeleteLine"
+      implementationClass="com.intellij.openapi.editor.actions.DeleteLineAction$CheckHandler"
+      order="first"
+      id="EditorDeleteLine.checkHandler"
+    />
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
                  description="Allows to restore the legacy behavior of Up/Down w.r.t. selection boundaries.\n\
@@ -766,7 +771,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.VcsCloneCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$ExtensionLocalFileCustomValidationRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$FileNamePatternCustomValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup"/>
@@ -862,7 +867,7 @@
 
     <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity" order="last"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
-    <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
+    <applicationService serviceImplementation="com.intellij.ide.ui.AppTopHitCache"/>
 
     <applicationService serviceInterface="com.intellij.ide.util.TipAndTrickManager"
                         serviceImplementation="com.intellij.ide.util.TipAndTrickManagerImpl"/>
@@ -1058,6 +1063,9 @@
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.AboutTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.SystemTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.DisplayTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.WindowStateProjectServiceTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.WindowStateApplicationServiceTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.DimensionServiceTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.PluginTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.ProjectTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.GCTroubleInfoCollector"/>
@@ -1309,7 +1317,7 @@
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
     <iw.actionProvider implementation="com.intellij.codeInsight.actions.ReaderModeActionProvider"/>
     <gotoActionAliasMatcher implementation="com.intellij.ide.util.gotoByName.LocalizedActionAliasMatcher" />
-    <gotoActionAliasMatcher implementation="com.intellij.ide.util.gotoByName.DefaultBundleActionAliasMatcher" />
+    <!--<gotoActionAliasMatcher implementation="com.intellij.ide.util.gotoByName.DefaultBundleActionAliasMatcher" />-->
 
     <applicationService serviceImplementation="com.intellij.ide.ui.IconDbMaintainer" preload="notHeadless"/>
 

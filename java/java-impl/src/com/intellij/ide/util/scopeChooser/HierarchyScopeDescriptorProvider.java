@@ -2,23 +2,18 @@
 
 package com.intellij.ide.util.scopeChooser;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 
-final class HierarchyScopeDescriptorProvider implements ScopeDescriptorProvider {
-
-  @RequiresReadLock
+public class HierarchyScopeDescriptorProvider implements ScopeDescriptorProvider {
   @Override
-  public ScopeDescriptor @NotNull [] getScopeDescriptors(@NotNull Project project,
-                                                         @NotNull DataContext dataContext) {
+  public ScopeDescriptor @NotNull [] getScopeDescriptors(final Project project) {
     if (Comparing.strEqual(ToolWindowManager.getInstance(project).getActiveToolWindowId(), ToolWindowId.TODO_VIEW)) {
       return EMPTY;
     }
-    return new ScopeDescriptor[]{new ClassHierarchyScopeDescriptor(project, dataContext)};
+    return new ScopeDescriptor[]{new ClassHierarchyScopeDescriptor(project)};
   }
 }

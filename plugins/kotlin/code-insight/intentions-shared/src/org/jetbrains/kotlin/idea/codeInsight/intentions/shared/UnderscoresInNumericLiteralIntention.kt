@@ -22,7 +22,7 @@ class AddUnderscoresToNumericLiteralIntention : SelfTargetingIntention<KtConstan
         val text = element.text
         val digits = text.takeWhile { it.isDigit() }
         element.replace(
-            KtPsiFactory(element).createExpression(
+            KtPsiFactory(element.project).createExpression(
                 digits.reversed().chunked(3).joinToString(separator = "_").reversed() + text.removePrefix(digits)
             )
         )
@@ -36,7 +36,7 @@ class RemoveUnderscoresFromNumericLiteralIntention : SelfTargetingIntention<KtCo
         element.isNumeric() && element.text.hasUnderscore()
 
     override fun applyTo(element: KtConstantExpression, editor: Editor?) {
-        element.replace(KtPsiFactory(element).createExpression(element.text.replace("_", "")))
+        element.replace(KtPsiFactory(element.project).createExpression(element.text.replace("_", "")))
     }
 }
 

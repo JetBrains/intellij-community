@@ -109,7 +109,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     prepare();
     final T runner = createProcessRunner();
     do {
-      executeRunner(sdkHome, runner);
+      executeRunner(sdkHome, existingSdk, runner);
     }
     while (runner.shouldRunAgain());
     Disposer.dispose(runner);
@@ -126,7 +126,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     Assert.fail("Exception thrown, see logs for details: " + e.getMessage());
   }
 
-  private void executeRunner(final String sdkHome, final T runner) throws InterruptedException {
+  private void executeRunner(final String sdkHome, @Nullable Sdk sdk, final T runner) throws InterruptedException {
     // Semaphore to wait end of process
     final Semaphore processStartedSemaphore = new Semaphore(1);
     processStartedSemaphore.acquire();
@@ -162,7 +162,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     // Invoke runner
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        runner.runProcess(sdkHome, getProject(), processListener, myFixture.getTempDirPath());
+        runner.runProcess(sdkHome, sdk, getProject(), processListener, myFixture.getTempDirPath());
       }
       catch (final Throwable e) {
         failed.set(true);

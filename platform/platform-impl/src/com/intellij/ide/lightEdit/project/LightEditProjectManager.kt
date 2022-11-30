@@ -25,7 +25,7 @@ class LightEditProjectManager {
         runUnderModalProgressIfIsEdt {
           val startupManager = StartupManager.getInstance(project) as StartupManagerImpl
           startupManager.initProject()
-          startupManager.runStartupActivities()
+          startupManager.runPostStartupActivities()
         }
       }
       if (app.isDispatchThread || app.isUnitTestMode) {

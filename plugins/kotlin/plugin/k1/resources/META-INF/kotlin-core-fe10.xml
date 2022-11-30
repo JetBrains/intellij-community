@@ -85,6 +85,7 @@
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinExpressionTypeProviderDescriptorsImpl"/>
 
     <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestCreator"/>
+    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestDiffProvider"/>
     <testFinder implementation="org.jetbrains.kotlin.idea.testIntegration.KotlinTestFinder"/>
 
     <lang.jvm.actions.jvmElementActionsFactory

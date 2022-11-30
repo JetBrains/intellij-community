@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
@@ -34,7 +33,7 @@ private const val ID: String = "pythonInterpreterWidget"
 
 fun isDataSpellInterpreterWidgetEnabled() = PlatformUtils.isDataSpell() && Registry.`is`("dataspell.interpreter.widget")
 
-class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
+private class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
@@ -44,12 +43,10 @@ class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
 
   override fun createWidget(project: Project): StatusBarWidget = PySdkStatusBar(project)
 
-  override fun disposeWidget(widget: StatusBarWidget) = Disposer.dispose(widget)
-
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 }
 
-class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interpreter"), null, null) {
+private class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interpreter"), null, null) {
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.project != null
   }
@@ -69,7 +66,6 @@ class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interp
 }
 
 private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(project, false) {
-
   private var module: Module? = null
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {

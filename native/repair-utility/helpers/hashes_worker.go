@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"repair/logger"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -246,6 +247,9 @@ func GenerateFilesInfo() (distrFiles []fileInfo) {
 	go walkAndCollectHashes(ideaPath, &distrFilesThreaded)
 	manifestGenerationWorkGroup.Wait()
 	distrFiles = distrFilesThreaded.distrFiles
+	sort.Slice(distrFiles[:], func(i, j int) bool {
+    return strings.Compare(distrFiles[i].Path, distrFiles[j].Path) == -1
+  })
 	logger.InfoLogger.Printf("File struct size: %d, Time %d sec", len(distrFiles), time.Now().Unix()-timebeginning)
 	return distrFiles
 }

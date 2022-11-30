@@ -7,8 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.AppUIExecutor.onUiThread
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -69,7 +68,7 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 }
 
 open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
-  private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
 
   private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<InlineCommitChecksProgressIndicator?>(null)
@@ -284,7 +283,7 @@ sealed class CommitCheckFailure {
   class WithDetails(text: @NlsContexts.NotificationContent String,
                     val viewDetailsLinkText: @NlsContexts.NotificationContent String?,
                     val viewDetailsActionText: @NlsContexts.NotificationContent String,
-                    val viewDetails: () -> Unit) : WithDescription(text)
+                    val viewDetails: (place: CommitSessionCounterUsagesCollector.CommitProblemPlace) -> Unit) : WithDescription(text)
 }
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
@@ -376,7 +375,7 @@ private class FailuresDescriptionPanel : HtmlPanel() {
     if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return
 
     val failure = failures[event.description.toInt()] as? CommitCheckFailure.WithDetails ?: return
-    failure.viewDetails()
+    failure.viewDetails(CommitSessionCounterUsagesCollector.CommitProblemPlace.COMMIT_TOOLWINDOW)
   }
 }
 

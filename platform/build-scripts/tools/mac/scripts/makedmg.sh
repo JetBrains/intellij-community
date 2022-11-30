@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+# Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #immediately exit script with an error if a command fails
 set -euo pipefail
@@ -12,6 +12,7 @@ RESULT_DMG=${3:-"$1.dmg"}
 TEMP_DMG="$2.temp.dmg"
 BG_PIC="$2.png"
 CLEANUP_EXPLODED=${5:-"true"}
+CONTENT_SIGNED=${6:-"true"}
 
 function log() {
   echo "$(date '+[%H:%M:%S]') $*"
@@ -98,18 +99,30 @@ find "/Volumes/$1" -maxdepth 1
 log "Updating $VOLNAME disk image styles..."
 stat "/Volumes/$1/DSStorePlaceHolder"
 rm "/Volumes/$1/DSStorePlaceHolder"
-if ! python3 --version >/dev/null 2>/dev/null; then
+if ! python3 --version; then
   log "python3 is required for DMG/DS_Store generation"
   exit 1
 elif ! python3 -c "import ds_store; import mac_alias;" >/dev/null 2>/dev/null; then
   log "ds_store library is required for DMG/DS_Store generation, installing"
-  pip3 install ds_store --user
+  pip3 install mac-alias==2.2.0 --user
+  pip3 install ds-store==1.3.0 --user
 fi
 python3 makedmg.py "$VOLNAME" "$BG_PIC" "$1"
 log "DMG/DS_Store is generated"
 rm -rf "/Volumes/$1/.fseventsd"
 
+if [[ -n ${SOURCE_DATE_EPOCH+x} ]]; then
+  timestamp=$(date -r "$SOURCE_DATE_EPOCH" +%Y%m%d%H%m)
+  log "Updating access and modification times for files and symbolic links in $RESULT_DMG to $timestamp"
+  find "/Volumes/$1" -exec touch -amht "$timestamp" '{}' \;
+fi
+
 sync;sync;sync
+
+if [ "$CONTENT_SIGNED" = "true" ]; then
+  codesign --verify --deep --strict --verbose "/Volumes/$1/$BUILD_NAME"
+fi
+
 retry "Detaching disk" 3 hdiutil detach "$device"
 
 log "Compressing r/w disk image to ${RESULT_DMG}..."
@@ -119,5 +132,6 @@ rm -f "$TEMP_DMG"
 if hdiutil internet-enable -help >/dev/null 2>/dev/null; then
   hdiutil internet-enable -no "$RESULT_DMG"
 fi
+hdiutil verify "$RESULT_DMG"
 
 log "Done"

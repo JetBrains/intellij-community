@@ -26,7 +26,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.PredefinedSearchScopeProviderImpl;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
@@ -220,8 +223,7 @@ public class ScopePanel extends JPanel {
             }
           }
           if (!namedScopeFound) {
-            final SearchScope selectedFilesScope = ((PredefinedSearchScopeProviderBase)PredefinedSearchScopeProvider.getInstance(myProject))
-              .getSelectedFilesScope(context, null);
+            final SearchScope selectedFilesScope = PredefinedSearchScopeProviderImpl.getSelectedFilesScope(myProject, context, null);
             if (selectedFilesScope != null) {
               selectNamedScope(selectedFilesScope.getDisplayName());
             }

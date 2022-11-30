@@ -162,12 +162,13 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
+      return myList.isValid() && !myList.isEmpty();
     }
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       PsiExpression[] expressions = myList.getExpressions();
+      if (expressions.length == 0) return;
       myList.deleteChildRange(expressions[0], expressions[expressions.length - 1]);
     }
 

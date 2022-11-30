@@ -16,6 +16,8 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.testFramework.ServiceContainerUtil;
@@ -33,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCase {
   private MavenProjectsNavigator myNavigator;
@@ -419,9 +422,13 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                               getMavenGeneralSettings(),
                               getMavenImporterSettings(),
                               Collections.emptyList(), Collections.emptyList());
-      MavenReadContext readContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
-      flow.updateProjectManager(readContext);
-      myNavigator.scheduleStructureUpdate();
+
+
+      ApplicationManager.getApplication().executeOnPooledThread(()-> {
+        MavenReadContext readContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+        flow.updateProjectManager(readContext);
+        myNavigator.scheduleStructureUpdate();
+      }).get(10, TimeUnit.SECONDS);
 
       waitForMavenUtilRunnablesComplete();
     }

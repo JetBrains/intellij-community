@@ -454,7 +454,7 @@ public final class ExternalDiffToolUtil {
   @NotNull
   private static GeneralCommandLine createMergeCommandLine(@NotNull ExternalDiffSettings.ExternalTool externalTool,
                                                            @NotNull OutputFile outputFile,
-                                                           @NotNull List<InputFile> inputFiles) {
+                                                           @NotNull List<? extends InputFile> inputFiles) {
     assert inputFiles.size() == 3;
 
     Map<String, String> patterns = new HashMap<>();

@@ -368,7 +368,7 @@ public final class VcsRepositoryManager implements Disposable {
     return newRootsMap;
   }
 
-  private @NotNull Collection<VirtualFile> findInvalidRoots(@NotNull Collection<Repository> repositories) {
+  private @NotNull Collection<VirtualFile> findInvalidRoots(@NotNull Collection<? extends Repository> repositories) {
     List<VirtualFile> invalidRepos = new ArrayList<>();
     for (Repository repo : repositories) {
       VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(repo.getRoot());

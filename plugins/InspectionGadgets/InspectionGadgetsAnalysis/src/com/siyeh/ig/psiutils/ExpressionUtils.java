@@ -221,9 +221,31 @@ public final class ExpressionUtils {
         if (e instanceof PsiParenthesizedExpression parens) {
           return StreamEx.ofNullable(parens.getExpression());
         }
+        if (e instanceof PsiSwitchExpression switchExpression) {
+          PsiCodeBlock switchBody = switchExpression.getBody();
+          if (switchBody == null) return StreamEx.empty();
+          List<PsiExpression> result = new ArrayList<>();
+          PsiStatement[] statements = switchBody.getStatements();
+          for (PsiStatement statement : statements) {
+            if (statement instanceof PsiSwitchLabeledRuleStatement rule) {
+              PsiStatement ruleBody = rule.getBody();
+              if (ruleBody instanceof PsiBlockStatement blockStatement) {
+                collectYieldExpressions(blockStatement, switchExpression, result);
+              }
+              else if (ruleBody instanceof PsiExpressionStatement expr) {
+                result.add(expr.getExpression());
+              }
+            }
+            else {
+              collectYieldExpressions(statement, switchExpression, result);
+            }
+          }
+          return StreamEx.of(result);
+        }
         return null;
       }).remove(e -> e instanceof PsiConditionalExpression ||
-                   e instanceof PsiParenthesizedExpression)
+                     e instanceof PsiParenthesizedExpression ||
+                     e instanceof PsiSwitchExpression)
       .map(e -> {
         if (e instanceof PsiTypeCastExpression cast) {
           PsiExpression operand = cast.getOperand();
@@ -242,6 +264,18 @@ public final class ExpressionUtils {
         }
         return StreamEx.of(e);
       });
+  }
+
+  private static void collectYieldExpressions(@NotNull PsiStatement statement,
+                                              @NotNull PsiSwitchExpression switchExpression,
+                                              @NotNull Collection<PsiExpression> result) {
+    Collection<PsiYieldStatement> blockStatement = statement instanceof PsiYieldStatement yieldStatement
+                                                   ? Collections.singleton(yieldStatement)
+                                                   : PsiTreeUtil.findChildrenOfType(statement, PsiYieldStatement.class);
+    List<PsiYieldStatement> myYields = ContainerUtil.filter(blockStatement, st -> st.findEnclosingExpression() == switchExpression);
+    for (PsiYieldStatement yield : myYields) {
+      ContainerUtil.addIfNotNull(result, yield.getExpression());
+    }
   }
 
   public static boolean isZero(@Nullable PsiExpression expression) {

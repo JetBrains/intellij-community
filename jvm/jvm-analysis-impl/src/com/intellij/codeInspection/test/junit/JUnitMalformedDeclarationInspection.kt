@@ -7,11 +7,13 @@ import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.test.junit.references.MethodSourceReference
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.lang.Language
+import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.*
@@ -975,27 +977,32 @@ private class JUnitMalformedSignatureVisitor(
 
   private class ClassSignatureQuickFix(
     private val name: @NlsSafe String,
-    private val makeStatic: Boolean,
-    private val makePublic: Boolean,
-  ) : LocalQuickFix {
+    private val makeStatic: Boolean?,
+    private val makePublic: Boolean?,
+  ) : CompositeIntentionQuickFix() {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature")
 
     override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature.descriptor", name)
 
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      val javaDeclaration = getUParentForIdentifier(previewDescriptor.psiElement)?.asSafely<UClass>() ?: return IntentionPreviewInfo.EMPTY
+      return generatePreviews(project, previewDescriptor, javaDeclaration.javaPsi.asSafely<PsiClass>() ?: return IntentionPreviewInfo.EMPTY)
+    }
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val containingFile = descriptor.psiElement.containingFile ?: return
-      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UClass>()?.javaPsi ?: return
-      val declPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaDeclaration)
-      declPtr.element?.asSafely<JvmModifiersOwner>()?.let { jvmMethod ->
-        createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
-          it.invoke(project, null, containingFile)
-        }
+      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UClass>() ?: return
+      applyFixes(project, descriptor, javaDeclaration.javaPsi.asSafely<PsiClass>() ?: return)
+    }
+
+    override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+      val actions = mutableListOf<(JvmModifiersOwner) -> List<IntentionAction>>()
+      if (makeStatic != null) {
+        actions.add { jvmClass -> createModifierActions(jvmClass, modifierRequest(JvmModifier.STATIC, makeStatic)) }
       }
-      declPtr.element?.asSafely<JvmModifiersOwner>()?.let { jvmMethod ->
-        createModifierActions(jvmMethod, modifierRequest(JvmModifier.PUBLIC, makePublic)).forEach {
-          it.invoke(project, null, containingFile)
-        }
+      if (makePublic != null) {
+        actions.add { jvmClass -> createModifierActions(jvmClass, modifierRequest(JvmModifier.PUBLIC, makePublic))}
       }
+      return actions
     }
   }
 
@@ -1003,29 +1010,30 @@ private class JUnitMalformedSignatureVisitor(
     private val name: @NlsSafe String,
     private val makeStatic: Boolean?,
     private val newVisibility: JvmModifier? = null
-  ) : LocalQuickFix {
+  ) : CompositeIntentionQuickFix() {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.field.signature")
 
     override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.field.signature.descriptor", name)
 
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      val javaDeclaration = getUParentForIdentifier(previewDescriptor.psiElement)?.asSafely<UField>() ?: return IntentionPreviewInfo.EMPTY
+      return generatePreviews(project, previewDescriptor, javaDeclaration.javaPsi ?: return IntentionPreviewInfo.EMPTY)
+    }
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val containingFile = descriptor.psiElement.containingFile ?: return
-      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UField>()?.javaPsi ?: return
-      val declPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaDeclaration)
+      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UField>() ?: return
+      applyFixes(project, descriptor, javaDeclaration.javaPsi ?: return)
+    }
+
+    override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+      val actions = mutableListOf<(JvmModifiersOwner) -> List<IntentionAction>>()
       if (newVisibility != null) {
-        declPtr.element?.asSafely<JvmModifiersOwner>()?.let { jvmMethod ->
-          createModifierActions(jvmMethod, modifierRequest(newVisibility, true)).forEach {
-            it.invoke(project, null, containingFile)
-          }
-        }
+        actions.add { jvmField -> createModifierActions(jvmField, modifierRequest(newVisibility, true)) }
       }
       if (makeStatic != null) {
-        declPtr.element?.asSafely<JvmModifiersOwner>()?.let { jvmMethod ->
-          createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
-            it.invoke(project, null, containingFile)
-          }
-        }
+        actions.add { jvmField -> createModifierActions(jvmField, modifierRequest(JvmModifier.STATIC, makeStatic)) }
       }
+      return actions
     }
   }
 
@@ -1035,43 +1043,42 @@ private class JUnitMalformedSignatureVisitor(
     private val shouldBeVoidType: Boolean? = null,
     private val newVisibility: JvmModifier? = null,
     @SafeFieldForPreview private val inCorrectParams: Map<String, JvmType>? = null
-  ) : LocalQuickFix {
+  ) : CompositeIntentionQuickFix() {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.method.signature")
 
     override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.method.signature.descriptor", name)
 
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      val javaDeclaration = getUParentForIdentifier(previewDescriptor.psiElement)?.asSafely<UMethod>() ?: return IntentionPreviewInfo.EMPTY
+      return generatePreviews(project, previewDescriptor, javaDeclaration.javaPsi)
+    }
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val containingFile = descriptor.psiElement.containingFile ?: return
-      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UMethod>()?.javaPsi ?: return
-      val declPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaDeclaration)
+      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UMethod>() ?: return
+      applyFixes(project, descriptor, javaDeclaration.javaPsi)
+    }
+
+    override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+      val actions = mutableListOf<(JvmModifiersOwner) -> List<IntentionAction>>()
       if (shouldBeVoidType == true) {
-        declPtr.element?.let { jvmMethod ->
-          createChangeTypeActions(jvmMethod, typeRequest(JvmPrimitiveTypeKind.VOID.name, emptyList())).forEach {
-            it.invoke(project, null, containingFile)
-          }
-        }
+        actions.add { jvmMethod -> createChangeTypeActions(
+          jvmMethod.asSafely<JvmMethod>()!!,
+          typeRequest(JvmPrimitiveTypeKind.VOID.name, emptyList())
+        ) }
       }
       if (newVisibility != null) {
-        declPtr.element?.let { jvmMethod ->
-          createModifierActions(jvmMethod, modifierRequest(newVisibility, true)).forEach {
-            it.invoke(project, null, containingFile)
-          }
-        }
+        actions.add { jvmMethod -> createModifierActions(jvmMethod, modifierRequest(newVisibility, true)) }
       }
       if (inCorrectParams != null) {
-        declPtr.element?.let { jvmMethod ->
-          createChangeParametersActions(jvmMethod, setMethodParametersRequest(inCorrectParams.entries)).forEach {
-            it.invoke(project, null, containingFile)
-          }
-        }
+        actions.add { jvmMethod -> createChangeParametersActions(
+          jvmMethod.asSafely<JvmMethod>()!!,
+          setMethodParametersRequest(inCorrectParams.entries)
+        ) }
       }
       if (makeStatic != null) {
-        declPtr.element?.let { jvmMethod ->
-          createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
-            it.invoke(project, null, containingFile)
-          }
-        }
+        actions.add { jvmMethod -> createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)) }
       }
+      return actions
     }
   }
 

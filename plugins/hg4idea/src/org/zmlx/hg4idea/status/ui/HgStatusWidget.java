@@ -6,7 +6,6 @@ import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -92,7 +91,7 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     }
   }
 
-  public static class Factory implements StatusBarWidgetFactory {
+  final static class Factory implements StatusBarWidgetFactory {
     @Override
     public @NotNull String getId() {
       return ID;
@@ -111,11 +110,6 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     @Override
     public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
       return new HgStatusWidget(Objects.requireNonNull(HgVcs.getInstance(project)), project, HgProjectSettings.getInstance(project));
-    }
-
-    @Override
-    public void disposeWidget(@NotNull StatusBarWidget widget) {
-      Disposer.dispose(widget);
     }
 
     @Override

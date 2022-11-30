@@ -26,6 +26,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     @Child val groupPath: ModuleGroupPathEntity?
     @Child val javaSettings: JavaModuleSettingsEntity?
     @Child val exModuleOptions: ExternalSystemModuleOptionsEntity?
+    @Child val testProperties: TestModulePropertiesEntity?
     val facets: List<@Child FacetEntity>
 
     override val symbolicId: ModuleId
@@ -43,6 +44,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     override var groupPath: ModuleGroupPathEntity?
     override var javaSettings: JavaModuleSettingsEntity?
     override var exModuleOptions: ExternalSystemModuleOptionsEntity?
+    override var testProperties: TestModulePropertiesEntity?
     override var facets: List<FacetEntity>
   }
 
@@ -240,4 +242,39 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: ExternalSystemModuleOptionsEntity,
                                       modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit) = modifyEntity(
   ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
+//endregion
+
+interface TestModulePropertiesEntity: WorkspaceEntity {
+  val module: ModuleEntity
+  val productionModuleId: ModuleId
+
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : TestModulePropertiesEntity, WorkspaceEntity.Builder<TestModulePropertiesEntity>, ObjBuilder<TestModulePropertiesEntity> {
+    override var entitySource: EntitySource
+    override var module: ModuleEntity
+    override var productionModuleId: ModuleId
+  }
+
+  companion object : Type<TestModulePropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(productionModuleId: ModuleId,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): TestModulePropertiesEntity {
+      val builder = builder()
+      builder.productionModuleId = productionModuleId
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: TestModulePropertiesEntity,
+                                      modification: TestModulePropertiesEntity.Builder.() -> Unit) = modifyEntity(
+  TestModulePropertiesEntity.Builder::class.java, entity, modification)
 //endregion

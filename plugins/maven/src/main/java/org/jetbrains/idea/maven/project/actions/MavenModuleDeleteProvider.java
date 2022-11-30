@@ -23,7 +23,7 @@ public class MavenModuleDeleteProvider extends ModuleDeleteProvider {
   @Override
   protected void doDetachModules(@NotNull Project project,
                                  Module @Nullable [] modules,
-                                 @Nullable List<UnloadedModuleDescription> unloadedModules) {
+                                 @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     List<MavenProject> mavenProjects = new ArrayList<>();
     if (null != modules) {

@@ -87,7 +87,7 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
                                                              String scopeTitle,
                                                              boolean rememberScope,
                                                              AnalysisUIOptions uiOptions,
-                                                             List<ModelScopeItem> items) {
+                                                             List<? extends ModelScopeItem> items) {
     return new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {

@@ -8,7 +8,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
@@ -33,9 +32,9 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.test.assertContains
-import kotlin.test.assertTrue
 
 
+// TODO: Cover case in com.intellij.workspaceModel.ide.impl.jps.serialization.JpsSplitModuleAndContentRoot.load module without java custom settings
 @TestApplication
 class ImlCreationPropertyTest {
   @TestDisposable

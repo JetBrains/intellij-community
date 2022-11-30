@@ -54,6 +54,7 @@ import java.io.IOException
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.FileTime
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
@@ -513,7 +514,8 @@ object CodeWithMeClientDownloader {
 
         when (url.scheme) {
           "http", "https" -> {
-            HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
+            HttpRequests.request(url.toString()).saveToFile(path, progressIndicator, true)
+            progressIndicator.text2 = ""
           }
           "file" -> {
             Files.copy(url.toPath(), path, StandardCopyOption.REPLACE_EXISTING)
@@ -615,8 +617,6 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  private val remoteDevYouTrackFlag = "-Dapplication.info.youtrack.url=https://youtrack.jetbrains.com/newissue?project=GTW&amp;clearDraft=true&amp;description=\$DESCR"
-
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
@@ -632,11 +632,13 @@ object CodeWithMeClientDownloader {
     }
 
     // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
-    listOfNotNull(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir).forEach { path ->
-      Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
+    if (config.clientVersionManagementEnabled) {
+      listOfNotNull(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir).forEach { path ->
+        Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
+      }
     }
 
-    val parameters = if (CodeWithMeGuestLauncher.isUnattendedModeUri(URI(url))) listOf("thinClient", url, remoteDevYouTrackFlag) else listOf("thinClient", url)
+    val parameters =  listOf("thinClient", url)
     val processLifetimeDef = lifetime.createNested()
 
     val vmOptionsFile = if (SystemInfoRt.isMac) {
@@ -645,8 +647,9 @@ object CodeWithMeClientDownloader {
         PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + extractedJetBrainsClientData.version),
         "jetbrains_client.vmoptions"
       )
-    } else executable.resolveSibling("jetbrains_client64.vmoptions")
-    service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile)
+    } else if (SystemInfoRt.isWindows) executable.resolveSibling("jetbrains_client64.exe.vmoptions")
+    else executable.resolveSibling("jetbrains_client64.vmoptions")
+    service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile, URI(url))
 
     if (SystemInfo.isWindows) {
       val hProcess = WindowsFileUtil.windowsShellExecute(

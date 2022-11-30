@@ -89,7 +89,7 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
       myRunnable = () -> {
         if (myProject.isDisposed()) return;
         Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
-        if (scope.stream().anyMatch(f -> service.possiblyHasReference(f.getName()))) {
+        if (ContainerUtil.exists(scope, f -> service.possiblyHasReference(f.getName()))) {
           myProject.getMessageBus().syncPublisher(JSON_DEPS_CHANGED).run();
           JsonDependencyModificationTracker.forProject(myProject).incModificationCount();
         }
@@ -107,11 +107,11 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
         final Editor[] editors = EditorFactory.getInstance().getAllEditors();
         Arrays.stream(editors)
               .filter(editor -> editor instanceof EditorEx && editor.getProject() == myProject)
-              .map(editor -> ((EditorEx)editor).getVirtualFile())
+              .map(editor -> editor.getVirtualFile())
               .filter(file -> file != null && file.isValid())
               .forEach(file -> {
                 final Collection<VirtualFile> schemaFiles = ((JsonSchemaServiceImpl)myService).getSchemasForFile(file, false, true);
-                if (schemaFiles.stream().anyMatch(finalScope::contains)) {
+                if (ContainerUtil.exists(schemaFiles, finalScope::contains)) {
                   if (ApplicationManager.getApplication().isUnitTestMode()) {
                     ReadAction.run(() -> restartAnalyzer(analyzer, psiManager, file));
                   }

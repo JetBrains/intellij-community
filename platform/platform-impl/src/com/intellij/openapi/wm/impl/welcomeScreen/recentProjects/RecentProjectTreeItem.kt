@@ -59,6 +59,7 @@ internal data class RecentProjectItem(
 
   companion object {
     fun openProjectAndLogRecent(file: Path, options: OpenProjectTask, projectGroup: ProjectGroup?) {
+      @Suppress("DEPRECATION")
       ApplicationManager.getApplication().coroutineScope.launch {
         RecentProjectsManagerBase.getInstanceEx().openProject(file, options)
         for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
@@ -107,7 +108,6 @@ internal data class RecentProjectItem(
     openProjectAndLogRecent(file, OpenProjectTask {
       this.forceOpenInNewFrame = forceOpenInNewFrame
       runConfigurators = true
-      showFrameAsap = true
     }, projectGroup)
   }
 

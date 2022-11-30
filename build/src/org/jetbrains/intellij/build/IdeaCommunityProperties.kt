@@ -96,7 +96,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
         icoPath = "${communityHomeDir}/platform/icons/src/idea_CE.ico"
         icoPathForEAP = "${communityHomeDir}/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
         installerImagesPath = "${communityHomeDir}/build/conf/ideaCE/win/images"
-        fileAssociations = listOf("java", "groovy", "kt", "kts")
+        fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
       }
 
       override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"

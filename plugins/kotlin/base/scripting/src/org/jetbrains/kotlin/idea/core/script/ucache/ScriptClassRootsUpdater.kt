@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.GlobalScope
@@ -27,12 +28,14 @@ import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.dependencies.hasGradleDependency
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -204,28 +207,53 @@ abstract class ScriptClassRootsUpdater(
             }
             if (disposable.disposed) return
 
+            runInEdt(ModalityState.NON_MODAL) {
+                runWriteAction {
+                    if (scriptsAsEntities) { // (updates.changed && !updates.hasNewRoots)
+                        val manager = VirtualFileManager.getInstance()
+                        updates.cache.scriptsPaths().takeUnless { it.isEmpty() }?.asSequence()
+                            ?.map { checkNotNull(manager.findFileByNioPath(Paths.get(it))) { "Couldn't find script as a VFS file: $it" } }
+                            ?.let { project.syncScriptEntities(it) }
+                    }
+                }
+            }
+
             if (updates.hasNewRoots) {
-                runInEdt (ModalityState.NON_MODAL) {
+                runInEdt(ModalityState.NON_MODAL) {
                     runWriteAction {
                         if (project.isDisposed) return@runWriteAction
 
-                        scriptingDebugLog { "kotlin.script.dependencies from ${updates.oldRoots} to ${updates.newRoots}" }
+                        if (!scriptsAsEntities) {
+                            scriptingDebugLog { "kotlin.script.dependencies from ${updates.oldRoots} to ${updates.newRoots}" }
 
-                        AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
-                            project,
-                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies"),
-                            updates.oldSdkRoots,
-                            updates.newSdkRoots,
-                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies")
-                        )
+                            val hasGradleDependency = updates.newSdkRoots.hasGradleDependency() || updates.newRoots.hasGradleDependency()
+                            val dependencySdkLibraryName = if (hasGradleDependency) {
+                                KotlinBaseScriptingBundle.message("script.name.gradle.script.sdk.dependencies")
+                            } else {
+                                KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies")
+                            }
 
-                        AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
-                            project,
-                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies"),
-                            updates.oldRoots,
-                            updates.newRoots,
-                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies")
-                        )
+                            AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
+                                project,
+                                dependencySdkLibraryName,
+                                updates.oldSdkRoots,
+                                updates.newSdkRoots,
+                                dependencySdkLibraryName
+                            )
+
+                            val dependencyLibraryName = if (hasGradleDependency) {
+                                KotlinBaseScriptingBundle.message("script.name.gradle.script.dependencies")
+                            } else {
+                                KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies")
+                            }
+                            AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
+                                project,
+                                dependencyLibraryName,
+                                updates.oldRoots,
+                                updates.newRoots,
+                                dependencyLibraryName
+                            )
+                        }
 
                         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
                     }
@@ -234,9 +262,11 @@ abstract class ScriptClassRootsUpdater(
 
             runReadAction {
                 if (project.isDisposed) return@runReadAction
-                PsiElementFinder.EP.findExtensionOrFail(KotlinScriptDependenciesClassFinder::class.java, project).clearCache()
 
-                ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+                if (!scriptsAsEntities) {
+                    PsiElementFinder.EP.findExtensionOrFail(KotlinScriptDependenciesClassFinder::class.java, project).clearCache()
+                    ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+                }
 
                 if (updates.hasUpdatedScripts) {
                     updateHighlighting(project) { file -> updates.isScriptChanged(file.path) }

@@ -1,12 +1,11 @@
 package org.jetbrains.completion.full.line.local.generation
 
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 class UtilsTest {
   @Test
-  @Tag("heavy")
   fun testTopk1d() {
     val list = doubleArrayOf(0.1, 0.2, 0.9, 0.3, 0.4, 0.0, 0.1, 0.5)
     val expected = intArrayOf(2, 7, 4)
@@ -14,7 +13,33 @@ class UtilsTest {
   }
 
   @Test
-  @Tag("heavy")
+  fun testTopk1dSameSize() {
+    val list = doubleArrayOf(0.1, 0.9, 0.3)
+    val expected = intArrayOf(1, 2, 0)
+    assertArrayEquals(topk1d(list, 3), expected)
+  }
+
+  @Test
+  fun testTopk1dLessSize() {
+    val list = doubleArrayOf(0.1, 0.9)
+    val expected = intArrayOf(1, 0)
+    assertArrayEquals(topk1d(list, 3), expected)
+  }
+
+  @Test
+  fun testTopk1dCorrectness() {
+    val list = DoubleArray(10000) { Random.nextDouble() }
+    val k = 10
+    val expected = list
+      .mapIndexed { i, v -> Pair(i, v) }
+      .sortedByDescending { it.second }
+      .take(k)
+      .map { it.first }
+      .toIntArray()
+    assertArrayEquals(topk1d(list, k), expected)
+  }
+
+  @Test
   fun testTopk2d() {
     val list1 = doubleArrayOf(0.1, 0.2, 0.9, 0.3, 0.4, 0.0, 0.1, 0.5)
     val list2 = doubleArrayOf(0.6, 0.8, 0.2, 0.1, 0.4, 0.7, 0.3, 0.0)

@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
@@ -42,6 +43,8 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 public class InjectedLanguageUtilBase {
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
+
+  private static final Key<CachedValue<InjectionResult>> INJECTION_RESULT_KEY = Key.create("INJECTION_RESULT");
 
   @NotNull
   static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
@@ -306,9 +309,9 @@ public class InjectedLanguageUtilBase {
 
   @NotNull
   private static InjectionResult getEmptyInjectionResult(@NotNull PsiFile host) {
-    return CachedValuesManager.getCachedValue(host, () ->
-      CachedValueProvider.Result.createSingleDependency(new InjectionResult(host, null, null),
-                                                        PsiModificationTracker.MODIFICATION_COUNT));
+    return CachedValuesManager.getCachedValue(host, INJECTION_RESULT_KEY, () ->
+      Result.createSingleDependency(new InjectionResult(host, null, null), PsiModificationTracker.MODIFICATION_COUNT)
+    );
   }
 
   /**

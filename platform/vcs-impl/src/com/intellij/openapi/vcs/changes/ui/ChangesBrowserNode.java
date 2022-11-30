@@ -204,7 +204,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     myDirectoryCount = -1;
   }
 
-  private int sumForChildren(@NotNull ToIntFunction<ChangesBrowserNode<?>> counter) {
+  private int sumForChildren(@NotNull ToIntFunction<? super ChangesBrowserNode<?>> counter) {
     int sum = 0;
     for (int i = 0; i < getChildCount(); i++) {
       ChangesBrowserNode<?> child = (ChangesBrowserNode<?>)getChildAt(i);

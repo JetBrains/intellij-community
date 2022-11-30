@@ -42,10 +42,14 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
                     else -> reference.expression
                 }
             }
+
             is FirTypeConstraintNameInWhereClausePositionContext, is FirIncorrectPositionContext, is FirClassifierNamePositionContext -> {
                 error("keyword completion should not be called for ${positionContext::class.simpleName}")
             }
-            is FirValueParameterPositionContext, is FirUnknownPositionContext -> null
+
+            is FirValueParameterPositionContext,
+            is FirMemberDeclarationExpectedPositionContext,
+            is FirUnknownPositionContext -> null
         }
         completeWithResolve(expression ?: positionContext.position, expression)
     }

@@ -39,7 +39,10 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
   @Override
   protected Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
-    final String actionName = extractCommandArgument(PREFIX);
+    String extractCommandList = extractCommandArgument(PREFIX);
+    String[] commandList = extractCommandList.split("\\|");
+    final String actionName = commandList[0];
+    final boolean invoke = commandList.length == 1 || Boolean.parseBoolean(commandList[1]);
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
       @NotNull Project project = context.getProject();
       Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -59,10 +62,10 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
               Optional<HighlightInfo.IntentionActionDescriptor>
                 singleIntention = combined.stream().filter(s -> s.getAction().getText().startsWith(actionName)).findFirst();
               if (singleIntention.isEmpty()) actionCallback.reject(actionName + " is not found among " + combined);
-              singleIntention
+              if (invoke) singleIntention
                 .ifPresent(c -> ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, c.getAction(), c.getAction().getText()));
             }
-            else {
+            if (!invoke || actionName.isEmpty()) {
               CachedIntentions cachedIntentions = CachedIntentions.create(project, psiFile, editor, intentions);
               IntentionHintComponent.showIntentionHint(project, psiFile, editor, true, cachedIntentions);
             }

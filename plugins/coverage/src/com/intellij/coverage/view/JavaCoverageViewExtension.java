@@ -107,14 +107,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (javaNode.isClassCoverage()) {
       return myAnnotator.getClassCoverageInfo(javaNode.getQualifiedName());
     }
-    if (javaNode.isPackageCoverage()) {
+    else {
       return myAnnotator.getPackageCoverageInfo(javaNode.getQualifiedName(), myStateBean.myFlattenPackages);
     }
-    final Object value = SlowOperations.allowSlowOperations(() -> javaNode.getValue());
-    if (value instanceof PsiNamedElement) {
-      return myAnnotator.getExtensionCoverageInfo((PsiNamedElement)value);
-    }
-    return null;
   }
 
   @Override
@@ -306,13 +301,13 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (runConfiguration != null) {
       JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
       if (coverageEnabledConfiguration != null) {
-        isBranchColumnAvailable(infos, coverageEnabledConfiguration.getCoverageRunner(), coverageEnabledConfiguration.isSampling());
+        tryAddBranches(infos, coverageEnabledConfiguration.getCoverageRunner(), coverageEnabledConfiguration.isTracingEnabled());
       }
     }
     else {
       for (CoverageSuite suite : mySuitesBundle.getSuites()) {
         CoverageRunner runner = suite.getRunner();
-        if (isBranchColumnAvailable(infos, runner, true)) {
+        if (tryAddBranches(infos, runner, false)) {
           break;
         }
       }
@@ -320,8 +315,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return infos.toArray(ColumnInfo.EMPTY_ARRAY);
   }
 
-  private boolean isBranchColumnAvailable(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean sampling) {
-    if (coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(sampling)) {
+  private boolean tryAddBranches(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean branchCoverage) {
+    if (coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(branchCoverage)) {
       infos.add(new PercentageCoverageColumnInfo(4, JavaCoverageBundle.message("coverage.view.column.branch"), mySuitesBundle, myStateBean));
       return true;
     }

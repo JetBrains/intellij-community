@@ -84,7 +84,7 @@ fun Row.feedbackAgreement(project: Project?, systemInfo: () -> Unit) {
  * @return product tag.
  * @see <a href="https://youtrack.jetbrains.com/issue/ZEN-1460#focus=Comments-27-5692479.0-0">ZEN-1460</a> for more information
  */
-private fun getProductTag(): String {
+internal fun getProductTag(): String {
   return when {
     PlatformUtils.isIntelliJ() -> "ij_idea"
     PlatformUtils.isPhpStorm() -> "ij_phpstorm"

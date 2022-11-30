@@ -6,16 +6,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 internal class AddWhenRemainingBranchesIntention
-    : KotlinApplicableIntentionWithContext<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
+    : AbstractKotlinApplicableIntentionWithContext<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
 
     override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(false)
     override fun getActionName(element: KtWhenExpression, context: AddRemainingWhenBranchesUtils.Context): String = familyName
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
 

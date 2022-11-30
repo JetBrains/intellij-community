@@ -4,11 +4,8 @@ package com.intellij.internal.inspector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.ide.ui.customization.CustomisedActionGroup;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionWithDelegate;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,11 +45,14 @@ public final class UiInspectorUtil {
   }
 
   @Nullable
-  public static String getActionId(@NotNull AnAction action) {
-    if (action instanceof CustomisedActionGroup) {
-      action = ((CustomisedActionGroup)action).getOrigin();
-    }
+  private static String getRawActionId(@NotNull AnAction action) {
     return ActionManager.getInstance().getId(action);
+  }
+
+  @Nullable
+  public static String getActionId(@NotNull AnAction action) {
+    AnAction delegate = ActionUtil.getDelegateChainRootAction(action);
+    return getRawActionId(delegate);
   }
 
   @NotNull
@@ -65,41 +65,51 @@ public final class UiInspectorUtil {
       result.add(new PropertyBean(prefix + " Place", place, true));
     }
 
-    String toolbarId = getActionId(group);
-    result.add(new PropertyBean(prefix + " Group", toolbarId, true));
-
+    String groupId = getActionId(group);
     Set<String> ids = new HashSet<>();
     recursiveCollectGroupIds(group, ids);
-    ContainerUtil.addIfNotNull(ids, toolbarId);
+    ContainerUtil.addIfNotNull(ids, groupId);
     if (ids.size() > 1 ||
-        ids.size() == 1 && toolbarId == null) {
-      result.add(new PropertyBean("All Groups", StringUtil.join(ids, ", "), true));
+        ids.size() == 1 && groupId == null) {
+      result.add(new PropertyBean("All " + prefix + " Groups", StringUtil.join(ids, ", "), true));
     }
+
+    result.addAll(collectAnActionInfo(group));
+
     return result;
   }
 
   @NotNull
   public static List<PropertyBean> collectAnActionInfo(@NotNull AnAction action) {
     List<PropertyBean> result = new ArrayList<>();
-    result.add(new PropertyBean("Action", action.getClass().getName(), true));
 
+    Class<? extends AnAction> clazz = action.getClass();
     boolean isGroup = action instanceof ActionGroup;
-    result.add(new PropertyBean("Action" + (isGroup ? " Group" : "") + " ID", getActionId(action), true));
+    String prefix = isGroup ? "Group" : "Action";
 
-    final ClassLoader classLoader = action.getClass().getClassLoader();
+    result.add(new PropertyBean(prefix + " ID", getActionId(action), true));
+    if (clazz != DefaultActionGroup.class) {
+      result.add(new PropertyBean(prefix + " Class", clazz.getName(), true));
+    }
+
+    final ClassLoader classLoader = clazz.getClassLoader();
     if (classLoader instanceof PluginAwareClassLoader) {
-      result.add(new PropertyBean("Action Plugin ID", ((PluginAwareClassLoader)classLoader).getPluginId().getIdString(), true));
+      result.add(new PropertyBean(prefix + " Plugin ID", ((PluginAwareClassLoader)classLoader).getPluginId().getIdString(), true));
     }
 
-    if (action instanceof ActionWithDelegate<?>) {
-      Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
+    int depth = 1;
+    Object object = action;
+    while (object instanceof ActionWithDelegate<?>) {
+      String suffix = " (" + depth + ")";
+      Object delegate = ((ActionWithDelegate<?>)object).getDelegate();
       if (delegate instanceof AnAction) {
-        result.add(new PropertyBean("Action Delegate", delegate.getClass().getName(), true));
-        result.add(new PropertyBean("Action Delegate ID", getActionId((AnAction)delegate), true));
+        result.add(new PropertyBean(prefix + " Delegate Class" + suffix, delegate.getClass().getName()));
+        result.add(new PropertyBean(prefix + " Delegate ID" + suffix, getRawActionId((AnAction)delegate)));
       }
-      result.add(new PropertyBean("Action Delegate toString", delegate, false));
+      result.add(new PropertyBean(prefix + " Delegate toString" + suffix, delegate));
+      object = delegate;
+      depth++;
     }
-
     return result;
   }
 

@@ -118,6 +118,11 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   }
 
   @Override
+  public boolean isInBatchFoldingOperation() {
+    return myDelegate.isInBatchFoldingOperation();
+  }
+
+  @Override
   public int getLastCollapsedRegionBefore(int offset) {
     return -1; //todo implement
   }
@@ -189,7 +194,7 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
     return getWindowRegions(hostRegions);
   }
 
-  private @NotNull List<FoldRegion> getWindowRegions(@NotNull List<FoldRegion> hostRegions) {
+  private @NotNull List<FoldRegion> getWindowRegions(@NotNull List<? extends FoldRegion> hostRegions) {
     List<FoldRegion> result = new ArrayList<>();
     hostRegions.forEach(hr -> {
       FoldingRegionWindow wr = getWindowRegion(hr);

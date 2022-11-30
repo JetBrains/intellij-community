@@ -464,6 +464,11 @@ public class ChangesViewManager implements ChangesViewEx,
       boolean isEditorPreview = isEditorPreview(myProject);
       boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
 
+      //noinspection DoubleNegation
+      boolean needUpdatePreviews = isEditorPreview != (myEditorChangeProcessor != null) ||
+                                   hasSplitterPreview != (mySplitterChangeProcessor != null);
+      if (!needUpdatePreviews) return;
+
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
 
@@ -473,6 +478,7 @@ public class ChangesViewManager implements ChangesViewEx,
         myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
       }
       else {
+        myEditorChangeProcessor = null;
         myEditorDiffPreview = null;
       }
 
@@ -482,6 +488,7 @@ public class ChangesViewManager implements ChangesViewEx,
         mySplitterDiffPreview = installSplitterPreview(mySplitterChangeProcessor);
       }
       else {
+        mySplitterChangeProcessor = null;
         mySplitterDiffPreview = null;
       }
 
@@ -796,8 +803,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @RequiresEdt
     private void refreshViewOnEdt(@NotNull DefaultTreeModel treeModel,
-                                  @NotNull List<LocalChangeList> changeLists,
-                                  @NotNull List<FilePath> unversionedFiles,
+                                  @NotNull List<? extends LocalChangeList> changeLists,
+                                  @NotNull List<? extends FilePath> unversionedFiles,
                                   boolean hasPendingRefresh) {
       if (myDisposed) return;
 

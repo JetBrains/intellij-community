@@ -110,14 +110,13 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     Library firstItem = ContainerUtil.getFirstItem(myLibraries.keySet());
-    String refName = StringUtil.getShortName(myLibraries.get(firstItem));
-    
-    return new IntentionPreviewInfo.Html(
-      HtmlChunk.text(JavaBundle.message("adds.library.preview",
-                                         myLibraries.size(),
-                                         firstItem.getPresentableName(),
-                                         NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'")),
-                                         myCurrentModule.getName(),
-                                         refName)));
+    String fqName = myLibraries.get(firstItem);
+    String refName = fqName != null ? StringUtil.getShortName(fqName) : null;
+
+    String libraryList = NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'"));
+    String libraryName = firstItem.getPresentableName();
+    String message = refName != null ? JavaBundle.message("adds.library.preview", myLibraries.size(), libraryName, libraryList, myCurrentModule.getName(), refName)
+                                     : JavaBundle.message("adds.library.preview.no.import", myLibraries.size(), libraryName, libraryList, myCurrentModule.getName());
+    return new IntentionPreviewInfo.Html(HtmlChunk.text(message));
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -220,6 +221,7 @@ public final class PluginInstallOperation {
     }
   }
 
+  @RequiresBackgroundThread
   private boolean prepareToInstall(@NotNull PluginNode pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
     if (!checkMissingDependencies(pluginNode, pluginIds)) return false;

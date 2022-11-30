@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -25,38 +24,26 @@ import java.util.function.Supplier;
 public final class ToolbarUtil {
   public static void setCustomTitleBar(@NotNull Window window,
                                        @NotNull JRootPane rootPane,
-                                       Consumer<? super Runnable> onDispose) {
+                                       @NotNull Consumer<? super Runnable> onDispose) {
     if (SystemInfoRt.isMac) {
       if (ExperimentalUI.isNewUI()) {
         setCustomTitleForToolbar(window, rootPane, onDispose);
       }
-      else if (isMacTransparentTitleBarAppearance()) {
+      else {
         setTransparentTitleBar(window, rootPane, onDispose);
       }
     }
   }
 
-  private static boolean isMacTransparentTitleBarAppearance() {
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.mac.transparentTitleBarAppearance");
-  }
-
-  public static void removeSystemTitleBar(@NotNull JRootPane rootPane) {
-    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) {
-      return;
-    }
-
+  public static void removeMacSystemTitleBar(@NotNull JRootPane rootPane) {
     rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
     rootPane.putClientProperty("apple.awt.fullWindowContent", true);
     rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
   }
 
-  public static void setCustomTitleForToolbar(@NotNull Window window,
-                                              @NotNull JRootPane rootPane,
-                                              Consumer<? super Runnable> onDispose) {
-    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) {
-      return;
-    }
-
+  private static void setCustomTitleForToolbar(@NotNull Window window,
+                                               @NotNull JRootPane rootPane,
+                                               @NotNull Consumer<? super Runnable> onDispose) {
     JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
     AbstractBorder customBorder = new AbstractBorder() {
       @Override
@@ -126,7 +113,7 @@ public final class ToolbarUtil {
                                             @NotNull JRootPane rootPane,
                                             @Nullable Supplier<? extends FullScreeSupport> handlerProvider,
                                             Consumer<? super Runnable> onDispose) {
-    if (!SystemInfoRt.isMac || !isMacTransparentTitleBarAppearance()) {
+    if (!SystemInfoRt.isMac) {
       return;
     }
 
@@ -154,14 +141,12 @@ public final class ToolbarUtil {
           Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
           graphics.setColor(UIUtil.getPanelBackground());
           graphics.fill(headerRectangle);
-          if (isMacTransparentTitleBarAppearance()) {
-            if (window instanceof RootPaneContainer) {
-              JRootPane pane = ((RootPaneContainer)window).getRootPane();
-              if (pane == null || pane.getClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY) == Boolean.FALSE) {
-                graphics.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
-                LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1,
-                                    LinePainter2D.StrokeType.INSIDE, 1);
-              }
+          if (window instanceof RootPaneContainer) {
+            JRootPane pane = ((RootPaneContainer)window).getRootPane();
+            if (pane == null || pane.getClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY) == Boolean.FALSE) {
+              graphics.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+              LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1,
+                                  LinePainter2D.StrokeType.INSIDE, 1);
             }
           }
           Color color = window.isActive()

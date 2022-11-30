@@ -1,13 +1,7 @@
 fragment commit on Commit {
     ...commitShort
     committer {
-        name
-        email
-        avatarUrl
-        date
-        user {
-            url
-        }
+        ...gitActorInfo
     }
     messageHeadline
     messageBodyHTML

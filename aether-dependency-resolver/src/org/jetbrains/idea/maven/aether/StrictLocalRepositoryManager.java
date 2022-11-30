@@ -8,6 +8,7 @@ import org.eclipse.aether.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.zip.ZipFile;
@@ -24,37 +25,37 @@ class StrictLocalRepositoryManager implements LocalRepositoryManager {
   @Override
   public LocalArtifactResult find(RepositorySystemSession session, LocalArtifactRequest request) {
     var result = delegate.find(session, request);
-    // TODO: to be revised after IDEA-269182 is implemented
-    if (STRICT_VALIDATION &&
-        result.isAvailable() &&
-        (result.getFile().getName().endsWith(".jar") ||
-         result.getFile().getName().endsWith(".zip"))) {
-      validateArchive(result);
+    if (result.isAvailable() && !isValidArchive(result.getFile())) {
+      result.setFile(null);
+      result.setAvailable(false);
     }
     return result;
   }
 
-  private static void validateArchive(LocalArtifactResult artifact) {
-    long entriesCount;
-    var file = artifact.getFile();
-    try (var zip = new ZipFile(file)) {
-      entriesCount = zip.size();
-    }
-    catch (IOException e) {
-      LOG.warn("Unable to read a number of entries in " + file, e);
-      entriesCount = 0;
-    }
-    if (entriesCount <= 0) {
-      LOG.warn(file + " is probably corrupted, deleting");
-      try {
-        Files.deleteIfExists(file.toPath());
+  boolean isValidArchive(File archive) {
+    if (!archive.exists()) return false;
+    // TODO: to be revised after IDEA-269182 is implemented
+    if (STRICT_VALIDATION && (archive.getName().endsWith(".jar") || archive.getName().endsWith(".zip"))) {
+      long entriesCount;
+      try (var zip = new ZipFile(archive)) {
+        entriesCount = zip.size();
       }
       catch (IOException e) {
-        throw new RuntimeException("Unable to delete " + file, e);
+        LOG.warn("Unable to read a number of entries in " + archive, e);
+        entriesCount = 0;
       }
-      artifact.setFile(null);
-      artifact.setAvailable(false);
+      if (entriesCount <= 0) {
+        LOG.warn(archive + " is probably corrupted, deleting");
+        try {
+          Files.deleteIfExists(archive.toPath());
+        }
+        catch (IOException e) {
+          throw new RuntimeException("Unable to delete " + archive, e);
+        }
+        return false;
+      }
     }
+    return true;
   }
 
   @Override

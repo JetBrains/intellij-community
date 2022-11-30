@@ -48,7 +48,7 @@ object NegatedBinaryExpressionSimplificationUtils {
         val operation =
             (expression as KtOperationExpression).operationReference.getReferencedNameElementType().negate()?.value ?: return
 
-        val psiFactory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(project)
         val newExpression = when (expression) {
             is KtIsExpression ->
                 psiFactory.createExpressionByPattern("$0 $1 $2", expression.leftHandSide, operation, expression.typeReference!!)

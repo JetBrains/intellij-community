@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
 import com.intellij.openapi.project.Project
@@ -33,7 +34,9 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val externalProjects = ArrayList<DependencyAnalyzerProject>()
     for (mavenProject in mavenProjectsManager.projects) {
-      val module = mavenProjectsManager.findModule(mavenProject) ?: continue
+      val module = runReadAction {
+        mavenProjectsManager.findModule(mavenProject)
+      } ?: continue
       externalProjects.add(DAProject(module, mavenProject.displayName))
     }
     return externalProjects

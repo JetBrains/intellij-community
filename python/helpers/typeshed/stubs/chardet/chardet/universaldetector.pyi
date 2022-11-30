@@ -12,7 +12,7 @@ class _IntermediateResultType(TypedDict):
     confidence: float
     language: str | None
 
-class UniversalDetector(object):
+class UniversalDetector:
     MINIMUM_THRESHOLD: float
     HIGH_BYTE_DETECTOR: Pattern[bytes]
     ESC_DETECTOR: Pattern[bytes]

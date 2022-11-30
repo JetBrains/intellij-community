@@ -539,7 +539,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     return patches;
   }
 
-  private void preloadBaseRevisions(@NotNull List<Change> textChanges) {
+  private void preloadBaseRevisions(@NotNull List<? extends Change> textChanges) {
     MultiMap<VcsRoot, Change> changesGroupedByRoot = MultiMap.create();
     for (Change change : textChanges) {
       ContentRevision beforeRevision = change.getBeforeRevision();
@@ -625,7 +625,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   public @NotNull ShelvedChangeList importFilePatches(String fileName,
                                                       List<? extends FilePatch> patches,
-                                                      List<PatchEP> patchTransitExtensions)
+                                                      List<? extends PatchEP> patchTransitExtensions)
     throws IOException {
     try {
       Path schemePatchDir = generateUniqueSchemePatchDir(fileName, true);
@@ -1458,7 +1458,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private static void savePatchFile(@NotNull Project project,
                                     @NotNull Path patchFile,
                                     @NotNull List<? extends FilePatch> patches,
-                                    @Nullable List<PatchEP> extensions,
+                                    @Nullable List<? extends PatchEP> extensions,
                                     @NotNull CommitContext context) throws IOException {
     try (Writer writer = Files.newBufferedWriter(patchFile)) {
       UnifiedDiffWriter.write(project, ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, "\n", context, extensions);

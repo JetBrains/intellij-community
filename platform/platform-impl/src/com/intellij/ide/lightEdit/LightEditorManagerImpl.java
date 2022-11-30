@@ -184,7 +184,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     myEventDispatcher.getMulticaster().autosaveModeChanged(autosaveMode);
   }
 
-  void fireFileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {
+  void fireFileStatusChanged(@NotNull Collection<? extends LightEditorInfo> editorInfos) {
     myEventDispatcher.getMulticaster().fileStatusChanged(editorInfos);
   }
 

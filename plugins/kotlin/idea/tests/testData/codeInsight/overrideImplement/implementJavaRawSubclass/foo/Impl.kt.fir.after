@@ -1,14 +1,10 @@
 // ERROR: [ABSTRACT_MEMBER_NOT_IMPLEMENTED] Class C is not abstract and does not implement abstract member foo
 // ERROR: [NOTHING_TO_OVERRIDE] 'foo' overrides nothing
-// ERROR: Unexpected tokens
-// ERROR: Unexpected token
-// ERROR: Unexpected token
-// ERROR: Unexpected token
 import foo.A
 import foo.B
 
 class C : A() {
-    override fun foo(x: (Mutable)List<String!>!, y: String!): B<String?>? {
+    override fun foo(x: List<String?>?, y: String?): B<String?>? {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }

@@ -335,6 +335,12 @@
     <registryKey key="maven.consumer.pom.support" defaultValue="false"
                  description="Enable Maven consumer pom support"/>
 
+    <registryKey key="maven.import.to.workspace.model.fast.facet.creation" defaultValue="false"
+                 description="Create facets in a background thread instead of EDT"/>
+
+    <registryKey key="maven.import.to.workspace.model.ignored.facet.importers" defaultValue=""
+                 description="Comma-separated list of facet importer class names that should be ignored during import for better performance. E.g., JpaFacetImporter"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>

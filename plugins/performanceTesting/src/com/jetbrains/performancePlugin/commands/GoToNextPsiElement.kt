@@ -8,17 +8,11 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.util.elementType
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
-import kotlin.math.max
-import kotlin.math.min
 
 class GoToNextPsiElement(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
@@ -29,7 +23,7 @@ class GoToNextPsiElement(text: String, line: Int) : AbstractCommand(text, line) 
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
-    val input = extractCommandArgument(GoToCommand.PREFIX)
+    val input = extractCommandArgument(PREFIX)
     val params = input.split(REGEX).dropLastWhile { it.isEmpty() }.toSet()
     ApplicationManager.getApplication().invokeLater {
       val project = context.project
@@ -42,27 +36,12 @@ class GoToNextPsiElement(text: String, line: Int) : AbstractCommand(text, line) 
       }
       editor.caretModel.addCaretListener(caretListener)
       actionCallback.doWhenProcessed { editor.caretModel.removeCaretListener(caretListener) }
-      psiFile?.accept(object : PsiRecursiveElementWalkingVisitor(true) {
-        override fun visitElement(element: PsiElement) {
-          if (params.contains(element.elementType?.debugName)) {
-            if (editor.caretModel.currentCaret.offset < element.startOffset) {
-              val spaceIndex = max(1, element.text.indexOf(" "))
-              val offset = min(element.endOffset, element.startOffset + spaceIndex)
-              if (editor.caretModel.offset == offset) {
-                actionCallback.setDone()
-              }
-              else {
-                editor.caretModel.moveToOffset(offset)
-              }
-              stopWalking()
-            }
-          }
-          super.visitElement(element)
-        }
-      })
+      psiFile.goToElement(position = "into_space", actionCallback = actionCallback, editor = editor,
+                          predicate = { params.contains(it.elementType?.debugName) })
       if (params.contains(SUPPRESS_ERROR_IF_NOT_FOUND) && !actionCallback.isDone) {
-         actionCallback.setDone()
-      } else if (!actionCallback.isDone) {
+        actionCallback.setDone()
+      }
+      else if (!actionCallback.isDone) {
         actionCallback.reject("not found any element")
       }
     }

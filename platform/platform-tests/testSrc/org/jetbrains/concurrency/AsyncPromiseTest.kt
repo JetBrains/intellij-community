@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-@Suppress("UsePropertyAccessSyntax")
 class AsyncPromiseTest {
   companion object {
     @JvmField

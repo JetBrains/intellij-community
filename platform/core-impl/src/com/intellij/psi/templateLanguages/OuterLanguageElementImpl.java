@@ -12,7 +12,7 @@ public class OuterLanguageElementImpl extends LeafPsiElement implements OuterLan
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitOuterLanguageElement(this);
   }
 }

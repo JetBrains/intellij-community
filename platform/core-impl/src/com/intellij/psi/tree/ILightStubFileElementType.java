@@ -25,11 +25,11 @@ import org.jetbrains.annotations.NonNls;
 
 
 public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileElementType<T> {
-  public ILightStubFileElementType(final Language language) {
+  public ILightStubFileElementType(Language language) {
     super(language);
   }
 
-  public ILightStubFileElementType(@NonNls final String debugName, final Language language) {
+  public ILightStubFileElementType(@NonNls String debugName, Language language) {
     super(debugName, language);
   }
 
@@ -38,16 +38,16 @@ public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileE
     return new LightStubBuilder();
   }
 
-  public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(final ASTNode chameleon) {
-    final PsiElement psi = chameleon.getPsi();
+  public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(ASTNode chameleon) {
+    PsiElement psi = chameleon.getPsi();
     assert psi != null : "Bad chameleon: " + chameleon;
 
-    final Project project = psi.getProject();
-    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final PsiBuilder builder = factory.createBuilder(project, chameleon);
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
+    Project project = psi.getProject();
+    PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    PsiBuilder builder = factory.createBuilder(project, chameleon);
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
     assert parserDefinition != null : this;
-    final PsiParser parser = parserDefinition.createParser(project);
+    PsiParser parser = parserDefinition.createParser(project);
     if (parser instanceof LightPsiParser) {
       ((LightPsiParser)parser).parseLight(this, builder);
     }

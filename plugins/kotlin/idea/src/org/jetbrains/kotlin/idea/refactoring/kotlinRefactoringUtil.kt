@@ -140,7 +140,7 @@ fun PsiElement.isInKotlinAwareSourceRoot(): Boolean =
     !isOutsideKotlinAwareSourceRoot(containingFile)
 
 fun KtFile.createTempCopy(text: String? = null): KtFile {
-    val tmpFile = KtPsiFactory(this).createAnalyzableFile(name, text ?: this.text ?: "", this)
+    val tmpFile = KtPsiFactory.contextual(this).createFile(name, text ?: this.text ?: "")
     tmpFile.originalFile = this
     return tmpFile
 }
@@ -327,7 +327,7 @@ fun PsiFile.getLineEndOffset(line: Int): Int? {
     return document?.getLineEndOffset(line)
 }
 
-@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.GeneralPsiElementUtilsKt.getLineNumber instead",)
+@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead",)
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
    return _getLineNumber(start)
 }
@@ -818,7 +818,7 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
         val psiBeforeLastParameter = lastOriginalParameter.prevSibling
         val withMultiline =
             (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')
-        val extraSpace = if (withMultiline) KtPsiFactory(originalList).createNewLine() else null
+        val extraSpace = if (withMultiline) KtPsiFactory(originalList.project).createNewLine() else null
         originalList.addRangeAfter(newParameters[commonCount - 1].nextSibling, newParameters.last(), lastOriginalParameter)
         if (extraSpace != null) {
             val addedItems = originalList.itemsFun().subList(commonCount, newCount)
@@ -832,10 +832,6 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     }
 
     return originalList
-}
-
-fun <T> Pass(body: (T) -> Unit) = object : Pass<T>() {
-    override fun pass(t: T) = body(t)
 }
 
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
@@ -867,7 +863,7 @@ fun getQualifiedTypeArgumentList(initializer: KtExpression): KtTypeArgumentList?
         IdeDescriptorRenderers.SOURCE_CODE_NOT_NULL_TYPE_APPROXIMATION.renderType(it.unCapture())
     }
 
-    return KtPsiFactory(initializer).createTypeArguments(renderedList)
+    return KtPsiFactory(initializer.project).createTypeArguments(renderedList)
 }
 
 fun addTypeArgumentsIfNeeded(expression: KtExpression, typeArgumentList: KtTypeArgumentList) {

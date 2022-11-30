@@ -890,6 +890,9 @@ class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLo
 internal fun Element.getAttributeValueStrict(name: String): String =
   getAttributeValue(name) ?: throw JDOMException("Expected attribute $name under ${this.name} element")
 
+internal fun Element.getChildTagStrict(name: String): Element =
+  getChild(name) ?: throw JDOMException("Expected tag $name under ${this.name} element")
+
 fun isExternalModuleFile(filePath: String): Boolean {
   val parentPath = PathUtil.getParentPath(filePath)
   return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"

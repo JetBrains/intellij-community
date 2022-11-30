@@ -111,14 +111,12 @@ public final class TypesUtil implements TypeConstants {
     }
   }
 
-  private static final List<PsiType> LUB_NUMERIC_TYPES = ContainerUtil.newArrayList(
-    PsiType.BYTE,
-    PsiType.SHORT,
-    PsiType.INT,
-    PsiType.LONG,
-    PsiType.FLOAT,
-    PsiType.DOUBLE
-  );
+  private static final List<PsiType> LUB_NUMERIC_TYPES = List.of(PsiType.BYTE,
+                                                                 PsiType.SHORT,
+                                                                 PsiType.INT,
+                                                                 PsiType.LONG,
+                                                                 PsiType.FLOAT,
+                                                                 PsiType.DOUBLE);
 
   /**
    * @deprecated see {@link #canAssign}
@@ -192,8 +190,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   public static boolean isAssignableByParameter(@Nullable PsiType targetType,
-                                               @Nullable PsiType actualType,
-                                               @NotNull PsiElement context) {
+                                                @Nullable PsiType actualType,
+                                                @NotNull PsiElement context) {
 
     if (targetType == null || actualType == null) return false;
     return canAssign(targetType, actualType, context, Position.GENERIC_PARAMETER) == ConversionResult.OK;
@@ -404,7 +402,8 @@ public final class TypesUtil implements TypeConstants {
           if (signature != null) {
             GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
             final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-            return GrClosureType.create(Collections.singletonList(signature), scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
+            return GrClosureType.create(Collections.singletonList(signature), scope, JavaPsiFacade.getInstance(manager.getProject()),
+                                        languageLevel, true);
           }
         }
       }
@@ -444,7 +443,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   private static PsiType genNewListBy(PsiType genericOwner, @NotNull PsiManager manager) {
-    PsiClass list = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
+    PsiClass list =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (list == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null);
     return factory.createType(list, PsiUtil.extractIterableTypeParameter(genericOwner, false));
@@ -459,7 +459,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   private static PsiType genNewMapBy(PsiType genericOwner, PsiManager manager) {
-    PsiClass map = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, genericOwner.getResolveScope());
+    PsiClass map =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (map == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_MAP, null);
 
@@ -749,11 +750,9 @@ public final class TypesUtil implements TypeConstants {
       public PsiType visitWildcardType(@NotNull PsiWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
-
     };
 
     return type.accept(visitor);
-
   }
 
   public static boolean isPsiClassTypeToClosure(PsiType type) {

@@ -150,7 +150,7 @@ class RemoveExplicitTypeIntention : AbstractKotlinApplicatorBasedIntention<KtDec
     private fun KtAnalysisSession.typeReferencesTypeParameter(typeParameter: KtTypeParameterSymbol, type: KtType): Boolean {
         return when (type) {
             is KtTypeParameterType -> type.symbol == typeParameter
-            is KtNonErrorClassType -> type.typeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }
+            is KtNonErrorClassType -> type.ownTypeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }
             else -> false
         }
     }

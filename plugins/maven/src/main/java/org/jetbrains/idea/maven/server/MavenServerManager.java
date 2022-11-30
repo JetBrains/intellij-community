@@ -266,7 +266,7 @@ public final class MavenServerManager implements Disposable {
 
   @Override
   public void dispose() {
-    shutdown(true);
+    shutdown(false);
   }
 
 

@@ -62,7 +62,7 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
             }
             literal == null -> {
                 val (prefix, myUnparseable) = makePlaceholder(child)
-                return collectInjections(literal, tail, pendingPrefix + prefix, unparseable || myUnparseable, collected)
+                return collectInjections(literal = null, tail, pendingPrefix + prefix, unparseable || myUnparseable, collected)
             }
             child is KtLiteralStringTemplateEntry || child is KtEscapeStringTemplateEntry -> {
                 val consequentStringsCount = tail.asSequence()

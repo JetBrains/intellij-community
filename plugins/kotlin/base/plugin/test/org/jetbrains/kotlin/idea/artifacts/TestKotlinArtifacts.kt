@@ -124,7 +124,7 @@ object TestKotlinArtifacts {
             baseDir.mkdirs()
         }
         val prebuilt = "kotlin-native-prebuilt-$platform-$version"
-        val archiveName = "$prebuilt.tar.gz"
+        val archiveName =  if (HostManager.hostIsMingw) "$prebuilt.zip" else "$prebuilt.tar.gz"
         val downloadUrl = "$NATIVE_PREBUILT_DEV_CDN_URL/$version/$platform/$archiveName"
         val downloadOut = "${baseDir.absolutePath}/$archiveName"
         val libPath = "${baseDir.absolutePath}/$prebuilt/$prebuilt/$library"

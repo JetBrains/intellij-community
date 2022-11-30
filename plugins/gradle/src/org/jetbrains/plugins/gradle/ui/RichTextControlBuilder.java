@@ -125,13 +125,8 @@ public class RichTextControlBuilder {
             rowComponents.add(component);
           }
           metaDataProcessor = null;
-          if (end < s.length()) {
-            // Handle situation like '{@key}text', i.e. there is no white space between the meta-data and the text that follows it.
-            s = s.substring(end);
-          }
-          else {
-            continue;
-          }
+          // Handle situation like '{@key}text', i.e. there is no white space between the meta-data and the text that follows it.
+          s = s.substring(end);
         }
         else {
           ignoreNext = true;

@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
+@Deprecated("Please don't use this for new inspections. Use `KotlinApplicableDiagnosticInspection` or `KotlinApplicableDiagnosticInspectionWithContext` instead.")
 abstract class AbstractKotlinDiagnosticBasedInspection<PSI : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : KotlinApplicatorInput>(
     elementType: KClass<PSI>,
 ) : AbstractKotlinApplicatorBasedInspection<PSI, INPUT>(elementType) {

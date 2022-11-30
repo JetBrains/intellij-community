@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -571,7 +571,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     );
     DiffHyperlink hyperlink = comparisionFailedState.getHyperlink();
     if (hyperlink != null) {
-      hyperlink.setTestProxyName(getName());
+      hyperlink.setTestProxy(this);
     }
 
     updateFailedState(comparisionFailedState);
@@ -598,7 +598,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     myParent = parent;
   }
 
-  public List<? extends SMTestProxy> collectChildren(@Nullable final Filter<SMTestProxy> filter) {
+  public List<? extends SMTestProxy> collectChildren(final @Nullable Filter<? super SMTestProxy> filter) {
     return filterChildren(filter, collectChildren());
   }
 

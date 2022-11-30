@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGutterRendererComponent {
-  public static final int CONTEXT_LINE_NUMBER = 3;
+  private static final int CONTEXT_LINE_NUMBER = 3;
   private final ProperTextRange myInfoRange;
 
   UsageCodeSnippetComponent(@NotNull PsiElement element, @Nullable ProperTextRange infoRange) {
@@ -58,7 +58,7 @@ class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGu
 
   private void addUsagePreview(@NotNull PsiElement element) {
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(element.getProject());
-    Document doc = docManager.getDocument(element.getContainingFile());
+    Document doc = docManager.getDocument(InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element));
     if (doc == null) return;
     TextRange selectionRange = UsagePreviewPanel.calculateHighlightingRangeForUsage(element, myInfoRange);
     selectionRange = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, selectionRange);

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModifi
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.util.sourceRoots
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -82,6 +83,50 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
         Assert.assertEquals("fun main() {\n" +
                                     "val v =\n" + 
                                     "}", ktFile.text)
+    }
+
+    //1. outside function
+    //2. in function identifier
+    fun testWhitespace() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "class Main {" +
+                            "    fun main() {}\n" +
+                            "}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        val singleFunction = (ktFile.declarations[0] as KtClass).declarations.single()
+        val startOffset = singleFunction.textRange.startOffset
+        editor.caretModel.moveToOffset(startOffset)
+        backspace()
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertFalse(
+            "Out of block modification count for module A should not change after deleting, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("class Main {   fun main() {}\n" +
+                                    "}", ktFile.text)
+
+        editor.caretModel.moveToOffset(startOffset + "fun ".length)
+        type(" ")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+        Assert.assertTrue(
+            "Out of block modification count for module A should change after adding space in identifier, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("class Main {   fun m ain() {}\n" +
+                                    "}", ktFile.text)
+
     }
     
     fun testThatAddModifierDoesLeadToOutOfBlockChange() {

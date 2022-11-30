@@ -1,4 +1,5 @@
-from typing import Any, AnyStr, Callable, overload
+from collections.abc import Callable
+from typing import Any, AnyStr, overload
 
 from . import _regex
 from ._regex_core import *

@@ -317,7 +317,7 @@ private fun MatchResult.generateCallChain(loop: KtForExpression, reformat: Boole
 
     var callChain = sequenceExpression
 
-    val psiFactory = KtPsiFactory(loop)
+    val psiFactory = KtPsiFactory(loop.project)
     val chainedCallGenerator = object : ChainedCallGenerator {
         override val receiver: KtExpression
             get() = callChain
@@ -375,7 +375,7 @@ fun matchIndexToIntroduce(loop: KtForExpression, reformat: Boolean): IntroduceIn
     val (inputVariable, indexVariable) = extractLoopData(loop) ?: return null
     if (indexVariable != null) return null // loop is already with "withIndex"
 
-    val state = createInitialMatchingState(loop, inputVariable, indexVariable, useLazySequence = false, reformat = reformat)?.unwrapBlock()
+    val state = createInitialMatchingState(loop, inputVariable, indexVariable = null, useLazySequence = false, reformat = reformat)?.unwrapBlock()
         ?: return null
 
     val match = IntroduceIndexMatcher.match(state) ?: return null

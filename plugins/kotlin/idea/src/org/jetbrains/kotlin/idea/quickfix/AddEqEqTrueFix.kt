@@ -18,6 +18,6 @@ class AddEqEqTrueFix(expression: KtExpression) : KotlinQuickFixAction<KtExpressi
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        expression.replace(KtPsiFactory(expression).createExpressionByPattern("$0 == true", expression))
+        expression.replace(KtPsiFactory(project).createExpressionByPattern("$0 == true", expression))
     }
 }

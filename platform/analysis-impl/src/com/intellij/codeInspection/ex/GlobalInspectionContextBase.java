@@ -332,7 +332,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return new ArrayList<>(set);
   }
 
-  private static void classifyTool(@NotNull List<? super Tools> outGlobalTools,
+  protected void classifyTool(@NotNull List<? super Tools> outGlobalTools,
                                    @NotNull List<? super Tools> outLocalTools,
                                    @NotNull List<? super Tools> outGlobalSimpleTools,
                                    @NotNull Tools currentTools,
@@ -364,7 +364,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return myTools;
   }
 
-  private void appendJobDescriptor(@NotNull JobDescriptor job) {
+  protected void appendJobDescriptor(@NotNull JobDescriptor job) {
     if (!myJobDescriptors.contains(job)) {
       myJobDescriptors.add(job);
       job.setDoneAmount(0);

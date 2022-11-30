@@ -28,7 +28,13 @@ internal class FullLineCompletionsGenerator(
 
     var completionResults = rawSuggestions.asSequence()
       .filter { it.ids.isNotEmpty() }
-      .map { CompletionModel.CompletionResult(tokenizer.decode(it.ids), it) }
+      .map {
+        val decodedText = tokenizer.decode(it.ids)
+        val stashRegexMatches = config.stashRegex.findAll(decodedText)
+        if (stashRegexMatches.none()) { return@map null }
+        CompletionModel.CompletionResult(decodedText.substring(0..stashRegexMatches.last().range.last), it)
+      }
+      .filterNotNull()
       .filter { it.text.length > newPrefix.length }
       .map { CompletionModel.CompletionResult(it.text.mergePrefixes(prefix, newPrefix), it.info) }
 

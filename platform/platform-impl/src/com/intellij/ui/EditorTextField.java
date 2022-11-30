@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
@@ -691,7 +690,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
       return;
     }
-    UISettings settings = UISettings.getInstance();
     float currentEditorFontSize = IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize();
     if (editor.getColorsScheme().getEditorFontSize2D() != currentEditorFontSize) {
       editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
@@ -1041,10 +1039,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     mySettingsProviders.add(provider);
   }
 
-  public boolean removeSettingsProvider(@NotNull EditorSettingsProvider provider) {
-    return mySettingsProviders.remove(provider);
-  }
-
   private static class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
     private boolean invokedFromBeforeOrAfter;
     @Override
@@ -1085,6 +1079,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     @Override
     public Component getDefaultComponent(Container aContainer) {
       if (invokedFromBeforeOrAfter) return null;     // escape our container
+      if (!(aContainer.isVisible() && aContainer.isDisplayable())) {
+        return null; // shamelessly copied from ContainerOrderFocusTraversalPolicy to fix the case of focus trying to get inside an invisible EditorTextField
+      }
       Editor editor = aContainer instanceof EditorTextField ? ((EditorTextField)aContainer).getEditor() : null;
       if (editor != null) return editor.getContentComponent();
       return aContainer;

@@ -77,8 +77,18 @@ public final class History {
   }
 
   public void back() {
-    assert canGoBack();
-    goThere(myCurrentPos - 1);
+    int next = findValid(myCurrentPos, -1);
+    assert next != -1;
+    goThere(next);
+  }
+
+  private int findValid(int start, int increment) {
+    for (int idx = start + increment; idx >= 0 && idx < myHistory.size(); idx += increment) {
+      if (myRoot.isValid(myHistory.get(idx))) {
+        return idx;
+      }
+    }
+    return -1;
   }
 
   private void goThere(final int nextPos) {
@@ -104,16 +114,17 @@ public final class History {
   }
 
   public boolean canGoBack() {
-    return myHistory.size() > 1 && myCurrentPos > 0;
+    return findValid(myCurrentPos, -1) != -1;
   }
 
   public void forward() {
-    assert canGoForward();
-    goThere(myCurrentPos + 1);
+    int next = findValid(myCurrentPos, 1);
+    assert next != -1;
+    goThere(next);
   }
 
   public boolean canGoForward() {
-    return myHistory.size() > 1 && myCurrentPos < myHistory.size() - 1;
+    return findValid(myCurrentPos, 1) != -1;
   }
 
   public void clear() {

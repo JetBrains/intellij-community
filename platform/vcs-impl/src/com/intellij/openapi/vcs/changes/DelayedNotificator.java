@@ -49,12 +49,12 @@ public class DelayedNotificator implements ChangeListListener {
   }
 
   @Override
-  public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
+  public void changesRemoved(final Collection<? extends Change> changes, final ChangeList fromList) {
     myScheduler.submit(() -> getMulticaster().changesRemoved(changes, fromList));
   }
 
   @Override
-  public void changesAdded(final Collection<Change> changes, final ChangeList toList) {
+  public void changesAdded(final Collection<? extends Change> changes, final ChangeList toList) {
     myScheduler.submit(() -> getMulticaster().changesAdded(changes, toList));
   }
 
@@ -84,7 +84,7 @@ public class DelayedNotificator implements ChangeListListener {
   }
 
   @Override
-  public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+  public void changesMoved(final Collection<? extends Change> changes, final ChangeList fromList, final ChangeList toList) {
     myScheduler.submit(() -> getMulticaster().changesMoved(changes, fromList, toList));
   }
 

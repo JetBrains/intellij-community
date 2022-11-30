@@ -41,6 +41,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
@@ -771,8 +772,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  @Nullable
-  public Module findModule(@NotNull MavenProject project) {
+  @RequiresReadLock
+  public @Nullable Module findModule(@NotNull MavenProject project) {
     if (!isInitialized()) return null;
     return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(project.getFile());
   }

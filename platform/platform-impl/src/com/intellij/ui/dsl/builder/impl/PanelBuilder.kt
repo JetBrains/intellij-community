@@ -215,6 +215,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
                                               gaps = gaps)
         cell.init(panel, constraints, spacingConfiguration)
       }
+      // todo revert back to null after migrating to Kotlin 1.7.21, see KT-45474
       else -> {
         builder.skip(1)
       }

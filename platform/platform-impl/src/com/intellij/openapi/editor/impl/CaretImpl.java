@@ -1638,7 +1638,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     private void alignToSurrogatePairBoundaries() {
-      long alignedRange = TextRangeScalarUtil.deltaScalarRange(toScalarRange(),
+      long alignedRange = TextRangeScalarUtil.shift(toScalarRange(),
       DocumentUtil.isInsideSurrogatePair(getDocument(), getStartOffset()) ? -1 : 0,
       DocumentUtil.isInsideSurrogatePair(getDocument(), getEndOffset()) ? -1 : 0);
       setRange(alignedRange);

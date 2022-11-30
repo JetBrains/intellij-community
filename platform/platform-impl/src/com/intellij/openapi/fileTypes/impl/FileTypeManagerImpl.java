@@ -567,6 +567,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return stdFileType != null ? stdFileType.fileType : PlainTextFileType.INSTANCE;
   }
 
+  @ApiStatus.Internal
+  public @NotNull List<FileNameMatcher> getStandardMatchers(@NotNull FileType type) {
+    StandardFileType stdFileType = myStandardFileTypes.get(type.getName());
+    return (stdFileType != null) ? stdFileType.matchers : Collections.emptyList();
+  }
+
   private void instantiatePendingFileTypeByName(@NotNull String name) {
     FileTypeBean bean = withReadLock(() -> myPendingFileTypes.get(name));
     if (bean != null) {

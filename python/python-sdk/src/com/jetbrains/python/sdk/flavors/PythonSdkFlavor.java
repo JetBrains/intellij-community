@@ -135,9 +135,14 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     // Most flavours just execute homePath on target, hence file must be executable
     var path = sdk.getHomePath();
     if (path == null) {
+      LOG.warn("Sdk doesn't have homepath:" + sdk.getName());
       return false;
     }
-    return isFileExecutable(path, targetConfig);
+    boolean executable = isFileExecutable(path, targetConfig);
+    if (! executable) {
+      LOG.warn("File not executable on default sdk flavour:" + path);
+    }
+    return executable;
   }
 
   /**

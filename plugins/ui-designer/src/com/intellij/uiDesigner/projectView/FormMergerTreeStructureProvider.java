@@ -87,7 +87,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (Form.DATA_KEY.is(dataId)) {
       List<Form> result = new ArrayList<>();
       for (AbstractTreeNode<?> node : selected) {
@@ -109,7 +109,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
     return null;
   }
 
-  private static Collection<PsiFile> convertToFiles(Collection<BasePsiNode<? extends PsiElement>> formNodes) {
+  private static Collection<PsiFile> convertToFiles(Collection<? extends BasePsiNode<? extends PsiElement>> formNodes) {
     List<PsiFile> psiFiles = new ArrayList<>();
     for (AbstractTreeNode<?> treeNode : formNodes) {
       psiFiles.add((PsiFile)treeNode.getValue());
@@ -117,7 +117,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
     return psiFiles;
   }
 
-  private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<AbstractTreeNode<?>> children, List<PsiFile> forms) {
+  private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<? extends AbstractTreeNode<?>> children, List<? extends PsiFile> forms) {
     if (children.isEmpty() || forms.isEmpty()) return Collections.emptyList();
     List<BasePsiNode<? extends PsiElement>> result = new ArrayList<>();
     Set<PsiFile> psiFiles = new HashSet<>(forms);
@@ -135,7 +135,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   private static final class MyDeleteProvider implements DeleteProvider {
     private final PsiElement[] myElements;
 
-    MyDeleteProvider(final Collection<AbstractTreeNode<?>> selected) {
+    MyDeleteProvider(final Collection<? extends AbstractTreeNode<?>> selected) {
       myElements = collectFormPsiElements(selected);
     }
 
@@ -155,7 +155,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
       return DeleteHandler.shouldEnableDeleteAction(myElements);
     }
 
-    private static PsiElement[] collectFormPsiElements(Collection<AbstractTreeNode<?>> selected) {
+    private static PsiElement[] collectFormPsiElements(Collection<? extends AbstractTreeNode<?>> selected) {
       Set<PsiElement> result = new HashSet<>();
       for(AbstractTreeNode<?> node: selected) {
         if (node.getValue() instanceof Form) {

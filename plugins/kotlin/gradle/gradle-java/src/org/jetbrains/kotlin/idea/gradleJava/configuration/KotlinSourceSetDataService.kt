@@ -33,11 +33,11 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.platform.IdePlatformKind
+import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.platform.js.JsPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -118,9 +118,10 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
         private fun SimplePlatform.isRelevantFor(projectPlatforms: List<KotlinPlatform>): Boolean {
             val jvmPlatforms = listOf(KotlinPlatform.ANDROID, KotlinPlatform.JVM, KotlinPlatform.COMMON)
+            val jsPlatforms = listOf(KotlinPlatform.JS, KotlinPlatform.WASM)
             return when (this) {
                 is JvmPlatform -> projectPlatforms.intersect(jvmPlatforms).isNotEmpty()
-                is JsPlatform -> KotlinPlatform.JS in projectPlatforms
+                is JsPlatform -> projectPlatforms.intersect(jsPlatforms).isNotEmpty()
                 is NativePlatform -> KotlinPlatform.NATIVE in projectPlatforms
                 else -> true
             }
@@ -206,7 +207,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 modelsProvider = modelsProvider,
                 hmppEnabled = kotlinGradleProjectData.isHmpp,
                 pureKotlinSourceFolders = if (platform.isJvm()) kotlinGradleProjectData.pureKotlinSourceFolders.toList() else emptyList(),
-                dependsOnList = kotlinSourceSet.dependsOn,
+                dependsOnList = kotlinSourceSet.dependsOn.toList(),
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
 

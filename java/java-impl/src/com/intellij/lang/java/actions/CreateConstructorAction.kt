@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromNewFix.setupSuperCall
@@ -104,7 +105,7 @@ private class JavaConstructorRenderer(
 
   private fun startTemplate(constructor: PsiMethod, template: Template, superConstructor: PsiMethod?) {
     val targetFile = targetClass.containingFile
-    val targetEditor = CreateFromUsageBaseFix.positionCursor(project, targetFile, constructor) ?: return
+    val targetEditor = CodeInsightUtil.positionCursor(project, targetFile, constructor) ?: return
     val templateListener = object : TemplateEditingAdapter() {
 
       override fun templateFinished(template: Template, brokenOff: Boolean) {

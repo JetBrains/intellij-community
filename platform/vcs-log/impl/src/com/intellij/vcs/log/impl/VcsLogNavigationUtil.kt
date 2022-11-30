@@ -5,9 +5,8 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -25,6 +24,7 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.*
+import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.ui.MainVcsLogUi
@@ -32,6 +32,7 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
+import com.intellij.vcs.log.visible.VisiblePack.ErrorVisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
@@ -51,7 +52,7 @@ object VcsLogNavigationUtil {
     runBackgroundableTask(progressTitle, project, true) { indicator ->
       runBlockingCancellable(indicator) {
         resultFuture.computeResult {
-          withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+          withContext(Dispatchers.EDT) {
             jumpToRevision(project, root, hash, filePath)
           }
         }
@@ -345,6 +346,9 @@ object VcsLogNavigationUtil {
   }
 
   private fun getCommitRow(storage: VcsLogStorage, visiblePack: VisiblePack, hash: Hash, root: VirtualFile): Int {
+    if (visiblePack.dataPack is ErrorDataPack) return VcsLogUiEx.COMMIT_NOT_FOUND
+    if (visiblePack is ErrorVisiblePack) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+
     val commitIndex = storage.getCommitIndex(hash, root)
     val visibleGraph = visiblePack.visibleGraph
     if (visibleGraph is VisibleGraphImpl<*>) {

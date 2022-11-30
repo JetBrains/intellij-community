@@ -108,14 +108,14 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
             runTest("testData/resolve/referenceInJava/sourceOnly/ClassObjectStaticField.java");
         }
 
-        @TestMetadata("DelegatedMethodFromTraitNoImpl.java")
-        public void testDelegatedMethodFromTraitNoImpl() throws Exception {
-            runTest("testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromTraitNoImpl.java");
+        @TestMetadata("DelegatedMethodFromInterfaceNoImpl.java")
+        public void testDelegatedMethodFromInterfaceNoImpl() throws Exception {
+            runTest("testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromInterfaceNoImpl.java");
         }
 
-        @TestMetadata("DelegatedMethodFromTraitWithImpl.java")
-        public void testDelegatedMethodFromTraitWithImpl() throws Exception {
-            runTest("testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromTraitWithImpl.java");
+        @TestMetadata("DelegatedMethodFromInterfaceWithImpl.java")
+        public void testDelegatedMethodFromInterfaceWithImpl() throws Exception {
+            runTest("testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromInterfaceWithImpl.java");
         }
     }
 }

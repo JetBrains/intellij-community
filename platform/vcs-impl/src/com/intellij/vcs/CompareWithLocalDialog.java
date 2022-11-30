@@ -141,7 +141,7 @@ public class CompareWithLocalDialog {
     @NotNull
     protected abstract Collection<Change> loadChanges() throws VcsException;
 
-    private void applyResult(@Nullable Collection<Change> changes) {
+    private void applyResult(@Nullable Collection<? extends Change> changes) {
       myChangesBrowser.setChangesToDisplay(changes != null ? changes : Collections.emptyList());
     }
 

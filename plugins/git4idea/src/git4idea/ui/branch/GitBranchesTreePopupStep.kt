@@ -96,6 +96,10 @@ class GitBranchesTreePopupStep(private val project: Project,
     return _treeModel.getPreferredSelection()
   }
 
+  fun createTreePathFor(value: Any): TreePath? {
+    return _treeModel.createTreePathFor(value)
+  }
+
   internal fun setPrefixGrouping(state: Boolean) {
     _treeModel.isPrefixGrouping = state
   }
@@ -128,15 +132,17 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   override fun hasSubstep(selectedValue: Any?): Boolean {
     val userValue = selectedValue ?: return false
-    return userValue is GitRepository ||
+    return (userValue is GitRepository && !_treeModel.isFilterActive()) ||
            userValue is GitBranch ||
+           userValue is GitBranchesTreeModel.BranchUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled && userValue.action is ActionGroup)
   }
 
   fun isSelectable(node: Any?): Boolean {
     val userValue = node ?: return false
-    return userValue is GitRepository ||
+    return (userValue is GitRepository && !_treeModel.isFilterActive()) ||
            userValue is GitBranch ||
+           userValue is GitBranchesTreeModel.BranchUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled)
   }
 
@@ -145,9 +151,12 @@ class GitBranchesTreePopupStep(private val project: Project,
       return GitBranchesTreePopupStep(project, listOf(selectedValue), false)
     }
 
-    if (selectedValue is GitBranch) {
+    val branchUnderRepository = selectedValue as? GitBranchesTreeModel.BranchUnderRepository
+    val branch = selectedValue as? GitBranch ?: branchUnderRepository?.branch
+
+    if (branch != null) {
       val actionGroup = ActionManager.getInstance().getAction(BRANCH_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
-      return createActionStep(actionGroup, project, repositories, selectedValue)
+      return createActionStep(actionGroup, project, branchUnderRepository?.repository?.let(::listOf) ?: repositories, branch)
     }
 
     if (selectedValue is PopupFactoryImpl.ActionItem) {
@@ -218,12 +227,13 @@ class GitBranchesTreePopupStep(private val project: Project,
     val value = treeNode ?: return null
     return when (value) {
       is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
-      is GitBranch -> getBranchIcon(value, isSelected)
+      is GitBranchesTreeModel.BranchUnderRepository -> getBranchIcon(value.branch, listOf(value.repository), isSelected)
+      is GitBranch -> getBranchIcon(value, repositories, isSelected)
       else -> null
     }
   }
 
-  private fun getBranchIcon(branch: GitBranch, isSelected: Boolean): Icon {
+  private fun getBranchIcon(branch: GitBranch, repositories: List<GitRepository>, isSelected: Boolean): Icon {
     val isCurrent = repositories.all { it.currentBranch == branch }
     val branchManager = project.service<GitBranchManager>()
     val isFavorite = repositories.all { branchManager.isFavorite(GitBranchType.of(branch), it, branch.name) }
@@ -249,6 +259,13 @@ class GitBranchesTreePopupStep(private val project: Project,
       }
       is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
       is GitRepository -> DvcsUtil.getShortRepositoryName(value)
+      is GitBranchesTreeModel.BranchTypeUnderRepository -> {
+        when (value.type) {
+          GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
+          GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
+        }
+      }
+      is GitBranchesTreeModel.BranchUnderRepository -> getText(value.branch)
       is GitBranch -> {
         if (_treeModel.isPrefixGrouping) value.name.split('/').last() else value.name
       }

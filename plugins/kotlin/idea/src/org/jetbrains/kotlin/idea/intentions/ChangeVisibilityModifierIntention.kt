@@ -69,11 +69,11 @@ open class ChangeVisibilityModifierIntention protected constructor(val modifier:
     }
 
     override fun applyTo(element: KtDeclaration, editor: Editor?) {
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         element.runCommandOnAllExpectAndActualDeclaration(KotlinBundle.message("change.visibility.modifier"), writeAction = true) {
             it.setVisibility(modifier)
             if (it is KtPropertyAccessor) {
-                it.modifierList?.nextSibling?.replace(factory.createWhiteSpace())
+                it.modifierList?.nextSibling?.replace(psiFactory.createWhiteSpace())
             }
         }
     }

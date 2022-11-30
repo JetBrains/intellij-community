@@ -7,8 +7,10 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.CallableId
@@ -28,7 +30,7 @@ private val FOR_EACH_CALLABLE_IDS = setOf(
 private typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
 
 internal class ConvertForEachToForLoopIntention
-    : KotlinApplicableIntentionWithContext<KtCallExpression, ConvertForEachToForLoopIntention.Context>(
+    : AbstractKotlinApplicableIntentionWithContext<KtCallExpression, ConvertForEachToForLoopIntention.Context>(
         KtCallExpression::class
     ) {
 
@@ -39,6 +41,8 @@ internal class ConvertForEachToForLoopIntention
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.for.loop")
     override fun getActionName(element: KtCallExpression, context: Context): String = familyName
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
         if (element.getCallNameExpression()?.getReferencedName() != FOR_EACH_NAME.asString()) return false

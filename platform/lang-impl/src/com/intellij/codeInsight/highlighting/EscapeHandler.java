@@ -14,6 +14,9 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ANY_KEY;
+import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ESCAPE;
+
 public class EscapeHandler extends EditorActionHandler {
   @NotNull
   private final EditorActionHandler myOriginalHandler;
@@ -30,7 +33,7 @@ public class EscapeHandler extends EditorActionHandler {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
-        if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
+        if (highlightManager != null && highlightManager.hideHighlights(editor, HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY)) {
           StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
           if (statusBar != null) {
             statusBar.setInfo("");
@@ -58,7 +61,9 @@ public class EscapeHandler extends EditorActionHandler {
 
     if (project != null) {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
-      if (highlightManager != null && highlightManager.hasHideByEscapeHighlighters(editor)) return true;
+      if (highlightManager != null && highlightManager.hasHighlightersToHide(editor, HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY)) {
+        return true;
+      }
       // Escape can be used to get rid of light bulb
       if (DaemonCodeAnalyzerEx.getInstanceEx(project).hasVisibleLightBulbOrPopup()) return true;
     }

@@ -70,6 +70,8 @@
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
     <applicationService serviceInterface="com.intellij.psi.PsiSubstitutorFactory"
                         serviceImplementation="com.intellij.psi.impl.PsiSubstitutorFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService"
+                        serviceImplementation="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService$DefaultImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>

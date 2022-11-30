@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class UseExpressionBodyIntention :
-    KotlinApplicableIntention<KtDeclarationWithBody>(KtDeclarationWithBody::class) {
+    AbstractKotlinApplicableIntention<KtDeclarationWithBody>(KtDeclarationWithBody::class) {
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.body.to.expression")
     override fun getActionName(element: KtDeclarationWithBody): String = familyName
@@ -68,7 +68,7 @@ private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression 
 
     val commentSaver = CommentSaver(bodyBlock)
 
-    val factory = KtPsiFactory(this)
+    val factory = KtPsiFactory(project)
     val eq = addBefore(factory.createEQ(), bodyBlockExpression)
     addAfter(factory.createWhiteSpace(), eq)
 
@@ -86,10 +86,8 @@ private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression 
  * @param[declaration] the PSI element used as an anchor, as no indexes are built for newly generated body yet
  * @param[newBody] the new "= <returnedExpression>" like body, which replaces the old one
  */
-private fun Editor.correctRightMargin(
-    declaration: KtDeclarationWithBody, newBody: KtExpression
-) {
-    val kotlinFactory = KtPsiFactory(declaration)
+private fun Editor.correctRightMargin(declaration: KtDeclarationWithBody, newBody: KtExpression) {
+    val kotlinFactory = KtPsiFactory(declaration.project)
     val startOffset = newBody.startOffset
     val startLine = document.getLineNumber(startOffset)
     val rightMargin = settings.getRightMargin(project)

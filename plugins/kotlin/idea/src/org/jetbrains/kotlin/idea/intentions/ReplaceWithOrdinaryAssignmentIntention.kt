@@ -32,12 +32,12 @@ class ReplaceWithOrdinaryAssignmentIntention : SelfTargetingIntention<KtBinaryEx
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val left = element.left!!
         val right = element.right!!
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         val assignOpText = element.operationReference.text
         assert(assignOpText.endsWith("="))
         val operationText = assignOpText.substring(0, assignOpText.length - 1)
 
-        element.replace(factory.createExpressionByPattern("$0 = $0 $operationText $1", left, right))
+        element.replace(psiFactory.createExpressionByPattern("$0 = $0 $operationText $1", left, right))
     }
 }

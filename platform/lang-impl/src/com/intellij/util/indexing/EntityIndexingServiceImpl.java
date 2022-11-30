@@ -145,7 +145,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   @TestOnly
   @NotNull
   static List<IndexableFilesIterator> getIterators(@NotNull Project project,
-                                                   @NotNull Collection<EntityChange<?>> events) {
+                                                   @NotNull Collection<? extends EntityChange<?>> events) {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     List<IndexableIteratorBuilder> result = getBuildersOnWorkspaceChange(project, events);
     return IndexableIteratorBuilders.INSTANCE.instantiateBuilders(result, project, entityStorage);
@@ -153,7 +153,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   @NotNull
   private static List<IndexableIteratorBuilder> getBuildersOnWorkspaceChange(@NotNull Project project,
-                                                                             @NotNull Collection<EntityChange<?>> event) {
+                                                                             @NotNull Collection<? extends EntityChange<?>> event) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     for (EntityChange<? extends WorkspaceEntity> change : event) {
       if (change instanceof EntityChange.Added) {
@@ -178,7 +178,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   private static <E extends WorkspaceEntity> void collectIteratorBuildersOnAdd(@NotNull E entity,
                                                                                @NotNull Project project,
-                                                                               @NotNull Collection<IndexableIteratorBuilder> builders) {
+                                                                               @NotNull Collection<? super IndexableIteratorBuilder> builders) {
     Class<? extends WorkspaceEntity> entityClass = entity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
@@ -191,13 +191,13 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   private static <E extends WorkspaceEntity> void collectIteratorBuildersOnReplace(@NotNull E oldEntity,
                                                                                    @NotNull E newEntity,
                                                                                    @NotNull Project project,
-                                                                                   @NotNull Collection<IndexableIteratorBuilder> builders) {
+                                                                                   @NotNull Collection<? super IndexableIteratorBuilder> builders) {
     Class<? extends WorkspaceEntity> entityClass = oldEntity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
         //noinspection unchecked
         builders.addAll(
-          ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity));
+          ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity, project));
       }
       if (provider instanceof IndexableEntityProvider.ParentEntityDependent &&
           entityClass == ((IndexableEntityProvider.ParentEntityDependent<?, ?>)provider).getParentEntityClass()) {
@@ -210,7 +210,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   private static <E extends WorkspaceEntity> void collectIteratorBuildersOnRemove(@NotNull E entity,
                                                                                   @NotNull Project project,
-                                                                                  @NotNull Collection<IndexableIteratorBuilder> builders) {
+                                                                                  @NotNull Collection<? super IndexableIteratorBuilder> builders) {
     Class<? extends WorkspaceEntity> entityClass = entity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
@@ -221,7 +221,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   private static Collection<? extends IndexableIteratorBuilder> getBuildersOnWorkspaceEntitiesRootsChange(@NotNull Project project,
-                                                                                                          @NotNull List<WorkspaceEntity> entities) {
+                                                                                                          @NotNull List<? extends WorkspaceEntity> entities) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     for (WorkspaceEntity entity : entities) {
       collectIteratorBuildersOnAdd(entity, project, builders);

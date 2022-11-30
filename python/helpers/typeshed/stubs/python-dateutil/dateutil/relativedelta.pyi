@@ -1,6 +1,7 @@
 from _typeshed import Self
 from datetime import date, datetime, timedelta
 from typing import SupportsFloat, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from ._common import weekday
 
@@ -8,7 +9,7 @@ from ._common import weekday
 _SelfT = TypeVar("_SelfT", bound=relativedelta)
 _DateT = TypeVar("_DateT", date, datetime)
 # Work around attribute and type having the same name.
-_weekday = weekday
+_weekday: TypeAlias = weekday
 
 MO: weekday
 TU: weekday
@@ -18,7 +19,7 @@ FR: weekday
 SA: weekday
 SU: weekday
 
-class relativedelta(object):
+class relativedelta:
     years: int
     months: int
     days: int

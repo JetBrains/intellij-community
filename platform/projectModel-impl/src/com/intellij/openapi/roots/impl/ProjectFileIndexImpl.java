@@ -19,6 +19,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRoot
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collections;
@@ -156,6 +159,34 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
       return fileSet.getRoot();
     }
     return getClassRootForFile(file, getInfoForFileOrDirectory(file));
+  }
+
+  @Override
+  public @Nullable JpsModuleSourceRootType<?> getContainingSourceRootType(@NotNull VirtualFile file) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet =
+        myWorkspaceFileIndex.findFileSetWithCustomData(file, true, true, false, false, ModuleSourceRootData.class);
+      if (fileSet == null) return null;
+
+      return SourceRootTypeRegistry.getInstance().findTypeById(fileSet.getData().getRootType());
+    }
+    SourceFolder sourceFolder = getSourceFolder(file);
+    return sourceFolder != null ? sourceFolder.getRootType() : null;
+  }
+
+  @Override
+  public boolean isInGeneratedSources(@NotNull VirtualFile file) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet =
+        myWorkspaceFileIndex.findFileSetWithCustomData(file, true, true, false, false, ModuleSourceRootData.class);
+      return fileSet != null && fileSet.getData().getForGeneratedSources();
+    }
+    
+    SourceFolder sourceFolder = getSourceFolder(file);
+    if (sourceFolder == null) return false;
+    JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+    JavaResourceRootProperties resourceProperties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.RESOURCES);
+    return properties != null && properties.isForGeneratedSources() || resourceProperties != null && resourceProperties.isForGeneratedSources();
   }
 
   @Nullable

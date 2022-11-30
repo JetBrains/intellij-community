@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -20,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 internal class ImportMemberIntention :
-    KotlinApplicableIntentionWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
+    AbstractKotlinApplicableIntentionWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
     HighPriorityAction {
 
     class Context(
@@ -32,6 +34,8 @@ internal class ImportMemberIntention :
 
     override fun getActionName(element: KtNameReferenceExpression, context: Context): String =
         KotlinBundle.message("add.import.for.0", context.fqName.asString())
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtNameReferenceExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtNameReferenceExpression): Boolean =
         // Ignore simple name expressions or already imported names.

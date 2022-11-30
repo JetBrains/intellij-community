@@ -17,12 +17,15 @@ class JavaCoverageNode(project: Project,
                        classOrPackage: PsiNamedElement,
                        bundle: CoverageSuitesBundle,
                        stateBean: CoverageViewManager.StateBean) : CoverageListNode(project, classOrPackage, bundle, stateBean) {
+  init {
+    require(classOrPackage is PsiClass || classOrPackage is PsiPackage)
+  }
+
   val qualifiedName: String = ReadAction.compute<String, Throwable> {
     (classOrPackage as? PsiQualifiedNamedElement)?.qualifiedName ?: classOrPackage.name ?: ""
   }
 
   val isClassCoverage = classOrPackage is PsiClass
-  val isPackageCoverage = classOrPackage is PsiPackage
 
   override fun getWeight() = if (isClassCoverage) 40 else 30
 }

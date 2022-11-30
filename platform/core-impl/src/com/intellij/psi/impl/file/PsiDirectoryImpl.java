@@ -202,7 +202,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     checkValid();
 
     VirtualFile[] files = myFile.getChildren();
-    final ArrayList<PsiElement> children = new ArrayList<>(files.length);
+    ArrayList<PsiElement> children = new ArrayList<>(files.length);
     processChildren(element -> {
       children.add(element);
       return true;
@@ -330,14 +330,14 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public @NotNull PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException {
     checkCreateFile(newName);
 
-    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
     if (document != null) {
       FileDocumentManager.getInstance().saveDocument(document);
     }
 
-    final VirtualFile parent = getVirtualFile();
+    VirtualFile parent = getVirtualFile();
     try {
-      final VirtualFile vFile = originalFile.getVirtualFile();
+      VirtualFile vFile = originalFile.getVirtualFile();
       if (vFile == null) throw new IncorrectOperationException("Cannot copy non-physical file: " + originalFile);
 
       VirtualFile copyVFile;
@@ -353,7 +353,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       }
       if (UPDATE_ADDED_FILE_KEY.get(this, true)) {
         DumbService.getInstance(getProject()).completeJustSubmittedTasks();
-        final PsiFile copyPsi = findCopy(copyVFile, vFile);
+        PsiFile copyPsi = findCopy(copyVFile, vFile);
         UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(copyPsi));
         return copyPsi;
       }
@@ -365,7 +365,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   private @NotNull PsiFile findCopy(VirtualFile copyVFile, VirtualFile vFile) {
-    final PsiFile copyPsi = myManager.findFile(copyVFile);
+    PsiFile copyPsi = myManager.findFile(copyVFile);
     if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
     return copyPsi;
   }
@@ -401,9 +401,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         if (originalFile instanceof PsiFileImpl) {
           newVFile = myFile.createChildData(myManager, originalFile.getName());
           String text = originalFile.getText();
-          final PsiFile psiFile = getManager().findFile(newVFile);
-          final Document document = psiFile == null ? null : psiFile.getViewProvider().getDocument();
-          final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+          PsiFile psiFile = getManager().findFile(newVFile);
+          Document document = psiFile == null ? null : psiFile.getViewProvider().getDocument();
+          FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
           if (document != null) {
             document.setText(text);
             if (psiFile.isPhysical()) {

@@ -3,11 +3,15 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -26,20 +31,19 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   public static final int PRECISE_CHECK_THRESHOLD =
     SystemProperties.getIntProperty("stub.index.per.file.element.type.modification.tracker.precise.check.threshold", 20);
 
-  private final ConcurrentMap<String, List<StubFileElementType>> myFileElementTypesCache = new ConcurrentHashMap<>();
-  private final ConcurrentMap<StubFileElementType, Long> myModCounts = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, List<StubFileElementType<?>>> myFileElementTypesCache = new ConcurrentHashMap<>();
+  private final ConcurrentMap<StubFileElementType<?>, Long> myModCounts = new ConcurrentHashMap<>();
   private final ClearableLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = ClearableLazyValue.createAtomic(() -> {
-    UpdatableIndex index = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
+    final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    fileBasedIndex.waitUntilIndicesAreInitialized();
+    UpdatableIndex<?, ?, ?, ?> index = fileBasedIndex.getIndex(StubUpdatingIndex.INDEX_ID);
     while (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-      index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex)index).getBaseIndex();
+      index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index).getBaseIndex();
     }
     return (StubUpdatingIndexStorage)index;
   });
-  private final ClearableLazyValue<DataIndexer<Integer, SerializedStubTree, FileContent>> myStubIndexer = ClearableLazyValue.createAtomic(() -> {
-    return myStubUpdatingIndexStorage.getValue().getExtension().getIndexer(); // new indexer instance ?????
-  });
 
-  private record FileInfo(VirtualFile file, Project project, StubFileElementType type) { }
+  private record FileInfo(VirtualFile file, Project project, StubFileElementType<?> type) { }
 
   private final Queue<VirtualFile> myPendingUpdates = new ArrayDeque<>();
   private final Queue<FileInfo> myProbablyExpensiveUpdates = new ArrayDeque<>();
@@ -123,7 +127,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   }
 
   private void preciseCheck() {
-    DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = myStubIndexer.getValue();
+    DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = myStubUpdatingIndexStorage.getValue().getIndexer();
     while (!myProbablyExpensiveUpdates.isEmpty()) {
       FileInfo info = myProbablyExpensiveUpdates.poll();
       if (wereModificationsInCurrentBatch(info.type) ||
@@ -136,10 +140,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
             null // see SingleEntryIndexForwardIndexAccessor#getDiffBuilder
           );
         // file might be deleted from actual fs, but still be "valid" in vfs (e.g. that happen sometimes in tests)
-        final FileContent fileContent;
-        try {
-          fileContent = FileContentImpl.createByFile(info.file, info.project);
-        } catch (FileNotFoundException ignored) {
+        final FileContent fileContent = getTransientAwareFileContent(info);
+        if (fileContent == null) {
           registerModificationFor(info.type);
           continue;
         }
@@ -158,6 +160,23 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
   }
 
+  private static @Nullable FileContent getTransientAwareFileContent(FileInfo info) throws IOException {
+    Document doc = FileDocumentManager.getInstance().getDocument(info.file);
+    if (doc == null || info.project == null) {
+      try {
+        return FileContentImpl.createByFile(info.file, info.project);
+      } catch (FileNotFoundException ignored) {
+        return null;
+      }
+    }
+    PsiFile psi = PsiDocumentManager.getInstance(info.project).getPsiFile(doc);
+    DocumentContent content = FileBasedIndexImpl.findLatestContent(doc, psi);
+    return FileContentImpl.createByContent(info.file, () -> {
+      var text = content.getText();
+      return text.toString().getBytes(StandardCharsets.UTF_8);
+    }, info.project);
+  }
+
   public void dispose() {
     myFileElementTypesCache.clear();
     myModCounts.clear();
@@ -165,22 +184,21 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myProbablyExpensiveUpdates.clear();
     myModificationsInCurrentBatch.clear();
     myStubUpdatingIndexStorage.drop();
-    myStubIndexer.drop();
   }
 
   private static @Nullable StubFileElementType determineCurrentFileElementType(IndexedFile indexedFile) {
-    if (shouldSkipFile(indexedFile)) return null;
+    if (shouldSkipFile(indexedFile.getFile())) return null;
     var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);
     if (stubBuilderType == null) return null;
     return stubBuilderType.getStubFileElementType();
   }
 
-  private @NotNull List<StubFileElementType> determinePreviousFileElementType(int fileId, StubUpdatingIndexStorage index) {
+  private @NotNull List<StubFileElementType<?>> determinePreviousFileElementType(int fileId, StubUpdatingIndexStorage index) {
     String storedVersion = index.getStoredSubIndexerVersion(fileId);
     if (storedVersion == null) return Collections.emptyList();
     return myFileElementTypesCache.compute(storedVersion, (__, value) -> {
       if (value != null) return value;
-      List<StubFileElementType> types = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
+      List<StubFileElementType<?>> types = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
       if (types.size() > 1) {
         LOG.error("Cannot distinguish StubFileElementTypes. This might worsen the performance. " +
                   "Providing unique externalId or adding a distinctive debugName when instantiating StubFileElementTypes can help. " +
@@ -196,15 +214,18 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   /**
    * There is no need to process binary files (e.g. .class), so we should just skip them.
    * Their processing might trigger content read which is expensive.
-   * Also, we should not process files which weren't indexed by StubIndex yet.
+   * Also, we should not process files which weren't indexed by StubIndex yet (or won't be, such as large files).
    */
-  private static boolean shouldSkipFile(IndexedFile indexedFile) {
+  private static boolean shouldSkipFile(VirtualFile file) {
+    if (((FileBasedIndexImpl)FileBasedIndex.getInstance()).isTooLarge(file)) {
+      return true;
+    }
     { // this code snippet is taken from StubTreeBuilder#getStubBuilderType
-      FileType fileType = indexedFile.getFileType();
+      FileType fileType = file.getFileType();
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       if (builder != null) return true;
     }
-    if (!StubUpdatingIndex.canHaveStub(indexedFile.getFile())) return true;
+    if (!StubUpdatingIndex.canHaveStub(file)) return true;
     return false;
   }
 }

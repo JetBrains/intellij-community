@@ -635,7 +635,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private static boolean isInstantShutdownPossible() {
-    if (!Registry.is("ide.instant.shutdown")) {
+    if (!Registry.is("ide.instant.shutdown", true)) {
       return false;
     }
 

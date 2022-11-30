@@ -61,7 +61,7 @@ public abstract class BlockSupport {
 
   public static final Key<Boolean> TREE_DEPTH_LIMIT_EXCEEDED = Key.create("TREE_IS_TOO_DEEP");
 
-  public static boolean isTooDeep(final UserDataHolder element) {
+  public static boolean isTooDeep(UserDataHolder element) {
     return element != null && Boolean.TRUE.equals(element.getUserData(TREE_DEPTH_LIMIT_EXCEEDED));
   }
 }

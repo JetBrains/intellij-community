@@ -103,6 +103,11 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
         runTest("testData/navigation/implementations/ImplementsInInlineClass.kt");
     }
 
+    @TestMetadata("InterfaceImplementorsWithDeclaration.kt")
+    public void testInterfaceImplementorsWithDeclaration() throws Exception {
+        runTest("testData/navigation/implementations/InterfaceImplementorsWithDeclaration.kt");
+    }
+
     @TestMetadata("ObjectImported.kt")
     public void testObjectImported() throws Exception {
         runTest("testData/navigation/implementations/ObjectImported.kt");
@@ -121,10 +126,5 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
     @TestMetadata("PropertyOverriddenNavigation.kt")
     public void testPropertyOverriddenNavigation() throws Exception {
         runTest("testData/navigation/implementations/PropertyOverriddenNavigation.kt");
-    }
-
-    @TestMetadata("TraitImplementorsWithDeclaration.kt")
-    public void testTraitImplementorsWithDeclaration() throws Exception {
-        runTest("testData/navigation/implementations/TraitImplementorsWithDeclaration.kt");
     }
 }

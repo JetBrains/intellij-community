@@ -50,6 +50,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter.ConfigurableId;
 
@@ -160,7 +161,8 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : "";
+    String topic = mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : null;
+    return Objects.requireNonNullElse(topic, "Working_with_projects");
   }
 
   @Override

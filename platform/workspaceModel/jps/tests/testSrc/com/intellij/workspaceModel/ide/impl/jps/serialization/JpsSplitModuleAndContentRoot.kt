@@ -20,6 +20,7 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.test.assertNull
 
 class JpsSplitModuleAndContentRoot {
   @Rule
@@ -464,6 +465,14 @@ class JpsSplitModuleAndContentRoot {
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val facetEntity = moduleEntity.facets.single()
       assertEquals("MyFacet", facetEntity.name)
+    }
+  }
+
+  @Test
+  fun `load module without java custom settings`() {
+    checkSaveProjectAfterChange("after/imlWithoutJavaSettings", "after/imlWithoutJavaSettings") { builder, _ ->
+      val javaSettings = builder.entities(ModuleEntity::class.java).single().javaSettings
+      assertNull(javaSettings)
     }
   }
 

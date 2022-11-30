@@ -330,7 +330,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return getLocalAndWslRoots(distributions);
     }
 
-    private static @NotNull List<VirtualFile> getLocalAndWslRoots(@NotNull List<WSLDistribution> distributions) {
+    private static @NotNull List<VirtualFile> getLocalAndWslRoots(@NotNull List<? extends WSLDistribution> distributions) {
       return toVirtualFiles(ContainerUtil.concat(ContainerUtil.newArrayList(FileSystems.getDefault().getRootDirectories()),
                                                  ContainerUtil.map(distributions, WSLDistribution::getUNCRootPath)));
     }
@@ -386,7 +386,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return newIndices.toIntArray();
     }
 
-    private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<Path> paths) {
+    private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<? extends Path> paths) {
       return paths.stream().map(root -> LocalFileSystem.getInstance().findFileByNioFile(root)).filter(State::isValid).collect(
         Collectors.toList());
     }

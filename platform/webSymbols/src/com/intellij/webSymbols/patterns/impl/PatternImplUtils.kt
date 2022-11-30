@@ -29,7 +29,7 @@ internal fun MatchResult.addOwner(owner: WebSymbol): MatchResult {
       newSegments.add(segment)
       continue
     }
-    if (segment.start == segment.end) {
+    if (segment.start == segment.end && segment.symbols.isEmpty()) {
       continue
     }
     if (foundNonEmpty || segment.symbols.isNotEmpty()) {

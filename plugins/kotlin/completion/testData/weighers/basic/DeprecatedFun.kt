@@ -1,4 +1,5 @@
 // FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo1() {}
 @Deprecated("Use foo3 instead") fun foo2() {}
 fun foo3() {}

@@ -165,7 +165,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         context.compilationData.builtArtifacts.remove(it.name)
       }
     }
-    var modules = if (buildIncludedModules) getModulesIncludedInArtifacts(artifacts) else emptyList()
+    val modules = if (buildIncludedModules) getModulesIncludedInArtifacts(artifacts) else emptyList()
     runBuild(moduleSet = modules,
              allModules = false,
              artifactNames = artifacts.map { it.name },
@@ -181,25 +181,30 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         true
       }
     }
-    // FIXME: workaround for sporadically missing build artifacts, to be investigated
     if (failedToBeBuilt.isNotEmpty()) {
-      require(!buildIncludedModules) {
-        "Failed to built artifacts ${failedToBeBuilt.map { it.name }}"
-      }
-      modules = getModulesIncludedInArtifacts(artifacts)
-      require(modules.isNotEmpty()) {
-        "No modules found for artifacts ${artifacts.map { it.name }}"
-      }
-      context.messages.warning("Building ${modules.joinToString()}")
+      compileMissingArtifactsModules(failedToBeBuilt)
+    }
+  }
+
+  // FIXME: workaround for sporadically missing build artifacts, to be investigated
+  private fun compileMissingArtifactsModules(artifacts: Collection<JpsArtifact>) {
+    val modules = getModulesIncludedInArtifacts(artifacts)
+    require(modules.isNotEmpty()) {
+      "No modules found for artifacts ${artifacts.map { it.name }}"
+    }
+    artifacts.forEach {
+      context.compilationData.builtArtifacts.remove(it.name)
+    }
+    context.messages.block("Compiling modules for missing artifacts: ${modules.joinToString()}") {
       runBuild(moduleSet = modules,
                allModules = false,
                artifactNames = artifacts.map { it.name },
                includeTests = false,
                resolveProjectDependencies = false)
-      artifacts.forEach {
-        if (it.outputFilePath?.let(Path::of)?.let(Files::exists) == false) {
-          context.messages.error("${it.name} is expected to be built at ${it.outputFilePath}")
-        }
+    }
+    artifacts.forEach {
+      if (it.outputFilePath?.let(Path::of)?.let(Files::exists) == false) {
+        context.messages.error("${it.name} is expected to be built at ${it.outputFilePath}")
       }
     }
   }

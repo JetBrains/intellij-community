@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.ConflictsUtil;
@@ -127,6 +128,10 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     setPreviewResults(false);
 
     init();
+  }
+
+  public void selectStaticFlag(boolean isStatic){
+    myMakeStatic.setSelected(isStatic);
   }
 
   protected String[] suggestMethodNames() {
@@ -402,6 +407,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
           myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
           updateVarargsEnabled();
           createParametersPanel();
+        } else {
+          JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = myMakeStatic.isSelected();
         }
         updateSignature();
       });
@@ -596,6 +603,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
         StringUtil.getShortName(myNullability == Nullability.NULLABLE ? nullManager.getDefaultNullable() : nullManager.getDefaultNotNull()));
       buffer.append("\n");
     }
+    final int declarationOffset = buffer.length();
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     buffer.append(visibilityString);
     if (buffer.length() > 0) {
@@ -622,11 +630,11 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     }
     buffer.append("(");
 
-    final String INDENT = StringUtil.repeatSymbol(' ', buffer.length());
+    final String INDENT = StringUtil.repeatSymbol(' ', buffer.length() - declarationOffset);
 
     final VariableData[] datas = myInputVariables;
     int count = 0;
-    for (int i = 0; i < datas.length;i++) {
+    for (int i = 0; i < datas.length; i++) {
       VariableData data = datas[i];
       if (data.passAsParameter) {
         //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
@@ -650,11 +658,14 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     buffer.append(")");
     if (myExceptions.length > 0) {
       buffer.append("\n");
-      buffer.append("throws\n");
+      buffer.append("throws ");
+      boolean printSeparator = false;
       for (PsiType exception : myExceptions) {
-        buffer.append(INDENT);
+        if (printSeparator) {
+          buffer.append(",\n       ");
+        }
         buffer.append(PsiFormatUtil.formatType(exception, 0, PsiSubstitutor.EMPTY));
-        buffer.append("\n");
+        printSeparator = true;
       }
     }
     return buffer.toString();

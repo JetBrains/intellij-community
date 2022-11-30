@@ -9,7 +9,10 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpres
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.IterableTypesDetection
 import org.jetbrains.kotlin.idea.liveTemplates.k1.macro.Fe10SuggestVariableNameMacro
@@ -22,6 +25,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
+import org.jetbrains.kotlin.types.typeUtil.isInt
 
 internal abstract class ConstantStringBasedPostfixTemplate(
     name: String,
@@ -49,13 +53,15 @@ internal class KtWrapWithSetOfPostfixTemplate(provider: PostfixTemplateProvider)
 internal class KtWrapWithArrayOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("arrayOf", provider)
 internal class KtWrapWithSequenceOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("sequenceOf", provider)
 
-internal class KtForEachPostfixTemplate(
+internal abstract class AbstractKtForEachPostfixTemplate(
     name: String,
+    desc: String,
+    template: String,
     provider: PostfixTemplateProvider
 ) : ConstantStringBasedPostfixTemplate(
     name,
-    "for (item in expr)",
-    "for (\$name$ in \$expr$) {\n    \$END$\n}",
+    desc,
+    template,
     createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = KtExpression::hasIterableType),
     provider
 ) {
@@ -64,6 +70,84 @@ internal class KtForEachPostfixTemplate(
         template.addVariable("name", name, ConstantNode("item"), true)
     }
 }
+internal class KtForEachPostfixTemplate(
+    name: String,
+    provider: PostfixTemplateProvider
+) : AbstractKtForEachPostfixTemplate(
+    name,
+    "for (item in expr)",
+    "for (\$name$ in \$expr$) {\n    \$END$\n}",
+    provider
+)
+
+internal class KtForReversedPostfixTemplate(
+    name: String,
+    provider: PostfixTemplateProvider
+) : AbstractKtForEachPostfixTemplate(
+    name,
+    "for (item in expr.reversed())",
+    "for (\$name$ in \$expr$.reversed()) {\n    \$END$\n}",
+    provider
+)
+
+internal class KtForWithIndexPostfixTemplate(
+    name: String,
+    provider: PostfixTemplateProvider
+) : ConstantStringBasedPostfixTemplate(
+    name,
+    "for ((index, name) in expr.withIndex())",
+    "for ((\$index$, \$name$) in \$expr$.withIndex()) {\n    \$END$\n}",
+    createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = KtExpression::hasIterableType),
+    provider
+) {
+    override fun setVariables(template: Template, element: PsiElement) {
+        val indexName = MacroCallNode(Fe10SuggestVariableNameMacro("index"))
+        template.addVariable("index", indexName, ConstantNode("index"), false)
+        val itemName = MacroCallNode(Fe10SuggestVariableNameMacro())
+        template.addVariable("name", itemName, ConstantNode("item"), true)
+    }
+}
+
+internal abstract class AbstractKtForLoopNumbersPostfixTemplate(
+    name: String,
+    desc: String,
+    template: String,
+    provider: PostfixTemplateProvider
+) : ConstantStringBasedPostfixTemplate(
+    name = name,
+    desc = desc,
+    template = template,
+    selector = createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = p@{ expression, bindingContext ->
+        if (expression.elementType == KtNodeTypes.INTEGER_CONSTANT) return@p true
+        expression.kotlinType(bindingContext)?.isInt() == true
+    }),
+    provider = provider
+) {
+    override fun setVariables(template: Template, element: PsiElement) {
+        val indexName = MacroCallNode(Fe10SuggestVariableNameMacro())
+        template.addVariable("index", indexName, ConstantNode("index"), false)
+    }
+}
+
+internal class KtForLoopNumbersPostfixTemplate(
+    name: String,
+    provider: PostfixTemplateProvider
+) : AbstractKtForLoopNumbersPostfixTemplate(
+    name,
+    "for (i in 0..number)",
+    "for (\$index$ in 0..\$expr$) {\n    \$END$\n}",
+    provider
+)
+
+internal class KtForLoopReverseNumbersPostfixTemplate(
+    name: String,
+    provider: PostfixTemplateProvider
+) : AbstractKtForLoopNumbersPostfixTemplate(
+    name,
+    "for (i in number downTo 0)",
+    "for (\$index$ in \$expr$ downTo 0) {\n    \$END$\n}",
+    provider
+)
 
 private fun KtExpression.hasIterableType(bindingContext: BindingContext): Boolean {
     val resolutionFacade = getResolutionFacade()

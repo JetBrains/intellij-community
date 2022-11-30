@@ -20,5 +20,5 @@ interface WebSymbolDocumentationTarget : DocumentationTarget {
   override fun computeDocumentation(): DocumentationResult? =
     symbol.documentation
       ?.takeIf { it.isNotEmpty() }
-      ?.let { doc -> WebSymbolDocumentationTargetImpl.buildDocumentation(doc) }
+      ?.let { doc -> WebSymbolDocumentationTargetImpl.buildDocumentation(symbol.origin, doc) }
 }

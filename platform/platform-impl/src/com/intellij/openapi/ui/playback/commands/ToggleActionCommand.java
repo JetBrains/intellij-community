@@ -71,11 +71,11 @@ public class ToggleActionCommand extends AbstractCommand {
               .getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()), ActionPlaces.UNKNOWN,
                             presentation, ActionManager.getInstance(), 0);
 
-      ActionUtil.performDumbAwareUpdate(action, event, false);
-
+      ActionUtil.performDumbAwareUpdate(action, event, true);
       boolean state = Toggleable.isSelected(event.getPresentation());
       if (state != on) {
-        ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true).doWhenProcessed(result.createSetDoneRunnable());
+        ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true)
+          .doWhenProcessed(result.createSetDoneRunnable());
       }
       else {
         result.setDone();

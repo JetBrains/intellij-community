@@ -59,7 +59,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
     override fun handlesElement(element: PsiElement): Boolean = element.canDeleteElement()
 
     override fun findUsages(
-        element: PsiElement, allElementsToDelete: Array<out PsiElement>, usages: MutableList<UsageInfo>
+      element: PsiElement, allElementsToDelete: Array<out PsiElement>, usages: MutableList<in UsageInfo>
     ): NonCodeUsageSearchInfo {
         val deleteSet = SmartSet.create<PsiElement>()
         deleteSet.addAll(allElementsToDelete)

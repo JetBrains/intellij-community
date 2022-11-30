@@ -69,6 +69,8 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   }
   @Override
   public void addValue(int inputId, Value value) {
+    //TODO RC: should we check inputId > 0 here? Storage format assumes positive ids, and it's better
+    //         to check this (and fail) as early as possible
     Object fileSetObject = getFileSetObject(value);
 
     ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, false);
@@ -440,33 +442,45 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   }
 
   @Override
-  public void saveTo(DataOutput out, DataExternalizer<? super Value> externalizer) throws IOException {
+  public void saveTo(final @NotNull DataOutput out,
+                     final @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
     DataInputOutputUtil.writeINT(out, size());
 
     for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
       externalizer.save(out, value);
-      Object fileSetObject = valueIterator.getFileSetObject();
 
-      if (fileSetObject instanceof Integer) {
-        DataInputOutputUtil.writeINT(out, (Integer)fileSetObject); // most common 90% case during index building
+      final Object fileSetObject = valueIterator.getFileSetObject();
+      storeFileSet(out, fileSetObject);
+    }
+  }
+
+  public static void storeFileSet(final @NotNull DataOutput out,
+                                  final @NotNull Object fileSetObject) throws IOException {
+    // format is either <single id> (positive int value)
+    //               or <-ids count> <id_1> <id_2-id_1> <id_3-id_2> ... (i.e. diff-encoded ids)
+    if (fileSetObject instanceof Integer) {
+      final int singleFileId = (Integer)fileSetObject;
+      checkFileIdSanity(singleFileId);
+      DataInputOutputUtil.writeINT(out, singleFileId); // most common 90% case during index building
+    } else {
+      // serialize positive file ids with delta encoding
+      final ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
+      final IntIdsIterator intIterator = originalInput.sortedIntIterator();
+      if (IndexDebugProperties.DEBUG) LOG.assertTrue(intIterator.hasAscendingOrder());
+
+      if (intIterator.size() == 1) {
+        final int singleFileId = intIterator.next();
+        checkFileIdSanity(singleFileId);
+        DataInputOutputUtil.writeINT(out, singleFileId);
       } else {
-        // serialize positive file ids with delta encoding
-        ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
-        IntIdsIterator intIterator = originalInput.sortedIntIterator();
-        if (IndexDebugProperties.DEBUG) LOG.assertTrue(intIterator.hasAscendingOrder());
+        DataInputOutputUtil.writeINT(out, -intIterator.size());
 
-        if (intIterator.size() == 1) {
-          DataInputOutputUtil.writeINT(out, intIterator.next());
-        } else {
-          DataInputOutputUtil.writeINT(out, -intIterator.size());
-          int prev = 0;
-
-          while (intIterator.hasNext()) {
-            int fileId = intIterator.next();
-            DataInputOutputUtil.writeINT(out, fileId - prev);
-            prev = fileId;
-          }
+        int prev = 0;
+        while (intIterator.hasNext()) {
+          int fileId = intIterator.next();
+          DataInputOutputUtil.writeINT(out, fileId - prev);
+          prev = fileId;
         }
       }
     }
@@ -581,6 +595,12 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       else {
         addValue(inputId, value);
       }
+    }
+  }
+
+  private static void checkFileIdSanity(final int singleFileId) {
+    if (singleFileId <= 0) {
+      throw new IllegalStateException("fileId(=" + singleFileId + ") must be >0");
     }
   }
 

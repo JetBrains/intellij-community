@@ -8,7 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.checkin.*
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitProblemPlace
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -92,7 +93,7 @@ class PostCommitChecksHandler(val project: Project) {
 
     if (lastCommitInfos.isNotEmpty()) {
       val mergedCommitInfo = withContext(Dispatchers.IO) {
-        runUnderIndicator {
+        coroutineToIndicator {
           mergeCommitInfos(lastCommitInfos, commitInfo)
         }
       }
@@ -104,7 +105,7 @@ class PostCommitChecksHandler(val project: Project) {
     }
 
     return withContext(Dispatchers.IO) {
-      runUnderIndicator {
+      coroutineToIndicator {
         createPostCommitInfo(commitInfo)
       }
     }
@@ -191,10 +192,15 @@ class PostCommitChecksHandler(val project: Project) {
       notification.setDisplayId(VcsNotificationIdsHolder.POST_COMMIT_CHECKS_FAILED)
 
       for (problem in problems.filterIsInstance<CommitProblemWithDetails>()) {
-        notification.addAction(NotificationAction.createSimple(problem.showDetailsAction) {
+        notification.addAction(NotificationAction.createSimple(problem.showDetailsAction.dropMnemonic()) {
+          CommitSessionCollector.getInstance(project).logCommitProblemViewed(problem, CommitProblemPlace.NOTIFICATION)
           problem.showDetails(project)
         })
       }
+
+      notification.addAction(NotificationAction.createSimple(VcsBundle.message("post.commit.checks.failed.notification.ignore.action")) {
+        resetPendingCommits()
+      })
     }
   }
 
@@ -221,6 +227,7 @@ class PostCommitChecksHandler(val project: Project) {
         if (problem is CommitProblemWithDetails) {
           panel.createActionLabel(problem.showDetailsAction.dropMnemonic()) {
             closeDialog.run()
+            CommitSessionCollector.getInstance(project).logCommitProblemViewed(problem, CommitProblemPlace.PUSH_DIALOG)
             problem.showDetails(project)
           }
         }

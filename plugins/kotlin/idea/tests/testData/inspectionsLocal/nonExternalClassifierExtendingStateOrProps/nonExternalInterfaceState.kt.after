@@ -1,0 +1,6 @@
+// JS
+// FIX: Add external keyword
+
+import react.State
+
+external interface InterfaceExtendingState : State

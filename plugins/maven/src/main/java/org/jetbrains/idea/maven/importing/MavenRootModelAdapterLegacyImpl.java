@@ -298,6 +298,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   public void addModuleDependency(@NotNull String moduleName,
                                   @NotNull DependencyScope scope,
                                   boolean testJar) {
+    myLibrariesTable = null;
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -355,6 +356,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
                                                 MavenProject project) {
     assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 
+    myLibrariesTable = null;
     String libraryName = artifact.getLibraryName();
 
     Library library = provider.getLibraryByName(libraryName);
@@ -446,15 +448,17 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   private Map<String, Library> getOrCreateLibrariesTable() {
-    if (myLibrariesTable == null) {
+    Map<String, Library> table = myLibrariesTable;
+    if (table == null) {
       Map<String, Library> temp = new HashMap<>();
       myRootModel.orderEntries().forEachLibrary(library -> {
         temp.put(library.getName(), library);
         return true;
       });
       myLibrariesTable = temp;
+      return temp;
     }
-    return myLibrariesTable;
+    return table;
   }
 
   public static boolean isMavenLibrary(@Nullable Library library) {

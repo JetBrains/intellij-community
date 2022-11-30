@@ -18,6 +18,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -78,10 +79,13 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
     internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
       if (preloadServices) {
-        launch {
-          project.getServiceAsync(FileEditorManager::class.java).join()
-          project.getServiceAsync(WolfTheProblemSolver::class.java).join()
-          project.getServiceAsync(DaemonCodeAnalyzer::class.java).join()
+        val app = ApplicationManager.getApplication()
+        if (project.isLight || app.isHeadlessEnvironment || app.isUnitTestMode) {
+          launch {
+            project.serviceAsync<FileEditorManager>().join()
+            project.serviceAsync<WolfTheProblemSolver>().join()
+            project.serviceAsync<DaemonCodeAnalyzer>().join()
+          }
         }
 
         // for light projects, preload only services that are essential

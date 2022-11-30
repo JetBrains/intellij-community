@@ -29,8 +29,8 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
-import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
+import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
@@ -555,7 +555,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   public XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
     return loadFrame(() -> {
       List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(ProcessDebugger.GROUP_TYPE.DEFAULT.ordinal());
-      return parseVars(frame, null, this);
+      XValueChildrenList frameValues = parseVars(frame, null, this);
+      notifyVariablesLoaded(frameValues);
+      return frameValues;
     });
   }
 
@@ -789,9 +791,16 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
+  private void notifyVariablesLoaded(XValueChildrenList values) {
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.updateVariables(this, values);
+    }
+  }
+
   private void notifySessionStopped() {
     for (PyFrameListener listener : myFrameListeners) {
       listener.sessionStopped();
+      listener.sessionStopped(this);
     }
   }
 

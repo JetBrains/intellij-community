@@ -45,7 +45,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Python versions for new environment
    */
-  val languageLevels: List<LanguageLevel> = LanguageLevel.values().toList()
+  val languageLevels: List<LanguageLevel> = condaSupportedLanguages
 
   val condaPathFileChooser: FileChooserDescriptor = object : FileChooserDescriptor(true, false, false, false, false, false) {
     override fun isFileVisible(file: VirtualFile?, showHiddenFiles: Boolean): Boolean =
@@ -176,7 +176,14 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
         // Already set, no need to detect
         condaPathTextBoxRwProp.get().isNotBlank()
       }) return
-    val condaPath = suggestCondaPath(targetConfiguration) ?: return
+    val condaPath = suggestCondaPath(targetConfiguration)
+    if (condaPath == null) {
+      withContext(uiContext) {
+        condaPathTextBoxRwProp.set("")
+      }
+      return
+    }
+
     withContext(uiContext) {
       condaPathTextBoxRwProp.set(condaPath)
       // Since path is set, lets click button on behalf of user

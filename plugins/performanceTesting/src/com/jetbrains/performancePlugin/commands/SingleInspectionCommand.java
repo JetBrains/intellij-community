@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public class SingleInspectionCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runSingleInspection";
@@ -73,7 +74,9 @@ public class SingleInspectionCommand extends AbstractCommand {
                     continue;
                   }
                   Path path = file.toPath();
-                  this.numberOfProblems = Files.lines(path).filter(line -> line.contains("<problem>")).count();
+                  try(Stream<String> lines = Files.lines(path).filter(line -> line.contains("<problem>"))) {
+                    this.numberOfProblems = lines.count();
+                  }
                 }
               }
               else {

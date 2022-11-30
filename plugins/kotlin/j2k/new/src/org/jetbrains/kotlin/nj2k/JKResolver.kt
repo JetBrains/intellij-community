@@ -77,7 +77,7 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
     }
 
     private fun constructImportDirectiveWithContext(fqName: FqName): KtImportDirective {
-        val importDirective = KtPsiFactory(contextElement).createImportDirective(ImportPath(fqName, false))
+        val importDirective = KtPsiFactory(project).createImportDirective(ImportPath(fqName, false))
         importDirective.containingKtFile.analysisContext = contextElement.containingFile
         return importDirective
     }

@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.toml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.analysis" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

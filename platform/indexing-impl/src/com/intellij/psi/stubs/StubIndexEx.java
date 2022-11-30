@@ -17,7 +17,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
@@ -60,7 +59,6 @@ public abstract class StubIndexEx extends StubIndex {
   }, ConcurrentHashMap::new);
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
-  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   @ApiStatus.Internal
   abstract void initializeStubIndexes();
@@ -312,10 +310,7 @@ public abstract class StubIndexEx extends StubIndex {
 
     try {
       @Nullable IdFilter finalIdFilter = idFilter;
-      return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, () -> FileBasedIndexEx.disableUpToDateCheckIn(() ->
-                                                                                                                    index.processAllKeys(
-                                                                                                                      processor, scope,
-                                                                                                                      finalIdFilter)));
+      return FileBasedIndexEx.disableUpToDateCheckIn(() -> index.processAllKeys(processor, scope, finalIdFilter));
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -413,12 +408,9 @@ public abstract class StubIndexEx extends StubIndex {
           return true;
         }
       };
-      myAccessValidator.validate(stubUpdatingIndexId, () -> {
-        trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
-        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        return FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(
-          stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
-      });
+      trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
+      // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+      FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {

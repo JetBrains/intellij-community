@@ -200,7 +200,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     deserializeInto(result, element, null);
   }
 
-  public final void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
+  public final void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<? super String> accessorNameTracker) {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
       if (StringUtilRt.isEmpty(attribute.getNamespaceURI())) {

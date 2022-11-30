@@ -128,7 +128,7 @@ public final class VcsRootScanner implements Disposable {
     });
   }
 
-  private static boolean isVcsDir(@NotNull List<VcsRootChecker> checkers, @NotNull String filePath) {
+  private static boolean isVcsDir(@NotNull List<? extends VcsRootChecker> checkers, @NotNull String filePath) {
     return checkers.stream().anyMatch(it -> it.isVcsDir(filePath));
   }
 

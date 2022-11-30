@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentNames
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class AddNamesToFollowingArgumentsIntention :
-    KotlinApplicableIntentionWithContext<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
+    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
 
     class Context(val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>)

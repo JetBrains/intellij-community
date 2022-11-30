@@ -22,9 +22,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.createSplitter
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Splitter
@@ -329,7 +328,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       file.putUserData(DRAG_START_PINNED_KEY, null)
       trimToSize(fileToIgnore = file, transferFocus = false)
       owner.updateFileIconImmediately(file = file, icon = IconUtil.computeBaseFileIcon(file))
-      owner.updateFileIconLater(file)
+      owner.updateFileIcon(file)
       owner.updateFileColor(file)
     }
     owner.updateFileColor(composite.file)
@@ -358,7 +357,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       val siblings = getSiblings()
       val target = siblings[0]
       if (virtualFile != null) {
-        syncCaretIfPossible(fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).allEditors)
+        syncCaretIfPossible(fileEditorManager.openFileImpl4(window = target,
+                                                            _file = virtualFile,
+                                                            entry = null,
+                                                            options = FileEditorOpenOptions(requestFocus = focusNew)).allEditors)
       }
       return target
     }
@@ -372,7 +374,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
 
     this.panel = JPanel(BorderLayout())
     this.panel.isOpaque = false
-    val splitter = createSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f)
+    val splitter = createSplitter(orientation = orientation == JSplitPane.VERTICAL_SPLIT, proportion = 0.5f, minProp = 0.1f, maxProp = 0.9f)
     splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, java.lang.Boolean.TRUE)
     val result = EditorWindow(owner = owner, parentDisposable = owner)
     val selectedComposite = selectedComposite
@@ -415,7 +417,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
 
   private fun normalizeProportionsIfNeed(inputComponent: Container) {
     var component = inputComponent
-    if (!getBoolean("editor.normalize.splits")) {
+    if (!AdvancedSettings.getBoolean("editor.normalize.splits")) {
       return
     }
 
@@ -426,7 +428,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
 
     val hierarchyStack = LinkedHashMap<Splitter, Boolean>()
-    while (component !== manager.mainSplitters) {
+    while (component !== manager.component) {
       val parent = component.parent
       if (parent is Splitter) {
         if (isVertical === null) {
@@ -716,16 +718,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       val height = Registry.intValue("ide.splitter.chooser.info.panel.height")
       var width = Registry.intValue("ide.splitter.chooser.info.panel.width")
       val arc = Registry.intValue("ide.splitter.chooser.info.panel.arc")
-      val getShortcut: (actionId: String) -> Unit = { actionId ->
-        val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
-        KeymapUtil.getKeystrokeText(shortcut?.firstKeyStroke)
-      }
-      val openShortcuts = String.format(IdeBundle.message("split.with.chooser.move.tab"), getShortcut("SplitChooser.Split"),
-                                        if (SplitterService.getInstance().initialEditorWindow != null) String.format(
-                                          IdeBundle.message("split.with.chooser.duplicate.tab"),
-                                          getShortcut("SplitChooser.Duplicate"))
-                                        else "")
-      val switchShortcuts = String.format(IdeBundle.message("split.with.chooser.switch.tab"), getShortcut("SplitChooser.NextWindow"))
+      val openShortcuts = IdeBundle.message(
+        "split.with.chooser.move.tab",
+        getShortcut("SplitChooser.Split"),
+        if (SplitterService.getInstance().initialEditorWindow != null)
+          IdeBundle.message("split.with.chooser.duplicate.tab", getShortcut("SplitChooser.Duplicate"))
+        else "")
+      val switchShortcuts = IdeBundle.message("split.with.chooser.switch.tab", getShortcut("SplitChooser.NextWindow"))
 
       // Adjust default width to info text
       val font = StartupUiUtil.getLabelFont()
@@ -761,6 +760,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       if (owner.getWindows().size > 1) {
         g.drawString(switchShortcuts, centerX - switchShortcutsWidth / 2, textY + fontMetrics.height)
       }
+    }
+
+    private fun getShortcut(actionId: String): @NlsSafe String {
+      val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
+      return KeymapUtil.getKeystrokeText(shortcut?.firstKeyStroke)
     }
 
     fun positionChanged(position: RelativePosition) {
@@ -910,7 +914,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   fun updateFileIcon(file: VirtualFile, icon: Icon) {
     val composite = getComposite(file) ?: return
     val index = findCompositeIndex(composite)
-    if (index < 0) return
+    if (index < 0) {
+      return
+    }
     tabbedPane.setIconAt(index, decorateFileIcon(composite, icon))
   }
 

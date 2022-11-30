@@ -9,11 +9,14 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 
 @ApiStatus.Internal
 class KotlinFirLookupElementFactory {
@@ -22,6 +25,7 @@ class KotlinFirLookupElementFactory {
     private val functionLookupElementFactory = FunctionLookupElementFactory()
     private val typeParameterLookupElementFactory = TypeParameterLookupElementFactory()
     private val packagePartLookupElementFactory = PackagePartLookupElementFactory()
+    private val namedArgumentLookupElementFactory = NamedArgumentLookupElementFactory()
 
     fun KtAnalysisSession.createLookupElement(
         symbol: KtNamedSymbol,
@@ -56,6 +60,12 @@ class KotlinFirLookupElementFactory {
 
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
         packagePartLookupElementFactory.createPackagePartLookupElement(packagePartFqName)
+
+    fun KtAnalysisSession.createNamedArgumentLookupElement(name: Name, types: List<KtType>): LookupElement =
+        with(namedArgumentLookupElementFactory) { createNamedArgumentLookup(name, types) }
+
+    fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
+        namedArgumentLookupElementFactory.createNamedArgumentWithValueLookup(name, value)
 
     fun KtAnalysisSession.createLookupElementForClassLikeSymbol(
         symbol: KtClassLikeSymbol,

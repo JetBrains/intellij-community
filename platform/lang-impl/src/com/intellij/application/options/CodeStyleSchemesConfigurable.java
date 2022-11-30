@@ -183,7 +183,7 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
       }
     }
 
-    CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(null);
+    CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged();
   }
 
   @Override

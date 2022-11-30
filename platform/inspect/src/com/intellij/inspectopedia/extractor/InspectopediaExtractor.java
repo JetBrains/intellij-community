@@ -1,6 +1,7 @@
 package com.intellij.inspectopedia.extractor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -50,24 +51,11 @@ public class InspectopediaExtractor implements ApplicationStarter {
     xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
     xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
     ASSETS.put("xml", xmlMapper);*/
-    final JsonMapper jsonMapper = new JsonMapper();
-    jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    final JsonMapper jsonMapper = JsonMapper.builder()
+      .enable(SerializationFeature.INDENT_OUTPUT)
+      .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+      .build();
     ASSETS.put("json", jsonMapper);
-  }
-
-  @Nullable
-  public static Language findLanguage(final @Nullable String id) {
-    if (id == null) return null;
-    Language lang = Language.findLanguageByID(id);
-    if (lang != null) return lang;
-
-    lang = Language.findLanguageByID(id.toLowerCase());
-    if (lang != null) return lang;
-
-    lang = Language.findLanguageByID(id.toUpperCase());
-    if (lang != null) return lang;
-
-    return Language.findLanguageByID(StringUtil.capitalize(id));
   }
 
   @Override
@@ -100,75 +88,97 @@ public class InspectopediaExtractor implements ApplicationStarter {
       System.exit(-1);
     }
 
-    final Project project = ProjectManager.getInstance().getDefaultProject();
+    try {
+      final Project project = ProjectManager.getInstance().getDefaultProject();
 
-    LOG.info("Using project " + project.getName() + ", default: " + project.isDefault());
-    final InspectionProjectProfileManager inspectionManager = InspectionProjectProfileManager.getInstance(project);
-    final List<ScopeToolState> scopeToolStates = inspectionManager.getCurrentProfile().getAllTools();
+      LOG.info("Using project " + project.getName() + ", default: " + project.isDefault());
+      final InspectionProjectProfileManager inspectionManager = InspectionProjectProfileManager.getInstance(project);
+      final List<ScopeToolState> scopeToolStates = inspectionManager.getCurrentProfile().getAllTools();
 
-    final Map<String, Plugin> availablePlugins = Arrays.stream(PluginManager.getPlugins()).map(
-      pluginDescriptor -> new Plugin(pluginDescriptor.getPluginId().getIdString(), pluginDescriptor.getName(),
-                                     pluginDescriptor.getVersion())).distinct().collect(Collectors.toMap(Plugin::getId, plugin -> plugin));
+      final Map<String, Plugin> availablePlugins = Arrays.stream(PluginManager.getPlugins()).map(
+          pluginDescriptor -> new Plugin(pluginDescriptor.getPluginId().getIdString(), pluginDescriptor.getName(),
+                                         pluginDescriptor.getVersion())).distinct()
+        .collect(Collectors.toMap(Plugin::getId, plugin -> plugin));
 
-    availablePlugins.put(IDE_NAME, new Plugin(IDE_NAME, IDE_NAME, IDE_VERSION));
+      availablePlugins.put(IDE_NAME, new Plugin(IDE_NAME, IDE_NAME, IDE_VERSION));
 
-    for (final ScopeToolState scopeToolState : scopeToolStates) {
+      for (final ScopeToolState scopeToolState : scopeToolStates) {
 
-      final InspectionToolWrapper<?, ?> wrapper = scopeToolState.getTool();
-      final InspectionEP extension = wrapper.getExtension();
-      final String pluginId = extension == null ? IDE_NAME : extension.getPluginDescriptor().getPluginId().getIdString();
-      final String originalDescription = wrapper.loadDescription();
-      final String[] description = originalDescription == null ? new String[]{""} : originalDescription.split("<!-- tooltip end -->");
+        final InspectionToolWrapper<?, ?> wrapper = scopeToolState.getTool();
+        final InspectionEP extension = wrapper.getExtension();
+        final String pluginId = extension == null ? IDE_NAME : extension.getPluginDescriptor().getPluginId().getIdString();
+        final String originalDescription = wrapper.loadDescription();
+        final String[] description = originalDescription == null ? new String[]{""} : originalDescription.split("<!-- tooltip end -->");
 
-      OptionsPanelInfo panelInfo = null;
-      try {
-        final JComponent panel = wrapper.getTool().createOptionsPanel();
+        OptionsPanelInfo panelInfo = null;
+        try {
+          final JComponent panel = wrapper.getTool().createOptionsPanel();
 
-        if (panel != null) {
-          LOG.info("Saving options panel for " + wrapper.getShortName());
-          panelInfo = retrievePanelStructure(panel);
+          if (panel != null) {
+            LOG.info("Saving options panel for " + wrapper.getShortName());
+            panelInfo = retrievePanelStructure(panel);
+          }
         }
-      }
-      catch (Throwable t) {
-        LOG.info("Cannot create options panel " + wrapper.getShortName(), t);
-      }
-      final Language language = findLanguage(wrapper.getLanguage());
-      final String briefDescription = HtmlUtils.cleanupHtml(description[0], language);
-      final String extendedDescription = description.length > 1 ? HtmlUtils.cleanupHtml(description[1], language) : null;
+        catch (Throwable t) {
+          LOG.info("Cannot create options panel " + wrapper.getShortName(), t);
+        }
+        final String language = wrapper.getLanguage();
+        final String briefDescription = HtmlUtils.cleanupHtml(description[0], language);
+        final String extendedDescription = description.length > 1 ? HtmlUtils.cleanupHtml(description[1], language) : null;
+        final Inspection inspection = new Inspection(wrapper.getShortName(), wrapper.getDisplayName(), wrapper.getDefaultLevel().getName(),
+                                                     language, briefDescription,
+                                                     extendedDescription, Arrays.asList(wrapper.getGroupPath()), wrapper.applyToDialects(),
+                                                     wrapper.isCleanupTool(), wrapper.isEnabledByDefault(), panelInfo);
 
-      final Inspection inspection = new Inspection(wrapper.getShortName(), wrapper.getDisplayName(), wrapper.getDefaultLevel().getName(),
-                                                   language == null ? null : language.getDisplayName(), briefDescription,
-                                                   extendedDescription, Arrays.asList(wrapper.getGroupPath()), wrapper.applyToDialects(),
-                                                   wrapper.isCleanupTool(), wrapper.isEnabledByDefault(), panelInfo);
+        availablePlugins.get(pluginId).addInspection(inspection);
+      }
 
-      availablePlugins.get(pluginId).addInspection(inspection);
+      var sortedPlugins = availablePlugins.values().stream()
+        .sorted(Comparator.comparing(Plugin::getId))
+        .peek(plugin -> {
+          plugin.inspections.sort(null);
+          plugin.inspections.forEach(it -> sortRecursively(it.optionsPanelInfo));
+        }).toList();
+      final Plugins pluginsData = new Plugins(sortedPlugins, IDE_CODE, IDE_NAME, IDE_VERSION);
+
+      for (final String ext : ASSETS.keySet()) {
+        String data = "";
+        try {
+          data = ASSETS.get(ext).writeValueAsString(pluginsData);
+        }
+        catch (JsonProcessingException e) {
+          LOG.error("Cannot serialize " + ext.toUpperCase(Locale.getDefault()), e);
+          System.exit(-1);
+        }
+
+        final Path outPath = outputPath.resolve(ASSET_FILENAME + ext);
+
+        try {
+          Files.writeString(outPath, data);
+        }
+        catch (IOException e) {
+          LOG.error("Cannot write " + outPath, e);
+          System.exit(-1);
+        }
+        LOG.info("Inspections info saved in " + outPath);
+      }
     }
-
-    final Plugins pluginsData = new Plugins(List.copyOf(availablePlugins.values()), IDE_CODE, IDE_NAME, IDE_VERSION);
-
-    for (final String ext : ASSETS.keySet()) {
-      String data = "";
-      try {
-        data = ASSETS.get(ext).writeValueAsString(pluginsData);
-      }
-      catch (JsonProcessingException e) {
-        LOG.error("Cannot serialize " + ext.toUpperCase(Locale.getDefault()), e);
-        System.exit(-1);
-      }
-
-      final Path outPath = outputPath.resolve(ASSET_FILENAME + ext);
-
-      try {
-        Files.writeString(outPath, data);
-      }
-      catch (IOException e) {
-        LOG.error("Cannot write " + outPath, e);
-        System.exit(-1);
-      }
-      LOG.info("Inspections info saved in " + outPath);
+    catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+      System.exit(-1);
     }
-
     System.exit(0);
+  }
+
+  private static final Comparator<OptionsPanelInfo> optionsPanelInfoComparator = Comparator
+    .<OptionsPanelInfo, String>comparing(info -> Optional.ofNullable(info).map(it -> it.type).orElse("null"))
+    .thenComparing(info -> Optional.ofNullable(info).map(it -> it.text).orElse("null"));
+
+  private static void sortRecursively(OptionsPanelInfo optionsPanelInfo) {
+    Optional.ofNullable(optionsPanelInfo).map(it -> it.children).ifPresent(it -> {
+      it.sort(optionsPanelInfoComparator);
+      it.forEach(InspectopediaExtractor::sortRecursively);
+    });
   }
 
   @Nullable
@@ -216,7 +226,8 @@ public class InspectopediaExtractor implements ApplicationStarter {
       final ListModel model = ofWhat instanceof JList ? ((JList)ofWhat).getModel() : ((JComboBox)ofWhat).getModel();
       result.children = new ArrayList<>();
       for (int i = 0; i < model.getSize(); i++) {
-        result.children.add(new OptionsPanelInfo("ListItem", String.valueOf(model.getElementAt(i))));
+        var element = model.getElementAt(i);
+        result.children.add(new OptionsPanelInfo("ListItem", element.getClass().getName()));
       }
     }
     else if (ofWhat instanceof JTable) {

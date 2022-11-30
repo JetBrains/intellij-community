@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.async.disposingScope
@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IconUtil
@@ -57,7 +57,7 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
         if (existing != null) return@withLock existing
         try {
           val context = withContext(Dispatchers.IO) {
-            runUnderIndicator {
+            coroutineToIndicator {
               loadContext(account, requestExecutor, repository, remote)
             }
           }
@@ -92,6 +92,10 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     val accountDetails = GithubAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
     indicator.checkCanceled()
 
+    indicator.text = GithubBundle.message("pull.request.loading.ghost")
+    val ghostUserDetails = requestExecutor.execute(indicator, GHGQLRequests.User.find(account.server, "ghost"))
+                           ?: error("Couldn't load ghost user details")
+
     indicator.text = GithubBundle.message("pull.request.loading.repo.info")
     val repositoryInfo =
       requestExecutor.execute(indicator, GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server,
@@ -116,6 +120,7 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
 
     val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
+                                                  ghostUserDetails,
                                                   account, currentUser, currentUserTeams,
                                                   repositoryInfo)
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)

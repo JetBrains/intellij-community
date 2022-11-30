@@ -67,7 +67,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       Span span = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_" + tab).startSpan();
       spanRef.set(span);
       try (Scope ignored = span.makeCurrent()) {
-        Future<List<Object>> resultList = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().findElementsForPattern(text);
+        @SuppressWarnings("TestOnlyProblems") Future<List<Object>> resultList = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().findElementsForPattern(text);
         result.set(resultList);
       }
     }));

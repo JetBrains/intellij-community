@@ -39,6 +39,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ModalityUiUtil;
@@ -784,8 +785,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             group.add(actions.get(i));
           }
 
-          DropDownAction dropDownAction =
-            new DropDownAction(IdeBundle.message("notifications.action.more"), (link, ignored) -> showPopup(notification, link, group));
+          DropDownAction dropDownAction = new DropDownAction(IdeBundle.message("notifications.action.more"),
+                                                             (link, _1) -> showPopup(notification, link, group, actionPanel.popupAlarm));
           actionPanel.addAction(dropDownAction);
           Notification.setDataProvider(notification, dropDownAction);
         }
@@ -858,7 +859,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           group.add(actionLink.getLinkData());
         }
       }
-      showPopup(notification, link, group);
+      showPopup(notification, link, group, actionPanel.popupAlarm);
     });
     Notification.setDataProvider(notification, action);
     action.setVisible(false);
@@ -1065,10 +1066,18 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   private static class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
     private final JPopupMenu myPopupMenu;
+    private final JComponent myComponent;
+    private final Alarm myAlarm;
     private boolean myHandleDispose = true;
 
-    private BalloonPopupSupport(@NotNull JPopupMenu popupMenu, @NotNull Balloon balloon) {
+    private BalloonPopupSupport(@NotNull JPopupMenu popupMenu,
+                                @NotNull Balloon balloon,
+                                @NotNull JComponent component,
+                                @NotNull Alarm popupAlarm) {
       myPopupMenu = popupMenu;
+      myComponent = component;
+      myAlarm = popupAlarm;
+      popupAlarm.cancelAllRequests();
       popupMenu.addPopupMenuListener(this);
       Disposer.register(balloon, this);
     }
@@ -1077,6 +1086,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
       myHandleDispose = false;
       Disposer.dispose(this);
+      myComponent.putClientProperty("PopupHideInProgress", Boolean.TRUE);
+      myAlarm.addRequest(() -> myComponent.putClientProperty("PopupHideInProgress", null), 500);
     }
 
     @Override
@@ -1121,11 +1132,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static void showPopup(@NotNull Notification notification, @NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
+  private static void showPopup(@NotNull Notification notification,
+                                @NotNull LinkLabel<?> link,
+                                @NotNull DefaultActionGroup group,
+                                @NotNull Alarm popupAlarm) {
+    if (link.getClientProperty("PopupHideInProgress") != null) {
+      return;
+    }
     JPopupMenu menu = showPopup(link, group);
     Balloon balloon = notification.getBalloon();
     if (menu != null && balloon != null) {
-      new BalloonPopupSupport(menu, balloon);
+      new BalloonPopupSupport(menu, balloon, link, popupAlarm);
     }
   }
 
@@ -1257,6 +1274,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     private final Notification.CollapseActionsDirection collapseActionsDirection;
     private DropDownAction groupedActionsLink;
     boolean checkActionWidth;
+    final Alarm popupAlarm = new Alarm();
 
     private NotificationActionPanel(int gap, Notification.CollapseActionsDirection direction) {
       super(new HorizontalLayout(gap, SwingConstants.CENTER));

@@ -2,18 +2,17 @@ from typing import Any, ClassVar
 
 import passlib.utils.handlers as uh
 
-class scram(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore
-    name: str
-    setting_kwds: Any
-    ident: Any
+class scram(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore[misc]
+    name: ClassVar[str]
+    ident: ClassVar[str]
     default_salt_size: ClassVar[int]
-    max_salt_size: int
-    default_rounds: int
-    min_rounds: int
-    max_rounds: Any
-    rounds_cost: str
-    default_algs: Any
-    algs: Any
+    max_salt_size: ClassVar[int]
+    default_rounds: ClassVar[int]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
+    default_algs: ClassVar[list[str]]
+    algs: Any | None
     @classmethod
     def extract_digest_info(cls, hash, alg): ...
     @classmethod
@@ -22,7 +21,6 @@ class scram(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler): 
     def derive_digest(cls, password, salt, rounds, alg): ...
     @classmethod
     def from_string(cls, hash): ...
-    def to_string(self): ...
     @classmethod
     def using(cls, default_algs: Any | None = ..., algs: Any | None = ..., **kwds): ...  # type: ignore[override]
     def __init__(self, algs: Any | None = ..., **kwds) -> None: ...

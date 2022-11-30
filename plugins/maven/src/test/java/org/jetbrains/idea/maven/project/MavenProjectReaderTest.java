@@ -386,18 +386,81 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "    <resource>" +
                      "      <directory></directory>" +
                      "    </resource>" +
+                     "    <resource>" +
+                     "      <directory>myRes</directory>" +
+                     "    </resource>" +
                      "  </resources>" +
                      "  <testResources>" +
                      "    <testResource>" +
                      "      <filtering>true</filtering>" +
+                     "    </testResource>" +
+                     "    <testResource>" +
+                     "      <directory>myTestRes</directory>" +
                      "    </testResource>" +
                      "  </testResources>" +
                      "</build>");
 
     MavenModel p = readProject(myProjectPom);
 
-    assertEquals(0, p.getBuild().getResources().size());
-    assertEquals(0, p.getBuild().getTestResources().size());
+    assertEquals(1, p.getBuild().getResources().size());
+    assertResource(p.getBuild().getResources().get(0), pathFromBasedir("myRes"),
+                   false, null, Collections.emptyList(), Collections.emptyList());
+
+    assertEquals(1, p.getBuild().getTestResources().size());
+    assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("myTestRes"),
+                   false, null, Collections.emptyList(), Collections.emptyList());
+  }
+
+  public void testRepairResourcesWithoutDirectory() {
+    createProjectPom("""
+                    <build>
+                       <resources>
+                         <resource>
+                         </resource>
+                       </resources>
+                       <testResources>
+                         <testResource>
+                         </testResource>
+                       </testResources>
+                    </build>
+                    """);
+
+    MavenModel p = readProject(myProjectPom);
+
+    assertEquals(1, p.getBuild().getResources().size());
+    assertResource(p.getBuild().getResources().get(0), pathFromBasedir("src/main/resources"),
+                   false, null, Collections.emptyList(), Collections.emptyList());
+
+    assertEquals(1, p.getBuild().getTestResources().size());
+    assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("src/test/resources"),
+                   false, null, Collections.emptyList(), Collections.emptyList());
+  }
+
+  public void testRepairResourcesWithEmptyDirectory() {
+    createProjectPom("""
+                       <build>
+                         <resources>
+                           <resource>
+                             <directory></directory>
+                           </resource>
+                         </resources>
+                         <testResources>
+                           <testResource>
+                             <directory></directory>
+                           </testResource>
+                         </testResources>
+                       </build>
+                       """);
+
+    MavenModel p = readProject(myProjectPom);
+
+    assertEquals(1, p.getBuild().getResources().size());
+    assertResource(p.getBuild().getResources().get(0), pathFromBasedir("src/main/resources"),
+                   false, null, Collections.emptyList(), Collections.emptyList());
+
+    assertEquals(1, p.getBuild().getTestResources().size());
+    assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("src/test/resources"),
+                   false, null, Collections.emptyList(), Collections.emptyList());
   }
 
   public void testPathsWithProperties() {

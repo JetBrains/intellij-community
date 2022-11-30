@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
-    override fun collectSlowLineMarkers(elements: MutableList<out PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
         KotlinCallProcessor.process(elements) { target ->
             val symbol = target.symbol
             val targetDeclaration = target.symbol.psi as? KtDeclaration ?: return@process

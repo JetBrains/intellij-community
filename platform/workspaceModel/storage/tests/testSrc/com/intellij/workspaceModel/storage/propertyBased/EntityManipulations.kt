@@ -113,7 +113,7 @@ private class RemoveSomeEntity(private val storage: MutableEntityStorageImpl) : 
     }
     storage.removeEntity(storage.entityDataByIdOrDie(id).createEntity(storage))
     Assert.assertNull(storage.entityDataById(id))
-    env.logMessage("Entity removed. Id: $id")
+    env.logMessage("Entity removed. Id: ${id.asString()}")
   }
 
   companion object {
@@ -291,7 +291,14 @@ private object OoParentManipulation : EntityManipulation {
   override fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>> {
     return object : ModifyEntity<OoParentEntity, OoParentEntity.Builder>(OoParentEntity::class, storage) {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<OoParentEntity.Builder.() -> Unit> {
-        return listOf(modifyStringProperty(OoParentEntity.Builder::parentProperty, env))
+        return listOf(
+          modifyStringProperty(OoParentEntity.Builder::parentProperty, env),
+          modifyNullableProperty(OoParentEntity.Builder::child,
+                                 Generator.sampledFrom(
+                                   OoChildEntity(env.generateValue(randomNames, null), env.generateValue(sources, null))
+                                 ),
+                                 env),
+        )
       }
     }
   }
@@ -304,7 +311,10 @@ private object OoChildManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
-        return storage.addOoChildEntity(parentEntity, someProperty, source) to "Selected parent: $parentEntity"
+        val newChild =  storage addEntity OoChildEntity(someProperty, source) {
+          this.parentEntity = parentEntity
+        }
+        return newChild to "Selected parent: $parentEntity"
       }
     }
   }
@@ -567,8 +577,8 @@ private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>> modifyBooleanP
 }
 
 private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> addOrRemoveInList(property: KMutableProperty1<A, MutableList<T>>,
-                                                                       takeFrom: Generator<T>,
-                                                                       env: ImperativeCommand.Environment): A.() -> Unit {
+                                                                                       takeFrom: Generator<T>,
+                                                                                       env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val removeValue = env.generateValue(Generator.booleans(), null)
     val value = property.getter.call(this)
@@ -587,7 +597,7 @@ private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> addOrRemove
 }
 
 private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> swapElementsInSequence(property: KMutableProperty1<A, Sequence<T>>,
-                                                                            env: ImperativeCommand.Environment): A.() -> Unit {
+                                                                                            env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val propertyList = property.getter.call(this).toMutableList()
     if (propertyList.size > 2) {
@@ -602,7 +612,7 @@ private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> swapElement
 }
 
 private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> swapElementsInList(property: KMutableProperty1<A, List<T>>,
-                                                                        env: ImperativeCommand.Environment): A.() -> Unit {
+                                                                                        env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val propertyList = property.getter.call(this).toMutableList()
     if (propertyList.size > 2) {
@@ -617,7 +627,7 @@ private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> swapElement
 }
 
 private fun <B : WorkspaceEntity, A : WorkspaceEntity.Builder<B>, T> removeInSequence(property: KMutableProperty1<A, Sequence<T>>,
-                                                                      env: ImperativeCommand.Environment): A.() -> Unit {
+                                                                                      env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val value = property.getter.call(this)
     if (value.any()) {

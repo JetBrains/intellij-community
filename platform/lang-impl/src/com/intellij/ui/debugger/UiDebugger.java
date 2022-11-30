@@ -116,7 +116,7 @@ public class UiDebugger extends JPanel implements Disposable {
     myDialog.getPeer().getWindow().toFront();
   }
 
-  private void addToUi(List<UiDebuggerExtension> extensions) {
+  private void addToUi(List<? extends UiDebuggerExtension> extensions) {
     for (UiDebuggerExtension each : extensions) {
       myTabs.addTab(new TabInfo(each.getComponent()).setText(each.getName()));
     }

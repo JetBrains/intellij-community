@@ -3,10 +3,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -199,12 +199,12 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
       //todo temporary fix. CLion guys promised to fix their annotator eventually
       //LOG.warnInProduction(pluginException);
-      Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
-      String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
       if (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.warn(f+"\nthread dump:\n+"+ThreadDumper.dumpThreadsToString(), pluginException);
+        Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
+        String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
+        LOG.warn(f, pluginException);
       }
-      else {
+      else if (!ApplicationManagerEx.isInStressTest()) {
         LOG.warn(pluginException);
       }
     }

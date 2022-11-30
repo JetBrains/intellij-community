@@ -49,7 +49,7 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
     return isMatchingMetadata(pattern, metadata, getColumnsForSpeedSearch());
   }
 
-  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata, @NotNull List<VcsLogMetadataColumn> columns) {
+  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata, @NotNull List<? extends VcsLogMetadataColumn> columns) {
     if (metadata == null) return false;
     return columns.stream().anyMatch(column -> compare(column.getValue(myComponent.getModel(), metadata), pattern));
   }

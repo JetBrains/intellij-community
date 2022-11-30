@@ -41,6 +41,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.*;
@@ -64,8 +66,8 @@ public abstract class TodoTreeBuilder implements Disposable {
   /**
    * This set contains "dirty" files. File is "dirty" if it's currently unknown
    * whether the file contains T.O.D.O item or not. To determine this it's necessary
-   * to perform some (perhaps, CPU expensive) operation. These "dirty" files are
-   * validated in {@code validateCache()} method.
+   * to perform {@link #hasDirtyFiles()} operation (potentially CPU expensive).
+   * These "dirty" files are validated in {@link #validateCache()} method.
    * <p>
    * Mutate in a background thread only.
    */
@@ -361,6 +363,17 @@ public abstract class TodoTreeBuilder implements Disposable {
     myFile2Highlighter.clear();
   }
 
+  protected final boolean hasDirtyFiles() {
+    synchronized (myDirtyFileSet) {
+      if (myDirtyFileSet.isEmpty()) {
+        return false;
+      }
+
+      validateCache();
+      return true;
+    }
+  }
+
   @RequiresEdt
   private void withLoadingPanel(@NotNull Consumer<? super JBLoadingPanel> consumer) {
     JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myTree);
@@ -369,35 +382,28 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  protected final boolean hasDirtyFiles() {
-    synchronized (myDirtyFileSet) {
-      if (myDirtyFileSet.isEmpty()) {
-        return false;
-      }
-
-      TodoTreeStructure treeStructure = getTodoTreeStructure();
-      // First we need to update "dirty" file set.
-      for (VirtualFile file : myDirtyFileSet) {
-        PsiFile psiFile = file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
-        if (psiFile == null || !treeStructure.accept(psiFile)) {
-          if (myFileTree.contains(file)) {
-            myFileTree.removeFile(file);
-            myFile2Highlighter.remove(file);
-          }
-        }
-        else { // file is valid and contains T.O.D.O items
+  private void validateCache() {
+    TodoTreeStructure treeStructure = getTodoTreeStructure();
+    // First we need to update "dirty" file set.
+    for (VirtualFile file : myDirtyFileSet) {
+      PsiFile psiFile = file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
+      if (psiFile == null || !treeStructure.accept(psiFile)) {
+        if (myFileTree.contains(file)) {
           myFileTree.removeFile(file);
-          myFileTree.add(file); // file can be moved. remove/add calls move it to another place
-          EditorHighlighter highlighter = myFile2Highlighter.get(file);
-          if (highlighter != null) { // update highlighter text
-            highlighter.setText(PsiDocumentManager.getInstance(myProject).getDocument(psiFile).getCharsSequence());
-          }
+          myFile2Highlighter.remove(file);
         }
       }
-
-      myDirtyFileSet.clear();
-      return true;
+      else { // file is valid and contains T.O.D.O items
+        myFileTree.removeFile(file);
+        myFileTree.add(file); // file can be moved. remove/add calls move it to another place
+        EditorHighlighter highlighter = myFile2Highlighter.get(file);
+        if (highlighter != null) { // update highlighter text
+          highlighter.setText(PsiDocumentManager.getInstance(myProject).getDocument(psiFile).getCharsSequence());
+        }
+      }
     }
+
+    myDirtyFileSet.clear();
   }
 
   protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
@@ -453,9 +459,10 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  @VisibleForTesting
-  protected final void updateTree() {
-    myCoroutineHelper.scheduleUpdateTree();
+  public final @NotNull Promise<?> updateTree() {
+    return myUpdatable ?
+           Promises.asPromise(myCoroutineHelper.scheduleUpdateTree()) :
+           Promises.resolvedPromise();
   }
 
   @VisibleForTesting
@@ -695,7 +702,8 @@ public abstract class TodoTreeBuilder implements Disposable {
         return;
       }
       if (child instanceof PsiDirectory psiDirectory) { // directory will be removed
-        myCoroutineHelper.scheduleMarkFilesAsDirtyAndUpdateTree(myFileTree.getFiles(psiDirectory.getVirtualFile()));
+        List<VirtualFile> files = myFileTree.getFiles(psiDirectory.getVirtualFile());
+        myCoroutineHelper.scheduleMarkFilesAsDirtyAndUpdateTree(files);
       }
       else {
         if (PsiTreeUtil.getParentOfType(child, PsiComment.class, false) != null) { // change inside comment
@@ -711,25 +719,29 @@ public abstract class TodoTreeBuilder implements Disposable {
         scheduleMarkFileAsDirtyAndUpdateTree(file);
         return;
       }
-
       PsiElement child = e.getChild();
       if (child instanceof PsiFile psiFile) { // file was moved
-        if (canContainTodoItems(psiFile)) { // moved file doesn't contain TODOs
+        if (canContainTodoItems(psiFile)) { // moved file contains TODOs
           scheduleMarkFileAsDirtyAndUpdateTree(psiFile);
         }
         return;
       }
       if (child instanceof PsiDirectory psiDirectory) { // directory was moved. mark all its files as dirty.
-        ArrayList<PsiFile> psiFiles = new ArrayList<>();
-        for (Iterator<PsiFile> i = getAllFiles(); i.hasNext(); ) {
+        ArrayList<VirtualFile> files = new ArrayList<>();
+        for (Iterator<? extends PsiFile> i = getAllFiles(); i.hasNext(); ) {
           PsiFile psiFile = i.next();
-          if (psiFile != null &&  // skip invalid PSI files
-              PsiTreeUtil.isAncestor(psiDirectory, psiFile, true)) {
-            psiFiles.add(psiFile);
+          if (psiFile == null ||  // skip invalid PSI files
+              !psiFile.isValid() ||
+              !PsiTreeUtil.isAncestor(psiDirectory, psiFile, true)) {
+            continue;
+          }
+          VirtualFile virtualFile = psiFile.getVirtualFile();
+          if (virtualFile != null) {
+            files.add(virtualFile);
           }
         }
 
-        myCoroutineHelper.scheduleMarkPsiFilesAsDirtyAndUpdateTree(psiFiles);
+        myCoroutineHelper.scheduleMarkFilesAsDirtyAndUpdateTree(files);
       }
     }
 
@@ -766,7 +778,10 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
 
     private void scheduleMarkFileAsDirtyAndUpdateTree(@Nullable PsiFile file) {
-      myCoroutineHelper.scheduleMarkPsiFilesAsDirtyAndUpdateTree(file != null ? List.of(file) : List.of());
+      VirtualFile virtualFile = file != null ? file.getVirtualFile() : null;
+      if (virtualFile != null) {
+        myCoroutineHelper.scheduleMarkFilesAsDirtyAndUpdateTree(List.of(virtualFile));
+      }
     }
   }
 

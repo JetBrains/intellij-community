@@ -311,7 +311,7 @@ public final class XsltSupport {
   }
 
   public static int getAVTOffset(String value, int i) {
-    do {
+    while (true) {
       i = value.indexOf('{', i);
       if (i != -1 && i == value.indexOf("{{", i)) {
         i += 2;
@@ -320,7 +320,6 @@ public final class XsltSupport {
         break;
       }
     }
-    while (i != -1);
     return i;
   }
 

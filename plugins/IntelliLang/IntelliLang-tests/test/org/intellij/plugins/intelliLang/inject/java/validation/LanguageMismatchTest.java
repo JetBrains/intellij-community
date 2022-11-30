@@ -27,7 +27,6 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
                   "class X {" +
                   "  @Language(\"JavaScript\")" +
                   "  String JS_CODE = \"var x;\";" +
-                  "" +
                   "  @Language(\"XPath\")" +
                   "  String XPATH_CODE = (((<warning descr=\"Language mismatch: Expected 'XPath', got 'JavaScript'\">JS_CODE</warning>)));" +
                   "}");
@@ -37,7 +36,6 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
     highlightTest("import org.intellij.lang.annotations.Language;" +
                   "class X {" +
                   "  public static final String[] EMPTY_ARRAY = {};" +
-                  "" +
                   "  @Language(\"HTML\")" +
                   "  String[] getCode() {" +
                   "    return EMPTY_ARRAY;" +

@@ -8,8 +8,10 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SpecialConfigFiles
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.User32Ex
 import com.sun.jna.platform.win32.WinDef
@@ -20,10 +22,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.MessageDecoder
-import java.io.DataInput
-import java.io.DataInputStream
-import java.io.DataOutputStream
-import java.io.IOException
+import java.io.*
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.Socket
@@ -337,7 +336,7 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
   private var state = State.HEADER
 
   override fun channelActive(context: ChannelHandlerContext) {
-    sendStringSequence(context, lockedPaths)
+    sendStringSequence(context, lockedPaths + PathManager.getPerProjectLockedPaths().joinToString() )
   }
 
   override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
@@ -369,8 +368,9 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
                   commandProcessor()(list).await()
                 }
               }
-              catch (e: Exception) {
-                CliResult(AppExitCodes.ACTIVATE_ERROR, e.message)
+              catch (e: Throwable) {
+                val message = getDiagnosticErrorMessage(e)
+                CliResult(AppExitCodes.ACTIVATE_ERROR, message)
               }
             }
             else {
@@ -393,5 +393,27 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
         }
       }
     }
+  }
+
+  private fun getDiagnosticErrorMessage(e: Throwable): @NlsSafe String {
+    val processInfo = try {
+      val ph = ProcessHandle.current()
+      val command = ph.info().command().orElse("<N/A>")
+      val pid = ph.pid()
+
+      "PID: $pid, Command: $command"
+    } catch (e: Throwable) {
+      "<Unable to determine process info: ${e.message}>"
+    }
+
+    val message = e.message ?: "<null>"
+
+    val stackTrace = try {
+      e.stackTraceToString()
+    } catch (e: Throwable) {
+      "<Unable to get stack trace: ${e.message}>"
+    }
+
+    return "Response from process: $processInfo, exception: $message\n$stackTrace"
   }
 }

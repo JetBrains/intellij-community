@@ -41,19 +41,19 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     }
 
     companion object {
-        fun KtAnalysisSession.getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> {
-            return getUnimplementedMemberSymbols(classWithUnimplementedMembers.getClassOrObjectSymbol()).map { unimplementedMemberSymbol ->
-                val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
-                KtClassMemberInfo(
-                    symbol = unimplementedMemberSymbol,
-                    memberText = unimplementedMemberSymbol.render(renderOption),
-                    memberIcon = getIcon(unimplementedMemberSymbol),
-                    containingSymbolText = containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString()
-                        ?: containingSymbol?.name?.asString(),
-                    containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
-                )
-            }
-        }
+        fun KtAnalysisSession.getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
+            classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
+                .map { unimplementedMemberSymbol ->
+                    val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
+                    KtClassMemberInfo(
+                        symbol = unimplementedMemberSymbol,
+                        memberText = unimplementedMemberSymbol.render(renderer),
+                        memberIcon = getIcon(unimplementedMemberSymbol),
+                        containingSymbolText = containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString()
+                            ?: containingSymbol?.name?.asString(),
+                        containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
+                    )
+                }
 
         @OptIn(ExperimentalStdlibApi::class)
         private fun KtAnalysisSession.getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {

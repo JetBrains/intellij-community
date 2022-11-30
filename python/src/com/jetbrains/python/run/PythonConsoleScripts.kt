@@ -138,7 +138,7 @@ private fun escape(s: String): String = StringUtil.escapeCharCharacters(s)
 fun String.toStringLiteral() = "'${escape(this)}'"
 
 @Contract(pure = true)
-private fun TargetEnvironmentFunction<String>.toStringLiteral(): TargetEnvironmentFunction<String> =
+fun TargetEnvironmentFunction<String>.toStringLiteral(): TargetEnvironmentFunction<String> =
   StringLiteralTargetFunctionWrapper(this)
 
 private class StringLiteralTargetFunctionWrapper(private val s: TargetEnvironmentFunction<String>)

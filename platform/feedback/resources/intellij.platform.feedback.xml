@@ -14,7 +14,7 @@
 
     <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
     <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
-                 description="Explicitly sets the number of seconds until the project creation feedback notification is displayed."/>
+                 description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
   </extensions>
 
   <applicationListeners>
@@ -25,14 +25,13 @@
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
+      <action id="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction"
+              class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               internal="true"/>
       <action id="com.intellij.feedback.kotlinRejecters.TestShowKotlinRejectersFeedbackDialogAction"
               class="com.intellij.feedback.kotlinRejecters.TestShowKotlinRejectersFeedbackDialogAction"
-              internal="true"/>
-      <action id="com.intellij.feedback.npw.TestShowNewProjectFeedbackDialogAction"
-              class="com.intellij.feedback.npw.TestShowNewProjectFeedbackDialogAction"
               internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>

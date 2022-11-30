@@ -4,9 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiTreeChangeEvent
+import com.intellij.psi.*
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
@@ -70,6 +68,11 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
              */
             return true
         }
+
+        if (psi is PsiWhiteSpace || psi is PsiComment) {
+            return false
+        }
+
         val container = psi.getNonLocalContainingInBodyDeclarationWith() ?: return true
         return !isReanalyzableContainer(container)
     }

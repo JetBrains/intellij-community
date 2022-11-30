@@ -43,6 +43,7 @@ class PyRunAnythingProvider : RunAnythingMatchedRunConfigurationProvider() {
       }
       workingDir?.findPythonSdk(project)?.let {
         sdkHome = it.homePath
+        sdk = it
       }
       workingDir?.let {
         workingDirectory = it.canonicalPath

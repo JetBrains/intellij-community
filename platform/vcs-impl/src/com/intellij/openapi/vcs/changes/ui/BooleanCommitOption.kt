@@ -5,9 +5,11 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.vcs.commit.CommitSessionCollector
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -35,12 +37,23 @@ open class BooleanCommitOption(
 
   private var isInSettings = false
 
+  private var checkinHandler: CheckinHandler? = null
+  private var isDuringUpdate: Boolean = false
+
+  init {
+    checkBox.addActionListener {
+      if (checkinHandler != null && !isDuringUpdate) {
+        CommitSessionCollector.getInstance(project).logCommitCheckToggled(checkinHandler!!, isInSettings, checkBox.isSelected)
+      }
+    }
+  }
+
   override fun saveState() {
     setter.accept(checkBox.isSelected)
   }
 
   override fun restoreState() {
-    checkBox.isSelected = getter()
+    setSelected(getter())
     if (disableWhenDumb && !isInSettings) {
       CheckinHandlerUtil.disableWhenDumb(project, checkBox,
                                          VcsBundle.message("changes.impossible.until.indices.are.up.to.date"))
@@ -59,4 +72,19 @@ open class BooleanCommitOption(
   override fun apply() = saveState()
 
   override fun reset() = restoreState()
+
+  fun setSelected(value: Boolean) {
+    isDuringUpdate = true
+    try {
+      checkBox.isSelected = value
+    }
+    finally {
+      isDuringUpdate = false
+    }
+  }
+
+  fun withCheckinHandler(checkinHandler: CheckinHandler): BooleanCommitOption {
+    this.checkinHandler = checkinHandler
+    return this
+  }
 }

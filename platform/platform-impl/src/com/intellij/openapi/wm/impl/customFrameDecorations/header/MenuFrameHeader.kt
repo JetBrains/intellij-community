@@ -3,8 +3,8 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
@@ -30,7 +30,7 @@ internal class MenuFrameHeader(frame: JFrame,
 
   private val mainMenuUpdater: UISettingsListener
 
-  private var disposable: Disposable? = null
+  private var disposable: CheckedDisposable? = null
 
   init {
     layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top, hidemode 2", "[pref!][][grow][pref!]")
@@ -51,9 +51,8 @@ internal class MenuFrameHeader(frame: JFrame,
     menuHolder.add(ideMenu, "wmin 0, wmax pref, top, growy")
 
     add(menuHolder, "wmin 0, top, growy, pushx")
-    val view = headerTitle.view.apply {
-      border = empty
-    }
+    val view = headerTitle.view
+    view.border = empty
 
     add(view, "left, growx, gapbottom 1")
     add(buttonPanes.getView(), "top, wmin pref")
@@ -81,7 +80,7 @@ internal class MenuFrameHeader(frame: JFrame,
 
   override fun installListeners() {
     ideMenu.selectionModel.addChangeListener(changeListener)
-    val disp = Disposer.newDisposable()
+    val disp = Disposer.newCheckedDisposable()
     Disposer.register(ApplicationManager.getApplication(), disp)
 
     ApplicationManager.getApplication().messageBus.connect(disp).subscribe(UISettingsListener.TOPIC, mainMenuUpdater)
@@ -94,8 +93,9 @@ internal class MenuFrameHeader(frame: JFrame,
   override fun uninstallListeners() {
     ideMenu.selectionModel.removeChangeListener(changeListener)
     disposable?.let {
-      if (!Disposer.isDisposed(it))
+      if (!it.isDisposed) {
         Disposer.dispose(it)
+      }
       disposable = null
     }
 

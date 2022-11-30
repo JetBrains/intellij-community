@@ -44,7 +44,7 @@ class ProjectExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPo
   }
 
   fun <R> computeSafeIfAny(areaInstance: AreaInstance, processor: Function<T, R?>): R? {
-    return computeSafeIfAny<T, R>(processor, getPointImpl(areaInstance))
+    return computeSafeIfAny(processor = processor, iterable = getPointImpl(areaInstance))
   }
 
   fun addExtensionPointListener(areaInstance: AreaInstance, listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {

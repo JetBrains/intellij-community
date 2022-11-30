@@ -72,19 +72,29 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
   fun create(vmScope: CoroutineScope,
              filterName: @Nls String,
              items: List<T>,
+             onSelect: () -> Unit,
              valuePresenter: (T) -> @Nls String = Any::toString): JComponent =
     create(vmScope, filterName, valuePresenter) { point, popupState ->
-      ChooserPopupUtil.showChooserPopup(point, popupState, items) {
-        ChooserPopupUtil.PopupItemPresentation.Simple(valuePresenter(it))
+      val selectedItem = ChooserPopupUtil.showChooserPopup(point, popupState, items) { popupItem ->
+        ChooserPopupUtil.PopupItemPresentation.Simple(valuePresenter(popupItem))
       }
+      if (selectedItem != null) {
+        onSelect()
+      }
+      selectedItem
     }
 
   fun create(vmScope: CoroutineScope,
              filterName: @Nls String,
              items: List<T>,
+             onSelect: () -> Unit,
              valuePresenter: (T) -> @Nls String = Any::toString,
              popupItemPresenter: (T) -> ChooserPopupUtil.PopupItemPresentation): JComponent =
     create(vmScope, filterName, valuePresenter) { point, popupState ->
-      ChooserPopupUtil.showChooserPopup(point, popupState, items, popupItemPresenter)
+      val selectedItem = ChooserPopupUtil.showChooserPopup(point, popupState, items, popupItemPresenter)
+      if (selectedItem != null) {
+        onSelect()
+      }
+      selectedItem
     }
 }

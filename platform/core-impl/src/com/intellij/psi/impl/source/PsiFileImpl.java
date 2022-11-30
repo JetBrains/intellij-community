@@ -76,7 +76,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myPsiLock = myViewProvider.getFilePsiLock();
   }
 
-  public void setContentElementType(final IElementType contentElementType) {
+  public void setContentElementType(IElementType contentElementType) {
     LOG.assertTrue(contentElementType instanceof ILazyParseableElementType, contentElementType);
     myContentElementType = contentElementType;
   }
@@ -85,7 +85,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return myContentElementType;
   }
 
-  protected void init(@NotNull final IElementType elementType, final IElementType contentElementType) {
+  protected void init(@NotNull IElementType elementType, IElementType contentElementType) {
     myElementType = elementType;
     setContentElementType(contentElementType);
   }
@@ -126,7 +126,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  public boolean processChildren(final @NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
+  public boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
     return true;
   }
 
@@ -192,9 +192,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       PsiUtilCore.ensureValid(this); // for invalidation trace diagnostics
     }
 
-    final FileViewProvider viewProvider = getViewProvider();
+    FileViewProvider viewProvider = getViewProvider();
     if (viewProvider.isPhysical()) {
-      final VirtualFile vFile = viewProvider.getVirtualFile();
+      VirtualFile vFile = viewProvider.getVirtualFile();
       AstLoadingFilter.assertTreeLoadingAllowed(vFile);
       if (myManager.isAssertOnFileLoading(vFile)) {
         reportProhibitedAstAccess(vFile);
@@ -273,14 +273,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @NotNull
   protected FileElement createFileElement(CharSequence docText) {
-    final FileElement treeElement;
-    final TreeElement contentLeaf = createContentLeafElement(docText);
+    FileElement treeElement;
+    TreeElement contentLeaf = createContentLeafElement(docText);
 
     if (contentLeaf instanceof FileElement) {
       treeElement = (FileElement)contentLeaf;
     }
     else {
-      final CompositeElement xxx = ASTFactory.composite(myElementType);
+      CompositeElement xxx = ASTFactory.composite(myElementType);
       assert xxx instanceof FileElement : "BUMM";
       treeElement = (FileElement)xxx;
       treeElement.rawAddChildrenWithoutNotifications(contentLeaf);
@@ -296,7 +296,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public String getText() {
-    final ASTNode tree = derefTreeElement();
+    ASTNode tree = derefTreeElement();
     if (!isValid()) {
       ProgressManager.checkCanceled();
 
@@ -317,7 +317,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public int getTextLength() {
-    final ASTNode tree = derefTreeElement();
+    ASTNode tree = derefTreeElement();
     if (tree != null) return tree.getTextLength();
 
     PsiUtilCore.ensureValid(this);
@@ -369,7 +369,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFileImpl clone() {
     FileViewProvider viewProvider = getViewProvider();
     FileViewProvider providerCopy = viewProvider.clone();
-    final Language language = getLanguage();
+    Language language = getLanguage();
     if (providerCopy == null) {
       throw new AssertionError("Unable to clone the view provider: " + viewProvider + "; " + language);
     }
@@ -378,7 +378,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     if (getTreeElement() != null) {
       // not set by provider in clone
-      final FileElement treeClone = (FileElement)calcTreeElement().clone();
+      FileElement treeClone = (FileElement)calcTreeElement().clone();
       clone.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
       treeClone.setPsi(clone);
     }
@@ -429,7 +429,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Nullable
   public PsiDirectory getContainingDirectory() {
     VirtualFile file = getViewProvider().getVirtualFile();
-    final VirtualFile parentFile = file.getParent();
+    VirtualFile parentFile = file.getParent();
     if (parentFile == null) return null;
     if (!parentFile.isValid()) {
       LOG.error("Invalid parent: " + parentFile + " of file " + file + ", file.valid=" + file.isValid());
@@ -464,7 +464,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return myOriginalFile == null ? this : myOriginalFile;
   }
 
-  public void setOriginalFile(@NotNull final PsiFile originalFile) {
+  public void setOriginalFile(@NotNull PsiFile originalFile) {
     myOriginalFile = originalFile.getOriginalFile();
 
     FileViewProvider original = myOriginalFile.getViewProvider();
@@ -473,10 +473,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public PsiFile @NotNull [] getPsiRoots() {
-    final FileViewProvider viewProvider = getViewProvider();
-    final Set<Language> languages = viewProvider.getLanguages();
+    FileViewProvider viewProvider = getViewProvider();
+    Set<Language> languages = viewProvider.getLanguages();
 
-    final PsiFile[] roots = new PsiFile[languages.size()];
+    PsiFile[] roots = new PsiFile[languages.size()];
     int i = 0;
     for (Language language : languages) {
       PsiFile psi = viewProvider.getPsi(language);
@@ -622,24 +622,24 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     if (getTreeElement() != null) return null;
 
-    final StubTree derefd = derefStub();
+    StubTree derefd = derefStub();
     if (derefd != null) return derefd;
 
     if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getElementTypeForStubBuilder() == null) {
       return null;
     }
 
-    final VirtualFile vFile = getVirtualFile();
+    VirtualFile vFile = getVirtualFile();
 
     ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return null;
-    final FileViewProvider viewProvider = getViewProvider();
-    final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
+    FileViewProvider viewProvider = getViewProvider();
+    List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
     synchronized (myPsiLock) {
       if (getTreeElement() != null) return null;
 
-      final StubTree derefdOnLock = derefStub();
+      StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
       PsiFileStubImpl<?> baseRoot = (PsiFileStubImpl<?>)((StubTree)tree).getRoot();
@@ -902,7 +902,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
 
       @Override
-      public Icon getIcon(final boolean open) {
+      public Icon getIcon(boolean open) {
         return PsiFileImpl.this.getIcon(0);
       }
     };
@@ -943,7 +943,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return this == another;
   }
 
@@ -1001,9 +1001,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         myManager.dropPsiCaches();
       }
 
-      final VirtualFile vFile = getVirtualFile();
+      VirtualFile vFile = getVirtualFile();
       if (vFile != null && vFile.isValid()) {
-        final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
+        Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
         if (doc != null) {
           FileDocumentManager.getInstance().saveDocument(doc);
         }

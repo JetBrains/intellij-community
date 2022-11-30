@@ -279,6 +279,7 @@ object PlatformModules {
       "intellij.platform.vcs.dvcs.impl",
       "intellij.platform.vcs.log.graph.impl",
       "intellij.platform.vcs.log.impl",
+      "intellij.smart.update",
 
       "intellij.platform.collaborationTools",
       "intellij.platform.collaborationTools.auth",

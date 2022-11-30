@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.THashSet;
@@ -17,7 +18,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -127,6 +127,19 @@ public final class ContainerUtil {
     return new ArrayList<>(Arrays.asList(array));
   }
 
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead
+   *
+   * DO NOT REMOVE this method until {@link ContainerUtil#newArrayList(Iterable)} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Collection<? extends E> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("Use `new ArrayList(Collection)` instead. "+iterable.getClass());
+    return new ArrayList<>(iterable);
+  }
+
   @Contract(pure = true)
   public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Iterable<? extends E> iterable) {
     ArrayList<E> collection = new ArrayList<>();
@@ -232,10 +245,24 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> iterable) {
-    Iterator<? extends T> iterator = iterable.iterator();
     HashSet<T> set = new HashSet<>();
-    while (iterator.hasNext()) set.add(iterator.next());
+    for (T t : iterable) {
+      set.add(t);
+    }
     return set;
+  }
+
+  /**
+   * @deprecated use {@link HashSet#HashSet(Collection)}
+   *
+   * DO NOT remove this method until {@link #newHashSet(Iterable)} is removed
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static @NotNull <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("use HashSet#HashSet(Collection) instead");
+    return new HashSet<>(iterable);
   }
 
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
@@ -270,6 +297,19 @@ public final class ContainerUtil {
       collection.add(element);
     }
     return collection;
+  }
+
+  /**
+   * @deprecated use {@link LinkedHashSet#LinkedHashSet(Collection)}
+   *
+   * DO NOT remove this method until {@link #newLinkedHashSet(Iterable)} is removed
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Collection<? extends T> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("use LinkedHashSet#LinkedHashSet(Collection) instead");
+    return new LinkedHashSet<>(iterable);
   }
 
   @SafeVarargs
@@ -960,8 +1000,8 @@ public final class ContainerUtil {
     return result;
   }
 
-  public static <T> boolean all(T[] array, @NotNull Condition<? super T> condition) {
-    return all(Arrays.asList(array), condition);
+  public static <T> boolean all(T @NotNull [] array, @NotNull Condition<? super T> condition) {
+    return and(array, condition);
   }
 
   public static <T> boolean all(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
@@ -1004,47 +1044,6 @@ public final class ContainerUtil {
       @Override
       public T next() {
         return enumeration.nextElement();
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> iterate(T @NotNull [] arrays, @NotNull Condition<? super T> condition) {
-    return iterate(Arrays.asList(arrays), condition);
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> iterate(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
-    if (collection.isEmpty()) return Collections.emptyList();
-    return () -> new Iterator<T>() {
-      private final Iterator<? extends T> impl = collection.iterator();
-      private T next = findNext();
-
-      @Override
-      public boolean hasNext() {
-        return next != null;
-      }
-
-      @Override
-      public T next() {
-        T result = next;
-        next = findNext();
-        return result;
-      }
-
-      private @Nullable T findNext() {
-        while (impl.hasNext()) {
-          T each = impl.next();
-          if (condition.value(each)) {
-            return each;
-          }
-        }
-        return null;
       }
 
       @Override
@@ -1515,6 +1514,18 @@ public final class ContainerUtil {
     }
 
     return res;
+  }
+  /**
+   * @deprecated use {@link #getLastItem(List)}
+   *
+   * DO NOT remove this method until {@link #iterateAndGetLastItem(Iterable)} is removed
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static <T> T iterateAndGetLastItem(@NotNull List<? extends T> items) {
+    Logger.getInstance(ContainerUtil.class).error("use getLastItem(List) instead");
+    return getLastItem(items);
   }
 
   @Contract(pure = true)
@@ -2583,6 +2594,20 @@ public final class ContainerUtil {
     return iterable instanceof Collection ? (Collection<T>)iterable : newArrayList(iterable);
   }
 
+  /**
+   * @deprecated use the argument instead
+   *
+   * DO NOT remove this method until {@link #toCollection(Iterable)} is removed
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  public static @NotNull <T> Collection<T> toCollection(@NotNull Collection<? extends T> iterable) {
+    Logger.getInstance(ContainerUtil.class).error("use the argument, Luke");
+    //noinspection unchecked
+    return (Collection<T>)iterable;
+  }
+
   public static @NotNull <T> List<T> toList(@NotNull Enumeration<? extends T> enumeration) {
     if (!enumeration.hasMoreElements()) {
       return Collections.emptyList();
@@ -2773,22 +2798,5 @@ public final class ContainerUtil {
     int numberOfChunks = listSize / chunkSize;
     return IntStream.range(0, numberOfChunks * chunkSize == listSize ? numberOfChunks : numberOfChunks + 1)
       .mapToObj(i -> list.subList(i * chunkSize, Math.min(listSize, i * chunkSize + chunkSize)));
-  }
-
-  public static <T> @NotNull List<List<T>> groupSublistRuns(@NotNull List<T> list,
-                                                            @NotNull BiPredicate<? super T, ? super T> equality) {
-    if (list.isEmpty()) {
-      return emptyList();
-    }
-
-    List<List<T>> result = new ArrayList<>();
-    int lastIndex = 0;
-    for (int i = 0, size = list.size(); i < size; i++) {
-      if (i == size - 1 || !equality.test(list.get(i), list.get(i + 1))) {
-        result.add(list.subList(lastIndex, i + 1));
-        lastIndex = i + 1;
-      }
-    }
-    return result;
   }
 }

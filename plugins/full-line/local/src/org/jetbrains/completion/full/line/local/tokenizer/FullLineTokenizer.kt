@@ -3,8 +3,7 @@ package org.jetbrains.completion.full.line.local.tokenizer
 import java.io.File
 import java.nio.charset.Charset
 import java.util.*
-import kotlin.concurrent.thread
-import kotlin.math.min
+import kotlin.collections.ArrayList
 
 // TODO: use different types to prevent overflow
 // uint32_t -> Int
@@ -56,13 +55,7 @@ data class BPERule(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
-
     other as BPERule
-
-    if (x != other.x) return false
-    if (y != other.y) return false
-    if (z != other.z) return false
-
     return x == other.x && y == other.y && z == other.z
   }
 
@@ -130,8 +123,8 @@ data class SpecialTokens(
   }
 }
 
-class FullLineTokenizer(modelFile: File, nThreads: Int) : Tokenizer {
-  private var encoder = BaseEncoder(modelFile, nThreads)
+class FullLineTokenizer(modelFile: File) : Tokenizer {
+  private var encoder = BaseEncoder(modelFile)
   override val vocabSize = encoder.vocabSize()
   override val eosTokenId = this.encoder.bpeState.specialTokens.eosId
   override val invalidIds: Set<Int> = setOf(
@@ -198,6 +191,10 @@ class FullLineTokenizer(modelFile: File, nThreads: Int) : Tokenizer {
     return decode(listOf(ids.toList()))[0]
   }
 
+  override fun decode(ids: IntArray, separator: String): String {
+    return ids.map { decode(it) }.joinToString(separator)
+  }
+
   override fun decode(id: Int): String {
     return encoder.idToSubword(id, true)
   }
@@ -205,13 +202,17 @@ class FullLineTokenizer(modelFile: File, nThreads: Int) : Tokenizer {
   override fun isValidString(s: String): Boolean {
     return true
   }
+  
+  override fun idsByRegex(regex: Regex): Set<Int> {
+    return vocab.filterKeys { it.contains(regex) }.values.toSet()
+  }
 
   override val vocab: Map<String, Int> = encoder.vocabulary().mapIndexed { index, s -> Pair(s, index) }.toMap()
 }
 
 
 // TODO: use better hashmap (or maybe this is good enough)
-class BaseEncoder(modelFile: File, private var nThreads: Int) {
+class BaseEncoder(modelFile: File) {
   // BPEState bpeState;
   internal var bpeState: BPEState = BPEState()
 
@@ -229,13 +230,6 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
 
 
   init {
-    assert(nThreads >= 1 || nThreads == -1)
-    if (nThreads == -1) {
-      // TODO: determine hardware concurrency
-      // nThreads = max(1, int(std::thread::hardwareConcurrency()));
-      this.nThreads = 2
-    }
-
     val status: Status = bpeState.load(modelFile)
     if (!status.ok()) {
       throw BPEException("Couldn't load model from ${modelFile.absolutePath}")
@@ -267,14 +261,14 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
     sentences: List<String>, bos: Boolean, eos: Boolean, reverse: Boolean, dropoutProb: Double
   ): EncodingResult {
     val encodingConfig = EncodingConfig(bos, eos, reverse, dropoutProb)
-    val encodingParallelResult = encodeParallel(sentences, encodingConfig)
+    val encodingParallelResult = encodeMany(sentences, encodingConfig)
     val decodeResults = encodingParallelResult.ids
     val status = encodingParallelResult.status
     return EncodingResult(status, decodeResults)
   }
 
   // BaseEncoder::encode_parallel()
-  private fun encodeParallel(
+  private fun encodeMany(
     sentences: List<String>, encodingConfig: EncodingConfig
   ): EncodingResult {
     if (encodingConfig.bos && bpeState.specialTokens.bosId == -1) {
@@ -288,35 +282,12 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
       )
     }
 
-    val ids = arrayOfNulls<List<Int>>(sentences.size).asList().toMutableList()
-    if (sentences.size <= nThreads * 3 || nThreads == 1) {
-      // Not too many sentences. It's better to solve it without threads.
-      sentences.forEachIndexed { index, sentence ->
-        ids[index] = encodeSentence(sentence, encodingConfig)
-      }
-    }
-    else {
-      val threads: List<Thread> = (0..nThreads).map {
-        thread {
-          val tasksForThread: Int = ((sentences.size + nThreads - 1) / nThreads)
-          val firstTask: Int = tasksForThread * it
-          val lastTask: Int = min(tasksForThread * (it + 1), sentences.size - 1)
-          (firstTask..lastTask).forEach {
-            ids[it] = encodeSentence(sentences[it], encodingConfig)
-          }
-        }
-
-      }
-
-      threads.forEach {
-        it.join()
-      }
+    val ids = ArrayList<List<Int>>(sentences.size)
+    sentences.forEach { sentence ->
+      ids.add(encodeSentence(sentence, encodingConfig))
     }
 
-    assert(ids.none { it == null })
-    return EncodingResult(
-      Status(), ids.filterNotNull()
-    )
+    return EncodingResult(Status(), ids)
   }
 
   private fun encodeSentence(sentence: String, encodingConfig: EncodingConfig): List<Int> {

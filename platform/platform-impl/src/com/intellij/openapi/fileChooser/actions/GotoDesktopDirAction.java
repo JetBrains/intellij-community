@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -23,7 +23,7 @@ import java.nio.file.Path;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
-public final class GotoDesktopDirAction extends FileChooserAction implements LightEditCompatible {
+final class GotoDesktopDirAction extends FileChooserAction implements LightEditCompatible {
   private final NullableLazyValue<Path> myDesktopPath = lazyNullable(() -> {
     Path path = getDesktopDirectory();
     return Files.isDirectory(path) ? path : null;
@@ -31,7 +31,7 @@ public final class GotoDesktopDirAction extends FileChooserAction implements Lig
 
   private final NullableLazyValue<VirtualFile> myDesktopDirectory = lazyNullable(() -> {
     Path path = myDesktopPath.getValue();
-    return path != null ? LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path) : null;
+    return path != null ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   });
 
   @Override

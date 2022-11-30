@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleFileTestUtil")
-
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.file.VirtualFileUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
@@ -78,8 +79,9 @@ fun VirtualFile.createSettingsFile(
   useKotlinDsl: Boolean = false,
   content: String
 ) = runWriteActionAndGet {
-  findOrCreateFile(getSettingsFilePath(relativeModulePath, useKotlinDsl))
-    .also { it.text = content }
+  val path = getSettingsFilePath(relativeModulePath, useKotlinDsl)
+  val file = VirtualFileUtil.findOrCreateFile(this, path)
+  VirtualFileUtil.setTextContent(file, content)
 }
 
 fun VirtualFile.createBuildFile(
@@ -87,22 +89,25 @@ fun VirtualFile.createBuildFile(
   useKotlinDsl: Boolean = false,
   content: String
 ) = runWriteActionAndGet {
-  findOrCreateFile(getBuildFilePath(relativeModulePath, useKotlinDsl))
-    .also { it.text = content }
+  val path = getBuildFilePath(relativeModulePath, useKotlinDsl)
+  val file = VirtualFileUtil.findOrCreateFile(this, path)
+  VirtualFileUtil.setTextContent(file, content)
 }
 
 fun VirtualFile.getSettingsFile(
   relativeModulePath: String = ".",
   useKotlinDsl: Boolean = false
 ) = runReadAction {
-  getFile(getSettingsFilePath(relativeModulePath, useKotlinDsl))
+  val path = getSettingsFilePath(relativeModulePath, useKotlinDsl)
+  VirtualFileUtil.getFile(this, path)
 }
 
 fun VirtualFile.getBuildFile(
   relativeModulePath: String = ".",
   useKotlinDsl: Boolean = false
 ) = runReadAction {
-  getFile(getBuildFilePath(relativeModulePath, useKotlinDsl))
+  val path = getBuildFilePath(relativeModulePath, useKotlinDsl)
+  VirtualFileUtil.getFile(this, path)
 }
 
 fun TestFilesConfiguration.withSettingsFile(
@@ -137,14 +142,16 @@ fun TestFilesConfiguration.withBuildFile(
   content: String
 ) = withFile(getBuildFilePath(relativeModulePath, useKotlinDsl), content)
 
-private fun getSettingsFilePath(relativeModulePath: String, useKotlinDsl: Boolean) =
-  when (useKotlinDsl) {
+private fun getSettingsFilePath(relativeModulePath: String, useKotlinDsl: Boolean): String {
+  return when (useKotlinDsl) {
     true -> "$relativeModulePath/settings.gradle.kts"
     else -> "$relativeModulePath/settings.gradle"
   }
+}
 
-private fun getBuildFilePath(relativeModulePath: String, useKotlinDsl: Boolean) =
-  when (useKotlinDsl) {
+private fun getBuildFilePath(relativeModulePath: String, useKotlinDsl: Boolean): String {
+  return when (useKotlinDsl) {
     true -> "$relativeModulePath/build.gradle.kts"
     else -> "$relativeModulePath/build.gradle"
   }
+}

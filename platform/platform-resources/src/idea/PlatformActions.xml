@@ -600,15 +600,6 @@
               <synonym key="action.TogglePresentationMode.text.enter"/>
               <synonym key="action.TogglePresentationMode.text.exit"/>
             </action>
-            <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
-              <synonym key="action.ZoomInIdeAction.text"/>
-            </action>
-            <action id="ZoomOutIdeAction" class="com.intellij.ide.actions.ZoomOutIdeAction">
-              <synonym key="action.ZoomOutIdeAction.text"/>
-            </action>
-            <action id="ResetIdeScaleAction" class="com.intellij.ide.actions.ResetIdeScaleAction">
-              <synonym key="action.ResetIdeScaleAction.text"/>
-            </action>
             <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction">
               <synonym key="action.ToggleDistractionFreeMode.enter"/>
               <synonym key="action.ToggleDistractionFreeMode.exit"/>
@@ -620,6 +611,16 @@
             <action id="ToggleZenMode" class="com.intellij.ide.actions.ToggleZenModeAction">
               <synonym key="action.ToggleZenMode.exit"/>
               <synonym key="action.ToggleZenMode.enter"/>
+            </action>
+            <separator/>
+            <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
+              <synonym key="action.ZoomInIdeAction.text"/>
+            </action>
+            <action id="ZoomOutIdeAction" class="com.intellij.ide.actions.ZoomOutIdeAction">
+              <synonym key="action.ZoomOutIdeAction.text"/>
+            </action>
+            <action id="ResetIdeScaleAction" class="com.intellij.ide.actions.ResetIdeScaleAction">
+              <synonym key="action.ResetIdeScaleAction.text"/>
             </action>
           </group>
 

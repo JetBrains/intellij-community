@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -19,8 +19,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -57,6 +57,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
+import com.intellij.vcs.commit.CommitSessionCollector
 import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
@@ -72,12 +73,10 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
     CodeAnalysisBeforeCheckinHandler(panel.project)
 }
 
-class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>) : CommitProblemWithDetails {
+class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>,
+                                private val errors: Int, private val warnings: Int) : CommitProblemWithDetails {
   override val text: String
     get() {
-      val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
-      val warnings = codeSmells.size - errors
-
       val errorsText = if (errors > 0) HighlightSeverity.ERROR.getCountMessage(errors) else null
       val warningsText = if (warnings > 0) HighlightSeverity.WARNING.getCountMessage(warnings) else null
 
@@ -133,12 +132,18 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     withContext(Dispatchers.Default) {
       // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
       val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
-      runUnderIndicator(coroutineContext.job, progressIndicatorEx) {
+      jobToIndicator(coroutineContext.job, progressIndicatorEx) {
         // TODO suspending [findCodeSmells]
         codeSmells = findCodeSmells(changesByFile, isPostCommit)
       }
     }
-    return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
+    if (codeSmells.isEmpty()) return null
+
+    val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
+    val warnings = codeSmells.size - errors
+    CommitSessionCollector.getInstance(project).logCodeAnalysisWarnings(warnings, errors)
+
+    return CodeAnalysisCommitProblem(codeSmells, errors, warnings)
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
@@ -148,6 +153,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
                    settings::CODE_SMELLS_PROFILE,
                    "before.checkin.standard.options.check.smells",
                    "before.checkin.options.check.smells.profile")
+      .withCheckinHandler(this)
 
   /**
    * Puts a closure in PsiFile user data that extracts PsiElement elements that are being committed.

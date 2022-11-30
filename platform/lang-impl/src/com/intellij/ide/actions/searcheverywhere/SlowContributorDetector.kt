@@ -20,9 +20,9 @@ class SlowContributorDetector: SearchListener {
 
   override fun searchStarted(contributors: Collection<SearchEverywhereContributor<*>>) = restart()
 
-  override fun elementsAdded(list: MutableList<out SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
+  override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
 
-  override fun elementsRemoved(list: MutableList<out SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
+  override fun elementsRemoved(list: List<SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
 
   private fun updateContributorsWithEvents(list: Collection<SearchEverywhereFoundElementInfo>) {
     list.mapNotNull { it.contributor?.searchProviderId }.let { contributorsWithEvents.addAll(it) }

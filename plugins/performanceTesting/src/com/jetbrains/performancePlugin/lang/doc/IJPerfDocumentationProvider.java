@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.lang.doc;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ResourceUtil;
@@ -10,12 +11,12 @@ import com.jetbrains.performancePlugin.CommandProvider;
 import com.jetbrains.performancePlugin.lang.psi.IJPerfCommandName;
 import com.jetbrains.performancePlugin.lang.psi.IJPerfPsiImplUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 
@@ -24,6 +25,7 @@ public class IJPerfDocumentationProvider extends AbstractDocumentationProvider {
   @Nullable
   @Override
   public @Nls String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+    @NlsSafe
     String title = null;
     if (!(element instanceof IJPerfCommandName)) {
       return null;
@@ -62,11 +64,13 @@ public class IJPerfDocumentationProvider extends AbstractDocumentationProvider {
   @Nullable
   @Override
   public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+    @NlsSafe
     String description;
     if (!(element instanceof IJPerfCommandName)) {
       return null;
     }
     try {
+      @NonNls
       String commandName = IJPerfPsiImplUtil.getName((IJPerfCommandName)element);
       String commandDescriptionFileName = getCommandDescriptionFileName(commandName);
       InputStream inputStream = getDocumentationStream(commandDescriptionFileName);

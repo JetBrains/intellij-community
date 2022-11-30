@@ -24,7 +24,6 @@ import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@Suppress("UsePropertyAccessSyntax")
 internal class DefaultProjectStoreTest {
   companion object {
     @JvmField

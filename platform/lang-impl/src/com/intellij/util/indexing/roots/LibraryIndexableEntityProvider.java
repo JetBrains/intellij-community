@@ -33,7 +33,8 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull LibraryEntity oldEntity,
-                                                                                                   @NotNull LibraryEntity newEntity) {
+                                                                                                   @NotNull LibraryEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (hasSomethingToIndex(oldEntity, newEntity)) {
       return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(newEntity.getSymbolicId(), false);
     }

@@ -155,12 +155,12 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     paneComponentListener = new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        ensureSelectedTabIsVisble();
+        ensureSelectedTabIsVisible();
       }
     };
     tabPane.addComponentListener(paneComponentListener);
 
-    paneChangeListener = e -> ensureSelectedTabIsVisble();
+    paneChangeListener = e -> ensureSelectedTabIsVisible();
 
     tabPane.addChangeListener(paneChangeListener);
 
@@ -236,7 +236,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     return tabPane.getTabPlacement() == TOP || tabPane.getTabPlacement() == BOTTOM;
   }
 
-  private void ensureSelectedTabIsVisble() {
+  private void ensureSelectedTabIsVisible() {
     int index = tabPane.getSelectedIndex();
     JViewport viewport = getScrollableTabViewport();
     if (viewport == null || rects.length <= index || index < 0) return;
@@ -285,11 +285,12 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       Rectangle bounds = g.getClipBounds();
       g.setColor(JBColor.namedColor("TabbedPane.contentAreaColor", 0xbfbfbf));
 
+      int offset = getOffset();
       if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-        g.fillRect(bounds.x + bounds.width - getOffset(), bounds.y, getOffset(), bounds.y + bounds.height);
+        g.fillRect(bounds.x + bounds.width - offset, bounds.y, offset, bounds.y + bounds.height);
       }
       else {
-        g.fillRect(bounds.x, bounds.y + bounds.height - getOffset(), bounds.x + bounds.width, getOffset());
+        g.fillRect(bounds.x, bounds.y + bounds.height - offset, bounds.x + bounds.width, offset);
       }
     }
     super.paintTabArea(g, tabPlacement, selectedIndex);
@@ -297,29 +298,27 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   @Override
   protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
-    switch (tabStyle) {
-      case fill -> {
-        if (tabPane.isEnabled()) {
-          g.setColor(isSelected ? ENABLED_SELECTED_COLOR : tabIndex == hoverTab ? getHoverColor() : tabPane.getBackground());
+    if (tabStyle == TabStyle.fill) {
+      if (tabPane.isEnabled()) {
+        g.setColor(isSelected ? ENABLED_SELECTED_COLOR : tabIndex == hoverTab ? getHoverColor() : tabPane.getBackground());
+      }
+      else {
+        g.setColor(isSelected ? DISABLED_SELECTED_COLOR : tabPane.getBackground());
+      }
+    }
+    else {
+      // underline
+      Color c = tabPane.getBackground();
+      if (tabPane.isEnabled()) {
+        if (tabPane.hasFocus() && isSelected) {
+          c = FOCUS_COLOR;
         }
-        else {
-          g.setColor(isSelected ? DISABLED_SELECTED_COLOR : tabPane.getBackground());
+        else if (tabIndex == hoverTab) {
+          c = getHoverColor();
         }
       }
-      //case underline,
-      default -> {
-        Color c = tabPane.getBackground();
-        if (tabPane.isEnabled()) {
-          if (tabPane.hasFocus() && isSelected) {
-            c = FOCUS_COLOR;
-          }
-          else if (tabIndex == hoverTab) {
-            c = getHoverColor();
-          }
-        }
 
-        g.setColor(c);
-      }
+      g.setColor(c);
     }
 
     if (tabBackgroundOnlyForHover && tabIndex != hoverTab) {
@@ -362,24 +361,23 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   @Override
   protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
     if (isSelected && tabStyle == TabStyle.underline) {
-      int offset;
       boolean wrap = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT;
       switch (tabPlacement) {
         case LEFT -> {
-          offset = SELECTION_HEIGHT.get() - (wrap ? getOffset() : 0);
+          int offset = SELECTION_HEIGHT.get() - (wrap ? getOffset() : 0);
           paintUnderline(g, x + w - offset, y, SELECTION_HEIGHT.get(), h);
         }
         case RIGHT -> {
-          offset = wrap ? getOffset() : 0;
+          int offset = wrap ? getOffset() : 0;
           paintUnderline(g, x - offset, y, SELECTION_HEIGHT.get(), h);
         }
         case BOTTOM -> {
-          offset = wrap ? getOffset() : 0;
+          int offset = wrap ? getOffset() : 0;
           paintUnderline(g, x, y - offset, w, SELECTION_HEIGHT.get());
         }
         //case TOP,
         default -> {
-          offset = SELECTION_HEIGHT.get() - (wrap ? getOffset() : 0);
+          int offset = SELECTION_HEIGHT.get() - (wrap ? getOffset() : 0);
           paintUnderline(g, x, y + h - offset, w, SELECTION_HEIGHT.get());
         }
       }
@@ -605,13 +603,13 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
             int buttonsWidth = 2 * myHiddenArrowButtons.get(0).getPreferredSize().width;
             viewportBounds.width -= buttonsWidth;
             viewport.setBounds(viewportBounds);
-                ensureSelectedTabIsVisble();
+                ensureSelectedTabIsVisible();
             bounds = new Rectangle(viewport.getX()+viewport.getWidth(), viewport.getY(), buttonsWidth, viewport.getHeight());
           } else {
             int buttonHeight = 2 * myHiddenArrowButtons.get(0).getPreferredSize().height;
             viewportBounds.height -= buttonHeight;
             viewport.setBounds(viewportBounds);
-                ensureSelectedTabIsVisble();
+                ensureSelectedTabIsVisible();
             bounds = new Rectangle(viewport.getX(),  viewport.getY() + viewport.getHeight(), viewport.getWidth(), buttonHeight);
           }
           myShowHiddenTabsButton.setBounds(bounds);

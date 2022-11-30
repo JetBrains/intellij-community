@@ -3,11 +3,11 @@ import sys
 from collections.abc import Callable, Iterable, Iterator
 from tokenize import TokenInfo
 from typing import Any, ClassVar, Pattern, TypeVar, overload
-from typing_extensions import Literal, ParamSpec
+from typing_extensions import Literal, ParamSpec, TypeAlias
 
 from pyflakes.messages import Message
 
-_AnyFunction = Callable[..., Any]
+_AnyFunction: TypeAlias = Callable[..., Any]
 _F = TypeVar("_F", bound=_AnyFunction)
 _P = ParamSpec("_P")
 _T = TypeVar("_T")
@@ -37,8 +37,8 @@ PRECISION_RE: Pattern[str]
 LENGTH_RE: Pattern[str]
 VALID_CONVERSIONS: frozenset[str]
 
-_FormatType = tuple[str | None, str | None, str | None, str | None, str]
-_PercentFormat = tuple[str, _FormatType | None]
+_FormatType: TypeAlias = tuple[str | None, str | None, str | None, str | None, str]
+_PercentFormat: TypeAlias = tuple[str, _FormatType | None]
 
 def parse_percent_format(s: str) -> tuple[_PercentFormat, ...]: ...
 
@@ -47,7 +47,7 @@ class _FieldsOrder(dict[type[ast.AST], tuple[str, ...]]):
 
 def counter(items: Iterable[_T]) -> dict[_T, int]: ...
 
-_OmitType = str | tuple[str, ...] | None
+_OmitType: TypeAlias = str | tuple[str, ...] | None
 
 def iter_child_nodes(node: ast.AST, omit: _OmitType = ..., _fields_order: _FieldsOrder = ...) -> Iterator[ast.AST]: ...
 @overload
@@ -159,32 +159,32 @@ def in_string_annotation(func: _F) -> _F: ...
 def make_tokens(code: str | bytes) -> tuple[TokenInfo, ...]: ...
 
 if sys.version_info >= (3, 8):
-    _NamedExpr = ast.NamedExpr
+    _NamedExpr: TypeAlias = ast.NamedExpr
 else:
-    _NamedExpr = Any
+    _NamedExpr: TypeAlias = Any
 
 if sys.version_info >= (3, 10):
-    _Match = ast.Match
-    _MatchCase = ast.match_case
-    _MatchValue = ast.MatchValue
-    _MatchSingleton = ast.MatchSingleton
-    _MatchSequence = ast.MatchSequence
-    _MatchStar = ast.MatchStar
-    _MatchMapping = ast.MatchMapping
-    _MatchClass = ast.MatchClass
-    _MatchAs = ast.MatchAs
-    _MatchOr = ast.MatchOr
+    _Match: TypeAlias = ast.Match
+    _MatchCase: TypeAlias = ast.match_case
+    _MatchValue: TypeAlias = ast.MatchValue
+    _MatchSingleton: TypeAlias = ast.MatchSingleton
+    _MatchSequence: TypeAlias = ast.MatchSequence
+    _MatchStar: TypeAlias = ast.MatchStar
+    _MatchMapping: TypeAlias = ast.MatchMapping
+    _MatchClass: TypeAlias = ast.MatchClass
+    _MatchAs: TypeAlias = ast.MatchAs
+    _MatchOr: TypeAlias = ast.MatchOr
 else:
-    _Match = Any
-    _MatchCase = Any
-    _MatchValue = Any
-    _MatchSingleton = Any
-    _MatchSequence = Any
-    _MatchStar = Any
-    _MatchMapping = Any
-    _MatchClass = Any
-    _MatchAs = Any
-    _MatchOr = Any
+    _Match: TypeAlias = Any
+    _MatchCase: TypeAlias = Any
+    _MatchValue: TypeAlias = Any
+    _MatchSingleton: TypeAlias = Any
+    _MatchSequence: TypeAlias = Any
+    _MatchStar: TypeAlias = Any
+    _MatchMapping: TypeAlias = Any
+    _MatchClass: TypeAlias = Any
+    _MatchAs: TypeAlias = Any
+    _MatchOr: TypeAlias = Any
 
 class Checker:
     nodeDepth: int

@@ -1,20 +1,20 @@
-use std::collections::HashMap;
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::{BufWriter, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
-use crate::default::get_config_home;
 use utils::{get_path_from_env_var, PathExt, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, is_remote_dev, LaunchConfiguration};
+use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, is_remote_dev, LaunchConfiguration};
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
     config_dir: PathBuf,
     system_dir: PathBuf,
+    logs_dir: Option<PathBuf>
 }
 
 impl LaunchConfiguration for RemoteDevLaunchConfiguration {
@@ -35,9 +35,12 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         Ok(patched_xmx)
     }
 
-    fn get_properties_file(&self) -> Result<PathBuf> {
+    fn get_properties_file(&self) -> Result<Option<PathBuf>> {
         let remote_dev_properties = self.get_remote_dev_properties();
-        self.write_merged_properties_file(&remote_dev_properties[..])
+        let remote_dev_properties_file = self.write_merged_properties_file(&remote_dev_properties[..])
+            .context("Failed to write remote dev IDE properties file")?;
+
+        Ok(Some(remote_dev_properties_file))
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
@@ -62,17 +65,37 @@ impl DefaultLaunchConfiguration {
             "IDE config directory",
             "IJ_HOST_CONFIG_DIR",
             "IJ_HOST_CONFIG_BASE_DIR",
+            &get_config_home()?,
             per_project_config_dir_name
         )
     }
 
-    fn prepare_system_config_dir(&self, per_project_config_dir_name: &str) -> Result<PathBuf> {
+    fn prepare_host_system_dir(&self, per_project_config_dir_name: &str) -> Result<PathBuf> {
         self.prepare_project_specific_dir(
             "IDE system directory",
             "IJ_HOST_SYSTEM_DIR",
             "IJ_HOST_SYSTEM_BASE_DIR",
+            &get_cache_home()?,
             per_project_config_dir_name
         )
+    }
+
+    fn prepare_host_logs_dir(&self, per_project_config_dir_name: &str) -> Result<Option<PathBuf>> {
+        let logs_home = &get_logs_home()?;
+
+        match logs_home {
+            None => return Ok(None),
+            Some(x) => {
+                let prepared_logs_home = self.prepare_project_specific_dir(
+                    "IDE logs directory",
+                    "IJ_HOST_LOGS_DIR",
+                    "IJ_HOST_LOGS_BASE_DIR",
+                    x,
+                    per_project_config_dir_name
+                )?;
+                Ok(Some(prepared_logs_home))
+            }
+        }
     }
 
     fn prepare_project_specific_dir(
@@ -80,7 +103,9 @@ impl DefaultLaunchConfiguration {
         human_readable_name: &str,
         specific_dir_env_var_name: &str,
         base_dir_env_var_name: &str,
+        default_base_dir: &Path,
         per_project_config_dir_name: &str) -> Result<PathBuf> {
+        debug!("Per project config dir name: {per_project_config_dir_name:?}");
 
         let specific_dir = match get_path_from_env_var(specific_dir_env_var_name) {
             Ok(x) => {
@@ -93,7 +118,7 @@ impl DefaultLaunchConfiguration {
                         debug!("{human_readable_name}: {base_dir_env_var_name} is set to {x:?}, will use it as a base dir");
                         x
                     },
-                    Err(_) => get_config_home(),
+                    Err(_) => default_base_dir.to_path_buf(),
                 };
 
                 let product_code = &self.product_info.productCode;
@@ -230,20 +255,20 @@ impl RemoteDevLaunchConfiguration {
     }
 
     pub fn new(project_path: PathBuf, default: DefaultLaunchConfiguration) -> Result<Self> {
-        let per_project_config_dir_name = project_path.file_name()
-            .context("Failed to get project dir name, project path: {project_path:?}")
-            ?.to_string_lossy()
+        let per_project_config_dir_name = project_path.to_string_lossy()
             .replace("/", "_")
             .replace("\\", "_")
             .replace(":", "_");
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
-        let system_dir = default.prepare_system_config_dir(&per_project_config_dir_name)?;
+        let system_dir = default.prepare_host_system_dir(&per_project_config_dir_name)?;
+        let logs_dir = default.prepare_host_logs_dir(&per_project_config_dir_name)?;
 
         let config = RemoteDevLaunchConfiguration {
             default,
             config_dir,
-            system_dir
+            system_dir,
+            logs_dir: logs_dir
         };
 
         Ok(config)
@@ -253,13 +278,17 @@ impl RemoteDevLaunchConfiguration {
         let config_path = self.config_dir.to_string_lossy();
         let plugins_path = self.config_dir.join("plugins").to_string_lossy().to_string();
         let system_path = self.system_dir.to_string_lossy();
-        let log_path = self.system_dir.join("log").to_string_lossy().to_string();
+
+        let logs_path = match &self.logs_dir {
+            None => self.system_dir.join("log").to_string_lossy().to_string(),
+            Some(x) => x.to_string_lossy().to_string()
+        };
 
         let remote_dev_properties = vec![
             ("idea.config.path", config_path.as_ref()),
             ("idea.plugins.path", plugins_path.as_ref()),
             ("idea.system.path", system_path.as_ref()),
-            ("idea.log.path", log_path.as_ref()),
+            ("idea.log.path", logs_path.as_ref()),
 
             // TODO: remove once all of this is disabled for remote dev
             ("jb.privacy.policy.text", "<!--999.999-->"),
@@ -278,8 +307,10 @@ impl RemoteDevLaunchConfiguration {
             // TODO: disable once IDEA doesn't require JBA login for remote dev
             ("eap.login.enabled", "false"),
 
+            ("#com.intellij.idea.SocketLock.level", "FINE"),
+
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
-            ("jdk.lang.Process.launchMechanism", "vfork"),
+            // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
         remote_dev_properties
@@ -296,7 +327,13 @@ impl RemoteDevLaunchConfiguration {
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
         let path = self.system_dir.join(filename);
 
-        let file = File::open(&path)?;
+        match path.parent() {
+            None => {}
+            Some(x) => fs::create_dir_all(x)
+                .context("Failed to create to parent folder for IDE properties file at path {x:?}")?
+        }
+
+        let file = File::create(&path)?;
         let mut writer = BufWriter::new(file);
 
         // TODO: maybe check the user-set properties file?
@@ -304,7 +341,7 @@ impl RemoteDevLaunchConfiguration {
 
         // TODO: use IDE-specific properties file
         let distribution_properties = self.default.ide_bin.join("idea.properties");
-        let default_properties = read_file_to_end(&distribution_properties)?;
+        let default_properties = read_file_to_end(&distribution_properties).context("Failed to read IDE properties file")?;
 
         for l in default_properties.lines() {
             writeln!(&mut writer, "{l}")?;

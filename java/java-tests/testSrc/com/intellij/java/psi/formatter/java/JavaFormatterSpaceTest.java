@@ -1067,4 +1067,18 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
             }
         }""");
   }
+
+  public void testSpaceBetweenWhenAndPattern() {
+    doMethodTest(
+      """
+        switch (xx) {
+              case S(int x)when   true -> y();
+        }""",
+      """
+        switch (xx) {
+            case S(int x) when true -> y();
+        }""");
+  }
+
+
 }

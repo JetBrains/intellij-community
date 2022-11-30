@@ -854,6 +854,7 @@ private class NotificationComponent(val project: Project,
   private var myMorePopup: JBPopup? = null
   var myMoreAwtPopup: JPopupMenu? = null
   var myDropDownPopup: JPopupMenu? = null
+  val myPopupAlarm = Alarm()
 
   private var myLafUpdater: Runnable? = null
 
@@ -1186,6 +1187,7 @@ private class NotificationComponent(val project: Project,
     myMorePopup?.cancel()
     myMoreAwtPopup?.isVisible = false
     myDropDownPopup?.isVisible = false
+    Disposer.dispose(myPopupAlarm)
   }
 
   private fun createTextComponent(text: @Nls String): JEditorPane {
@@ -1342,11 +1344,19 @@ private class MoreAction(val notificationComponent: NotificationComponent, actio
     }
 
     setListener(LinkListener { link, _ ->
+      if (notificationComponent.myMoreAwtPopup != null) {
+        notificationComponent.myMoreAwtPopup!!.isVisible = false
+        notificationComponent.myMoreAwtPopup = null
+        return@LinkListener
+      }
+
+      notificationComponent.myPopupAlarm.cancelAllRequests()
+
       val popup = NotificationsManagerImpl.showPopup(link, group)
       notificationComponent.myMoreAwtPopup = popup
       popup?.addPopupMenuListener(object : PopupMenuListenerAdapter() {
         override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
-          notificationComponent.myMoreAwtPopup = null
+          notificationComponent.myPopupAlarm.addRequest(Runnable { notificationComponent.myMoreAwtPopup = null }, 500)
         }
       })
     }, null)
@@ -1364,6 +1374,12 @@ private class MyDropDownAction(val notificationComponent: NotificationComponent)
 
   init {
     setListener(LinkListener { link, _ ->
+      if (notificationComponent.myDropDownPopup != null) {
+        notificationComponent.myDropDownPopup!!.isVisible = false
+        notificationComponent.myDropDownPopup = null
+        return@LinkListener
+      }
+
       val group = DefaultActionGroup()
       val layout = link.parent.layout as DropDownActionLayout
 
@@ -1373,11 +1389,13 @@ private class MyDropDownAction(val notificationComponent: NotificationComponent)
         }
       }
 
+      notificationComponent.myPopupAlarm.cancelAllRequests()
+
       val popup = NotificationsManagerImpl.showPopup(link, group)
       notificationComponent.myDropDownPopup = popup
       popup?.addPopupMenuListener(object : PopupMenuListenerAdapter() {
         override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
-          notificationComponent.myDropDownPopup = null
+          notificationComponent.myPopupAlarm.addRequest(Runnable { notificationComponent.myDropDownPopup = null }, 500)
         }
       })
     }, null)

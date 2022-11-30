@@ -356,8 +356,32 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayHintsProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="codeInsight.declarativeInlayProvider" beanClass="com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.declarative.InlayHintsProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="codeInsight.declarativeInlayProviderCustomSettingsProvider"
+                    beanClass="com.intellij.codeInsight.hints.declarative.InlayHintsCustomSettingsProviderBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.declarative.InlayHintsCustomSettingsProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="codeInsight.inlayActionHandler"
+                    beanClass="com.intellij.codeInsight.hints.declarative.InlayActionHandlerBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.declarative.InlayActionHandler"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="com.intellij.codeInsight.inlayProviderFactory"
                     interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayHintsSwitch"
+                    interface="com.intellij.codeInsight.hints.InlayHintsSwitch"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.declarativeInlayProviderFactory"
+                    interface="com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory"
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.codeVisionProvider"
@@ -525,6 +549,10 @@
 
     <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider" dynamic="true"/>
 
+     <extensionPoint name="testDiffProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.execution.testframework.actions.TestDiffProvider"/>
+    </extensionPoint>
+    
     <extensionPoint name="diffPreviewProvider" interface="com.intellij.openapi.diff.impl.settings.DiffPreviewProvider"/>
 
     <extensionPoint name="semContributor" beanClass="com.intellij.semantic.SemContributorEP" dynamic="true">
@@ -624,7 +652,5 @@
                     interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.daemon.impl.injectedLanguageHighlightingRangeReducer"
                     interface="com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingRangeReducer"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.daemon.impl.injectedLanguageHighlightingFilesFilterProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingFilesFilterProvider"/>
   </extensionPoints>
 </idea-plugin>

@@ -96,7 +96,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
                             val endOffset = lastSibling?.endOffset ?: range.endOffset
                             selectionModel.setSelection(range.startOffset, endOffset)
                         } else {
-                            LOG.error("Extension created with new method body for $bodyToSelect but this body was not found after document commit. Extension text: \"${extension.text}\"")
+                            LOG.error("Extension created with new method body but this body was not found after document commit. Extension text: \"${extension.text}\"")
                             moveCaret(extension.textOffset, ScrollType.CENTER)
                         }
                     } else {
@@ -163,7 +163,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
 
         val typeParameterList = newTypeParameterList(element)
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
 
         val (extension, bodyTypeToSelect) =
             runWriteAction {
@@ -316,7 +316,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         if (classParams.isEmpty()) return null
         val allTypeParameters = classParams + member.typeParameters
         val text = allTypeParameters.joinToString(",", "<", ">") { it.textWithoutVariance() }
-        return KtPsiFactory(member).createDeclaration<KtFunction>("fun $text foo()").typeParameterList
+        return KtPsiFactory(member.project).createDeclaration<KtFunction>("fun $text foo()").typeParameterList
     }
 
     private fun KtTypeParameter.textWithoutVariance(): String {

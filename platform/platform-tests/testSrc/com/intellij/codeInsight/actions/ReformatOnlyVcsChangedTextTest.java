@@ -300,7 +300,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     OptimizeImportsAction optimizeImports = new OptimizeImportsAction();
     OptimizeImportsAction.setProcessVcsChangedFilesInTests(true);
     try {
-      optimizeImports.actionPerformed(new TestActionEvent(dataId -> {
+      optimizeImports.actionPerformed(TestActionEvent.createTestEvent(dataId -> {
         if (CommonDataKeys.PROJECT.is(dataId)) {
           return getProject();
         }

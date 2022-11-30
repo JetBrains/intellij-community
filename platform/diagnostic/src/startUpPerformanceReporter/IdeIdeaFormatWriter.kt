@@ -16,7 +16,7 @@ import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2LongMap
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import java.lang.invoke.MethodHandles
@@ -29,7 +29,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
-                                   private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
+                                   private val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
                                    threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager,
                                                                                             StartUpPerformanceReporter.VERSION) {
   val publicStatMetrics = Object2IntOpenHashMap<String>()

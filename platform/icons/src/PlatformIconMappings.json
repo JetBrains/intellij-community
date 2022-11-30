@@ -157,7 +157,6 @@
       "lombok.svg": "icons/lombok.svg",
       "lombokConfig.svg": "icons/config.svg",
       "manifest.svg": "fileTypes/manifest.svg",
-      "markdown.svg": "icons/MarkdownPlugin.svg",
       "maven.svg": "icons/repositoryLibraryLogo.svg",
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
@@ -199,6 +198,20 @@
       "yarn.svg": "icons/nodejs/yarn.svg"
     },
     "general": {
+      "inspections": {
+        "inspectionsError.svg": "icons/general/inspectionsError.svg",
+        "inspectionsErrorEmpty.svg": "icons/general/inspectionsErrorEmpty.svg",
+        "inspectionsEye.svg": "icons/general/inspectionsEye.svg",
+        "inspectionsMixed.svg": "icons/general/inspectionsMixed.svg",
+        "inspectionsOK.svg": "icons/general/inspectionsOK.svg",
+        "inspectionsOKEmpty.svg": "icons/general/inspectionsOKEmpty.svg",
+        "inspectionsPause.svg": "icons/general/inspectionsPause.svg",
+        "inspectionsPowerSaveMode.svg": "icons/general/inspectionsPowerSaveMode.svg",
+        "inspectionsTrafficOff.svg": "icons/general/inspectionsTrafficOff.svg",
+        "inspectionsTypos.svg": "icons/general/inspectionsTypos.svg",
+        "inspectionsWarning.svg": "icons/general/inspectionsWarning.svg",
+        "inspectionsWarningEmpty.svg": "icons/general/inspectionsWarningEmpty.svg"
+      },
       "add.svg": [
         "general/add.svg",
         "actions/AddMulticaret.svg"
@@ -268,15 +281,14 @@
       "ideUpdate.svg": "ide/notification/ideUpdate.svg",
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
-      "informationDialog.svg":"general/informationDialog.svg",
+      "informationDialog.svg": "general/informationDialog.svg",
       "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
       "listFiles.svg": "actions/listFiles.svg",
       "locate.svg": "general/locate.svg",
       "locked.svg": "ide/readonly.svg",
       "moreHorizontal.svg": "actions/moreHorizontal.svg",
-      "moreVertical.svg":
-      [
+      "moreVertical.svg": [
         "actions/more.svg",
         "ide/notification/gear.svg",
         "ide/notification/gearHover.svg"
@@ -336,16 +348,17 @@
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
       "projectStructure.svg": "general/projectStructure.svg",
       "successDialog.svg": "general/successDialog.svg",
+      "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
       "warningDialog.svg": "general/warningDialog.svg"
     },
     "gutter": {
       "bookmark.svg": "gutter/bookmark.svg",
       "colors.svg": "gutter/colors.svg",
-      "dataSchema.svg" : "gutter/dataSchema.svg",
+      "dataSchema.svg": "gutter/dataSchema.svg",
       "extAnnotation.svg": "gutter/extAnnotation.svg",
       "javadocEdit.svg": "gutter/javadocEdit.svg",
-      "javadocRead.svg":  "gutter/javadocRead.svg",
+      "javadocRead.svg": "gutter/javadocRead.svg",
       "mnemonic.svg": "gutter/mnemonic.svg",
       "readAccess.svg": "gutter/readAccess.svg",
       "rerun.svg": "runConfigurations/testState/run_run.svg",
@@ -356,7 +369,12 @@
       "suggestedRefactoring.svg": "gutter/suggestedRefactoringBulb.svg",
       "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
       "writeAccess.svg": "gutter/writeAccess.svg"
-
+    },
+    "ide": {
+      "feedbackRating.svg": "ide/feedbackRating.svg",
+      "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
+      "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
+      "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg"
     },
     "image": {
       "colorPicker_dark.svg": "ide/pipette.svg",
@@ -577,7 +595,7 @@
       "testUnknown.svg": "runConfigurations/testUnknown.svg",
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
-    "runConfigurations":{
+    "runConfigurations": {
       "application.svg": "runConfigurations/application.svg",
       "applicationRemote.svg": "runConfigurations/remote.svg",
       "compound.svg": "runConfigurations/compound.svg",
@@ -617,7 +635,6 @@
       "documentation.svg": "toolwindows/documentation.svg",
       "endpoints.svg": "icons/toolWindowEndpoints.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
-      "findExternalUsages.svg": "toolwindows/toolWindowFindExternalUsages.svg",
       "gradle.svg": "icons/toolWindowGradle.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
       "messages.svg": "toolwindows/toolWindowMessages.svg",
@@ -630,7 +647,7 @@
       "project.svg": "toolwindows/toolWindowProject.svg",
       "run.svg": "toolwindows/toolWindowRun.svg",
       "services.svg": "toolwindows/toolWindowServices.svg",
-      "settingSync.svg":"toolwindows/settingSync.svg",
+      "settingSync.svg": "toolwindows/settingSync.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
       "todo.svg": "toolwindows/toolWindowTodo.svg",
       "vcs.svg": [

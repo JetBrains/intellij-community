@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
@@ -123,11 +124,11 @@ fun removeRedundantSetter(setter: KtPropertyAccessor) {
 fun KtExpression.negate(reformat: Boolean = true, isBooleanExpression: (KtExpression) -> Boolean): KtExpression {
     val specialNegation = specialNegation(reformat, isBooleanExpression)
     if (specialNegation != null) return specialNegation
-    return KtPsiFactory(this).createExpressionByPattern(pattern = "!$0", this, reformat = reformat)
+    return KtPsiFactory(project).createExpressionByPattern(pattern = "!$0", this, reformat = reformat)
 }
 
 private fun KtExpression.specialNegation(reformat: Boolean, isBooleanExpression: (KtExpression) -> Boolean): KtExpression? {
-    val factory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
     when (this) {
         is KtPrefixExpression -> {
             if (operationReference.getReferencedName() == "!") {
@@ -145,14 +146,14 @@ private fun KtExpression.specialNegation(reformat: Boolean, isBooleanExpression:
             if (operator !in NEGATABLE_OPERATORS) return null
             val left = left ?: return null
             val right = right ?: return null
-            return factory.createExpressionByPattern(
+            return psiFactory.createExpressionByPattern(
                 "$0 $1 $2", left, getNegatedOperatorText(operator), right,
                 reformat = reformat
             )
         }
 
         is KtIsExpression -> {
-            return factory.createExpressionByPattern(
+            return psiFactory.createExpressionByPattern(
                 "$0 $1 $2",
                 leftHandSide,
                 if (isNegated) "is" else "!is",
@@ -163,8 +164,8 @@ private fun KtExpression.specialNegation(reformat: Boolean, isBooleanExpression:
 
         is KtConstantExpression -> {
             return when (text) {
-                "true" -> factory.createExpression("false")
-                "false" -> factory.createExpression("true")
+                "true" -> psiFactory.createExpression("false")
+                "false" -> psiFactory.createExpression("true")
                 else -> null
             }
         }
@@ -287,3 +288,18 @@ fun IElementType.invertedComparison(): KtSingleValueToken? = when (this) {
  */
 fun PsiElement.getWrappingPrefixExpressionOrNull(): KtPrefixExpression? =
     (getLastParentOfTypeInRow<KtParenthesizedExpression>() ?: this).parent as? KtPrefixExpression
+
+fun createArgumentWithoutName(argument: KtValueArgument, isVararg: Boolean = false, isArrayOf: Boolean = false): List<KtValueArgument> {
+    if (!argument.isNamed()) return listOf(argument.copied())
+    val argumentExpr = argument.getArgumentExpression() ?: return emptyList()
+    val psiFactory = KtPsiFactory(argument)
+    return when {
+        isVararg && argumentExpr is KtCollectionLiteralExpression ->
+            argumentExpr.getInnerExpressions().map { psiFactory.createArgument(it) }
+
+        isVararg && argumentExpr is KtCallExpression && isArrayOf ->
+            argumentExpr.valueArguments.map { psiFactory.createArgument(it.getArgumentExpression()) }
+
+        else -> listOf(psiFactory.createArgument(argumentExpr, name = null, isVararg))
+    }
+}

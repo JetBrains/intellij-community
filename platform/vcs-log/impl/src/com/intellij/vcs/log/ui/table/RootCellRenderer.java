@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
@@ -65,8 +66,12 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
 
     myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
               VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
-    myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected,
-                                                                              row == getHoveredRow(table)).getBackground());
+    // FIXME: temporary solution for the new UI
+    boolean hovered = row == getHoveredRow(table);
+    hovered = ExperimentalUI.isNewUI() ? hovered && !isSelected : hovered;
+    isSelected = ExperimentalUI.isNewUI() ? false : isSelected;
+
+    myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected, hovered).getBackground());
     setForeground(UIUtil.getTableForeground(false, hasFocus));
 
     if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {

@@ -23,10 +23,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.BiPredicate;
 
 public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   @Override
@@ -118,8 +116,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       if (isInsertingEntireLineAboveCaret) {
         caretModel.runBatchCaretOperation(() -> {
           List<CaretLineState> caretLineStateList = ContainerUtil.map(caretModel.getAllCarets(), CaretLineState::create);
-          List<List<CaretLineState>> caretsGroupedByLine = ContainerUtil.groupSublistRuns(caretLineStateList,
-                                                                                          CaretLineState::isOnSameLine);
+          List<List<CaretLineState>> caretsGroupedByLine = groupSublistRuns(caretLineStateList, CaretLineState::isOnSameLine);
           int shift = 0;
           for (List<CaretLineState> caretsOnSameLine : caretsGroupedByLine) {
             int lineStartOffset = caretsOnSameLine.get(0).lineStartOffset + shift;
@@ -150,6 +147,22 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       TextRange textRange = insertStringAtCaret(editor, normalizedText);
       return new TextRange[]{textRange};
     }
+  }
+  private static <T> @NotNull List<List<T>> groupSublistRuns(@NotNull List<T> list,
+                                                             @NotNull BiPredicate<? super T, ? super T> equality) {
+    if (list.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<List<T>> result = new ArrayList<>();
+    int lastIndex = 0;
+    for (int i = 0, size = list.size(); i < size; i++) {
+      if (i == size - 1 || !equality.test(list.get(i), list.get(i + 1))) {
+        result.add(list.subList(lastIndex, i + 1));
+        lastIndex = i + 1;
+      }
+    }
+    return result;
   }
 
   private record CaretLineState(

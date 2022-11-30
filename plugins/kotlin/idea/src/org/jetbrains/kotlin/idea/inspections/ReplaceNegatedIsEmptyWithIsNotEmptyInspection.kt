@@ -47,7 +47,7 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection()
             val (fromFunctionFqNames, toFunctionName) = functionNames[fromFunctionName] ?: return null
             val context = bindingContext ?: analyze(BodyResolveMode.PARTIAL)
             if (fromFunctionFqNames.none { callExpression.isCalling(it, context) }) return null
-            return KtPsiFactory(this).createExpressionByPattern(
+            return KtPsiFactory(project).createExpressionByPattern(
                 "$0.$toFunctionName()",
                 receiverExpression,
                 reformat = false
@@ -65,7 +65,7 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyQuickFix(private val from: String, priv
         val qualifiedExpression = descriptor.psiElement.getStrictParentOfType<KtQualifiedExpression>() ?: return
         val prefixExpression = qualifiedExpression.getWrappingPrefixExpressionIfAny() ?: return
         prefixExpression.replaced(
-            KtPsiFactory(qualifiedExpression).createExpressionByPattern(
+            KtPsiFactory(project).createExpressionByPattern(
                 "$0.$to()",
                 qualifiedExpression.receiverExpression
             )

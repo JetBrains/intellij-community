@@ -4,6 +4,7 @@ package com.intellij.execution.vmOptions
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessRunner
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.CollectionFactory
@@ -38,7 +39,13 @@ class VMOptionsServiceImpl : VMOptionsService {
     val vmPath = getVmPath(javaHome)
     val generalCommandLine = GeneralCommandLine(vmPath)
     generalCommandLine.addParameters("-XX:+PrintFlagsFinal", "-XX:+UnlockDiagnosticVMOptions", "-XX:+UnlockExperimentalVMOptions", "-X")
-    val runner = CapturingProcessRunner(OSProcessHandler(generalCommandLine))
+    val handler = try {
+      OSProcessHandler(generalCommandLine)
+    }
+    catch (e: ProcessNotCreatedException) {
+      return null
+    }
+    val runner = CapturingProcessRunner(handler)
     val output = runner.runProcess(1000)
     if (output.isTimeout) {
       return null

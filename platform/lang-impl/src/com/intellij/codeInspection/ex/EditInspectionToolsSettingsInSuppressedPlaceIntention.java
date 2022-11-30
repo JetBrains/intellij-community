@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.openapi.editor.Editor;
@@ -88,5 +89,10 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(InspectionsBundle.message("edit.inspection.options.preview", myDisplayName));
   }
 }

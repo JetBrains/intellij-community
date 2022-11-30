@@ -2,6 +2,7 @@
 @file:JvmName("TargetPlatformDetectorUtils")
 package org.jetbrains.kotlin.idea.base.facet.platform
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -33,7 +34,7 @@ val Project.platform: TargetPlatform?
     }
 
 val Module.platform: TargetPlatform
-    get() = ModulePlatformCache.getInstance(project)[this]
+    get() = runReadAction { ModulePlatformCache.getInstance(project)[this] }
 
 interface TargetPlatformDetector {
     companion object {

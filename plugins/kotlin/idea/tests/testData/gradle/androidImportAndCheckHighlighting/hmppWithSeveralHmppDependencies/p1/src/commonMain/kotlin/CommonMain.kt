@@ -20,7 +20,7 @@ interface <lineMarker descr="Is implemented by     AndroidMain     IosMa
     }
 
     fun <lineMarker descr="Is overridden in     AndroidMain     IosMain     JvmAndAndroidMain     JvmMain">useCoroutinesApis</lineMarker>(): Deferred<String> {
-        return GlobalScope.async(Dispatchers.Main) {
+        return MainScope().async(Dispatchers.Main) {
             <lineMarker descr="Suspend function call">withContext</lineMarker>(Dispatchers.Default) {
                 "This code is abusing coroutines! 🤷"
             }

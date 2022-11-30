@@ -242,7 +242,7 @@ private fun substituteDefaults(args: List<String>, compilerArguments: CommonComp
 
 private fun joinPluginOptions(old: Array<String>?, new: Array<String>?): Array<String>? {
     if (old == null && new == null) {
-        return old
+        return null
     } else if (new == null) {
         return old
     } else if (old == null) {

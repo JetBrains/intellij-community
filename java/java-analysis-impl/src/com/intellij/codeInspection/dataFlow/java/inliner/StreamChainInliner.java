@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -171,7 +170,7 @@ public class StreamChainInliner implements CallInliner {
     }
   };
 
-  static abstract class Step {
+  abstract static class Step {
     final Step myNext;
     final PsiMethodCallExpression myCall;
     final PsiExpression myFunction;
@@ -244,7 +243,7 @@ public class StreamChainInliner implements CallInliner {
     }
   }
 
-  static abstract class TerminalStep extends Step {
+  abstract static class TerminalStep extends Step {
     DfaVariableValue myResult;
 
     TerminalStep(@NotNull PsiMethodCallExpression call, PsiExpression function) {
@@ -701,7 +700,7 @@ public class StreamChainInliner implements CallInliner {
         } else {
           dfType = dfType.meet(DfTypes.LOCAL_OBJECT);
         }
-        if (SpecialField.fromQualifierType(dfType) == SpecialField.COLLECTION_SIZE) {
+        if (SpecialField.COLLECTION_SIZE.isMyQualifierType(dfType)) {
           dfType = dfType.meet(SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0)));
         }
         builder.push(dfType);

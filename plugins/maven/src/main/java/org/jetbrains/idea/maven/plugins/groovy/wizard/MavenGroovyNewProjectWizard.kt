@@ -118,7 +118,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     private fun getInitializedModel(): ComboBoxModel<DistributionInfo?> {
       val model = CollectionComboBoxModel<DistributionInfo?>()
       loadLatestGroovyVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
-        override fun onSuccess(versions: MutableList<out FrameworkLibraryVersion>) {
+        override fun onSuccess(versions: List<FrameworkLibraryVersion>) {
           SwingUtilities.invokeLater {
             for (version in versions.sortedWith(::moveUnstableVersionToTheEnd)) {
               model.add(FrameworkLibraryDistributionInfo(version))

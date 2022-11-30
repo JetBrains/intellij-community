@@ -4,6 +4,7 @@ package com.intellij.psi.stubs;
 import com.google.common.util.concurrent.Futures;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -402,19 +403,13 @@ public final class StubIndexImpl extends StubIndexEx {
     }
   }
 
-  /**
-   * @param fileElementType {@link StubFileElementType} to track changes for.
-   * @return {@link ModificationTracker} that changes stamp on every file update (with corresponding {@link StubFileElementType})
-   * for which the stub has changed.
-   * @implNote doesn't track changes of files with binary content. Modification tracking happens before the StubIndex update, so one can use
-   * this tracker to react on stub changes without performing the index update. File is considered modified if a stub for its actual content
-   * differs from what is stored in the index. Modification detector might react false-positively when the number of changed files is big.
-   */
   @Override
   public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType) {
     return () -> {
       if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+        ReadAction.run(() -> {
+          ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+        });
       }
       return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);
     };

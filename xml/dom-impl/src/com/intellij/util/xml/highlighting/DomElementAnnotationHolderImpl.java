@@ -20,6 +20,8 @@ import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -41,10 +43,12 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   private final SmartList<Annotation> myAnnotations = new SmartList<>();
   private final boolean myOnTheFly;
   private final DomFileElement myFileElement;
+  private final AnnotationHolder myAnnotationHolder;
 
-  public DomElementAnnotationHolderImpl(boolean onTheFly, @NotNull DomFileElement fileElement) {
+  public DomElementAnnotationHolderImpl(boolean onTheFly, @NotNull DomFileElement fileElement, @NotNull AnnotationHolder toFill) {
     myOnTheFly = onTheFly;
     myFileElement = fileElement;
+    myAnnotationHolder = toFill;
   }
 
   @Override
@@ -120,9 +124,13 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     final TextRange range = xmlElement.getTextRange();
     final int startOffset = range.getStartOffset();
     final int endOffset = message == null ? startOffset : range.getEndOffset();
-    final Annotation annotation = new Annotation(startOffset, endOffset, severity, message, null);
-    myAnnotations.add(annotation);
-    return annotation;
+    AnnotationBuilder builder = message == null ? myAnnotationHolder.newSilentAnnotation(severity) : myAnnotationHolder.newAnnotation(severity, message);
+    return builder.range(xmlElement.getNode()).createAnnotation();
+  }
+
+  @Override
+  public @NotNull AnnotationHolder getAnnotationHolder() {
+    return myAnnotationHolder;
   }
 
   public final SmartList<Annotation> getAnnotations() {

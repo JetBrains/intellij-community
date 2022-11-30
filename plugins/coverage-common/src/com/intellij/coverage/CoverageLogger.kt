@@ -27,16 +27,16 @@ class CoverageLogger : CounterUsagesCollector() {
 
     @JvmStatic
     fun logStarted(coverageRunner: CoverageRunner,
-                   isSampling: Boolean,
-                   isTrackRepTestEnabled: Boolean,
+                   branchCoverage: Boolean,
+                   isTrackPerTestEnabled: Boolean,
                    includePatterns: Int,
                    excludePatterns: Int) {
       val type = when (coverageRunner.id) {
         "emma" -> RunnerType.Emma
         "jacoco" -> RunnerType.JaCoCo
         "idea" -> when {
-          isSampling -> RunnerType.IJCSampling
-          isTrackRepTestEnabled -> RunnerType.IJCTracingTestTracking
+          !branchCoverage -> RunnerType.IJCSampling
+          isTrackPerTestEnabled -> RunnerType.IJCTracingTestTracking
           else -> RunnerType.IJCTracing
         }
         else -> return

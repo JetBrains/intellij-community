@@ -251,13 +251,14 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
   @NotNull List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
     synchronized (myOriginals) {
-      if (myOriginals.isEmpty()) return Collections.emptyList();
+      if (myOriginals.isEmpty()) {
+        return Collections.emptyList();
+      }
 
       List<Pair<TaskInfo, ProgressIndicator>> result = new ArrayList<>(myOriginals.size());
       for (int i = 0; i < myOriginals.size(); i++) {
-        result.add(Pair.create(myInfos.get(i), myOriginals.get(i)));
+        result.add(new Pair<>(myInfos.get(i), myOriginals.get(i)));
       }
-
       return Collections.unmodifiableList(result);
     }
   }

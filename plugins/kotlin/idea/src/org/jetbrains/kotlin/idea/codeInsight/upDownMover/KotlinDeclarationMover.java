@@ -124,7 +124,7 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
                     @Override
                     public void visitProperty(@NotNull KtProperty property) {
                         PsiElement valOrVarKeyword = property.getValOrVarKeyword();
-                        if (valOrVarKeyword != null) memberSuspects.add(valOrVarKeyword);
+                        memberSuspects.add(valOrVarKeyword);
 
                         KtTypeParameterList typeParameterList = property.getTypeParameterList();
                         if (typeParameterList != null) memberSuspects.add(typeParameterList);

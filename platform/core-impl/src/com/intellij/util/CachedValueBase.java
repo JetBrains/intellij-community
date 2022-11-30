@@ -8,6 +8,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.NotNullList;
 import org.jetbrains.annotations.NotNull;
@@ -181,16 +182,27 @@ public abstract class CachedValueBase<T> {
   @NotNull
   public abstract Object getValueProvider();
 
+  private static final Object[] PSI_MODIFICATION_DEPENDENCIES = new Object[] { PsiModificationTracker.MODIFICATION_COUNT };
+
   protected static final class Data<T> implements Getter<T> {
     private final T myValue;
     private final Object @NotNull [] myDependencies;
     private final long @NotNull [] myTimeStamps;
     final @Nullable CachedValueProfiler.ValueTracker trackingInfo;
 
-    Data(T value, Object @NotNull [] dependencies, long @NotNull [] timeStamps,
+    Data(T value,
+         Object @NotNull [] dependencies,
+         long @NotNull [] timeStamps,
          @Nullable CachedValueProfiler.ValueTracker trackingInfo) {
       myValue = value;
-      myDependencies = dependencies;
+
+      if (dependencies.length == 1 && dependencies[0] == PsiModificationTracker.MODIFICATION_COUNT) {
+        // there is no sense in storing hundreds of new arrays of [PsiModificationTracker.MODIFICATION_COUNT]
+        myDependencies = PSI_MODIFICATION_DEPENDENCIES;
+      } else {
+        myDependencies = dependencies;
+      }
+
       myTimeStamps = timeStamps;
       this.trackingInfo = trackingInfo;
     }

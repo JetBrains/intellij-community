@@ -1,0 +1,28 @@
+// FILE: first.before.kt
+// "Import function 'min'" "true"
+// ERROR: Unresolved reference: min
+// WITH_STDLIB
+/* IGNORE_FIR */
+
+package testing
+
+fun testing() {
+    val x = <caret>min(1, 2)
+}
+//-----------------------
+
+
+// FILE: first.after.kt
+// "Import function 'min'" "true"
+// ERROR: Unresolved reference: min
+// WITH_STDLIB
+/* IGNORE_FIR */
+
+package testing
+
+import java.util.Collections.min
+
+fun testing() {
+    val x = <caret>min(1, 2)
+}
+//-----------------------
