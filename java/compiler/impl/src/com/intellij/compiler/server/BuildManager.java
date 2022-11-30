@@ -1309,7 +1309,9 @@ public final class BuildManager implements Disposable {
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.boot.library.path=" + jnaBootLibraryPath);
       //noinspection SpellCheckingInspection
-      cmdLine.addParameter("-Djna.nounpack=true");
+      cmdLine.addParameter("-Djna.nosys=true");
+      //noinspection SpellCheckingInspection
+      cmdLine.addParameter("-Djna.noclasspath=true");
     }
 
     if (sdkVersion != null) {
