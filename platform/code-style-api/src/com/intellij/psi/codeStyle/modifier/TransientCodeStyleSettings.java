@@ -3,8 +3,10 @@ package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
@@ -55,7 +57,8 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
 
   @NotNull
   @Override
-  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file,
+  public IndentOptions getIndentOptionsByFile(@NotNull Project project,
+                                              @Nullable VirtualFile file,
                                               @Nullable TextRange formatRange,
                                               boolean ignoreDocOptions,
                                               @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {

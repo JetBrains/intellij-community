@@ -14,9 +14,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.util.EditorFacade;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -115,7 +117,7 @@ public class CodeFormatterFacade {
           final FormatTextRanges ranges = new FormatTextRanges(range, true);
           setDisabledRanges(fileToFormat,ranges);
           FormatterEx.getInstanceEx().format(
-            model, mySettings, mySettings.getIndentOptionsByFile(fileToFormat, range), ranges
+            model, mySettings, getIndentOptions(mySettings, file.getProject(), file, document, range), ranges
           );
 
           wrapLongLinesIfNecessary(file, document, startOffset, endOffset, myRightMargin);
@@ -191,8 +193,7 @@ public class CodeFormatterFacade {
           }
 
           CommonCodeStyleSettings.IndentOptions indentOptions =
-            mySettings.getIndentOptionsByFile(file, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
-
+            getIndentOptions(mySettings, project, file, document, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
           setDisabledRanges(file, ranges);
           formatter.format(model, mySettings, indentOptions, ranges);
           for (FormatTextRange range : textRanges) {
@@ -205,6 +206,28 @@ public class CodeFormatterFacade {
         }
       }
     }
+  }
+
+  static @NotNull CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings,
+                                                                         @NotNull Project project,
+                                                                         @NotNull PsiFile psiFile,
+                                                                         @Nullable Document document,
+                                                                         @Nullable TextRange textRange) {
+    VirtualFile virtualFile = getVirtualFile(psiFile, document);
+    return virtualFile != null ?
+           settings.getIndentOptionsByFile(project, virtualFile, textRange) :
+           settings.getIndentOptions(psiFile.getFileType());
+  }
+
+  private static @Nullable VirtualFile getVirtualFile(@NotNull PsiFile psiFile, @Nullable Document document) {
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file != null) {
+      return file;
+    }
+    if (document != null) {
+      return FileDocumentManager.getInstance().getFile(document);
+    }
+    return null;
   }
 
   private void setDisabledRanges(@NotNull PsiFile file, FormatTextRanges ranges) {

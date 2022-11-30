@@ -123,7 +123,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
   public TimeStampedIndentOptions getValidCachedIndentOptions(PsiFile file, Document document) {
-    IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(file);
+    IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(document);
     if (options instanceof TimeStampedIndentOptions) {
       final IndentOptions defaultIndentOptions = getDefaultIndentOptions(file, document);
       final TimeStampedIndentOptions cachedInDocument = (TimeStampedIndentOptions)options;

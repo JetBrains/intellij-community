@@ -667,7 +667,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
 
-    if (fileType == null) return OTHER_INDENT_OPTIONS;
+    if (fileType == null) {
+      return OTHER_INDENT_OPTIONS;
+    }
 
     if (!myLoadedAdditionalIndentOptions) {
       loadAdditionalIndentOptions();
@@ -701,76 +703,72 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   @NotNull
   public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file) {
-    return getIndentOptionsByFile(file, null);
+    if (file != null) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        return getIndentOptionsByFile(file.getProject(), virtualFile, null);
+      }
+      else {
+        return getIndentOptions(file.getFileType());
+      }
+    }
+    return OTHER_INDENT_OPTIONS;
   }
 
-  @NotNull
-  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange) {
-    return getIndentOptionsByFile(file, formatRange, false, null);
+  @ApiStatus.Internal
+  public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project, @NotNull VirtualFile file, @Nullable TextRange formatRange) {
+    return getIndentOptionsByFile(project, file, formatRange, false, null);
   }
 
-  /**
-   * Retrieves indent options for PSI file from an associated document or (if not defined in the document) from file indent options
-   * providers.
-   * @param file  The PSI file to retrieve options for.
-   * @param formatRange The text range within the file for formatting purposes or null if there is either no specific range or multiple
-   *                    ranges. If the range covers the entire file (full reformat), options stored in the document are ignored and
-   *                    indent options are taken from file indent options providers.
-   * @param ignoreDocOptions Ignore options stored in the document and use file indent options providers even if there is no text range
-   *                         or the text range doesn't cover the entire file.
-   * @param providerProcessor A callback object containing a reference to indent option provider which has returned indent options.
-   * @return Indent options from the associated document or file indent options providers.
-   * @see FileIndentOptionsProvider
-   */
-  @NotNull
-  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions,
-                                              @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
-    if (file != null && file.isValid()) {
-      boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
-      if (!ignoreDocOptions && !isFullReformat) {
-        IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(file);
-        if (options != null) {
-          FileIndentOptionsProvider provider = options.getFileIndentOptionsProvider();
-          if (providerProcessor != null && provider != null) {
+  @ApiStatus.Internal
+  public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project,
+                                                       @NotNull VirtualFile file,
+                                                       @Nullable TextRange formatRange,
+                                                       boolean ignoreDocOptions,
+                                                       @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    boolean isFullReformat = document == null || isFileFullyCoveredByRange(document, formatRange);
+    if (!ignoreDocOptions && !isFullReformat) {
+      IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(document);
+      if (options != null) {
+        FileIndentOptionsProvider provider = options.getFileIndentOptionsProvider();
+        if (providerProcessor != null && provider != null) {
+          providerProcessor.process(provider);
+        }
+        return options;
+      }
+    }
+
+    for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
+      if (!isFullReformat || provider.useOnFullReformat()) {
+        IndentOptions indentOptions = provider.getIndentOptions(project,this, file);
+        if (indentOptions != null) {
+          if (providerProcessor != null) {
             providerProcessor.process(provider);
           }
-          return options;
+          indentOptions.setFileIndentOptionsProvider(provider);
+          logIndentOptions(file, provider, indentOptions);
+          return indentOptions;
         }
       }
-
-      for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
-        if (!isFullReformat || provider.useOnFullReformat()) {
-          IndentOptions indentOptions = provider.getIndentOptions(this, file);
-          if (indentOptions != null) {
-            if (providerProcessor != null) {
-              providerProcessor.process(provider);
-            }
-            indentOptions.setFileIndentOptionsProvider(provider);
-            logIndentOptions(file, provider, indentOptions);
-            return indentOptions;
-          }
-        }
-      }
-
-      Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile(), file.getFileType());
-      if (language != null) {
-        IndentOptions options = getIndentOptions(language);
-        if (options != null) {
-          return options;
-        }
-      }
-
-      return getIndentOptions(file.getFileType());
     }
-    else
-      return OTHER_INDENT_OPTIONS;
+
+    Language language = LanguageUtil.getLanguageForPsi(project, file, file.getFileType());
+    if (language != null) {
+      IndentOptions options = getIndentOptions(language);
+      if (options != null) {
+        return options;
+      }
+    }
+
+    return getIndentOptions(file.getFileType());
   }
 
-  private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
-    return formatRange != null && formatRange.equals(file.getTextRange());
+  private static boolean isFileFullyCoveredByRange(@NotNull Document document, @Nullable TextRange formatRange) {
+    return formatRange != null && formatRange.equals(new TextRange(0, document.getTextLength()));
   }
 
-  private static void logIndentOptions(@NotNull PsiFile file,
+  private static void logIndentOptions(@NotNull VirtualFile file,
                                        @NotNull FileIndentOptionsProvider provider,
                                        @NotNull IndentOptions options) {
     LOG.debug("Indent options returned by " + provider.getClass().getName() +

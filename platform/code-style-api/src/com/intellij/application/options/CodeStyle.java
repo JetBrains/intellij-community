@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -368,24 +369,11 @@ public final class CodeStyle {
     return CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
   }
 
-  /**
-   * Updates document's indent options from indent options providers.
-   * <p><b>Note:</b> Calling this method directly when there is an editor associated with the document may cause the editor work
-   * incorrectly. To keep consistency with the editor call {@code EditorEx.reinitSettings()} instead.
-   * @param project  The project of the document.
-   * @param document The document to update indent options for.
-   */
-  public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull Document document) {
-    if (!project.isDisposed()) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      if (documentManager != null) {
-        PsiFile file = documentManager.getPsiFile(document);
-        if (file != null) {
-          CommonCodeStyleSettings.IndentOptions indentOptions = getSettings(file).getIndentOptionsByFile(file, null, true, null);
-          indentOptions.associateWithDocument(document);
-        }
-      }
-    }
+  @ApiStatus.Internal
+  public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document) {
+    CommonCodeStyleSettings.IndentOptions indentOptions =
+      getSettings(project, virtualFile).getIndentOptionsByFile(project, virtualFile, null, true, null);
+    indentOptions.associateWithDocument(document);
   }
 
   /**
