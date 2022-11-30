@@ -18,7 +18,7 @@ import java.util.concurrent.ForkJoinTask
 private const val COMMITS_COUNT = 1_000
 
 internal class PortableCompilationCacheDownloader(
-  private val  context: CompilationContext,
+  private val context: CompilationContext,
   private val git: Git,
   private val remoteCache: PortableCompilationCache.RemoteCache,
   private val gitUrl: String,
@@ -34,7 +34,14 @@ internal class PortableCompilationCacheDownloader(
    */
   val availableForHeadCommit by lazy { availableCommitDepth == 0 }
 
-  private val lastCommits by lazy { git.log(COMMITS_COUNT) }
+  private val lastCommits by lazy {
+    val ultimateHomeDir = context.paths.communityHomeDir.parent
+    git.log(COMMITS_COUNT) + if (git.dir != ultimateHomeDir) {
+      // IntelliJ is checked out inside another repository, Rider for example
+      Git(ultimateHomeDir).log(COMMITS_COUNT)
+    }
+    else emptyList()
+  }
 
   private fun downloadString(url: String): String = retryWithExponentialBackOff {
     if (url.isS3()) {
@@ -109,7 +116,7 @@ internal class PortableCompilationCacheDownloader(
       ForkJoinTask.invokeAll(tasks)
     }
     else {
-      context.messages.warning("Unable to find cache for any of last $COMMITS_COUNT commits.")
+      context.messages.warning("Unable to find cache for any of last ${lastCommits.count()} commits.")
     }
   }
 
