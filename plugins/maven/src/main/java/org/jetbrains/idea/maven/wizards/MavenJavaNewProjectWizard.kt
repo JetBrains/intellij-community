@@ -92,5 +92,12 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
       }
     }
+
+    override fun setupProject(project: Project) {
+      super.setupProject(project)
+      if (parent.generateOnboardingTips) {
+        prepareTipsInEditor(project)
+      }
+    }
   }
 }

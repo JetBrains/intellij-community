@@ -63,5 +63,12 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         withJavaSampleCodeAsset("src", "", javaData.generateOnboardingTips)
       }
     }
+
+    override fun setupProject(project: Project) {
+      super.setupProject(project)
+      if (javaData.generateOnboardingTips) {
+        prepareTipsInEditor(project)
+      }
+    }
   }
 }

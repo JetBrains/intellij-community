@@ -8,18 +8,14 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
-import com.intellij.ide.wizard.AbstractNewProjectWizardStep
-import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.setupProjectSafe
+import com.intellij.ide.wizard.*
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.fileSystem.LocalFileSystemUtil
@@ -118,6 +114,13 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
         addTemplateProperties("DEFAULT_RUN" to KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER))
         addTemplateProperties("DEFAULT_DEBUG" to KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER))
         addTemplateProperties("TOGGLE_BREAKPOINT" to KeymapUtil.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT))
+      }
+    }
+
+    @JvmStatic
+    fun prepareTipsInEditor(project: Project) = whenProjectCreated(project) l@{
+      for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
+        extension.installTips(project)
       }
     }
 

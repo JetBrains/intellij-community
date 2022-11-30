@@ -93,6 +93,13 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         withJavaSampleCodeAsset("src/main/java", groupId, gradleData.generateOnboardingTips)
       }
     }
+
+    override fun setupProject(project: Project) {
+      super.setupProject(project)
+      if (gradleData.generateOnboardingTips) {
+        prepareTipsInEditor(project)
+      }
+    }
   }
 }
 

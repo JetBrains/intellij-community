@@ -451,6 +451,8 @@
 
     <extensionPoint name="newProjectWizard.language" interface="com.intellij.ide.wizard.LanguageNewProjectWizard" dynamic="true"/>
 
+    <extensionPoint name="newProject.onboarding.tips" interface="com.intellij.ide.wizard.NewProjectOnboardingTips" dynamic="true"/>
+
     <extensionPoint name="projectOriginInfoProvider" interface="com.intellij.ide.impl.ProjectOriginInfoProvider" dynamic="true"/>
     <extensionPoint name="trustedHostsConfigurablePanelProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurablePanelProvider"
                     dynamic="true"/>
