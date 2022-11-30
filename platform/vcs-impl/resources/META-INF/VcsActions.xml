@@ -483,6 +483,8 @@
       <separator/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
       <separator/>
+      <reference ref="Vcs.Shelf.Operations.ContextMenu"/>
+      <reference ref="Vcs.Shelf.ChangesBrowser.ContextMenu"/>
 
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>
     </group>
