@@ -43,6 +43,7 @@ public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> 
       super(task, progress);
     }
 
+    @Override
     void registerStageStarted(@NotNull StructuredIdeActivity activity) {
       activity.stageStarted(DumbModeStatisticsCollector.DUMB_MODE_STAGE,
                             () -> Collections.singletonList(DumbModeStatisticsCollector.STAGE_CLASS.with(getTask().getClass())));

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.MergingTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -87,13 +89,13 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   }
 
   @Override
-  protected void runSingleTask(MergingTaskQueue.@NotNull QueuedTask<UnindexedFilesScanner> task) {
+  protected void runSingleTask(MergingTaskQueue.@NotNull QueuedTask<UnindexedFilesScanner> task, @Nullable StructuredIdeActivity activity) {
     ProgressIndicator indicator = task.getIndicator();
     ProgressIndicator old = runningTask.getAndSet(indicator);
     try {
       LOG.assertTrue(old == null, "Old = " + old);
       runningTask.set(indicator);
-      super.runSingleTask(task);
+      super.runSingleTask(task, activity);
     }
     finally {
       old = runningTask.getAndSet(null);

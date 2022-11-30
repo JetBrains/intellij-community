@@ -5,14 +5,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask> {
   private final DumbServiceHeavyActivities myHeavyActivities;
-  private StructuredIdeActivity activity;
 
   DumbServiceGuiExecutor(@NotNull Project project,
                          @NotNull DumbServiceMergingTaskQueue queue,
@@ -24,15 +23,17 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
 
   @Override
   protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
-                                          @NotNull ProgressIndicator visibleIndicator) {
+                                          @NotNull ProgressIndicator visibleIndicator,
+                                          @Nullable StructuredIdeActivity parentActivity) {
     Project project = getProject();
-    activity = DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project);
+    StructuredIdeActivity childActivity = createChildActivity(parentActivity);
+
     try {
       DumbServiceAppIconProgress.registerForProgress(project, (ProgressIndicatorEx)visibleIndicator);
       DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator);
       myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
 
-      super.processTasksWithProgress(suspender, visibleIndicator);
+      super.processTasksWithProgress(suspender, visibleIndicator, childActivity);
     }
     finally {
       // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
@@ -40,19 +41,28 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
       // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
       // previously installed.
       myHeavyActivities.resetCurrentSuspender();
-      DumbModeStatisticsCollector.logProcessFinished(activity, suspender.isClosed()
-                                                               ? DumbModeStatisticsCollector.IndexingFinishType.TERMINATED
-                                                               : DumbModeStatisticsCollector.IndexingFinishType.FINISHED);
-      activity = null;
+      DumbModeStatisticsCollector.logProcessFinished(childActivity, suspender.isClosed()
+                                                                    ? DumbModeStatisticsCollector.IndexingFinishType.TERMINATED
+                                                                    : DumbModeStatisticsCollector.IndexingFinishType.FINISHED);
       DumbModeProgressTitle.getInstance(project).removeDumpModeProgress(visibleIndicator);
     }
   }
 
+  @NotNull
+  private StructuredIdeActivity createChildActivity(@Nullable StructuredIdeActivity parentActivity) {
+    Project project = getProject();
+    if (parentActivity == null) {
+      return DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project);
+    }
+    else {
+      return DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.startedWithParent(project, parentActivity);
+    }
+  }
+
   @Override
-  protected void runSingleTask(@NotNull MergingTaskQueue.QueuedTask<DumbModeTask> task) {
-    ((QueuedDumbModeTask)task).registerStageStarted(activity);
+  protected void runSingleTask(@NotNull MergingTaskQueue.QueuedTask<DumbModeTask> task, @Nullable StructuredIdeActivity activity) {
     HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Indexing,
                                                 IdeBundle.message("progress.performing.indexing.tasks"),
-                                                () -> super.runSingleTask(task));
+                                                () -> super.runSingleTask(task, activity));
   }
 }

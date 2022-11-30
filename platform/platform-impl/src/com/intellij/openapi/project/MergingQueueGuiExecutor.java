@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -91,7 +92,8 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   }
 
   protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
-                                          @NotNull ProgressIndicator visibleIndicator) {
+                                          @NotNull ProgressIndicator visibleIndicator,
+                                          @Nullable StructuredIdeActivity activity) {
     while (true) {
       if (myProject.isDisposed()) break;
 
@@ -104,7 +106,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
         taskIndicator.addStateDelegate(relayToVisibleIndicator);
 
         try {
-          runSingleTask(task);
+          runSingleTask(task, activity);
         }
         finally {
           taskIndicator.removeStateDelegate(relayToVisibleIndicator);
@@ -177,7 +179,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
       ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
         try {
-          processTasksWithProgress(suspender, visibleIndicator);
+          processTasksWithProgress(suspender, visibleIndicator, null);
         }
         catch (ProcessCanceledException pce) {
           throw pce;
@@ -189,8 +191,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     }
   }
 
-  protected void runSingleTask(@NotNull MergingTaskQueue.QueuedTask<T> task) {
+  protected void runSingleTask(@NotNull MergingTaskQueue.QueuedTask<T> task, @Nullable StructuredIdeActivity activity) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task.getInfoString());
+    if (activity != null) task.registerStageStarted(activity);
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
     ProgressManager.getInstance().runProcess(() -> {

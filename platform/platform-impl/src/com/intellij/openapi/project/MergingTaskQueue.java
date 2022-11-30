@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -224,6 +225,16 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
     protected T getTask() {
       return myTask;
+    }
+
+    /**
+     * Override in children classes to report this task to FUS.
+     * <p>
+     * Override {@link MergingQueueGuiExecutor#runSingleTask(QueuedTask, StructuredIdeActivity)} or
+     * {@link MergingQueueGuiExecutor#processTasksWithProgress(ProgressSuspender, ProgressIndicator, StructuredIdeActivity)} to start
+     * FUS activity.
+     */
+    void registerStageStarted(@NotNull StructuredIdeActivity activity) {
     }
 
     public void beforeTask() {
