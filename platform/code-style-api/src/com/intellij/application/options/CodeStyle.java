@@ -69,19 +69,17 @@ public final class CodeStyle {
   }
 
   /**
-   * Returns root {@link CodeStyleSettings} for the given PSI file. In some cases the returned instance may be of
-   * {@link TransientCodeStyleSettings} class if the original (project) settings are modified for specific PSI file by
+   * Returns root {@link CodeStyleSettings} for the given project and virtual file. In some cases the returned instance may be of
+   * {@link TransientCodeStyleSettings} class if the original (project) settings are modified for specific file by
    * {@link CodeStyleSettingsModifier} extensions. In these cases the returned instance may change upon the next call if some of
    * {@link TransientCodeStyleSettings} dependencies become outdated.
-   * <p>
-   * A shorter way to get language-specific settings it to use one of the methods {@link #getLanguageSettings(PsiFile)}
-   * or {@link #getLanguageSettings(PsiFile, Language)}.
    *
+   * @param project The current project.
    * @param file The file to get code style settings for.
    * @return The current root code style settings associated with the file or default settings if the file is invalid.
    */
   @NotNull
-  public static CodeStyleSettings getSettings(@NotNull VirtualFile file, @NotNull Project project) {
+  public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull VirtualFile file) {
     @SuppressWarnings("TestOnlyProblems")
     CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
     if (tempSettings != null) {
@@ -145,7 +143,7 @@ public final class CodeStyle {
     Project project = editor.getProject();
     VirtualFile file = editor.getVirtualFile();
     if (file != null && project != null) {
-      return getSettings(file, project);
+      return getSettings(project, file);
     }
     return getDefaultSettings();
   }
