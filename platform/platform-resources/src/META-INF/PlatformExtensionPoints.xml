@@ -204,6 +204,8 @@
 
     <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider" dynamic="true"/>
 
+    <extensionPoint name="backedVirtualFileProvider" interface="com.intellij.notebook.editor.BackedVirtualFileProvider" dynamic="true"/>
+
     <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
