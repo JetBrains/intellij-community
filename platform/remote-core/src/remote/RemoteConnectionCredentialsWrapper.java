@@ -71,6 +71,10 @@ public class RemoteConnectionCredentialsWrapper {
     throw unknownConnectionType();
   }
 
+  /**
+   * Returns the credentials object stored in this wrapper if the given type matches it or null otherwise.<p/>
+   * This method allows to move away from using {@link #switchType(CredentialsCase[])} method.
+   */
   public <T> @Nullable T getCredentials(@NotNull CredentialsType<T> credentialsType) {
     return credentialsType.getCredentials(myCredentialsTypeHolder);
   }
