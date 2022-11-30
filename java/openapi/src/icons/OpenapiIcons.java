@@ -15,4 +15,5 @@ public final class OpenapiIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, OpenapiIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon RepositoryLibraryLogo = load("icons/repositoryLibraryLogo.svg", 1063779084, 0);
+  /** 16x16 */ public static final @NotNull Icon TransparentStub = load("icons/transparentStub.svg", -345756484, 0);
 }

@@ -20,6 +20,7 @@ import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import icons.OpenapiIcons;
 import org.jetbrains.annotations.NonNls;
@@ -31,6 +32,9 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
+import static org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET;
 
 public class RepositoryLibraryDescription {
   @NotNull @NonNls
@@ -47,21 +51,37 @@ public class RepositoryLibraryDescription {
   public static final String SnapshotVersionSuffix = "-SNAPSHOT";
 
   public static final Icon DEFAULT_ICON = OpenapiIcons.RepositoryLibraryLogo;
-  
+
   private static volatile Map<String, RepositoryLibraryDescription> ourStaticallyDefinedLibraries;
   
   private final String groupId;
   private final String artifactId;
   private final @NlsContexts.DialogTitle String libraryName;
 
-  protected RepositoryLibraryDescription(String groupId, String artifactId, @NlsContexts.DialogTitle String libraryName) {
+  public final String jarRemoteRepositoryId;
+  public final boolean sha256sumCheckEnabled;
+
+  protected RepositoryLibraryDescription(String groupId, String artifactId, @NlsContexts.DialogTitle String libraryName,
+                                         String jarRemoteRepositoryId, boolean sha256sumCheckEnabled) {
     this.groupId = groupId == null? "" : groupId;
     this.artifactId = artifactId == null? "" : artifactId;
     this.libraryName = libraryName == null ? CodeInsightBundle.message("unknown.node.text") : libraryName;
+    this.sha256sumCheckEnabled = sha256sumCheckEnabled;
+    this.jarRemoteRepositoryId = jarRemoteRepositoryId;
+  }
+
+  protected RepositoryLibraryDescription(String groupId, String artifactId, @NlsContexts.DialogTitle String libraryName) {
+      this(groupId, artifactId, libraryName, JAR_REPOSITORY_ID_NOT_SET, false);
   }
 
   @NotNull
   public static RepositoryLibraryDescription findDescription(@Nullable final String groupId, @Nullable final String artifactId) {
+    return findDescription(groupId, artifactId, JAR_REPOSITORY_ID_NOT_SET, false);
+  }
+
+  @NotNull
+  public static RepositoryLibraryDescription findDescription(@Nullable final String groupId, @Nullable final String artifactId,
+                                                             String bindToRemoteRepository, boolean sha256sumCheckEnabled) {
     if (ourStaticallyDefinedLibraries == null) {
       final HashMap<String, RepositoryLibraryDescription> map = new HashMap<>();
       for (RepositoryLibraryDefinition def : RepositoryLibraryDefinition.EP_NAME.getExtensions()) {
@@ -73,17 +93,21 @@ public class RepositoryLibraryDescription {
     @NlsSafe
     final String id = groupId == null && artifactId == null ? CodeInsightBundle.message("unknown.node.text") : groupId + ":" + artifactId;
     final RepositoryLibraryDescription description = ourStaticallyDefinedLibraries.get(id);
-    return description != null? description : new RepositoryLibraryDescription(groupId, artifactId, id);
+    return description != null? description : new RepositoryLibraryDescription(groupId, artifactId, id, bindToRemoteRepository,
+                                                                               sha256sumCheckEnabled);
   }
 
   @NotNull
   public static RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
-    return findDescription(properties.getGroupId(), properties.getArtifactId());
+    return findDescription(properties.getGroupId(), properties.getArtifactId(), properties.getJarRepositoryId(),
+                           properties.isEnableSha256Checksum());
   }
 
   @NotNull
   public static RepositoryLibraryDescription findDescription(@NotNull final JpsMavenRepositoryLibraryDescriptor descriptor) {
-    return findDescription(descriptor.getGroupId(), descriptor.getArtifactId());
+    return findDescription(descriptor.getGroupId(), descriptor.getArtifactId(),
+                           descriptor.getJarRepositoryId(),
+                           descriptor.isVerifySha256Checksum());
   }
 
   @NotNull
@@ -103,7 +127,15 @@ public class RepositoryLibraryDescription {
 
   @NotNull
   public Icon getIcon() {
-    return DEFAULT_ICON;
+    LayeredIcon icon = new LayeredIcon(4);
+    icon.setIcon(DEFAULT_ICON, 0);
+    if (sha256sumCheckEnabled) {
+      icon.setIcon(OpenapiIcons.TransparentStub, 1);
+    }
+    if (!Objects.equals(jarRemoteRepositoryId, JAR_REPOSITORY_ID_NOT_SET)) {
+      icon.setIcon(OpenapiIcons.TransparentStub, 3);
+    }
+    return icon;
   }
 
   @Nullable
