@@ -196,7 +196,7 @@ public final class ActionsTree {
     return myMainGroup;
   }
 
-  public JTree getTree(){
+  public JTree getTree() {
     return myTree;
   }
 
@@ -206,8 +206,9 @@ public final class ActionsTree {
   }
 
   private @Nullable Condition<? super AnAction> combineWithBaseFilter(@Nullable Condition<? super AnAction> actionFilter) {
-    if (actionFilter != null)
+    if (actionFilter != null) {
       return myBaseFilter != null ? Conditions.and(myBaseFilter, actionFilter) : actionFilter;
+    }
     return myBaseFilter;
   }
 
@@ -441,10 +442,10 @@ public final class ActionsTree {
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
 
       TreePath path = new TreePath(root.getPath());
-      if (myTree.isPathSelected(path)){
+      if (myTree.isPathSelected(path)) {
         addPathToList(root, mySelectionPaths);
       }
-      if (myTree.isExpanded(path) || root.getChildCount() == 0){
+      if (myTree.isExpanded(path) || root.getChildCount() == 0) {
         addPathToList(root, myPathsToExpand);
         _storePaths(root);
       }
@@ -493,7 +494,7 @@ public final class ActionsTree {
 
     private ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
       ArrayList<TreeNode> arrayList = new ArrayList<>();
-      for(int i = 0; i < node.getChildCount(); i++){
+      for (int i = 0; i < node.getChildCount(); i++) {
         arrayList.add(node.getChildAt(i));
       }
       return arrayList;
@@ -510,7 +511,13 @@ public final class ActionsTree {
 
     // Make sure that the text rendered by this method is 'searchable' via com.intellij.openapi.keymap.impl.ui.ActionsTree.filter method.
     @Override
-    public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    public void customizeCellRenderer(@NotNull JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
       myRow = row;
       myHaveLink = false;
       myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
@@ -534,7 +541,7 @@ public final class ActionsTree {
 
           changed = myKeymap != null && areGroupShortcutsCustomized(group, myKeymap);
           icon = group.getIcon();
-          if (icon == null){
+          if (icon == null) {
             icon = CLOSE_ICON;
           }
         }
@@ -709,8 +716,9 @@ public final class ActionsTree {
             if (shortcuts != null && shortcuts.length > 0) {
               StringBuilder sb = new StringBuilder();
               for (Shortcut shortcut : shortcuts) {
-                if (sb.length() > 0)
+                if (sb.length() > 0) {
                   sb.append(", ");
+                }
                 sb.append(KeyMapBundle.message("accessible.name.shortcut"));
                 sb.append(KeymapUtil.getShortcutText(shortcut));
               }
