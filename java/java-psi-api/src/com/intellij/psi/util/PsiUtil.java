@@ -802,7 +802,7 @@ public final class PsiUtil extends PsiUtilCore {
     LOG.assertTrue(aClass == null || !place.isPhysical() || PsiTreeUtil.isContextAncestor(aClass, place, false));
     PsiElement parent = place;
     while (parent != aClass) {
-      if (parent == null || parent instanceof PsiFile && parent.getContext() == parent.getParent()) break;
+      if (parent == null) return null;
       if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) {
         return (PsiModifierListOwner)parent;
       }
