@@ -4,20 +4,9 @@ package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
-import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
-
-// TODO(dsavvinov): remove it when usages are migrated
-fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(
-    project: Project,
-    expectedTestDataDir: File,
-    actualTestProjectRoot: File,
-    vararg checkModes: WorkspacePrintingMode
-) {
-    checkWorkspaceModel(project, expectedTestDataDir, actualTestProjectRoot, kotlinPluginVersion, gradleVersion, checkModes.asList(), TestConfiguration())
-}
 
 fun checkWorkspaceModel(
     project: Project,
@@ -26,10 +15,17 @@ fun checkWorkspaceModel(
     kotlinPluginVersion: KotlinToolingVersion,
     gradleVersion: String,
     checkModes: List<WorkspacePrintingMode>,
-    testConfiguration: TestConfiguration
+    testConfiguration: TestConfiguration,
+    testClassifier: String? = null,
 ) {
     val kotlinClassifier = with(kotlinPluginVersion) { "$major.$minor.$patch" }
-    val filesWithExpectedTestData = findExpectedTestDataFiles(expectedTestDataDir, kotlinClassifier, gradleVersion, checkModes)
+    val filesWithExpectedTestData = findExpectedTestDataFiles(
+        expectedTestDataDir,
+        kotlinClassifier,
+        gradleVersion,
+        checkModes,
+        testClassifier
+    )
 
     for ((expectedFile, mode) in filesWithExpectedTestData) {
         val actualWorkspaceModelText = mode.printer.build().print(project, actualTestProjectRoot, testConfiguration, kotlinPluginVersion)
@@ -48,12 +44,13 @@ private fun findMostSpecificExistingFileOrNewDefault(
     kotlinClassifier: String,
     gradleClassifier: String,
     mode: WorkspacePrintingMode,
+    testClassifier: String?
 ): File {
     val prioritisedClassifyingParts = sequenceOf(
         listOf(kotlinClassifier, gradleClassifier),
         listOf(kotlinClassifier),
         listOf(gradleClassifier),
-        emptyList(),
+        listOfNotNull(testClassifier),
     )
 
     return prioritisedClassifyingParts
@@ -67,8 +64,9 @@ private fun findExpectedTestDataFiles(
     kotlinClassifier: String,
     gradleClassifier: String,
     checkModes: List<WorkspacePrintingMode>,
+    testClassifier: String?,
 ): List<Pair<File, WorkspacePrintingMode>> = checkModes.map { mode ->
-    findMostSpecificExistingFileOrNewDefault(testDataDir, kotlinClassifier, gradleClassifier, mode) to mode
+    findMostSpecificExistingFileOrNewDefault(testDataDir, kotlinClassifier, gradleClassifier, mode, testClassifier) to mode
 }
 
 enum class WorkspacePrintingMode(

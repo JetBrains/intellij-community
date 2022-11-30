@@ -1,38 +1,25 @@
 MODULES
     wasm20221114
-    Order entries:
-        < Gradle JDK >
-        <Module source>
     wasm20221114.commonMain
-    Order entries:
-        < Kotlin SDK >
-        <Module source>
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
     wasm20221114.commonTest
-    Order entries:
-        < Kotlin SDK >
-        <Module source>
-        wasm20221114.commonMain (scope: TEST, exported: false)
-        wasm20221114.wasmMain (scope: TEST, exported: false)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (scope: TEST, exported: false)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (scope: TEST, exported: false)
-        Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (scope: TEST, exported: false)
-        Gradle: org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (scope: TEST, exported: false)
+        wasm20221114.commonMain (TEST)
+        wasm20221114.wasmMain (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
     wasm20221114.wasmMain
-    Order entries:
-        < Kotlin SDK >
-        <Module source>
-        wasm20221114.commonMain (scope: COMPILE, exported: false)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (scope: COMPILE, exported: false)
+        wasm20221114.commonMain (COMPILE)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (COMPILE)
     wasm20221114.wasmTest
-    Order entries:
-        < Kotlin SDK >
-        <Module source>
-        wasm20221114.commonMain (scope: TEST, exported: false)
-        wasm20221114.commonTest (scope: TEST, exported: false)
-        wasm20221114.wasmMain (scope: TEST, exported: false)
-        wasm20221114.wasmMain (scope: RUNTIME, exported: false)
-        Gradle: org.jetbrains.kotlin:kotlin-test-wasm:klib:{{KGP_VERSION}} (scope: TEST, exported: false)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (scope: TEST, exported: false)
-        Gradle: org.jetbrains.kotlin:kotlin-test-annotations-wasm:{{KGP_VERSION}} (scope: TEST, exported: false)
+        wasm20221114.commonMain (TEST)
+        wasm20221114.commonTest (TEST)
+        wasm20221114.wasmMain (TEST)
+        wasm20221114.wasmMain (RUNTIME)
+        Gradle: org.jetbrains.kotlin:kotlin-test-wasm:klib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-annotations-wasm:{{KGP_VERSION}} (TEST)
 
+Test configuration:
+- hiding following standard dependencies: Kotlin/Native distribution, sdk, self
