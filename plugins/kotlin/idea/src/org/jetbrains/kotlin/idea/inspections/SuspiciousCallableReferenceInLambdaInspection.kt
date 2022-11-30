@@ -6,6 +6,7 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
@@ -112,6 +113,8 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
         }
 
         override fun isApplicableTo(element: KtLambdaExpression) = true
+
+        override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean = false
     }
 }
 

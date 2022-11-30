@@ -15142,6 +15142,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/normal.kt");
         }
 
+        @TestMetadata("onCallableReference.kt")
+        public void testOnCallableReference() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/onCallableReference.kt");
+        }
+
         @TestMetadata("parameter.kt")
         public void testParameter() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/parameter.kt");
