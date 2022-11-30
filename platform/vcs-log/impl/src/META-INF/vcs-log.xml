@@ -83,63 +83,65 @@
   </extensions>
 
   <actions resource-bundle="messages.VcsLogBundle">
-    <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Find"
-            use-shortcut-of="Find"/>
-    <action class="com.intellij.vcs.log.ui.actions.GoToParentRowAction" id="Vcs.Log.GoToParent">
-      <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
-    </action>
-    <action class="com.intellij.vcs.log.ui.actions.GoToChildRowAction" id="Vcs.Log.GoToChild">
-      <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
-    </action>
-    <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
-    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" icon="AllIcons.Toolwindows.ToolWindowChanges">
-      <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
-    </action>
-    <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowTagNamesAction" id="Vcs.Log.ShowTagNames"/>
-    <action class="com.intellij.vcs.log.ui.actions.AlignLabelsAction" id="Vcs.Log.AlignLabels"/>
-    <action class="com.intellij.vcs.log.ui.actions.CollapseGraphAction" id="Vcs.Log.CollapseAll"/>
-    <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowDiffPreviewAction" id="Vcs.Log.ShowDiffPreview"/>
-    <action class="com.intellij.vcs.log.ui.actions.MoveDiffPreviewToBottomAction" id="Vcs.Log.MoveDiffPreviewToBottom"/>
-    <action class="com.intellij.vcs.log.ui.actions.MoveDiffPreviewToRightAction" id="Vcs.Log.MoveDiffPreviewToRight"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowOnlyAffectedChangesAction" id="Vcs.Log.ShowOnlyAffectedChanges"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
-    <action class="com.intellij.vcs.log.ui.actions.PreferCommitDateAction" id="Vcs.Log.PreferCommitDate"/>
-    <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
-      <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
-    </action>
-    <action class="com.intellij.vcs.log.ui.actions.ToggleLogColumnsActionGroup" id="Vcs.Log.ToggleColumns"/>
-    <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
-    <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
-    <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
-            use-shortcut-of="QuickJavaDoc"/>
-    <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction"
-            id="Vcs.Log.EnableFilterByRegexAction"
-            icon="AllIcons.Actions.Regex"/>
-    <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction"
-            id="Vcs.Log.MatchCaseAction"
-            icon="AllIcons.Actions.MatchCase"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
-            use-shortcut-of="Vcs.OpenRepositoryVersion"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
-            use-shortcut-of="Annotate"
-            icon="AllIcons.Actions.Annotate"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.ShowAllAffectedFromHistoryAction" id="Vcs.Log.ShowAllAffected"
-            use-shortcut-of="VcsHistory.ShowAllAffected" icon="AllIcons.Actions.ListChanges"/>
-    <action class="com.intellij.vcs.log.ui.actions.CompareRevisionsFromLogAction" id="Vcs.Log.CompareRevisions"
-            icon="AllIcons.Actions.Diff"/>
-    <action class="com.intellij.vcs.log.ui.actions.ResumeIndexingAction" id="Vcs.Log.ResumeIndexing"
-            icon="AllIcons.Process.ProgressResumeSmall"/>
-    <action class="com.intellij.vcs.log.ui.actions.InvalidateVcsLogCaches" id="Vcs.Log.InvalidateCaches" internal="true"/>
-    <action class="com.intellij.vcs.log.ui.actions.CheckSelectedCommits" id="Vcs.Log.CheckSelectedCommitsIndexData" internal="true"/>
-    <action class="com.intellij.vcs.log.ui.actions.CheckOldCommits" id="Vcs.Log.CheckFirstCommitsIndexData" internal="true"/>
+    <group id="Log.Unsorted.KeymapGroup" searchable="false">
+      <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Find"
+              use-shortcut-of="Find"/>
+      <action class="com.intellij.vcs.log.ui.actions.GoToParentRowAction" id="Vcs.Log.GoToParent">
+        <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
+      </action>
+      <action class="com.intellij.vcs.log.ui.actions.GoToChildRowAction" id="Vcs.Log.GoToChild">
+        <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
+      </action>
+      <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
+      <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" icon="AllIcons.Toolwindows.ToolWindowChanges">
+        <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
+      </action>
+      <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowTagNamesAction" id="Vcs.Log.ShowTagNames"/>
+      <action class="com.intellij.vcs.log.ui.actions.AlignLabelsAction" id="Vcs.Log.AlignLabels"/>
+      <action class="com.intellij.vcs.log.ui.actions.CollapseGraphAction" id="Vcs.Log.CollapseAll"/>
+      <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowDiffPreviewAction" id="Vcs.Log.ShowDiffPreview"/>
+      <action class="com.intellij.vcs.log.ui.actions.MoveDiffPreviewToBottomAction" id="Vcs.Log.MoveDiffPreviewToBottom"/>
+      <action class="com.intellij.vcs.log.ui.actions.MoveDiffPreviewToRightAction" id="Vcs.Log.MoveDiffPreviewToRight"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowOnlyAffectedChangesAction" id="Vcs.Log.ShowOnlyAffectedChanges"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
+      <action class="com.intellij.vcs.log.ui.actions.PreferCommitDateAction" id="Vcs.Log.PreferCommitDate"/>
+      <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
+        <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
+      </action>
+      <action class="com.intellij.vcs.log.ui.actions.ToggleLogColumnsActionGroup" id="Vcs.Log.ToggleColumns"/>
+      <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
+      <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
+      <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
+              use-shortcut-of="QuickJavaDoc"/>
+      <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction"
+              id="Vcs.Log.EnableFilterByRegexAction"
+              icon="AllIcons.Actions.Regex"/>
+      <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction"
+              id="Vcs.Log.MatchCaseAction"
+              icon="AllIcons.Actions.MatchCase"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
+      <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
+              use-shortcut-of="Vcs.OpenRepositoryVersion"/>
+      <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
+              use-shortcut-of="Annotate"
+              icon="AllIcons.Actions.Annotate"/>
+      <action class="com.intellij.vcs.log.ui.actions.history.ShowAllAffectedFromHistoryAction" id="Vcs.Log.ShowAllAffected"
+              use-shortcut-of="VcsHistory.ShowAllAffected" icon="AllIcons.Actions.ListChanges"/>
+      <action class="com.intellij.vcs.log.ui.actions.CompareRevisionsFromLogAction" id="Vcs.Log.CompareRevisions"
+              icon="AllIcons.Actions.Diff"/>
+      <action class="com.intellij.vcs.log.ui.actions.ResumeIndexingAction" id="Vcs.Log.ResumeIndexing"
+              icon="AllIcons.Process.ProgressResumeSmall"/>
+      <action class="com.intellij.vcs.log.ui.actions.InvalidateVcsLogCaches" id="Vcs.Log.InvalidateCaches" internal="true"/>
+      <action class="com.intellij.vcs.log.ui.actions.CheckSelectedCommits" id="Vcs.Log.CheckSelectedCommitsIndexData" internal="true"/>
+      <action class="com.intellij.vcs.log.ui.actions.CheckOldCommits" id="Vcs.Log.CheckFirstCommitsIndexData" internal="true"/>
+    </group>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy" popup="true">
@@ -272,6 +274,8 @@
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
       <reference ref="Vcs.Log.ResumeIndexing"/>
+
+      <reference id="Log.Unsorted.KeymapGroup"/>
 
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
