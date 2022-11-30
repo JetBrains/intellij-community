@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.test.utils
 
@@ -326,6 +326,8 @@ object IgnoreTests {
         }
     }
 
-    private fun deriveFirTestFile(originalTestFile: File) =
-        originalTestFile.parentFile.resolve(originalTestFile.name.removeSuffix(".kt") + ".fir.kt")
+    private fun deriveFirTestFile(originalTestFile: File): File {
+        val name = originalTestFile.name
+        return originalTestFile.parentFile.resolve(name.substringBeforeLast('.') + ".fir." + name.substringAfterLast('.'))
+    }
 }
