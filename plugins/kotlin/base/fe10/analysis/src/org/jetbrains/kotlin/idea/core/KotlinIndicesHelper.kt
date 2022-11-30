@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.addIfNotNull
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 
@@ -294,19 +295,28 @@ class KotlinIndicesHelper(
     }
 
     fun getJvmClassesByName(name: String): Collection<ClassDescriptor> {
-        return PsiShortNamesCache.getInstance(project).getClassesByName(name, scope)
-            .filter { it in scope && it.containingFile != null }
-            .mapNotNull { it.resolveToDescriptor(resolutionFacade) }
-            .filter(descriptorFilter)
-            .toSet()
+        val classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(name, scope)
+        val result = HashSet<ClassDescriptor>(classesByName.size)
+        for (clazz in classesByName) {
+            ProgressManager.checkCanceled()
+            if (!(clazz in scope && clazz.containingFile != null)) continue
+            result.addIfNotNull(clazz.resolveToDescriptor(resolutionFacade)?.takeIf { descriptorFilter(it) })
+        }
+        return result
     }
 
     fun getKotlinEnumsByName(name: String): Collection<DeclarationDescriptor> {
-        return KotlinClassShortNameIndex.get(name, project, scope)
-            .filter { it is KtEnumEntry && it in scope }
-            .flatMap { it.resolveToDescriptors<DeclarationDescriptor>() }
-            .filter(descriptorFilter)
-            .toSet()
+        val classOrObjects = KotlinClassShortNameIndex.get(name, project, scope)
+        val result = HashSet<DeclarationDescriptor>(classOrObjects.size)
+        for (classOrObject in classOrObjects) {
+            ProgressManager.checkCanceled()
+            if (!(classOrObject is KtEnumEntry && classOrObject in scope)) continue
+            val descriptorsWithHack = classOrObject.resolveToDescriptorsWithHack { true }
+            for (descriptor in descriptorsWithHack) {
+                if (descriptorFilter(descriptor)) result += descriptor
+            }
+        }
+        return result
     }
 
     fun processJvmCallablesByName(
