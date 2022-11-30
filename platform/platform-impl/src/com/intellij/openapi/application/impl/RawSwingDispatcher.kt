@@ -9,7 +9,7 @@ import kotlin.coroutines.CoroutineContext
 /**
  * **Do not use it**. For low level Swing code only.
  */
-internal object RawSwingDispatcher : CoroutineDispatcher() {
+object RawSwingDispatcher : CoroutineDispatcher() {
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
     EventQueue.invokeLater(block)

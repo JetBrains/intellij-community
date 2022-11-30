@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.PlatformDataKeys.*
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
@@ -84,7 +85,7 @@ internal class NewNavBarPanel(
   private suspend fun handleItems() {
     vm.items.collectLatest { items ->
       coroutineScope {
-        withContext(Dispatchers.EDT) {
+        withContext(RawSwingDispatcher) {
           rebuild(this@coroutineScope, items)
         }
         handleSelection()
@@ -141,9 +142,7 @@ internal class NewNavBarPanel(
     repaint()
 
     onSizeChange?.run()
-    while (!isValid) {
-      yield()
-    }
+    yield()
     myItemComponents.lastOrNull()?.let {
       scrollRectToVisible(it.bounds)
     }
