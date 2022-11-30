@@ -18,7 +18,8 @@ package com.intellij.openapi.application;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-
+import javax.swing.SwingUtilities;
+import com.intellij.openapi.project.DumbService;
 /**
  * Represents the stack of active modal dialogs. Used in calls to {@link Application#invokeLater} to specify
  * that the corresponding runnable is to be executed within the given modality state, i.e., when the same set modal dialogs is present, or its subset.<p/>
@@ -26,13 +27,13 @@ import java.awt.*;
  * The primary purpose of the modality state is to guarantee code model (PSI/VFS/etc) correctness during user interaction.
  * Consider the following scenario:
  * <ul>
- *   <li>Some code invokes {@code SwingUtilities.invokeLater}</li>
+ *   <li>Some code invokes {@code SwingUtilities#invokeLater}</li>
  *   <li>Before that, the user action is processed which shows a dialog (e.g., asking a yes/no question)</li>
  *   <li>While this dialog is shown, the event scheduled before is processed and does something very dramatic, e.g., removes a module from the project, deletes some files,
  *   invalidates PSI</li>
  *   <li>The user closes the dialog</li>
  *   <li>The code that invoked that dialog now has to deal with the completely
- *   changed world, where PSI that it worked with might be already invalid, dumb mode (see {@link com.intellij.openapi.project.DumbService})
+ *   changed world, where PSI that it worked with might be already invalid, dumb mode (see {@link DumbService})
  *   might have unexpectedly begun, etc.</li>
  * </ul>
  *
@@ -40,8 +41,10 @@ import java.awt.*;
  * Worse than that, there'll be no indication on why a particular change has occurred, because the runnable that was incorrectly invoked-later will
  * in many cases leave no trace of itself.<p/>
  *
- * For these reasons, it's strongly advised to use {@link Application#invokeLater} everywhere.
- * {@link javax.swing.SwingUtilities#invokeLater(Runnable)}, {@link #any()} and {@link com.intellij.util.ui.UIUtil} convenience methods may be used in the
+ * For these reasons, it's strongly advised to use {@link Application#invokeLater} methods everywhere instead of
+ * {@link SwingUtilities#invokeLater(Runnable)} and {@link com.intellij.util.ui.UIUtil} convenience methods.<p/>
+ *
+ * {@link SwingUtilities#invokeLater(Runnable)}, {@link #any()} and {@link com.intellij.util.ui.UIUtil} convenience methods may be used in the
  * purely UI-related code, but not with anything that deals with PSI or VFS.
  */
 public abstract class ModalityState {
