@@ -27,7 +27,11 @@ import java.util.Objects;
  */
 public class JpsMavenRepositoryLibraryDescriptor {
   public static final String DEFAULT_PACKAGING = "jar";
-  
+
+  public static final boolean VERIFY_SHA256_CHECKSUM_DEFAULT = false;
+
+  public static final String JAR_REPOSITORY_ID_NOT_SET = null;
+
   private final String myMavenId;
   private final String myGroupId;
   private final String myArtifactId;
@@ -35,6 +39,12 @@ public class JpsMavenRepositoryLibraryDescriptor {
   private final String myPackaging;
   private final boolean myIncludeTransitiveDependencies;
   private final List<String> myExcludedDependencies;
+
+  private final String myJarRepositoryId;
+
+  private final boolean myVerifySha256Checksum;
+
+  private final List<ArtifactVerification> myArtifactsVerification;
 
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
     this(groupId, artifactId, version, true, Collections.emptyList());
@@ -44,9 +54,29 @@ public class JpsMavenRepositoryLibraryDescriptor {
                                              boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
     this(groupId, artifactId, version, DEFAULT_PACKAGING, includeTransitiveDependencies, excludedDependencies);
   }
-  
+
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
-                                             @NotNull final String packaging, boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
+                                             @NotNull final String packaging, boolean includeTransitiveDependencies,
+                                             @NotNull List<String> excludedDependencies) {
+    this(groupId, artifactId, version, packaging, includeTransitiveDependencies, excludedDependencies,
+         VERIFY_SHA256_CHECKSUM_DEFAULT, Collections.emptyList());
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             @NotNull final String packaging, boolean includeTransitiveDependencies,
+                                             @NotNull List<String> excludedDependencies,
+                                             boolean verifySha256Checksum,
+                                             @NotNull List<ArtifactVerification> metadata) {
+    this(groupId, artifactId, version, packaging, includeTransitiveDependencies, excludedDependencies,
+         verifySha256Checksum, metadata, JAR_REPOSITORY_ID_NOT_SET);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             @NotNull final String packaging, boolean includeTransitiveDependencies,
+                                             @NotNull List<String> excludedDependencies,
+                                             boolean verifySha256Checksum,
+                                             @NotNull List<ArtifactVerification> metadata,
+                                             @Nullable String jarRepositoryId) {
     myGroupId = groupId;
     myArtifactId = artifactId;
     myVersion = version;
@@ -54,6 +84,9 @@ public class JpsMavenRepositoryLibraryDescriptor {
     myIncludeTransitiveDependencies = includeTransitiveDependencies;
     myExcludedDependencies = excludedDependencies;
     myMavenId = groupId + ":" + artifactId + ":" + version;
+    myVerifySha256Checksum = verifySha256Checksum;
+    myArtifactsVerification = metadata;
+    myJarRepositoryId = jarRepositoryId;
   }
 
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId) {
@@ -70,10 +103,28 @@ public class JpsMavenRepositoryLibraryDescriptor {
   }
 
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, @NotNull String packaging, boolean includeTransitiveDependencies, List<String> excludedDependencies) {
+    this(mavenId, packaging, includeTransitiveDependencies, excludedDependencies, VERIFY_SHA256_CHECKSUM_DEFAULT, Collections.emptyList(),
+         JAR_REPOSITORY_ID_NOT_SET);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, boolean includeTransitiveDependencies, List<String> excludedDependencies,
+                                             boolean verifySha256Checksum, @NotNull List<ArtifactVerification> artifactsVerification,
+                                             @Nullable String jarRepositoryId) {
+    this(mavenId, DEFAULT_PACKAGING, includeTransitiveDependencies, excludedDependencies, verifySha256Checksum, artifactsVerification,
+         jarRepositoryId);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, @NotNull String packaging, boolean includeTransitiveDependencies, List<String> excludedDependencies,
+                                             boolean verifySha256Checksum, @NotNull List<ArtifactVerification> artifactsVerification,
+                                             @Nullable String jarRepositoryId) {
     myMavenId = mavenId;
     myIncludeTransitiveDependencies = includeTransitiveDependencies;
     myExcludedDependencies = excludedDependencies;
     myPackaging = packaging;
+    myVerifySha256Checksum = verifySha256Checksum;
+    myArtifactsVerification = artifactsVerification;
+    myJarRepositoryId = jarRepositoryId;
+
     if (mavenId == null) {
       myGroupId = myArtifactId = myVersion = null;
     }
@@ -127,15 +178,66 @@ public class JpsMavenRepositoryLibraryDescriptor {
     return myIncludeTransitiveDependencies == that.myIncludeTransitiveDependencies &&
       myMavenId.equals(that.myMavenId) &&
       myPackaging.equals(that.myPackaging) &&
-      myExcludedDependencies.equals(that.myExcludedDependencies);
+      myExcludedDependencies.equals(that.myExcludedDependencies) &&
+      myArtifactsVerification.equals(that.myArtifactsVerification) &&
+      myVerifySha256Checksum == that.myVerifySha256Checksum &&
+      Objects.equals(myJarRepositoryId, that.myJarRepositoryId);
   }
 
   public int hashCode() {
-    return Objects.hash(myMavenId, myPackaging, myIncludeTransitiveDependencies, myExcludedDependencies);
+    return Objects.hash(myMavenId, myPackaging, myIncludeTransitiveDependencies, myExcludedDependencies, myArtifactsVerification,
+                        myVerifySha256Checksum, myJarRepositoryId);
   }
 
   @Override
   public String toString() {
     return myMavenId != null ? myMavenId : "null";
+  }
+
+  public boolean isVerifySha256Checksum() {
+    return myVerifySha256Checksum;
+  }
+
+  public List<ArtifactVerification> getArtifactsVerification() {
+    return myArtifactsVerification;
+  }
+
+  public String getJarRepositoryId() {
+    return myJarRepositoryId;
+  }
+
+  public static class ArtifactVerification {
+    private final String url;
+    private final String sha256sum;
+
+    public ArtifactVerification(@NotNull String url, @Nullable String sha256sum) {
+      this.url = url;
+      this.sha256sum = sha256sum;
+    }
+
+    public String getSha256sum() {
+      return sha256sum;
+    }
+
+    public String getUrl() {
+      return url;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      ArtifactVerification that = (ArtifactVerification)o;
+      return Objects.equals(url, that.url) && Objects.equals(sha256sum, that.sha256sum);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(url, sha256sum);
+    }
   }
 }
