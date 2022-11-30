@@ -1,4 +1,4 @@
-// FIX: Move suspicious callable reference into parentheses '()'
+// FIX: Move reference into parentheses
 // WITH_STDLIB
 
 fun foo() {
