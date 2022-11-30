@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
+import com.intellij.ui.dualView.TableCellRendererWrapper
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.popup.list.SelectablePanel.Companion.wrap
@@ -18,7 +19,12 @@ import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
-internal class VcsLogNewUiTableCellRenderer(val delegate: TableCellRenderer) : TableCellRenderer, VcsLogCellRenderer {
+internal class VcsLogNewUiTableCellRenderer(
+  val delegate: TableCellRenderer
+) : TableCellRenderer,
+    VcsLogCellRenderer,
+    TableCellRendererWrapper {
+
   private var isRight = false
   private var isLeft = false
   private var cachedRenderer: JComponent? = null
@@ -53,7 +59,7 @@ internal class VcsLogNewUiTableCellRenderer(val delegate: TableCellRenderer) : T
     return selectablePanel
   }
 
-
+  override fun getBaseRenderer(): TableCellRenderer = delegate
 
   private fun updateSelectablePanelIfNeeded(isRightColumn: Boolean, isLeftColumn: Boolean, columnRenderer: JComponent) {
     if (isRight != isRightColumn || isLeft != isLeftColumn || cachedRenderer !== columnRenderer) {

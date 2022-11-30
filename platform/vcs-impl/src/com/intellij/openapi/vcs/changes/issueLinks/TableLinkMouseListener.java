@@ -31,12 +31,12 @@ public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
       tag = forColoredRenderer(e, table, row, column, renderer);
     }
     else {
-      tag = tryGetTag(e, table, row, column);
+      tag = tryGetTag(e, table, row, column, cellRenderer);
     }
     return tag;
   }
 
-  protected Object tryGetTag(MouseEvent e, JTable table, int row, int column) {
+  protected Object tryGetTag(MouseEvent e, JTable table, int row, int column, TableCellRenderer cellRenderer) {
     return null;
   }
 
