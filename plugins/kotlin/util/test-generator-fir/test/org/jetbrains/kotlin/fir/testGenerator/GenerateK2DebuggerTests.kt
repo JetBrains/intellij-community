@@ -16,6 +16,16 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             model("stepping/filters", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
             model("stepping/custom", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
         }
+
+        testClass<AbstractK2IndyLambdaKotlinSteppingTest> {
+            model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
+            model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
+            model("stepping/stepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
+            model("stepping/stepOut", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
+            model("stepping/stepOver", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
+            model("stepping/filters", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
+            model("stepping/custom", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+        }
         //
         //testClass<AbstractKotlinEvaluateExpressionTest> {
         //    model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)

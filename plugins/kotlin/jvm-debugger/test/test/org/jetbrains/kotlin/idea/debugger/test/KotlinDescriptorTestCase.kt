@@ -33,6 +33,7 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
@@ -150,6 +151,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
     open fun fragmentCompilerBackend() = FragmentCompilerBackend.JVM_IR
 
+    open fun lambdasGenerationScheme() = JvmClosureGenerationScheme.CLASS
+
     protected open fun targetBackend(): TargetBackend =
         when (fragmentCompilerBackend()) {
             FragmentCompilerBackend.JVM ->
@@ -161,8 +164,13 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>) {
     }
 
-    protected open fun createDebuggerTestCompilerFacility(testFiles: TestFiles, jvmTarget: JvmTarget, useIrBackend: Boolean) =
-        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend)
+    protected open fun createDebuggerTestCompilerFacility(
+        testFiles: TestFiles,
+        jvmTarget: JvmTarget,
+        useIrBackend: Boolean,
+        lambdasGenerationScheme: JvmClosureGenerationScheme,
+    ) =
+        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend, lambdasGenerationScheme)
 
     @Suppress("UNUSED_PARAMETER")
     fun doTest(unused: String) {
@@ -181,7 +189,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")
 
-        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend())
+        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend(), lambdasGenerationScheme())
 
         for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY]) {
             if (library.startsWith("maven("))
