@@ -145,7 +145,7 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
       return snapshotCache.cache
     }
 
-  override val current: EntityStorage
+  override val current: EntityStorageSnapshot
     get() = currentPointer.storage
 
   override val base: EntityStorage

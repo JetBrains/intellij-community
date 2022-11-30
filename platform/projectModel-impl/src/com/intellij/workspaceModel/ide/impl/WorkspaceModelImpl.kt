@@ -32,6 +32,9 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     protected set
 
   final override val entityStorage: VersionedEntityStorageImpl
+  
+  override val currentSnapshot: EntityStorageSnapshot
+    get() = entityStorage.current
 
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
 

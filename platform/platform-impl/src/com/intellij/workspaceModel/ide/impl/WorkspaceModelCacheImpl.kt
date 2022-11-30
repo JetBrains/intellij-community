@@ -74,7 +74,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
   }
 
   private fun doCacheSaving() {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     if (!storage.isConsistent) {
       invalidateProjectCache()
     }

@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 
@@ -10,6 +11,12 @@ import com.intellij.workspaceModel.storage.VersionedEntityStorage
  * Provides access to the storage which holds workspace model entities.
  */
 interface WorkspaceModel {
+  /**
+   * Returns snapshot of the workspace model storage. 
+   * The returned value won't be affected by future changes in [WorkspaceModel], so it can be safely used without any locks from any thread.
+   */
+  val currentSnapshot: EntityStorageSnapshot
+  
   val entityStorage: VersionedEntityStorage
 
   /**
