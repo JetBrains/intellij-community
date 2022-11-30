@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
@@ -148,12 +149,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       @Override
       public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D)g.create();
-        Rectangle r = new Rectangle(getSize());
-        JBInsets.removeFrom(r, JBUI.insets(1, 0, 1, 1));
 
         try {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+          Rectangle r = getArrowButtonRect(this);
           g2.translate(r.x, r.y);
 
           if (myPaintArrowButton) {
@@ -163,12 +163,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
             arc = arc > bw + lw ? arc - bw - lw : 0.0f;
 
             Path2D innerShape = new Path2D.Float();
-            innerShape.moveTo(lw, bw + lw);
-            innerShape.lineTo(r.width - bw - lw - arc, bw + lw);
-            innerShape.quadTo(r.width - bw - lw, bw + lw, r.width - bw - lw, bw + lw + arc);
-            innerShape.lineTo(r.width - bw - lw, r.height - bw - lw - arc);
-            innerShape.quadTo(r.width - bw - lw, r.height - bw - lw, r.width - bw - lw - arc, r.height - bw - lw);
-            innerShape.lineTo(lw, r.height - bw - lw);
+            innerShape.moveTo(lw, lw);
+            innerShape.lineTo(r.width - lw - arc, lw);
+            innerShape.quadTo(r.width - lw, lw, r.width - lw, lw + arc);
+            innerShape.lineTo(r.width - lw, r.height - lw - arc);
+            innerShape.quadTo(r.width - lw, r.height - lw, r.width - lw - arc, r.height - lw);
+            innerShape.lineTo(lw, r.height - lw);
             innerShape.closePath();
 
             g2.setColor(JBUI.CurrentTheme.Arrow.backgroundColor(comboBox.isEnabled(), comboBox.isEditable()));
@@ -177,10 +177,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
             // Paint vertical line
             if (comboBox.isEditable() || ClientProperty.isTrue(comboBox, PAINT_VERTICAL_LINE)) {
               g2.setColor(getOutlineColor(comboBox.isEnabled(), false));
-              g2.fill(new Rectangle2D.Float(0, bw + lw, LW.getFloat(), r.height - (bw + lw) * 2));
+              g2.fill(new Rectangle2D.Float(0, lw, LW.getFloat(), r.height - lw * 2));
             }
           }
 
+          g2.translate(-r.x, -r.y + JBUI.scale(1));
           paintArrow(g2, this);
         }
         finally {
@@ -198,9 +199,25 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return button;
   }
 
+  private static Rectangle getArrowButtonRect(JButton button) {
+    Rectangle result = new Rectangle(button.getSize());
+    JBInsets.removeFrom(result, JBUI.insets(1, 0, 1, 1));
+    int bw = BW.get();
+    //noinspection UseDPIAwareInsets
+    JBInsets.removeFrom(result, new Insets(bw, 0, bw, bw));
+    return result;
+  }
+
   protected void paintArrow(Graphics2D g2, JButton btn) {
-    g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(comboBox.isEnabled()));
-    g2.fill(getArrowShape(btn));
+    if (ExperimentalUI.isNewUI()) {
+      Icon icon = comboBox.isEnabled() ? AllIcons.General.ChevronDown : IconLoader.getDisabledIcon(AllIcons.General.ChevronDown);
+      Rectangle r = getArrowButtonRect(btn);
+      icon.paintIcon(btn, g2, r.x + (r.width - icon.getIconWidth()) / 2, r.y + (r.height - icon.getIconHeight()) / 2);
+    }
+    else {
+      g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(comboBox.isEnabled()));
+      g2.fill(getArrowShape(btn));
+    }
   }
 
   @SuppressWarnings("unused")
