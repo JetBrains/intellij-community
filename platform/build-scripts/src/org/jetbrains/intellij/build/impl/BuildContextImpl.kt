@@ -294,9 +294,9 @@ class BuildContextImpl private constructor(
     }
     jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
     jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
-    // prefer bundled JNA dispatcher lib
+    // require bundled JNA dispatcher lib
     jvmArgs.add("-Djna.nosys=true")
-    jvmArgs.add("-Djna.nounpack=true")
+    jvmArgs.add("-Djna.noclasspath=true")
 
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
