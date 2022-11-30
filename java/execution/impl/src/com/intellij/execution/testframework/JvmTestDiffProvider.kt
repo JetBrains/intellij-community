@@ -27,7 +27,7 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
       val failedCall = getFailedCall(file, startOffset, endOffset) ?: return@forEach
       val expected = getExpected(failedCall, expectedParamIndex) ?: return@forEach
       expectedParamIndex = getParamIndex(expected)
-      return expected
+      if (expectedParamIndex == null) return expected
     }
     return null
   }

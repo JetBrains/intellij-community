@@ -17,7 +17,6 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,8 +26,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nls;
@@ -85,7 +85,14 @@ public class TestDiffRequestProcessor {
 
       DiffContent content1 = null;
       if (file1 == null && testProxy != null) {
-        content1 = ReadAction.compute(() -> createFragmentDiff(testProxy));
+        TestDiffProvider provider = ReadAction.compute(() -> getTestDiffProvider(testProxy));
+        if (provider != null) {
+          PsiElement expected = ReadAction.compute(() -> getExpected(provider, testProxy));
+          if (expected != null) {
+            file1 = ReadAction.compute(() -> expected.getContainingFile().getVirtualFile());
+            content1 = ReadAction.compute(() -> createPsiDiffContent(provider, expected, text1));
+          }
+        }
       }
       if (content1 == null) {
         content1 = createContentWithTitle(myProject, text1, file1, file2);
@@ -100,20 +107,23 @@ public class TestDiffRequestProcessor {
       return new SimpleDiffRequest(windowTitle, content1, content2, title1, title2);
     }
 
-    @Nullable
-    private DiffContent createFragmentDiff(AbstractTestProxy testProxy) {
-      Location<?> location = testProxy.getLocation(myProject, GlobalSearchScope.projectScope(myProject));
-      if (location == null) return null;
-      TestDiffProvider testDiffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(
-        location.getPsiElement().getLanguage()
-      );
+    private @Nullable TestDiffProvider getTestDiffProvider(@NotNull AbstractTestProxy testProxy) {
+      Location<?> loc = testProxy.getLocation(myProject, GlobalSearchScope.projectScope(myProject));
+      if (loc == null) return null;
+      return TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(loc.getPsiElement().getLanguage());
+    }
+
+    private @Nullable PsiElement getExpected(@NotNull TestDiffProvider provider, @NotNull AbstractTestProxy testProxy) {
       String stackTrace = testProxy.getStacktrace();
       if (stackTrace == null) return null;
-      PsiElement expected = testDiffProvider.findExpected(myProject, testProxy.getStacktrace());
-      if (expected == null) return null;
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(expected.getContainingFile());
-      if (document == null) return null;
-      return DiffContentFactory.getInstance().createFragment(myProject, document, expected.getTextRange());
+      return provider.findExpected(myProject, testProxy.getStacktrace());
+    }
+
+    private @Nullable DiffContent createPsiDiffContent(@NotNull TestDiffProvider provider,
+                                                       @NotNull PsiElement element,
+                                                       @NotNull String text) {
+      SmartPsiElementPointer<PsiElement> elemPtr = SmartPointerManager.createPointer(element);
+      return TestDiffContent.Companion.create(myProject, text, elemPtr, provider::createActual);
     }
 
     @Override

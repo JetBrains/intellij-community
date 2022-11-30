@@ -2,12 +2,17 @@
 package com.intellij.execution.testframework
 
 import com.intellij.codeInsight.CodeInsightUtil
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.asSafely
 import com.intellij.util.containers.ContainerUtil
 import com.siyeh.ig.testFrameworks.AssertHint.Companion.createAssertEqualsHint
 
 class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
+  override fun createActual(project: Project, element: PsiElement, actual: String): PsiElement {
+    return PsiElementFactory.getInstance(project).createExpressionFromText("\"$actual\"", element)
+  }
+
   override fun getParamIndex(param: PsiElement): Int? {
     if (param is PsiParameter) {
       return param.parent.asSafely<PsiParameterList>()?.parameters?.indexOf<PsiElement>(param)
@@ -31,7 +36,15 @@ class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
     }
     if (expr is PsiLiteralExpression) return expr
     if (expr is PsiPolyadicExpression && ContainerUtil.all(expr.operands) { PsiLiteralExpression::class.java.isInstance(it) }) return expr
-    if (expr is PsiReference) return expr.resolve()
+    if (expr is PsiReference) {
+      val resolved = expr.resolve()
+      if (resolved is PsiVariable) {
+        if (resolved is PsiLocalVariable || resolved is PsiField) {
+          return resolved.initializer
+        }
+        return resolved
+      }
+    }
     return null
   }
 }

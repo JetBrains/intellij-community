@@ -143,7 +143,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   @Override
-  protected DiffHyperlink createHyperlink(String expected,
+  public DiffHyperlink createHyperlink(String expected,
                                           String actual,
                                           String filePath,
                                           final String actualFilePath, final boolean printOneLine) {
