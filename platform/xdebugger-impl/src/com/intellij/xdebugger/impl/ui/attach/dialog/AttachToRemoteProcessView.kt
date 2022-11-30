@@ -169,7 +169,7 @@ internal class AttachToRemoteProcessView(private val project: Project,
 
       for (providerAndHosts in hosts.groupBy { it.provider }.toList().sortedBy { it.first.presentationGroup.order }) {
         for (host in providerAndHosts.second) {
-          actions.add(object : AnAction({ host.toString() }, host.getIcon()) {
+          actions.add(object : AnAction({ host.getPresentation() }, host.getIcon()) {
             override fun actionPerformed(e: AnActionEvent) {
               selectedHost = host
               updateProcesses()

@@ -22,6 +22,11 @@ data class AttachHostAndProvider(
     return presentationGroup.getItemDisplayText(project, host, dataHolder)
   }
 
+  @Nls
+  override fun toString(): String {
+    return getPresentation()
+  }
+
   fun getIcon(): Icon {
     val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemIcon(project, host, dataHolder)
