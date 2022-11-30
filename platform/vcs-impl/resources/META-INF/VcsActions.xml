@@ -422,32 +422,36 @@
       <add-to-group group-id="EditorTabsEntryPoint" anchor="after" relative-to-action="CloseAllEditors"/>
     </action>
 
-    <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
-    <action id="Vcs.ShowDiffChangedLines" class="com.intellij.openapi.vcs.ex.ShowDiffLineStatusAction" icon="AllIcons.Actions.Diff"/>
-    <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction"/>
-    <action id="Vcs.Diff.ExcludeChangedLinesFromCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
+    <group id="Vcs.Diff.Commit.KeymapGroup" searchable="false">
+      <action id="Vcs.Diff.ExcludeChangedLinesFromCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="Vcs.Diff.IncludeOnlyChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Diff.ResolveConflict" anchor="after"/>
-    </action>
-    <action id="Vcs.Diff.IncludeOnlyChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
-      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Vcs.Diff.ExcludeChangedLinesFromCommit" anchor="after"/>
-    </action>
-    <action id="Vcs.Diff.ToggleDiffAligningMode" class="com.intellij.diff.actions.impl.ToggleDiffAligningModeAction">
-      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
-      <override-text place="popup@DiffToolbar"/>
-    </action>
-    <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
-      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
-      <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
-    </action>
-    <group id="Vcs.Diff.EditorTabs.Group" searchable="false">
-      <action id="Vcs.Diff.ShowDiffInNewWindow"
-              icon="AllIcons.Actions.MoveToWindow"
-              class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
-        <add-to-group group-id="Diff.Binary.Settings"/>
+    </group>
+    <group id="Vcs.Diff.KeymapGroup" searchable="false">
+      <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
+      <action id="Vcs.ShowDiffChangedLines" class="com.intellij.openapi.vcs.ex.ShowDiffLineStatusAction" icon="AllIcons.Actions.Diff"/>
+      <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction"/>
+      <action id="Vcs.Diff.ToggleDiffAligningMode" class="com.intellij.diff.actions.impl.ToggleDiffAligningModeAction">
+        <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
+        <override-text place="popup@DiffToolbar"/>
       </action>
-      <separator/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
-      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+      <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
+        <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+        <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
+      </action>
+      <group id="Vcs.Diff.EditorTabs.Group" searchable="false">
+        <action id="Vcs.Diff.ShowDiffInNewWindow"
+                icon="AllIcons.Actions.MoveToWindow"
+                class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
+          <add-to-group group-id="Diff.Binary.Settings"/>
+        </action>
+        <separator/>
+        <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
+        <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+      </group>
+
+      <add-to-group group-id="Diff.KeymapGroup"/>
     </group>
 
     <reference ref="Vcs.VcsClone">
@@ -540,6 +544,7 @@
       <reference ref="ChangesView.SetDefault"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
+      <reference ref="ChangesView.SingleClickPreview"/>
       <reference ref="$Delete"/>
       <reference ref="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.RemoveDeleted"/>

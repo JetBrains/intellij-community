@@ -39,6 +39,8 @@
     <group id="Vcs.Push.Actions">
       <action id="Vcs.Push.Simple" class="com.intellij.dvcs.push.ui.SimplePushAction"/>
       <action id="Vcs.Push.Force" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
     <group id="Dvcs.Log.ContextMenu">
