@@ -570,22 +570,24 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
           log("Loading finished: tracker already released", virtualFile)
           return
         }
+
+        tracker = data.tracker
+        if (!loader.isMyTracker(tracker)) {
+          log("Loading finished: wrong tracker. tracker: $tracker, loader: $loader", virtualFile)
+          return
+        }
+
         if (!loader.shouldBeUpdated(data.contentInfo, refreshData.contentInfo)) {
           log("Loading finished: no need to update", virtualFile)
           return
         }
 
         data.contentInfo = refreshData.contentInfo
-        tracker = data.tracker
       }
 
-      if (loader.isMyTracker(tracker)) {
-        loader.setLoadedContent(tracker, refreshData.content)
-        log("Loading finished: success", virtualFile)
-      }
-      else {
-        log("Loading finished: wrong tracker. tracker: $tracker, loader: $loader", virtualFile)
-      }
+      log("Loading finished: applying content", virtualFile)
+      loader.setLoadedContent(tracker, refreshData.content)
+      log("Loading finished: success", virtualFile)
 
       restorePendingTrackerState(document)
     }
