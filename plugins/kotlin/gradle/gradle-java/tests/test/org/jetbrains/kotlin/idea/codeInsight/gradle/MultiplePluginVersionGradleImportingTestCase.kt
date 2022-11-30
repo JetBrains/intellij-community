@@ -7,10 +7,12 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
+import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.OrderEntriesFilteringTestFeature
+import org.jetbrains.kotlin.gradle.workspace.WorkspacePrintingMode
 import org.jetbrains.kotlin.gradle.workspace.checkWorkspaceModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_4_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_6_21
@@ -19,7 +21,6 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
 import org.junit.runners.Parameterized
-import java.io.File
 
 @Suppress("ACCIDENTAL_OVERRIDE")
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
@@ -183,8 +184,23 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         createHighlightingCheck(testLineMarkers).invokeOnAllModules()
     }
 
-    fun checkWorkspaceModel(testClassifier: String? = null) =
-        checkWorkspaceModel(myProject, testDataDirectory(), testClassifier)
+    fun checkWorkspaceModel(testClassifier: String? = null) {
+        val testConfiguration = TestConfiguration().apply {
+            // Temporary hack for older usages (they were expecting K/N Dist to be leniently folded)
+            getConfiguration(OrderEntriesFilteringTestFeature).hideKonanDist = true
+        }
+
+        checkWorkspaceModel(
+            myProject,
+            testDataDirectory(),
+            myProjectRoot.toNioPath().toFile(),
+            kotlinPluginVersion,
+            gradleVersion,
+            listOf(WorkspacePrintingMode.MODULE_DEPENDENCIES),
+            testClassifier = testClassifier,
+            testConfiguration = testConfiguration
+        )
+    }
 }
 
 fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(versionRequirement: String): Boolean {
