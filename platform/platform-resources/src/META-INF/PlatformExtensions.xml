@@ -792,7 +792,7 @@
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="3"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.VfsUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.IndexingStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationFusCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationAggregatesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.util.indexing.diagnostic.IndexIdRuleValidator" />

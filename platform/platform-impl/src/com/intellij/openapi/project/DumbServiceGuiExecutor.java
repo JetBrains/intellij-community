@@ -26,7 +26,7 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
   protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
                                           @NotNull ProgressIndicator visibleIndicator) {
     Project project = getProject();
-    activity = IndexingStatisticsCollector.DUMB_MODE_ACTIVITY.started(project);
+    activity = DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project);
     try {
       DumbServiceAppIconProgress.registerForProgress(project, (ProgressIndicatorEx)visibleIndicator);
       DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator);
@@ -40,9 +40,9 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
       // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
       // previously installed.
       myHeavyActivities.resetCurrentSuspender();
-      IndexingStatisticsCollector.logProcessFinished(activity, suspender.isClosed()
-                                                               ? IndexingStatisticsCollector.IndexingFinishType.TERMINATED
-                                                               : IndexingStatisticsCollector.IndexingFinishType.FINISHED);
+      DumbModeStatisticsCollector.logProcessFinished(activity, suspender.isClosed()
+                                                               ? DumbModeStatisticsCollector.IndexingFinishType.TERMINATED
+                                                               : DumbModeStatisticsCollector.IndexingFinishType.FINISHED);
       activity = null;
       DumbModeProgressTitle.getInstance(project).removeDumpModeProgress(visibleIndicator);
     }
