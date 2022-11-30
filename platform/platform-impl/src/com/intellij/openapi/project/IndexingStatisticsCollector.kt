@@ -23,10 +23,10 @@ class IndexingStatisticsCollector : CounterUsagesCollector() {
     @JvmField
     val FINISH_TYPE = EventFields.Enum("finish_type", IndexingFinishType::class.java)
     @JvmField
-    val INDEXING_ACTIVITY = GROUP.registerIdeActivity(null, emptyArray(), arrayOf(FINISH_TYPE))
+    val DUMB_MODE_ACTIVITY = GROUP.registerIdeActivity(null, emptyArray(), arrayOf(FINISH_TYPE))
 
     @JvmField
-    val INDEXING_STAGE = INDEXING_ACTIVITY.registerStage("stage", arrayOf(STAGE_CLASS, EventFields.PluginInfo))
+    val DUMB_MODE_STAGE = DUMB_MODE_ACTIVITY.registerStage("stage", arrayOf(STAGE_CLASS, EventFields.PluginInfo))
   }
 
   override fun getGroup(): EventLogGroup {

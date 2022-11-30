@@ -26,7 +26,7 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
   protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
                                           @NotNull ProgressIndicator visibleIndicator) {
     Project project = getProject();
-    activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(project);
+    activity = IndexingStatisticsCollector.DUMB_MODE_ACTIVITY.started(project);
     try {
       DumbServiceAppIconProgress.registerForProgress(project, (ProgressIndicatorEx)visibleIndicator);
       DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator);
