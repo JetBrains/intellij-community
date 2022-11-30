@@ -141,7 +141,10 @@ class IdeaResolverForProject(
             packagePartProviderFactory = { IDEPackagePartProvider(it.moduleContentScope) },
             moduleByJavaClass = { javaClass: JavaClass ->
                 val psiClass = (javaClass as JavaClassImpl).psi
-                psiClass.getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform)?.platformModule ?: psiClass.moduleInfoOrNull
+                when (settings) {
+                    is CompositeAnalysisSettings -> psiClass.moduleInfoOrNull
+                    else -> psiClass.getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform)?.platformModule ?: psiClass.moduleInfoOrNull
+                }
             },
             resolverForReferencedModule = { targetModuleInfo, referencingModuleInfo ->
                 require(targetModuleInfo is IdeaModuleInfo && referencingModuleInfo is IdeaModuleInfo) {
