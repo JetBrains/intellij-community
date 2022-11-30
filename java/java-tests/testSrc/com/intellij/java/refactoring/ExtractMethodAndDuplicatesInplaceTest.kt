@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
@@ -199,22 +200,16 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testDuplicatedWithDeclinedChangeSignature(){
-    val default = DuplicatesMethodExtractor.changeSignatureDefault
-    try {
+    runAndRevertSettings {
       DuplicatesMethodExtractor.changeSignatureDefault = false
       doTest()
-    } finally {
-      DuplicatesMethodExtractor.changeSignatureDefault = default
     }
   }
 
   fun testDuplicatedButDeclined(){
-    val default = DuplicatesMethodExtractor.replaceDuplicatesDefault
-    try {
+    runAndRevertSettings {
       DuplicatesMethodExtractor.replaceDuplicatesDefault = false
       doTest()
-    } finally {
-      DuplicatesMethodExtractor.replaceDuplicatesDefault = default
     }
   }
 
@@ -242,13 +237,29 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testMakeStaticWithThis(){
+    runAndRevertSettings {
+      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+      doTest()
+    }
+  }
+
+  fun testMakeStaticWithStaticMembers(){
+    runAndRevertSettings {
+      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+      doTest()
+    }
+  }
+
+  fun testMakeStaticWithLocalMethod(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
+  }
+
   fun testFoldedParametersInExactDuplicates(){
-    val default = DuplicatesMethodExtractor.changeSignatureDefault
-    try {
+    runAndRevertSettings {
       DuplicatesMethodExtractor.changeSignatureDefault = false
       doTest()
-    } finally {
-      DuplicatesMethodExtractor.changeSignatureDefault = default
     }
   }
 
@@ -287,6 +298,23 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
       if (checkResults) {
         checkResultByFile("$BASE_PATH/${getTestName(false)}_after.java")
       }
+    }
+  }
+
+  private inline fun runAndRevertSettings(action: () -> Unit) {
+    val settings = JavaRefactoringSettings.getInstance()
+    val defaultStatic = settings.EXTRACT_STATIC_METHOD
+    val defaultPassFields = settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS
+    val defaultChangeSignature = DuplicatesMethodExtractor.changeSignatureDefault
+    val defaultReplaceDuplicates = DuplicatesMethodExtractor.replaceDuplicatesDefault
+    try {
+      action.invoke()
+    }
+    finally {
+      settings.EXTRACT_STATIC_METHOD = defaultStatic
+      settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = defaultPassFields
+      DuplicatesMethodExtractor.changeSignatureDefault = defaultChangeSignature
+      DuplicatesMethodExtractor.replaceDuplicatesDefault = defaultReplaceDuplicates
     }
   }
 

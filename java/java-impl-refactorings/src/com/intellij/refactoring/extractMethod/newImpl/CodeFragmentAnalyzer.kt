@@ -17,13 +17,13 @@ import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLAS
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
-import com.intellij.refactoring.util.classMembers.ElementNeedsThis
+import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor
 import com.siyeh.ig.psiutils.VariableAccessUtils
 import it.unimi.dsi.fastutil.ints.IntArrayList
 
 data class ExitDescription(val statements: List<PsiStatement>, val numberOfExits: Int, val hasSpecialExits: Boolean)
 data class ExternalReference(val variable: PsiVariable, val references: List<PsiReferenceExpression>)
-data class MemberUsage(val member: PsiMember, val reference: PsiReferenceExpression)
+data class MemberUsage(val member: PsiMember, val reference: PsiExpression)
 
 class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
@@ -122,13 +122,16 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
   fun findInstanceMemberUsages(targetClass: PsiClass, elements: List<PsiElement>): List<MemberUsage> {
     val usedFields = ArrayList<MemberUsage>()
-    val visitor: ElementNeedsThis = object : ElementNeedsThis(targetClass) {
+    val visitor = object : ClassMemberReferencesVisitor(targetClass) {
       override fun visitClassMemberReferenceElement(classMember: PsiMember, classMemberReference: PsiJavaCodeReferenceElement) {
         val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiReferenceExpression::class.java, false)
         if (expression != null && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
           usedFields += MemberUsage(classMember, expression)
         }
-        super.visitClassMemberReferenceElement(classMember, classMemberReference)
+      }
+
+      override fun visitThisExpression(expression: PsiThisExpression) {
+        usedFields += MemberUsage(targetClass, expression)
       }
     }
     elements.forEach { it.accept(visitor) }
