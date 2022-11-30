@@ -16,6 +16,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notebook.editor.BackedVirtualFile;
+import com.intellij.notebook.editor.BackedVirtualFileProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -952,7 +953,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       try {
         boolean submitted = false;
         for (FileEditor fileEditor : activeEditors) {
-          VirtualFile virtualFile = fileEditor.getFile();
+          VirtualFile virtualFile = getVirtualFile(fileEditor);
           PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
           if (psiFile == null) continue;
           submitted |= dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
@@ -964,6 +965,18 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
       catch (ProcessCanceledException ignored) {
       }
+    }
+
+    private static VirtualFile getVirtualFile(FileEditor fileEditor) {
+      VirtualFile virtualFile = fileEditor.getFile();
+      for (BackedVirtualFileProvider provider : BackedVirtualFileProvider.EP_NAME.getExtensionList()) {
+        VirtualFile replacedVirtualFile = provider.getReplacedVirtualFile(virtualFile);
+        if (replacedVirtualFile != null) {
+          virtualFile = replacedVirtualFile;
+          break;
+        }
+      }
+      return virtualFile;
     }
 
     private void clearFieldsOnDispose() {
