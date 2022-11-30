@@ -9,7 +9,8 @@
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
-    <action id="ChangesView.ToggleCommitUi" class="com.intellij.openapi.vcs.actions.commit.ToggleChangesViewCommitUiAction" use-shortcut-of="CheckinProject">
+    <action id="ChangesView.ToggleCommitUi" class="com.intellij.openapi.vcs.actions.commit.ToggleChangesViewCommitUiAction"
+            use-shortcut-of="CheckinProject">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
     <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.commit.CommonCheckinFilesAction"/>
@@ -42,11 +43,11 @@
       <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
-    <action id="Vcs.Toolbar.ShowMoreActions"  class="com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup">
+    <action id="Vcs.Toolbar.ShowMoreActions" class="com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
     <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true">
-      <add-to-group group-id="VersionControlsGroup" />
+      <add-to-group group-id="VersionControlsGroup"/>
     </group>
 
     <group id="GoToChangeMarkerGroup">
@@ -64,7 +65,7 @@
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
       <reference ref="ChangesView.ToggleCommitUi"/>
-      <add-to-group group-id="TouchBarDefaultOptionalGroup" anchor="first" />
+      <add-to-group group-id="TouchBarDefaultOptionalGroup" anchor="first"/>
     </group>
 
     <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
@@ -192,7 +193,8 @@
       <reference ref="ChangesView.SetDefault"/>
       <reference ref="ChangesView.Rename"/>
       <reference ref="ChangesView.CreatePatch"/>
-      <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Clipboard"/>
+      <action id="ChangesView.CreatePatchToClipboard"
+              class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Clipboard"/>
       <reference ref="ChangesView.Shelve"/>
       <separator/>
       <reference ref="ChangesView.Refresh"/>
@@ -347,7 +349,7 @@
 
     <group id="Vcs.History">
       <action id="VcsHistory.ShowAllAffected" class="com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction"
-              icon="AllIcons.Actions.ListChanges" />
+              icon="AllIcons.Actions.ListChanges"/>
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.committed.BrowseCommittedChangesAction"/>
@@ -369,7 +371,8 @@
       <reference id="Diff.ShowDiff"/>
     </group>
 
-    <action id="Vcs.ReformatCommitMessage" class="com.intellij.vcs.commit.message.ReformatCommitMessageAction" use-shortcut-of="ReformatCode"/>
+    <action id="Vcs.ReformatCommitMessage" class="com.intellij.vcs.commit.message.ReformatCommitMessageAction"
+            use-shortcut-of="ReformatCode"/>
     <group id="Vcs.MessageActionGroup">
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
@@ -413,7 +416,7 @@
       <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>
 
- <!-- Window -->
+    <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="after" relative-to-action="CloseAllEditors"/>
       <add-to-group group-id="EditorTabsEntryPoint" anchor="after" relative-to-action="CloseAllEditors"/>
@@ -622,7 +625,7 @@
 
     <action id="AnnotateStackTraceAction.show.files.modification.info"
             class="com.intellij.unscramble.AnnotateStackTraceAction" icon="AllIcons.Actions.Annotate">
-      <add-to-group group-id="AnalyzeStacktraceToolbar" anchor="first" />
+      <add-to-group group-id="AnalyzeStacktraceToolbar" anchor="first"/>
     </action>
 
     <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup">
@@ -631,7 +634,8 @@
 
     <group id="Vcs.Operations.Popup">
       <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
-        <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
+        <group id="Vcs.Operations.Popup.VcsNameSeparator"
+               class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
         <reference id="ChangesView.AddUnversioned"/>
         <reference id="CheckinProject"/>
         <reference ref="ChangesView.ToggleCommitUi"/>
