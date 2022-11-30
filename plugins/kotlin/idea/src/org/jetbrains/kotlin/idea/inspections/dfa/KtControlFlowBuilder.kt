@@ -716,6 +716,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         flushParameter(parameter)
                     }
                 }
+                val receiver = KtVariableDescriptor.getLambdaReceiver(factory, lambda)
+                if (receiver != null) {
+                    addInstruction(FlushVariableInstruction(receiver))
+                }
             }
             processExpression(bodyExpression)
             flow.finishElement(functionLiteral)

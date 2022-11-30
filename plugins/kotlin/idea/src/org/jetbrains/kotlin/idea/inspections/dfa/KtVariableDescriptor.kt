@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
@@ -94,6 +94,12 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
             }
             val kotlinType = lambda.resolveType()?.getValueParameterTypesFromFunctionType()?.singleOrNull()?.type ?: return null
             return factory.varFactory.createVariableValue(KtItVariableDescriptor(lambda.functionLiteral, kotlinType))
+        }
+        
+        fun getLambdaReceiver(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
+            val receiverType = lambda.resolveType()?.getReceiverTypeFromFunctionType() ?: return null
+            val descriptor = lambda.functionLiteral.resolveToDescriptorIfAny() ?: return null
+            return factory.varFactory.createVariableValue(KtThisDescriptor(descriptor, receiverType.toDfType()))
         }
 
         fun createFromQualified(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
