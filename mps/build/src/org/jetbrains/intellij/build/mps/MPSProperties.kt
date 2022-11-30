@@ -60,19 +60,14 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.bundledPluginModules.add("intellij.vcs.changeReminder")
         productLayout.bundledPluginModules.add("intellij.markdown")
         productLayout.bundledPluginModules.add("intellij.grazie")
+        productLayout.bundledPluginModules.add("intellij.laf.macos")
+        productLayout.bundledPluginModules.add("intellij.laf.win10")
 
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = persistentListOf("intellij.java.plugin")
 
         val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin()
-        for (pluginLayout in pluginLayouts) {
-            if (pluginLayout.mainModule == "intellij.laf.macos" || pluginLayout.mainModule == "intellij.laf.win10") {
-                pluginLayout.bundlingRestrictions = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, pluginLayout.bundlingRestrictions.includeInEapOnly)
-                println(pluginLayout.mainModule)
-                println(pluginLayout.bundlingRestrictions)
-            }
-        }
         productLayout.pluginLayouts = pluginLayouts.toPersistentList()
 
         productLayout.addPlatformCustomizer { layout, _ ->
