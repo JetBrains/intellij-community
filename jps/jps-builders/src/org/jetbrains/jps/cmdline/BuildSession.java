@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tracing.Tracer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
@@ -41,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
@@ -49,30 +51,26 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 */
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance(BuildSession.class);
-  public static final String FS_STATE_FILE = "fs_state.dat";
   private static final Boolean REPORT_BUILD_STATISTICS = Boolean.valueOf(System.getProperty(GlobalOptions.REPORT_BUILD_STATISTICS, "false"));
+
+  static final String FS_STATE_FILE = "fs_state.dat";
 
   private final UUID mySessionId;
   private final Channel myChannel;
-  @Nullable
-  private PreloadedData myPreloadedData;
+  private @Nullable PreloadedData myPreloadedData;
   private volatile boolean myCanceled;
   private final String myProjectPath;
-  @Nullable
-  private CmdlineRemoteProto.Message.ControllerMessage.FSEvent myInitialFSDelta;
+  private @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent myInitialFSDelta;
   // state
   private final EventsProcessor myEventsProcessor = new EventsProcessor();
-  private volatile long myLastEventOrdinal;
+  private final AtomicLong myLastEventOrdinal = new AtomicLong();
   private volatile ProjectDescriptor myProjectDescriptor;
-  @NotNull
-  private final BuildRunner myBuildRunner;
+  private final @NotNull BuildRunner myBuildRunner;
   private final BuildType myBuildType;
   private final List<TargetTypeBuildScope> myScopes;
   private final boolean myLoadUnloadedModules;
-  @Nullable
-  private JpsOutputLoaderManager myCacheLoadManager;
-  @Nullable
-  private CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings myCacheDownloadSettings;
+  private @Nullable JpsOutputLoaderManager myCacheLoadManager;
+  private final @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings myCacheDownloadSettings;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -284,7 +282,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       storageFilesAbsent || preloadedProject != null || myLoadUnloadedModules || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
     if (fsStateStream != null || myPreloadedData != null) {
-      // optimization: check whether we can skip the build
+      // optimization: checking whether we can skip the build
       final boolean hasWorkFlag = fsStateStream != null? fsStateStream.readBoolean() : myPreloadedData.hasWorkToDo();
       LOG.debug("hasWorkFlag = " + hasWorkFlag);
       final boolean hasWorkToDoWithModules = hasWorkFlag || myInitialFSDelta == null;
@@ -362,7 +360,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       myProjectDescriptor = pd;
       if (myCacheLoadManager != null) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
 
-      myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
+      myLastEventOrdinal.set(myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L);
 
       // free memory
       myInitialFSDelta = null;
@@ -432,7 +430,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     myEventsProcessor.execute(() -> {
       try {
         applyFSEvent(myProjectDescriptor, event, true);
-        myLastEventOrdinal += 1;
+        myLastEventOrdinal.addAndGet(1);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -538,7 +536,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       try (DataOutputStream out = new DataOutputStream(bytes)) {
         out.writeInt(BuildFSState.VERSION);
-        out.writeLong(myLastEventOrdinal);
+        out.writeLong(myLastEventOrdinal.get());
         out.writeBoolean(hasWorkToDo(state, pd));
         state.save(out);
       }
@@ -553,7 +551,7 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private static boolean hasWorkToDo(BuildFSState state, @Nullable ProjectDescriptor pd) {
     if (pd == null) {
-      return true; // assuming worst case
+      return true; // assuming the worst case
     }
     final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
     for (JpsModule module : pd.getProject().getModules()) {
@@ -575,25 +573,17 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  @NotNull
-  private static FileOutputStream writeOrCreate(@NotNull File file) throws FileNotFoundException {
-    FileOutputStream fos = null;
+  private static @NotNull FileOutputStream writeOrCreate(@NotNull File file) throws FileNotFoundException {
     try {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      fos = new FileOutputStream(file);
+      return new FileOutputStream(file);
     }
     catch (FileNotFoundException ignored) {
       FileUtil.createIfDoesntExist(file);
+      return new FileOutputStream(file);
     }
-
-    if (fos == null) {
-      fos = new FileOutputStream(file);
-    }
-    return fos;
   }
 
-  @Nullable
-  private static DataInputStream createFSDataStream(File dataStorageRoot, final long currentEventOrdinal) {
+  private static @Nullable DataInputStream createFSDataStream(File dataStorageRoot, final long currentEventOrdinal) {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try (InputStream fs = new FileInputStream(file)) {
       byte[] bytes = FileUtil.loadBytes(fs, (int)file.length());
@@ -636,14 +626,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (cause == null) {
           cause = error;
         }
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try (PrintStream stream = new PrintStream(out)) {
-          cause.printStackTrace(stream);
-        }
-
         @Nls StringBuilder messageText = new StringBuilder();
         messageText.append(JpsBuildBundle.message("build.message.internal.error.0.1", cause.getClass().getName(),cause.getMessage()));
-        final String trace = out.toString();
+        String trace = ExceptionUtil.getThrowableText(cause);
         if (!trace.isEmpty()) {
           messageText.append("\n").append(trace);
         }
