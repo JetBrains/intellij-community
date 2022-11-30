@@ -4,6 +4,7 @@ package com.intellij.ide.gdpr;
 import com.fasterxml.jackson.jr.ob.JSON;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -70,12 +71,14 @@ public final class ConsentOptions {
 
       @Override
       public void writeConfirmedConsents(@NotNull String data) throws IOException {
-        DataSharingSettingsChangeListener syncPublisher =
-          ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.Companion.getTOPIC());
         Path confirmedConsentsFile = getConfirmedConsentsFile();
         Files.createDirectories(confirmedConsentsFile.getParent());
         Files.writeString(confirmedConsentsFile, data);
-        syncPublisher.consentWritten();
+        if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+          DataSharingSettingsChangeListener syncPublisher =
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.Companion.getTOPIC());
+          syncPublisher.consentWritten();
+        }
       }
 
       @Override
