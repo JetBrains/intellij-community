@@ -551,6 +551,8 @@
                  defaultValue="true"/>
     <registryKey key="git.branches.popup.tree" defaultValue="true"
                  description="Show branches tree in a popup instead of a list"/>
+    <registryKey key="git.branches.popup.tree.experimental.ui" defaultValue="false"
+                 description="Show branches tree in the New UI VCS widget instead of a list"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"

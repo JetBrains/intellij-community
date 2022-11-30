@@ -615,8 +615,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     private val treeRowHeight = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
 
     @JvmStatic
-    fun isEnabled() = Registry.`is`("git.branches.popup.tree", false)
-                      && !ExperimentalUI.isNewUI()
+    fun isEnabled() = !ExperimentalUI.isNewUI() && Registry.`is`("git.branches.popup.tree", false)
+                      || ExperimentalUI.isNewUI() && Registry.`is`("git.branches.popup.tree.experimental.ui", false)
 
     @JvmStatic
     fun show(project: Project) {
