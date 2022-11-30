@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
@@ -35,11 +34,8 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   protected RefJavaManager() {
     List<Language> languages = new ArrayList<>(Language.findInstance(UastMetaLanguage.class).getMatchingLanguages());
-    for (String lang : ContainerUtil.set(Registry.stringValue("ignored.jvm.languages").split(","))) {
+    for (String lang : ContainerUtil.set(Registry.stringValue("batch.inspections.ignored.jvm.languages").split(","))) {
       languages.removeIf(l -> l.isKindOf(lang));
-    }
-    if (!Registry.is("batch.jvm.inspections") && !ApplicationManager.getApplication().isUnitTestMode()) {
-      languages.removeIf(l -> l.isKindOf("kotlin"));
     }
     myLanguages = Collections.unmodifiableList(languages);
   }
