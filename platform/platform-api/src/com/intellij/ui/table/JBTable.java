@@ -616,7 +616,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setShowVerticalLines(boolean showVerticalLines) {
     if (!showVerticalLines) {
       getColumnModel().setColumnMargin(0);
-      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+      setIntercellSpacing(new Dimension(0, getIntercellSpacing().height));
     }
     super.setShowVerticalLines(showVerticalLines);
   }
