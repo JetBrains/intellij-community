@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -14,7 +15,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import org.editorconfig.language.messages.EditorConfigBundle;
@@ -23,13 +26,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Paths;
 
-public final class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyleSettingsListener {
+final class EditorConfigPreviewFile extends LightVirtualFile {
   private final Project  myProject;
   private final String   myOriginalPath;
   private final Document myDocument;
 
-  EditorConfigPreviewFile(@NotNull Project project, @NotNull VirtualFile originalFile, @NotNull Document document) {
+  EditorConfigPreviewFile(@NotNull Project project,
+                          @NotNull VirtualFile originalFile,
+                          @NotNull Document document,
+                          @NotNull Disposable parentDisposable) {
     super(originalFile.getName());
+
     myProject = project;
     myOriginalPath = originalFile.getPath();
     myDocument = document;
@@ -39,21 +46,19 @@ public final class EditorConfigPreviewFile extends LightVirtualFile implements C
     }
     super.setContent(this, myDocument.getText(), false);
     reformat();
-    CodeStyleSettingsManager.getInstance(project).addListener(this);
+
+    project.getMessageBus().connect(parentDisposable).subscribe(CodeStyleSettingsListener.TOPIC, event -> {
+      VirtualFile virtualFile = event.getVirtualFile();
+      if (virtualFile == null || isOriginalFile(virtualFile)) {
+        reformat();
+      }
+    });
   }
 
   private @NotNull PsiFile createPsi(@NotNull FileType fileType) {
     return PsiFileFactory.getInstance(myProject)
       .createFileFromText(
         "preview", fileType, myDocument.getText(), LocalTimeCounter.currentTime(), false);
-  }
-
-  @Override
-  public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
-    VirtualFile virtualFile = event.getVirtualFile();
-    if (virtualFile == null || isOriginalFile(virtualFile)) {
-      reformat();
-    }
   }
 
   private boolean isOriginalFile(@NotNull VirtualFile file) {
@@ -88,9 +93,5 @@ public final class EditorConfigPreviewFile extends LightVirtualFile implements C
       }
     }
     return null;
-  }
-
-  public void unregisterListener() {
-    CodeStyleSettingsManager.removeListener(myProject, this);
   }
 }

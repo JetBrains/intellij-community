@@ -272,16 +272,21 @@ abstract class EditorBasedStatusBarPopup(
   private fun drainRequestsInTest() {
     runBlockingModal(ModalTaskOwner.guess(), "") {
       val replayCache = update.replayCache
+      @Suppress("OPT_IN_USAGE")
+      update.resetReplayCache()
       for (runnable in replayCache) {
         doUpdate(runnable)
       }
     }
+
     UIUtil.dispatchAllInvocationEvents()
   }
 
   @TestOnly
   fun flushUpdateInTests() {
-    drainRequestsInTest()
+    while (!update.replayCache.isEmpty()) {
+      drainRequestsInTest()
+    }
   }
 
   fun update() {

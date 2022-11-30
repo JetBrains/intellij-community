@@ -3,19 +3,19 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import org.editorconfig.language.messages.EditorConfigBundle;
@@ -26,11 +26,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 
-public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSettingsListener {
-  private final Editor                  myEditor;
+final class EditorConfigPreviewFileEditor implements FileEditor {
+  private final Editor myEditor;
   private final EditorConfigPreviewFile myPreviewFile;
 
-  public EditorConfigPreviewFileEditor(@NotNull Editor editor, @NotNull EditorConfigPreviewFile previewFile) {
+  EditorConfigPreviewFileEditor(@NotNull Editor editor, @NotNull EditorConfigPreviewFile previewFile) {
     myEditor = editor;
     myPreviewFile = previewFile;
     JComponent headerComponent = getHeaderComponent();
@@ -38,15 +38,18 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
       ((EditorEx)myEditor).setPermanentHeaderComponent(headerComponent);
     }
     myEditor.setHeaderComponent(headerComponent);
-    final EditorSettings editorSettings = myEditor.getSettings();
+    EditorSettings editorSettings = myEditor.getSettings();
     editorSettings.setWhitespacesShown(true);
     editorSettings.setGutterIconsShown(false);
     editorSettings.setLineNumbersShown(false);
     updateEditor();
-    CodeStyleSettingsManager.getInstance(myEditor.getProject()).addListener(this);
+
+    Project project = myEditor.getProject();
+    var bus = (project == null || project.isDefault()) ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+    bus.connect(this).subscribe(CodeStyleSettingsListener.TOPIC, __ -> updateEditor());
   }
 
-  private static JComponent getHeaderComponent() {
+  private static @NotNull JComponent getHeaderComponent() {
     JPanel previewHeaderPanel = new JPanel();
     previewHeaderPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
     JLabel warningLabel = new JLabel(EditorConfigBundle.message("editor.preview.not.saved.warning"));
@@ -56,27 +59,23 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
     return previewHeaderPanel;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myEditor.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return EditorConfigBundle.message("preview.file.editor.name");
   }
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-
   }
 
   @Override
@@ -91,12 +90,10 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
 
   @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-
   }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-
   }
 
   @Override
@@ -106,24 +103,16 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
 
   @Override
   public void dispose() {
-    CodeStyleSettingsManager.removeListener(myEditor.getProject(), this);
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     return null;
   }
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-
-  }
-
-  @Override
-  public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
-    updateEditor();
   }
 
   private void updateEditor() {
@@ -136,5 +125,4 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
       myEditor.getSettings().setTabSize(settings.getTabSize(myPreviewFile.getFileType()));
     }
   }
-
 }

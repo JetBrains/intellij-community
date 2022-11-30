@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -79,11 +80,12 @@ final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbA
       EditorConfigStatusListener statusListener = new EditorConfigStatusListener(myProject, myFile);
       if (contextFile != null && CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class).ENABLED) {
         Document document = EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
-        EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document);
+        Disposable disposable = Disposer.newDisposable();
+        EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document, disposable);
         FileEditor previewEditor = createPreviewEditor(document, previewFile);
         TextEditor ecTextEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myFile);
         EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(myFile, myProject, ecTextEditor, previewEditor);
-        Disposer.register(splitEditor, () -> previewFile.unregisterListener());
+        Disposer.register(splitEditor, disposable);
         Disposer.register(splitEditor, statusListener);
         return splitEditor;
       }
