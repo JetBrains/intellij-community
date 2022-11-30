@@ -485,7 +485,12 @@ public final class ActionsTreeUtil {
     result.removeAll(groupIds);
 
     for (String id : ContainerUtil.sorted(result, Comparator.comparing(o -> getTextToCompare(o)))) {
-      if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) group.addActionId(id);
+      AnAction actionOrStub = actionManager.getActionOrStub(id);
+      if (actionOrStub == null || isSearchable(actionOrStub)) {
+        if (filtered == null || filtered.value(actionOrStub)) {
+          group.addActionId(id);
+        }
+      }
     }
     return group;
   }
@@ -703,6 +708,13 @@ public final class ActionsTreeUtil {
         if (id != null) group.addActionId(id);
       }
     }
+  }
+
+  private static boolean isSearchable(@NotNull AnAction action) {
+    if (action instanceof ActionGroup) {
+      return ((ActionGroup)action).isSearchable();
+    }
+    return true;
   }
 
   public static AnAction @NotNull [] getActions(@NonNls String actionGroup) {
