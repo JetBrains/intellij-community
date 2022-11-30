@@ -66,8 +66,8 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   @Override
-  protected void doUpdate() {
-    setNameAndTooltip(getName(), myTooltipCache);
+  protected void doUpdate(@NotNull PresentationData presentation) {
+    setNameAndTooltip(presentation, getName(), myTooltipCache);
   }
 
   private @NlsSafe String makeDescription() {

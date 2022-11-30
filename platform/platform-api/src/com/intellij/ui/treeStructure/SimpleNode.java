@@ -62,7 +62,8 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
   }
 
   protected SimpleTextAttributes getPlainAttributes() {
-    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor());
+    Color color = getColor(); // the most common case is no color, regular attributes, avoid memory allocation in this case
+    return color == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
   }
 
   @Nullable
@@ -85,7 +86,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
 
     myColor = UIUtil.getTreeForeground();
 
-    doUpdate();
+    doUpdate(presentation);
 
     myName = getName();
     presentation.setPresentableText(myName);
@@ -145,7 +146,37 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
     getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
   }
 
-  protected void doUpdate() {
+  /**
+   * Updates properties of the node's presentation.
+   * <p>
+   *   This method is called as a part of update process. During the update, the template presentation is cloned,
+   *   then the new element is computed (by calling {@link #updateElement()} and if it's not {@code null},
+   *   then this method is called with the cloned template presentation passed to it.
+   * </p>
+   * <p>
+   *   This method <em>only</em> change the given presentation.
+   *   In particular, should not change the template presentation (use the constructor or {@link #createPresentation()} for that),
+   *   nor the current presentation (it will be replaced by the given presentation when the update is finished),
+   *   nor the object's own fields (name, icon, color) - these can be set in the constructor or <em>before</em> the update.
+   *   Altering this object's state in any way in this method can cause race conditions and subtle UI bugs, as it's often called on
+   *   the background thread, and therefore the only safe way to deal with update is to publish the new presentation after the
+   *   update is finished, and not to change any state during the update.
+   * </p>
+   * <p>
+   *   To set the text, <em>either</em> use {@link PresentationData#addText(ColoredFragment)} / {@link PresentationData#addText(String, SimpleTextAttributes)}
+   *   (don't forget to call {@link PresentationData#clearText()} first, as it's initially copied from the template presentation!)
+   *   or {@link PresentationData#setPresentableText(String)}. The former takes precedence: when the update is done, the plain text version is
+   *   set to the colored text (with coloring removed) if any.
+   * </p>
+   * <p>
+   *   Note that if, at the end of the update, text, some of the text, color, icon properties are {@code null}, then
+   *   {@link PresentableNodeDescriptor} falls back to using own properties: {@link #myName}, {@link #getIcon()}, {@link #getColor()},
+   *   and uses them to fill in the missing properties of the updated presentation.
+   *   This is intended for classes that never bother to override {@link #update(PresentationData)} or this method, but still set some of those
+   *   properties.
+   * </p>
+   */
+  protected void doUpdate(@NotNull PresentationData presentation) {
   }
 
   @Override
