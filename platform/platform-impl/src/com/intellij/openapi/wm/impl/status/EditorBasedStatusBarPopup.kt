@@ -102,10 +102,48 @@ abstract class EditorBasedStatusBarPopup(
         .debounce(300.milliseconds)
         .collectLatest(::doUpdate)
     }.cancelOnDispose(this)
+
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+        fileChanged(file)
+      }
+
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        fileChanged(file)
+      }
+
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          return
+        }
+
+        val newFile = event.newFile
+        val fileEditor = if (newFile == null) null else FileEditorManager.getInstance(project).getSelectedEditor(newFile)
+        editor = WeakReference((fileEditor as? TextEditor)?.editor)
+        fileChanged(newFile)
+      }
+    })
+
+    registerCustomListeners()
+    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(e: DocumentEvent) {
+        val document = e.document
+        updateForDocument(document)
+      }
+    }, this)
+    if (isWriteableFileRequired) {
+      myConnection.subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileListener {
+        override fun propertyChanged(event: VirtualFilePropertyEvent) {
+          if (event.propertyName == VirtualFile.PROP_WRITABLE) {
+            updateForFile(event.file)
+          }
+        }
+      }))
+    }
   }
 
   private suspend fun doUpdate(finishUpdate: Runnable?) {
-    val file = selectedFile
+    val file = getSelectedFile()
     val state = readAction {
       getWidgetState(file)
     }
@@ -147,44 +185,6 @@ abstract class EditorBasedStatusBarPopup(
   override fun install(statusBar: StatusBar) {
     super<EditorBasedWidget>.install(statusBar)
 
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        fileChanged(file)
-      }
-
-      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        fileChanged(file)
-      }
-
-      override fun selectionChanged(event: FileEditorManagerEvent) {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-          return
-        }
-
-        val newFile = event.newFile
-        val fileEditor = if (newFile == null) null else FileEditorManager.getInstance(project).getSelectedEditor(newFile)
-        editor = WeakReference((fileEditor as? TextEditor)?.editor)
-        fileChanged(newFile)
-      }
-    })
-
-    registerCustomListeners()
-    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(e: DocumentEvent) {
-        val document = e.document
-        updateForDocument(document)
-      }
-    }, this)
-    if (isWriteableFileRequired) {
-      ApplicationManager.getApplication().messageBus.connect(this)
-        .subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileListener {
-          override fun propertyChanged(event: VirtualFilePropertyEvent) {
-            if (VirtualFile.PROP_WRITABLE == event.propertyName) {
-              updateForFile(event.file)
-            }
-          }
-        }))
-    }
     setEditor(getEditor())
     update()
   }
@@ -310,7 +310,7 @@ abstract class EditorBasedStatusBarPopup(
     component.isEnabled = isActionEnabled
     updateComponent(state)
     if (myStatusBar != null && !component.isValid) {
-      myStatusBar.updateWidget(ID())
+      myStatusBar!!.updateWidget(ID())
     }
     finishUpdate?.run()
     afterVisibleUpdate(state)
