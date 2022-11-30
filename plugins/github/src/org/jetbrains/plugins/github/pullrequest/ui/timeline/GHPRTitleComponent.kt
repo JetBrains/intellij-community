@@ -2,14 +2,17 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.util.bindText
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.NamedColorUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 
@@ -25,14 +28,13 @@ internal object GHPRTitleComponent {
     return titlePane
   }
 
-  fun create(detailsModel: GHPRDetailsModel): JComponent {
-    val titlePane = HtmlEditorPane().apply {
+  fun create(scope: CoroutineScope, reviewDetailsVM: GHPRDetailsViewModel): JComponent {
+    val titleLabel = HtmlEditorPane().apply {
       font = JBFont.h2().asBold()
+      bindText(scope, combine(reviewDetailsVM.titleState, reviewDetailsVM.numberState, reviewDetailsVM.urlState, ::createTitleText))
     }
-    detailsModel.addAndInvokeDetailsChangedListener {
-      titlePane.setBody(createTitleText(detailsModel.title, detailsModel.number, detailsModel.url))
-    }
-    return titlePane
+
+    return titleLabel
   }
 
   private fun createTitleText(title: @NlsSafe String, reviewNumber: @NlsSafe String, url: String): @NlsSafe String {

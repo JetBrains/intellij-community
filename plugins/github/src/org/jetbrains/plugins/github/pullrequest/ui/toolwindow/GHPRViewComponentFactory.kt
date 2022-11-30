@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.async.DisposingScope
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
@@ -53,10 +54,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingMod
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRBranchesModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRMetadataModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRStateModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.*
 import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
@@ -246,7 +244,11 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       val stateModel = GHPRStateModelImpl(project, dataProvider.stateData, dataProvider.changesData, model, disposable)
 
-      GHPRDetailsComponentFactory.create(project,
+      val scope = DisposingScope(disposable)
+      val reviewDetailsVm = GHPRDetailsViewModelImpl(detailsModel)
+
+      GHPRDetailsComponentFactory.create(scope,
+                                         reviewDetailsVm,
                                          dataContext.securityService,
                                          dataContext.avatarIconsProvider,
                                          branchesModel, detailsModel, metadataModel, stateModel)

@@ -60,9 +60,8 @@ internal object GHPRDetailsBranchesComponentFactory {
   private fun createLabel() = JBLabel(CollaborationToolsIcons.Review.Branch).also {
     CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
       foreground = CurrentBranchComponent.TEXT_COLOR
-      background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
     }
-  }.andOpaque()
+  }
 
   private class Controller(private val model: GHPRBranchesModel,
                            private val from: JBLabel,

@@ -7,7 +7,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
 
 class GHPROpenPullRequestTimelineAction
-  : DumbAwareAction(GithubBundle.messagePointer("pull.request.view.conversations.action"),
+  : DumbAwareAction(GithubBundle.messagePointer("pull.request.view.timeline.action"),
                     GithubBundle.messagePointer("pull.request.view.conversations.action.description"),
                     null) {
 

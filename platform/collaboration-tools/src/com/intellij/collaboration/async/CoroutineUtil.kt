@@ -80,6 +80,20 @@ suspend fun <T1, T2> combineAndCollect(
 }
 
 @ApiStatus.Experimental
+suspend fun <T1, T2, T3> combineAndCollect(
+  flow1: Flow<T1>,
+  flow2: Flow<T2>,
+  flow3: Flow<T3>,
+  action: (T1, T2, T3) -> Unit
+) {
+  return combine(flow1, flow2, flow3) { value1, value2, value3 ->
+    Triple(value1, value2, value3)
+  }.collect { (value1, value2, value3) ->
+    action(value1, value2, value3)
+  }
+}
+
+@ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(
   scope: CoroutineScope,
   mapper: (value: T) -> M
