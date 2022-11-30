@@ -6,11 +6,13 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.jps.model.JpsProject
 import java.nio.file.Files
+import java.nio.file.Path
 import java.text.MessageFormat
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.bufferedReader
 
 @Suppress("SpellCheckingInspection")
 private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
@@ -19,13 +21,9 @@ private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
 @Suppress("SpellCheckingInspection")
 internal val MAJOR_RELEASE_DATE_PATTERN: DateTimeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd")
 
-class ApplicationInfoPropertiesImpl(
-  productProperties: ProductProperties,
-  buildOptions: BuildOptions,
-  override val appInfoXml: String,
-) : ApplicationInfoProperties {
-  override val majorVersion: String
-  override val minorVersion: String
+class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
+  override lateinit var majorVersion: String
+  override lateinit var minorVersion: String
   override val microVersion: String
   override val patchVersion: String
   override val fullVersionFormat: String
@@ -37,7 +35,7 @@ class ApplicationInfoPropertiesImpl(
    */
   override val minorVersionMainPart: String
   override val shortProductName: String
-  override val productCode: String
+  override lateinit var productCode: String
   override val productName: String
   override val majorReleaseDate: String
   override val edition: String?
@@ -47,15 +45,18 @@ class ApplicationInfoPropertiesImpl(
   override val svgRelativePath: String?
   override val svgProductIcons: List<String>
   override val patchesUrl: String?
+  private lateinit var context: BuildContext
 
-  constructor(project: JpsProject, productProperties: ProductProperties, buildOptions: BuildOptions) :
-    this(productProperties = productProperties,
-         buildOptions = buildOptions,
-         appInfoXml = findApplicationInfoInSources(project, productProperties)
-    )
+  constructor(context: BuildContext) : this(context.project, context.productProperties, context.options) {
+    this.context = context
+  }
 
-  init {
-    val root = readXmlAsModel(appInfoXml.reader())
+  constructor(project: JpsProject,
+              productProperties: ProductProperties,
+              buildOptions: BuildOptions) {
+    val root = findApplicationInfoInSources(project, productProperties)
+      .bufferedReader()
+      .use(::readXmlAsModel)
 
     val versionTag = root.getChild("version")!!
     majorVersion = versionTag.getAttributeValue("major")!!
@@ -118,43 +119,47 @@ class ApplicationInfoPropertiesImpl(
 
 
   override fun toString() = appInfoXml
-
-  fun patch(buildContext: BuildContext): ApplicationInfoProperties {
-    val artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
+  override val appInfoXml by lazy {
+    check(this::context.isInitialized) {
+      "buildContext property is not initialized, please use different constructor"
+    }
+    val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
+    check("$majorVersion$minorVersion".removePrefix("20") == context.buildNumber.takeWhile { it != '.' }) {
+      "'major=$majorVersion' and 'minor=$minorVersion' attributes of '$appInfoXmlPath' don't match supplied build number '${context.buildNumber}'"
+    }
+    val artifactsServer = context.proprietaryBuildTools.artifactsServer
     var builtinPluginsRepoUrl = ""
-    if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "$productCode-plugins/plugins.xml")!!
-      check (!builtinPluginsRepoUrl.startsWith("http:")) {
+    if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "$productCode-plugins/plugins.xml")!!
+      check(!builtinPluginsRepoUrl.startsWith("http:")) {
         "Insecure artifact server: $builtinPluginsRepoUrl"
       }
     }
-    val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(buildContext.options.buildDateInSeconds), ZoneOffset.UTC)
-    val patchedAppInfoXml = BuildUtils.replaceAll(
-      text = appInfoXml,
-      replacements = java.util.Map.of(
-        "BUILD_NUMBER", "$productCode-${buildContext.buildNumber}",
-        "BUILD_DATE", buildDate.format(BUILD_DATE_PATTERN),
-        "BUILD", buildContext.buildNumber,
-        "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl
+    val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(context.options.buildDateInSeconds), ZoneOffset.UTC)
+    BuildUtils.replaceAll(
+      text = Files.readString(appInfoXmlPath),
+      replacements = mapOf(
+        "BUILD_NUMBER" to "$productCode-${context.buildNumber}",
+        "BUILD_DATE" to buildDate.format(BUILD_DATE_PATTERN),
+        "BUILD" to context.buildNumber,
+        "BUILTIN_PLUGINS_URL" to builtinPluginsRepoUrl
       ),
       marker = "__"
     )
-    return ApplicationInfoPropertiesImpl(buildContext.productProperties, buildContext.options, patchedAppInfoXml)
   }
 }
 
 //copy of ApplicationInfoImpl.shortenCompanyName
 private fun shortenCompanyName(name: String) = name.removeSuffix(" s.r.o.").removeSuffix(" Inc.")
 
-private fun findApplicationInfoInSources(project: JpsProject, productProperties: ProductProperties): String {
-  val module = checkNotNull(project . modules . find { it.name == productProperties.applicationInfoModule }) {
+private fun findApplicationInfoInSources(project: JpsProject, productProperties: ProductProperties): Path {
+  val module = checkNotNull(project.modules.find { it.name == productProperties.applicationInfoModule }) {
     "Cannot find required '${productProperties.applicationInfoModule}' module"
   }
   val appInfoRelativePath = "idea/${productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
-  val appInfoFile = checkNotNull(module.sourceRoots.asSequence().map { it.path.resolve(appInfoRelativePath) }.firstOrNull { Files.exists(it) }) {
+  return checkNotNull(module.sourceRoots.asSequence().map { it.path.resolve(appInfoRelativePath) }.firstOrNull { Files.exists(it) }) {
     "Cannot find $appInfoRelativePath in '$module.name' module"
   }
-  return Files.readString(appInfoFile)
 }
 
 @VisibleForTesting

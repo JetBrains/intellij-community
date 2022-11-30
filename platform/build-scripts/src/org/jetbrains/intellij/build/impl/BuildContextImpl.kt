@@ -54,7 +54,7 @@ class BuildContextImpl private constructor(
 
   override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
 
-  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(project, productProperties, options).patch(this)
+  override val applicationInfo = ApplicationInfoPropertiesImpl(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   init {
