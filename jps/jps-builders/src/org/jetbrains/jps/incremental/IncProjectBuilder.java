@@ -110,7 +110,7 @@ public final class IncProjectBuilder {
   private final boolean myIsTestMode;
 
   private final int myTotalModuleLevelBuilderCount;
-  private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<>());
+  private final List<Future<?>> myAsyncTasks = Collections.synchronizedList(new ArrayList<>());
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = new ConcurrentHashMap<>();
   private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = new ConcurrentHashMap<>();
 
@@ -546,20 +546,28 @@ public final class IncProjectBuilder {
   private void cleanOutputRoots(CompileContext context, boolean cleanCaches) throws ProjectBuildException {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     ProjectBuildException ex = null;
+    final ExecutorService cleanupExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("IncProjectBuilder Output Cleanup Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+    final List<Future<?>> cleanupTasks = new ArrayList<>();
+    final long cleanStart = System.nanoTime();
     try {
       final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(projectDescriptor.getProject());
-      final boolean shouldClear = configuration.isClearOutputDirectoryOnRebuild();
-      if (shouldClear) {
-        clearOutputs(context);
+      if (configuration.isClearOutputDirectoryOnRebuild()) {
+        clearOutputs(context, cleanupExecutor, cleanupTasks);
       }
       else {
         for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
           context.checkCanceled();
           if (context.getScope().isBuildForced(target)) {
-            clearOutputFilesUninterruptibly(context, target);
+            if (SYNC_DELETE) {
+              clearOutputFilesUninterruptibly(context, target);
+            }
+            else {
+              cleanupTasks.add(cleanupExecutor.submit(() -> clearOutputFilesUninterruptibly(context, target)));
+            }
           }
         }
       }
+
       for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
         if (context.getScope().isAllTargetsOfTypeAffected(type)) {
           cleanOutputOfStaleTargets(type, context);
@@ -570,6 +578,15 @@ public final class IncProjectBuilder {
       ex = e;
     }
     finally {
+      for (Future<?> task : cleanupTasks) {
+        try {
+          task.get();
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+      }
+      LOG.info("Cleaned output directories in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cleanStart) + " ms");
       if (cleanCaches) {
         try {
           projectDescriptor.getProjectStamps().getStampStorage().clean();
@@ -584,7 +601,7 @@ public final class IncProjectBuilder {
         }
         finally {
           try {
-            projectDescriptor.dataManager.clean();
+            projectDescriptor.dataManager.clean(myAsyncTasks::add);
           }
           catch (IOException e) {
             if (ex == null) {
@@ -723,8 +740,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  private void clearOutputs(CompileContext context) throws ProjectBuildException {
-    final long cleanStart = System.nanoTime();
+  private void clearOutputs(CompileContext context, final ExecutorService cleanupExecutor, final List<Future<?>> cleanupTasks) throws ProjectBuildException {
     final MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
     final Set<File> allSourceRoots = FileCollectionFactory.createCanonicalFileSet();
 
@@ -738,7 +754,12 @@ public final class IncProjectBuilder {
       }
       else {
         if (context.getScope().isBuildForced(target)) {
-          clearOutputFilesUninterruptibly(context, target);
+          if (SYNC_DELETE) {
+            clearOutputFilesUninterruptibly(context, target);
+          }
+          else {
+            cleanupTasks.add(cleanupExecutor.submit(() -> clearOutputFilesUninterruptibly(context, target)));
+          }
         }
       }
     }
@@ -819,7 +840,12 @@ public final class IncProjectBuilder {
         // clean only those files we are aware of
         for (BuildTarget<?> target : rootTargets) {
           if (compileScope.isBuildForced(target)) {
-            clearOutputFilesUninterruptibly(context, target);
+            if (SYNC_DELETE) {
+              clearOutputFilesUninterruptibly(context, target);
+            }
+            else {
+              cleanupTasks.add(cleanupExecutor.submit(() -> clearOutputFilesUninterruptibly(context, target)));
+            }
           }
         }
       }
@@ -837,7 +863,6 @@ public final class IncProjectBuilder {
         myAsyncTasks.add(FileUtil.asyncDelete(filesToDelete));
       }
     }
-    LOG.info("Cleaned output directories in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cleanStart) + " ms");
   }
 
   private static boolean isEmpty(File outputRoot) {
