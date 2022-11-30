@@ -24,15 +24,13 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.*;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.PlatformColors;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -519,6 +517,8 @@ public final class ActionsTree {
     private int myLinkWidth;
     private int myRow;
 
+    private boolean myIsSeparator;
+
     // Make sure that the text rendered by this method is 'searchable' via com.intellij.openapi.keymap.impl.ui.ActionsTree.filter method.
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
@@ -530,6 +530,7 @@ public final class ActionsTree {
                                       boolean hasFocus) {
       myRow = row;
       myHaveLink = false;
+      myIsSeparator = false;
 
       @Nullable @Nls String text;
       boolean changed;
@@ -563,7 +564,8 @@ public final class ActionsTree {
         changed = myKeymap != null && isShortcutCustomized(list.getActionId(), myKeymap);
       }
       else if (userObject instanceof Separator) {
-        text = "-------------";
+        myIsSeparator = true;
+        text = null;
         changed = false;
       }
       else if (userObject instanceof Hyperlink link) {
@@ -651,7 +653,13 @@ public final class ActionsTree {
 
     @Override
     protected void doPaint(Graphics2D g) {
-      if (myHaveLink) {
+      if (myIsSeparator) {
+        super.doPaint(g);
+
+        g.setColor(JBUI.CurrentTheme.Popup.separatorColor());
+        RectanglePainter.FILL.paint(g, 0, getHeight() / 2, getWidth(), 1, null);
+      }
+      else if (myHaveLink) {
         UIUtil.useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height), super::doPaint);
 
         g.translate(myLinkOffset, 0);
