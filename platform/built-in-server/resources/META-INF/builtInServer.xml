@@ -27,6 +27,7 @@
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.UploadLogsService"/>
 
     <applicationService serviceImplementation="org.jetbrains.ide.ToolboxRestServiceConfig" preload="true"/>
     <httpRequestHandler implementation="org.jetbrains.ide.ToolboxRestService"/>

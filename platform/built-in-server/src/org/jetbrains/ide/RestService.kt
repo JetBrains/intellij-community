@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AppIcon
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
 import com.intellij.util.net.NetUtils
@@ -325,6 +326,26 @@ abstract class RestService : HttpRequestHandler() {
         }, ModalityState.any())
       return isTrusted
     }
+  }
+
+  fun isHostInPredefinedHosts(request: FullHttpRequest, urlDecoder: QueryStringDecoder, trustedPredefinedHosts: Set<String>, systemPropertyKey: String): Boolean {
+    val origin = request.origin
+    val originHost = try {
+      if (origin == null) null else URI(origin).takeIf { it.scheme == "https" }?.host.nullize()
+    }
+    catch (ignored: URISyntaxException) {
+      return false
+    }
+
+    val hostName = getHostName(request)
+    if (hostName != null && !NetUtils.isLocalhost(hostName)) {
+      LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
+    }
+
+    return (originHost != null && (
+      trustedPredefinedHosts.contains(originHost) ||
+      System.getProperty(systemPropertyKey, "").split(",").contains(originHost) ||
+      NetUtils.isLocalhost(originHost)))
   }
 
   /**
