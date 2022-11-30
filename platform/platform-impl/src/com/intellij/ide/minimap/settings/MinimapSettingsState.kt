@@ -7,7 +7,7 @@ package com.intellij.ide.minimap.settings
  * @param rightAligned If false, Minimap will be on the left side
  * @param fileTypes List of file extensions for which we want to show Minimap. For example txt,kt,java,zpln.
  */
-data class MinimapSettingsState(var enabled: Boolean = true,
+data class MinimapSettingsState(var enabled: Boolean = false,
                                 var width: Int = 200,
                                 var rightAligned: Boolean = true,
                                 var fileTypes: List<String> = listOf("java", "kt", "php", "scala", "md", "py", "cpp", "c", "cs", "zpln"))

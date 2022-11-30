@@ -37,8 +37,6 @@ class MinimapImage {
 
   private var lastWidth = -1
 
-  //private val alarm = Alarm(parentDisposable)
-
   var onImageReady: (() -> Unit)? = null
 
   private fun updateImage(editor: Editor) {
