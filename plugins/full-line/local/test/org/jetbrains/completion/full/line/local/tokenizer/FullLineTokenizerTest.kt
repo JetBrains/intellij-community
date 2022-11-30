@@ -26,7 +26,7 @@ internal class FullLineTokenizerTest {
   }
 
   companion object {
-    val bpe = FullLineTokenizer(ModelsFiles.currentModel.tokenizer)
+    val bpe = FullLineTokenizer.load(ModelsFiles.currentModel.tokenizer)
 
     @JvmStatic
     fun encodeTests(): Stream<Arguments> {

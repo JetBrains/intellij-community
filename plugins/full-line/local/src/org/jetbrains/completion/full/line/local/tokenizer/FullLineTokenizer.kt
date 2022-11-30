@@ -4,6 +4,7 @@ import java.io.File
 import java.nio.charset.Charset
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.streams.toList
 
 // TODO: use different types to prevent overflow
 // uint32_t -> Int
@@ -14,11 +15,6 @@ import kotlin.collections.ArrayList
 
 fun int2comb(a: Int, b: Int): Long {
   return (a.toLong() shl 32) + b.toLong()
-}
-
-fun isSpace(ch: Int): Boolean {
-  // TODO: why do we need two
-  return ch == '\n'.toInt() || ch == SPACE_TOKEN
 }
 
 fun token2word(source: List<Int>, id2char: Map<Int, Int>): String {
@@ -32,7 +28,9 @@ fun <T> concatVectors(vararg lists: List<T>): List<T> {
   return listOf(*lists).flatten()
 }
 
-const val SPACE_TOKEN = 9601
+// hardcoded compatibility fix, https://github.com/JetBrains-Research/YouTokenToMe/blob/master/youtokentome/cpp/bpe.cpp#L400
+const val SPACE_ID = 4
+const val SPACE_TOKEN_OLD = 9601
 const val UNK_TOKEN = "<UNK>"
 const val PAD_TOKEN = "<PAD>"
 const val BOS_TOKEN = "<BOS>"
@@ -55,7 +53,9 @@ data class BPERule(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
+
     other as BPERule
+
     return x == other.x && y == other.y && z == other.z
   }
 
@@ -123,8 +123,7 @@ data class SpecialTokens(
   }
 }
 
-class FullLineTokenizer(modelFile: File) : Tokenizer {
-  private var encoder = BaseEncoder(modelFile)
+class FullLineTokenizer private constructor(private var encoder: BaseEncoder) : Tokenizer {
   override val vocabSize = encoder.vocabSize()
   override val eosTokenId = this.encoder.bpeState.specialTokens.eosId
   override val invalidIds: Set<Int> = setOf(
@@ -133,6 +132,12 @@ class FullLineTokenizer(modelFile: File) : Tokenizer {
     this.encoder.bpeState.specialTokens.bosId,
     this.encoder.bpeState.specialTokens.eosId
   )
+
+  companion object {
+    fun load(modelFile: File): FullLineTokenizer {
+      return FullLineTokenizer(BaseEncoder.load(modelFile))
+    }
+  }
 
   // A copy of BPE.encode() from yttm.pyx
   fun encode(
@@ -160,7 +165,7 @@ class FullLineTokenizer(modelFile: File) : Tokenizer {
   }
 
   fun decode(ids: List<List<Int>>): List<String> {
-    return encoder.decodeIds(ids, null).sentences
+    return encoder.decodeIds(ids).sentences
   }
 
   fun encode(
@@ -210,44 +215,38 @@ class FullLineTokenizer(modelFile: File) : Tokenizer {
   override val vocab: Map<String, Int> = encoder.vocabulary().mapIndexed { index, s -> Pair(s, index) }.toMap()
 }
 
-
 // TODO: use better hashmap (or maybe this is good enough)
-class BaseEncoder(modelFile: File) {
-  // BPEState bpeState;
-  internal var bpeState: BPEState = BPEState()
+class BaseEncoder private constructor(
+  internal var bpeState: BPEState,
+  private var id2char: HashMap<Int, Int>,
+  private var rule2id: HashMap<Long, Int>,
+  private var recipe: HashMap<Int, List<Int>>,
+  private val spaceToken: Int,
+) {
+  companion object {
+    fun load(modelFile: File): BaseEncoder {
+      val bpeState = BPEState()
+      val id2char = HashMap<Int, Int>()
+      val rule2id = HashMap<Long, Int>()
+      val recipe = HashMap<Int, List<Int>>()
 
-  // flat_hash_map<uint32_t, uint32_t> id2char;
-  private var id2char = HashMap<Int, Int>()
+      val status: Status = bpeState.load(modelFile)
+      if (!status.ok()) {
+        throw BPEException("Couldn't load model from ${modelFile.absolutePath}")
+      }
 
-  // flat_hash_map<uint64_t, int> rule2id;
-  private var rule2id = HashMap<Long, Int>()
+      // fillFromState
+      bpeState.char2id.map { it.value to it.key }.toMap(id2char)
+      bpeState.rules.mapIndexed { i, rule -> int2comb(rule.x, rule.y) to i }.toMap(rule2id)
+      id2char.map { it.key to listOf(it.key) }.toMap(recipe)
+      bpeState.rules.forEach {
+        recipe[it.z] = concatVectors(recipe[it.x] ?: error(it), recipe[it.y] ?: error(it))
+      }
 
-  // flat_hash_map<uint32_t, std::vector<uint32_t>> recipe;
-  private var recipe = HashMap<Int, List<Int>>()
+      val spaceToken = id2char[SPACE_ID] ?: throw BPEException("Couldn't find spaceToken with id $SPACE_ID")
 
-  // flat_hash_map<std::string, uint32_t> reversed_recipe;
-  private var reversedRecipe = HashMap<String, Int>()
-
-
-  init {
-    val status: Status = bpeState.load(modelFile)
-    if (!status.ok()) {
-      throw BPEException("Couldn't load model from ${modelFile.absolutePath}")
+      return BaseEncoder(bpeState, id2char, rule2id, recipe, spaceToken)
     }
-    this.fillFromState()
-  }
-
-
-  private fun fillFromState() {
-    bpeState.char2id.map { it.value to it.key }.toMap(id2char)
-    bpeState.rules.mapIndexed { i, rule -> int2comb(rule.x, rule.y) to i }.toMap(rule2id)
-    id2char.map { it.key to listOf(it.key) }.toMap(recipe)
-    bpeState.rules.forEach {
-      recipe[it.z] = concatVectors(recipe[it.x] ?: error(it), recipe[it.y] ?: error(it))
-    }
-    recipe.map { token2word(it.value, id2char) to it.key }.toMap(reversedRecipe)
-    reversedRecipe[BOS_TOKEN] = bpeState.specialTokens.bosId
-    reversedRecipe[EOS_TOKEN] = bpeState.specialTokens.eosId
   }
 
   data class EncodingResult(val status: Status, val ids: List<List<Int>>?)
@@ -326,7 +325,7 @@ class BaseEncoder(modelFile: File) {
     val text: List<Int> = sentence.codePoints().toList()
 
     // TODO: why do we need to assert in each encoding
-    assert(bpeState.char2id.keys.any { it == SPACE_TOKEN })
+    assert(bpeState.char2id.keys.any { it == spaceToken })
 
 
     //        TODO: trim trailing separators, why commented?
@@ -356,7 +355,7 @@ class BaseEncoder(modelFile: File) {
       val endOfWordIndex = textIndex
 
       newTokenCur = newTokensStart
-      list.add(NodeDecoder(bpeState.char2id.getValue(SPACE_TOKEN), 0))
+      list.add(NodeDecoder(SPACE_ID, 0))
 
       var charInWordIndex = beginOfWordIndex
       while (charInWordIndex < endOfWordIndex) {
@@ -451,12 +450,12 @@ class BaseEncoder(modelFile: File) {
     return outputIds
   }
 
-  fun decodeIds(
-    ids: List<List<Int>>, ignoreIds: Set<Int>?
-  ): DecodingResult {
+  private fun isSpace(ch: Int) = ch == '\n'.code
+
+  fun decodeIds(ids: List<List<Int>>): DecodingResult {
     val sentences = ArrayList<String>()
     for (sentenceIds in ids) {
-      val sentence = decodeSentence(sentenceIds, ignoreIds)
+      val sentence = decodeSentence(sentenceIds)
       sentences.add(sentence)
     }
     return DecodingResult(
@@ -464,17 +463,10 @@ class BaseEncoder(modelFile: File) {
     )
   }
 
-  private fun decodeSentence(sentenceIds: List<Int>, ignoreIds: Set<Int>?): String {
+  private fun decodeSentence(sentenceIds: List<Int>): String {
     var sentence = ""
-    //        var firstIter = true
     for (id in sentenceIds) {
-      if ((ignoreIds != null) || (ignoreIds?.contains(id) != false)) {
-        sentence += idToSubword(id, true)
-        //                if (firstIter && sentence[0] == '\n') {
-        //                    sentence = sentence.substring(1)
-        //                }
-        //                firstIter = false
-      }
+      sentence += idToSubword(id, true)
     }
     return sentence
   }
@@ -501,9 +493,10 @@ class BaseEncoder(modelFile: File) {
 
 
     assert(recipe.containsKey(id))
-    if (replaceSpace) {
+    // Compatibility fix
+    if (replaceSpace && spaceToken == SPACE_TOKEN_OLD) {
       val symbols = recipe.getValue(id)
-      if (id2char.getValue(symbols[0]) == SPACE_TOKEN) {
+      if (id2char.getValue(symbols[0]) == spaceToken) {
         return "\n" + token2word(symbols.subList(1, symbols.size), id2char)
       }
     }

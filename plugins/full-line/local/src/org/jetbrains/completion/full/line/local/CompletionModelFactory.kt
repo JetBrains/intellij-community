@@ -21,7 +21,7 @@ object CompletionModelFactory {
     loggingCallback: ((String) -> Unit)? = null,
     modelCache: HiddenStateCache? = null
   ): FullLineCompletionPipeline {
-    val tokenizer = FullLineTokenizer(tokenizerPath)
+    val tokenizer = FullLineTokenizer.load(tokenizerPath)
 
     val model = if (modelCache == null) GPT2ModelWrapper(modelPath, configPath)
                 else HiddenStateCachingModelWrapper(GPT2ModelWrapper(modelPath, configPath), modelCache)

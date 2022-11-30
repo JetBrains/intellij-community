@@ -16,7 +16,7 @@ class FullLineGenerationTest {
   companion object {
     private val modelFiles = ModelsFiles.currentModel
     private val gpt2 = GPT2ModelWrapper(modelFiles.model, modelFiles.config)
-    private val bpe = FullLineTokenizer(modelFiles.tokenizer)
+    private val bpe = FullLineTokenizer.load(modelFiles.tokenizer)
     private val generation = FullLineGeneration(gpt2, bpe)
   }
 
