@@ -16,14 +16,17 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.ConvertLambdaToReferenceIntention
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.ValueArgument
@@ -33,8 +36,9 @@ import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getParentCall
 import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
+import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
@@ -43,10 +47,19 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
             val context = lambdaExpression.analyze()
             val parentResolvedCall = lambdaExpression.getParentResolvedCall(context)
             if (parentResolvedCall != null) {
-                val expectedType = parentResolvedCall.getParameterForArgument(lambdaExpression.parent as? ValueArgument)?.type
+                val parameter = parentResolvedCall.getParameterForArgument(lambdaExpression.parent as? ValueArgument)
+                val expectedType = parameter?.type
                 if (expectedType?.isBuiltinFunctionalType == true) {
                     val returnType = expectedType.getReturnTypeFromFunctionType()
                     if (returnType.isFunctionOrSuspendFunctionType) return
+
+                    val originalReturnType = parameter.original.type.getReturnTypeFromFunctionType()
+                    if (originalReturnType.isFunctionInterfaceOrPropertyType() ||
+                        originalReturnType.isTypeParameter() && originalReturnType.supertypes().any {
+                            it.isFunctionInterfaceOrPropertyType()
+                        }
+                    ) return
+
                     if (parentResolvedCall.call.callElement.getParentCall(context) != null) return
                 }
             }
@@ -118,3 +131,19 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
     }
 }
 
+private val functionInterfaces: Set<FqName> = listOf(
+    "kotlin.Function",
+    "kotlin.reflect.KFunction"
+).map { FqName(it) }.toSet()
+
+private val propertyTypes: Set<FqName> = listOf(
+    "kotlin.reflect.KProperty",
+    "kotlin.reflect.KProperty0",
+    "kotlin.reflect.KProperty1",
+    "kotlin.reflect.KMutableProperty",
+    "kotlin.reflect.KMutableProperty0",
+    "kotlin.reflect.KMutableProperty1",
+).map { FqName(it) }.toSet()
+
+private fun KotlinType.isFunctionInterfaceOrPropertyType(): Boolean =
+    fqName in functionInterfaces || fqName in propertyTypes
