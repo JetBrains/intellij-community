@@ -3,7 +3,6 @@
 // ERROR: Unresolved reference: getTestValue
 // ACTION: Create method 'foobar'
 // WITH_STDLIB
-/* IGNORE_FIR */
 
 package bar;
 
