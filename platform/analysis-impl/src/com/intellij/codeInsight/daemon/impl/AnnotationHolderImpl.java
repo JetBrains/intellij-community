@@ -199,13 +199,15 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
       //todo temporary fix. CLion guys promised to fix their annotator eventually
       //LOG.warnInProduction(pluginException);
-      if (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
-        Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
-        String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
-        LOG.warn(f, pluginException);
-      }
-      else if (!ApplicationManagerEx.isInStressTest()) {
-        LOG.warn(pluginException);
+      if (!ApplicationManagerEx.isInStressTest()) {
+        if (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
+          Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
+          String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
+          LOG.warn(f, pluginException);
+        }
+        else {
+          LOG.warn(pluginException);
+        }
       }
     }
     else {
