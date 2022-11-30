@@ -7,7 +7,6 @@ import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
-import com.intellij.ide.structureView.StructureViewBundle
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.navigation.NavigationRequest
@@ -54,9 +53,8 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
 
     val icon: Icon? = fromOldExtensions { ext -> ext.getIcon(data) } ?: getIcon()
 
-    val invalidText = StructureViewBundle.message("node.structureview.invalid")
-    val text: String = fromOldExtensions { ext -> ext.getPresentableText(data, false) } ?: invalidText
-    val popupText: String = fromOldExtensions { ext -> ext.getPresentableText(data, true) } ?: invalidText
+    val text: String = fromOldExtensions { ext -> ext.getPresentableText(data, false) } ?: getText(false)
+    val popupText: String = fromOldExtensions { ext -> ext.getPresentableText(data, true) } ?: getText(true)
 
     val textAttributes = getTextAttributes(selected = false)
     val selectedTextAttributes = getTextAttributes(selected = true)
