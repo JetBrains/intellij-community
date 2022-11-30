@@ -8,16 +8,28 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
-fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(project: Project, testDataDir: File, vararg checkModes: WorkspacePrintingMode) {
-    checkWorkspaceModel(project, testDataDir, kotlinPluginVersion, gradleVersion, checkModes.asList())
+fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(
+    project: Project,
+    expectedTestDataDir: File,
+    actualTestProjectRoot: File,
+    vararg checkModes: WorkspacePrintingMode
+) {
+    checkWorkspaceModel(project, expectedTestDataDir, actualTestProjectRoot, kotlinPluginVersion, gradleVersion, checkModes.asList())
 }
 
-fun checkWorkspaceModel(project: Project, testDataDir: File, kotlinPluginVersion: KotlinToolingVersion, gradleVersion: String, checkModes: List<WorkspacePrintingMode>) {
+fun checkWorkspaceModel(
+    project: Project,
+    expectedTestDataDir: File,
+    actualTestProjectRoot: File, // root of [project]
+    kotlinPluginVersion: KotlinToolingVersion,
+    gradleVersion: String,
+    checkModes: List<WorkspacePrintingMode>
+) {
     val kotlinClassifier = with(kotlinPluginVersion) { "$major.$minor.$patch" }
-    val filesWithExpectedTestData = findExpectedTestDataFiles(testDataDir, kotlinClassifier, gradleVersion, checkModes)
+    val filesWithExpectedTestData = findExpectedTestDataFiles(expectedTestDataDir, kotlinClassifier, gradleVersion, checkModes)
 
     for ((expectedFile, mode) in filesWithExpectedTestData) {
-        val actualWorkspaceModelText = mode.printer.build().print(project)
+        val actualWorkspaceModelText = mode.printer.build().print(project, actualTestProjectRoot)
 
         // NB: KotlinTestUtils handle non-existent expectedFile fine
         KotlinTestUtils.assertEqualsToFile(
