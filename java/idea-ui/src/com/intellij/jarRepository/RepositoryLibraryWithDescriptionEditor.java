@@ -96,7 +96,7 @@ public class RepositoryLibraryWithDescriptionEditor
       project,
       model,
       RepositoryLibraryDescription.findDescription(properties),
-      true, true);
+      true, true, isGlobalLibrary);
     if (!dialog.showAndGet()) {
       return;
     }

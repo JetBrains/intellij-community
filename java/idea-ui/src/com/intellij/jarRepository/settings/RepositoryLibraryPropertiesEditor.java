@@ -5,6 +5,8 @@ import com.google.common.base.Strings;
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.jarRepository.RepositoryLibrarySettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +24,7 @@ import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
@@ -34,10 +37,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class RepositoryLibraryPropertiesEditor {
   private static final Logger LOG = Logger.getInstance(RepositoryLibraryPropertiesEditor.class);
@@ -58,6 +59,12 @@ public final class RepositoryLibraryPropertiesEditor {
   private JPanel myPropertiesPanel;
   private JPanel myTransitiveDependenciesPanel;
 
+  private JPanel myVerificationSettingsPanel;
+
+  private JBCheckBox myVerificationSha256ChecksumCheckBox;
+  private ComboBox<RemoteRepositoryDescription> myRemoteRepositoryComboBox;
+  private JPanel myRemoteRepositoryOptionsPanel;
+
   @NotNull private final ModelChangeListener onChangeListener;
   private final ActionLink myManageDependenciesLink;
 
@@ -67,21 +74,45 @@ public final class RepositoryLibraryPropertiesEditor {
 
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
                                            RepositoryLibraryPropertiesModel model,
-                                           RepositoryLibraryDescription description) {
+                                           RepositoryLibraryDescription description,
+                                           boolean globalLibrary) {
     this(project, model, description, true, new ModelChangeListener() {
       @Override
       public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
 
       }
-    });
+    }, globalLibrary);
+  }
+
+  /**
+   * @deprecated    * @deprecated Use  {@link #RepositoryLibraryPropertiesEditor(Project, RepositoryLibraryPropertiesModel, RepositoryLibraryDescription, boolean)}
+   */
+  @Deprecated
+  public RepositoryLibraryPropertiesEditor(@Nullable Project project,
+                                           RepositoryLibraryPropertiesModel model,
+                                           RepositoryLibraryDescription description) {
+    this(project, model, description, false);
   }
 
 
+  /**
+   * @deprecated Use  {@link #RepositoryLibraryPropertiesEditor(Project, RepositoryLibraryPropertiesModel, RepositoryLibraryDescription, boolean, ModelChangeListener, boolean)}
+   */
+  @Deprecated
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
                                            final RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,
                                            boolean allowExcludingTransitiveDependencies,
                                            @NotNull final ModelChangeListener onChangeListener) {
+    this(project, model, description, allowExcludingTransitiveDependencies, onChangeListener, false);
+  }
+
+  public RepositoryLibraryPropertiesEditor(@Nullable Project project,
+                                           final RepositoryLibraryPropertiesModel model,
+                                           RepositoryLibraryDescription description,
+                                           boolean allowExcludingTransitiveDependencies,
+                                           @NotNull final ModelChangeListener onChangeListener,
+                                           boolean globalLibrary) {
     this.initialModel = model.clone();
     this.model = model;
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
@@ -96,6 +127,27 @@ public final class RepositoryLibraryPropertiesEditor {
     myManageDependenciesLink.setBorder(JBUI.Borders.emptyLeft(10));
     myTransitiveDependenciesPanel.add(myManageDependenciesLink);
     myTransitiveDependenciesPanel.setVisible(allowExcludingTransitiveDependencies);
+
+    if (globalLibrary) {
+      myVerificationSettingsPanel.setVisible(false);
+      myRemoteRepositoryOptionsPanel.setVisible(false);
+    } else {
+      RepositoryLibrarySettings intSettings = RepositoryLibrarySettings.getInstanceOrDefaults(project);
+      myVerificationSettingsPanel.setVisible(intSettings.isSha256ChecksumFeatureEnabled());
+      myRemoteRepositoryOptionsPanel.setVisible(intSettings.isJarRepositoryBindingFeatureEnabled());
+    }
+
+    myRemoteRepositoryComboBox.setRenderer(SimpleListCellRenderer.create(
+      JavaUiBundle.message("repository.library.bind.repository.not.selected"),
+      RemoteRepositoryDescription::getUrl)
+    );
+    myRemoteRepositoryComboBox.setModel(model.getRemoteRepositoryModel());
+    myRemoteRepositoryComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        reloadVersionsAsync();
+      }
+    });
     myReloadButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -152,8 +204,12 @@ public final class RepositoryLibraryPropertiesEditor {
 
   private void reloadVersionsAsync() {
     setState(State.Loading);
-    JarRepositoryManager.getAvailableVersions(project, repositoryLibraryDescription)
-      .onSuccess(result -> versionsLoaded(new ArrayList<>(result)));
+    var selectedRemoteRepository = model.getRemoteRepository();
+    Promise<Collection<String>> promise = selectedRemoteRepository != null ?
+                                          JarRepositoryManager.getAvailableVersions(project, repositoryLibraryDescription,
+                                                                                    List.of(selectedRemoteRepository)) :
+                                          JarRepositoryManager.getAvailableVersions(project, repositoryLibraryDescription);
+    promise.onSuccess(result -> versionsLoaded(new ArrayList<>(result)));
   }
 
   private void initVersionsPanel() {
@@ -211,6 +267,15 @@ public final class RepositoryLibraryPropertiesEditor {
       }
     });
     updateManageDependenciesLink();
+
+    myVerificationSha256ChecksumCheckBox.setSelected(model.isSha256ChecksumEnabled());
+    myVerificationSha256ChecksumCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        model.setVerificationSha256Checksum(myVerificationSha256ChecksumCheckBox.isSelected());
+        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
+      }
+    });
   }
 
   private void updateIncludeTransitiveDepsCheckBoxState() {
