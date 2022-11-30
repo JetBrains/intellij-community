@@ -119,11 +119,15 @@ internal class LightEditFrameWrapper(
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
     val statusBar = statusBar!!
+
+    @Suppress("DEPRECATION")
+    val coroutineScope = project.coroutineScope
+
     statusBar.addWidgetToLeft(LightEditModeNotificationWidget(), this)
     statusBar.addWidget(LightEditPositionWidget(project, editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
     statusBar.addWidget(LightEditAutosaveWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
-    statusBar.addWidget(LightEditEncodingWidgetWrapper(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this)
-    statusBar.addWidget(widget = LightEditLineSeparatorWidgetWrapper(project),
+    statusBar.addWidget(LightEditEncodingWidgetWrapper(project, coroutineScope), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this)
+    statusBar.addWidget(widget = LightEditLineSeparatorWidgetWrapper(project, coroutineScope),
                         anchor = StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
                         parentDisposable = this)
     PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)

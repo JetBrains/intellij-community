@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +64,13 @@ public interface StatusBarWidgetFactory {
    * {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
    * to recreate the widget and re-add it to the status bar.
    */
-  @NotNull StatusBarWidget createWidget(@NotNull Project project);
+  default @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return createWidget(project);
+  }
+
+  default @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+    throw new AbstractMethodError("createWidget is not implemented");
+  }
 
   default void disposeWidget(@NotNull StatusBarWidget widget) {
     Disposer.dispose(widget);

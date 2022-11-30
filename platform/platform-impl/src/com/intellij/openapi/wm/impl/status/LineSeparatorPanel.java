@@ -16,12 +16,13 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.LineSeparator;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
-  protected LineSeparatorPanel(@NotNull Project project) {
-    super(project, true);
+  protected LineSeparatorPanel(@NotNull Project project, @NotNull CoroutineScope scope) {
+    super(project, true, scope);
   }
 
   @Override
@@ -53,7 +54,7 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
 
   @Override
   protected @NotNull StatusBarWidget createInstance(@NotNull Project project) {
-    return new LineSeparatorPanel(project);
+    return new LineSeparatorPanel(project, getScope());
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.ide.lightEdit.LightEditService;
@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,26 +22,26 @@ import javax.swing.*;
 public abstract class LightEditAbstractPopupWidgetWrapper
   implements StatusBarWidget, LightEditorListener, CustomStatusBarWidget {
 
-  private final NotNullLazyValue<EditorBasedStatusBarPopup> myOriginalInstance =
-    NotNullLazyValue.createValue(() -> createOriginalWidget());
+  private final NotNullLazyValue<EditorBasedStatusBarPopup> myOriginalInstance;
 
-  private @Nullable      Editor  myEditor;
+  private @Nullable Editor myEditor;
   private final @NotNull Project myProject;
 
-  protected LightEditAbstractPopupWidgetWrapper(@NotNull Project project) {
+  protected LightEditAbstractPopupWidgetWrapper(@NotNull Project project, @NotNull CoroutineScope scope) {
     myProject = project;
+    myOriginalInstance = NotNullLazyValue.createValue(() -> {
+      //noinspection deprecation
+      return createOriginalWidget(scope);
+    });
   }
 
-  @Nullable
-  protected Editor getLightEditor() {
+  protected @Nullable Editor getLightEditor() {
     return myEditor;
   }
 
-  @NotNull
-  protected abstract EditorBasedStatusBarPopup createOriginalWidget();
+  protected abstract @NotNull EditorBasedStatusBarPopup createOriginalWidget(@NotNull CoroutineScope scope);
 
-  @NotNull
-  private EditorBasedStatusBarPopup getOriginalWidget() {
+  private @NotNull EditorBasedStatusBarPopup getOriginalWidget() {
     return myOriginalInstance.getValue();
   }
 

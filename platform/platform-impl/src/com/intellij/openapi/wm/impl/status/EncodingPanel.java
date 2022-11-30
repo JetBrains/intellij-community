@@ -22,14 +22,15 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
 public class EncodingPanel extends EditorBasedStatusBarPopup {
-  public EncodingPanel(@NotNull Project project) {
-    super(project, false);
+  public EncodingPanel(@NotNull Project project, @NotNull CoroutineScope scope) {
+    super(project, false, scope);
   }
 
   @Override
@@ -75,7 +76,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
 
   @Override
   protected @NotNull StatusBarWidget createInstance(@NotNull Project project) {
-    return new EncodingPanel(project);
+    return new EncodingPanel(project, getScope());
   }
 
   @Override

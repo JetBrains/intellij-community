@@ -61,7 +61,11 @@ import kotlin.time.Duration.Companion.milliseconds
 abstract class EditorBasedStatusBarPopup(
   project: Project,
   private val isWriteableFileRequired: Boolean,
+  protected val scope: CoroutineScope,
 ) : EditorBasedWidget(project), Multiframe, CustomStatusBarWidget {
+  @Suppress("DEPRECATION")
+  constructor(project: Project, isWriteableFileRequired: Boolean) : this(project, isWriteableFileRequired, project.coroutineScope)
+
   private val popupState = PopupState.forPopup()
 
   private val component: Lazy<JPanel> = lazy {
@@ -93,8 +97,7 @@ abstract class EditorBasedStatusBarPopup(
   private var editor = WeakReference<Editor?>(null)
 
   init {
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    scope.launch {
       update
         .debounce(300.milliseconds)
         .collectLatest(::doUpdate)

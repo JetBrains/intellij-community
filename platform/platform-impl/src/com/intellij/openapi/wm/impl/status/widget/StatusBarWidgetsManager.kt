@@ -75,7 +75,8 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
         return
       }
 
-      val widget = factory.createWidget(project)
+      @Suppress("DEPRECATION")
+      val widget = factory.createWidget(project, project.coroutineScope)
       widgetFactories.put(factory, widget)
       widgetIdMap.put(widget.ID(), factory)
       val anchor = getAnchor(factory = factory, availableFactories = widgetFactories.keys.toList())
@@ -200,7 +201,8 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
           continue
         }
 
-        val widget = factory.createWidget(project)
+        @Suppress("DEPRECATION")
+        val widget = factory.createWidget(project, project.coroutineScope)
         widgetFactories.put(factory, widget)
         widgetIdMap.put(widget.ID(), factory)
         result.add(widget to getAnchor(factory = factory, availableFactories = availableFactories))
