@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Paths;
 
-public class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyleSettingsListener {
+public final class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyleSettingsListener {
   private final Project  myProject;
   private final String   myOriginalPath;
   private final Document myDocument;
@@ -42,8 +42,7 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
     CodeStyleSettingsManager.getInstance(project).addListener(this);
   }
 
-  @NotNull
-  private PsiFile createPsi(@NotNull FileType fileType) {
+  private @NotNull PsiFile createPsi(@NotNull FileType fileType) {
     return PsiFileFactory.getInstance(myProject)
       .createFileFromText(
         "preview", fileType, myDocument.getText(), LocalTimeCounter.currentTime(), false);
@@ -80,8 +79,7 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
       EditorConfigBundle.message("command.name.reformat"), null);
   }
 
-  @Nullable
-  public PsiFile resolveOriginalPsi() {
+  public @Nullable PsiFile resolveOriginalPsi() {
     VirtualFile virtualFile =  VfsUtil.findFile(Paths.get(myOriginalPath), true);
     if (virtualFile != null) {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);

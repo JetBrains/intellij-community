@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
+final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
   private static final String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
 
   static final int MAX_PREVIEW_LENGTH = 10000;

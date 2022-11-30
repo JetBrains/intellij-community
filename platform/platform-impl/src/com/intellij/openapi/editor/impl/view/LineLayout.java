@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -45,8 +45,7 @@ abstract class LineLayout {
   /**
    * Creates a layout for a fragment of text from editor.
    */
-  @NotNull
-  static LineLayout create(@NotNull EditorView view, int line, boolean skipBidiLayout) {
+  static @NotNull LineLayout create(@NotNull EditorView view, int line, boolean skipBidiLayout) {
     List<BidiRun> runs = createFragments(view, line, skipBidiLayout);
     return createLayout(view, runs, null, line);
   }
@@ -54,8 +53,7 @@ abstract class LineLayout {
   /**
    * Creates a layout for an arbitrary piece of text (using a common font style).
    */
-  @NotNull
-  static LineLayout create(@NotNull EditorView view, @NotNull CharSequence text, @JdkConstants.FontStyle int fontStyle) {
+  static @NotNull LineLayout create(@NotNull EditorView view, @NotNull CharSequence text, @JdkConstants.FontStyle int fontStyle) {
     List<BidiRun> runs = createFragments(view, text, fontStyle);
     LineLayout delegate = createLayout(view, runs, text, 0);
     return new WithSize(delegate);
@@ -337,7 +335,7 @@ abstract class LineLayout {
    * If {@code quickEvaluationListener} is provided, quick approximate iteration becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
-  Iterator<VisualFragment> getFragmentsInVisualOrder(@NotNull final EditorView view,
+  Iterator<VisualFragment> getFragmentsInVisualOrder(final @NotNull EditorView view,
                                                      final int line,
                                                      final float startX,
                                                      final int startVisualColumn,
@@ -466,8 +464,8 @@ abstract class LineLayout {
 
     @Override
     int findNearestDirectionBoundary(int offset, boolean lookForward) {
+      byte originLevel = -1;
       if (lookForward) {
-        byte originLevel = -1;
         for (BidiRun run : myBidiRunsInLogicalOrder) {
           if (originLevel >= 0) {
             if (run.level != originLevel) return run.startOffset;
@@ -479,7 +477,6 @@ abstract class LineLayout {
         return originLevel > 0 ? myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endOffset : -1;
       }
       else {
-        byte originLevel = -1;
         for (int i = myBidiRunsInLogicalOrder.length - 1; i >= 0; i--) {
           BidiRun run = myBidiRunsInLogicalOrder[i];
           if (originLevel >= 0) {
@@ -582,8 +579,7 @@ abstract class LineLayout {
       return BitUtil.isSet(level, 1);
     }
 
-    @NotNull
-    private List<Chunk> getChunks(CharSequence text, int startOffsetInText) {
+    private @NotNull List<Chunk> getChunks(CharSequence text, int startOffsetInText) {
       List<Chunk> c = chunks;
       if (c == null) {
         int chunkCount = getChunkCount();

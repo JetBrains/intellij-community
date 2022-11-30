@@ -1,17 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm;
+package com.intellij.openapi.wm
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import javax.swing.JComponent
 
-import javax.swing.*;
+interface IdeRootPaneNorthExtension {
+  companion object {
+    val EP_NAME: ExtensionPointName<IdeRootPaneNorthExtension> = ExtensionPointName("com.intellij.ideRootPaneNorth")
+  }
 
-public interface IdeRootPaneNorthExtension {
-  ExtensionPointName<IdeRootPaneNorthExtension> EP_NAME = new ExtensionPointName<>("com.intellij.ideRootPaneNorth");
+  val key: String
 
-  @NotNull String getKey();
-
-  @Nullable JComponent createComponent(@NotNull Project project, boolean isDocked);
+  fun createComponent(project: Project, isDocked: Boolean): JComponent?
 }

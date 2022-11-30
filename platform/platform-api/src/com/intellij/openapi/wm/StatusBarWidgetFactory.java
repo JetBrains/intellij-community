@@ -88,7 +88,9 @@ public interface StatusBarWidgetFactory {
    * in a frame that the given status bar is attached to.
    * For creating editor-based widgets, see also {@link com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory}
    */
-  boolean canBeEnabledOn(@NotNull StatusBar statusBar);
+  default boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
+    return true;
+  }
 
   /**
    * Returns {@code true} if the widget should be created by default.

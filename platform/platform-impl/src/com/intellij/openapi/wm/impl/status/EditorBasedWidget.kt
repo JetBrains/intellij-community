@@ -1,102 +1,89 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.status;
+package com.intellij.openapi.wm.impl.status
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.EditorTextField;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.EditorTextField
+import com.intellij.util.messages.MessageBusConnection
+import java.awt.Component
+import java.awt.KeyboardFocusManager
 
-import java.awt.*;
+abstract class EditorBasedWidget protected constructor(@JvmField protected val myProject: Project) : StatusBarWidget {
+  @JvmField
+  protected var myStatusBar: StatusBar? = null
+  @JvmField
+  protected val myConnection: MessageBusConnection
 
-public abstract class EditorBasedWidget implements StatusBarWidget {
-  protected final @NotNull Project myProject;
+  @Volatile
+  protected var isDisposed = false
+    private set
 
-  protected StatusBar myStatusBar;
-  protected MessageBusConnection myConnection;
-  private volatile boolean myDisposed;
+  protected val project: Project
+    get() = myProject
 
-  protected EditorBasedWidget(@NotNull Project project) {
-    myProject = project;
-    Disposer.register(project, this);
+  init {
+    @Suppress("LeakingThis")
+    myConnection = project.messageBus.connect(this)
   }
 
-  protected @Nullable Editor getEditor() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+  protected open fun getEditor(): Editor? {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return FileEditorManager.getInstance(project).selectedTextEditor
     }
 
-    FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(myStatusBar);
-    return fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    val fileEditor = StatusBarUtil.getCurrentFileEditor(myStatusBar)
+    return if (fileEditor is TextEditor) fileEditor.editor else null
   }
 
-  public boolean isOurEditor(Editor editor) {
+  open fun isOurEditor(editor: Editor?): Boolean {
     return editor != null &&
-           editor.getComponent().isShowing() &&
-           !Boolean.TRUE.equals(editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY)) &&
-           WindowManager.getInstance().getStatusBar(editor.getComponent(), editor.getProject()) == myStatusBar;
+           editor.component.isShowing &&
+           java.lang.Boolean.TRUE != editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) &&
+           WindowManager.getInstance().getStatusBar(editor.component, editor.project) === myStatusBar
   }
 
-  final @Nullable Component getFocusedComponent() {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner == null) {
-      IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-      Window frame = focusManager.getLastFocusedIdeWindow();
-      if (frame != null) {
-        focusOwner = focusManager.getLastFocusedFor(frame);
-      }
-    }
-    return focusOwner;
-  }
-
-  final @Nullable Editor getFocusedEditor() {
-    Component component = getFocusedComponent();
-    Editor editor = component instanceof EditorComponentImpl ? ((EditorComponentImpl)component).getEditor() : getEditor();
-    return editor != null && !editor.isDisposed() ? editor : null;
-  }
-
-  protected @Nullable VirtualFile getSelectedFile() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      Editor textEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-      return textEditor == null ? null : textEditor.getVirtualFile();
+  fun getFocusedComponent(): Component? {
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.let {
+      return it
     }
 
-    FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(myStatusBar);
-    return fileEditor instanceof TextEditor ? fileEditor.getFile() : null;
+    val focusManager = IdeFocusManager.getInstance(project)
+    return focusManager.getLastFocusedFor(focusManager.lastFocusedIdeWindow ?: return null)
   }
 
-  protected final @NotNull Project getProject() {
-    return myProject;
+  fun getFocusedEditor(): Editor? {
+    val component = getFocusedComponent()
+    val editor = if (component is EditorComponentImpl) component.editor else getEditor()
+    return if (editor != null && !editor.isDisposed) editor else null
   }
 
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-    assert statusBar.getProject() == null ||
-           statusBar.getProject().equals(myProject) : "Cannot install widget from one project on status bar of another project";
-
-    this.myStatusBar = statusBar;
-    myConnection = myProject.getMessageBus().connect(this);
+  protected open fun getSelectedFile(): VirtualFile? {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val textEditor = FileEditorManager.getInstance(project).selectedTextEditor
+      return textEditor?.virtualFile
+    }
+    val fileEditor = StatusBarUtil.getCurrentFileEditor(myStatusBar)
+    return (fileEditor as? TextEditor)?.file
   }
 
-  @Override
-  public void dispose() {
-    myDisposed = true;
-    myStatusBar = null;
+  override fun install(statusBar: StatusBar) {
+    assert(statusBar.project == null || statusBar.project == project) {
+      "Cannot install widget from one project on status bar of another project"
+    }
+    myStatusBar = statusBar
   }
 
-  protected final boolean isDisposed() {
-    return myDisposed;
+  override fun dispose() {
+    isDisposed = true
+    myStatusBar = null
   }
 }
