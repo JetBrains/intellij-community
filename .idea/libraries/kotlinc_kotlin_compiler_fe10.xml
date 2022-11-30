@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-compiler-fe10">
+  <library name="kotlinc.kotlin-compiler-fe10" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fe10-for-ide:1.8.20-dev-3308" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/1.8.255/kotlin-compiler-fe10-for-ide-1.8.255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/1.8.20-dev-3308/kotlin-compiler-fe10-for-ide-1.8.20-dev-3308.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/1.8.255/kotlin-compiler-fe10-for-ide-1.8.255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/1.8.20-dev-3308/kotlin-compiler-fe10-for-ide-1.8.20-dev-3308-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
