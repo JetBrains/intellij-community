@@ -6,11 +6,13 @@ import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,6 +23,8 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +36,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.*;
+import static com.intellij.ui.ListUtil.removeSelectedItems;
+import static org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET;
 
 public class RemoteRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
@@ -56,14 +66,17 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   private final CollectionListModel<String> myServicesModel = new CollectionListModel<>();
   private final CollectionListModel<RemoteRepositoryDescription> myReposModel = new CollectionListModel<>();
 
+  private final MutableEntityStorageWrapper myMutableEntityStorageWrapper;
+
   public RemoteRepositoriesConfigurable(Project project) {
     myProject = project;
+    myMutableEntityStorageWrapper = new MutableEntityStorageWrapper(project);
     configControls();
   }
 
   @Override
   public boolean isModified() {
-    return isServiceListModified() || isRepoListModified();
+    return isServiceListModified() || isRepoListModified() || myMutableEntityStorageWrapper.hasChanges();
   }
 
   private boolean isServiceListModified() {
@@ -80,17 +93,20 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     myServiceListPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaUiBundle.message(
       "settings.remote.repo.artifactory.or.nexus.service.urls"), false, JBUI.insetsTop(8)).setShowLine(false));
 
-    setupListControls(
-      myServiceList, myServicesModel, myAddServiceButton, myEditServiceButton, myRemoveServiceButton,
+    setupCommonListControls(
+      myServiceList, myServicesModel, myAddServiceButton, myEditServiceButton,
       JavaUiBundle.message("settings.remote.repo.artifactory.or.nexus"), JavaUiBundle.message("settings.remote.repo.service.url"),
       JavaUiBundle.message("settings.remote.repo.no.services"), DataAdapter.STRING_ADAPTER
     );
-    setupListControls(
-      myJarRepositoryList, myReposModel, myAddRepoButton, myEditRepoButton, myRemoveRepoButton,
+    ListUtil.addRemoveListener(myRemoveServiceButton, myServiceList);
+
+    setupCommonListControls(
+      myJarRepositoryList, myReposModel, myAddRepoButton, myEditRepoButton,
       JavaUiBundle.message("settings.remote.repo.maven.repository.url"),
       JavaUiBundle.message("settings.remote.repo.Maven.Repository.URL"),
       JavaUiBundle.message("settings.remote.repo.no.remote.repositories"), DataAdapter.REPOSITORY_DESCRIPTION_ADAPTER
     );
+    setupRepoRemoveButton(myProject, myMutableEntityStorageWrapper, myJarRepositoryList, myReposModel, myRemoveRepoButton);
 
     ListUtil.disableWhenNoSelection(myTestServiceButton, myServiceList);
     myTestServiceButton.addActionListener(new ActionListener() {
@@ -117,9 +133,25 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     myResetToDefaultReposButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        resetReposModel(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
+        Set<String> currentIds = myReposModel.getItems().stream().map(RemoteRepositoryDescription::getId).collect(Collectors.toSet());
+        int bindLibrariesCount = countBindLibraries(myMutableEntityStorageWrapper.builder, currentIds);
+        if (bindLibrariesCount == 0) {
+          resetReposModel(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
+          return;
+        }
+
+        boolean resetConfirmed = MessageDialogBuilder.yesNo(
+          JavaUiBundle.message("jar.repository.manager.confirm.reset.default.repositories.dialog.title"),
+          JavaUiBundle.message("jar.repository.manager.confirm.reset.default.repositories.dialog.text", bindLibrariesCount)
+        ).ask(myProject);
+
+        if (resetConfirmed) {
+          updateLibrariesRepositoryId(myMutableEntityStorageWrapper.builder, currentIds, JAR_REPOSITORY_ID_NOT_SET);
+          resetReposModel(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
+        }
       }
     });
+
     myResetToDefaultServicesButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -168,14 +200,13 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     Data change(Data current, Presentation changes);
   }
 
-  private static <T> void setupListControls(final JBList<T> list,
-                                            final CollectionListModel<T> model,
-                                            final JButton addButton,
-                                            final JButton editButton,
-                                            final JButton removeButton,
-                                            final @NlsContexts.DialogMessage String modificationDialogTitle,
-                                            final String modificationDialogHint,
-                                            final @NlsContexts.StatusText String emptyListHint, DataAdapter<T, String> adapter) {
+  private static <T> void setupCommonListControls(final JBList<T> list,
+                                                  final CollectionListModel<T> model,
+                                                  final JButton addButton,
+                                                  final JButton editButton,
+                                                  final @NlsContexts.DialogMessage String modificationDialogTitle,
+                                                  final String modificationDialogHint,
+                                                  final @NlsContexts.StatusText String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(SimpleListCellRenderer.create("", adapter::toPresentation));
@@ -208,10 +239,37 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         }
       }
     });
-    ListUtil.addRemoveListener(removeButton, list);
     ListUtil.disableWhenNoSelection(editButton, list);
     list.getEmptyText().setText(emptyListHint);
   }
+
+  private static void setupRepoRemoveButton(final Project project,
+                                            final MutableEntityStorageWrapper mutableEntityStorageWrapper,
+                                            final JBList<RemoteRepositoryDescription> list,
+                                            final CollectionListModel<RemoteRepositoryDescription> model,
+                                            final JButton removeButton) {
+
+    removeButton.addActionListener(event -> {
+      final int index = list.getSelectedIndex();
+      if (index < 0 || index > list.getItemsCount()) {
+        return;
+      }
+      final RemoteRepositoryDescription remoteRepository = model.getElementAt(index);
+
+      int bindLibrariesCount = countBindLibraries(mutableEntityStorageWrapper.builder, remoteRepository);
+      if (bindLibrariesCount > 0) {
+        var dialog = new RepositoryRemoveDialog(project, remoteRepository, model.getItems(), bindLibrariesCount);
+        if (!dialog.showAndGet()) {
+          return;
+        }
+        updateLibrariesRepositoryId(mutableEntityStorageWrapper.builder, remoteRepository, dialog.getSelectedRepository());
+      }
+
+      removeSelectedItems(list);
+      list.requestFocusInWindow();
+    });
+  }
+
 
 
   @Override
@@ -241,15 +299,20 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     List<String> oldUrls = ContainerUtil.map(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories(), RemoteRepositoryDescription::getUrl);
     MavenRepositoryServicesManager.getInstance(myProject).setUrls(myServicesModel.getItems());
     RemoteRepositoriesConfiguration.getInstance(myProject).setRepositories(myReposModel.getItems());
-    if (!newUrls.containsAll(oldUrls)) {
+    myMutableEntityStorageWrapper.apply();
+
+    if (!newUrls.containsAll(oldUrls) || myMutableEntityStorageWrapper.hasChanges()) {
       RepositoryLibrariesReloaderKt.reloadAllRepositoryLibraries(myProject);
     }
+
+    myMutableEntityStorageWrapper.reset();
   }
 
   @Override
   public void reset() {
     resetServicesModel(MavenRepositoryServicesManager.getInstance(myProject).getUrls());
     resetReposModel(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories());
+    myMutableEntityStorageWrapper.reset();
   }
 
   private void resetServicesModel(final List<String> urls) {
@@ -276,6 +339,42 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     @Override
     public boolean canClose(String inputString) {
       return checkInput(inputString);
+    }
+  }
+
+  /**
+   * Created to wrap mutable builder and pass it into action listener via closure
+   */
+  private static class MutableEntityStorageWrapper {
+    private final WorkspaceModel workspaceModel;
+    MutableEntityStorage builder;
+
+    private MutableEntityStorageWrapper(Project project) {
+      workspaceModel = WorkspaceModel.getInstance(project);
+      reset();
+    }
+
+    void reset() {
+      builder = MutableEntityStorage.from(workspaceModel.getEntityStorage().getCurrent());
+    }
+
+    boolean hasChanges() {
+      return builder.hasChanges();
+    }
+
+    void apply() {
+      try {
+        WriteAction.run(() -> {
+          workspaceModel.updateProjectModel(
+            "Update libraries bindings to remote repositories on repository remove", it -> {
+              it.addDiff(builder);
+              return null;
+            });
+        });
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }
