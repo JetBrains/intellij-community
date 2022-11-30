@@ -202,7 +202,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
         myToProcess.removeFirst();
         return hasNext();
       }
-      return !myToProcess.isEmpty();
+      return true;
     }
 
     @Override
