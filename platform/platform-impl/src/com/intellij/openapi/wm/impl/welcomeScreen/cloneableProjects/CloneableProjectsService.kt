@@ -50,13 +50,11 @@ class CloneableProjectsService {
         }
         VcsCloneCollector.cloneFinished(activity, cloneStatus)
 
-        ApplicationManager.getApplication().invokeLater {
-          when (cloneStatus) {
-            CloneStatus.SUCCESS -> onSuccess(cloneableProject)
-            CloneStatus.FAILURE -> onFailure(cloneableProject)
-            CloneStatus.CANCEL -> onCancel(cloneableProject)
-            else -> {}
-          }
+        when (cloneStatus) {
+          CloneStatus.SUCCESS -> onSuccess(cloneableProject)
+          CloneStatus.FAILURE -> onFailure(cloneableProject)
+          CloneStatus.CANCEL -> onCancel(cloneableProject)
+          else -> {}
         }
       }, progressIndicator)
     }
@@ -124,33 +122,43 @@ class CloneableProjectsService {
   }
 
   private fun fireCloneAddedEvent(cloneableProject: CloneableProject) {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneAdded(cloneableProject.progressIndicator, cloneableProject.cloneTaskInfo)
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneAdded(cloneableProject.progressIndicator, cloneableProject.cloneTaskInfo)
+    }
   }
 
   private fun fireCloneRemovedEvent() {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneRemoved()
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneRemoved()
+    }
   }
 
   private fun fireCloneSuccessEvent() {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneSuccess()
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneSuccess()
+    }
   }
 
   private fun fireCloneFailedEvent() {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneFailed()
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneFailed()
+    }
   }
 
   private fun fireCloneCanceledEvent() {
-    ApplicationManager.getApplication().messageBus
-      .syncPublisher(TOPIC)
-      .onCloneCanceled()
+    ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onCloneCanceled()
+    }
   }
 
   enum class CloneStatus {

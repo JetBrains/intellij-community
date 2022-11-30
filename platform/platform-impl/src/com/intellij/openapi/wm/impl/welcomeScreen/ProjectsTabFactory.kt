@@ -84,9 +84,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
     })
     connect.subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
       override fun change() {
-        ApplicationManager.getApplication().invokeLater {
-          checkState()
-        }
+        checkState()
       }
     })
   }

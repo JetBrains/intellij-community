@@ -33,9 +33,7 @@ internal object RecentProjectPanelComponentFactory {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).apply {
       subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
         override fun change() {
-          ApplicationManager.getApplication().invokeLater {
-            filteringTree.updateTree()
-          }
+          filteringTree.updateTree()
         }
       })
       subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
