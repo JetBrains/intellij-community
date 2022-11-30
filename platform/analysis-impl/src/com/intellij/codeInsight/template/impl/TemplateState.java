@@ -827,6 +827,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     if (isFinished()) {
       return;
     }
+    if (getTemplate() == null) {
+      LOG.error("Template disposed: " + myPrevTemplate);
+      return;
+    }
 
     //some psi operations may block the document, unblock here
     unblockDocument();
