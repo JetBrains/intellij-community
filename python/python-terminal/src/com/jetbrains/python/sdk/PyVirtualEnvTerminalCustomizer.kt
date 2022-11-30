@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.application.runReadAction
@@ -11,6 +11,7 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.run.findActivateScript
@@ -61,9 +62,13 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
     // No need to escape path: conda can't have spaces
     return """
-        $condaPath shell.powershell hook | Out-String | Invoke-Expression ; 
-        try { conda activate ${sdkHomePath.parent.path} } catch { Write-Host('$errorMessage') }
-        """.trim()
+        & '${StringUtil.escapeChar(condaPath.toString(), '\'')}' shell.powershell hook | Out-String | Invoke-Expression ; 
+        try { 
+          conda activate '${StringUtil.escapeChar(sdkHomePath.parent.path, '\'')}' 
+        } catch { 
+          Write-Host('${StringUtil.escapeChar(errorMessage, '\'')}') 
+        }
+        """.trimIndent()
   }
 
   override fun customizeCommandAndEnvironment(project: Project,
