@@ -567,6 +567,7 @@ public final class ActionsTree {
         changed = false;
       }
       else if (userObject instanceof Hyperlink link) {
+        // see also XDebuggerTreeRenderer
         myHaveLink = true;
         text = null;
         changed = false;
@@ -645,6 +646,7 @@ public final class ActionsTree {
       Dimension linkSize = myLink.getPreferredSize();
       myLinkWidth = linkSize.width;
       myLinkOffset = Math.min(super.getPreferredSize().width - 1, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
+      myLink.setSize(myLinkWidth, getHeight()); // actually we only set width here, height is not yet ready
     }
 
     @Override
@@ -653,7 +655,7 @@ public final class ActionsTree {
         UIUtil.useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height), super::doPaint);
 
         g.translate(myLinkOffset, 0);
-        myLink.setHeight(getHeight());
+        myLink.setSize(myLink.getWidth(), getHeight());
         myLink.doPaint(g);
         g.translate(-myLinkOffset, 0);
       }
@@ -833,8 +835,6 @@ public final class ActionsTree {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
-    private int myHeight;
-
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -848,15 +848,6 @@ public final class ActionsTree {
     @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
-    }
-
-    public void setHeight(int height) {
-      myHeight = height;
-    }
-
-    @Override
-    public int getHeight() {
-      return myHeight;
     }
   }
 }
