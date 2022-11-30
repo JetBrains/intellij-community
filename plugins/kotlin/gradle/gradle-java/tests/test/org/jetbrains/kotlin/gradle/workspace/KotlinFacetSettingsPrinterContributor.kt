@@ -9,13 +9,15 @@ import java.io.File
 
 class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
     override fun PrinterContext.process(module: Module) = with(printer) {
-        val facetSettings = runReadAction { KotlinFacetSettingsProvider.getInstance(module.project)
-            ?.getSettings(module) }
-            ?: return
+        val facetSettings = runReadAction {
+          KotlinFacetSettingsProvider.getInstance(module.project)
+            ?.getSettings(module)
+        } ?: return
 
         indented {
             println("Settings from the Kotlin facet:")
             indented {
+                println("Target platform: ${module.platform}")
                 println("External project ID: ${facetSettings.externalProjectId}")
                 println("Language level: ${facetSettings.languageLevel}")
                 println("API level: ${facetSettings.apiLevel}")
@@ -24,8 +26,12 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
                 indented { facetSettings.dependsOnModuleNames.sorted().forEach(printer::println) }
                 println("Additional visible module names:")
                 indented { facetSettings.additionalVisibleModuleNames.sorted().forEach(printer::println) }
-                println("Additional compiler arguments: ${facetSettings.compilerSettings?.additionalArguments.orEmpty()}")
+
+                val additionalArguments = facetSettings.compilerSettings?.additionalArguments?.removeAbsolutePaths(projectRoot)
+                println("Additional compiler arguments: ${additionalArguments.orEmpty()}")
             }
         }
     }
+
+    private fun String.removeAbsolutePaths(projectRoot: File): String = replace(projectRoot.toString(), "")
 }

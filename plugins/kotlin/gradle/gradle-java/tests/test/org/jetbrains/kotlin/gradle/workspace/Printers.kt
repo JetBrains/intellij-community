@@ -6,13 +6,14 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.utils.Printer
+import java.io.File
 
 class WorkspaceModelPrinter(
     private val moduleContributors: List<ModulePrinterContributor>
 ) {
-    fun print(project: Project): String {
+    fun print(project: Project, projectRoot: File): String {
         val printer = Printer(StringBuilder())
-        val context = PrinterContext(printer, project)
+        val context = PrinterContext(printer, project, projectRoot)
         context.processModules()
 
         return printer.toString()
@@ -33,7 +34,11 @@ class WorkspaceModelPrinter(
     }
 }
 
-data class PrinterContext(val printer: Printer, val project: Project)
+data class PrinterContext(
+    val printer: Printer,
+    val project: Project,
+    val projectRoot: File,
+)
 
 internal fun Printer.indented(block: () -> Unit) {
     pushIndent()
