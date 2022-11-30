@@ -491,6 +491,14 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
             importProject()
             createHighlightingCheck(testLineMarkers = false).invokeOnAllModules()
         }
+
+        @Test
+        @PluginTargetVersions(pluginVersion = "1.7.0+")
+        fun testKotlinJavaKotlin() {
+            configureByFiles()
+            importProject()
+            createHighlightingCheck(testLineMarkers = false).invokeOnAllModules()
+        }
     }
 
     class HmppLibAndConsumer25 : HmppImportAndHighlightingTests() {
