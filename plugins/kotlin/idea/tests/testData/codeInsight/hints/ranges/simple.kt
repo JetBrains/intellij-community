@@ -61,6 +61,12 @@ fun foo() {
     }
 
     for (index in someVeryVeryLongLongLongLongFunctionName(0)<# ≤ #> .. <# ≤ #>someVeryVeryLongLongLongLongFunctionName(100)) {}
+
+    val list = emptyList<String>()
+
+    val string = "abc" + list..map {
+
+    }
 }
 
 private infix fun Int.until(intRange: IntRange): IntRange = TODO()

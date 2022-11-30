@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getRet
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
+import org.jetbrains.kotlin.idea.util.isComparable
 import org.jetbrains.kotlin.idea.util.isRangeExpression
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -183,6 +184,9 @@ enum class HintType(
             val rightExp = binaryExpression.right ?: return emptyList()
             val operationReference: KtOperationReferenceExpression = binaryExpression.operationReference
             val type = binaryExpression.getRangeBinaryExpressionType() ?: return emptyList()
+
+            if (!leftExp.isComparable() || !rightExp.isComparable()) return emptyList()
+
             val (leftText: String, rightText: String?) = when (type) {
                 RANGE_TO -> {
                     KotlinBundle.message("hints.ranges.lessOrEqual") to KotlinBundle.message("hints.ranges.lessOrEqual")
