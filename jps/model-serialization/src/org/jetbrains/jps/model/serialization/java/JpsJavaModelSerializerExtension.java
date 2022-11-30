@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization.java;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -13,6 +14,7 @@ import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.ArtifactVerification;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -29,11 +31,16 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerialize
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET;
+
 public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
+  private static final Logger LOG = Logger.getInstance(JpsJavaModelSerializerExtension.class);
+
   public static final String EXPORTED_ATTRIBUTE = "exported";
   public static final String SCOPE_ATTRIBUTE = "scope";
   public static final String OUTPUT_TAG = "output";
@@ -112,7 +119,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     extension.setExported(exported);
     extension.setScope(scope);
   }
-  
+
   @Override
   public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
     return Arrays.asList(new JpsLibraryRootTypeSerializer("JAVADOC", JpsOrderRootType.DOCUMENTATION, true),
@@ -307,6 +314,18 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     private static final String EXCLUDE_TAG = "exclude";
     private static final String DEPENDENCY_TAG = "dependency";
 
+    private static final String VERIFY_SHA25_CHECKSUM_ATTRIBUTE = "verify-sha256-checksum";
+
+    private static final String JAR_REPOSITORY_ID_ATTRIBUTE = "jar-repository-id";
+
+    private static final String VERIFICATION_TAG = "verification";
+
+    private static final String ARTIFACT_TAG = "artifact";
+
+    private static final String URL_ATTRIBUTE = "url";
+
+    private static final String SHA256SUM_TAG = "sha256sum";
+
     JpsRepositoryLibraryPropertiesSerializer() {
       super(JpsRepositoryLibraryType.INSTANCE, JpsRepositoryLibraryType.INSTANCE.getTypeId());
     }
@@ -319,13 +338,44 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     @NotNull
     private static JpsMavenRepositoryLibraryDescriptor loadDescriptor(@Nullable Element elem) {
       if (elem == null) return new JpsMavenRepositoryLibraryDescriptor(null);
+      String mavenId = elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null);
 
       boolean includeTransitiveDependencies = Boolean.parseBoolean(elem.getAttributeValue(INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE, "true"));
+      boolean verifySha256Checksum = Boolean.parseBoolean(elem.getAttributeValue(VERIFY_SHA25_CHECKSUM_ATTRIBUTE, "false"));
+      String jarRepositoryId = elem.getAttributeValue(JAR_REPOSITORY_ID_ATTRIBUTE, JAR_REPOSITORY_ID_NOT_SET);
+
+
       Element excludeTag = elem.getChild(EXCLUDE_TAG);
       List<Element> dependencyTags = excludeTag != null ? excludeTag.getChildren(DEPENDENCY_TAG) : Collections.emptyList();
       List<String> excludedDependencies = ContainerUtil.map(dependencyTags, it -> it.getAttributeValue(MAVEN_ID_ATTRIBUTE));
-      return new JpsMavenRepositoryLibraryDescriptor(elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null),
-                                                     includeTransitiveDependencies, excludedDependencies);
+      var verificationProperties = loadArtifactsVerificationProperties(mavenId, elem.getChild(VERIFICATION_TAG));
+      return new JpsMavenRepositoryLibraryDescriptor(mavenId,
+                                                     includeTransitiveDependencies, excludedDependencies,
+                                                     verifySha256Checksum,
+                                                     verificationProperties,
+                                                     jarRepositoryId);
+    }
+
+    private static List<ArtifactVerification> loadArtifactsVerificationProperties(@Nullable String mavenId, @Nullable Element element) {
+      if (element == null) {
+        return Collections.emptyList();
+      }
+
+      List<Element> children = element.getChildren(ARTIFACT_TAG);
+
+      List<ArtifactVerification> result = new ArrayList<>(children.size());
+      for (var child : children) {
+        String artifactUrl = child.getAttributeValue(URL_ATTRIBUTE);
+        if (artifactUrl != null) {
+          Element sha256sumElement = child.getChild(SHA256SUM_TAG);
+          String sha256sum = sha256sumElement != null ? sha256sumElement.getText() : null;
+
+          result.add(new ArtifactVerification(artifactUrl, sha256sum));
+        } else {
+          LOG.warn("Missing url attribute for verification artifact tag for descriptor maven-id=" + mavenId);
+        }
+      }
+      return result;
     }
   }
 }
