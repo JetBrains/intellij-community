@@ -342,9 +342,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private static class MergePatch {
     final boolean myApplyToRight;
-    final Consumer<? super DfaMemoryStateImpl> myPatcher;
+    final Consumer<DfaMemoryStateImpl> myPatcher;
 
-    private MergePatch(boolean right, Consumer<? super DfaMemoryStateImpl> patcher) {
+    private MergePatch(boolean right, Consumer<DfaMemoryStateImpl> patcher) {
       myApplyToRight = right;
       myPatcher = patcher;
     }
@@ -375,7 +375,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       this(right, pair, ms -> ms.myDistinctClasses.dropOrder(pair));
     }
 
-    private DropOrderingMergePatch(boolean right, DistinctPairSet.DistinctPair pair, Consumer<? super DfaMemoryStateImpl> diff) {
+    private DropOrderingMergePatch(boolean right, DistinctPairSet.DistinctPair pair, Consumer<DfaMemoryStateImpl> diff) {
       super(right, diff);
       myPair = pair;
     }
@@ -412,7 +412,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     @Nullable
-    private MergePatch tryMergeDiffs(Supplier<? extends MergePatch> singleDiff) {
+    private MergePatch tryMergeDiffs(Supplier<MergePatch> singleDiff) {
       if (!(mySingleDiff instanceof DropOrderingMergePatch)) return null;
       MergePatch diff = singleDiff.get();
       if (diff instanceof DropOrderingMergePatch && diff.myApplyToRight != mySingleDiff.myApplyToRight) {
@@ -448,8 +448,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
               .equals(myLeftState.getDfType(var)) &&
             updateVar.myType.meetRelation(left ? RelationType.GT : RelationType.LT, myRightState.getDfType(otherVar))
               .equals(myRightState.getDfType(var))) {
-          return new DropOrderingMergePatch(mySingleDiff.myApplyToRight, pair,
-                                            ((Consumer<DfaMemoryStateImpl>)mySingleDiff.myPatcher).andThen(diff.myPatcher));
+          return new DropOrderingMergePatch(mySingleDiff.myApplyToRight, pair, mySingleDiff.myPatcher.andThen(diff.myPatcher));
         }
       }
       return null;
@@ -1667,10 +1666,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private final class QualifierStatusMap {
     private final Int2ObjectMap<QualifierStatus> myMap = new Int2ObjectOpenHashMap<>();
-    private final @Nullable Set<? extends DfaValue> myQualifiersToFlush;
+    private final @Nullable Set<DfaValue> myQualifiersToFlush;
     private final boolean myClosure;
 
-    private QualifierStatusMap(@Nullable Set<? extends DfaValue> qualifiersToFlush, boolean closure) {
+    private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush, boolean closure) {
       myQualifiersToFlush = qualifiersToFlush;
       myClosure = closure;
     }
