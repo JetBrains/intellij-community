@@ -326,5 +326,10 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         public void testVariablesAsFunctions() throws Exception {
             runTest("../idea/tests/testData/highlighter/VariablesAsFunctions.kt");
         }
+
+        @TestMetadata("VariablesWithSetter.kt")
+        public void testVariablesWithSetter() throws Exception {
+            runTest("../idea/tests/testData/highlighter/VariablesWithSetter.kt");
+        }
     }
 }

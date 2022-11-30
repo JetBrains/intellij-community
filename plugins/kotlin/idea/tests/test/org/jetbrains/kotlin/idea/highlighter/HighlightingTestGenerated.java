@@ -326,5 +326,10 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         public void testVariablesAsFunctions() throws Exception {
             runTest("testData/highlighter/VariablesAsFunctions.kt");
         }
+
+        @TestMetadata("VariablesWithSetter.kt")
+        public void testVariablesWithSetter() throws Exception {
+            runTest("testData/highlighter/VariablesWithSetter.kt");
+        }
     }
 }
