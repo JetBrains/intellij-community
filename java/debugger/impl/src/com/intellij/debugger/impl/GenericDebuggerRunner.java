@@ -24,7 +24,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -68,9 +67,9 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       });
     }
     else {
-      executionManager.startRunProfile(environment, state, state1 -> SlowOperations.allowSlowOperations(() -> {
+      executionManager.startRunProfile(environment, state, state1 -> {
         return doExecute(state, environment);
-      }));
+      });
     }
   }
 
