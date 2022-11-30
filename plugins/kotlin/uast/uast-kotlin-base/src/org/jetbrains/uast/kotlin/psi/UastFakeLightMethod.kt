@@ -9,12 +9,15 @@ import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.impl.light.LightReferenceListBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterBuilder
-import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
-import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.asJava.classes.cannotModify
+import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
@@ -149,14 +152,27 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
     }
 
     private val _annotations: Array<PsiAnnotation> by lz {
-        original.annotationEntries.map { entry ->
+        val annotations = SmartList<PsiAnnotation>()
+
+        val isUnitFunction = original is KtFunction && _returnType == PsiType.VOID
+        // Do not annotate Unit function
+        if (!isUnitFunction) {
+            val nullability = baseResolveProviderService.nullability(original)
+            if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
+                annotations.add(
+                    UastFakeLightNullabilityAnnotation(nullability, this)
+                )
+            }
+        }
+        original.annotationEntries.mapTo(annotations) { entry ->
             KtLightAnnotationForSourceEntry(
                 name = entry.shortName?.identifier,
                 lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(entry) },
                 kotlinOrigin = entry,
                 parent = original,
             )
-        }.toTypedArray()
+        }
+        annotations.toTypedArray()
     }
 
     override fun getAnnotations(): Array<PsiAnnotation> {
@@ -177,8 +193,12 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
         return original is KtConstructor<*>
     }
 
+    private val _returnType: PsiType? by lz {
+        baseResolveProviderService.getType(original, this)
+    }
+
     override fun getReturnType(): PsiType? {
-        return baseResolveProviderService.getType(original, this)
+        return _returnType
     }
 
     override fun getParent(): PsiElement? = containingClass
@@ -195,4 +215,32 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
     }
 
     override fun hashCode(): Int = original.hashCode()
+}
+
+private class UastFakeLightNullabilityAnnotation(
+    private val nullability: KtTypeNullability,
+    parent: PsiElement
+) : KtLightAbstractAnnotation(parent) {
+
+    override val kotlinOrigin: KtCallElement?
+        get() = null
+
+    override fun findAttributeValue(attributeName: String?): PsiAnnotationMemberValue? = null
+
+    override fun findDeclaredAttributeValue(attributeName: String?): PsiAnnotationMemberValue? = null
+
+    override fun getNameReferenceElement(): PsiJavaCodeReferenceElement? = null
+
+    override fun getParameterList(): PsiAnnotationParameterList = KtLightEmptyAnnotationParameterList(this)
+
+    override fun getQualifiedName(): String? =
+        when (nullability) {
+            KtTypeNullability.NON_NULLABLE -> NotNull::class.qualifiedName
+            KtTypeNullability.NULLABLE -> Nullable::class.qualifiedName
+            KtTypeNullability.UNKNOWN -> null
+        }
+
+    override fun toString() = "@$qualifiedName"
+
+    override fun <T : PsiAnnotationMemberValue?> setDeclaredAttributeValue(attributeName: String?, value: T?): T = cannotModify()
 }

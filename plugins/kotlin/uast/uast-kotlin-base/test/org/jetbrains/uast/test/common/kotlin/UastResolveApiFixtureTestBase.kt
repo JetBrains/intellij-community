@@ -842,11 +842,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
     }
 
-    private val PsiAnnotation.isNullnessAnnotation: Boolean
-        get() {
-            return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
-        }
-
     fun checkArrayAccessOverloads(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """
