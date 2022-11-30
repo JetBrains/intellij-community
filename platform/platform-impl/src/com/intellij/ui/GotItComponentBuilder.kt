@@ -135,9 +135,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add an optional link to the tooltip.
    */
   fun withLink(@Nls linkLabel: String, action: () -> Unit): GotItComponentBuilder {
-    link = object : LinkLabel<Unit>(linkLabel, null) {
-      override fun getNormal(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
-    }
+    link = createLinkLabel(linkLabel, isExternal = false)
     linkAction = action
     return this
   }
@@ -146,11 +144,20 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add an optional browser link to the tooltip. Link is rendered with arrow icon.
    */
   fun withBrowserLink(@Nls linkLabel: String, url: URL): GotItComponentBuilder {
-    link = object : LinkLabel<Unit>(linkLabel, AllIcons.Ide.External_link_arrow) {
-      override fun getNormal(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
-    }.apply { horizontalTextPosition = SwingConstants.LEFT }
+    link = createLinkLabel(linkLabel, isExternal = true)
     linkAction = { BrowserUtil.browse(url) }
     return this
+  }
+
+  private fun createLinkLabel(@Nls text: String, isExternal: Boolean): LinkLabel<Unit> {
+    return object : LinkLabel<Unit>(text, if (isExternal) AllIcons.Ide.External_link_arrow else null) {
+      override fun getNormal(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
+      override fun getHover(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
+      override fun getVisited(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
+      override fun getActive(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
+    }.also {
+      if (isExternal) it.horizontalTextPosition = SwingConstants.LEFT
+    }
   }
 
   /**
