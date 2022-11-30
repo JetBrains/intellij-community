@@ -622,6 +622,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   @Override
+  public void setShowHorizontalLines(boolean showHorizontalLines) {
+    if (!showHorizontalLines) {
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+    }
+    super.setShowHorizontalLines(showHorizontalLines);
+  }
+
+  @Override
   public boolean editCellAt(final int row, final int column, final EventObject e) {
     if (cellEditor != null && !cellEditor.stopCellEditing()) {
       return false;
