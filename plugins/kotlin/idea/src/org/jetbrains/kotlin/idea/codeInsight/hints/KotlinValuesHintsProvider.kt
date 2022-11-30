@@ -6,17 +6,7 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
-import com.intellij.util.asSafely
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
-import org.jetbrains.kotlin.idea.intentions.callExpression
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import javax.swing.JComponent
 
 class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsProvider.Settings>() {

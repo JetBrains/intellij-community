@@ -8,11 +8,20 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.builtIns
 
 internal fun KtExpression.isRangeExpression(context: Lazy<BindingContext>? = null): Boolean = getRangeBinaryExpressionType(context) != null
+
+internal fun KtExpression.isComparable(): Boolean {
+    val context = safeAnalyze(BodyResolveMode.PARTIAL)
+    val valType = getType(context) ?: return false
+    return DescriptorUtils.isSubtypeOfClass(valType, valType.builtIns.comparable)
+}
 
 internal fun KtExpression.getRangeBinaryExpressionType(context: Lazy<BindingContext>? = null): RangeKtExpressionType? {
     val binaryExprName = asSafely<KtBinaryExpression>()?.operationReference?.getReferencedNameAsName()?.asString()
