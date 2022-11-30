@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class FullLineTest : UsefulTestCase() {
   companion object {
-    private val modelFiles = ModelsFiles.gpt2_py_4L_512_793_v3_q_local
+    private val modelFiles = ModelsFiles.currentModel
     val context = """
             def hello_
         """.trimIndent()

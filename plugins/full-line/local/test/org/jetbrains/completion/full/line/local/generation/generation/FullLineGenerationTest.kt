@@ -14,7 +14,7 @@ import kotlin.system.measureTimeMillis
 
 class FullLineGenerationTest {
   companion object {
-    private val modelFiles = ModelsFiles.gpt2_py_4L_512_793_v3_q_local
+    private val modelFiles = ModelsFiles.currentModel
     private val gpt2 = GPT2ModelWrapper(modelFiles.model, modelFiles.config)
     private val bpe = FullLineTokenizer(modelFiles.tokenizer)
     private val generation = FullLineGeneration(gpt2, bpe)
