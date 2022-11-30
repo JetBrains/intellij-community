@@ -2,17 +2,9 @@
 
 package org.jetbrains.kotlin.idea.stubs;
 
-import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -21,14 +13,10 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener;
-import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener;
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
 import org.jetbrains.kotlin.idea.test.AstAccessControl;
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndMultiplatformStdlibDescriptor;
-import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
@@ -38,8 +26,6 @@ import org.junit.runner.RunWith;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static org.jetbrains.kotlin.idea.test.AstAccessControl.dropPsiAndTestWithControlledAccessToAst;
 
@@ -119,13 +105,9 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
         }
     }
 
-    /**
-     * Hooray, it fails! Check KT-55160 is closed, make this test green
-     * and remove {@link com.intellij.psi.tree.IStubFileElementType#isKotlinFragment()} workaround.
-     **/
-    public void testKT_55160hasNotBeenFixedYet() {
-        assertTrue(ReflectionUtil.isAssignable(IStubFileElementType.class, KtExpressionCodeFragmentType.class));
-        assertTrue(ReflectionUtil.isAssignable(IStubFileElementType.class, KtBlockCodeFragmentType.class));
-        assertTrue(ReflectionUtil.isAssignable(IStubFileElementType.class, KtBlockCodeFragmentType.class));
+    public void testFileStubInheritanceInFragments() {
+        assertFalse(ReflectionUtil.isAssignable(IStubFileElementType.class, KtExpressionCodeFragmentType.class));
+        assertFalse(ReflectionUtil.isAssignable(IStubFileElementType.class, KtBlockCodeFragmentType.class));
+        assertFalse(ReflectionUtil.isAssignable(IStubFileElementType.class, KtBlockCodeFragmentType.class));
     }
 }
