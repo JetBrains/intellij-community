@@ -22,7 +22,7 @@ internal abstract class CreateFieldActionBase(
 
   internal fun fieldRenderer(project: Project) = JavaFieldRenderer(project, isConstant(), target, request)
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     fieldRenderer(project).doRender()
   }
 

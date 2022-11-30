@@ -48,7 +48,7 @@ internal class CreateConstructorAction(
     return IntentionPreviewInfo.DIFF
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     constructorRenderer(project).doMagic()
   }
 }

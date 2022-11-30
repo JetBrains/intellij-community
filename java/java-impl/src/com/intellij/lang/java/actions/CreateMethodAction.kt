@@ -37,8 +37,8 @@ internal class CreateMethodAction(
 
   override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    return super.isAvailable(project, editor, file) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
+  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
+    return super.isAvailable(project, file, target) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
   }
 
   override fun getRenderData() = JvmActionGroup.RenderData { request.methodName }
@@ -63,7 +63,7 @@ internal class CreateMethodAction(
     return IntentionPreviewInfo.DIFF
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     JavaMethodRenderer(project, abstract, target, request).doMagic()
   }
 }

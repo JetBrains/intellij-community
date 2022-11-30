@@ -10,7 +10,6 @@ import com.intellij.lang.java.beans.PropertyKind.*
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.CreatePropertyActionGroup
 import com.intellij.lang.jvm.actions.JvmActionGroup
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
@@ -23,8 +22,8 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
 
   override fun getActionGroup(): JvmActionGroup = CreatePropertyActionGroup
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (!super.isAvailable(project, editor, file)) return false
+  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
+    if (!super.isAvailable(project, file, target)) return false
     val (propertyName, propertyKind) = propertyInfo
     val counterPart = when (propertyKind) {
       GETTER, BOOLEAN_GETTER -> SETTER

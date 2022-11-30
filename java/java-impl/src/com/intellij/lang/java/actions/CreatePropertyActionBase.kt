@@ -27,8 +27,8 @@ internal abstract class CreatePropertyActionBase(
 
   private fun doGetPropertyInfo() = PropertyUtilBase.getPropertyNameAndKind(request.methodName)
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (!super.isAvailable(project, editor, file)) return false
+  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
+    if (!super.isAvailable(project, file, target)) return false
 
     val accessorName = request.methodName
     if (!PsiNameHelper.getInstance(project).isIdentifier(accessorName)) return false
@@ -57,7 +57,7 @@ internal abstract class CreatePropertyActionBase(
     return IntentionPreviewInfo.DIFF
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     createRenderer(project, target).doRender()
   }
 
