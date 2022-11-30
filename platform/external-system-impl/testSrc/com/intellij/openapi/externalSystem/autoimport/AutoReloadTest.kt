@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.FAILURE
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.UPDATE
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus.IN_PROGRESS
+import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 import com.intellij.openapi.util.Ref
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.AlarmFactory
+import com.intellij.util.Alarm
 import org.jetbrains.concurrency.AsyncPromise
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
@@ -996,8 +996,7 @@ class AutoReloadTest : AutoReloadTestCase() {
     test { settingsFile ->
       enableAsyncExecution()
       setDispatcherMergingSpan(100)
-      val alarmFactory = AlarmFactory.getInstance()
-      val alarm = alarmFactory.create()
+      val alarm = Alarm()
       repeat(10) { iteration ->
         val promise = AsyncPromise<Unit>()
         alarm.addRequest({

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +73,7 @@ class JBCefOsrComponent extends JPanel {
   public void addNotify() {
     super.addNotify();
     myDisposable = Disposer.newDisposable();
-    myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     if (!JBCefBrowserBase.isCefBrowserCreated(myBrowser)) {
       myBrowser.createImmediately();
     }

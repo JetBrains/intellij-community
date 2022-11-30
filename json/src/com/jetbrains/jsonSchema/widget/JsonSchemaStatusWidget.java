@@ -44,6 +44,7 @@ import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -68,8 +69,9 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private volatile Pair<WidgetState, VirtualFile> myLastWidgetStateAndFilePair;
   private ProgressIndicator myCurrentProgress;
 
-  JsonSchemaStatusWidget(@NotNull Project project) {
-    super(project, false);
+  JsonSchemaStatusWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    super(project, false, scope);
+
     myServiceLazy = new SynchronizedClearableLazy<>(() -> {
       if (!project.isDisposed()) {
         JsonSchemaService myService = JsonSchemaService.Impl.get(project);
@@ -454,7 +456,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   protected @NotNull StatusBarWidget createInstance(@NotNull Project project) {
-    return new JsonSchemaStatusWidget(project);
+    return new JsonSchemaStatusWidget(project, getScope());
   }
 
   @Override

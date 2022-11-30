@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import com.jetbrains.performancePlugin.profilers.Profiler;
 import com.jetbrains.performancePlugin.profilers.ProfilersController;
 import com.jetbrains.performancePlugin.ui.FinishScriptDialog;
@@ -19,7 +18,7 @@ public final class ProjectIndexingComponent implements DumbService.DumbModeListe
   public static final String PROFILE_WITH_ASYNC = "performancePlugin.isProfileIndexingWithAsync";
   @NotNull private final Project project;
   private static final int TIMEOUT = 500;
-  private final Alarm myAlarm = AlarmFactory.getInstance().create();
+  private final Alarm myAlarm = new Alarm();
 
   ProjectIndexingComponent(@NotNull Project project) {
     this.project = project;

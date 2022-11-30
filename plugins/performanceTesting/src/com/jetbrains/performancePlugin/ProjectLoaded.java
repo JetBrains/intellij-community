@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -84,7 +83,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
 
   private static final String INDEXING_PROFILER_PREFIX = "%%profileIndexing";
   private static ScheduledExecutorService screenshotExecutor;
-  private final Alarm myAlarm = AlarmFactory.getInstance().create();
+  private final Alarm myAlarm = new Alarm();
 
   private static boolean ourScriptStarted;
 

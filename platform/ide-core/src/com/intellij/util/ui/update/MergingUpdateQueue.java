@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -116,8 +115,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       Disposer.register(parent, this);
     }
 
-    AlarmFactory alarmFactory = AlarmFactory.getInstance();
-    myWaiterForMerge = myExecuteInDispatchThread ? alarmFactory.create(thread) : alarmFactory.create(thread, this);
+    myWaiterForMerge = myExecuteInDispatchThread ? new Alarm(thread) : new Alarm(thread, this);
 
     if (isActive) {
       showNotify();
