@@ -1077,6 +1077,14 @@
       <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction"
               use-shortcut-of="$Delete"/>
     </group>
+    <group id="WelcomeScreen.KeymapGroup" searchable="false">
+      <reference id="WelcomeScreen.Options"/>
+      <reference id="WelcomeScreenRecentProjectActionGroup"/>
+      <reference id="WelcomeScreen.Configure"/>
+      <reference id="WelcomeScreen.OpenDirectoryProject"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
     <group id="EditorGutterPopupMenu.Appearance" popup="true">
       <action id="EditorGutterToggleGlobalLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction"/>
       <action id="EditorGutterToggleGlobalIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesGloballyAction"/>
