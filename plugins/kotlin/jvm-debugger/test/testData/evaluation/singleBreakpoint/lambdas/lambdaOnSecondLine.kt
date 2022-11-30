@@ -16,3 +16,5 @@ class A {
     }
 }
 
+
+// IGNORE_FOR_INDY_LAMBDAS

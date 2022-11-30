@@ -25,3 +25,4 @@ fun foo(f: () -> Unit) {
 
 // EXPRESSION: val1 + val2
 // RESULT: 2: I
+// IGNORE_FOR_INDY_LAMBDAS

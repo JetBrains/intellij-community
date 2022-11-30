@@ -21,3 +21,4 @@ fun foo(f: () -> Unit) {
 }
 
 // PRINT_FRAME
+// IGNORE_FOR_INDY_LAMBDAS

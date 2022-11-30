@@ -23,3 +23,4 @@ fun foo(f: () -> Unit) {
 
 // EXPRESSION: O.obMyFun()
 // RESULT: 1: I
+// IGNORE_FOR_INDY_LAMBDAS

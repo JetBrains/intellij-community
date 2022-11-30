@@ -55,3 +55,4 @@ public interface I {
 }
 
 // IGNORE_K2
+// IGNORE_FOR_INDY_LAMBDAS

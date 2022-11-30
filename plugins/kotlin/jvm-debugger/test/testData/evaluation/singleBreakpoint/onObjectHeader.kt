@@ -27,3 +27,4 @@ object A {
 // RESULT: 2: I
 
 // SKIP_SYNTHETIC_METHODS: false
+// IGNORE_FOR_INDY_LAMBDAS

@@ -14,3 +14,4 @@ fun lambda(f: () -> Int) = f()
 
 // EXPRESSION: lambda { localObjectVar.test() }
 // RESULT: 1: I
+// IGNORE_FOR_INDY_LAMBDAS

@@ -13,3 +13,5 @@ fun MyClass(): (Int) -> String {
     //Breakpoint! (lambdaOrdinal = 1)
     return { y: Int -> y.toString() }
 }
+
+// IGNORE_FOR_INDY_LAMBDAS

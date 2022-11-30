@@ -74,3 +74,5 @@ class A {
         return this
     }
 }
+
+// IGNORE_FOR_INDY_LAMBDAS

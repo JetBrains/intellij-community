@@ -14,3 +14,4 @@ class A {
         return f(1)
     }
 }
+// IGNORE_FOR_INDY_LAMBDAS

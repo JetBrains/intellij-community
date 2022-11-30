@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 import org.junit.Assert;
@@ -22,6 +23,7 @@ import java.util.*;
 public final class InTextDirectivesUtils {
 
     private static final String DIRECTIVES_FILE_NAME = "directives.txt";
+    private static final String IGNORE_FOR_INDY_LAMBDAS = "// IGNORE_FOR_INDY_LAMBDAS";
 
     public static final String IGNORE_BACKEND_DIRECTIVE_PREFIX = "// IGNORE_BACKEND: ";
     public static final String MUTED_DIRECTIVE_PREFIX = "// MUTED: ";
@@ -259,6 +261,11 @@ public final class InTextDirectivesUtils {
 
     public static boolean isIgnoredTarget(TargetBackend targetBackend, File file) {
         return isIgnoredTarget(targetBackend, file, IGNORE_BACKEND_DIRECTIVE_PREFIX);
+    }
+
+    public static boolean isIgnoredIndyLambdas(@NotNull JvmClosureGenerationScheme lambdasGenerationScheme, @NotNull File file) {
+        return lambdasGenerationScheme == JvmClosureGenerationScheme.INDY &&
+               isDirectiveDefined(textWithDirectives(file), IGNORE_FOR_INDY_LAMBDAS);
     }
 
     public static void checkIfMuted(String fileText) {

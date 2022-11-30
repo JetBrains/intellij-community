@@ -22,3 +22,4 @@ fun main() {
 
 // EXPRESSION: this
 // RESULT: instance of lambdaFun3.Foo(id=ID): LlambdaFun3/Foo;
+// IGNORE_FOR_INDY_LAMBDAS
