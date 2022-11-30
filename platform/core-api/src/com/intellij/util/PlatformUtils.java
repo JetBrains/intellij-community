@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -22,7 +22,7 @@ import java.util.Set;
  * </p>
  * <p>
  * If you need to customize behavior of a plugin depending on the IDE it's installed, it's better to use optional dependency on a corresponding
- * plugin or IDE module. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules
+ * plugin or IDE module. See <a href="https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules">SDK Docs</a>.
  * </p>
  * @author Konstantin Bulenkov, Nikolay Chashnikov
  */

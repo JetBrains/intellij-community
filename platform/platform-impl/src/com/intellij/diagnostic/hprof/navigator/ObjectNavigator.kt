@@ -54,14 +54,16 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
   abstract fun getWeakReferenceId(): Long
   abstract fun getSoftWeakReferenceIndex(): Int
 
-  fun goToInstanceField(@NonNls className: String, @NonNls fieldName: String) {
+  fun goToInstanceField(@NonNls className: String?, @NonNls fieldName: String) {
     val objectId = getInstanceFieldObjectId(className, fieldName)
     goTo(objectId, ReferenceResolution.ALL_REFERENCES)
   }
 
-  fun getInstanceFieldObjectId(@NonNls className: String, @NonNls name: String): Long {
+  fun getInstanceFieldObjectId(@NonNls className: String?, @NonNls name: String): Long {
     val refs = getReferencesCopy()
-    assert(className == getClass().name.substringBeforeLast('!')) { "Expected $className, got ${getClass().name}" }
+    className?.let {
+      assert(className == getClass().name.substringBeforeLast('!')) { "Expected $className, got ${getClass().name}" }
+    }
     val indexOfField = getClass().allRefFieldNames(classStore).indexOfFirst { it == name }
     if (indexOfField == -1) {
       throw IllegalStateException("Can't find field $name in class $className")

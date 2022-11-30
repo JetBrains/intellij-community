@@ -4,8 +4,11 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.psi.PsiReference;
 
 /**
- * Marker interface for references that should be highlighted with
- * [com.intellij.openapi.editor.DefaultLanguageHighlighterColors.HIGHLIGHTED_REFERENCE] text attributes.
+ * Marker interface to highlight references.
+ * <p>
+ * Use for non-soft references in non-obvious places like String literals which have some navigation target.
+ * Highlighting will apply
+ * {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#HIGHLIGHTED_REFERENCE} text attributes.
  */
 public interface HighlightedReference extends PsiReference {
   default boolean isHighlightedWhenSoft() {
