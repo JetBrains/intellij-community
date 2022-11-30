@@ -19,7 +19,6 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.toArray
 
 /**
@@ -84,17 +83,6 @@ private fun getBgData(project: Project, selectedItems: Lazy<List<NavBarItem>>, d
     else {
       null
     }
-  }
-  PlatformCoreDataKeys.SELECTED_ITEM.name -> {
-    (selectedItems.value.firstOrNull() as? DefaultNavBarItem<*>)?.data
-  }
-  PlatformCoreDataKeys.SELECTED_ITEMS.name -> {
-    selectedItems.value
-      .mapNotNull {
-        (it as? DefaultNavBarItem<*>)?.data
-      }
-      .ifEmpty { null }
-      ?.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY)
   }
   CommonDataKeys.PSI_ELEMENT.name -> {
     selectedItems.value

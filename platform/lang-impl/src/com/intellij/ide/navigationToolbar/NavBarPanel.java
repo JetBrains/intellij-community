@@ -54,7 +54,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -834,13 +833,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      return selection.get().first();
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      List<?> result = selection.get().toList();
-      return result.isEmpty() ? null : ArrayUtil.toObjectArray(result);
-    }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       JBIterable<?> finalSelection = selection.get();
       return (DataProvider)slowId -> getSlowData(slowId, myProject, finalSelection);
@@ -897,13 +889,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         }
       }
       return null;
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      return selection.first();
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      List<?> result = selection.toList();
-      return result.isEmpty() ? null : ArrayUtil.toObjectArray(result);
     }
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       PsiElement element = selection.filter(PsiElement.class).first();
