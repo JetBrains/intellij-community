@@ -13,12 +13,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
-import com.intellij.remoteDev.tests.modelGenerated.*
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
+import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.util.alsoIfNull
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
@@ -221,15 +223,15 @@ abstract class DistributedTestHostBase() {
 
     val result = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().invokeLater {
-      val frame = WindowManager.getInstance().getIdeFrame(project)
+      val frame = WindowManager.getInstance().getIdeFrame(projectOrNull)
       if (frame != null) {
         val component = frame.component
         val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
         component.printAll(img.createGraphics())
         ApplicationManager.getApplication().executeOnPooledThread {
           try {
-            result.complete(ImageIO.write(img, "png", File(PathManager.getLogPath()).resolve(
-              if (fileName.endsWith(".png")) fileName else "$fileName.png")))
+            val finalFileName = if (fileName.endsWith(".png")) fileName else "$fileName.png"
+            result.complete(ImageIO.write(img, "png", File(PathManager.getLogPath()).resolve(finalFileName)))
           }
           catch (e: IOException) {
             logger.info(e)
