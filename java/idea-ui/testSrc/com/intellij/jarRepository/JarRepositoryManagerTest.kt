@@ -14,6 +14,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -167,8 +168,49 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertEquals(AnnotationOrderRootType.getInstance(), root.type)
   }
 
+  @Test fun `test remote repositories selection uses project repos by default`() {
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(
+      RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1"),
+      RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2"),
+    )
 
+    val descriptor = createDescriptorWithJarRepoId(JAR_REPOSITORY_ID_NOT_SET)
+    val expected = RemoteRepositoriesConfiguration.getInstance(myProject).repositories
+    val actualWhenNullPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
+    assertEquals(expected, actualWhenNullPassed)
 
+    val actualWhenEmptyListPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
+    assertEquals(expected, actualWhenEmptyListPassed)
+  }
+  
+  @Test fun `test remote repositories selection repo from desc has second priority`() {
+    val repo1 = RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1")
+    val repo2 = RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2")
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(repo1, repo2)
+    val descriptor = createDescriptorWithJarRepoId(repo1.id)
+    
+    val expected = listOf(repo1)
+    val actualWhenNullPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, null)
+    val actualWhenEmptyListPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
+    assertEquals(expected, actualWhenNullPassed)
+    assertEquals(expected, actualWhenEmptyListPassed)
+  }  
+  
+  @Test fun `test remote repositories selection explicitly set repos have max priority`() {
+    val repo1 = RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1")
+    val repo2 = RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2")
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(repo1, repo2)
+    val descriptor = createDescriptorWithJarRepoId(repo1.id)
+    val expected = listOf(repo2)
+    val actual = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, expected)
+    assertEquals(expected, actual)
+  }
+  
+  private fun createDescriptorWithJarRepoId(jarRepoId: String?) = JpsMavenRepositoryLibraryDescriptor("id", false, emptyList(), false,
+                                                                                                      emptyList(),
+                                                                                                      jarRepoId)
   private fun getResultingRoots(promise: Promise<MutableList<OrderRoot>>): List<OrderRoot>? {
     var result: List<OrderRoot>? = null
     (1..5).forEach {
