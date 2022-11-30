@@ -110,7 +110,7 @@ internal fun JComponent.registerEditSourceAction(parent: Disposable) = LightEdit
   .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY)) }
   .registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, parent)
 
-internal fun JTree.registerNavigateOnEnterAction() {
+internal fun JTree.registerNavigateOnEnterAction(whenPerformed: () -> Unit = {}) {
   val enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
   // perform previous action if the specified action is failed
   // it is needed to expand/collapse a tree node
@@ -121,6 +121,7 @@ internal fun JTree.registerNavigateOnEnterAction() {
       is GroupNode -> oldListener?.actionPerformed(it)
       else -> node.navigate(true)
     }
+    whenPerformed()
   }
   registerKeyboardAction(newListener, enter, JComponent.WHEN_FOCUSED)
 }

@@ -4,6 +4,7 @@ package com.intellij.ide.bookmark.ui
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.actions.registerNavigateOnEnterAction
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.bookmark.ui.tree.FolderNodeComparator
 import com.intellij.ide.bookmark.ui.tree.FolderNodeUpdater
@@ -32,7 +33,6 @@ import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.toArray
@@ -238,7 +238,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
-    EditSourceOnEnterKeyHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }
+    tree.registerNavigateOnEnterAction { editSourceListeners.forEach { it.onEditSource() } }
     EditSourceOnDoubleClickHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }
 
     val group = ContextMenuActionGroup(tree)
