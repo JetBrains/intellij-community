@@ -100,7 +100,7 @@ class ConsolePandasColumnNameRetrievalServiceImpl(val project: Project) : Consol
       return emptyList()
     }
     try {
-      val debugValue = consoleCommunication.runCmd(PANDAS_COLUMN_NAMES_CODE.format(name, name), true)
+      val debugValue = consoleCommunication.evaluateCommand(PANDAS_COLUMN_NAMES_CODE.format(name, name), true)
       return when (debugValue.type) {
         "str" -> debugValue.value?.let { parseDebugValue(it) } ?: emptyList()
         "NameError" -> emptyList()

@@ -551,16 +551,15 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
-  public PyDebugValue runCmd(String expression, boolean doTrunc) throws PyDebuggerException {
+  public PyDebugValue evaluateCommand(String expression, boolean doTrunc) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      List<DebugValue> debugValues;
       try {
-        debugValues = getPythonConsoleBackendClient().evaluate(expression, doTrunc);
+        List<DebugValue> debugValues = getPythonConsoleBackendClient().evaluate(expression, doTrunc);
+        return createPyDebugValue(debugValues.iterator().next(), this);
       }
       catch (TException e) {
         throw new PyDebuggerException(e.getMessage());
       }
-      return createPyDebugValue(debugValues.iterator().next(), this);
     }
     else {
       return null;
