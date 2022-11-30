@@ -443,7 +443,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   override fun afterShow() {
-    selectPreferred()
+    if (!ExperimentalUI.isNewUI()) {
+      selectPreferred()
+    }
     expandCurrentBranches()
     if (treeStep.isSpeedSearchEnabled) {
       installSpeedSearchActions()
