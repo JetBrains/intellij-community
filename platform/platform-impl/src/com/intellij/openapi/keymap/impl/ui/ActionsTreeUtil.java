@@ -141,7 +141,7 @@ public final class ActionsTreeUtil {
     final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
     return action -> {
       if (action == null) return false;
-      final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+      final String id = actionManager.getId(action);
       if (id != null) {
         if (!Registry.is("keymap.show.alias.actions")) {
           String binding = KeymapManagerEx.getInstanceEx().getActionBinding(id);
@@ -194,7 +194,7 @@ public final class ActionsTreeUtil {
       return name;
     }
     else {
-      @NlsSafe final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+      @NlsSafe final String id = ActionManager.getInstance().getId(action);
       if (id != null) {
         return id;
       }
@@ -257,7 +257,7 @@ public final class ActionsTreeUtil {
         }
       }
       else {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) {
           if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
@@ -319,7 +319,7 @@ public final class ActionsTreeUtil {
         group.addSeparator();
       }
       else {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) {
           group.addActionId(id);
         }
@@ -369,7 +369,7 @@ public final class ActionsTreeUtil {
         addEditorActions(filtered, (DefaultActionGroup)editorAction, ids);
       }
       else {
-        String actionId = editorAction instanceof ActionStub ? ((ActionStub)editorAction).getId() : actionManager.getId(editorAction);
+        String actionId = actionManager.getId(editorAction);
         if (actionId == null) continue;
         if (filtered == null || filtered.value(editorAction)) {
           ids.add(actionId);
@@ -523,7 +523,7 @@ public final class ActionsTreeUtil {
       DefaultActionGroup group = (DefaultActionGroup)action;
       AnAction[] children = group.getChildActionsOrStubs();
       for (AnAction child : children) {
-        String childId = child instanceof ActionStub ? ((ActionStub)child).getId() : actionManager.getId(child);
+        String childId = actionManager.getId(child);
         if (childId == null) {
           // SCR 35149
           continue;
@@ -608,7 +608,7 @@ public final class ActionsTreeUtil {
       for (Supplier<String> synonym : action.getSynonyms()) {
         options.add(synonym.get());
       }
-      String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+      String id = ActionManager.getInstance().getId(action);
       if (id != null) {
         options.add(id);
         options.addAll(AbbreviationManager.getInstance().getAbbreviations(id));
@@ -638,8 +638,7 @@ public final class ActionsTreeUtil {
                                                      final Condition<? super Shortcut> predicat) {
     return action -> {
       if (action == null) return false;
-      final Shortcut[] actionShortcuts =
-        keymap.getShortcuts(action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action));
+      final Shortcut[] actionShortcuts = keymap.getShortcuts(actionManager.getId(action));
       for (Shortcut actionShortcut : actionShortcuts) {
         if (predicat.value(actionShortcut)) {
           return true;
@@ -700,7 +699,7 @@ public final class ActionsTreeUtil {
     }
     else {
       if (filtered == null || filtered.value(action)) {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) group.addActionId(id);
       }
     }
