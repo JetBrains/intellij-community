@@ -19,6 +19,7 @@ abstract class AttachDialogColumnsLayout {
 
   fun getColumnClass(columnIndex: Int): Class<*> = getColumnInfos()[columnIndex].columnClass
 
+  @Nls
   fun getColumnName(columnKey: String): String = getColumnInfos().first { it.columnKey == columnKey }.columnHeader
 
   fun getColumnName(columnIndex: Int): String = getColumnInfos()[columnIndex].columnHeader
