@@ -1,77 +1,40 @@
 MODULES
     project
-    Order entries:
-        < Gradle JDK >
-        <Module source>
     project.project1
-    Order entries:
-        < Gradle JDK >
-        <Module source>
     project.project1.custom
-    Order entries:
-        < Kotlin SDK >
-        <Module source>
     project.project1.main
-    Order entries:
-        < Kotlin SDK >
-        <Module source>
     project.project1.test
-    Order entries:
-        < Kotlin SDK >
-        <Module source>
-        project.project1.main (scope: COMPILE, exported: false)
-        project.project1.main (scope: RUNTIME, exported: false)
+        project.project1.main (COMPILE)
+        project.project1.main (RUNTIME)
     project.project2
-    Order entries:
-        < Gradle JDK >
-        <Module source>
     project.project2.custom
-    Order entries:
-        < Gradle JDK >
-        <Module source>
-        project.project1.custom (scope: COMPILE, exported: false)
+        project.project1.custom (COMPILE)
     project.project2.main
-    Order entries:
-        < Gradle JDK >
-        <Module source>
-        project.project1.main (scope: COMPILE, exported: false)
-        project.project1.main (scope: COMPILE, exported: false)
+        project.project1.main (COMPILE)
+        project.project1.main (COMPILE)
     project.project2.test
-    Order entries:
-        < Gradle JDK >
-        <Module source>
-        project.project1.main (scope: COMPILE, exported: false)
-        project.project1.test (scope: COMPILE, exported: false)
-        project.project2.main (scope: COMPILE, exported: false)
-        project.project2.main (scope: RUNTIME, exported: false)
-        project.project1.main (scope: COMPILE, exported: false)
+        project.project1.main (COMPILE)
+        project.project1.test (COMPILE)
+        project.project2.main (COMPILE)
+        project.project2.main (RUNTIME)
+        project.project1.main (COMPILE)
     project.project3
-    Order entries:
-        < Gradle JDK >
-        <Module source>
     project.project3.custom
-    Order entries:
-        < Gradle JDK >
-        <Module source>
-        project.project1.custom (scope: COMPILE, exported: false)
-        project.project2.main (scope: COMPILE, exported: false)
-        project.project1.main (scope: COMPILE, exported: false)
+        project.project1.custom (COMPILE)
+        project.project2.main (COMPILE)
+        project.project1.main (COMPILE)
     project.project3.main
-    Order entries:
-        < Gradle JDK >
-        <Module source>
-        project.project1.main (scope: COMPILE, exported: false)
-        project.project2.main (scope: COMPILE, exported: false)
-        project.project1.main (scope: COMPILE, exported: false)
+        project.project1.main (COMPILE)
+        project.project2.main (COMPILE)
+        project.project1.main (COMPILE)
     project.project3.test
-    Order entries:
-        < Gradle JDK >
-        <Module source>
-        project.project1.main (scope: COMPILE, exported: false)
-        project.project1.test (scope: COMPILE, exported: false)
-        project.project2.test (scope: COMPILE, exported: false)
-        project.project3.main (scope: COMPILE, exported: false)
-        project.project3.main (scope: RUNTIME, exported: false)
-        project.project2.main (scope: COMPILE, exported: false)
-        project.project1.main (scope: COMPILE, exported: false)
+        project.project1.main (COMPILE)
+        project.project1.test (COMPILE)
+        project.project2.test (COMPILE)
+        project.project3.main (COMPILE)
+        project.project3.main (RUNTIME)
+        project.project2.main (COMPILE)
+        project.project1.main (COMPILE)
 
+Test configuration:
+- hiding following standard dependencies: Kotlin/Native distribution, sdk, self
