@@ -155,18 +155,20 @@ trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
-pub fn is_remote_dev(cmd_args: &[String]) -> bool {
-    // 0 arg is binary itself
-    let args = cmd_args.join(" ");
-    debug!("cmd_args={args}");
+pub fn is_remote_dev() -> bool {
+    let current_exe_path = env::current_exe().expect("Failed to get current exe path");
+    debug!("Executable path: {:?}", current_exe_path);
+    let current_exe_name = current_exe_path.file_name()
+        .expect("Failed to get current exe filename");
+    debug!("Executable name: {:?}", current_exe_name);
 
-    cmd_args.len() > 1 && cmd_args[1] == "--remote-dev"
+    current_exe_name.to_string_lossy().starts_with("remote-dev-server")
 }
 
 fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
     
-    let is_remote_dev = is_remote_dev(&cmd_args);
+    let is_remote_dev = is_remote_dev();
     debug!("is_remote_dev={is_remote_dev}");
 
     let (remote_dev_project_path, ij_args) = match is_remote_dev {

@@ -8,7 +8,7 @@ use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
 use utils::{get_path_from_env_var, PathExt, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, is_remote_dev, LaunchConfiguration};
+use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
@@ -147,20 +147,15 @@ struct IjStarterCommand {
 }
 
 impl RemoteDevLaunchConfiguration {
-    // launcher.exe --remote-dev command_name /path/to/project args ->
-    // launcher.exe ij_command_name /path/to/project args
+    // remote-dev-server.exe ij_command_name /path/to/project args
     pub fn parse_remote_dev_args(args: &[String]) -> Result<RemoteDevArgs> {
         debug!("Parsing remote dev command-line arguments");
 
-        if !is_remote_dev(args) {
-            bail!("Expected to see --remote-dev marker in command-line arguments")
-        }
-
-        if args.len() < 3 {
+        if args.len() < 2 {
             bail!("Starter command is not specified")
         }
 
-        let remote_dev_starter_command = args[2].as_str();
+        let remote_dev_starter_command = args[1].as_str();
         let is_project_required_by_known_commands = HashMap::from([
             ("registerBackendLocationForGateway", ("", false)),
             ("run", ("cwmHostNoLobby", true)),
@@ -184,8 +179,8 @@ impl RemoteDevLaunchConfiguration {
             }
         };
 
-        let project_path = if args.len() > 3 {
-            let arg = args[3].as_str();
+        let project_path = if args.len() > 2 {
+            let arg = args[2].as_str();
             if arg == "-h" || arg == "--help" {
                 return Ok(
                     RemoteDevArgs {
@@ -211,13 +206,13 @@ impl RemoteDevLaunchConfiguration {
                     bail!("Project path is not specified");
                 }
 
-                let command_arguments = args[3..].to_vec();
+                let command_arguments = args[2..].to_vec();
 
                 [vec![ij_starter_command.ij_command], command_arguments]
             }
             Some(x) => {
                 let project_path_string = x.to_string_lossy().to_string();
-                let command_arguments = args[4..].to_vec();
+                let command_arguments = args[3..].to_vec();
 
                 if ij_starter_command.ij_command == "warmup" {
                     [vec![ij_starter_command.ij_command, format!("--project-dir={project_path_string}")], command_arguments]
