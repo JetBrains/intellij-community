@@ -78,7 +78,10 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -150,18 +153,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   private final MergingUpdateQueue queue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true,
                                                                   MergingUpdateQueue.ANY_COMPONENT, this);
-
-  private SoftReference<VirtualFile> fileToUpdateTitle;
-  private final SingleAlarm updateFileTitleAlarm = new SingleAlarm(() -> {
-    VirtualFile file = SoftReference.deref(fileToUpdateTitle);
-    if (file == null || !file.isValid()) {
-      return;
-    }
-    fileToUpdateTitle = null;
-    for (EditorsSplitters each : getAllSplitters()) {
-      each.updateFileName(file);
-    }
-  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL);
 
   private final BusyObject.Impl.Simple myBusyObject = new BusyObject.Impl.Simple();
 
@@ -270,7 +261,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public void dispose() {
-    fileToUpdateTitle = null;
     myDisposed = true;
   }
 
@@ -529,8 +519,19 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   void updateFileName(@Nullable VirtualFile file) {
     // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
     // only the last event makes sense to handle
-    updateFileTitleAlarm.cancelAndRequest();
-    fileToUpdateTitle = new SoftReference<>(file);
+    queue.queue(new Update("UpdateFileName " + (file == null ? "" : file.getPath())) {
+      @Override
+      public boolean isExpired() {
+        return myProject.isDisposed() || !myProject.isOpen() || (file == null ? super.isExpired() : !file.isValid());
+      }
+
+      @Override
+      public void run() {
+        for (EditorsSplitters each : getAllSplitters()) {
+          each.updateFileName(file);
+        }
+      }
+    });
   }
 
   private void updateFrameTitle() {
@@ -1046,7 +1047,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
                                                              @Nullable HistoryEntry entry,
                                                              @NotNull FileEditorOpenOptions options,
                                                              @Nullable List<FileEditorProvider> newProviders,
-                                                             @NotNull List<AsyncFileEditorProvider. @Nullable Builder> builders) {
+                                                     @NotNull List<AsyncFileEditorProvider. @Nullable Builder> builders) {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     LOG.assertTrue(file.isValid(), "Invalid file: " + file);
 
