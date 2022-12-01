@@ -10,9 +10,9 @@ import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.MergingQueueGuiExecutor;
 import com.intellij.openapi.project.MergingTaskQueue;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -64,19 +64,25 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
     }
   }
 
-  private void startTaskInSmartMode(UnindexedFilesScanner task) {
+  private void startTaskInSmartMode(@NotNull UnindexedFilesScanner task) {
     getTaskQueue().addTask(task);
     startBackgroundProcess();
   }
 
-  private void startTaskInDumbMode(UnindexedFilesScanner task) {
-    DumbModeTask dumbTask = new DumbModeTask() {
+  private void startTaskInDumbMode(@NotNull UnindexedFilesScanner task) {
+    wrapAsDumbTask(task).queue(getProject());
+  }
+
+  @NotNull
+  @VisibleForTesting
+  DumbModeTask wrapAsDumbTask(@NotNull UnindexedFilesScanner task) {
+    return new UnindexedFilesScannerAsDumbModeTaskWrapper(task) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         ProgressIndicator old = runningTask.getAndSet(indicator);
         try {
           LOG.assertTrue(old == null, "Old = " + old);
-          task.perform(indicator);
+          super.performInDumbMode(indicator);
         }
         finally {
           old = runningTask.getAndSet(null);
@@ -84,8 +90,6 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
         }
       }
     };
-    Disposer.register(dumbTask, task);
-    dumbTask.queue(getProject());
   }
 
   @Override

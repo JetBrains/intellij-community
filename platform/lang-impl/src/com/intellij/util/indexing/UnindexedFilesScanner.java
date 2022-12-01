@@ -565,7 +565,12 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
   }
 
-  void queue(Project project) {
+  void queue(@NotNull Project project) {
     project.getService(UnindexedFilesScannerExecutor.class).submitTask(this);
+  }
+
+  @Nullable
+  List<IndexableFilesIterator> getPredefinedIndexableFilesIterators() {
+    return myPredefinedIndexableFilesIterators;
   }
 }
