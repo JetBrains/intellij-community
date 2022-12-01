@@ -10,10 +10,12 @@ import com.intellij.openapi.file.CanonicalPathUtil.getRelativeNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
 import com.intellij.openapi.fileSystem.NioFileSystemUtil
 import com.intellij.util.io.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
+@ApiStatus.Experimental
 object NioFileUtil {
 
   @JvmStatic

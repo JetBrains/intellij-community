@@ -8,8 +8,10 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.file.CanonicalPathUtil.getFileName
 import com.intellij.openapi.file.CanonicalPathUtil.getParentPath
 import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Experimental
 object VirtualFileSystemUtil {
 
   @JvmStatic

@@ -4,10 +4,12 @@ package com.intellij.openapi.fileSystem
 
 import com.intellij.openapi.file.NioFileUtil
 import com.intellij.util.io.*
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 
+@ApiStatus.Experimental
 object NioFileSystemUtil {
 
   @JvmStatic

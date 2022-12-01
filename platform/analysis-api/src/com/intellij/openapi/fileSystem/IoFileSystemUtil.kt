@@ -2,8 +2,10 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package com.intellij.openapi.fileSystem
 
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
+@ApiStatus.Experimental
 object IoFileSystemUtil {
 
   @JvmStatic

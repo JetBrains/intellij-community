@@ -3,9 +3,11 @@
 package com.intellij.openapi.file
 
 import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 
+@ApiStatus.Experimental
 object IoFileUtil {
 
   @JvmStatic

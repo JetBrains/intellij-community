@@ -16,9 +16,11 @@ import com.intellij.openapi.fileSystem.VirtualFileSystemUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 
+@ApiStatus.Experimental
 object VirtualFileUtil {
 
   @JvmStatic

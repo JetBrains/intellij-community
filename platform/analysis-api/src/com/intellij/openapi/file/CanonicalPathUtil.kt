@@ -5,10 +5,12 @@ package com.intellij.openapi.file
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@ApiStatus.Experimental
 object CanonicalPathUtil {
 
   @JvmStatic
