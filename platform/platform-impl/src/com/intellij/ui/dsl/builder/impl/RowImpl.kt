@@ -243,6 +243,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String, tooltipRenderer: (T) -> String?): SegmentedButton<T> {
+    val result = SegmentedButtonImpl(this, renderer, tooltipRenderer)
+    result.items(items)
+    cells.add(result)
+    return result
+  }
+
   override fun tabbedPaneHeader(items: Collection<String>): Cell<JBTabbedPane> {
     val tabbedPaneHeader = TabbedPaneHeader()
     for (item in items) {

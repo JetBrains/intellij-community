@@ -38,8 +38,12 @@ import javax.swing.JPanel
 
 private const val PLACE = "SegmentedButton"
 
+internal val NO_TOOLTIP_RENDERER: (Any?) -> String? = { null }
+
 @ApiStatus.Internal
-internal class SegmentedButtonComponent<T>(items: Collection<T>, private val renderer: (T) -> String) : JPanel(GridLayout()) {
+internal class SegmentedButtonComponent<T>(items: Collection<T>,
+                                           private val renderer: (T) -> String,
+                                           private val tooltipRenderer: (T) -> String? = NO_TOOLTIP_RENDERER) : JPanel(GridLayout()) {
 
   var spacing: SpacingConfiguration = EmptySpacingConfiguration()
     set(value) {
@@ -135,6 +139,8 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     for (item in items) {
       val action = SegmentedButtonAction(this, item, renderer.invoke(item))
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
+      button.toolTipText = tooltipRenderer.invoke(item)
+
       builder.cell(button, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
     }
 
@@ -278,6 +284,10 @@ private class SegmentedButton<T>(
 
   init {
     setLook(SegmentedButtonLook)
+  }
+
+  override fun setToolTipText(toolTipText: String?) {
+    setCustomToolTipText(toolTipText)
   }
 
   override fun getPreferredSize(): Dimension {

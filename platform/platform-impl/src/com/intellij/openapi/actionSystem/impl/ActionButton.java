@@ -299,6 +299,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  protected void setCustomToolTipText(@NlsContexts.Tooltip String toolTipText) {
+    super.setToolTipText(Strings.isNotEmpty(toolTipText) ? toolTipText : null);
+  }
+
   @Override
   public void updateUI() {
     if (myLook != null) {

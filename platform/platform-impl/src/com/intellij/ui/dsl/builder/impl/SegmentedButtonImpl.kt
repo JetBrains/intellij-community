@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.components.NO_TOOLTIP_RENDERER
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.bind
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
@@ -25,15 +26,17 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultComboBoxModel
 
 @ApiStatus.Internal
-internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T) -> String) :
-  PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
+internal class SegmentedButtonImpl<T>(parent: RowImpl,
+                                      private val renderer: (T) -> String,
+                                      tooltipRenderer: (T) -> String? = NO_TOOLTIP_RENDERER
+) : PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
 
   private var items: Collection<T> = emptyList()
   private var property: ObservableProperty<T>? = null
   private var maxButtonsCount = SegmentedButton.DEFAULT_MAX_BUTTONS_COUNT
 
   private val comboBox = ComboBox<T>()
-  private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer)
+  private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer, tooltipRenderer)
 
   override var selectedItem: T?
     get() {

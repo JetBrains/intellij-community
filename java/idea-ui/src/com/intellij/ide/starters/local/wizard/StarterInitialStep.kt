@@ -122,7 +122,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.build.system.label")) {
-          segmentedButton(starterSettings.projectTypes, StarterProjectType::title)
+          segmentedButton(starterSettings.projectTypes, StarterProjectType::title, StarterProjectType::description)
             .bind(projectTypeProperty)
 
           bottomGap(BottomGap.SMALL)

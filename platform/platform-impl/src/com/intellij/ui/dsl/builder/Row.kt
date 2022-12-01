@@ -224,6 +224,12 @@ interface Row {
   fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String): SegmentedButton<T>
 
   /**
+   * @see [SegmentedButton]
+   */
+  @ApiStatus.Experimental
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String, tooltipRenderer: (T) -> String?): SegmentedButton<T>
+
+  /**
    * Creates JBTabbedPane which shows only tabs without tab content. To add a new tab call something like
    * ```
    * JBTabbedPane.addTab(tab.name, JPanel())
