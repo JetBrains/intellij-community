@@ -35,7 +35,7 @@ public final class ChangeToAppendUtil {
       for (PsiExpression operand : operands) {
         final PsiType operandType = operand.getType();
         isConstant &= PsiUtil.isConstantExpression(operand);
-        isPrimitiveOrBoxed &= operandType instanceof PsiPrimitiveType || PsiPrimitiveType.getUnboxedType(operandType) != null;
+        isPrimitiveOrBoxed &= PsiPrimitiveType.getOptionallyUnboxedType(operandType) != null;
         if (isConstant || !isString && isPrimitiveOrBoxed) {
           if (!builder.isEmpty()) {
             builder.append('+');
