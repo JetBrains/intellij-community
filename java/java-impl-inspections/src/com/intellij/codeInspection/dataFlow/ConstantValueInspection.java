@@ -129,21 +129,21 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     }
     if (result == ConstantResult.UNKNOWN) return;
     Object value = result.value();
-    if (anchor instanceof JavaPolyadicPartAnchor) {
-      if (value instanceof Boolean) {
+    if (anchor instanceof JavaPolyadicPartAnchor polyadicPartAnchor) {
+      if (value instanceof Boolean booleanValue) {
         // report rare cases like a == b == c where "a == b" part is constant
         String message = JavaAnalysisBundle.message("dataflow.message.constant.condition",
-                                                    ((Boolean)value).booleanValue() ? 1 : 0);
-        reporter.registerProblem(((JavaPolyadicPartAnchor)anchor).getExpression(),
-                                 ((JavaPolyadicPartAnchor)anchor).getTextRange(), message);
+                                                    booleanValue.booleanValue() ? 1 : 0);
+        reporter.registerProblem(polyadicPartAnchor.getExpression(),
+                                 polyadicPartAnchor.getTextRange(), message);
         // do not add to reported anchors if only part of expression was reported
       }
     }
-    else if (anchor instanceof JavaExpressionAnchor) {
-      PsiExpression expression = ((JavaExpressionAnchor)anchor).getExpression();
+    else if (anchor instanceof JavaExpressionAnchor expressionAnchor) {
+      PsiExpression expression = expressionAnchor.getExpression();
       if (isCondition(expression)) {
-        if (value instanceof Boolean) {
-          reportConstantBoolean(reporter, expression, (Boolean)value);
+        if (value instanceof Boolean booleanValue) {
+          reportConstantBoolean(reporter, expression, booleanValue);
         }
       }
       else {
@@ -164,9 +164,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static boolean shouldReportZero(PsiExpression ref) {
-    if (ref instanceof PsiPolyadicExpression) {
+    if (ref instanceof PsiPolyadicExpression polyadic) {
       if (PsiUtil.isConstantExpression(ref)) return false;
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)ref;
       IElementType tokenType = polyadic.getOperationTokenType();
       if (tokenType.equals(JavaTokenType.ASTERISK)) {
         PsiMethod method = PsiTreeUtil.getParentOfType(ref, PsiMethod.class, true, PsiLambdaExpression.class, PsiClass.class);
@@ -177,8 +176,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
     }
-    else if (ref instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)ref;
+    else if (ref instanceof PsiMethodCallExpression call) {
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (PsiUtil.isConstantExpression(qualifier) &&
           ContainerUtil.and(call.getArgumentList().getExpressions(), PsiUtil::isConstantExpression)) {
@@ -243,8 +241,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
   private static boolean isCoveredBySurroundingFix(PsiElement anchor, boolean evaluatesToTrue) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
-    if (parent instanceof PsiPolyadicExpression) {
-      IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+    if (parent instanceof PsiPolyadicExpression polyadic) {
+      IElementType tokenType = polyadic.getOperationTokenType();
       return tokenType.equals(JavaTokenType.ANDAND) && !evaluatesToTrue ||
              tokenType.equals(JavaTokenType.OROR) && evaluatesToTrue;
     }
@@ -257,42 +255,37 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     if (!(expression instanceof PsiMethodCallExpression) && !(expression instanceof PsiReferenceExpression)) return true;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiStatement) return !(parent instanceof PsiReturnStatement);
-    if (parent instanceof PsiPolyadicExpression) {
-      IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+    if (parent instanceof PsiPolyadicExpression polyadic) {
+      IElementType tokenType = polyadic.getOperationTokenType();
       return tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR) ||
              tokenType.equals(JavaTokenType.AND) || tokenType.equals(JavaTokenType.OR);
     }
-    if (parent instanceof PsiConditionalExpression) {
-      return PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false);
+    if (parent instanceof PsiConditionalExpression conditional) {
+      return PsiTreeUtil.isAncestor(conditional.getCondition(), expression, false);
     }
     return PsiUtil.isAccessedForWriting(expression);
   }
 
   @Contract("null -> false")
   private static boolean shouldBeSuppressed(PsiElement anchor) {
-    if (!(anchor instanceof PsiExpression)) return false;
+    if (!(anchor instanceof PsiExpression expression)) return false;
     // Don't report System.out.println(b = false) or doSomething((Type)null)
     if (anchor instanceof PsiAssignmentExpression ||
-        (anchor instanceof PsiTypeCastExpression && !(((PsiTypeCastExpression)anchor).getType() instanceof PsiPrimitiveType))) {
+        (anchor instanceof PsiTypeCastExpression cast && !(cast.getType() instanceof PsiPrimitiveType))) {
       return true;
     }
     // For conditional the root cause (constant condition or both branches constant) should be already reported for branches
     if (anchor instanceof PsiConditionalExpression) return true;
-    PsiExpression expression = (PsiExpression)anchor;
-    if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
-      if ("TRUE".equals(ref.getReferenceName()) || "FALSE".equals(ref.getReferenceName())) {
-        PsiElement target = ref.resolve();
-        if (target instanceof PsiField) {
-          PsiClass containingClass = ((PsiField)target).getContainingClass();
-          if (containingClass != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(containingClass.getQualifiedName())) return true;
-        }
-      }
+    if (expression instanceof PsiReferenceExpression ref &&
+        ("TRUE".equals(ref.getReferenceName()) || "FALSE".equals(ref.getReferenceName())) &&
+        ref.resolve() instanceof PsiField field) {
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(containingClass.getQualifiedName())) return true;
     }
-    if (expression instanceof PsiBinaryExpression) {
-      PsiExpression lOperand = ((PsiBinaryExpression)expression).getLOperand();
-      PsiExpression rOperand = ((PsiBinaryExpression)expression).getROperand();
-      IElementType tokenType = ((PsiBinaryExpression)expression).getOperationTokenType();
+    if (expression instanceof PsiBinaryExpression binOp) {
+      PsiExpression lOperand = binOp.getLOperand();
+      PsiExpression rOperand = binOp.getROperand();
+      IElementType tokenType = binOp.getOperationTokenType();
       // Suppress on type mismatch compilation errors
       if (rOperand == null) return true;
       PsiType lType = lOperand.getType();
@@ -300,12 +293,12 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
       if (lType == null || rType == null) return true;
       if (!TypeConversionUtil.isBinaryOperatorApplicable(tokenType, lType, rType, false)) return true;
     }
-    if (expression instanceof PsiInstanceOfExpression) {
-      PsiType type = ((PsiInstanceOfExpression)expression).getOperand().getType();
+    if (expression instanceof PsiInstanceOfExpression instanceOf) {
+      PsiType type = instanceOf.getOperand().getType();
       if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
-      PsiPattern pattern = ((PsiInstanceOfExpression)expression).getPattern();
-      if (pattern instanceof PsiTypeTestPattern && ((PsiTypeTestPattern)pattern).getPatternVariable() != null) {
-        PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
+      PsiPattern pattern = instanceOf.getPattern();
+      if (pattern instanceof PsiTypeTestPattern typeTestPattern && typeTestPattern.getPatternVariable() != null) {
+        PsiTypeElement checkType = typeTestPattern.getCheckType();
         if (checkType != null && checkType.getType().isAssignableFrom(type)) {
           // Reported as compilation error
           return true;
@@ -314,20 +307,20 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     // Don't report "x" in "x == null" as will be anyway reported as "always true"
-    if (parent instanceof PsiBinaryExpression && ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)parent) != null) return true;
+    if (parent instanceof PsiBinaryExpression binOp && ExpressionUtils.getValueComparedWithNull(binOp) != null) return true;
     // Dereference of null will be covered by other warning
     if (ExpressionUtils.isVoidContext(expression) || isDereferenceContext(expression)) return true;
     // We assume all Void variables as null because you cannot instantiate it without dirty hacks
     // However reporting them as "always null" looks redundant (dereferences or comparisons will be reported though).
     if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, expression.getType())) return true;
     if (isFlagCheck(anchor)) return true;
-    if (!isCondition(expression) && expression instanceof PsiMethodCallExpression) {
-      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts((PsiCallExpression)expression);
+    if (!isCondition(expression) && expression instanceof PsiMethodCallExpression call) {
+      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
       ContractReturnValue value = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
       if (value != null) return true;
       if (!(parent instanceof PsiAssignmentExpression) && !(parent instanceof PsiVariable) &&
           !(parent instanceof PsiReturnStatement)) {
-        PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+        PsiMethod method = call.resolveMethod();
         if (method == null || !JavaMethodContractUtil.isPure(method)) return true;
       }
     }
@@ -335,8 +328,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
       expression = BoolUtils.getNegated(expression);
     }
     if (expression == null) return false;
-    if (!isCondition(expression) && expression instanceof PsiReferenceExpression) {
-      PsiVariable variable = tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
+    if (!isCondition(expression) && expression instanceof PsiReferenceExpression ref) {
+      PsiVariable variable = tryCast(ref.resolve(), PsiVariable.class);
       if (variable instanceof PsiField &&
           variable.hasModifierProperty(PsiModifier.STATIC) &&
           ExpressionUtils.isNullLiteral(PsiFieldImpl.getDetachedInitializer(variable))) {
@@ -350,8 +343,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
       return false;
     }
     // Avoid double reporting
-    return expression instanceof PsiMethodCallExpression && EqualsWithItselfInspection.isEqualsWithItself((PsiMethodCallExpression)expression) ||
-           expression instanceof PsiBinaryExpression && ComparisonToNaNInspection.extractNaNFromComparison((PsiBinaryExpression)expression) != null;
+    return expression instanceof PsiMethodCallExpression call && EqualsWithItselfInspection.isEqualsWithItself(call) ||
+           expression instanceof PsiBinaryExpression binOp && ComparisonToNaNInspection.extractNaNFromComparison(binOp) != null;
   }
 
   private static boolean isDereferenceContext(PsiExpression ref) {
@@ -362,8 +355,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
   private static boolean isFlagCheck(PsiElement element) {
     PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiVariable.class);
-    PsiExpression topExpression = scope instanceof PsiIfStatement ? ((PsiIfStatement)scope).getCondition() :
-                                  scope instanceof PsiVariable ? ((PsiVariable)scope).getInitializer() :
+    PsiExpression topExpression = scope instanceof PsiIfStatement ifStatement ? ifStatement.getCondition() :
+                                  scope instanceof PsiVariable variable ? variable.getInitializer() :
                                   null;
     if (!PsiTreeUtil.isAncestor(topExpression, element, false)) return false;
 
@@ -372,8 +365,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static boolean isCompileTimeFlagCheck(PsiElement element) {
-    if(element instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)element;
+    if(element instanceof PsiBinaryExpression binOp) {
       if(ComparisonUtils.isComparisonOperation(binOp.getOperationTokenType())) {
         PsiExpression comparedWith = null;
         if(ExpressionUtils.isLiteral(binOp.getROperand())) {
@@ -386,8 +378,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
           // like "if(DEBUG_LEVEL > 2)"
           return true;
         }
-        if(comparedWith instanceof PsiBinaryExpression) {
-          PsiBinaryExpression subOp = (PsiBinaryExpression)comparedWith;
+        if(comparedWith instanceof PsiBinaryExpression subOp) {
           if(subOp.getOperationTokenType().equals(JavaTokenType.AND)) {
             PsiExpression left = PsiUtil.skipParenthesizedExprDown(subOp.getLOperand());
             PsiExpression right = PsiUtil.skipParenthesizedExprDown(subOp.getROperand());
@@ -405,9 +396,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static boolean isConstantOfType(PsiElement element, PsiPrimitiveType... types) {
-    PsiElement resolved = element instanceof PsiReferenceExpression ? ((PsiReferenceExpression)element).resolve() : null;
-    if (!(resolved instanceof PsiField)) return false;
-    PsiField field = (PsiField)resolved;
+    if (!(element instanceof PsiReferenceExpression ref) || !(ref.resolve() instanceof PsiField field)) return false;
     PsiModifierList modifierList = field.getModifierList();
     if (modifierList == null ||
         !modifierList.hasModifierProperty(PsiModifier.STATIC) ||
@@ -423,11 +412,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
     while (cur != null && !(cur instanceof PsiMember)) {
       PsiElement parent = cur.getParent();
-
-      if (parent instanceof PsiBinaryExpression && cur == ((PsiBinaryExpression)parent).getROperand()) {
-        return true;
-      }
-
+      if (parent instanceof PsiBinaryExpression binOp && cur == binOp.getROperand()) return true;
       cur = parent;
     }
 
@@ -461,9 +446,9 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
       }
       ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
     }
-    if (psiAnchor instanceof PsiExpression) {
+    if (psiAnchor instanceof PsiExpression expression) {
       ContainerUtil.addIfNotNull(fixes, new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS,
-        (PsiExpression)psiAnchor, new TrackingRunner.ValueDfaProblemType(evaluatesToTrue)));
+                                                                   expression, new TrackingRunner.ValueDfaProblemType(evaluatesToTrue)));
     }
     String message = JavaAnalysisBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
                                                 "dataflow.message.constant.condition.when.reached" :
@@ -505,13 +490,12 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
   private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {
     if (evaluatesToTrue) return null;
-    if (!(psiAnchor instanceof PsiMethodCallExpression)) return null;
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)psiAnchor;
-    if (!MethodCallUtils.isEqualsCall(methodCallExpression)) return null;
-    PsiExpression arg = ArrayUtil.getFirstElement(methodCallExpression.getArgumentList().getExpressions());
+    if (!(psiAnchor instanceof final PsiMethodCallExpression call)) return null;
+    if (!MethodCallUtils.isEqualsCall(call)) return null;
+    PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
     if (!ExpressionUtils.isNullLiteral(arg)) return null;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
-    return EqualsToEqualityFix.buildFix(methodCallExpression, parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent));
+    return EqualsToEqualityFix.buildFix(call, parent instanceof PsiExpression expr && BoolUtils.isNegation(expr));
   }
 
   private static LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue,
@@ -526,10 +510,9 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
-    if (!(element instanceof PsiExpression)) return null;
+    if (!(element instanceof PsiExpression expression)) return null;
     if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
 
-    final PsiExpression expression = (PsiExpression)element;
     while (element.getParent() instanceof PsiExpression) {
       element = element.getParent();
     }
@@ -549,8 +532,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
    */
   private static boolean isAssertionEffectively(@NotNull PsiExpression anchor, ConstantResult result) {
     Object value = result.value();
-    if (value instanceof Boolean) {
-      return DfaPsiUtil.isAssertionEffectively(anchor, (Boolean)value);
+    if (value instanceof Boolean booleanValue) {
+      return DfaPsiUtil.isAssertionEffectively(anchor, booleanValue);
     }
     if (value != null) return false;
     return DfaPsiUtil.isAssertCallArgument(anchor, ContractValue.nullValue());
