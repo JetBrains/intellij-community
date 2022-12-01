@@ -21,7 +21,7 @@ import javax.swing.JPanel
 import kotlin.collections.set
 
 class CommitOptionsPanel(private val project: Project,
-                         private val actionNameSupplier: () -> String,
+                         private val actionNameSupplier: () -> @Nls String,
                          private val nonFocusable: Boolean) : BorderLayoutPanel(), CommitOptionsUi {
   private val perVcsOptionsPanels = mutableMapOf<AbstractVcs, JPanel>()
   private val vcsOptionsPanel = verticalPanel()
