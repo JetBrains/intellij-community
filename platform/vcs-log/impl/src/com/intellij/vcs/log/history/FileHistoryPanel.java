@@ -68,11 +68,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Nullable private FileHistoryEditorDiffPreview myEditorDiffPreview;
 
   public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
-                          @NotNull FilePath filePath, @NotNull Disposable disposable) {
+                          @NotNull FilePath filePath, @NotNull VirtualFile root, @NotNull Disposable disposable) {
     myProject = logData.getProject();
 
     myFilePath = filePath;
-    myRoot = Objects.requireNonNull(VcsLogUtil.getActualRoot(myProject, myFilePath));
+    myRoot = root;
 
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
