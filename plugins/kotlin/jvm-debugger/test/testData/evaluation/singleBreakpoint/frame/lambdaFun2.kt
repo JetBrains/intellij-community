@@ -22,4 +22,3 @@ fun main() {
 
 // EXPRESSION: this
 // RESULT: instance of lambdaFun2.Foo(id=ID): LlambdaFun2/Foo;
-// IGNORE_FOR_INDY_LAMBDAS

@@ -16,4 +16,3 @@ fun foo(f: () -> Unit) {
 
 // EXPRESSION: var1
 // RESULT: 1: I
-// IGNORE_FOR_INDY_LAMBDAS

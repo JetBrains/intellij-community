@@ -16,4 +16,3 @@ fun foo(f: () -> Unit) {
 
 // EXPRESSION: val1
 // RESULT: 'val1' is not captured
-// IGNORE_FOR_INDY_LAMBDAS

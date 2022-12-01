@@ -29,6 +29,3 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: y
 // RESULT: 48: C
-
-
-// IGNORE_FOR_INDY_LAMBDAS
