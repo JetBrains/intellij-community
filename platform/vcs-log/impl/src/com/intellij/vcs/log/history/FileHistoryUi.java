@@ -187,10 +187,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return HELP_ID;
   }
 
-  private void updateFilter() {
-    myRefresher.onFiltersChange(myFilterUi.getFilters());
-  }
-
   @Override
   @NotNull
   public FileHistoryUiProperties getProperties() {
@@ -216,7 +212,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         myFileHistoryPanel.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
       }
       else if (FileHistoryUiProperties.SHOW_ALL_BRANCHES.equals(property)) {
-        updateFilter();
+        myRefresher.onFiltersChange(myFilterUi.getFilters());
       }
       else if (CommonUiProperties.COLUMN_ID_ORDER.equals(property)) {
         getTable().onColumnOrderSettingChanged();
