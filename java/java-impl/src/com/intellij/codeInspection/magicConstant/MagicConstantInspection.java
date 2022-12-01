@@ -231,7 +231,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     if (allowed == null) return;
     PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(expression, null);
     if (scope == null) scope = expression;
-    if (!isAllowed(expression, scope, allowed, expression.getManager())) {
+    if (!isAllowed(expression, scope, allowed, expression.getManager(), null)) {
       registerProblem(expression, allowed, holder);
     }
   }
@@ -294,7 +294,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
                                                   @NotNull ProblemsHolder holder) {
     final PsiManager manager = PsiManager.getInstance(holder.getProject());
 
-    if (!argument.getTextRange().isEmpty() && !isAllowed(argument, parameter.getDeclarationScope(), allowedValues, manager)) {
+    if (!argument.getTextRange().isEmpty() && !isAllowed(argument, parameter.getDeclarationScope(), allowedValues, manager, null)) {
       registerProblem(argument, allowedValues, holder);
     }
   }
@@ -380,20 +380,31 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
 
   private static boolean isAllowed(@NotNull final PsiExpression argument, @NotNull final PsiElement scope,
                                    @NotNull final AllowedValues allowedValues,
-                                   @NotNull final PsiManager manager) {
-    if (isGoodExpression(argument, allowedValues, scope, manager)) return true;
+                                   @NotNull final PsiManager manager,
+                                   @Nullable Set<PsiExpression> visited) {
+    if (isGoodExpression(argument, allowedValues, scope, manager, visited)) return true;
 
-    return processValuesFlownTo(argument, scope, manager, expression -> isGoodExpression(expression, allowedValues, scope, manager));
+    return processValuesFlownTo(argument, scope, manager,
+                                expression -> isGoodExpression(expression, allowedValues, scope, manager, visited));
   }
 
   private static boolean isGoodExpression(@NotNull PsiExpression argument,
                                           @NotNull AllowedValues allowedValues,
                                           @NotNull PsiElement scope,
-                                          @NotNull PsiManager manager) {
+                                          @NotNull PsiManager manager,
+                                          @Nullable Set<PsiExpression> visited) {
+    if (visited == null) visited = new HashSet<>();
+    if (!visited.add(argument)) return false;
     if (argument instanceof PsiParenthesizedExpression ||
         argument instanceof PsiConditionalExpression ||
         argument instanceof PsiSwitchExpression) {
-      return ExpressionUtils.nonStructuralChildren(argument).allMatch(e -> isAllowed(e, scope, allowedValues, manager));
+      List<PsiExpression> expressions = ExpressionUtils.nonStructuralChildren(argument).toList();
+      for (PsiExpression expression : expressions) {
+        if (!isAllowed(expression, scope, allowedValues, manager, visited)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     if (isOneOf(argument, allowedValues, manager)) return true;
@@ -410,13 +421,16 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         IElementType tokenType = polyadic.getOperationTokenType();
         if (JavaTokenType.OR.equals(tokenType) || JavaTokenType.XOR.equals(tokenType) ||
             JavaTokenType.AND.equals(tokenType) || JavaTokenType.PLUS.equals(tokenType)) {
-          return ContainerUtil.all(polyadic.getOperands(), e -> isAllowed(e, scope, allowedValues, manager));
+          for (PsiExpression operand : polyadic.getOperands()) {
+            if (!isAllowed(operand, scope, allowedValues, manager, visited)) return false;
+          }
+          return true;
         }
       }
       if (argument instanceof PsiPrefixExpression prefixExpression &&
           JavaTokenType.TILDE.equals(prefixExpression.getOperationTokenType())) {
         PsiExpression operand = prefixExpression.getOperand();
-        return operand == null || isAllowed(operand, scope, allowedValues, manager);
+        return operand == null || isAllowed(operand, scope, allowedValues, manager, visited);
       }
     }
 
