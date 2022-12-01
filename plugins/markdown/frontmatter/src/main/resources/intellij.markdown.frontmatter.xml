@@ -11,7 +11,4 @@
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.intellij.plugins.markdown.frontmatter.header.FrontMatterHeaderJsonSchemaProviderFactory"/>
   </extensions>
-  <extensions defaultExtensionNs="com.intellij.json">
-    <jsonSchemaEnabler implementation="org.intellij.plugins.markdown.frontmatter.header.FrontMatterHeaderJsonSchemaEnabler"/>
-  </extensions>
 </idea-plugin>
