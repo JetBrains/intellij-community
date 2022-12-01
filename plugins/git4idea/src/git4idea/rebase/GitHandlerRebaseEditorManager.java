@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitScriptGenerator;
@@ -53,7 +55,8 @@ public final class GitHandlerRebaseEditorManager implements AutoCloseable {
       int port = myService.getIdePort();
       File scriptFile = myService.getCallbackScriptPath(executable.getId(), new GitScriptGenerator(executable), false);
 
-      myHandler.addCustomEnvironmentVariable(GIT_EDITOR_ENV, scriptFile);
+      String scriptPath = myHandler.getExecutable().convertFilePath(scriptFile);
+      myHandler.addCustomEnvironmentVariable(GIT_EDITOR_ENV, CommandLineUtil.posixQuote(scriptPath));
       myHandler.addCustomEnvironmentVariable(GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV, handlerId.toString());
       myHandler.addCustomEnvironmentVariable(GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV, Integer.toString(port));
     }
