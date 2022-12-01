@@ -255,7 +255,7 @@ public final class GradleBuildSrcProjectsResolver {
 
     if (buildSrcProjectDataNode == null) return;
     for (DataNode<LibraryData> libraryDataNode : getChildren(buildSrcProjectDataNode, ProjectKeys.LIBRARY)) {
-      GradleProjectResolverUtil.linkProjectLibrary(myResolverContext, resultProjectDataNode, libraryDataNode.getData());
+      GradleProjectResolverUtil.linkProjectLibrary(resultProjectDataNode, libraryDataNode.getData());
     }
 
     Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();

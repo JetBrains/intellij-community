@@ -37,7 +37,7 @@ object KotlinNativeLibrariesFixer {
             // Only KLIBs from Kotlin/Native distribution can have such prefix:
             if (libraryData.internalName.startsWith("$GRADLE_LIBRARY_PREFIX$KOTLIN_NATIVE_LIBRARY_PREFIX")) {
                 fixLibraryName(libraryData)
-                GradleProjectResolverUtil.linkProjectLibrary(resolverCtx, ideProject, libraryData)
+                GradleProjectResolverUtil.linkProjectLibrary(ideProject, libraryData)
                 fixLibraryDependencyLevel(libraryDependencyNode)
             }
         }
