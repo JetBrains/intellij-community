@@ -417,7 +417,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         updateSdkPaths(sdk, evaluateSysPath(sdk, project != null ? project : ProjectManager.getInstance().getDefaultProject()), project);
       }
       catch (ExecutionException e) {
-        throw new InvalidSdkException("Can't evaluate sdk version", e);
+        throw new InvalidSdkException(PyBundle.message("python.sdk.cannot.evaluate.sdk.version.error.message"), e);
       }
     }
   }
