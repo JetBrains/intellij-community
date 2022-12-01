@@ -23,7 +23,7 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
     val dependencyNode = findLibraryDependencyNode(dependency) ?: run create@{
         val coordinates = dependency.coordinates ?: return null
         val libraryData = LibraryData(KotlinLibraryName(coordinates))
-        val libraryLevel = if (dependency.isIdeaProjectLevel == true) LibraryLevel.PROJECT else LibraryLevel.MODULE
+        val libraryLevel = if (dependency.isIdeaProjectLevel) LibraryLevel.PROJECT else LibraryLevel.MODULE
         libraryData.setGroup(coordinates.group)
         libraryData.artifactId = coordinates.module
         libraryData.version = coordinates.version
@@ -37,7 +37,7 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
     Handle dependencies that are marked as 'project level'.
     Those dependencies are not bound to the particular SourceSet!
      */
-    if (dependency.isIdeaProjectLevel == true) {
+    if (dependency.isIdeaProjectLevel) {
         dependencyNode.data.level = LibraryLevel.PROJECT
         GradleProjectResolverUtil.linkProjectLibrary(getParent(ProjectData::class.java), dependencyNode.data.target)
     }
@@ -46,7 +46,7 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
     Handle dependencies that are coming from the native distribution.
     Those dependencies shall receive a nicer representation (name)
      */
-    if (dependency.isNativeDistribution == true) {
+    if (dependency.isNativeDistribution) {
         dependencyNode.data.target.internalName = buildNativeDistributionInternalLibraryName(dependency)
     }
 
