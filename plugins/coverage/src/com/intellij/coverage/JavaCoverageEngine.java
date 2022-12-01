@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -395,6 +396,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.getProject());
     }
     catch (Exception e) {
+      if (e instanceof ControlFlowException) throw e;
       LOG.error("Fail to process class from: " + classFile.getPath(), e);
     }
     return uncoveredLines;
