@@ -36,6 +36,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectLegacyImporter.class);
@@ -50,15 +51,18 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private final Map<MavenProject, Module> myMavenProjectToModule = new HashMap<>();
   private final Map<MavenProject, String> myMavenProjectToModuleName = new HashMap<>();
   private final Map<MavenProject, String> myMavenProjectToModulePath = new HashMap<>();
+  private final Collection<MavenProject> myNewlyIgnoredProjects;
 
   MavenProjectLegacyImporter(@NotNull Project p,
                              @NotNull MavenProjectsTree projectsTree,
                              @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
+                             @NotNull Collection<MavenProject> newlyIgnoredProjects,
                              boolean importModuleGroupsRequired,
                              @NotNull IdeModifiableModelsProvider modelsProvider,
                              @NotNull MavenImportingSettings importingSettings,
                              @Nullable Module previewModule) {
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
+    myNewlyIgnoredProjects = newlyIgnoredProjects;
     myFileToModuleMapping = getFileToModuleMapping(p, previewModule, modelsProvider);
     myImportModuleGroupsRequired = importModuleGroupsRequired;
     myPreviewModule = previewModule;
@@ -80,9 +84,14 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     myAllProjects.addAll(myProjectsToImportWithChanges.keySet()); // some projects may already have been removed from the tree
 
     hasChanges = deleteIncompatibleModules();
-    myProjectsToImportWithChanges = collectProjectsToImport(myProjectsToImportWithChanges);
 
     mapMavenProjectsToModulesAndNames();
+
+    List<Module> obsoleteModules = collectObsoleteModules();
+    boolean isDeleteObsoleteModules = isDeleteObsoleteModules(obsoleteModules);
+    hasChanges |= isDeleteObsoleteModules;
+
+    myProjectsToImportWithChanges = collectProjectsToImport(myProjectsToImportWithChanges, obsoleteModules);
 
     if (myProject.isDisposed()) return null;
 
@@ -102,10 +111,6 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     }
 
     if (myProject.isDisposed()) return null;
-
-    List<Module> obsoleteModules = collectObsoleteModules();
-    boolean isDeleteObsoleteModules = isDeleteObsoleteModules(obsoleteModules);
-    hasChanges |= isDeleteObsoleteModules;
 
     if (hasChanges) {
       StructuredIdeActivity deleteObsoletePhase = MavenImportCollector.LEGACY_DELETE_OBSOLETE_PHASE.startedWithParent(myProject, activity);
@@ -159,9 +164,37 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   }
 
 
-  private Map<MavenProject, MavenProjectChanges> collectProjectsToImport(Map<MavenProject, MavenProjectChanges> projectsToImport) {
+  private Map<MavenProject, MavenProjectChanges> collectProjectsToImport(
+    Map<MavenProject, MavenProjectChanges> projectsToImport,
+    List<Module> obsoleteModules) {
     Map<MavenProject, MavenProjectChanges> result = new HashMap<>(projectsToImport);
-    result.putAll(collectNewlyCreatedProjects()); // e.g. when 'create modules fro aggregators' setting changes
+
+    for (MavenProject each : myAllProjects) {
+      if (!myNewlyIgnoredProjects.isEmpty()) {
+        // if a maven project was ignored, we must update all the modules that were dependent on it
+        result.put(each, MavenProjectChanges.ALL);
+      } else {
+        Module module = myFileToModuleMapping.get(each.getFile());
+        if (module == null) {
+          // newly created projects
+          // e.g. when 'create modules from aggregators' setting changes
+          result.put(each, MavenProjectChanges.ALL);
+        }
+      }
+    }
+
+    for (var project : myAllProjects) {
+      var module = myMavenProjectToModule.get(project);
+      if (null == module) continue;
+
+      var rootModel = myModelsProvider.getModifiableRootModel(module);
+      var moduleDependencies = rootModel.getModuleDependencies();
+      for (var moduleDependency : moduleDependencies) {
+        if (obsoleteModules.contains(moduleDependency)) {
+          result.put(project, MavenProjectChanges.ALL);
+        }
+      }
+    }
 
     Set<MavenProject> allProjectsToImport = result.keySet();
     Set<MavenProject> selectedProjectsToImport = selectProjectsToImport(allProjectsToImport);
@@ -169,19 +202,6 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     Iterator<MavenProject> it = allProjectsToImport.iterator();
     while (it.hasNext()) {
       if (!selectedProjectsToImport.contains(it.next())) it.remove();
-    }
-
-    return result;
-  }
-
-  private Map<MavenProject, MavenProjectChanges> collectNewlyCreatedProjects() {
-    Map<MavenProject, MavenProjectChanges> result = new HashMap<>();
-
-    for (MavenProject each : myAllProjects) {
-      Module module = myFileToModuleMapping.get(each.getFile());
-      if (module == null) {
-        result.put(each, MavenProjectChanges.ALL);
-      }
     }
 
     return result;
@@ -270,17 +290,41 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   }
 
   private void deleteModules(@NotNull List<Module> modules) {
+    var existingModules = Arrays.stream(myModuleModel.getModules()).collect(Collectors.toSet());
     for (Module each : modules) {
-      if (!each.isDisposed()) {
+      if (!each.isDisposed() && existingModules.contains(each)) {
         myModuleModel.disposeModule(each);
       }
     }
   }
 
+  // TODO: can we get rid of this confirmation and always delete obsolete modules?
   private boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {
     if (obsoleteModules.isEmpty()) {
       return false;
     }
+    var myNewlyIgnoredModules = ContainerUtil.map(myNewlyIgnoredProjects, mavenProject -> myMavenProjectToModule.get(mavenProject));
+    // don't ask about module deletion if it was explicitly deleted by the user in project view or project structure
+    if (myNewlyIgnoredModules.containsAll(obsoleteModules)) {
+      return true;
+    }
+    // don't ask about module deletion if the pom file was moved to another directory
+    boolean askAboutDeletingIgnoredModules = false;
+    for (var module : obsoleteModules) {
+      var mavenProjectsManager = MavenProjectsManager.getInstance(myProject);
+      var mavenProjectOptional = myMavenProjectToModule.entrySet().stream()
+        .filter(entry -> entry.getValue() == module)
+        .map(entry -> entry.getKey()).findFirst();
+      if (mavenProjectOptional.isPresent()) {
+        var mavenProject = mavenProjectOptional.get();
+        if (mavenProjectsManager.isIgnored(mavenProject)) {
+          // ask about module deletion if the user ignored the pom file manually
+          askAboutDeletingIgnoredModules = true;
+          break;
+        }
+      }
+    }
+    if (!askAboutDeletingIgnoredModules) return true;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() || MavenUtil.isMavenUnitTestModeEnabled()) {
       final int[] result = new int[1];
       MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
@@ -297,6 +341,7 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     return true;
   }
 
+  @NotNull
   private List<Module> collectObsoleteModules() {
     List<Module> remainingModules = new ArrayList<>();
     Collections.addAll(remainingModules, myModuleModel.getModules());

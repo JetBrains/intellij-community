@@ -60,6 +60,7 @@ var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
 internal class WorkspaceProjectImporter(
   private val myProjectsTree: MavenProjectsTree,
   private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+  private val newlyIgnoredProjects: Collection<MavenProject>,
   private val myImportingSettings: MavenImportingSettings,
   private val myModifiableModelsProvider: IdeModifiableModelsProvider,
   private val myProject: Project
@@ -146,7 +147,7 @@ internal class WorkspaceProjectImporter(
         if (newProjectToImport) MavenProjectChanges.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChanges.NONE)
       }
 
-    var hasChanges = allProjectToImport.values.any { it.hasChanges() }
+    var hasChanges = allProjectToImport.values.any { it.hasChanges() } || !newlyIgnoredProjects.isEmpty()
     if (!hasChanges) {
       // check for a situation, when we have a newly ignored project, but no other changes
       val listOfProjectChanged = allProjectToImport.size != projectFilesFromPreviousImport.size

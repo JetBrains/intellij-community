@@ -22,13 +22,14 @@ interface MavenProjectImporter {
     fun createImporter(project: Project,
                        projectsTree: MavenProjectsTree,
                        projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                       newlyIgnoredProjects: Collection<MavenProject>,
                        importModuleGroupsRequired: Boolean,
                        modelsProvider: IdeModifiableModelsProvider,
                        importingSettings: MavenImportingSettings,
                        previewModule: Module?,
                        importingActivity: StructuredIdeActivity): MavenProjectImporter {
-      val importer = createImporter(project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired, modelsProvider,
-                                    importingSettings, previewModule)
+      val importer = createImporter(project, projectsTree, projectsToImportWithChanges, newlyIgnoredProjects,
+                                    importModuleGroupsRequired, modelsProvider, importingSettings, previewModule)
       return object : MavenProjectImporter {
         override fun importProject(): List<MavenProjectsProcessorTask>? {
           val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
@@ -55,12 +56,13 @@ interface MavenProjectImporter {
     private fun createImporter(project: Project,
                                projectsTree: MavenProjectsTree,
                                projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                               newlyIgnoredProjects: Collection<MavenProject>,
                                importModuleGroupsRequired: Boolean,
                                modelsProvider: IdeModifiableModelsProvider,
                                importingSettings: MavenImportingSettings,
                                previewModule: Module?): MavenProjectImporter {
       if (isImportToWorkspaceModelEnabled(project)) {
-        return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
+        return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges, newlyIgnoredProjects,
                                         importingSettings, modelsProvider, project)
       }
 
@@ -71,6 +73,7 @@ interface MavenProjectImporter {
 
       return MavenProjectLegacyImporter(project, projectsTree,
                                         projectsToImportWithChanges,
+                                        newlyIgnoredProjects,
                                         importModuleGroupsRequired,
                                         modelsProvider, importingSettings,
                                         previewModule)

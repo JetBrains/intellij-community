@@ -1,7 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.DeleteAction;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -11,6 +17,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
@@ -24,7 +31,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider;
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction;
+import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
@@ -1128,7 +1137,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
   }
 
   @Test
-  public void testIgnoringProjectsForRemovedInUiModules() {
+  public void testIgnoringProjectsForRemovedInUiModules() throws ConfigurationException {
     configConfirmationForYesAnswer();
 
     createProjectPom("<groupId>test</groupId>" +
@@ -1153,6 +1162,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     var moduleManager = ModuleManager.getInstance(myProject);
     ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
     ModuleDeleteProvider.removeModule(module, List.of(), moduleModel);
+    var moduleStructureExtension = new MavenModuleStructureExtension();
+    moduleStructureExtension.moduleRemoved(module);
+    moduleStructureExtension.apply();
+    moduleStructureExtension.disposeUIResources();
     myProjectsManager.performScheduledImportInTests();
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
@@ -1190,6 +1203,122 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
     assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+  }
+
+  private static DataContext createTestModuleDataContext(Module... modules) {
+    final DataContext defaultContext = DataManager.getInstance().getDataContext();
+    return dataId -> {
+      if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
+        return modules;
+      }
+      if (ProjectView.UNLOADED_MODULES_CONTEXT_KEY.is(dataId)) {
+        return List.of(); // UnloadedModuleDescription
+      }
+      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+        return new MavenModuleDeleteProvider();
+      }
+      return defaultContext.getData(dataId);
+    };
+  }
+
+  @Test
+  public void testWhenDeleteModuleThenChangeModuleDependencyToLibraryDependency() {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
+
+    VirtualFile m1 = createModulePom("m1",
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
+
+    VirtualFile m2 = createModulePom("m2",
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                           <dependency>
+                                               <groupId>test</groupId>
+                                               <artifactId>m1</artifactId>
+                                               <version>1</version>
+                                           </dependency>
+                                       </dependencies>
+                                       """);
+    importProject();
+
+    assertModuleModuleDeps("m2", "m1");
+
+    Module module1 = getModule("m1");
+    configConfirmationForYesAnswer();
+    var action = new DeleteAction();
+    action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)));
+
+    myProjectsManager.performScheduledImportInTests();
+    assertModuleModuleDeps("m2");
+    assertModuleLibDep("m2", "Maven: test:m1:1");
+  }
+
+  @Test
+  public void testWhenDeleteModuleInProjectStructureThenChangeModuleDependencyToLibraryDependency() throws ConfigurationException {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
+
+    VirtualFile m1 = createModulePom("m1",
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
+
+    VirtualFile m2 = createModulePom("m2",
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                           <dependency>
+                                               <groupId>test</groupId>
+                                               <artifactId>m1</artifactId>
+                                               <version>1</version>
+                                           </dependency>
+                                       </dependencies>
+                                       """);
+    importProject();
+
+    assertModuleModuleDeps("m2", "m1");
+
+    Module module1 = getModule("m1");
+    Module module2 = getModule("m2");
+    var moduleManager = ModuleManager.getInstance(myProject);
+    ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
+    List<ModifiableRootModel> otherModuleRootModels = List.of(ModuleRootManager.getInstance(module2).getModifiableModel());
+    ModuleDeleteProvider.removeModule(module1, otherModuleRootModels, moduleModel);
+    var moduleStructureExtension = new MavenModuleStructureExtension();
+    moduleStructureExtension.moduleRemoved(module1);
+    moduleStructureExtension.apply();
+    moduleStructureExtension.disposeUIResources();
+
+    myProjectsManager.performScheduledImportInTests();
+    assertModuleModuleDeps("m2");
+    assertModuleLibDep("m2", "Maven: test:m1:1");
   }
 
   @Test

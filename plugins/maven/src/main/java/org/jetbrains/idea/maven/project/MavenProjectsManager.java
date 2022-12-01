@@ -78,6 +78,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -110,6 +111,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenMergingUpdateQueue myImportingQueue;
   private final Object myImportingDataLock = new Object();
   private final Map<MavenProject, MavenProjectChanges> myProjectsToImport = new LinkedHashMap<>();
+
+  private final Collection<MavenProject> myProjectsScheduledToIgnore = new CopyOnWriteArrayList<>();
   private final Set<MavenProject> myProjectsToResolve = new LinkedHashSet<>();
 
   private boolean myImportModuleGroupsRequired = false;
@@ -896,6 +899,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
+  public void scheduleMavenProjectToIgnore(@Nullable MavenProject mavenProject) {
+    if (null == mavenProject) return;
+
+    if (myProjectsScheduledToIgnore.contains(mavenProject)) return;
+
+    myProjectsScheduledToIgnore.add(mavenProject);
+  }
+
   public Set<MavenRemoteRepository> getRemoteRepositories() {
     Set<MavenRemoteRepository> result = new HashSet<>();
     for (MavenProject each : getProjects()) {
@@ -1389,10 +1400,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public List<Module> importProjects(final IdeModifiableModelsProvider modelsProvider) {
     final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
+    final List <MavenProject> projectsScheduledToIgnore;
     final boolean importModuleGroupsRequired;
     synchronized (myImportingDataLock) {
       projectsToImportWithChanges = Collections.unmodifiableMap(new LinkedHashMap<>(myProjectsToImport));
       myProjectsToImport.clear();
+      projectsScheduledToIgnore = Collections.unmodifiableList(new ArrayList<>(myProjectsScheduledToIgnore));
+      myProjectsScheduledToIgnore.clear();
       importModuleGroupsRequired = myImportModuleGroupsRequired;
       myImportModuleGroupsRequired = false;
     }
@@ -1405,8 +1419,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.ImportingTaskOld.class))
       );
       try {
+        setIgnoredState(projectsScheduledToIgnore, true);
         MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(
-          myProject, myProjectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
+          myProject, myProjectsTree, projectsToImportWithChanges, projectsScheduledToIgnore, importModuleGroupsRequired,
           modelsProvider, getImportingSettings(), myPreviewModule, activity
         );
         importer.set(projectImporter);
