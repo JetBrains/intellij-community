@@ -365,7 +365,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static boolean isCompileTimeFlagCheck(PsiElement element) {
-    if(element instanceof PsiBinaryExpression binOp) {
+    if (element instanceof PsiBinaryExpression binOp) {
       if(ComparisonUtils.isComparisonOperation(binOp.getOperationTokenType())) {
         PsiExpression comparedWith = null;
         if(ExpressionUtils.isLiteral(binOp.getROperand())) {
