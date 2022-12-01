@@ -604,7 +604,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
-        // TODO: this-binding methods (apply, run)
         // TODO: non-qualified methods (run, repeat)
         // TODO: collection methods (forEach, map, etc.)
         val resolvedCall = expr.resolveToCall() ?: return false
@@ -614,15 +613,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
         if (packageFragment.fqName.asString() == "kotlin" && resolvedCall.valueArguments.size == 1) {
             val name = descriptor.name.asString()
-            if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless") {
-                val parameter = KtVariableDescriptor.getSingleLambdaParameter(factory, lambda) ?: return false
+            if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless" || name == "apply" || name == "run") {
+                val parameter = (if (name == "apply" || name == "run")
+                    KtVariableDescriptor.getLambdaReceiver(factory, lambda)
+                else
+                    KtVariableDescriptor.getSingleLambdaParameter(factory, lambda)) ?: return false
                 // qualifier is on stack
                 val receiverType = receiver?.getKotlinType()
                 val argType = if (expr.parent is KtSafeQualifiedExpression) receiverType?.makeNotNullable() else receiverType
                 addImplicitConversion(receiver, argType)
                 addInstruction(JvmAssignmentInstruction(null, parameter))
                 when (name) {
-                    "let" -> {
+                    "let", "run" -> {
                         addInstruction(PopInstruction())
                         val lambdaResultType = lambda.resolveType()?.getReturnTypeFromFunctionType()
                         val result = flow.createTempVariable(lambdaResultType.toDfType())
@@ -635,7 +637,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addInstruction(JvmPushInstruction(result, null))
                         addImplicitConversion(expr, lambdaResultType, expr.getKotlinType())
                     }
-                    "also" -> {
+                    "also", "apply" -> {
                         inlinedBlock(lambda) {
                             processExpression(bodyExpression)
                             flow.finishElement(lambda.functionLiteral)

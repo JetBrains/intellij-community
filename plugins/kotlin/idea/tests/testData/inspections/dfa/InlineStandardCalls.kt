@@ -39,3 +39,27 @@ fun inlineTakeIfLet(s: String?) {
 fun letWithUnit(s: String?) {
     if (s?.let {println(it)} != null) {}
 }
+
+fun inlineRun() {
+    var x = false
+    var y = false
+
+    for(line in 1..2) {
+        line.run {
+            if (<warning descr="Condition 'this == 3' is always false">this == 3</warning>) x = true else y = true
+        }
+    }
+    println(<warning descr="Condition 'x && y' is always false"><weak_warning descr="Value of 'x' is always false">x</weak_warning> && y</warning>)
+}
+
+fun inlineAll() {
+    val num = 123
+    val res1 = <warning descr="Condition 'num.let { it > 10 }' is always true">num.let { <warning descr="Condition 'it > 10' is always true">it > 10</warning> }</warning>
+    val res2 = num.also { println(<warning descr="Condition 'it > 10' is always true">it > 10</warning>) }
+    val res3 = <warning descr="Condition 'num.run { this > 10 }' is always true">num.run { <warning descr="Condition 'this > 10' is always true">this > 10</warning> }</warning>
+    val res4 = num.apply { println(<warning descr="Condition 'this > 10' is always true">this > 10</warning>) }
+    println(<weak_warning descr="Value of 'res1' is always true">res1</weak_warning>)
+    println(res2)
+    println(<weak_warning descr="Value of 'res3' is always true">res3</weak_warning>)
+    println(res4)
+}
