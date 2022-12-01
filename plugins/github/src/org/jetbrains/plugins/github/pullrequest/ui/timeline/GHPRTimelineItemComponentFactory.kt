@@ -18,7 +18,6 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.JBDateFormat
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -228,11 +227,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       if (panelHandle != null) {
         val commentPanel = panelHandle.panel
         add(commentPanel, CC().grow().push()
-          .minWidth("0").maxWidth("${GHPRTimelineItemUIUtil.maxTimelineItemTextWidth}"))
+          .minWidth("0").maxWidth("${GHPRTimelineItemUIUtil.maxTimelineItemTextWidth}px"))
       }
 
       add(StatusMessageComponentFactory.create(HtmlEditorPane(stateText), stateType), CC().grow().push()
-        .minWidth("0").maxWidth("${GHPRTimelineItemUIUtil.maxTimelineItemTextWidth}"))
+        .minWidth("0").maxWidth("${GHPRTimelineItemUIUtil.maxTimelineItemTextWidth}px"))
 
       val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) {
         GHPRReviewThreadComponent.createWithDiff(project, it,
@@ -243,7 +242,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
       add(threadsPanel, CC().grow().push()
         .minWidth("0")
-        .gapTop("${JBUIScale.scale(8)}"))
+        .gapTop("8"))
     }
     return GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, review.author ?: ghostUser, review.createdAt,
                                              contentPanel, Int.MAX_VALUE, actionsPanel)

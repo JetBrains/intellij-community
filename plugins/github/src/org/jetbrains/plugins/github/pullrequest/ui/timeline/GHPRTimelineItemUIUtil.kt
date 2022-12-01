@@ -74,17 +74,17 @@ object GHPRTimelineItemUIUtil {
                            .insets("0", "0", "0", "0"))
 
       add(iconLabel, CC().spanY(2).alignY("top")
-        .gapRight("${JBUIScale.scale(AVATAR_CONTENT_GAP)}"))
+        .gapRight("$AVATAR_CONTENT_GAP"))
 
       add(titleTextPane, CC().grow().push().gapRight("push")
-        .maxWidth("$maxTimelineItemTextWidth"))
+        .maxWidth("${maxTimelineItemTextWidth}px"))
 
       if (actionsPanel != null) {
-        add(actionsPanel, CC().gapLeft("${JBUIScale.scale(10)}"))
+        add(actionsPanel, CC().gapLeft("10"))
       }
       add(content, CC().push().grow().spanX(2).newline()
-        .gapTop("${JBUIScale.scale(4)}")
-        .minWidth("0").maxWidth("$maxContentWidth"))
+        .gapTop("4")
+        .minWidth("0").maxWidth("${maxContentWidth}px"))
     }
   }
 

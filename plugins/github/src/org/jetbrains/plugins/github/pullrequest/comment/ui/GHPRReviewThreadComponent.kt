@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.util.ui.InlineIconButton
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.icons.AllIcons
@@ -21,6 +20,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PathUtil
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
@@ -205,7 +205,7 @@ object GHPRReviewThreadComponent {
       resolvedLabel.isVisible = thread.isResolved
     }
 
-    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("${JBUIScale.scale(5)}", "0").fill().noGrid())).apply {
+    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
       border = JBUI.Borders.empty(10)
 
       add(nameLabel)
@@ -270,15 +270,14 @@ object GHPRReviewThreadComponent {
       { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
       {
         GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
-                                                         GithubBundle.message(
-                                                               "pull.request.review.thread.reply"),
+                                                         GithubBundle.message("pull.request.review.thread.reply"),
                                                          onCancel = { toggleModel.value = false })
       }
     )
     return JPanel().apply {
       isOpaque = false
       layout = MigLayout(LC().insets("0"))
-      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + JBUIScale.scale(GHUIUtil.AVATAR_SIZE)}"))
+      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + JBUIScale.scale(GHUIUtil.AVATAR_SIZE)}px"))
     }
   }
 

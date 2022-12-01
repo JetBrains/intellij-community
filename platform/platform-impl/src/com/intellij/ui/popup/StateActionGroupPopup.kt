@@ -103,7 +103,7 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
         }
 
         stateLabel = lb
-        pane.add(lb, "gapbefore ${JBUI.scale(3)}, gapafter ${JBUI.scale(3)}, ay center")
+        pane.add(lb, "gapbefore 3, gapafter 3, ay center")
         pane.border = PillBorder(
           JBUI.CurrentTheme.Advertiser.background(), 1)
 

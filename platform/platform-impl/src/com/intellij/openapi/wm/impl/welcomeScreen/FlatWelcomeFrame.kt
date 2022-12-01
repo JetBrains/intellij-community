@@ -405,7 +405,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       val quickStart = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART) as ActionGroup
       WelcomeScreenActionsUtil.collectAllActions(group, quickStart)
       @Suppress("SpellCheckingInspection")
-      val mainPanel = ActionPanel(MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"))
+      val mainPanel = ActionPanel(MigLayout("ins 0, novisualpadding, gap 5, flowy", "push[pref!, center]push"))
       mainPanel.isOpaque = false
       val panel = object : JPanel(VerticalLayout(JBUI.scale(5))) {
         private var firstAction: Component? = null

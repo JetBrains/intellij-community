@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -82,9 +81,9 @@ internal object GHPRTitleComponent {
 
   private fun layout(icon: JLabel, title: JComponent, editButton: JComponent? = null): JComponent {
     return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("0", "0").noGrid())).apply {
-      add(icon, CC().gapRight("${JBUIScale.scale(4)}"))
+      add(icon, CC().gapRight("4"))
       add(title, CC())
-      if (editButton != null) add(editButton, CC().gapLeft("${JBUIScale.scale(12)}").hideMode(3))
+      if (editButton != null) add(editButton, CC().gapLeft("12").hideMode(3))
     }
   }
 }

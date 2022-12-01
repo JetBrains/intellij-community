@@ -87,7 +87,7 @@ class GHCommentTextFieldFactory(private val model: CommentTextFieldModel) {
           IdeFocusTraversalPolicy.getPreferredFocusedComponent(commentComponent) ?: super.getDefaultComponent(aContainer)
       }
 
-      add(authorLabel, CC().alignY("top").gapRight("${JBUI.scale(6)}"))
+      add(authorLabel, CC().alignY("top").gapRight("6"))
       add(component, CC().grow().pushX())
     }
   }

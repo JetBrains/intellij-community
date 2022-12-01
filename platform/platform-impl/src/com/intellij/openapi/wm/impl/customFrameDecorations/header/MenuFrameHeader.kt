@@ -45,7 +45,7 @@ internal class MenuFrameHeader(frame: JFrame,
 
     headerTitle.onBoundsChanged = { windowStateChanged() }
 
-    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 3", "[pref!]${JBUI.scale(10)}"))
+    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 3", "[pref!]10"))
     menuHolder.border = JBUI.Borders.empty(0, H - 1, 0, 0)
     menuHolder.isOpaque = false
     menuHolder.add(ideMenu, "wmin 0, wmax pref, top, growy")

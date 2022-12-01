@@ -155,20 +155,20 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                            .flowY(),
                          AC().grow().gap("push"))
 
-      add(header, CC().growX().maxWidth("$maxWidth"))
+      add(header, CC().growX().maxWidth("${maxWidth}px"))
       add(descriptionWrapper, CC().growX())
       add(timeline, CC().growX().minWidth(""))
 
       val fullTimelineWidth = GHPRTimelineItemUIUtil.maxTimelineItemWidth
 
-      add(errorPanel, CC().hideMode(2).width("$fullTimelineWidth"))
-      add(loadingIcon, CC().hideMode(2).width("$fullTimelineWidth"))
+      add(errorPanel, CC().hideMode(2).width("${fullTimelineWidth}px"))
+      add(loadingIcon, CC().hideMode(2).width("${fullTimelineWidth}px"))
 
       if (editor.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
         val commentField = createCommentField(editor.commentsData,
                                               editor.avatarIconsProvider,
                                               editor.securityService.currentUser)
-        add(commentField, CC().growX().pushX().maxWidth("$fullTimelineWidth"))
+        add(commentField, CC().growX().pushX().maxWidth("${fullTimelineWidth}px"))
       }
     }
 

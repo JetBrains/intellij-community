@@ -30,7 +30,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.compensateForHighligh
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.noInsets
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledAsString
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.skipInvisibleComponents
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.withHtmlStyling
 import net.miginfocom.layout.AC
@@ -82,7 +81,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
             LC().fillX()
                 .noInsets()
                 .skipInvisibleComponents()
-                .gridGap("0", 8.scaledAsString()),
+                .gridGap("0", "8"),
             AC().grow(), // One column only
             AC().fill().gap() // All rows are filling all available width
                 .fill().gap()

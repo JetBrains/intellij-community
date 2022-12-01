@@ -139,7 +139,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     return JPanel(null).apply {
       isOpaque = false
       border = JBUI.Borders.empty(30, 16)
-      layout = MigLayout(LC().fill().gridGap("${UI.scale(10)}px", "${UI.scale(16)}px").insets("0").hideMode(3).noGrid())
+      layout = MigLayout(LC().fill().gridGap("10", "16").insets("0").hideMode(3).noGrid())
 
       add(repoCombo, CC().growX().push())
       add(accountCombo, CC())

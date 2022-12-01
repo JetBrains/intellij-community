@@ -7,7 +7,6 @@ import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.NamedColorUtil
 import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
@@ -63,7 +62,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
 
       val actionsPanel = JPanel(null).apply {
         isOpaque = false
-        layout = MigLayout(LC().fill().flowY().gridGap("${JBUIScale.scale(5)}", "0").insets("0"))
+        layout = MigLayout(LC().fill().flowY().gridGap("5", "0").insets("0"))
 
         add(buttonsPanel)
         add(errorComponent, CC().minWidth("0"))
@@ -71,7 +70,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
 
       return JPanel(null).apply {
         isOpaque = false
-        layout = MigLayout(LC().fill().flowY().gridGap("${JBUIScale.scale(4)}", "0").insets("0"))
+        layout = MigLayout(LC().fill().flowY().gridGap("4", "0").insets("0"))
 
         add(statusComponent)
         add(actionsPanel)

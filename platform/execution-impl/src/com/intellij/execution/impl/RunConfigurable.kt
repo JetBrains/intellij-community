@@ -342,7 +342,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   private fun showFolderField(node: DefaultMutableTreeNode, @Nls folderName: String) {
     rightPanel.removeAll()
-    val p = JPanel(MigLayout("ins ${toolbarDecorator!!.actionsPanel.height} 5 0 0, flowx"))
+    val p = JPanel(MigLayout("ins ${toolbarDecorator!!.actionsPanel.height}px 5 0 0, flowx"))
     val textField = JTextField(folderName)
     textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {

@@ -765,7 +765,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     myNavigationHintLabel.setEnabled(false);
     myNavigationHintLabel.setFont(JBUI.Fonts.smallFont());
     Insets insets = myOKButton.getInsets();
-    String btnGapLeft = "gapleft " + Math.max(0, JBUIScale.scale(12) - insets.left - insets.right);
+    String btnGapLeft = "gapleft " + Math.max(0, JBUIScale.scale(12) - insets.left - insets.right) + "px";
 
     bottomPanel.add(myNavigationHintLabel, btnGapLeft);
     bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
@@ -1800,7 +1800,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       e.getPresentation().setEnabled(myEnableStateProvider.produce());
       Toggleable.setSelected(e.getPresentation(), myState.get());
     }
-    
+
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;

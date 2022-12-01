@@ -23,8 +23,8 @@ import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.TagComponent
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.insets
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledInsets
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
@@ -44,7 +44,7 @@ import javax.swing.table.TableCellRenderer
 internal object PackageNameCellRenderer : TableCellRenderer {
 
     private val layoutConstraints = LC().align("left", "center")
-        .scaledInsets(left = 8, right = 0)
+        .insets(left = 8, right = 0)
 
     private val componentGapX = 4.scaled()
 

@@ -89,15 +89,15 @@ object GHPRReviewCommentComponent {
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill(),
-                         AC().gap("${JBUIScale.scale(8)}"))
+                         AC().gap("8"))
 
       add(avatarLabel, CC().pushY())
       add(titlePane, CC().minWidth("0").split(5).alignX("left").pushX())
       add(pendingLabel, CC().hideMode(3).alignX("left"))
       add(resolvedLabel, CC().hideMode(3).alignX("left"))
-      add(editButton, CC().hideMode(3).gapBefore("${JBUIScale.scale(12)}"))
-      add(deleteButton, CC().hideMode(3).gapBefore("${JBUIScale.scale(8)}"))
-      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX().maxWidth("${getMaxWidth()}"))
+      add(editButton, CC().hideMode(3).gapBefore("12"))
+      add(deleteButton, CC().hideMode(3).gapBefore("8"))
+      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX().maxWidth("${getMaxWidth()}px"))
     }
   }
 
