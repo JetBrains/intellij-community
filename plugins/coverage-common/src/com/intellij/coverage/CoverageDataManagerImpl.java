@@ -15,7 +15,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -688,8 +687,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         });
         if (psiFile == null || !psiFile.isPhysical()) return;
         final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
-        ReadAction.nonBlocking(() -> engine.coverageEditorHighlightingApplicableTo(psiFile)).finishOnUiThread(ModalityState.NON_MODAL, (isApplicable) -> {
-          if (!isApplicable) return;
+        AppExecutorUtil.getAppExecutorService().execute(() -> {
+          if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
           CoverageEditorAnnotator annotator = manager.getAnnotator(editor);
           if (annotator == null) {
             annotator = engine.createSrcFileAnnotator(psiFile, editor);
@@ -711,8 +710,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             }
           };
           myCurrentEditors.put(editor, request);
-          getRequestsAlarm(manager).addRequest(request, 100);
-        }).submit(AppExecutorUtil.getAppExecutorService());
+          ApplicationManager.getApplication().invokeLater(() -> getRequestsAlarm(manager).addRequest(request, 100));
+        });
       }
     }
 
