@@ -40,4 +40,3 @@ class Outer {
 }
 
 fun lambda(f: () -> Unit) = f()
-// IGNORE_FOR_INDY_LAMBDAS

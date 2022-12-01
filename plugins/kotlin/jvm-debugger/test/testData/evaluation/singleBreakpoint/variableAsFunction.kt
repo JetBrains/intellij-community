@@ -23,4 +23,3 @@ fun block(block: () -> Unit) {
 
 // EXPRESSION: foo(5)
 // RESULT: 5: I
-// IGNORE_FOR_INDY_LAMBDAS
