@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,12 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * @see FoldingModel#getAllFoldRegions()
  */
 public interface FoldRegion extends RangeMarker {
-  /**
-   * Set to <code>true</code> if gutter icon should not be shown for a collapsed region.
-   * E.g. if Editor provides another means of expanding the region..
-   */
-  Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
-
   FoldRegion[] EMPTY_ARRAY = new FoldRegion[0];
 
   /**

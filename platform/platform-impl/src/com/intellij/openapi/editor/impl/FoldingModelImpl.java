@@ -43,6 +43,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private static final Key<Boolean> MARK_FOR_UPDATE = Key.create("marked.for.position.update");
   private static final Key<Boolean> DO_NOT_NOTIFY = Key.create("do.not.notify.on.region.disposal");
 
+  static final Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
+
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myIsFoldingEnabled;
@@ -203,6 +205,14 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (!(region instanceof FoldRegionImpl)) {
       throw new IllegalArgumentException("Only regions created by this instance of FoldingModel are accepted");
     }
+  }
+
+  /**
+   * Do not show default gutter icon for a collapsed region.
+   * E.g. if Editor provides another means of expanding the region.
+   */
+  public static void hideGutterRendererForCollapsedRegion(@NotNull FoldRegion region) {
+    region.putUserData(HIDE_GUTTER_RENDERER_FOR_COLLAPSED, Boolean.TRUE);
   }
 
   @Override

@@ -98,7 +98,7 @@ final class FoldingAnchorsOverlayStrategy {
 
   private static boolean skipFoldingAnchor(@NotNull FoldRegion region) {
     if (!region.isExpanded()) {
-      return region.getUserData(FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED) == Boolean.TRUE;
+      return Boolean.TRUE.equals(region.getUserData(FoldingModelImpl.HIDE_GUTTER_RENDERER_FOR_COLLAPSED));
     }
     return false;
   }
