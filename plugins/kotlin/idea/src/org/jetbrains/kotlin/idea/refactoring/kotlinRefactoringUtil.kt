@@ -1007,65 +1007,6 @@ fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?)
     return if (overriddenElementsToDescriptor.isEmpty()) listOf(declaration) else overriddenElementsToDescriptor.keys.toList()
 }
 
-fun checkSuperMethodsWithPopup(
-    declaration: KtNamedDeclaration,
-    deepestSuperMethods: List<PsiElement>,
-    editor: Editor,
-    action: (List<PsiElement>) -> Unit
-) {
-    if (deepestSuperMethods.isEmpty()) return action(listOf(declaration))
-
-    val superMethod = deepestSuperMethods.first()
-
-    val (superClass, isAbstract) = when (superMethod) {
-        is PsiMember -> superMethod.containingClass to superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
-        is KtNamedDeclaration -> superMethod.containingClassOrObject to superMethod.isAbstract()
-        else -> null
-    } ?: return action(listOf(declaration))
-    if (superClass == null) return action(listOf(declaration))
-
-    if (isUnitTestMode()) return action(deepestSuperMethods)
-
-    val kindIndex = when (declaration) {
-        is KtNamedFunction -> 1 // "function"
-        is KtProperty, is KtParameter -> 2 // "property"
-        else -> return
-    }
-
-    val unwrappedSupers = deepestSuperMethods.mapNotNull { it.namedUnwrappedElement }
-    val hasJavaMethods = unwrappedSupers.any { it is PsiMethod }
-    val hasKtMembers = unwrappedSupers.any { it is KtNamedDeclaration }
-    val superKindIndex = when {
-        hasJavaMethods && hasKtMembers -> 3 // "member"
-        hasJavaMethods -> 4 // "method"
-        else -> kindIndex
-    }
-
-    val renameBase = KotlinBundle.message("rename.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
-    val renameCurrent = KotlinBundle.message("rename.only.current.0", kindIndex)
-    val title = KotlinBundle.message(
-        "rename.declaration.title.0.implements.1.2.of.3",
-        declaration.name ?: "",
-        if (isAbstract) 1 else 2,
-        ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),
-        SymbolPresentationUtil.getSymbolPresentableText(superClass)
-    )
-
-    JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(listOf(renameBase, renameCurrent))
-        .setTitle(title)
-        .setMovable(false)
-        .setResizable(false)
-        .setRequestFocus(true)
-        .setItemChosenCallback { value: String? ->
-            if (value == null) return@setItemChosenCallback
-            val chosenElements = if (value == renameBase) deepestSuperMethods + declaration else listOf(declaration)
-            action(chosenElements)
-        }
-        .createPopup()
-        .showInBestPositionFor(editor)
-}
-
 fun KtNamedDeclaration.isCompanionMemberOf(klass: KtClassOrObject): Boolean {
     val containingObject = containingClassOrObject as? KtObjectDeclaration ?: return false
     return containingObject.isCompanion() && containingObject.containingClassOrObject == klass

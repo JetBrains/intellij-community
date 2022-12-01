@@ -21,15 +21,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.checkSuperMethodsWithPopup
 import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtReference

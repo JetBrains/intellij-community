@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.resolve.source.getPsi
 
 internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     override fun processForeignUsages(
@@ -44,5 +48,10 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
         org.jetbrains.kotlin.idea.refactoring.rename.checkAccidentalPropertyOverrides(declaration, newName, result)
+    }
+
+    override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
+        val descriptor = function.unsafeResolveToDescriptor() as FunctionDescriptor
+        return descriptor.overriddenDescriptors.mapNotNull { it.source.getPsi() }
     }
 }

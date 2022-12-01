@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 /**
  * Service for various functionality which have different implementation in K1 and K2 plugin
@@ -45,4 +46,6 @@ interface KotlinRenameRefactoringSupport {
         newName: String,
         result: MutableList<UsageInfo>
     )
+
+    fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement>
 }

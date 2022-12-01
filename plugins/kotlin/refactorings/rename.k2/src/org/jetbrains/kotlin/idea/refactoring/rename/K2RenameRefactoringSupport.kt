@@ -4,7 +4,10 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     override fun processForeignUsages(
@@ -42,5 +45,12 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
         // TODO
+    }
+
+    override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
+        return analyze(function) {
+            val overridenFunctions = (function.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols().orEmpty()
+            overridenFunctions.mapNotNull { it.psi as? KtNamedFunction }
+        }
     }
 }

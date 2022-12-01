@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.refactoring.checkSuperMethodsWithPopup
 import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
