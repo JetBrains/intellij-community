@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -216,7 +217,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Nullable
   @RequiresEdt
-  public String getCurrentChangeName() {
+  public @Nls String getCurrentChangeName() {
     if (myCurrentChange == null) {
       return null;
     }
@@ -405,7 +406,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     public abstract Object getUserObject();
 
     @Nullable
-    public abstract String getPresentableName();
+    public abstract @Nls String getPresentableName();
 
     @Nullable
     public abstract DiffRequestProducer createProducer(@Nullable Project project);
@@ -456,7 +457,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     @Nullable
     @Override
-    public String getPresentableName() {
+    public @Nls String getPresentableName() {
       return getFilePath().getName();
     }
 
@@ -528,7 +529,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     @Nullable
     @Override
-    public String getPresentableName() {
+    public @Nls String getPresentableName() {
       return path.getName();
     }
 

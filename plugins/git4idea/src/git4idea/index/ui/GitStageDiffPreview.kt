@@ -22,6 +22,7 @@ import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
 import git4idea.index.KindTag
 import git4idea.index.createTwoSidesDiffRequestProducer
+import org.jetbrains.annotations.Nls
 import java.util.*
 
 class GitStageDiffPreview(project: Project,
@@ -87,7 +88,7 @@ class GitStageDiffPreview(project: Project,
                 .map { ChangeWrapper(it) })
 
   private class GitFileStatusNodeWrapper(val node: GitFileStatusNode) : Wrapper() {
-    override fun getPresentableName(): String = node.filePath.name
+    override fun getPresentableName(): @Nls String = node.filePath.name
 
     override fun getUserObject(): Any = node
 
