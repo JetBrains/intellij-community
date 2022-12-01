@@ -43,6 +43,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,7 +89,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       }
     };
     myDefaultJreItem = new DefaultJreItem();
-    buildModel(editable);
+    myComboBoxModel.setAll(buildModel(editable));
     myComboBoxModel.setSelectedItem(myDefaultJreItem);
 
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, JBUI.scale(300));
@@ -149,30 +150,31 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
    * @return true if selection update needed
    */
   public boolean updateModel(@NotNull Project project, @Nullable String targetName) {
-    myComboBoxModel.clear();
+    List<JreComboBoxItem> items = new ArrayList<>();
     myRemoteTarget = false;
     TargetEnvironmentConfiguration config = TargetEnvironmentConfigurations.getEffectiveConfiguration(targetName, project);
     if (config != null) {
       myRemoteTarget = true;
-      List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
-                                                           configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
-                                                                            new CustomJreItem(
-                                                                              (JavaLanguageRuntimeConfiguration)configuration) : null);
+      items.addAll(ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
+                                            configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ? new CustomJreItem(
+                                              (JavaLanguageRuntimeConfiguration)configuration) : null));
       myComboBoxModel.addAll(items);
       if (!items.isEmpty()) {
         myComboBoxModel.setSelectedItem(items.get(0));
       }
       return false;
     }
-    buildModel(getComponent().isEditable());
+    items.addAll(buildModel(getComponent().isEditable()));
+    myComboBoxModel.setAll(items);
     return true;
   }
 
-  private void buildModel(boolean editable) {
-    myComboBoxModel.add(myDefaultJreItem);
+  private List<JreComboBoxItem> buildModel(boolean editable) {
+    List<JreComboBoxItem> model = new ArrayList<>();
+    model.add(myDefaultJreItem);
     final Sdk[] allJDKs = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : allJDKs) {
-      myComboBoxModel.add(new SdkAsJreItem(sdk));
+      model.add(new SdkAsJreItem(sdk));
     }
 
     final Set<String> jrePaths = new HashSet<>();
@@ -181,7 +183,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
         String path = provider.getJrePath();
         if (!StringUtil.isEmpty(path)) {
           jrePaths.add(path);
-          myComboBoxModel.add(new CustomJreItem(provider));
+          model.add(new CustomJreItem(provider));
         }
       }
     }
@@ -196,12 +198,13 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
         }
       }
       if (jrePaths.add(homePath)) {
-        myComboBoxModel.add(new CustomJreItem(homePath, null, jdk.getVersionString()));
+        model.add(new CustomJreItem(homePath, null, jdk.getVersionString()));
       }
     }
     if (!editable) {
-      myComboBoxModel.add(new AddJreItem());
+      model.add(new AddJreItem());
     }
+    return model;
   }
 
   @NotNull
