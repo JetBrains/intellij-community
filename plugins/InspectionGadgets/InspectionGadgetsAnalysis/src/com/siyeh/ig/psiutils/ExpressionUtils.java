@@ -269,10 +269,10 @@ public final class ExpressionUtils {
   private static void collectYieldExpressions(@NotNull PsiStatement statement,
                                               @NotNull PsiSwitchExpression switchExpression,
                                               @NotNull Collection<PsiExpression> result) {
-    Collection<PsiYieldStatement> blockStatement = statement instanceof PsiYieldStatement yieldStatement
-                                                   ? Collections.singleton(yieldStatement)
-                                                   : PsiTreeUtil.findChildrenOfType(statement, PsiYieldStatement.class);
-    List<PsiYieldStatement> myYields = ContainerUtil.filter(blockStatement, st -> st.findEnclosingExpression() == switchExpression);
+    Collection<PsiYieldStatement> yields = statement instanceof PsiYieldStatement yieldStatement
+                                           ? Collections.singleton(yieldStatement)
+                                           : PsiTreeUtil.findChildrenOfType(statement, PsiYieldStatement.class);
+    List<PsiYieldStatement> myYields = ContainerUtil.filter(yields, st -> st.findEnclosingExpression() == switchExpression);
     for (PsiYieldStatement yield : myYields) {
       ContainerUtil.addIfNotNull(result, yield.getExpression());
     }
