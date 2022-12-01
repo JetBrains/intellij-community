@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.Arrays;
 
@@ -75,12 +74,6 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
           return defaultLevel != null ? MessageFormat.format("({0})", defaultLevel.getPresentableText())
                                       : "";
         }
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon(Object value) {
         return null;
       }
     });
