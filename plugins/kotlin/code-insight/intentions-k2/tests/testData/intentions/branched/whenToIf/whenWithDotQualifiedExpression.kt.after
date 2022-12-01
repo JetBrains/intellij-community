@@ -5,9 +5,8 @@ object G {
 }
 
 fun test(x: Int, y: Int): String {
-    if (G.cat(x, y) == 1) return "one"
-    else if (G.cat(x, y) == 2) return "two"
+    val n = G.cat(x, y)
+    if (n == 1) return "one"
+    else if (n == 2) return "two"
     else return "big"
 }
-
-// IGNORE_FIR
