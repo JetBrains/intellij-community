@@ -40,7 +40,7 @@ public final class LineEndingsManager implements FileDocumentManagerListener {
       StatusBar statusBar = frame != null ? frame.getStatusBar() : null;
       StatusBarWidget widget = statusBar == null ? null : statusBar.getWidget(StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL);
       if (widget instanceof LineSeparatorPanel) {
-        ((LineSeparatorPanel)widget).selectionChanged((VirtualFile)null);
+        ((LineSeparatorPanel)widget).selectionChanged(null);
       }
     });
   }
