@@ -52,7 +52,8 @@ internal fun activityFlow(project: Project): Flow<Unit> {
     }
 
     IdeEventQueue.getInstance().addActivityListener(Runnable {
-      if (!skipActivityEvent(IdeEventQueue.getCurrentEvent(), project)) {
+      val currentEvent = IdeEventQueue.getCurrentEvent() ?: return@Runnable
+      if (!skipActivityEvent(currentEvent, project)) {
         fire()
       }
     }, disposable)
