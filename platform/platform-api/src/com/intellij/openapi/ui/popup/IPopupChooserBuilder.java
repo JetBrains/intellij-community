@@ -93,6 +93,8 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount);
 
+  IPopupChooserBuilder<T> withFixedRendererSize(@NotNull Dimension dimension);
+
   @NotNull JBPopup createPopup();
 
   ListComponentUpdater getBackgroundUpdater();

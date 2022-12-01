@@ -127,6 +127,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     default JComponent buildFinalComponent() {
       return getComponent();
     }
+
+    default void setFixedRendererSize(@NotNull Dimension dimension) {}
   }
 
   @Override
@@ -610,6 +612,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount) {
     myVisibleRowCount = visibleRowCount;
+    return this;
+  }
+
+  @Override
+  public IPopupChooserBuilder<T> withFixedRendererSize(@NotNull Dimension dimension) {
+    myChooserComponent.setFixedRendererSize(dimension);
     return this;
   }
 
