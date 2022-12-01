@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
+import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver

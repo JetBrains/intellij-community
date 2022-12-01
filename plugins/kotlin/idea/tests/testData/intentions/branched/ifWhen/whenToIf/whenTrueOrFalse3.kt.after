@@ -5,3 +5,5 @@ fun foo(i : Int) {
     if (0 == i) 1
     else if (0 == i) 2
 }
+
+// IGNORE_FIR
