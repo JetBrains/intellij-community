@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import kotlin.Pair;
@@ -45,6 +46,9 @@ public class DependenciesIndexedStatusService {
   }
 
   public static boolean shouldBeUsed() {
+    if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
+      return false;
+    }
     return Registry.is("use.dependencies.cache.service", false) || TestModeFlags.is(ENFORCEMENT_USAGE_TEST_MODE_FLAG);
   }
 
