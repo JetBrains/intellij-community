@@ -133,6 +133,7 @@ class GotItTooltip(@NonNls val id: String,
   /**
    * Add optional shortcut after mandatory description (text).
    */
+  @Deprecated("Describe inline shortcuts in any place of the text using GotItTextBuilder")
   fun withShortcut(shortcut: Shortcut): GotItTooltip {
     gotItBuilder.withShortcut(shortcut)
     return this
@@ -227,6 +228,7 @@ class GotItTooltip(@NonNls val id: String,
   /**
    * Set whether to use contrast tooltip colors.
    */
+  @Deprecated("Not supported in the updated design")
   fun withContrastColors(contrastColors: Boolean): GotItTooltip {
     gotItBuilder.withContrastColors(contrastColors)
     return this
@@ -235,6 +237,7 @@ class GotItTooltip(@NonNls val id: String,
   /**
    * Show close shortcut next to the "Got It" button.
    */
+  @Deprecated("Not supported in the updated design")
   fun andShowCloseShortcut(): GotItTooltip {
     gotItBuilder.showCloseShortcut(true)
     return this
