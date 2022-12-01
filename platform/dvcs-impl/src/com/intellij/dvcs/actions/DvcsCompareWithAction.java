@@ -31,12 +31,16 @@ import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.CompareWithLocalDialog;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -97,6 +101,7 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
       .setItemChosenCallback(onChosen::accept)
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering(o -> o)
+      .withFixedRendererSize(JBUI.size(350, UIUtil.LIST_FIXED_CELL_HEIGHT)) // do not freeze on huge lists
       .createPopup();
   }
 
