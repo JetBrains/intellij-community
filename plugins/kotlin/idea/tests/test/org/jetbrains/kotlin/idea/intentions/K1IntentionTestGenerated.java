@@ -7191,6 +7191,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertPropertyGetterToInitializer/block.kt");
         }
 
+        @TestMetadata("expect.kt")
+        public void testExpect() throws Exception {
+            runTest("testData/intentions/convertPropertyGetterToInitializer/expect.kt");
+        }
+
         @TestMetadata("extentionProperty.kt")
         public void testExtentionProperty() throws Exception {
             runTest("testData/intentions/convertPropertyGetterToInitializer/extentionProperty.kt");
