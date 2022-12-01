@@ -7,29 +7,30 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.platform.ProjectSelfieUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.Security;
-import java.util.Base64;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
@@ -42,7 +43,9 @@ public final class Splash extends Dialog {
   public Splash(@NotNull ApplicationInfoEx info) {
     super((Frame)null, "splash" /* not visible, but available through window properties on Linux */);
     setUndecorated(true);
+    setBackground(Gray.TRANSPARENT);
     setResizable(false); // makes tiling window managers on Linux show window as floating
+    WindowRoundedCornersManager.setRoundedCorners(this);
 
     progressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info);
 
@@ -51,7 +54,6 @@ public final class Splash extends Dialog {
     image = loadImage(info.getSplashImageUrl(), info);
     int width = image.getWidth(null);
     int height = image.getHeight(null);
-
     setSize(new Dimension(width, height));
     setLocationInTheCenterOfScreen(this);
   }
@@ -71,44 +73,59 @@ public final class Splash extends Dialog {
   }
 
   private static @NotNull Image loadImage(@NotNull String path, @NotNull ApplicationInfoEx appInfo) {
-    float scale = JBUIScale.sysScale();
-    if (isCacheNeeded(scale)) {
-      var image = loadImageFromCache(path, scale, appInfo);
+    float sysScale = JBUIScale.sysScale();
+    var file = getCacheFile(path, sysScale, appInfo);
+    if (file != null) {
+      var image = loadImageFromCache(file);
       if (image != null) {
         return image;
       }
-
-      cacheAsync(path, appInfo);
     }
 
-    Image result = doLoadImage(path);
+    Image result = doLoadImage(path, sysScale);
     if (result == null) {
       throw new IllegalStateException("Cannot find image: " + path);
+    }
+
+    if (file != null) {
+      ForkJoinPool.commonPool().execute(() -> {
+        try {
+          BufferedImage rawImage =
+            (BufferedImage)(result instanceof JBHiDPIScaledImage ? ((JBHiDPIScaledImage)result).getDelegate() : result);
+          assert rawImage != null;
+          ProjectSelfieUtil.INSTANCE.writeImage(file, rawImage, sysScale);
+        }
+        catch (Throwable e) {
+          Logger.getInstance(Splash.class).warn("Cannot save splash image", e);
+        }
+      });
     }
     return result;
   }
 
-  private static void cacheAsync(@NotNull String url, @NotNull ApplicationInfoEx appInfo) {
-    // don't use already loaded image to avoid oom
-    NonUrgentExecutor.getInstance().execute(() -> {
-      var cacheFile = getCacheFile(url, JBUIScale.sysScale(), appInfo);
-      if (cacheFile == null) {
-        return;
-      }
+  static @Nullable Image doLoadImage(@NotNull String path, float sysScale) {
+    BufferedImage originalImage = ImageLoader.loadImageForStartUp(path, Splash.class.getClassLoader());
+    if (originalImage == null) {
+      return null;
+    }
 
-      var image = doLoadImage(url);
-      if (image != null) {
-        saveImage(cacheFile, FileUtilRt.getExtension(url), image);
-      }
-    });
-  }
+    int w = originalImage.getWidth();
+    int h = originalImage.getHeight();
 
-  private static boolean isCacheNeeded(float scale) {
-    return scale != 1 && scale != 2;
-  }
+    @SuppressWarnings("UndesirableClassUsage")
+    BufferedImage resultImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g2 = resultImage.createGraphics();
 
-  static @Nullable Image doLoadImage(@NotNull String path) {
-    return ImageLoader.loadImageForStartUp(path, Splash.class.getClassLoader(), ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(), !path.endsWith(".svg"));
+    g2.setComposite(AlphaComposite.Src);
+    ImageUtil.applyQualityRenderingHints(g2);
+    //noinspection UseJBColor
+    g2.setColor(Color.WHITE);
+    float cornerRadius = 8 * sysScale;
+    g2.fill(new RoundRectangle2D.Float(0, 0, w, h, cornerRadius, cornerRadius));
+    g2.setComposite(AlphaComposite.SrcIn);
+    g2.drawImage(originalImage, 0, 0, null);
+    g2.dispose();
+    return ImageUtil.ensureHiDPI(resultImage, ScaleContext.create());
   }
 
   @Override
@@ -140,72 +157,51 @@ public final class Splash extends Dialog {
     }
   }
 
-   private static void saveImage(@NotNull Path file, String extension, @NotNull Image image) {
-     try {
-       var tmp = file.resolve(file + ".tmp" + System.currentTimeMillis());
-       Files.createDirectories(tmp.getParent());
-       try {
-         ImageIO.write(ImageUtil.toBufferedImage(image), extension, tmp.toFile());
-         try {
-           Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE);
-         }
-         catch (AtomicMoveNotSupportedException e) {
-           Files.move(tmp, file);
-         }
-       }
-       finally {
-         Files.deleteIfExists(tmp);
-       }
-     }
-     catch (Throwable ignored) {
-     }
-   }
+  private static @Nullable Image loadImageFromCache(@NotNull Path file) {
+    try {
+      return ProjectSelfieUtil.INSTANCE.readImage(file, ScaleContext::create);
+    }
+    catch (Exception e) {
+      // don't use `error`, because it can crash application
+      Logger.getInstance(Splash.class).warn("Failed to load splash image", e);
+    }
+    return null;
+  }
 
-   private static @Nullable Image loadImageFromCache(@NotNull String path, float scale, @NotNull ApplicationInfoEx appInfo) {
-     var file = getCacheFile(path, scale, appInfo);
-     if (file == null) {
-       return null;
-     }
+  private static @Nullable Path getCacheFile(@NotNull String path, float scale, @NotNull ApplicationInfoEx appInfo) {
+    try {
+      var d = MessageDigest.getInstance("SHA-256", Security.getProvider("SUN"));
+      d.update(path.getBytes(StandardCharsets.UTF_8));
+      ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE + 1).order(ByteOrder.LITTLE_ENDIAN);
+      // path for EAP and release builds is the same, but content maybe different
+      buffer.put((byte)(appInfo.isEAP() ? 1 : 0));
 
-     try {
-       if (!Files.isRegularFile(file)) {
-         return null;
-       }
-       Image image = ImageIO.read(file.toFile());
-       if (StartupUiUtil.isJreHiDPI()) {
-         int w = image.getWidth(ImageLoader.ourComponent);
-         int h = image.getHeight(ImageLoader.ourComponent);
-         image = new JBHiDPIScaledImage(image, w / (double)scale, h / (double)scale, BufferedImage.TYPE_INT_ARGB);
-       }
-       return image;
-     }
-     catch (IOException e) {
-       // don't use `error`, because it can crash application
-       Logger.getInstance(Splash.class).warn("Failed to load splash image", e);
-     }
-     return null;
-   }
+      // for dev run build data is equal to run time
+      if (appInfo.getBuild().isSnapshot()) {
+        long size = 0;
+        try {
+          String pathToSplash = path.startsWith("/") ? path.substring(1) : path;
+          URL resource = Splash.class.getClassLoader().getResource(pathToSplash);
+          if (resource != null) {
+            size = Files.size(Path.of(resource.toURI()));
+          }
+        }
+        catch (Exception e) {
+          Logger.getInstance(Splash.class).warn("Failed to read splash image", e);
+        }
+        buffer.putLong(size);
+      }
+      else {
+        buffer.putLong(appInfo.getBuildDate().getTimeInMillis());
+      }
+      buffer.flip();
+      d.update(buffer);
 
-   private static @Nullable Path getCacheFile(@NotNull String path, float scale, @NotNull ApplicationInfoEx appInfo) {
-     try {
-       var d = MessageDigest.getInstance("SHA-256", Security.getProvider("SUN"));
-       d.update(path.getBytes(StandardCharsets.UTF_8));
-       // path for EAP and release builds is the same, but content maybe different
-       d.update((byte)(appInfo.isEAP() ? 1 : 0));
-
-       String pathToSplash = path.startsWith("/") ? path.substring(1) : path;
-       URL resource = Splash.class.getClassLoader().getResource(pathToSplash);
-       if (resource != null) {
-         long fileSize = Files.size(Paths.get(resource.toURI()));
-         ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE).putLong(fileSize);
-         d.update(buffer);
-       }
-       var encodedDigest = Base64.getUrlEncoder().encodeToString(d.digest());
-       int dotIndex = path.lastIndexOf('.');
-       return Paths.get(PathManager.getSystemPath(), "splashSlides", encodedDigest + '.' + scale + '.' + (dotIndex < 0 ? "" : path.substring(dotIndex)));
-     }
-     catch (Exception e) {
-       return null;
-     }
-   }
+      var encodedDigest = new BigInteger(1, d.digest()).toString(Character.MAX_RADIX);
+      return Path.of(PathManager.getSystemPath(), "splash", encodedDigest + '.' + scale + ".ij");
+    }
+    catch (Exception e) {
+      return null;
+    }
+  }
 }

@@ -179,21 +179,29 @@ public final class ImageLoader {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Image loadImageForStartUp(@NotNull String path,
-                                                    @NotNull ClassLoader classLoader,
-                                                    @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                                    @NotNull ScaleContext scaleContext,
-                                                    boolean isUpScaleNeeded) {
-    List<ImageDescriptor> descriptors = createImageDescriptorList(path, flags, scaleContext);
-    boolean isHiDpiNeeded = StartupUiUtil.isJreHiDPI(scaleContext);
+  public static @Nullable BufferedImage loadImageForStartUp(@NotNull String requestedPath, @NotNull ClassLoader classLoader) {
+    ScaleContext scaleContext = ScaleContext.create();
+    List<ImageDescriptor> descriptors = createImageDescriptorList(requestedPath, ALLOW_FLOAT_SCALING, scaleContext);
     for (ImageDescriptor descriptor : descriptors) {
       try {
-        Image image = loadByDescriptorWithoutCache(descriptor, null, classLoader, null);
-        if (image == null) {
+        byte[] data = getResourceData(descriptor.path, null, classLoader);
+        if (data == null) {
           continue;
         }
-        return convertImage(image, Collections.emptyList(), flags, scaleContext, isUpScaleNeeded, isHiDpiNeeded, descriptor.scale, descriptor.isSvg
-        );
+
+        Image image;
+        if (descriptor.isSvg) {
+          return SVGLoader.loadWithoutCache(data, descriptor.scale);
+        }
+        else {
+          image = loadPng(new ByteArrayInputStream(data), descriptor.scale, null);
+          float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
+          if (descriptor.scale > 1) {
+            // compensate the image original scale
+            scale /= descriptor.scale;
+          }
+          return (BufferedImage)scaleImage(image, scale);
+        }
       }
       catch (IOException ignore) {
       }
@@ -510,6 +518,7 @@ public final class ImageLoader {
     if (w <= 0 || h <= 0) {
       return image;
     }
+
     int width = (int)Math.round(scale * w);
     int height = (int)Math.round(scale * h);
     // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
