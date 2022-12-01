@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 
@@ -98,7 +99,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
         
         fun getLambdaReceiver(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
             val receiverType = lambda.resolveType()?.getReceiverTypeFromFunctionType() ?: return null
-            val descriptor = lambda.functionLiteral.resolveToDescriptorIfAny() ?: return null
+            val descriptor = lambda.functionLiteral.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return null
             return factory.varFactory.createVariableValue(KtThisDescriptor(descriptor, receiverType.toDfType()))
         }
 
