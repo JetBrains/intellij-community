@@ -25,3 +25,12 @@ class NotNullableCopyableDataNodeUserDataProperty<in R : DataNode<*>, T : Any>(v
         thisRef.putCopyableUserData(key, if (value != defaultValue) value else null)
     }
 }
+
+class FactoryCopyableDataNodeUserDataProperty<in R : DataNode<*>, T : Any>(val key: Key<T>, private val factory: () -> T) {
+    operator fun getValue(thisRef: R, property: KProperty<*>): T =
+        thisRef.getCopyableUserData(key) ?: factory().also { value -> thisRef.putCopyableUserData(key, value) }
+
+    operator fun setValue(thisRef: R, property: KProperty<*>, value: T) {
+        thisRef.putCopyableUserData(key, value)
+    }
+}
