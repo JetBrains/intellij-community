@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dev.psiViewer;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
 import com.intellij.dev.psiViewer.formatter.BlockViewerPsiBasedTree;
 import com.intellij.dev.psiViewer.stubs.StubViewerPsiBasedTree;
@@ -208,11 +209,13 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     Disposer.register(getDisposable(), myStubTree);
     Disposer.register(getDisposable(), myBlockTree);
 
-    setOKButtonText("&Build PSI Tree");
-    setCancelButtonText("&Close");
+    setOKButtonText(DevPsiViewerBundle.message("button.build.psi.tree"));
+    setCancelButtonText(DevPsiViewerBundle.message("button.close"));
     Disposer.register(myProject, getDisposable());
     VirtualFile selectedFile = selectedEditor == null ? null : FileDocumentManager.getInstance().getFile(selectedEditor.getDocument());
-    setTitle(selectedFile == null ? "PSI Viewer" : "PSI Viewer: " + selectedFile.getName());
+    setTitle(selectedFile == null ? 
+             DevPsiViewerBundle.message("dialog.title.psi.viewer") : 
+             DevPsiViewerBundle.message("dialog.title.psi.viewer.with.file", selectedFile.getName()));
     if (selectedEditor != null) {
       myEditor = (EditorEx)EditorFactory.getInstance().createEditor(selectedEditor.getDocument(), myProject);
     }
@@ -260,7 +263,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         if (userObject instanceof ViewerNodeDescriptor descriptor) {
           Object element = descriptor.getElement();
           if (c instanceof NodeRenderer nodeRenderer) {
-            nodeRenderer.setToolTipText(element.getClass().getName());
+            nodeRenderer.setToolTipText(getElementDescription(element));
           }
           if (element instanceof PsiElement psiElement && FileContextUtil.getFileContext(psiElement.getContainingFile()) != null ||
               element instanceof ViewerTreeStructure.Inject) {
@@ -282,9 +285,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     referencesPanel.add(myRefs);
     referencesPanel.setBorder(IdeBorderFactory.createBorder());
 
-    myTabs.addTab(new TabInfo(referencesPanel).setText("References"));
-    myTabs.addTab(new TabInfo(myBlockTree.getComponent()).setText("Block Structure"));
-    myTabs.addTab(new TabInfo(myStubTree.getComponent()).setText("Stub Structure"));
+    myTabs.addTab(new TabInfo(referencesPanel).setText(DevPsiViewerBundle.message("tab.title.references")));
+    myTabs.addTab(new TabInfo(myBlockTree.getComponent()).setText(DevPsiViewerBundle.message("tab.title.block.structure")));
+    myTabs.addTab(new TabInfo(myStubTree.getComponent()).setText(DevPsiViewerBundle.message("tab.title.stub.structure")));
     PsiViewerSettings settings = PsiViewerSettings.getSettings();
     int tabIndex = settings.lastSelectedTabIndex;
     TabInfo defaultInfo = tabIndex < myTabs.getTabCount() ? myTabs.getTabAt(tabIndex) : null;
@@ -375,9 +378,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       myFileTypeComboBox.setSelectedIndex(0);
     }
 
-    myDialectComboBox.setRenderer(SimpleListCellRenderer.create("(none)", value -> value.getDisplayName()));
+    myDialectComboBox.setRenderer(SimpleListCellRenderer.create(DevPsiViewerBundle.message("label.none"), value -> value.getDisplayName()));
     myDialectComboBox.addFocusListener(new AutoExpandFocusListener(myDialectComboBox));
-    myExtensionComboBox.setRenderer(SimpleListCellRenderer.create("", value -> "." + value));
+    myExtensionComboBox.setRenderer(SimpleListCellRenderer.create("", value -> "." + value)); //NON-NLS
     myExtensionComboBox.addFocusListener(new AutoExpandFocusListener(myExtensionComboBox));
 
     myShowWhiteSpacesBox.addActionListener(__ -> {
@@ -409,6 +412,11 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
     updateEditor();
     super.init();
+  }
+
+  @NotNull
+  private static @NlsSafe String getElementDescription(Object element) {
+    return element.getClass().getName();
   }
 
   public static void initTree(JTree tree) {
@@ -540,7 +548,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         myExtensionComboBox.setVisible(true);
         myExtensionLabel.setVisible(true);
         VirtualFile file = myExternalDocument ? FileDocumentManager.getInstance().getFile(myEditor.getDocument()) : null;
-        String fileExt = file == null ? "" : FileUtilRt.getExtension(file.getName());
+        String fileExt = file == null ? "" : FileUtilRt.getExtension(file.getName()); //NON-NLS
         if (!fileExt.isEmpty() && extensions.contains(fileExt)) {
           myExtensionComboBox.setSelectedItem(fileExt);
           return;
@@ -587,7 +595,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   @Override
   protected Action @NotNull [] createActions() {
-    AbstractAction copyPsi = new AbstractAction("Cop&y PSI") {
+    AbstractAction copyPsi = new AbstractAction(DevPsiViewerBundle.message("cop.y.psi")) {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         PsiElement element = parseText(myEditor.getDocument().getText());
@@ -657,7 +665,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       }
     }
     catch (IncorrectOperationException e) {
-      Messages.showMessageDialog(myProject, e.getMessage(), "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(myProject, e.getMessage(), CommonBundle.message("title.error"), Messages.getErrorIcon());
     }
     return null;
   }
@@ -775,7 +783,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     List<PsiReference> psiReferences = computeSlowOperationsSafeInBgThread(myProject, progressTitle, updater);
 
     for (PsiReference reference : psiReferences) {
-      model.addElement(reference.getClass().getName());
+      model.addElement(getElementDescription(reference));
     }
   }
 

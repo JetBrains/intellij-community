@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,8 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
     myExtension = extension;
   }
 
-  public String getText() {
-    return myFileType != null ? myFileType.getName() + " file" : myExtension.getName();
+  public @Nls String getText() {
+    return myFileType != null ? DevPsiViewerBundle.message("label.file", myFileType.getName()) : myExtension.getName();
   }
 
   @Nullable
