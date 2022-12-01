@@ -303,9 +303,20 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     if (obsoleteModules.isEmpty()) {
       return false;
     }
+
+    var obsoleteModulesToConfirm = new ArrayList<>(obsoleteModules);
+
     var myNewlyIgnoredModules = ContainerUtil.map(myNewlyIgnoredProjects, mavenProject -> myMavenProjectToModule.get(mavenProject));
     // don't ask about module deletion if it was explicitly deleted by the user in project view or project structure
-    if (myNewlyIgnoredModules.containsAll(obsoleteModules)) {
+    obsoleteModulesToConfirm.removeIf(module -> myNewlyIgnoredModules.contains(module));
+
+    // don't ask about module deletion if the pom file was moved to another directory
+    var renamingModuleNames = myMavenProjectToModuleName.keySet().stream()
+      .filter(mavenProject -> !myMavenProjectToModule.containsKey(mavenProject))
+      .map(mavenProject -> myMavenProjectToModuleName.get(mavenProject)).collect(Collectors.toSet());
+    obsoleteModulesToConfirm.removeIf(module -> renamingModuleNames.contains(module.getName()));
+
+    if (obsoleteModulesToConfirm.isEmpty()) {
       return true;
     }
 
@@ -314,7 +325,7 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
                               () -> result[0] = Messages.showYesNoDialog(myProject,
                                                                          MavenProjectBundle.message("maven.import.message.delete.obsolete",
-                                                                                                    formatModules(obsoleteModules)),
+                                                                                                    formatModules(obsoleteModulesToConfirm)),
                                                                          MavenProjectBundle.message("maven.project.import.title"),
                                                                          Messages.getQuestionIcon()));
 
