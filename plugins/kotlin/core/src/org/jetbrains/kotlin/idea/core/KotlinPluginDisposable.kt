@@ -6,10 +6,16 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
 class KotlinPluginDisposable : Disposable {
+    @Volatile
+    private var _disposed: Boolean = false
+    val disposed: Boolean get() = _disposed
+
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): Disposable = project.service<KotlinPluginDisposable>()
+        fun getInstance(project: Project): KotlinPluginDisposable = project.service<KotlinPluginDisposable>()
     }
 
-    override fun dispose() {}
+    override fun dispose() {
+        _disposed = true
+    }
 }
