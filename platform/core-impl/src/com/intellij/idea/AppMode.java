@@ -122,7 +122,7 @@ public final class AppMode {
 
     @SuppressWarnings("SpellCheckingInspection")
     List<String> headlessCommands = Arrays.asList(
-      "ant", "duplocate", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
+      "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
       "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "invalidateCaches", "warmup", "buildEventsScheme",
       "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
       "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit", "qodanaExcludedPlugins");
