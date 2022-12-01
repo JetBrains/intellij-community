@@ -17,14 +17,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.getImportAlias
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinMethodReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.util.actualsForExpected
-import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -72,7 +69,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
             // have to filter so far as
             // - text-matched reference could be named as imported alias and found in ReferencesSearch
             // - MethodUsagesSearcher could create its own MethodReferencesSearchParameters regardless provided one
-            it.element.getNonStrictParentOfType<KtImportDirective>() != null || it.getImportAlias() == null
+            it.element.getNonStrictParentOfType<KtImportDirective>() != null || (it as? KtSimpleNameReference)?.getImportAlias() == null
         }
     }
 
@@ -80,7 +77,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         if (ref !is KtReference) {
             val targetElement = ref.resolve()
             if (targetElement is KtLightMethod && targetElement.isMangled) {
-                KotlinTypeMapper.InternalNameMapper.getModuleNameSuffix(targetElement.name)?.let {
+                renameRefactoringSupport.getModuleNameSuffixForMangledName(targetElement.name)?.let {
                     return MangledJavaRefUsageInfo(
                         it,
                         element,
@@ -119,9 +116,9 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
 
         val declaration = element.namedUnwrappedElement as? KtNamedDeclaration
         if (declaration != null) {
-            declaration.liftToExpected()?.let { expectDeclaration ->
+            renameRefactoringSupport.liftToExpected(declaration)?.let { expectDeclaration ->
                 allRenames[expectDeclaration] = safeNewName
-                expectDeclaration.actualsForExpected().forEach { allRenames[it] = safeNewName }
+                renameRefactoringSupport.actualsForExpected(expectDeclaration).forEach { allRenames[it] = safeNewName }
             }
         }
     }
@@ -147,12 +144,12 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
 
     protected fun renameMangledUsageIfPossible(usage: UsageInfo, element: PsiElement, newName: String): Boolean {
         val chosenName = (if (usage is MangledJavaRefUsageInfo) {
-            KotlinTypeMapper.InternalNameMapper.mangleInternalName(newName, usage.manglingSuffix)
+            renameRefactoringSupport.mangleInternalName(newName, usage.manglingSuffix)
         } else {
             val reference = usage.reference
             if (reference is KtReference) {
                 if (element is KtLightMethod && element.isMangled) {
-                    KotlinTypeMapper.InternalNameMapper.demangleInternalName(newName)
+                    renameRefactoringSupport.demangleInternalName(newName)
                 } else null
             } else null
         }) ?: return false

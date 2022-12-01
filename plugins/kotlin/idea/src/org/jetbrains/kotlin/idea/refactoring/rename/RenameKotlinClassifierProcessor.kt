@@ -11,15 +11,9 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.util.withExpectedActuals
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 
@@ -45,7 +39,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
         super.prepareRenaming(element, newName, allRenames)
 
         val classOrObject = getClassOrObject(element) as? KtClassOrObject ?: return
-        val topLevelClassifiers = classOrObject.withExpectedActuals().filter { it.parent is KtFile }
+        val topLevelClassifiers = renameRefactoringSupport.withExpectedActuals(classOrObject).filter { it.parent is KtFile }
 
         topLevelClassifiers.forEach {
             val file = it.containingKtFile
@@ -72,11 +66,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
     }
 
     private fun PsiReference.isCompanionObjectClassReference(): Boolean {
-        if (this !is KtSimpleNameReference) {
-            return false
-        }
-        val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
-        return bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, element] != null
+        return renameRefactoringSupport.isCompanionObjectClassReference(this)
     }
 
     override fun findCollisions(
@@ -96,9 +86,9 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 
     private fun getClassOrObject(element: PsiElement?): PsiElement? = when (element) {
         is KtLightClass ->
-            when (element) {
-                is KtLightClassForSourceDeclaration -> element.kotlinOrigin
-                is KtLightClassForFacade -> element
+            when {
+                renameRefactoringSupport.isLightClassForRegularKotlinClass(element) -> element.kotlinOrigin
+                element is KtLightClassForFacade -> element
                 else -> throw AssertionError("Should not be suggested to rename element of type " + element::class.java + " " + element)
             }
 

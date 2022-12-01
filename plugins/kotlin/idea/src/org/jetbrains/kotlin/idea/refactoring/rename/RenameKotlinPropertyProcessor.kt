@@ -19,28 +19,25 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.JvmNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
-import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -65,10 +62,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     }
 
     private fun getJvmNames(element: PsiElement): Pair<String?, String?> {
-        val descriptor = (element.unwrapped as? KtDeclaration)?.unsafeResolveToDescriptor() as? PropertyDescriptor ?: return null to null
-        val getterName = descriptor.getter?.let { DescriptorUtils.getJvmName(it) }
-        val setterName = descriptor.setter?.let { DescriptorUtils.getJvmName(it) }
-        return getterName to setterName
+        return renameRefactoringSupport.getJvmNamesForPropertyAccessors(element)
     }
 
     protected fun processFoundReferences(
@@ -228,8 +222,8 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
         for (propertyMethod in propertyMethods) {
             val mangledPropertyName = if (propertyMethod is KtLightMethod && propertyMethod.isMangled) {
-                val suffix = KotlinTypeMapper.InternalNameMapper.getModuleNameSuffix(propertyMethod.name)
-                if (suffix != null && newPropertyName != null) KotlinTypeMapper.InternalNameMapper.mangleInternalName(
+                val suffix = renameRefactoringSupport.getModuleNameSuffixForMangledName(propertyMethod.name)
+                if (suffix != null && newPropertyName != null) renameRefactoringSupport.mangleInternalName(
                     newPropertyName,
                     suffix
                 ) else null
@@ -289,9 +283,11 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                     }
                 } else {
                     val demangledName =
-                        if (newName != null && overrider is KtLightMethod && overrider.isMangled) KotlinTypeMapper.InternalNameMapper.demangleInternalName(
-                            newName
-                        ) else null
+                        if (newName != null && overrider is KtLightMethod && overrider.isMangled) {
+                            renameRefactoringSupport.demangleInternalName(newName)
+                        } else {
+                            null
+                        }
                     val adjustedName = demangledName ?: newName
                     val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, oldName, adjustedName)
                     if (newOverriderName != null) {
@@ -338,7 +334,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     ) {
         val newNameUnquoted = newName.unquoteKotlinIdentifier()
         if (element is KtLightMethod) {
-            if (element.modifierList.hasAnnotation(DescriptorUtils.JVM_NAME.asString())) {
+            if (element.modifierList.hasAnnotation(JvmNames.JVM_NAME.asString())) {
                 return super.renameElement(element, newName, usages, listener)
             }
 
@@ -385,7 +381,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                 val refElementName = refElement.name
                 val refElementNameToCheck = (
                         if (usage is MangledJavaRefUsageInfo)
-                            KotlinTypeMapper.InternalNameMapper.demangleInternalName(refElementName)
+                            renameRefactoringSupport.demangleInternalName(refElementName)
                         else
                             null
                         ) ?: refElementName
@@ -420,7 +416,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
 
-        dropOverrideKeywordIfNecessary(element)
+        renameRefactoringSupport.dropOverrideKeywordIfNecessary(element)
 
         listener?.elementRenamed(element)
     }
