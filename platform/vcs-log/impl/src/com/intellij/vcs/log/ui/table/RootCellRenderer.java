@@ -67,8 +67,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
               VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
     // FIXME: temporary solution for the new UI
-    boolean hovered = row == getHoveredRow(table);
-    hovered = ExperimentalUI.isNewUI() ? hovered && !isSelected : hovered;
+    boolean hovered = ExperimentalUI.isNewUI() ? false : row == getHoveredRow(table);
     isSelected = ExperimentalUI.isNewUI() ? false : isSelected;
 
     myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected, hovered).getBackground());

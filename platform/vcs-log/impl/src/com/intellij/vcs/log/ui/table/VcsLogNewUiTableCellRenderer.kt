@@ -45,14 +45,19 @@ internal class VcsLogNewUiTableCellRenderer(
 
     updateSelectablePanelIfNeeded(isRightColumn, isLeftColumn, columnRenderer)
 
+    val isHovered = TableHoverListener.getHoveredRow(table) == row
+
     selectablePanel.apply {
-      background = getUnselectedBackground(table, row, column, isSelected, hasFocus)
-      selectionColor = if (isSelected) VcsLogGraphTable.getSelectionBackground(table.hasFocus()) else null
+      background = getUnselectedBackground(table, row, column, hasFocus)
+      selectionColor = getSelectionColor(table, row, column, isSelected, hasFocus, isHovered)
       selectionArc = 0
       selectionArcCorners = SelectionArcCorners.ALL
 
-      if (isSelected && (isLeft || isRight)) {
-        getSelectedRowType(table, row).tune(selectablePanel, isLeft, isRight)
+      if ((isLeft || isRight)) {
+        when {
+          isSelected -> getSelectedRowType(table, row).tune(selectablePanel, isLeft, isRight)
+          isHovered -> SelectedRowType.SINGLE.tune(selectablePanel, isLeft, isRight)
+        }
       }
     }
 
@@ -89,11 +94,22 @@ internal class VcsLogNewUiTableCellRenderer(
     return null
   }
 
-  private fun getUnselectedBackground(table: JTable, row: Int, column: Int, isSelected: Boolean, hasFocus: Boolean): Color? {
-    val hovered = if (isSelected) false else row == TableHoverListener.getHoveredRow(table)
+  private fun getUnselectedBackground(table: JTable, row: Int, column: Int, hasFocus: Boolean): Color? {
     return (table as VcsLogGraphTable)
-      .getStyle(row, column, hasFocus, false, hovered)
+      .getStyle(row, column, hasFocus, false, false)
       .background
+  }
+
+  private fun getSelectionColor(table: JTable, row: Int, column: Int, isSelected: Boolean, hasFocus: Boolean, isHovered: Boolean): Color? {
+    return when {
+      isSelected -> VcsLogGraphTable.getSelectionBackground(table.hasFocus())
+
+      isHovered -> (table as VcsLogGraphTable)
+        .getStyle(row, column, hasFocus, false, true)
+        .background
+
+      else -> null
+    }
   }
 
   private fun getSelectedRowType(table: JTable, row: Int): SelectedRowType {
