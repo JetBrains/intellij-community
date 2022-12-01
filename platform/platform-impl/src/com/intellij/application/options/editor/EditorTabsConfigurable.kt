@@ -44,23 +44,15 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         row(TAB_PLACEMENT + ":") {
           myEditorTabPlacement = tabPlacementComboBox().component
         }
-        if (ExperimentalUI.isNewUI()) {
+        row {
+          myOneRowCheckbox = checkBox(showTabsInOneRow)
+            .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+        }
+        indent {
           row {
-            checkBox(hideTabsIfNeeded)
-              .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP })
-              .component
-          }
-        } else {
-          row {
-            myOneRowCheckbox = checkBox(showTabsInOneRow)
-              .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
-          }
-          indent {
-            row {
-              checkBox(hideTabsIfNeeded).enabledIf(
-                myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
-                  and myOneRowCheckbox.selected).component
-            }
+            checkBox(hideTabsIfNeeded).enabledIf(
+              myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
+                and myOneRowCheckbox.selected).component
           }
         }
         row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)

@@ -3190,7 +3190,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean isSingleRow() {
-    return mySingleRow || ExperimentalUI.isNewUI();
+    return mySingleRow;
   }
 
   public boolean isSideComponentVertical() {
