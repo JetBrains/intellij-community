@@ -12,6 +12,8 @@
   <content>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>
+    <module name="intellij.markdown.frontmatter.yaml"/>
+    <module name="intellij.markdown.frontmatter.toml"/>
   </content>
 
   <description><![CDATA[

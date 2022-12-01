@@ -1,12 +1,12 @@
 <idea-plugin package="org.intellij.plugins.markdown.frontmatter">
   <dependencies>
     <plugin id="org.intellij.intelliLang"/>
-    <plugin id="org.jetbrains.plugins.yaml"/>
     <plugin id="com.intellij.modules.json"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <multiHostInjector implementation="org.intellij.plugins.markdown.frontmatter.header.FrontMatterHeaderLanguageInjector"/>
+    <languageInjectionPerformer language="Markdown"
+                                implementationClass="org.intellij.plugins.markdown.frontmatter.header.FrontMatterHeaderLanguageInjectionPerformer"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.intellij.plugins.markdown.frontmatter.header.FrontMatterHeaderJsonSchemaProviderFactory"/>

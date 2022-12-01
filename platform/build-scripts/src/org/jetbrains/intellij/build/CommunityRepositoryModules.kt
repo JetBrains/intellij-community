@@ -257,6 +257,8 @@ object CommunityRepositoryModules {
       "intellij.markdown.core",
       "intellij.markdown.fenceInjection",
       "intellij.markdown.frontmatter",
+      "intellij.markdown.frontmatter.yaml",
+      "intellij.markdown.frontmatter.toml",
     )),
     plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
     plugin(listOf(

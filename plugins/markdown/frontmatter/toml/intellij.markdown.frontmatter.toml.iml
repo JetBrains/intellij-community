@@ -11,8 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.markdown.core" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" />
-    <orderEntry type="module" module-name="intellij.json" />
+    <orderEntry type="module" module-name="intellij.toml" />
   </component>
 </module>
