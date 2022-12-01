@@ -8,7 +8,7 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
     fn remote_dev_args_test(#[case]launcher_location: &LayoutSpec) {
         let test = &prepare_test_env(launcher_location);
         let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
