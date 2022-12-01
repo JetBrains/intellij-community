@@ -5,7 +5,7 @@ use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use log::{debug, warn};
 use anyhow::{bail, Context, Result};
-use utils::{canonical_non_unc, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
+use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
 
 use crate::{get_config_home, LaunchConfiguration, ProductInfo};
 
@@ -99,17 +99,11 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
 impl DefaultLaunchConfiguration {
     pub fn new(args: Vec<String>) -> Result<Self> {
-        let current_exe = &match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
-            Ok(x) => {
-                debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
-                x
-            }
-            Err(_) => { env::current_exe()? }
-        };
+        let current_exe = get_current_exe();
 
         debug!("Resolved current executable path as '{current_exe:?}'");
 
-        let ide_home = get_ide_home(current_exe).context("Failed to resolve IDE home")?;
+        let ide_home = get_ide_home(&current_exe).context("Failed to resolve IDE home")?;
         debug!("Resolved ide home dir as '{ide_home:?}'");
 
         let ide_bin = ide_home.join("bin");

@@ -43,6 +43,7 @@ use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
 use anyhow::{bail, Result};
+use utils::get_current_exe;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
 
 #[cfg(target_os = "windows")] use {
@@ -156,7 +157,7 @@ trait LaunchConfiguration {
 }
 
 pub fn is_remote_dev() -> bool {
-    let current_exe_path = env::current_exe().expect("Failed to get current exe path");
+    let current_exe_path = get_current_exe();
     debug!("Executable path: {:?}", current_exe_path);
     let current_exe_name = current_exe_path.file_name()
         .expect("Failed to get current exe filename");
