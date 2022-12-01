@@ -113,10 +113,6 @@ private class ElementInfoManager(private val seUI: SearchEverywhereUI) {
       return
     }
 
-    val sb = StringBuilder()
-    sb.appendLine("contributor: ${info.contributor.searchProviderId}")
-    sb.appendLine("weight: ${info.priority}")
-
-    content.text = sb.toString()
+    content.text = info.description
   }
 }

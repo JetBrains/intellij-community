@@ -33,4 +33,17 @@ internal class SearchEverywhereFoundElementInfoWithMl(
       return (weight * MAX_ELEMENT_WEIGHT).toInt() * 100_000 + priority
     }
   }
+
+  override fun getDescription(): String {
+    val sb = StringBuilder()
+
+    val searchProviderId = contributor?.searchProviderId ?: "null"
+    sb.appendLine("Contributor: $searchProviderId")
+    sb.appendLine("Weight: ${priority}")
+    sb.appendLine("ML Weight: ${mlWeight}")
+    sb.appendLine("ML Features:")
+    mlFeatures.forEach { eventPair -> sb.appendLine("${eventPair.field.name}: ${eventPair.data}") }
+
+    return sb.toString()
+  }
 }
