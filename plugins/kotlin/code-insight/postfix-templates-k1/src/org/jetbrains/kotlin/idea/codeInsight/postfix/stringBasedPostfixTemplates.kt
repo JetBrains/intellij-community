@@ -117,9 +117,8 @@ internal abstract class AbstractKtForLoopNumbersPostfixTemplate(
     name = name,
     desc = desc,
     template = template,
-    selector = createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = p@{ expression, bindingContext ->
-        if (expression.elementType == KtNodeTypes.INTEGER_CONSTANT) return@p true
-        expression.kotlinType(bindingContext)?.isInt() == true
+    selector = createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = { expression, bindingContext ->
+        expression.elementType == KtNodeTypes.INTEGER_CONSTANT || expression.kotlinType(bindingContext)?.isInt() == true
     }),
     provider = provider
 ) {
