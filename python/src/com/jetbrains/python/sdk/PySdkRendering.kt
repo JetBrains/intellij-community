@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleColoredComponent
@@ -46,7 +47,7 @@ fun name(sdk: Sdk, name: String): Triple<String?, String, String?> {
  *
  * @see FileUtil.getLocationRelativeToUserHome
  */
-fun path(sdk: Sdk): String? {
+fun path(sdk: Sdk): @NlsSafe String? {
   val name = sdk.name
   val homePath = sdk.homePath ?: return null
 
