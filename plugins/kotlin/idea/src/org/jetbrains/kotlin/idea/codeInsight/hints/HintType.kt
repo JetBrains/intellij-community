@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 enum class HintType(
@@ -183,9 +185,10 @@ enum class HintType(
             val leftExp = binaryExpression.left ?: return emptyList()
             val rightExp = binaryExpression.right ?: return emptyList()
             val operationReference: KtOperationReferenceExpression = binaryExpression.operationReference
-            val type = binaryExpression.getRangeBinaryExpressionType() ?: return emptyList()
+            val context = lazy { binaryExpression.safeAnalyze(BodyResolveMode.PARTIAL) }
+            val type = binaryExpression.getRangeBinaryExpressionType(context) ?: return emptyList()
 
-            if (!leftExp.isComparable() || !rightExp.isComparable()) return emptyList()
+            if (!leftExp.isComparable(context.value) || !rightExp.isComparable(context.value)) return emptyList()
 
             val (leftText: String, rightText: String?) = when (type) {
                 RANGE_TO -> {
