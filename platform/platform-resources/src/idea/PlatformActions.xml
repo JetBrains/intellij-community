@@ -1286,6 +1286,8 @@
       <action id="CompareKeymaps" internal="true" class="com.intellij.internal.CompareKeymapsAction"/>
       <action id="BrowseWeb" internal="true" class="com.intellij.internal.BrowseWebAction"/>
 
+      <action id="ShowSearchEverywhereItemInfo" class="com.intellij.ide.actions.searcheverywhere.ShowElementInfoAction" internal="true"/>
+
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 

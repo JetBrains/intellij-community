@@ -54,7 +54,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -102,6 +102,8 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 public final class SearchEverywhereUI extends BigPopupUI implements DataProvider, QuickSearchComponent {
 
   public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
+
+  static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
@@ -332,6 +334,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
+    if (SELECTED_ITEM_INFO.is(dataId)) {
+      return ContainerUtil.getOnlyItem(getSelectedInfos());
+    }
     if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
       SearchEverywhereFoundElementInfo info = ContainerUtil.getOnlyItem(getSelectedInfos());
       return info == null ? null : info.getElement();
@@ -411,7 +416,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void updateHint(Object element) {
     if (myHint == null || !myHint.isVisible()) return;
-    final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
+    final PopupUpdateProcessorBase updateProcessor = myHint.getUserData(PopupUpdateProcessorBase.class);
     if (updateProcessor != null) {
       updateProcessor.updatePopup(element);
     }
