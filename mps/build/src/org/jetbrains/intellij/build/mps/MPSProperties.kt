@@ -89,6 +89,11 @@ class MPSProperties : JetBrainsProductProperties() {
             // TODO: experiment 2 fix
             // layout.withModule("intellij.java.guiForms.rt")
 
+            layout.withModule("intellij.platform.jps.build", "jps/jps-build-test.jar")
+            layout.withModule("intellij.platform.jps.build.tests", "jps/jps-build-test.jar")
+            layout.withModule("intellij.platform.jps.model.tests", "jps/jps-build-test.jar")
+            layout.withModule("intellij.platform.jps.model.serialization.tests", "jps/jps-build-test.jar")
+
             layout.withModule("intellij.java.rt", "idea_rt.jar")
             layout.withProjectLibrary("Eclipse", LibraryPackMode.MERGED)
             layout.withProjectLibrary("JUnit4", LibraryPackMode.STANDALONE_MERGED)
@@ -100,8 +105,9 @@ class MPSProperties : JetBrainsProductProperties() {
 
         additionalModulesToCompile = persistentListOf("intellij.tools.jps.build.standalone")
         modulesToCompileTests = listOf(
-            "intellij.platform.jps.build", 
-            "intellij.platform.jps.model.tests", 
+            "intellij.platform.jps.build",
+            "intellij.platform.jps.build.tests",
+            "intellij.platform.jps.model.tests",
             "intellij.platform.jps.model.serialization.tests")
 
         buildSourcesArchive = true
