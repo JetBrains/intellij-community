@@ -17,8 +17,7 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 
 internal fun KtExpression.isRangeExpression(context: Lazy<BindingContext>? = null): Boolean = getRangeBinaryExpressionType(context) != null
 
-internal fun KtExpression.isComparable(): Boolean {
-    val context = safeAnalyze(BodyResolveMode.PARTIAL)
+internal fun KtExpression.isComparable(context: BindingContext): Boolean {
     val valType = getType(context) ?: return false
     return DescriptorUtils.isSubtypeOfClass(valType, valType.builtIns.comparable)
 }
