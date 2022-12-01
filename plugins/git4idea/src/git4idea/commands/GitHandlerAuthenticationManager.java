@@ -180,6 +180,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
                            (!Registry.is("git.use.shell.script.on.windows") ||
                             !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion));
     File scriptFile = service.getCallbackScriptPath(executable.getId(), new GitScriptGenerator(executable), useBatchFile);
-    myHandler.addCustomEnvironmentVariable(env, scriptFile);
+    String scriptPath = executable.convertFilePath(scriptFile);
+    myHandler.addCustomEnvironmentVariable(env, scriptPath);
   }
 }
