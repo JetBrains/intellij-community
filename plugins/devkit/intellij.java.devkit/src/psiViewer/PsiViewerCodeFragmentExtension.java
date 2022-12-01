@@ -12,7 +12,7 @@ import javax.swing.*;
 final class PsiViewerCodeFragmentExtension extends JavaPsiViewerExtension {
   @Override
   public @NotNull String getName() {
-    return "Java Code Block";
+    return JavaPsiViewerBundle.message("java.code.block");
   }
 
   @Override
