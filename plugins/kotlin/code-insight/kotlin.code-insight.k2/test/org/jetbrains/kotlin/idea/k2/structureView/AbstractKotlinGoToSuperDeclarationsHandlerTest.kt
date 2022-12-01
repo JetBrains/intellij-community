@@ -16,7 +16,7 @@ abstract class AbstractKotlinGoToSuperDeclarationsHandlerTest : NewLightKotlinCo
         get() = KotlinPluginKind.FIR_PLUGIN
 
     protected fun performTest() {
-        val file = myFixture.configureByMainPath() as KtFile
+        val file = myFixture.configureByDefaultFile() as KtFile
         val superDeclarations = KotlinGoToSuperDeclarationsHandler.findSuperDeclarations(file, editor.caretModel.offset)
         val actualText = render(superDeclarations?.items ?: emptyList())
         checkTextByExpectedPath(".expected", actualText)

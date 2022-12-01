@@ -2,28 +2,27 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.lineMarkers.test
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.testFramework.ExpectedHighlightingData
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.base.test.Tag
 
 abstract class AbstractLineMarkerTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
         get() = KotlinPluginKind.FIR_PLUGIN
 
     protected fun performTest() {
-        myFixture.configureByMainPathStrippingTags("lineMarker")
-        myFixture.doHighlighting()
+        myFixture.configureByDefaultFile()
 
         val document = editor.document
+        val data = ExpectedHighlightingData(document)
+        data.init()
+
+        myFixture.doHighlighting()
+
 
         val lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project)
-            .map { Tag(it.startOffset, it.endOffset, "lineMarker", "text" to it.lineMarkerTooltip) }
-
-        val expectedText = KotlinTestHelpers.insertTags(document.text, lineMarkers)
-
-        KotlinTestHelpers.assertEqualsToPath(mainPath, expectedText)
+        data.checkLineMarkers(myFixture.file, lineMarkers, document.text)
     }
 
     override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT

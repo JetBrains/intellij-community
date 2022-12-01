@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.io.exists
-import com.intellij.util.io.readText
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
@@ -22,17 +21,22 @@ import java.lang.reflect.Modifier
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.name
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.writeText
 
 abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
     protected abstract val pluginKind: KotlinPluginKind
 
-    val testRoot: Path by lazy { KotlinTestHelpers.getTestRootPath(javaClass) }
+    val testRoot: String by lazy {
+        val testClassPath = javaClass.getAnnotation(TestMetadata::class.java)?.value
+        ?: error("@${TestMetadata::class.java} annotation not found on class '${javaClass.name}'")
+        val pathString = KotlinTestHelpers.getTestRootPath(javaClass).resolve(testClassPath).absolutePathString()
+        if (pathString.endsWith(File.separatorChar)) pathString else pathString + File.separatorChar
+    }
 
     override fun getTestDataPath(): String {
-        val pathString = testRoot.absolutePathString()
-        return if (pathString.endsWith(File.separatorChar)) pathString else pathString + File.separatorChar
+        return testRoot
     }
 
     protected open val directivesContainer: DirectivesContainer
@@ -46,7 +50,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         directiveParser.build()
     }
 
-    protected val mainPath: Path by lazy {
+    protected val testMethodPath: Path by lazy {
         val testName = this.name
         val testClass = javaClass
         val testMethod = testClass.methods
@@ -58,17 +62,10 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
                         && method.returnType == Void.TYPE
             }
 
-        val testClassPath = testClass.getAnnotation(TestMetadata::class.java)?.value
-            ?: error("@${TestMetadata::class.java} annotation not found on class '${testClass.name}'")
-
         val testMethodPath = testMethod.getAnnotation(TestMetadata::class.java)?.value
             ?: error("@${TestMetadata::class.java} annotation not found on method '${testMethod.name}'")
-
-        Paths.get(testClassPath, testMethodPath)
+        Paths.get(testMethodPath)
     }
-
-    protected val mainPathAbsolute: Path
-        get() = Paths.get(testDataPath).resolve(mainPath)
 
     override fun setUp() {
         val isK2Plugin = pluginKind == KotlinPluginKind.FIR_PLUGIN
@@ -83,23 +80,18 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     }
 
     fun checkTextByExpectedPath(expectedSuffix: String, actual: String) {
-        val expectedPath = KotlinTestHelpers.getExpectedPath(mainPath, expectedSuffix)
+        val expectedPath = Paths.get(testDataPath, getExpectedPath(expectedSuffix))
         KotlinTestHelpers.assertEqualsToPath(expectedPath, actual)
     }
 
-    fun JavaCodeInsightTestFixture.configureByMainPath(): PsiFile {
-        return configureByFile(mainPath.toString())
-    }
-
-    fun JavaCodeInsightTestFixture.configureByMainPathStrippingTags(vararg tagNames: String): PsiFile {
-        val text = mainPath.readText()
-        return configureByText(mainPath.name, KotlinTestHelpers.stripTags(text, *tagNames))
+    fun JavaCodeInsightTestFixture.configureByDefaultFile(): PsiFile {
+        return configureByFile(testMethodPath.toString())
     }
 
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String) {
-        val expectedPath = KotlinTestHelpers.getExpectedPath(mainPath, expectedSuffix)
+        val expectedPath = getExpectedPath(expectedSuffix)
         try {
-            checkResultByFile(expectedPath.toString(), /* ignoreTrailingWhitespaces = */ true)
+            checkResultByFile(expectedPath, /* ignoreTrailingWhitespaces = */ true)
         } catch (e: RuntimeException) {
             if (e.cause is FileNotFoundException) {
                 val absoluteExpectedPath = Paths.get(testDataPath).resolve(expectedPath)
@@ -121,5 +113,12 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
                 throw e
             }
         }
+    }
+
+    protected fun getExpectedPath(expectedSuffix: String): String = buildString {
+        append(testMethodPath.nameWithoutExtension)
+        append(expectedSuffix)
+        append(".")
+        append(testMethodPath.extension)
     }
 }
