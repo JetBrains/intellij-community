@@ -1140,7 +1140,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       library.addPath(LibraryPathType.DOC, javadocPath.getPath());
     }
 
-    if (level == LibraryLevel.PROJECT && !linkProjectLibrary(resolverCtx, ideProject, library)) {
+    if (level == LibraryLevel.PROJECT && !linkProjectLibrary(ideProject, library)) {
       level = LibraryLevel.MODULE;
     }
 
