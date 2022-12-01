@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
 
 internal data class ProgressState(
-  @ProgressText val text: String?,
-  @ProgressDetails val details: String?,
+  val text: @ProgressText String?,
+  val details: @ProgressDetails String?,
   val fraction: Double,
 )
