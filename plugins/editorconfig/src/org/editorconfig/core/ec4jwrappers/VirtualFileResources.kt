@@ -42,11 +42,6 @@ class PathHolderResource(val path: String) : Resource {
 }
 
 class VirtualFileResource(val file: VirtualFile) : Resource, ResourcePath {
-  init {
-    // Still does not allow the use nio.Path, as TempFileSystem.getNioPath returns null (breaks tests)
-    require(file.isInLocalFileSystem)
-  }
-
   override fun equals(other: Any?): Boolean = other is VirtualFileResource && file == other.file
 
   override fun hashCode(): Int = file.hashCode()
