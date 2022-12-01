@@ -44,7 +44,6 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
-import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -289,10 +288,6 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     AsyncProcessIcon("")
     AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
     AnimatedIcon.FS()
-  }
-  launch {
-    // IDEA-170295
-    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
   }
 
   if (!app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {

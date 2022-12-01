@@ -698,6 +698,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     patchLafFonts(uiDefaults)
     patchTreeUI(uiDefaults)
     patchHiDPI(uiDefaults)
+    // required for MigLayout logical pixels to work
+    // super-huge DPI causes issues like IDEA-170295 if `laf.scaleFactor` property is missing
+    uiDefaults.put("laf.scaleFactor", scale(1f))
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
