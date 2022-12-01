@@ -7,6 +7,7 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
 import com.intellij.ide.starters.StarterModuleProcessListener
 import com.intellij.ide.starters.local.generator.AssetsProcessor
+import com.intellij.ide.starters.local.generator.TestFileSystemLocation
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
@@ -20,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -50,6 +52,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ModalityUiUtil
@@ -58,6 +61,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.URL
+import java.nio.file.Path
 import javax.swing.Icon
 
 abstract class StarterModuleBuilder : ModuleBuilder() {
@@ -344,13 +348,17 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       dependencyConfig,
       getGeneratorContextProperties(sdk, dependencyConfig),
       getAssets(starter),
-      moduleContentRoot
+      convertOutputLocation(moduleContentRoot)
     )
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       WriteAction.runAndWait<Throwable> {
         try {
-          AssetsProcessor.generateSources(generatorContext, getTemplateProperties())
+          service<AssetsProcessor>().generateSources(
+            generatorContext.outputDirectory,
+            generatorContext.assets,
+            getTemplateProperties() + ("context" to generatorContext)
+          )
         }
         catch (e: IOException) {
           logger<StarterModuleBuilder>().error("Unable to create module by template", e)
@@ -388,7 +396,12 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
     else {
       // test mode, open files immediately, do not import module
-      AssetsProcessor.generateSources(generatorContext, getTemplateProperties())
+      service<AssetsProcessor>().generateSources(
+        generatorContext.outputDirectory,
+        generatorContext.assets,
+        getTemplateProperties() + ("context" to generatorContext)
+      )
+
       ReformatCodeProcessor(module.project, module, false).run()
       openSampleFiles(module, getFilePathsToOpen())
     }
@@ -428,5 +441,14 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected fun getPackagePath(group: String, artifact: String): String {
     val packageName = suggestPackageName(group, artifact)
     return packageName.replace(".", "/").removeSuffix("/")
+  }
+
+  @Suppress("TestOnlyProblems")
+  private fun convertOutputLocation(moduleContentRoot: VirtualFile): Path {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return TestFileSystemLocation(moduleContentRoot, Path.of(moduleContentRoot.name))
+    }
+
+    return moduleContentRoot.toNioPath()
   }
 }

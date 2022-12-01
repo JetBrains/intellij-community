@@ -13,6 +13,7 @@ import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,7 +21,9 @@ import com.intellij.openapi.fileSystem.LocalFileSystemUtil
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.StringJoiner
+import kotlin.io.path.name
 
 @ApiStatus.Experimental
 abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
@@ -59,13 +62,15 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
       val generatedFiles = invokeAndWaitIfNeeded {
         runWriteAction {
-          val outputDirectory = LocalFileSystemUtil.findOrCreateDirectory(outputDirectory)
-          AssetsProcessor.generateSources(outputDirectory, assets, templateProperties)
+          service<AssetsProcessor>().generateSources(Path.of(outputDirectory), assets, templateProperties)
         }
       }
       whenProjectCreated(project) { //IDEA-244863
-        reformatCode(project, generatedFiles)
-        openFilesInEditor(project, generatedFiles.filter { it.path in filesToOpen })
+        val vFiles = generatedFiles
+          .mapNotNull { LocalFileSystemUtil.findFile(it) }
+
+        reformatCode(project, vFiles)
+        openFilesInEditor(project, vFiles.filter { it.toString() in filesToOpen })
       }
     }
   }

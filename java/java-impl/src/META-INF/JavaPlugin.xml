@@ -2358,6 +2358,10 @@
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
 
+    <applicationService serviceInterface="com.intellij.ide.starters.local.generator.AssetsProcessor"
+                        serviceImplementation="com.intellij.ide.starters.local.generator.AssetsProcessorImpl"
+                        testServiceImplementation="com.intellij.ide.starters.local.generator.TestAssetsProcessorImpl"/>
+
     <newProjectWizard.language implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard.java.buildSystem implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizard"/>
 
