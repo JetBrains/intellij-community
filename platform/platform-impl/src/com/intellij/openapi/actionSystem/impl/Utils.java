@@ -159,7 +159,7 @@ public final class Utils {
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction,
                                                                           boolean skipFastTrack) {
-    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
+    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + dumpDataContextClass(context));
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
     List<AnAction> actions = skipFastTrack ? null : expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
     if (actions != null) {
@@ -276,7 +276,7 @@ public final class Utils {
     }
     else {
       if (Registry.is("actionSystem.update.actions.async") && !isUnitTestMode) {
-        LOG.error("Async data context required in '" + place + "': " + wrapped.getClass().getName());
+        LOG.error("Async data context required in '" + place + "': " + dumpDataContextClass(wrapped));
       }
       try {
         list = DO_FULL_EXPAND ?
@@ -514,10 +514,22 @@ public final class Utils {
     if (StringUtil.isNotEmpty(place)) sb.append("@").append(place);
     sb.append(" (");
     for (Object x = action; x instanceof ActionWithDelegate; x = ((ActionWithDelegate<?>)x).getDelegate(), c = x.getClass()) {
-      sb.append(c.getSimpleName()).append("/");
+      sb.append(StringUtil.getShortName(c.getName())).append("/");
     }
     sb.append(c.getName()).append(")");
-    sb.insert(0, StringUtil.isNotEmpty(c.getSimpleName()) ? c.getSimpleName() : StringUtil.getShortName(c.getName()));
+    sb.insert(0, StringUtil.getShortName(c.getName()));
+    return sb.toString();
+  }
+
+  private static @NotNull String dumpDataContextClass(@NotNull DataContext context) {
+    Class<?> c = context.getClass();
+    StringBuilder sb = new StringBuilder(200);
+    int i = 0;
+    for (Object x = context; x instanceof CustomizedDataContext; x = ((CustomizedDataContext)x).getParent(), i++, c = x.getClass()) {
+      sb.append(StringUtil.getShortName(c.getName())).append("(");
+    }
+    sb.append(c.getName());
+    StringUtil.repeatSymbol(sb, ')', i);
     return sb.toString();
   }
 
