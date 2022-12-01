@@ -39,8 +39,8 @@ enum class ModuleSubType(val moduleType: ModuleType) {
 }
 
 val ModuleSubType.isIOS: Boolean
-    get() = this in EnumSet.of(ModuleSubType.iosX64, ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.ios,
-                               ModuleSubType.iosCocoaPods)
+    get() = this in EnumSet.of(ModuleSubType.iosX64, ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.iosSimulatorArm64,
+                               ModuleSubType.ios, ModuleSubType.iosCocoaPods)
 
 val ModuleSubType.isNativeDesktop: Boolean
     get() = this in EnumSet.of(
