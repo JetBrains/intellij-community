@@ -362,8 +362,8 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     assertEquals(0, counter.get());
   }
 
-  @Test
-  public void testMoveModuleWithSystemScopedDependency() {
+  //@Test
+  public void _testMoveModuleWithSystemScopedDependency() {
     DirectoryContentSpecKt.zipFile(builder -> {
       builder.file("a.txt");
       return Unit.INSTANCE;

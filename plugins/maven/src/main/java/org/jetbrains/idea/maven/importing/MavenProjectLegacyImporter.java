@@ -308,23 +308,7 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     if (myNewlyIgnoredModules.containsAll(obsoleteModules)) {
       return true;
     }
-    // don't ask about module deletion if the pom file was moved to another directory
-    boolean askAboutDeletingIgnoredModules = false;
-    for (var module : obsoleteModules) {
-      var mavenProjectsManager = MavenProjectsManager.getInstance(myProject);
-      var mavenProjectOptional = myMavenProjectToModule.entrySet().stream()
-        .filter(entry -> entry.getValue() == module)
-        .map(entry -> entry.getKey()).findFirst();
-      if (mavenProjectOptional.isPresent()) {
-        var mavenProject = mavenProjectOptional.get();
-        if (mavenProjectsManager.isIgnored(mavenProject)) {
-          // ask about module deletion if the user ignored the pom file manually
-          askAboutDeletingIgnoredModules = true;
-          break;
-        }
-      }
-    }
-    if (!askAboutDeletingIgnoredModules) return true;
+
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() || MavenUtil.isMavenUnitTestModeEnabled()) {
       final int[] result = new int[1];
       MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
