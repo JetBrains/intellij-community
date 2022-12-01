@@ -256,7 +256,7 @@ final class ActionUpdater {
           elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass());
         FList<Throwable> edtTraces = edtTracesRef.get();
         // do not report pauses without EDT traces (e.g. due to debugging)
-        if (edtTraces != null && edtTraces.size() > 0) {
+        if (edtTraces != null && edtTraces.size() > 0 && edtTraces.get(0).getStackTrace().length > 0) {
           for (Throwable trace : edtTraces) {
             throwable.addSuppressed(trace);
           }
