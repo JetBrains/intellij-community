@@ -26,6 +26,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class IOUtil {
+  public static final int KiB = 1024;
+  public static final int MiB = 1024 * 1024;
+  public static final int GiB = 1024 * 1024 * 1024;
+
   @ApiStatus.Internal
   public static final ThreadLocal<Boolean> OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP = new ThreadLocal<Boolean>() {
     @Override

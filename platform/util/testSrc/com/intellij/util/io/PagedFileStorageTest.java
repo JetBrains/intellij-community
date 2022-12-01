@@ -109,7 +109,7 @@ public class PagedFileStorageTest {
   public void testResizeableMappedFile2() throws IOException {
     withLock(lock, () -> {
       int initialSize = 4096;
-      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, PagedFileStorage.MB, false);
+      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, IOUtil.MiB, false);
       byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(StandardCharsets.UTF_8);
       assertTrue(bytes.length > initialSize);
 

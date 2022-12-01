@@ -63,7 +63,7 @@ class KeyHashLog<Key> implements Closeable {
     return new AppendableStorageBackedByResizableMappedFile<>(dataFile,
                                                               size,
                                                               null,
-                                                              PagedFileStorage.MB,
+                                                              IOUtil.MiB,
                                                               true,
                                                               IntPairInArrayKeyDescriptor.INSTANCE);
   }

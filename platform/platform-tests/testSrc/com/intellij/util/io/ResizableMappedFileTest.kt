@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.impl.IndexDebugProperties
+import com.intellij.util.io.IOUtil.MiB
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Rule
@@ -30,14 +31,14 @@ class ResizableMappedFileTest {
   fun `put data to non-existing page`() {
     val storagePath = tempDir.newDirectoryPath().resolve("non-existing-page-test")
 
-    val address = 5L * PagedFileStorage.MB + 123
+    val address = 5L * MiB + 123
     val value = 112233L
 
     ResizeableMappedFile(
       storagePath,
-      PagedFileStorage.MB,
+      MiB,
       null,
-      PagedFileStorage.MB,
+      MiB,
       true
     ).write {
       use { file ->
@@ -57,9 +58,9 @@ class ResizableMappedFileTest {
 
     ResizeableMappedFile(
       storagePath,
-      PagedFileStorage.MB,
+      MiB,
       null,
-      PagedFileStorage.MB,
+      MiB,
       true
     ).write {
       use { file ->
@@ -74,17 +75,17 @@ class ResizableMappedFileTest {
 
   @Test
   fun testCacheMisses() {
-    val fileCount = (StorageLockContext.getCacheMaxSize() / PagedFileStorage.MB + 10).toInt()
-    val pageSize = PagedFileStorage.MB
+    val fileCount = (StorageLockContext.getCacheMaxSize() / MiB + 10).toInt()
+    val pageSize = MiB
     Assert.assertTrue(fileCount * pageSize > StorageLockContext.getCacheMaxSize())
 
     val directory = tempDir.newDirectory("resizable-mapped-files").toPath()
     val resizableMappedFiles = (0..fileCount).map {
       val file = ResizeableMappedFile(
         directory.resolve("map$it"),
-        PagedFileStorage.MB,
+        MiB,
         null,
-        PagedFileStorage.MB,
+        MiB,
         true
       )
 

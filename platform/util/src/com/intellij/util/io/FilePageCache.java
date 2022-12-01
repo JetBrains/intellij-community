@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.intellij.util.io.PagedFileStorage.MB;
+import static com.intellij.util.io.IOUtil.MiB;
 
 /**
  * Maintains 'pages' of data (in the form of {@linkplain DirectBufferWrapper}), from file storages
@@ -57,7 +57,11 @@ final class FilePageCache {
    * Total size of the cache, bytes
    * It is somewhere ~100-500 Mb, or see static initializer for exact logic
    */
-  private static final int CACHE_SIZE;
+  private static final long CACHE_CAPACITY_BYTES;
+  /**
+   * Capacity of {@linkplain DirectByteBufferAllocator}. Placed here because it is initialized along with
+   * {@linkplain #CACHE_CAPACITY_BYTES}
+   */
   static final int ALLOCATOR_SIZE;
   /**
    * 10Mb default, or SystemProperty('idea.max.paged.storage.cache')Mb, but not less than 1 Mb
@@ -66,26 +70,34 @@ final class FilePageCache {
 
   static {
     final int defaultPageSizeMb = SystemProperties.getIntProperty("idea.paged.storage.page.size", 10);
-    DEFAULT_PAGE_SIZE = Math.max(1, defaultPageSizeMb) * MB;
+    DEFAULT_PAGE_SIZE = Math.max(1, defaultPageSizeMb) * MiB;
 
-    final int lowerCacheSizeMb = 100;
-    final int upperCacheSizeMb = CpuArch.is32Bit() ? 200 : 500;
+    final long maxDirectMemoryToUseBytes = maxDirectMemory() - 2L * DEFAULT_PAGE_SIZE;
 
-    final long maxDirectMemoryToUse = maxDirectMemory() - 2L * DEFAULT_PAGE_SIZE;
+    CACHE_CAPACITY_BYTES = configureCacheCapacity(maxDirectMemoryToUseBytes);
 
-    //RC: basically, try to allocate cache of sys("idea.max.paged.storage.cache", default: upperCacheSizeMb) size,
-    //    but not less than lowerCacheSizeMb,
-    //    and not more than maxDirectMemoryToUse (strictly)
-
-    final int lowerLimit = (int)Math.min(lowerCacheSizeMb * MB, maxDirectMemoryToUse);
-    final int cacheSizeMb = SystemProperties.getIntProperty("idea.max.paged.storage.cache", upperCacheSizeMb);
-    CACHE_SIZE = (int)Math.min(
-      Math.max(lowerLimit, cacheSizeMb * MB),
-      maxDirectMemoryToUse
-    );
     ALLOCATOR_SIZE = (int)Math.min(
-      100 * MB,
-      Math.max(0, maxDirectMemoryToUse - CACHE_SIZE - 300 * MB)
+      100 * MiB,
+      Math.max(0, maxDirectMemoryToUseBytes - CACHE_CAPACITY_BYTES - 300 * MiB)
+    );
+  }
+
+  private static long configureCacheCapacity(final long maxDirectMemoryToUseBytes) {
+    //RC: basically, try to allocate cache of sys("idea.max.paged.storage.cache", default: defaultCacheCapacityMb) size,
+    //    but not less than minCacheCapacityMb,
+    //    and not more than maxDirectMemoryToUseBytes (strictly)
+
+    final int defaultCacheCapacityMb = CpuArch.is32Bit() ? 200 : 500;
+
+    final int cacheCapacityMb = SystemProperties.getIntProperty("idea.max.paged.storage.cache", defaultCacheCapacityMb);
+    final long cacheCapacityBytes = cacheCapacityMb * (long)MiB;
+
+    final int minCacheCapacityMb = 100;
+    final long minCacheCapacityBytes = Math.min(minCacheCapacityMb * MiB, maxDirectMemoryToUseBytes);
+
+    return Math.min(
+      Math.max(minCacheCapacityBytes, cacheCapacityBytes),
+      maxDirectMemoryToUseBytes
     );
   }
 
@@ -149,7 +161,7 @@ final class FilePageCache {
 
 
   FilePageCache() {
-    cachedSizeLimit = CACHE_SIZE;
+    cachedSizeLimit = CACHE_CAPACITY_BYTES;
 
     // super hot-spot, it's very essential to use specialized collection here
     pagesByPageId = new LongLinkedHashMap<DirectBufferWrapper>(10, 0.75f, /*access order: */ true) {
@@ -252,7 +264,7 @@ final class FilePageCache {
 
       pagesAccessLock.lock();
       try {
-        if (totalSizeCached + fileStorage.myPageSize < cachedSizeLimit) {
+        if (totalSizeCached + fileStorage.getPageSize() < cachedSizeLimit) {
           myLoad++;
         }
         else {
@@ -541,7 +553,7 @@ final class FilePageCache {
         context.checkWriteAccess();
       }
     }
-    final long offsetInFile = (pageId & MAX_PAGES_COUNT) * owner.myPageSize;
+    final long offsetInFile = (pageId & MAX_PAGES_COUNT) * owner.getPageSize();
 
     return new DirectBufferWrapper(owner, offsetInFile);
   }

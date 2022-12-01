@@ -257,9 +257,9 @@ final class PersistentFSConnector {
       LOG.info("VFS uses non-strict names enumerator");
       final ResizeableMappedFile mappedFile = new ResizeableMappedFile(
         namesFile,
-        10 * PagedFileStorage.MB,
+        10 * IOUtil.MiB,
         PERSISTENT_FS_STORAGE_CONTEXT,
-        PagedFileStorage.MB,
+        IOUtil.MiB,
         false
       );
       return new OffsetBasedNonStrictStringsEnumerator(mappedFile);

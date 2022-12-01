@@ -32,7 +32,6 @@ public class PagedFileStorage implements Forceable {
 
   static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 400));
 
-  public static final int MB = 1024 * 1024;
   public static final int DEFAULT_PAGE_SIZE = FilePageCache.DEFAULT_PAGE_SIZE;
 
   @NotNull
@@ -62,10 +61,8 @@ public class PagedFileStorage implements Forceable {
   private final boolean myReadOnly;
   private final Object myInputStreamLock = new Object();
 
-  //TODO RC: pageSize could be != FilePageCache.PAGE_SIZE, and I don't understand how do they both interact, i.e. how could Storage
-  //         use pages of size != FilePageCache.PAGE_SIZE, if pages are managed by FilePageCache?
-  protected final int myPageSize;
-  protected final boolean myValuesAreBufferAligned;
+  private final int myPageSize;
+  private final boolean myValuesAreBufferAligned;
 
   private volatile boolean isDirty;
   private volatile long mySize = -1;
@@ -476,10 +473,6 @@ public class PagedFileStorage implements Forceable {
 
   public boolean isReadOnly() {
     return myReadOnly;
-  }
-
-  boolean useNativeByteOrder() {
-    return myNativeBytesOrder;
   }
 
   private static byte[] getThreadLocalTypedIOBuffer() {
