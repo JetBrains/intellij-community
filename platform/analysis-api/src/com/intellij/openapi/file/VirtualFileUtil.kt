@@ -11,7 +11,6 @@ import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativeNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
-import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
 import com.intellij.openapi.fileSystem.VirtualFileSystemUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -152,7 +151,7 @@ object VirtualFileUtil {
 
   @JvmStatic
   fun VirtualFile.toCanonicalPath(): String {
-    return toNioPath().toCanonicalPath()
+    return path
   }
 
   fun VirtualFile.toIoFile(): File {
