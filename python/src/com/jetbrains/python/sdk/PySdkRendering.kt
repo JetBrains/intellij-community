@@ -68,7 +68,7 @@ fun path(sdk: Sdk): @NlsSafe String? {
  * Result is wrapped with [AllIcons.Actions.Cancel]
  * if the sdk is local and does not exist, or remote and incomplete or has invalid credentials, or is not supported.
  *
- * @see com.jetbrains.python.sdk.PySdkExtKt.isValid
+ * @see sdkSeemsValid
  * @see PythonSdkType.isIncompleteRemote
  * @see PythonSdkType.hasInvalidRemoteCredentials
  * @see LanguageLevel.SUPPORTED_LEVELS
