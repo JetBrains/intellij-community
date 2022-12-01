@@ -871,13 +871,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
     //skip places where name for this local variable is calculated, otherwise grab the name
-    else if (expr.getParent() instanceof PsiLocalVariable && variableKind != VariableKind.LOCAL_VARIABLE) {
-      PsiVariable variable = (PsiVariable)expr.getParent();
+    else if (expr.getParent() instanceof PsiLocalVariable variable && variableKind != VariableKind.LOCAL_VARIABLE) {
       String variableName = variable.getName();
-      if (variableName != null) {
-        String propertyName = variableNameToPropertyName(variableName, getVariableKind(variable));
-        return new NamesByExprInfo(propertyName);
-      }
+      String propertyName = variableNameToPropertyName(variableName, getVariableKind(variable));
+      return new NamesByExprInfo(propertyName);
     }
 
     return NamesByExprInfo.EMPTY;

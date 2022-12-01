@@ -353,7 +353,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                          result,
                          branch.getUsedElements()));
       } else {
-        newBranches.add(new SwitchBranch(forceNextDefaultBranch || branch.isDefault(),
+        newBranches.add(new SwitchBranch(branch.isDefault(),
                                          branch.getCaseLabelElements(),
                                          result,
                                          branch.getUsedElements()));

@@ -430,11 +430,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             @Override
             public void visitMethod(@NotNull final RefMethod refMethod) {
               processedSuspicious.add(refMethod);
-              if (refMethod instanceof RefImplicitConstructor) {
-                RefClass ownerClass = refMethod.getOwnerClass();
-                if (ownerClass != null) {
-                  visitClass(ownerClass);
-                }
+              if (refMethod instanceof RefImplicitConstructor ctor) {
+                RefClass ownerClass = ctor.getOwnerClass();
+                visitClass(ownerClass);
                 return;
               }
               if (refMethod.isConstructor()) {

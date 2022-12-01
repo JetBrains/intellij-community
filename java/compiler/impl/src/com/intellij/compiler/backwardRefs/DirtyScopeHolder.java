@@ -227,9 +227,9 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
     }
 
-    PsiDocumentManager psiDocumentMananger = PsiDocumentManager.getInstance(myProject);
-    for (Document document : psiDocumentMananger.getUncommittedDocuments()) {
-      final PsiFile psiFile = psiDocumentMananger.getPsiFile(document);
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
+    for (Document document : psiDocumentManager.getUncommittedDocuments()) {
+      final PsiFile psiFile = psiDocumentManager.getPsiFile(document);
       if (psiFile == null) continue;
       final VirtualFile file = psiFile.getVirtualFile();
       if (file == null) continue;
@@ -276,9 +276,8 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
       else if (event instanceof VFileCopyEvent || event instanceof VFileMoveEvent) {
         VirtualFile file = event.getFile();
-        if (file != null) {
-          fileChanged(file);
-        }
+        assert file != null;
+        fileChanged(file);
       }
       else {
         if (event instanceof VFilePropertyChangeEvent) {
@@ -302,10 +301,9 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFileContentChangeEvent) {
         VirtualFile file = event.getFile();
-        if (file != null) {
-          final Module module = getModuleForSourceContentFile(file);
-          ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
-        }
+        assert file != null;
+        final Module module = getModuleForSourceContentFile(file);
+        ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;

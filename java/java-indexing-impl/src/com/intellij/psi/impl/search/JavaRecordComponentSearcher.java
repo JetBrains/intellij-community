@@ -48,7 +48,6 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
   private static RecordNavigationInfo findNavigationInfo(PsiRecordComponent recordComponent) {
     return ReadAction.compute(() -> {
       String name = recordComponent.getName();
-      if (name == null) return null;
       PsiClass containingClass = recordComponent.getContainingClass();
       if (containingClass == null) return null;
 

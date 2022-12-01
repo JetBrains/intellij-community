@@ -209,7 +209,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
   }
 
   public void testTypingLatencyPerformance() throws Throwable {
-    boolean debug = false;
+    final boolean debug = false;
 
     @NonNls String filePath = "/psi/resolve/ThinletBig.java";
 

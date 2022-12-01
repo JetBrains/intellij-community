@@ -314,7 +314,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       final boolean hasClassInfo = className != null && className.length() > 0;
       final String methodName = getMethodName();
       final String displayName = methodName != null? methodName + "()" : null;
-      final boolean hasMethodInfo = displayName != null && displayName.length() > 0;
+      final boolean hasMethodInfo = displayName != null;
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = new StringBuilder();
         boolean isFile = getFileName().equals(className);

@@ -119,19 +119,17 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<PsiElement, String> allRenames) {
-    if (element instanceof PsiRecordComponent) {
-      PsiClass containingClass = ((PsiRecordComponent)element).getContainingClass();
+    if (element instanceof PsiRecordComponent component) {
+      PsiClass containingClass = component.getContainingClass();
       if (containingClass != null) {
-        String name = ((PsiRecordComponent)element).getName();
-        if (name != null) {
-          addGetter(element, newName, allRenames, containingClass, name);
+        String name = component.getName();
+        addGetter(element, newName, allRenames, containingClass, name);
 
-          PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
-          if (canonicalConstructor != null) {
-            PsiParameter parameter = ContainerUtil.find(canonicalConstructor.getParameterList().getParameters(), p -> name.equals(p.getName()));
-            if (parameter != null) {
-              allRenames.put(parameter, newName);
-            }
+        PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
+        if (canonicalConstructor != null) {
+          PsiParameter parameter = ContainerUtil.find(canonicalConstructor.getParameterList().getParameters(), p -> name.equals(p.getName()));
+          if (parameter != null) {
+            allRenames.put(parameter, newName);
           }
         }
       }

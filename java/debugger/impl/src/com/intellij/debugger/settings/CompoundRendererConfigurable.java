@@ -74,9 +74,7 @@ class CompoundRendererConfigurable extends JPanel {
   CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
     super(new CardLayout());
 
-    if (myProject == null) {
-      myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-    }
+    myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
 
     myRbDefaultLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
     myRbExpressionLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression"));

@@ -283,8 +283,8 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
                                       Map<File, Integer> runtimeClasspathOrder,
                                       ExternalDependency dependency) {
     String scope = dependency.getScope();
-    Map<File, Integer> classpathOrderMap = scope == CompileDependenciesProvider.SCOPE || scope == PROVIDED_SCOPE ? compileClasspathOrder :
-                                           scope == RuntimeDependenciesProvider.SCOPE ? runtimeClasspathOrder : null;
+    Map<File, Integer> classpathOrderMap = scope.equals(CompileDependenciesProvider.SCOPE) || scope.equals(PROVIDED_SCOPE) ? compileClasspathOrder :
+                                           scope.equals(RuntimeDependenciesProvider.SCOPE) ? runtimeClasspathOrder : null;
     final Collection<File> depFiles = getFiles(dependency);
     int order = getOrder(classpathOrderMap, depFiles);
     if (dependency instanceof AbstractExternalDependency) {
@@ -360,7 +360,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   @NotNull
   public Set<File> getCompileClasspathFiles(@NotNull SourceSet sourceSet, String... languages) {
     List<String> jvmLanguages = Lists.newArrayList(languages);
-    final String sourceSetCompileTaskPrefix = sourceSet.getName() == "main" ? "" : sourceSet.getName();
+    final String sourceSetCompileTaskPrefix = sourceSet.getName().equals("main") ? "" : sourceSet.getName();
 
     List<String> compileTaskNames = new ArrayList<String>(jvmLanguages.size());
     for (String language : jvmLanguages) {
@@ -522,9 +522,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     && newDependency instanceof ExternalProjectDependency) {
       String seenConfiguration = ((ExternalProjectDependency)seenDependency).getConfigurationName();
       String newConfiguration = ((ExternalProjectDependency)newDependency).getConfigurationName();
-      return
-        seenDependency.getId().equals(newDependency.getId())
-      && ((seenConfiguration == newConfiguration) || (seenConfiguration != null && seenConfiguration.equals(newConfiguration)));
+      return seenDependency.getId().equals(newDependency.getId()) && Objects.equals(seenConfiguration, newConfiguration);
     }
     return false;
   }
@@ -706,7 +704,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       try {
         if (dep instanceof SelfResolvingDependency && !(dep instanceof ProjectDependency)) {
           Set<File> files = ((SelfResolvingDependency)dep).resolve();
-          if (files != null && !files.isEmpty()) {
+          if (!files.isEmpty()) {
             AbstractExternalDependency dependency = new DefaultFileCollectionDependency(files);
             dependency.setScope(scope);
             result.add(dependency);
@@ -758,7 +756,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           Collection<ResolvedArtifact> artifactsResult = artifactMap.get(toMyModuleIdentifier(it.getName(), it.getGroup()));
           if (artifactsResult != null && !artifactsResult.isEmpty()) {
             ResolvedArtifact artifact = artifactsResult.iterator().next();
-            String packaging = artifact.getExtension() != null ? artifact.getExtension() : "jar";
+            String packaging = artifact.getExtension();
             String classifier = artifact.getClassifier();
             final ExternalLibraryDependency resolvedDep = resolveLibraryByPath(artifact.getFile(), scope);
             File sourcesFile = resolvedDep == null ? null : resolvedDep.getSource();
@@ -845,7 +843,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
 
   /*
-  DeprecatedDependencyResolver used Google Guava library, repackaged insinde Gradle Impl Dep artifact.
+  DeprecatedDependencyResolver used Google Guava library, repackaged inside Gradle Impl Dep artifact.
   Starting with Gradle 7.4, the Guava library requires JDK 8
   All usages were inlined to keep code compatibility with JDK 1.6
    */

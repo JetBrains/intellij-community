@@ -12,12 +12,9 @@ public final class DefaultMethodInvoker {
     throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
     Method method = obj.getClass().getMethod(name, null);
-    if (method != null) {
-      method.setAccessible(true);
-      Object res = method.invoke(obj, null);
-      method.setAccessible(false);
-      return res;
-    }
-    return null;
+    method.setAccessible(true);
+    Object res = method.invoke(obj, null);
+    method.setAccessible(false);
+    return res;
   }
 }

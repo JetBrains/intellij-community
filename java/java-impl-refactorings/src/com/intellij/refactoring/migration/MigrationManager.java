@@ -26,7 +26,6 @@ public class MigrationManager {
     }
 
     GlobalSearchScope migrationScope = migrationDialog.getMigrationScope();
-    if (migrationScope == null) return;
 
     new MigrationProcessor(myProject, map, migrationScope).run();
   }

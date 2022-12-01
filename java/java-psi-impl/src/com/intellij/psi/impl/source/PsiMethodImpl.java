@@ -214,7 +214,6 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
           PsiRecordComponent[] recordComponents = aClass.getRecordComponents();
           for (PsiRecordComponent component : recordComponents) {
             String name = component.getName();
-            if (name == null) continue;
             lightList.addParameter(new LightCompactConstructorParameter(name, component.getType(), this, component));
           }
         }

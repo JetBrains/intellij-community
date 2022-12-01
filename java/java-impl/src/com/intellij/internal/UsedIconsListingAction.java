@@ -59,7 +59,6 @@ final class UsedIconsListingAction extends AnAction {
         PsiCallExpression call = PsiTreeUtil.getParentOfType(reference.getElement(), PsiCallExpression.class, false);
         if (call == null) return true;
         if (call.getArgumentList() == null) return true;
-        if (call.getArgumentList().getExpressions() == null) return true;
 
         PsiFile file = reference.getElement().getContainingFile();
         if ("AllIcons.java".equals(file.getName())) return true;

@@ -574,9 +574,9 @@ public final class ExpectedTypesProvider {
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
-      if (variable instanceof PsiLocalVariable && myForCompletion && myHops < MAX_VAR_HOPS) {
-        PsiTypeElement typeElement = variable.getTypeElement();
-        if (typeElement != null && typeElement.isInferredType()) {
+      if (variable instanceof PsiLocalVariable local && myForCompletion && myHops < MAX_VAR_HOPS) {
+        PsiTypeElement typeElement = local.getTypeElement();
+        if (typeElement.isInferredType()) {
           PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
           if (block != null) {
             myHops++;

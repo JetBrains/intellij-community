@@ -80,15 +80,13 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         if (typeInfo == null)
           return;
         ReferenceType ref = ((JavaTypeInfo) typeInfo).getReferenceType();
-        if (ref != null) {
-          final boolean activated = myIsTrackersActivated.get();
-          managerThread.schedule(new DebuggerCommandImpl() {
-            @Override
-            protected void action() {
-              trackClass(debugSession, debugProcess, ref, type, activated);
-            }
-          });
-        }
+        final boolean activated = myIsTrackersActivated.get();
+        managerThread.schedule(new DebuggerCommandImpl() {
+          @Override
+          protected void action() {
+            trackClass(debugSession, debugProcess, ref, type, activated);
+          }
+        });
         table.repaint();
       }
 
