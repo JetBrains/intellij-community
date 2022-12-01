@@ -34,4 +34,3 @@ fun <T> block(obj: T, block: T.() -> Unit) {
 
 // SHOW_KOTLIN_VARIABLES
 // PRINT_FRAME
-// IGNORE_FOR_INDY_LAMBDAS
