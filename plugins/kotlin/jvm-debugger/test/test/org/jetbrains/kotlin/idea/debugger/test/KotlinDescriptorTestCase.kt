@@ -379,11 +379,14 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     }
 
     protected fun getExpectedOutputFile(): File {
-        if (useIrBackend()) {
-            val irOut = File(getTestDataPath(), getTestName(true) + ".ir.out")
-            if (irOut.exists()) return irOut
-        }
-        return File(getTestDataPath(), getTestName(true) + ".out")
+        val extensions = sequenceOf(
+            ".indy.out".takeIf { lambdasGenerationScheme() == JvmClosureGenerationScheme.INDY },
+            ".ir.out".takeIf { useIrBackend() },
+            ".out",
+        )
+        return extensions.filterNotNull()
+            .map { File(getTestDataPath(), getTestName(true) + it) }
+            .first(File::exists)
     }
 
     override fun getData(dataId: String): Any? {
