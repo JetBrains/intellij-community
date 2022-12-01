@@ -6,8 +6,14 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.types.PyGenericType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * @author vlan
@@ -1590,6 +1596,42 @@ public class Py3TypeTest extends PyTestCase {
              res = f()
              expr = res.value
              """);
+  }
+
+  // PY-54336
+  public void testReusedTypeVarsCauseRecursiveSubstitution() {
+    doTest("Sub",
+           """
+             from typing import Generic, TypeVar
+                          
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+                          
+             class Super(Generic[T1]):
+                 pass
+                          
+             class Sub(Super[T2]):
+                 def __init__(self, xs: list[T2]):
+                     pass
+                          
+             def func(xs: list[T1]):
+                 expr = Sub(xs)
+             """);
+  }
+
+  // PY-54336
+  public void testCyclePreventionDuringGenericsSubstitution() {
+    PyGenericType typeVarT = new PyGenericType("T", null, false);
+    PyGenericType typeVarV = new PyGenericType("V", null, false);
+    TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+
+    PyType substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarT)), context);
+    assertEquals(typeVarT, substituted);
+
+    substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, typeVarT)), context);
+    assertNull(substituted);
+
+    // TODO add tests on more complex substitutions, e.g T -> list[T2], T2 -> T. These are not implemented at the moment.
   }
 
   private void doTest(final String expectedType, final String text) {
