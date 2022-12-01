@@ -8,6 +8,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,14 +21,12 @@ import java.io.IOException;
 
 @ApiStatus.NonExtendable
 public class EditMemorySettingsDialog extends DialogWrapper {
-  private static final int MIN_VALUE = 256;
-  static final int HEAP_INC = 512;
+  private static final int MIN_VALUE = 256, HEAP_INCREMENT = 512;
 
   private final VMOptions.MemoryKind myOption;
   private final int myLowerBound;
-  private Action mySaveAndExitAction;
-  private Action mySaveAction;
   private final EditMemorySettingsPanel content;
+  private Action mySaveAndExitAction, mySaveAction;
 
   public EditMemorySettingsDialog() {
     this(VMOptions.MemoryKind.HEAP, false);
@@ -42,9 +41,30 @@ public class EditMemorySettingsDialog extends DialogWrapper {
     myOption = option;
     myLowerBound = Math.max(option == VMOptions.MemoryKind.HEAP ? VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false) : 0, MIN_VALUE);
     setTitle(DiagnosticBundle.message("change.memory.title"));
-    content = new EditMemorySettingsPanel(option, memoryLow);
+    content = new EditMemorySettingsPanel(option, memoryLow, getSuggestedValue(memoryLow, myOption));
     init();
     initValidation();
+  }
+
+  private static int getSuggestedValue(boolean memoryLow, VMOptions.MemoryKind option) {
+    var current = VMOptions.readOption(option, true);
+    var suggested = 0;
+    if (memoryLow && option == VMOptions.MemoryKind.HEAP) {
+      var cap = Registry.intValue("max.suggested.heap.size");
+      if (current > 0) {
+        suggested = current + HEAP_INCREMENT;
+        if (suggested > cap) suggested = Math.max(cap, current);
+      }
+      else {
+        suggested = cap;
+      }
+    }
+    else {
+      suggested = VMOptions.readOption(option, false);
+      if (suggested <= 0) suggested = current;
+      if (suggested <= 0) suggested = MIN_VALUE;
+    }
+    return suggested;
   }
 
   @Override

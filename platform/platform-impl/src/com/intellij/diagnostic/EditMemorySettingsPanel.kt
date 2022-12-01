@@ -2,22 +2,15 @@
 package com.intellij.diagnostic
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.system.CpuArch
-import kotlin.math.max
 
-private const val MIN_VALUE = 256
-
-internal class EditMemorySettingsPanel(private val option: VMOptions.MemoryKind, private val memoryLow: Boolean) {
-
+internal class EditMemorySettingsPanel(private val option: VMOptions.MemoryKind, private val memoryLow: Boolean, private val suggested: Int) {
   lateinit var newValueField: JBTextField
 
   @JvmField
   val panel = panel {
-
     val current = VMOptions.readOption(option, true)
     val file = EditMemorySettingsService.getInstance().userOptionsFile ?: throw IllegalStateException()
 
@@ -41,7 +34,6 @@ internal class EditMemorySettingsPanel(private val option: VMOptions.MemoryKind,
     val optionLabel = JBLabel(option.label() + ':')
       .apply { toolTipText = '-' + option.optionName }
     row(optionLabel) {
-      val suggested = getSuggested(current)
       newValueField = textField()
         .text(suggested.toString())
         .columns(5)
@@ -58,25 +50,6 @@ internal class EditMemorySettingsPanel(private val option: VMOptions.MemoryKind,
         .align(AlignY.TOP)
         .gap(RightGap.SMALL)
       text(DiagnosticBundle.message("change.memory.file", file.toString()), maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
-    }
-  }
-
-  private fun getSuggested(current: Int): Int {
-    if (memoryLow && option == VMOptions.MemoryKind.HEAP) {
-      val cap = if (CpuArch.isIntel32()) 800 else Registry.intValue("max.suggested.heap.size")
-      if (current > 0) {
-        val result = current + EditMemorySettingsDialog.HEAP_INC
-        return if (result > cap) max(cap, current) else result
-      }
-      else {
-        return cap
-      }
-    }
-    else {
-      var result = VMOptions.readOption(option, false)
-      if (result <= 0) result = current
-      if (result <= 0) result = MIN_VALUE
-      return result
     }
   }
 }
