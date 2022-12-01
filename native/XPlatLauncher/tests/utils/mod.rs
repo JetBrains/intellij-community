@@ -72,9 +72,10 @@ fn prepare_test_env_impl(layout_kind: &LayoutSpec) -> Result<TestEnvironment> {
     )?;
 
     let launcher_dir = resolve_launcher_dir(&temp_dir_path, layout_kind);
+    let launcher_file = resolve_launcher_filename(layout_kind);
     env::set_current_dir(&launcher_dir)?;
 
-    let launcher_path = launcher_dir.join("xplat-launcher");
+    let launcher_path = launcher_dir.join(launcher_file);
 
     let result = TestEnvironment {
         launcher_path,
@@ -207,6 +208,7 @@ pub struct LayoutSpec {
 
 pub enum LauncherLocation {
     MainBin,
+    MainBinRemoteDev,
     PluginsBin,
 }
 
@@ -229,6 +231,7 @@ pub fn layout_launcher(
     // .
     // ├── bin/
     // │   └── xplat-launcher
+    // │   └── remote-dev-server
     // │   └── idea64.vmoptions
     // │   └── idea.properties
     // ├── lib/
@@ -255,6 +258,7 @@ pub fn layout_launcher(
         ],
         vec![
             (launcher.as_path(), "bin/xplat-launcher"),
+            (launcher.as_path(), "bin/remote-dev-server"),
             (launcher.as_path(), "plugins/remote-dev-server/bin/xplat-launcher"),
             (intellij_main_mock_jar, "lib/app.jar"),
             (product_info_absolute_path, "product-info.json"),
@@ -281,6 +285,7 @@ pub fn layout_launcher(
     // └── Contents
     //     ├── bin/
     //     │   └── xplat-launcher
+    //     │   └── remote-dev-server
     //     │   └── idea.vmoptions
     //     │   └── idea.properties
     //     ├── Resources/
@@ -308,6 +313,7 @@ pub fn layout_launcher(
         ],
         vec![
             (launcher.as_path(), "Contents/bin/xplat-launcher"),
+            (launcher.as_path(), "Contents/bin/remote-dev-server"),
             (launcher.as_path(), "Contents/plugins/remote-dev-server/bin/xplat-launcher"),
             (intellij_main_mock_jar, "Contents/lib/app.jar"),
             (product_info_absolute_path, "Contents/Resources/product-info.json"),
@@ -332,7 +338,8 @@ pub fn layout_launcher(
     // windows:
     // .
     // ├── bin/
-    // │   └── xplat-launcher
+    // │   └── xplat-launcher.exe
+    // │   └── remote-dev-server.exe
     // │   └── idea64.exe.vmoptions
     // │   └── idea.properties
     // ├── lib/
@@ -359,6 +366,7 @@ pub fn layout_launcher(
         ],
         vec![
             (launcher.as_path(), "bin/xplat-launcher.exe"),
+            (launcher.as_path(), "bin/remote-dev-server.exe"),
             (launcher.as_path(), "plugins/remote-dev-server/bin/xplat-launcher.exe"),
             (intellij_main_mock_jar, "lib/app.jar"),
             (product_info_absolute_path, "product-info.json"),
@@ -443,9 +451,16 @@ pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutSpec) -> PathBu
     };
 
     match layout_kind.launcher_location {
-        LauncherLocation::MainBin => root.join("bin"),
+        LauncherLocation::MainBin | LauncherLocation::MainBinRemoteDev => root.join("bin"),
 
         LauncherLocation::PluginsBin => root.join("plugins/remote-dev-server/bin")
+    }
+}
+
+pub fn resolve_launcher_filename(layout_kind: &LayoutSpec) -> &str {
+    match layout_kind.launcher_location {
+        LauncherLocation::MainBin | LauncherLocation::PluginsBin => "xplat-launcher",
+        LauncherLocation::MainBinRemoteDev => "remote-dev-server"
     }
 }
 

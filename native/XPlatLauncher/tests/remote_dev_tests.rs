@@ -7,14 +7,13 @@ mod tests {
     use crate::utils::*;
 
     #[rstest]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::remote_dev_test(& LayoutSpec {launcher_location: LauncherLocation::MainBinRemoteDev, java_type: JavaType::JBR})]
     fn remote_dev_args_test(#[case]launcher_location: &LayoutSpec) {
         let test = &prepare_test_env(launcher_location);
         let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
         let output_args = [
-            "--remote-dev",
-            "dumpLaunchParameters", &test.test_root_dir.path().to_string_lossy(),
+            "dumpLaunchParameters",
+            &test.test_root_dir.path().to_string_lossy(),
             "--output",
             &output_file.to_string_lossy()
         ];
