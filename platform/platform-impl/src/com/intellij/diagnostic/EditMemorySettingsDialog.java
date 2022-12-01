@@ -74,7 +74,7 @@ public class EditMemorySettingsDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+    var canRestart = ApplicationManager.getApplication().isRestartCapable();
     mySaveAndExitAction = new DialogWrapperAction(DiagnosticBundle.message(canRestart ? "change.memory.apply" : "change.memory.exit")) {
       @Override
       protected void doAction(ActionEvent e) {
@@ -98,7 +98,7 @@ public class EditMemorySettingsDialog extends DialogWrapper {
   protected @Nullable ValidationInfo doValidate() {
     ValidationInfo info = null;
     try {
-      int value = Integer.parseInt(content.newValueField.getText());
+      var value = Integer.parseInt(content.newValueField.getText());
       if (value <= myLowerBound) info = new ValidationInfo(DiagnosticBundle.message("change.memory.low", myLowerBound), content.newValueField);
     }
     catch (NumberFormatException e) {
@@ -111,7 +111,7 @@ public class EditMemorySettingsDialog extends DialogWrapper {
 
   private boolean save() {
     try {
-      int value = Integer.parseInt(content.newValueField.getText());
+      var value = Integer.parseInt(content.newValueField.getText());
       EditMemorySettingsService.getInstance().save(myOption, value);
       return true;
     }
