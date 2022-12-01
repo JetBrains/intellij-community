@@ -457,11 +457,13 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
     init {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment && container !is DockContainer.Dialog) {
-        val statusBar = WindowManager.getInstance().getStatusBar(project)
-        if (statusBar != null) {
+        val mainStatusBar = WindowManager.getInstance().getStatusBar(project)
+        if (mainStatusBar != null) {
           val frame = getFrame()
           if (frame is IdeFrame) {
-            this.statusBar = statusBar.createChild(frame)
+            statusBar = mainStatusBar.createChild(frame) {
+              (container as? DockableEditorTabbedContainer)?.splitters?.currentWindow?.selectedComposite?.selectedWithProvider?.fileEditor
+            }
           }
         }
       }
@@ -473,7 +475,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       centerPanel.add(dockContentUiContainer, BorderLayout.CENTER)
       uiContainer.add(centerPanel, BorderLayout.CENTER)
       statusBar?.let {
-        uiContainer.add(it.component, BorderLayout.SOUTH)
+        uiContainer.add(it.component!!, BorderLayout.SOUTH)
       }
       component = uiContainer
       IdeEventQueue.getInstance().addPostprocessor({ e ->

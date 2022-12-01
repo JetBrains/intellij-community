@@ -377,7 +377,6 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
 
   launch {
     val frameHelper = deferredProjectFrameHelper.await()
-
     frameHelper.installDefaultProjectStatusBarWidgets(project)
     frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
   }

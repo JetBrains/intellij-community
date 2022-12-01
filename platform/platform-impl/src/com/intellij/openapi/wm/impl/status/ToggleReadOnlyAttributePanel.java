@@ -9,8 +9,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.function.Supplier;
 
 public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
   private StatusBar myStatusBar;
@@ -137,14 +134,8 @@ public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multi
       return null;
     }
 
-    Supplier<@Nullable FileEditor> editorSupplier = myStatusBar.getCurrentEditor();
-    if (editorSupplier == null) {
-      EditorsSplitters splitters = FileEditorManagerEx.getInstanceEx(project).getSplittersFor(myStatusBar.getComponent());
-      return splitters.getCurrentFile();
-    }
-    else {
-      FileEditor editor = editorSupplier.get();
-      return editor == null ? null : editor.getFile();
-    }
+    var editorSupplier = myStatusBar.getCurrentEditor();
+    FileEditor editor = editorSupplier.invoke();
+    return editor == null ? null : editor.getFile();
   }
 }

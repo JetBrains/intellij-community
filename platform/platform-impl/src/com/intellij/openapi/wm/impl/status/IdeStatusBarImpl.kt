@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.diagnostic.IdeMessagePanel
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.notification.impl.widget.IdeNotificationArea
@@ -11,7 +12,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
@@ -26,6 +31,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
@@ -33,11 +39,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjec
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.popup.NotificationPopup
 import com.intellij.util.EventDispatcher
-import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +55,6 @@ import java.awt.*
 import java.awt.event.MouseEvent
 import java.util.*
 import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
@@ -75,16 +80,21 @@ open class IdeStatusBarImpl internal constructor(
   private val widgetMap = LinkedHashMap<String, WidgetBean>()
   private var leftPanel: JPanel? = null
   private var rightPanel: JPanel? = null
-  private var centerPanel: JPanel? = null
+  private val centerPanel: JPanel
   private var effectComponent: JComponent? = null
   private var info: @NlsContexts.StatusBarText String? = null
-  private var editorProvider: Supplier<FileEditor?>? = null
-  private val children = HashSet<IdeStatusBarImpl>()
+
+  private var editorProvider: () -> FileEditor? = {
+    frameHelper.project?.getServiceIfCreated(FileEditorManager::class.java)?.selectedEditor
+  }
+
+  private val children = LinkedHashSet<IdeStatusBarImpl>()
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   companion object {
     @JvmField
     val HOVERED_WIDGET_ID = DataKey.create<String>("HOVERED_WIDGET_ID")
+
     @JvmField
     val WIDGET_EFFECT_KEY = Key.create<WidgetEffect>("TextPanel.widgetEffect")
     const val NAVBAR_WIDGET_KEY = "NavBar"
@@ -101,15 +111,16 @@ open class IdeStatusBarImpl internal constructor(
     return this
   }
 
-  private fun updateChildren(consumer: Consumer<in IdeStatusBarImpl>) {
+  private fun updateChildren(consumer: Consumer<IdeStatusBarImpl>) {
     for (child in children) {
       consumer.accept(child)
     }
   }
 
-  override fun createChild(frame: IdeFrame): StatusBar {
+  override fun createChild(frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
     val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowsWidget = false)
+    bar.editorProvider = editorProvider
     bar.isVisible = isVisible
     children.add(bar)
     Disposer.register(frameHelper) { children.remove(bar) }
@@ -118,7 +129,6 @@ open class IdeStatusBarImpl internal constructor(
         bar.addWidget(widget = eachBean.widget.copy(), position = eachBean.position, anchor = eachBean.anchor)
       }
     }
-    bar.repaint()
     return bar
   }
 
@@ -135,9 +145,21 @@ open class IdeStatusBarImpl internal constructor(
       JBUI.Borders.empty(1, 0, 0, 6)
     })
 
+    centerPanel = JPanel(BorderLayout())
+    centerPanel.isOpaque = false
+    centerPanel.border = if (ExperimentalUI.isNewUI()) JBUI.Borders.empty() else JBUI.Borders.empty(0, 1)
+    add(centerPanel, BorderLayout.CENTER)
+
     infoAndProgressPanel = InfoAndProgressPanel(UISettings.shadowInstance)
-    addWidget(widget = infoAndProgressPanel, position = Position.CENTER, anchor = "__IGNORED__")
+    ClientProperty.put(infoAndProgressPanel, WIDGET_ID, infoAndProgressPanel.ID())
+    val component1 = infoAndProgressPanel.component
+    centerPanel.add(component1)
+    widgetMap.put(infoAndProgressPanel.ID(),
+                  WidgetBean(widget = infoAndProgressPanel, position = Position.CENTER, component = component1, anchor = "__IGNORED__"))
+    Disposer.register(frameHelper, infoAndProgressPanel)
+
     registerCloneTasks()
+
     updateUI()
     if (addToolWindowsWidget) {
       addWidget(ToolWindowsWidget(frameHelper), Position.LEFT, "__IGNORED__")
@@ -181,8 +203,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   override fun addWidget(widget: StatusBarWidget, parentDisposable: Disposable) {
-    @Suppress("DEPRECATION")
-    addWidget(widget)
+    EdtInvocationManager.invokeLaterIfNeeded { addWidget(widget, Position.RIGHT, "__AUTODETECT__") }
     val id = widget.ID()
     Disposer.register(parentDisposable) { removeWidget(id) }
   }
@@ -197,25 +218,19 @@ open class IdeStatusBarImpl internal constructor(
   @ApiStatus.Experimental
   @RequiresEdt
   fun setCentralWidget(widget: StatusBarWidget, component: JComponent) {
-    val panel: JPanel?
     infoAndProgressPanel.setCentralComponent(component)
-    panel = infoAndProgressPanel
-    doAddWidget(widget, Position.CENTER, "", component, panel)
+    doAddWidget(widget, Position.CENTER, "", component, infoAndProgressPanel)
   }
 
   /**
    * Adds widget to the left side of the status bar. Please note there is no hover effect when mouse is over the widget.
    * Use [.addWidget] to add widget to the right side of the status bar, in this case hover effect is on.
    * @param widget widget to add
-   * @param parentDisposable when disposed, the widget will be removed from the status bar
    */
-  internal suspend fun addWidgetToLeft(widget: StatusBarWidget, parentDisposable: Disposable) {
+  internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
     withContext(Dispatchers.EDT) {
       addWidget(widget, Position.LEFT, "__IGNORED__")
     }
-
-    val id = widget.ID()
-    Disposer.register(parentDisposable) { removeWidget(id) }
   }
 
   @RequiresEdt
@@ -224,30 +239,61 @@ open class IdeStatusBarImpl internal constructor(
     addWidget(widget, Position.RIGHT, anchor)
   }
 
-  @RequiresEdt
-  @ApiStatus.Internal
-  fun addRightWidgets(widgets: List<kotlin.Pair<StatusBarWidget, String>>, parentDisposable: Disposable) {
-    val panel = rightPanel()
-    val items = widgets.map { (widget, anchor) ->
-      val component = wrap(widget)
-      if (component is StatusBarWidgetWrapper) {
-        component.beforeUpdate()
-      }
-      panel.add(component, getPositionIndex(Position.RIGHT, anchor))
-      val item = WidgetBean(widget = widget, position = Position.RIGHT, component = component, anchor = anchor)
-      widgetMap.put(widget.ID(), item)
-      widget.install(this)
-      Disposer.register(parentDisposable, widget)
-      if (widget is Multiframe) {
-        updateChildren { child -> child.addWidget(widget = widget.copy(), position = Position.RIGHT, anchor = anchor) }
-      }
-
-      item
+  internal suspend fun init(project: Project, extraItems: List<kotlin.Pair<StatusBarWidget, String>> = emptyList()) {
+    val service = project.service<StatusBarWidgetsManager>()
+    val items = runActivity("status bar pre-init") {
+      service.init()
     }
-    panel.revalidate()
+    runActivity("status bar init") {
+      init(widgets = items + extraItems, parentDisposable = service)
+    }
+  }
 
-    for (item in items) {
-      fireWidgetAdded(widget = item.widget, anchor = item.anchor)
+  private suspend fun init(widgets: List<kotlin.Pair<StatusBarWidget, String>>, parentDisposable: Disposable) {
+    val items = runActivity("status bar widget creating") {
+      widgets.map { (widget, anchor) ->
+        val component = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          val component = wrap(widget)
+          if (component is StatusBarWidgetWrapper) {
+            component.beforeUpdate()
+          }
+          component
+        }
+        val item = WidgetBean(widget = widget, position = Position.RIGHT, component = component, anchor = anchor)
+        widget.install(this)
+        Disposer.register(parentDisposable, widget)
+        item
+      }
+    }
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      runActivity("status bar widget adding") {
+        val isPanelAdded = rightPanel != null
+        val panel = rightPanel ?: createRightPanel()
+        for (item in items) {
+          panel.add(component, getPositionIndex(Position.RIGHT, item.anchor))
+          widgetMap.put(item.widget.ID(), item)
+        }
+
+        if (isPanelAdded) {
+          panel.revalidate()
+        }
+        else {
+          add(panel, BorderLayout.EAST)
+        }
+      }
+    }
+
+    if (listeners.hasListeners()) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        for (item in items) {
+          fireWidgetAdded(widget = item.widget, anchor = item.anchor)
+        }
+      }
+    }
+
+    withContext(Dispatchers.EDT) {
+      PopupHandler.installPopupMenu(this@IdeStatusBarImpl, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
     }
   }
 
@@ -282,7 +328,7 @@ open class IdeStatusBarImpl internal constructor(
       var before = false
       val parts = anchor.split(' ')
       if (parts.size > 1) {
-        widgetAnchor = widgetMap[parts[1]]
+        widgetAnchor = widgetMap.get(parts[1])
         before = "before".equals(parts[0], ignoreCase = true)
       }
       if (widgetAnchor == null) {
@@ -301,42 +347,14 @@ open class IdeStatusBarImpl internal constructor(
     return when (position) {
       Position.RIGHT -> rightPanel()
       Position.LEFT -> leftPanel()
-      else -> centerPanel()
+      else -> centerPanel
     }
-  }
-
-  private fun centerPanel(): JPanel {
-    var centerPanel = centerPanel
-    if (centerPanel == null) {
-      centerPanel = JBUI.Panels.simplePanel().andTransparent()!!
-      this.centerPanel = centerPanel
-      centerPanel.border = if (ExperimentalUI.isNewUI()) JBUI.Borders.empty() else JBUI.Borders.empty(0, 1)
-      add(centerPanel, BorderLayout.CENTER)
-    }
-    return centerPanel
   }
 
   private fun rightPanel(): JPanel {
     var rightPanel = rightPanel
     if (rightPanel == null) {
-      rightPanel = JPanel()
-      this.rightPanel = rightPanel
-      rightPanel.border = JBUI.Borders.emptyLeft(1)
-      rightPanel.layout = object : BoxLayout(rightPanel, X_AXIS) {
-        override fun layoutContainer(target: Container) {
-          super.layoutContainer(target)
-          for (component in target.components) {
-            if (component is MemoryUsagePanel) {
-              val r = component.getBounds()
-              r.y = 0
-              r.width += if (SystemInfo.isMac) 4 else 0
-              r.height = target.height
-              component.setBounds(r)
-            }
-          }
-        }
-      }
-      rightPanel.isOpaque = false
+      rightPanel = createRightPanel()
       add(rightPanel, BorderLayout.EAST)
     }
     return rightPanel
@@ -351,6 +369,7 @@ open class IdeStatusBarImpl internal constructor(
       leftPanel.layout = BoxLayout(leftPanel, BoxLayout.X_AXIS)
       leftPanel.isOpaque = false
       add(leftPanel, BorderLayout.WEST)
+      this.leftPanel = leftPanel
     }
     return leftPanel
   }
@@ -422,7 +441,12 @@ open class IdeStatusBarImpl internal constructor(
     effectComponent.background = null
     ClientProperty.put(effectComponent, WIDGET_EFFECT_KEY, widgetEffect)
     if (effectComponent.isEnabled && widgetEffect != null) {
-      effectComponent.background = if (widgetEffect == WidgetEffect.HOVER) JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND else JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND
+      effectComponent.background = if (widgetEffect == WidgetEffect.HOVER) {
+        JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND
+      }
+      else {
+        JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND
+      }
     }
     repaint(RelativeRectangle(effectComponent).getRectangleOn(this))
   }
@@ -456,7 +480,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   private fun dispatchMouseEvent(e: MouseEvent): Boolean {
-    if (rightPanel == null || centerPanel == null || !rightPanel!!.isVisible) {
+    if (rightPanel == null || !rightPanel!!.isVisible) {
       return false
     }
 
@@ -467,21 +491,23 @@ open class IdeStatusBarImpl internal constructor(
     }
 
     val point = SwingUtilities.convertPoint(component, e.point, rightPanel)
-    val widget = ObjectUtils.tryCast(rightPanel!!.getComponentAt(point), JComponent::class.java)
+    val widget = rightPanel!!.getComponentAt(point) as? JComponent
     if (e.clickCount == 0 || e.id == MouseEvent.MOUSE_RELEASED) {
       applyWidgetEffect(if (widget !== rightPanel) widget else null, WidgetEffect.HOVER)
     }
     else if (e.clickCount == 1 && e.id == MouseEvent.MOUSE_PRESSED) {
       applyWidgetEffect(if (widget !== rightPanel) widget else null, WidgetEffect.PRESSED)
     }
+
     if (e.isConsumed || widget == null) {
       return false
     }
+
     if (e.isPopupTrigger && (e.id == MouseEvent.MOUSE_PRESSED || e.id == MouseEvent.MOUSE_RELEASED)) {
       val project = project
       if (project != null) {
         val actionManager = ActionManager.getInstance()
-        val group = ObjectUtils.tryCast(actionManager.getAction(StatusBarWidgetsActionGroup.GROUP_ID), ActionGroup::class.java)
+        val group = actionManager.getAction(StatusBarWidgetsActionGroup.GROUP_ID) as? ActionGroup
         if (group != null) {
           val menu = actionManager.createActionPopupMenu(ActionPlaces.STATUS_BAR_PLACE, group)
           menu.setTargetComponent(this)
@@ -513,10 +539,13 @@ open class IdeStatusBarImpl internal constructor(
     EdtInvocationManager.invokeLaterIfNeeded {
       val bean = widgetMap.remove(id)
       if (bean != null) {
-        if (UIUtil.isAncestor(bean.component, effectComponent)) {
-          ClientProperty.put(effectComponent!!, WIDGET_EFFECT_KEY, null)
-          effectComponent = null
+        effectComponent?.let {
+          if (UIUtil.isAncestor(bean.component, it)) {
+            ClientProperty.put(it, WIDGET_EFFECT_KEY, null)
+            effectComponent = null
+          }
         }
+
         val targetPanel = getTargetPanel(bean.position)
         targetPanel.remove(bean.component)
         targetPanel.revalidate()
@@ -555,12 +584,12 @@ open class IdeStatusBarImpl internal constructor(
   override val project: Project?
     get() = frameHelper.project
 
-  override val currentEditor: Supplier<FileEditor?>?
+  override val currentEditor: () -> FileEditor?
     get() = editorProvider
 
   @ApiStatus.Internal
-  fun setEditorProvider(provider: CurrentEditorProvider?) {
-    editorProvider = if (provider == null) null else Supplier { provider.currentEditor }
+  fun setEditorProvider(provider: CurrentEditorProvider) {
+    editorProvider = { provider.currentEditor }
   }
 
   override fun getAccessibleContext(): AccessibleContext {
@@ -653,4 +682,25 @@ private fun wrap(widget: StatusBarWidget): JComponent {
   ClientProperty.put(wrapper, WIDGET_ID, widget.ID())
   wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, java.lang.Boolean.TRUE)
   return wrapper
+}
+
+private fun createRightPanel(): JPanel {
+  val result = JPanel()
+  result.layout = object : BoxLayout(result, X_AXIS) {
+    override fun layoutContainer(target: Container) {
+      super.layoutContainer(target)
+      for (component in target.components) {
+        if (component is MemoryUsagePanel) {
+          val r = component.getBounds()
+          r.y = 0
+          r.width += if (SystemInfoRt.isMac) 4 else 0
+          r.height = target.height
+          component.setBounds(r)
+        }
+      }
+    }
+  }
+  result.border = JBUI.Borders.emptyLeft(1)
+  result.isOpaque = false
+  return result
 }

@@ -206,10 +206,6 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     return null;
   }
 
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-  }
-
   @ApiStatus.Experimental
   public void setCentralComponent(@Nullable JComponent component) {
     if (myShowNavBar) {
@@ -1138,7 +1134,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  private static class InlineLayout extends AbstractLayoutManager {
+  private static final class InlineLayout extends AbstractLayoutManager {
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       Dimension result = new Dimension();

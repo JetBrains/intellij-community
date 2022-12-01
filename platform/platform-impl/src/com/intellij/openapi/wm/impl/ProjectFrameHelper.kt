@@ -5,14 +5,12 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.notification.ActionCenter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,8 +25,6 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
@@ -342,19 +338,11 @@ open class ProjectFrameHelper internal constructor(
   }
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      rootPane.statusBar!!.setEditorProvider {
-        project.getServiceIfCreated(FileEditorManager::class.java)?.selectedEditor
-      }
-    }
-    project.service<StatusBarWidgetsManager>().init { rootPane.statusBar!! }
+    rootPane.statusBar!!.init(project)
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val statusBar = rootPane.statusBar!!
-      PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
-
       val navBar = rootPane.navBarStatusWidgetComponent ?: return@withContext
-      statusBar.setCentralWidget({ IdeStatusBarImpl.NAVBAR_WIDGET_KEY }, navBar)
+      statusBar!!.setCentralWidget({ IdeStatusBarImpl.NAVBAR_WIDGET_KEY }, navBar)
     }
   }
 

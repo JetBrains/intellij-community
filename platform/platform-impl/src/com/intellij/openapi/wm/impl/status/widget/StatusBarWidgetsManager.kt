@@ -3,14 +3,11 @@
 
 package com.intellij.openapi.wm.impl.status.widget
 
-import com.intellij.diagnostic.runActivity
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -21,8 +18,6 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 class StatusBarWidgetsManager(private val project: Project) : SimpleModificationTracker(), Disposable {
@@ -41,15 +36,6 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     }
   }
 
-  @ApiStatus.Internal
-  fun disableAllWidgets() {
-    synchronized(widgetFactories) {
-      for (factory in widgetFactories.keys.toList()) {
-        disableWidget(factory)
-      }
-    }
-  }
-
   fun updateWidget(factoryExtension: Class<out StatusBarWidgetFactory>) {
     val factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension)
     synchronized(widgetFactories) {
@@ -63,7 +49,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
   }
 
   fun updateWidget(factory: StatusBarWidgetFactory) {
-    if (!(!factory.isConfigurable || StatusBarWidgetSettings.getInstance().isEnabled(factory)) || !factory.isAvailable(project)) {
+    if ((factory.isConfigurable && !StatusBarWidgetSettings.getInstance().isEnabled(factory)) || !factory.isAvailable(project)) {
       disableWidget(factory)
       return
     }
@@ -166,7 +152,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
   }
 
-  suspend fun init(statusBarSupplier: () -> StatusBar) {
+  internal fun init(): List<Pair<StatusBarWidget, String>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
     val availableFactories = StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
@@ -212,21 +198,6 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
 
     incModificationCount()
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val statusBar = statusBarSupplier()
-      runActivity("status bar widgets adding") {
-        if (statusBar is IdeStatusBarImpl) {
-          statusBar.addRightWidgets(widgets, this@StatusBarWidgetsManager)
-        }
-        else {
-          for ((widget, anchor) in widgets) {
-            @Suppress("DEPRECATION")
-            statusBar.addWidget(widget, anchor)
-          }
-        }
-      }
-    }
-
     StatusBarWidgetFactory.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<StatusBarWidgetFactory> {
       override fun extensionAdded(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
         if (LightEdit.owns(project) && extension !is LightEditCompatible) {
@@ -255,5 +226,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
         }
       }
     }, this)
+
+    return widgets
   }
 }

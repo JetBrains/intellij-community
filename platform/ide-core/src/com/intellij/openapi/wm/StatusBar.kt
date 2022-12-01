@@ -14,7 +14,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.awt.Component
-import java.util.function.Supplier
 import javax.swing.JComponent
 
 /**
@@ -63,7 +62,6 @@ interface StatusBar : StatusBarInfo {
   /**
    * Adds the given widget on the right.
    *
-   *
    * For external usages use [com.intellij.openapi.wm.StatusBarWidgetFactory].
    */
   @ApiStatus.Internal
@@ -71,7 +69,6 @@ interface StatusBar : StatusBarInfo {
 
   /**
    * Adds the given widget positioned according to given anchor (see [Anchors]).
-   *
    *
    * For external usages use [com.intellij.openapi.wm.StatusBarWidgetFactory].
    */
@@ -90,7 +87,8 @@ interface StatusBar : StatusBarInfo {
 
   fun fireNotificationPopup(content: JComponent, backgroundColor: Color?)
 
-  fun createChild(frame: IdeFrame): StatusBar?
+  @ApiStatus.Internal
+  fun createChild(frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar?
 
   val component: JComponent?
 
@@ -135,6 +133,6 @@ interface StatusBar : StatusBarInfo {
    */
   @get:ApiStatus.Internal
   @get:ApiStatus.Experimental
-  val currentEditor: Supplier<FileEditor?>?
-    get() = null
+
+  val currentEditor: () -> FileEditor?
 }

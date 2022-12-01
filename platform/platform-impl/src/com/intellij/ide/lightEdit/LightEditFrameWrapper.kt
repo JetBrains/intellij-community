@@ -6,9 +6,7 @@ import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -19,10 +17,7 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.toolWindow.ToolWindowPane
-import com.intellij.ui.PopupHandler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -122,16 +117,13 @@ internal class LightEditFrameWrapper(
 
     @Suppress("DEPRECATION")
     val coroutineScope = project.coroutineScope
-
-    statusBar.addWidgetToLeft(LightEditModeNotificationWidget(), this)
-    statusBar.addWidget(LightEditPositionWidget(project, editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
-    statusBar.addWidget(LightEditAutosaveWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
-    statusBar.addWidget(LightEditEncodingWidgetWrapper(project, coroutineScope), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this)
-    statusBar.addWidget(widget = LightEditLineSeparatorWidgetWrapper(project, coroutineScope),
-                        anchor = StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
-                        parentDisposable = this)
-    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
-    project.service<StatusBarWidgetsManager>().init { statusBar }
+    statusBar.addWidgetToLeft(LightEditModeNotificationWidget())
+    statusBar.init(project, extraItems = listOf(
+      LightEditPositionWidget(project, editorManager) to StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR),
+      LightEditAutosaveWidget(editorManager) to StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR),
+      LightEditEncodingWidgetWrapper(project, coroutineScope) to StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL),
+      LightEditLineSeparatorWidgetWrapper(project, coroutineScope) to StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
+    ))
   }
 
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
