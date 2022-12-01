@@ -396,7 +396,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     normalizeProportionsIfNeed(this.panel)
     // open only selected file in the new splitter instead of opening all tabs
     val nextFile = virtualFile ?: selectedComposite!!.file
-    val currentState = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file != nextFile }
+    val currentState = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file == nextFile }
     val openOptions = FileEditorOpenOptions(requestFocus = focusNew, isExactState = true)
     val editors = fileEditorManager.openFileImpl4(result, nextFile, currentState, openOptions).allEditors
     syncCaretIfPossible(editors)
