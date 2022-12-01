@@ -23,6 +23,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -42,7 +43,6 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -192,9 +192,12 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       String homePath = jdk.getHomePath();
 
       if (!SystemInfo.isMac) {
-        final File jre = new File(jdk.getHomePath(), "jre");
-        if (jre.isDirectory()) {
-          homePath = jre.getPath();
+        VirtualFile homeDirectory = jdk.getHomeDirectory();
+        if (homeDirectory != null) {
+          VirtualFile jre = homeDirectory.findChild("jre");
+          if (jre != null && jre.isDirectory()) {
+            homePath = jre.getPath();
+          }
         }
       }
       if (jrePaths.add(homePath)) {
