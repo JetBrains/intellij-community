@@ -31,13 +31,24 @@ class UploadLogsService : RestService() {
   private val uploadsServiceUrl = "https://uploads.jetbrains.com"
 
   private val trustedPredefinedHosts = setOf("intellij-support.jetbrains.com")
+  private val serviceName = "logs"
 
   override fun getServiceName(): String {
-    return "uploadLogs"
+    return serviceName
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val project = ProjectManager.getInstance().openProjects.firstOrNull()
+    val path = urlDecoder.path().split(serviceName).last().trimStart('/')
+    if(path == "status") {
+      sendOk(request, context)
+      return null
+    }
+    val channel = context.channel()
+    if (path != "uploads") {
+      sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
+      return null;
+    }
+    val project = getLastFocusedOrOpenedProject()
     if (project != null) {
       val task = object : Task.Backgroundable(project, IdeBundle.message("collect.upload.logs.progress.title"), true) {
         override fun run(indicator: ProgressIndicator) {
@@ -46,7 +57,7 @@ class UploadLogsService : RestService() {
             val logs = CollectZippedLogsAction.packLogs(project)
             val uploadedID = uploadFile(logs.toFile(), logs.name, indicator)
             if (uploadedID == null) {
-              sendStatus(HttpResponseStatus.BAD_REQUEST, false, context.channel())
+              sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
               return
             }
             val message = IdeBundle.message("collect.logs.notification.sent.success", uploadsServiceUrl, uploadedID)
@@ -61,10 +72,10 @@ class UploadLogsService : RestService() {
           catch (x: IOException) {
             val message = IdeBundle.message("collect.logs.notification.error", IoErrorText.message(x))
             Notification(CollectZippedLogsAction.NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(project)
-            sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, context.channel())
+            sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
           }
           catch (pc: ProcessCanceledException) {
-            sendStatus(HttpResponseStatus.BAD_REQUEST, false, context.channel())
+            sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
           }
         }
       }
