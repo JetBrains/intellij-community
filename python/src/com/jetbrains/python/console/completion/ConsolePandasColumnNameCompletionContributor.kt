@@ -20,10 +20,10 @@ import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.PyExecuteConsoleCustomizer
 import com.jetbrains.python.console.PydevConsoleCommunication
 import com.jetbrains.python.console.PythonConsoleView
-import com.jetbrains.python.debugger.PyDebuggerException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import org.apache.thrift.TException
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.Callable
 
@@ -111,7 +111,8 @@ class ConsolePandasColumnNameRetrievalServiceImpl(val project: Project) : Consol
         else -> emptyList()
       }
     }
-    catch (_: PyDebuggerException) {
+    catch (e: TException) {
+      ConsolePandasColumnNameCompletionContributor.LOG.warn(e)
       return emptyList()
     }
   }
