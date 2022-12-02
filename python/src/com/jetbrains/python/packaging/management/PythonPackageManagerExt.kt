@@ -38,10 +38,11 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   // todo[akniazev]: check applyWorkingDir: PyTargetEnvironmentPackageManager.java:133
 
   pythonExecution.addParameter(operation)
-
-  proxyString?.let {
-    pythonExecution.addParameter("--proxy")
-    pythonExecution.addParameter(it)
+  if (operation == "install") {
+    proxyString?.let {
+      pythonExecution.addParameter("--proxy")
+      pythonExecution.addParameter(it)
+    }
   }
 
   arguments.forEach(pythonExecution::addParameter)
