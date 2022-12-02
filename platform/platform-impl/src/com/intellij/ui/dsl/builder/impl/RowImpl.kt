@@ -36,6 +36,7 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -229,21 +230,21 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
-  override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
+  override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
     val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     return cell(toolbar)
   }
 
-  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String): SegmentedButton<T> {
+  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T> {
     val result = SegmentedButtonImpl(this, renderer)
     result.items(items)
     cells.add(result)
     return result
   }
 
-  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String, tooltipRenderer: (T) -> String?): SegmentedButton<T> {
+  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String, tooltipRenderer: (T) -> @Nls String?): SegmentedButton<T> {
     val result = SegmentedButtonImpl(this, renderer, tooltipRenderer)
     result.items(items)
     cells.add(result)

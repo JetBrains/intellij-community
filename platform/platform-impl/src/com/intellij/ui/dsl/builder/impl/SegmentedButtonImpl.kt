@@ -23,12 +23,13 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 
 @ApiStatus.Internal
 internal class SegmentedButtonImpl<T>(parent: RowImpl,
-                                      private val renderer: (T) -> String,
-                                      tooltipRenderer: (T) -> String? = NO_TOOLTIP_RENDERER
+                                      private val renderer: (T) -> @Nls String,
+                                      tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER
 ) : PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
 
   private var items: Collection<T> = emptyList()

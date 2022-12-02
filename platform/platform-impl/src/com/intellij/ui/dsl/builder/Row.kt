@@ -24,6 +24,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -215,19 +216,19 @@ interface Row {
 
   @Deprecated("Use overloaded method")
   @ApiStatus.ScheduledForRemoval
-  fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar>
+  fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar>
 
   /**
    * @see [SegmentedButton]
    */
   @ApiStatus.Experimental
-  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String): SegmentedButton<T>
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
 
   /**
    * @see [SegmentedButton]
    */
   @ApiStatus.Experimental
-  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String, tooltipRenderer: (T) -> String?): SegmentedButton<T>
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String, tooltipRenderer: (T) -> @Nls String?): SegmentedButton<T>
 
   /**
    * Creates JBTabbedPane which shows only tabs without tab content. To add a new tab call something like

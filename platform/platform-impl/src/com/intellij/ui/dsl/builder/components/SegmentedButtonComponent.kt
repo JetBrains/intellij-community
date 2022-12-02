@@ -27,6 +27,7 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -38,12 +39,12 @@ import javax.swing.JPanel
 
 private const val PLACE = "SegmentedButton"
 
-internal val NO_TOOLTIP_RENDERER: (Any?) -> String? = { null }
+internal val NO_TOOLTIP_RENDERER: (Any?) -> @Nls String? = { null }
 
 @ApiStatus.Internal
 internal class SegmentedButtonComponent<T>(items: Collection<T>,
-                                           private val renderer: (T) -> String,
-                                           private val tooltipRenderer: (T) -> String? = NO_TOOLTIP_RENDERER) : JPanel(GridLayout()) {
+                                           private val renderer: (T) -> @Nls String,
+                                           private val tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER) : JPanel(GridLayout()) {
 
   var spacing: SpacingConfiguration = EmptySpacingConfiguration()
     set(value) {

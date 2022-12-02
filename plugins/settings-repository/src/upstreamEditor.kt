@@ -8,11 +8,11 @@ import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.DialogManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
 import java.awt.Component
@@ -21,7 +21,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JTextField
 
-internal fun validateUrl(url: String?, project: Project?): @NlsContexts.DialogMessage String? {
+internal fun validateUrl(url: String?, project: Project?): @Nls String? {
   return if (url == null) IcsBundle.message("dialog.error.message.url.empty") else icsManager.repositoryService.checkUrl(url, project)
 }
 

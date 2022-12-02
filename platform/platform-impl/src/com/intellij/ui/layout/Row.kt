@@ -17,7 +17,7 @@ import javax.swing.JLabel
 interface BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun withButtonGroup(@NlsContexts.BorderTitle title: String?, buttonGroup: ButtonGroup, body: () -> Unit)
+  fun withButtonGroup(title: @NlsContexts.BorderTitle String?, buttonGroup: ButtonGroup, body: () -> Unit)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -58,7 +58,7 @@ interface RowBuilder : BaseBuilder {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }
 
-  fun row(@Nls label: String?, separated: Boolean = false, init: Row.() -> Unit): Row {
+  fun row(label: @Nls String?, separated: Boolean = false, init: Row.() -> Unit): Row {
     return row(label?.let { Label(it) }, separated = separated, init)
   }
 

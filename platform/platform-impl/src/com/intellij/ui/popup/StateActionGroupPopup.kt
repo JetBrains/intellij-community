@@ -15,6 +15,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Font
 import javax.swing.*
@@ -31,7 +32,7 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
                                  preselectActionCondition: Condition<AnAction>?,
                                  actionPlace: String?,
                                  autoSelection: Boolean,
-                                 val getState: (AnAction) -> String?) :
+                                 val getState: (AnAction) -> @Nls String?) :
   PopupFactoryImpl.ActionGroupPopup(title, actionGroup, dataContext, showNumbers,
                                     useAlphaAsNumbers,
                                     showDisabledActions, honorActionMnemonics,

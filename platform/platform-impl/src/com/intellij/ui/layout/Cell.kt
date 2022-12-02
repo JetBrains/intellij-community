@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -692,7 +693,7 @@ class InnerCell(val cell: Cell) : Cell() {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
+  override fun withButtonGroup(title: @NlsContexts.BorderTitle String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     cell.withButtonGroup(title, buttonGroup, body)
   }
 }
