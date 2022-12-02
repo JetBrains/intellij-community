@@ -278,7 +278,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       ExternalProjectsStructure.ErrorLevel result = ExternalProjectsStructure.ErrorLevel.NONE;
       for (DependencyNode dependencyNode : node.getDependencies()) {
         ExternalProjectsStructure.ErrorLevel eachLevel = getErrorLevelRecursively(dependencyNode);
-        if (result.compareTo(eachLevel) > 0) result = eachLevel;
+        if (result.compareTo(eachLevel) < 0) result = eachLevel;
         if (result == ExternalProjectsStructure.ErrorLevel.ERROR) break;
       }
       return result;
