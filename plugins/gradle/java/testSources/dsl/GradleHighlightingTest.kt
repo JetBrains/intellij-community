@@ -6,13 +6,16 @@ import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.textContent
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
+import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.EMPTY_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -42,6 +45,18 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
         val reference = psiFile.findReferenceAt(offset)!!
         val method = assertInstanceOf<PsiMethod>(reference.resolve())
         assertEquals("setTransitive", method.name)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAndroid(gradleVersion: GradleVersion) {
+    test(gradleVersion, ANDROID_FIXTURE) {
+      val file = getFile("build.gradle")
+      runInEdtAndWait {
+        fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+        fixture.testHighlighting(true, false, true, file)
       }
     }
   }
@@ -199,6 +214,32 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       }
       withDirectory("buildSrc/src/main/groovy")
       withDirectory("buildSrc/src/main/java")
+    }
+
+    private val ANDROID_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-android") {
+      withSettingsFile {
+        pluginManagement {
+          call("repositories") {
+            call("google")
+            call("mavenCentral")
+            call("gradlePluginPortal")
+          }
+        }
+        setProjectName("GradleHighlightingTest-android")
+      }
+      withBuildFile(it) {
+        withPrefix {
+          call("plugins") {
+            code("id 'com.android.application' version '7.3.0'")
+          }
+          call("android") {
+            call("compileSdk", int(32))
+            call("defaultConfig") {
+              call("applicationId", string("com.example.myApplication"))
+            }
+          }
+        }
+      }
     }
   }
 }
