@@ -34,7 +34,7 @@ class JBCefOsrComponent extends JPanel {
   private @NotNull Alarm myAlarm;
   private @NotNull Disposable myDisposable;
 
-  JBCefOsrComponent() {
+  JBCefOsrComponent(boolean isMouseWheelEventEnabled) {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
     setBackground(JBColor.background());
     addPropertyChangeListener("graphicsConfiguration",
@@ -42,7 +42,7 @@ class JBCefOsrComponent extends JPanel {
 
     enableEvents(AWTEvent.KEY_EVENT_MASK |
                  AWTEvent.MOUSE_EVENT_MASK |
-                 AWTEvent.MOUSE_WHEEL_EVENT_MASK |
+                 (isMouseWheelEventEnabled ? AWTEvent.MOUSE_WHEEL_EVENT_MASK : 0L) |
                  AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
     setFocusable(true);
