@@ -6,6 +6,7 @@ import com.intellij.execution.filters.ExceptionLineParserFactory
 import com.intellij.execution.testframework.actions.TestDiffProvider
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiBinaryFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -17,6 +18,7 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
     stackTrace.lineSequence().forEach {  line ->
       lineParser.execute(line, line.length) ?: return@forEach
       val file = lineParser.file ?: return@forEach
+      if (file is PsiBinaryFile) return@forEach
       val virtualFile = file.virtualFile ?: return@forEach
       val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return@forEach
       val lineNumber = lineParser.info.lineNumber
