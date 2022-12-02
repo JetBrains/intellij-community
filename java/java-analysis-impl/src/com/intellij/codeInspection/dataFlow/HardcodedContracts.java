@@ -197,7 +197,38 @@ public final class HardcodedContracts {
       singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnFalse())
     ))
     //for propagation CONSUMED_STREAM
-    .register(ConsumedStreamUtils.getSkipStreamMatchers(), ContractProvider.of(trivialContract(returnThis())));
+    .register(ConsumedStreamUtils.getSkipStreamMatchers(), ContractProvider.of(trivialContract(returnThis())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isSurrogate").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_SURROGATE, PsiType.CHAR), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_SURROGATE, PsiType.CHAR), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isHighSurrogate").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_HIGH_SURROGATE, PsiType.CHAR), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_HIGH_SURROGATE, PsiType.CHAR), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isLowSurrogate").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_LOW_SURROGATE, PsiType.CHAR), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_LOW_SURROGATE, PsiType.CHAR), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isSupplementaryCodePoint").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_SUPPLEMENTARY_CODE_POINT, PsiType.INT), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_CODE_POINT, PsiType.INT), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isValidCodePoint").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_CODE_POINT, PsiType.INT), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_CODE_POINT, PsiType.INT), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isBmpCodePoint").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_CODE_POINT, PsiType.INT), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GE, ContractValue.constant(Character.MIN_SUPPLEMENTARY_CODE_POINT, PsiType.INT), returnFalse()),
+                trivialContract(returnTrue())))
+    ;
 
   private static @NotNull ContractProvider getArraycopyContract() {
     ContractValue src = ContractValue.argument(0);
