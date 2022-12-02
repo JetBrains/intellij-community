@@ -56,7 +56,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  public void cancelTask(@NotNull DumbModeTask task) {
+  public void cancelTask(@NotNull T task) {
     ProgressIndicatorEx indicator;
     synchronized (myLock) {
       indicator = myProgresses.get(task);
@@ -158,7 +158,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
     catch (Throwable t) {
       if (!(t instanceof ControlFlowException)) {
-        LOG.warn("Failed to dispose DumbModeTask: " + t.getMessage(), t);
+        LOG.warn("Failed to dispose task: " + t.getMessage(), t);
       }
     }
   }
@@ -175,7 +175,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
     catch (Throwable t) {
       if (!(t instanceof ControlFlowException)) {
-        LOG.warn("Failed to cancel DumbModeTask indicator: " + t.getMessage(), t);
+        LOG.warn("Failed to cancel task indicator: " + t.getMessage(), t);
       }
     }
   }
