@@ -22,6 +22,7 @@
 package de.plushnikov.intellij.plugin.thirdparty;
 
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -96,7 +97,7 @@ public class LombokHandlerUtil {
    * @param isBoolean if the field is of type 'boolean'. For fields of type {@code java.lang.Boolean}, you should provide {@code false}.
    * @return The getter name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
-  public static String toGetterName(AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean) {
+  public static String toGetterName(@NotNull AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean) {
     return toAccessorName(accessors, fieldName, isBoolean, "is", "get", true);
   }
 
@@ -120,7 +121,7 @@ public class LombokHandlerUtil {
    * @param isBoolean if the field is of type 'boolean'. For fields of type {@code java.lang.Boolean}, you should provide {@code false}.
    * @return The setter name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
-  public static String toSetterName(AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean) {
+  public static String toSetterName(@NotNull AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean) {
     return toAccessorName(accessors, fieldName, isBoolean, "set", "set", true);
   }
 
@@ -143,14 +144,14 @@ public class LombokHandlerUtil {
    * @param isBoolean if the field is of type 'boolean'. For fields of type {@code java.lang.Boolean}, you should provide {@code false}.
    * @return The wither name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
-  public static String toWitherName(AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean) {
+  public static String toWitherName(@NotNull AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean) {
     if (accessors.isFluent()) {
       throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
     }
     return toAccessorName(accessors, fieldName, isBoolean, "with", "with", false);
   }
 
-  private static String toAccessorName(AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean,
+  private static String toAccessorName(@NotNull AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean,
                                        String booleanPrefix, String normalPrefix, boolean adhereToFluent) {
 
     fieldName = fieldName.toString();
@@ -161,11 +162,10 @@ public class LombokHandlerUtil {
     if (Boolean.TRUE.equals(accessors.isDoNotUseIsPrefix())) {
       isBoolean = false;
     }
-    boolean explicitPrefix = accessors != null;//accessors.isExplicit("prefix");
-    boolean explicitFluent = accessors != null && accessors.isFluent();//accessors.isExplicit("fluent");
+    boolean explicitFluent = accessors.isFluent();//accessors.isExplicit("fluent");
 
-    List<String> prefix = explicitPrefix ? Arrays.asList(accessors.getPrefixes()) : null;
-    boolean fluent = explicitFluent ? accessors.isFluent() : Boolean.TRUE.equals(null);
+    List<String> prefix = Arrays.asList(accessors.getPrefixes());
+    boolean fluent = explicitFluent && accessors.isFluent();
 
     fieldName = removePrefix(fieldName, prefix);
     if (fieldName == null) {
@@ -230,7 +230,7 @@ public class LombokHandlerUtil {
     return toAllAccessorNames(accessors, fieldName, isBoolean, "with", "with", false);
   }
 
-  private static List<String> toAllAccessorNames(AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean,
+  private static List<String> toAllAccessorNames(@NotNull AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean,
                                                  String booleanPrefix, String normalPrefix, boolean adhereToFluent) {
 
     if (Boolean.TRUE.equals(accessors.isDoNotUseIsPrefix())) {
@@ -241,19 +241,14 @@ public class LombokHandlerUtil {
       return (accessorName == null) ? Collections.emptyList() : Collections.singletonList(accessorName);
     }
 
-    boolean explicitPrefix = accessors != null && false;//accessors.isExplicit("prefix");
-    boolean explicitFluent = accessors != null && accessors.isFluent();//accessors.isExplicit("fluent");
+    boolean explicitFluent = accessors.isFluent();
+    boolean fluent = explicitFluent && accessors.isFluent();
 
-
-    List<String> prefix = explicitPrefix ? Arrays.asList(accessors.getPrefixes()) : null;
-    boolean fluent = explicitFluent ? accessors.isFluent() : Boolean.TRUE.equals(null);
-
-    fieldName = removePrefix(fieldName, prefix);
     if (fieldName == null) {
       return Collections.emptyList();
     }
 
-    List<String> baseNames = toBaseNames(fieldName, isBoolean, fluent);
+    List<String> baseNames = toBaseNames(fieldName, fluent);
 
     Set<String> names = new HashSet<>();
     for (String baseName : baseNames) {
@@ -271,7 +266,7 @@ public class LombokHandlerUtil {
 
   }
 
-  private static List<String> toBaseNames(CharSequence fieldName, boolean isBoolean, boolean fluent) {
+  private static List<String> toBaseNames(CharSequence fieldName, boolean fluent) {
     List<String> baseNames = new ArrayList<>();
     baseNames.add(fieldName.toString());
 
