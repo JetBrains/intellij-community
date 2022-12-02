@@ -16,7 +16,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.asSafely
 
-abstract class TestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
+abstract class JvmTestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("junit4", *ArrayUtilRt.toStringArray(JavaSdkUtil.getJUnit4JarPaths()))
   }

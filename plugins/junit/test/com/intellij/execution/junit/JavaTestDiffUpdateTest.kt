@@ -3,7 +3,7 @@ package com.intellij.execution.junit
 
 import org.intellij.lang.annotations.Language
 
-class JavaTestDiffUpdateTest : TestDiffUpdateTest() {
+class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
 
   @Suppress("SameParameterValue")
   private fun checkAcceptDiff(
@@ -15,6 +15,65 @@ class JavaTestDiffUpdateTest : TestDiffUpdateTest() {
     actual: String,
     stackTrace: String
   ) = checkAcceptDiff(before, after, testClass, testName, expected, actual, stackTrace, "java")
+
+  fun `test failure when stacktrace is corrupted`() {
+    checkAcceptDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+          @Test
+          public void testFoo() {
+              Assert.assertEquals("expected", "actual");
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+          @Test
+          public void testFoo() {
+              Assert.assertEquals("expected", "actual");
+          }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      	at org.junit.Assert.assertEquals(Assert.java:117)
+      	at org.junit.Assert.assertEquals(Assert.java:146)
+      	unexpected input
+    """.trimIndent())
+  }
+
+  fun `test success when stacktrace is polluted`() {
+    checkAcceptDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+          @Test
+          public void testFoo() {
+              Assert.assertEquals("expected", "actual");
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+          @Test
+          public void testFoo() {
+              Assert.assertEquals("actual", "actual");
+          }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+        unexpected input
+      	at org.junit.Assert.assertEquals(Assert.java:117)
+        unexpected input
+      	at org.junit.Assert.assertEquals(Assert.java:146)
+      	at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+        unexpected input
+    """.trimIndent())
+  }
 
   fun `test string literal diff`() {
     checkAcceptDiff("""
@@ -177,7 +236,7 @@ class JavaTestDiffUpdateTest : TestDiffUpdateTest() {
               Assert.assertEquals(exp, "actual");
           }
       }
-    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """"
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
       at org.junit.Assert.assertEquals(Assert.java:117)
       at org.junit.Assert.assertEquals(Assert.java:146)
       at MyJUnitTest.testFoo(MyJUnitTest.java:9)

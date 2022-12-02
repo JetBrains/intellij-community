@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration
 
-import com.intellij.execution.junit.TestDiffUpdateTest
+import com.intellij.execution.junit.JvmTestDiffUpdateTest
 import org.intellij.lang.annotations.Language
 
-class KotlinTestDiffUpdateTest : TestDiffUpdateTest() {
+class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     @Suppress("SameParameterValue")
     private fun checkAcceptDiff(
         @Language("kotlin") before: String,
