@@ -2,8 +2,11 @@
 package com.intellij.ide.starters.local.generator
 
 import com.intellij.ide.starters.local.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.file.NioFileUtil
 import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,15 +15,19 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
 
+@ApiStatus.Experimental
 interface AssetsProcessor {
   fun generateSources(
     outputDirectory: Path,
     assets: List<GeneratorAsset>,
     templateProperties: Map<String, Any>
   ): List<Path>
+
+  companion object {
+    fun getInstance(): AssetsProcessor = service()
+  }
 }
 
-@ApiStatus.Experimental
 abstract class AbstractAssetsProcessor : AssetsProcessor {
   override fun generateSources(
     outputDirectory: Path,
@@ -106,13 +113,25 @@ class AssetsProcessorImpl : AbstractAssetsProcessor() {
   }
 }
 
+@Suppress("TestOnlyProblems")
+fun convertOutputLocationForTests(moduleContentRoot: VirtualFile): Path {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return TestFileSystemLocation(moduleContentRoot, Path.of(moduleContentRoot.name))
+  }
+
+  return moduleContentRoot.toNioPath()
+}
+
 @TestOnly
 class TestFileSystemLocation(
   val virtualFile: VirtualFile,
-  val localPath: Path
-): Path by localPath {
+  /**
+   * Fake Path for debug-purpose only, should never be used for disk operations
+   */
+  val debugPath: Path
+): Path by debugPath {
   override fun toString(): String {
-    return "TestFileSystemLocation($localPath)"
+    return "TestFileSystemLocation($debugPath)"
   }
 }
 
@@ -137,7 +156,7 @@ class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
   override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
     if (outputDirectory is TestFileSystemLocation) {
       val vFile = VirtualFileUtil.findOrCreateFile(outputDirectory.virtualFile, relativePath)
-      return TestFileSystemLocation(vFile, outputDirectory.localPath.resolve(relativePath))
+      return TestFileSystemLocation(vFile, outputDirectory.debugPath.resolve(relativePath.toNioPath()))
     } else {
       return NioFileUtil.findOrCreateFile(outputDirectory, relativePath)
     }
@@ -147,7 +166,7 @@ class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
     if (outputDirectory is TestFileSystemLocation) {
       val vFile = VirtualFileUtil.findOrCreateDirectory(outputDirectory.virtualFile, relativePath)
 
-      return TestFileSystemLocation(vFile, outputDirectory.localPath.resolve(relativePath))
+      return TestFileSystemLocation(vFile, outputDirectory.debugPath.resolve(relativePath.toNioPath()))
     } else {
       return NioFileUtil.findOrCreateDirectory(outputDirectory, relativePath)
     }

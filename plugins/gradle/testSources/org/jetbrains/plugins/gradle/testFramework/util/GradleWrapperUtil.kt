@@ -28,7 +28,7 @@ fun generateWrapper(root: VirtualFile, configuration: WrapperConfiguration) {
     VirtualFileUtil.setTextContent(propertiesFile, propertiesContent)
     val assets = StandardAssetsProvider().getGradlewAssets()
 
-    service<AssetsProcessor>().generateSources(TestFileSystemLocation(root, Path.of(root.name)), assets, emptyMap())
+    AssetsProcessor.getInstance().generateSources(TestFileSystemLocation(root, Path.of(root.name)), assets, emptyMap())
   }
 }
 

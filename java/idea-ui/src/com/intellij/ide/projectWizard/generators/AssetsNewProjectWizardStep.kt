@@ -13,7 +13,7 @@ import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.service
+import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,9 +21,7 @@ import com.intellij.openapi.fileSystem.LocalFileSystemUtil
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import java.util.StringJoiner
-import kotlin.io.path.name
 
 @ApiStatus.Experimental
 abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
@@ -62,23 +60,22 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
       val generatedFiles = invokeAndWaitIfNeeded {
         runWriteAction {
-          service<AssetsProcessor>().generateSources(Path.of(outputDirectory), assets, templateProperties)
+          AssetsProcessor.getInstance().generateSources(outputDirectory.toNioPath(), assets, templateProperties)
         }
       }
-      whenProjectCreated(project) { //IDEA-244863
-        val vFiles = generatedFiles
-          .mapNotNull { LocalFileSystemUtil.findFile(it) }
 
-        reformatCode(project, vFiles)
-        openFilesInEditor(project, vFiles.filter { it.toString() in filesToOpen })
+      whenProjectCreated(project) { //IDEA-244863
+        reformatCode(project, generatedFiles.mapNotNull { LocalFileSystemUtil.findFile(it) })
+        openFilesInEditor(project, filesToOpen.mapNotNull { LocalFileSystemUtil.findFile(it) })
       }
     }
   }
 
   private fun reformatCode(project: Project, files: List<VirtualFile>) {
     val psiManager = PsiManager.getInstance(project)
-    val generatedPsiFiles = files.mapNotNull { psiManager.findFile(it) }
-    ReformatCodeProcessor(project, generatedPsiFiles.toTypedArray(), null, false).run()
+    val psiFiles = files.mapNotNull { psiManager.findFile(it) }
+
+    ReformatCodeProcessor(project, psiFiles.toTypedArray(), null, false).run()
   }
 
   private fun openFilesInEditor(project: Project, files: List<VirtualFile>) {
