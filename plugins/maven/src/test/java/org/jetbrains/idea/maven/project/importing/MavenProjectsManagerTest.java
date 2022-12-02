@@ -1223,6 +1223,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testWhenDeleteModuleThenChangeModuleDependencyToLibraryDependency() {
+    if (!isWorkspaceImport()) return;
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1270,6 +1271,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testWhenDeleteModuleInProjectStructureThenChangeModuleDependencyToLibraryDependency() throws ConfigurationException {
+    if (!isWorkspaceImport()) return;
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
