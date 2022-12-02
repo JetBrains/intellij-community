@@ -314,7 +314,10 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
     }
     else {
       val firstClass = this.getEntityClass()
-      entityLinks.keys.asSequence().map { it.connectionId }.singleOrNull {
+      // Attempt to find connection by old entities still existing in storage
+      val connectionsFromOldEntities = (referrers(entityClass.java).firstOrNull() as? WorkspaceEntityBase)?.connectionIdList()?.asSequence()
+                                      ?: emptySequence()
+      (entityLinks.keys.asSequence().map { it.connectionId }.asSequence() + connectionsFromOldEntities).singleOrNull {
         isCorrectConnection(it, firstClass, entityClass.java) || isCorrectConnection(it, entityClass.java, firstClass)
       }
     }

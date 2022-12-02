@@ -15,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -26,18 +29,25 @@ open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : Main
   companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityToParent::class.java, AttachedEntityToParent::class.java,
                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CHILDNULLABLEPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityToParent::class.java,
+                                                                                       AttachedEntityToNullableParent::class.java,
+                                                                                       ConnectionId.ConnectionType.ONE_TO_ONE, true)
 
     val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
+      CHILDNULLABLEPARENT_CONNECTION_ID,
     )
 
   }
 
+  override val x: String
+    get() = dataSource.x
+
   override val child: AttachedEntityToParent?
     get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
 
-  override val x: String
-    get() = dataSource.x
+  override val childNullableParent: AttachedEntityToNullableParent?
+    get() = snapshot.extractOneToOneChild(CHILDNULLABLEPARENT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -107,6 +117,14 @@ open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : Main
 
       }
 
+    override var x: String
+      get() = getEntityData().x
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).x = value
+        changedProperty.add("x")
+      }
+
     override var child: AttachedEntityToParent?
       get() {
         val _diff = diff
@@ -142,12 +160,39 @@ open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : Main
         changedProperty.add("child")
       }
 
-    override var x: String
-      get() = getEntityData().x
+    override var childNullableParent: AttachedEntityToNullableParent?
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToOneChild(CHILDNULLABLEPARENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                             CHILDNULLABLEPARENT_CONNECTION_ID)] as? AttachedEntityToNullableParent
+        }
+        else {
+          this.entityLinks[EntityLink(true, CHILDNULLABLEPARENT_CONNECTION_ID)] as? AttachedEntityToNullableParent
+        }
+      }
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).x = value
-        changedProperty.add("x")
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, CHILDNULLABLEPARENT_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
+          _diff.updateOneToOneChildOfParent(CHILDNULLABLEPARENT_CONNECTION_ID, this, value)
+        }
+        else {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, CHILDNULLABLEPARENT_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(true, CHILDNULLABLEPARENT_CONNECTION_ID)] = value
+        }
+        changedProperty.add("childNullableParent")
       }
 
     override fun getEntityClass(): Class<MainEntityToParent> = MainEntityToParent::class.java
