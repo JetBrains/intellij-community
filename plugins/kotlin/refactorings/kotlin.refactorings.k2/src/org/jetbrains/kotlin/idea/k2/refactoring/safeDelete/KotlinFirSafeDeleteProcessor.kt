@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.refactoring.safeDelete
+package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -25,6 +25,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
+import org.jetbrains.kotlin.idea.k2.refactoring.KotlinK2RefactoringsBundle
+import org.jetbrains.kotlin.idea.k2.refactoring.canDeleteElement
+import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettingsBase
-import org.jetbrains.kotlin.idea.refactoring.KotlinFirRefactoringsSettings
 
 @Suppress("SuspiciousCallableReferenceInLambda")
 internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase<KotlinFirRefactoringsSettings>() {
