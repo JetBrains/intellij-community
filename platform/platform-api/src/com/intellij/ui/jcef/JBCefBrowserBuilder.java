@@ -19,6 +19,7 @@ public class JBCefBrowserBuilder {
   boolean myIsOffScreenRendering;
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
+  boolean myMouseWheelEventEnable = true;
 
   /**
    * Sets whether the browser is rendered off-screen.
@@ -123,5 +124,16 @@ public class JBCefBrowserBuilder {
    */
   public @NotNull JBCefBrowser build() {
     return JBCefBrowser.create(this);
+  }
+
+  /**
+   * If {@code true}, the browser will intercept mouse wheel events. Otherwise, the browser won't react on scrolling,
+   * and the parent component will handle scroll events.
+   * <p>
+   * Default is {@code true}.
+   */
+  public @NotNull JBCefBrowserBuilder setMouseWheelEventEnable(boolean mouseWheelEventEnable) {
+    myMouseWheelEventEnable = mouseWheelEventEnable;
+    return this;
   }
 }
