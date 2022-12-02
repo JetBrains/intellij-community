@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.IterableTypesDetection
@@ -13,25 +12,17 @@ import org.jetbrains.kotlin.idea.liveTemplates.macro.AbstractSuggestVariableName
 import org.jetbrains.kotlin.idea.resolve.ideService
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class Fe10SuggestVariableNameMacro(private val defaultName: String? = null) : AbstractSuggestVariableNameMacro() {
     override fun suggestNames(declaration: KtCallableDeclaration): Collection<String> {
-        val initializer = (declaration as? KtDeclarationWithInitializer)?.initializer
-
         val nameValidator = Fe10KotlinNewDeclarationNameValidator(
             declaration,
             declaration.siblings(withItself = false),
             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
         )
-
-        if (initializer != null) {
-            val bindingContext = initializer.analyze(BodyResolveMode.PARTIAL)
-            return Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(initializer, null, bindingContext, nameValidator, null)
-        }
 
         val parent = declaration.parent
         if (parent is KtForExpression && declaration == parent.loopParameter) {
