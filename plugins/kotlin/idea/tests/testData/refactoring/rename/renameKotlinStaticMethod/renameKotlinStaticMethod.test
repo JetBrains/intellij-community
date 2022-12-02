@@ -3,6 +3,5 @@
   "classId": "testing/rename/C.Companion",
   "oldName": "first",
   "newName": "second",
-  "withRuntime": "true",
-  "enabledInK2": true
+  "withRuntime": "true"
 }

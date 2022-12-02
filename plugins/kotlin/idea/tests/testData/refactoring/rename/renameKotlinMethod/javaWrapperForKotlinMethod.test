@@ -3,6 +3,5 @@
   "classId": "testing/rename/C",
   "methodSignature": "int first()",
   "newName": "second",
-  "comment": "KT-3256 Can't rename a Kotlin function from Java code",
-  "enabledInK2": true
+  "comment": "KT-3256 Can't rename a Kotlin function from Java code"
 }
