@@ -50,7 +50,7 @@ import kotlin.coroutines.coroutineContext
  *
  * Indeterminate and determinate child steps can go in any order.
  *
- * Finally, [finish] transitions the reporter to the final state (internal fraction is 1.0).
+ * Finally, [close] transitions the reporter to the final state (internal fraction is 1.0).
  *
  * ### Fraction Scaling
  *
@@ -90,18 +90,18 @@ import kotlin.coroutines.coroutineContext
  *       ...
  *     }
  *     finally {
- *       step1.finish()
+ *       step1.close()
  *     }
  *   }
  *   // Note, step2 is created strictly after step1 sequentially.
- *   // After creation, both can report their state and can be finished concurrently.
+ *   // After creation, both can report their state and can be closed concurrently.
  *   val step2 = topLevelStep.step(endFraction = 1.0)
  *   launch {
  *     try {
  *       ...
  *     }
  *     finally {
- *       step2.finish()
+ *       step2.close()
  *     }
  *   }
  * }
@@ -111,7 +111,7 @@ import kotlin.coroutines.coroutineContext
  */
 @Experimental
 @NonExtendable
-interface ProgressReporter {
+interface ProgressReporter : AutoCloseable {
 
   /**
    * Starts a child step.
@@ -121,10 +121,10 @@ interface ProgressReporter {
    * If the text is not `null`, then the text will be used as text of this reporter,
    * while the text of the returned child step will be used as details of this reporter.
    *
-   * @param endFraction value which is used to advance the fraction of the current step after the returned child step is [finished][finish],
+   * @param endFraction value which is used to advance the fraction of the current step after the returned child step is [closed][close],
    * or `null` if this step is indeterminate, in which case the fraction advancements in the returned step will be ignored in this reporter
    *
-   * @see finish
+   * @see close
    */
   fun step(text: @ProgressText String?, endFraction: Double?): ProgressReporter
 
@@ -142,12 +142,12 @@ interface ProgressReporter {
    *     // do stuff
    *   }
    *   finally {
-   *     childStep.finish() // will advance the fraction to 0.5
+   *     childStep.close() // will advance the fraction to 0.5
    *   }
    * }
    * ```
    */
-  fun finish()
+  override fun close()
 
   companion object {
 
@@ -155,14 +155,14 @@ interface ProgressReporter {
     fun <T> ProgressReporter.indeterminateStep(
       text: @ProgressText String?,
       action: ProgressReporter.() -> T,
-    ): T = progressStepInner(parent = this, text, endFraction = null, action)
+    ): T = step(text, endFraction = null).use(action)
 
     @JvmStatic
     fun <T> ProgressReporter.progressStep(
       text: @ProgressText String?,
       endFraction: Double = 1.0,
       action: ProgressReporter.() -> T,
-    ): T = progressStepInner(parent = this, text, endFraction, action)
+    ): T = step(text, endFraction).use(action)
   }
 }
 
@@ -191,23 +191,8 @@ private suspend fun <T> progressStep(
   endFraction: Double?,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return progressStepInner(parent, text, endFraction) { step ->
+  return parent.step(text, endFraction).use { step: ProgressReporter ->
     withContext(step.asContextElement(), action)
-  }
-}
-
-private inline fun <T> progressStepInner(
-  parent: ProgressReporter,
-  text: @ProgressText String?,
-  endFraction: Double?,
-  action: (child: ProgressReporter) -> T,
-): T {
-  val step = parent.step(text, endFraction)
-  try {
-    return action(step)
-  }
-  finally {
-    step.finish()
   }
 }
 

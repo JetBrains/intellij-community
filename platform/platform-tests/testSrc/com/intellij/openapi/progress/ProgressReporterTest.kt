@@ -346,11 +346,8 @@ class ProgressReporterTest {
     val reporter = checkNotNull(progressReporter)
     val step = reporter.step(text, endFraction)
     return launch(step.asContextElement()) {
-      try {
+      step.use {
         action()
-      }
-      finally {
-        step.finish()
       }
     }
   }
@@ -551,7 +548,7 @@ private fun progressReporterTest(
     }
   }
   withContext(progressReporter.asContextElement(), action)
-  progressReporter.finish()
+  progressReporter.close()
   progressReporter.awaitCompletion()
   collector.cancelAndJoin()
   assertEquals(ProgressState(null, null, -1.0), actualUpdates.first())

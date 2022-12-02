@@ -5,5 +5,5 @@ import com.intellij.openapi.progress.ProgressReporter
 
 internal object EmptyProgressReporter : ProgressReporter {
   override fun step(text: ProgressText?, endFraction: Double?): ProgressReporter = EmptyProgressReporter
-  override fun finish(): Unit = Unit
+  override fun close(): Unit = Unit
 }

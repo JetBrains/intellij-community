@@ -14,7 +14,7 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
 
   protected val cs: CoroutineScope = parentScope.childScope(supervisor = false)
 
-  final override fun finish() {
+  final override fun close() {
     cs.cancel()
   }
 
