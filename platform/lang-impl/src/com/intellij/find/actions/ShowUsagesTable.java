@@ -166,7 +166,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
             PsiElement element = usageInfo.getElement();
             if (element != null) {
               UsageViewStatisticsCollector.logItemChosen(element.getProject(), myUsageView, CodeNavigateSource.ShowUsagesPopup,
-                                                         element.getLanguage());
+                                                         element.getLanguage(), null);
             }
           }
           else if (usage instanceof Navigatable) {
