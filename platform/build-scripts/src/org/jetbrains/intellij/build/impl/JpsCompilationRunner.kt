@@ -41,6 +41,9 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
 internal class JpsCompilationRunner(private val context: CompilationContext) {
   private val compilationData = context.compilationData
@@ -165,7 +168,24 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         context.compilationData.builtArtifacts.remove(it.name)
       }
     }
-    val modules = if (buildIncludedModules) getModulesIncludedInArtifacts(artifacts) else emptyList()
+    val includedModules = getModulesIncludedInArtifacts(artifacts)
+    val modules = if (buildIncludedModules) includedModules
+    else {
+      includedModules.filter {
+        val module = context.findRequiredModule(it)
+        val outputDir = context.getModuleOutputDir(module)
+        if (outputDir.exists() &&
+            outputDir.isDirectory() &&
+            outputDir.listDirectoryEntries().isNotEmpty()) false
+        else {
+          /**
+           * See [compileMissingArtifactsModules]
+           */
+          context.messages.warning("Compilation output of module $it is missing: $outputDir")
+          true
+        }
+      }
+    }
     runBuild(moduleSet = modules,
              allModules = false,
              artifactNames = artifacts.map { it.name },
