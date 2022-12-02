@@ -540,6 +540,11 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/DollarsInNameNoPackage.kt"));
         }
 
+        @TestMetadata("EnumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/EnumEntry.kt"));
+        }
+
         @TestMetadata("ExtendingInterfaceWithDefaultImpls.kt")
         public void testExtendingInterfaceWithDefaultImpls() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/ExtendingInterfaceWithDefaultImpls.kt"));
