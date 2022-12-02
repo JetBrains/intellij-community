@@ -2066,16 +2066,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void setMinimumSize(Dimension size) {
     //todo: consider changing only the caption panel minimum size
-    Dimension sizeFromHeader = myHeaderPanel.getPreferredSize();
-
-    if (sizeFromHeader == null) {
-      sizeFromHeader = myHeaderPanel.getMinimumSize();
-    }
-
-    if (sizeFromHeader == null) {
-      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
-      sizeFromHeader = new Dimension(minimumSize, minimumSize);
-    }
+    Dimension sizeFromHeader = calcHeaderSize();
 
     if (size == null) {
       myMinSize = sizeFromHeader;
@@ -2091,6 +2082,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       int height = Math.min(screenRectangle.height, myMinSize.height);
       myWindow.setMinimumSize(new Dimension(width, height));
     }
+  }
+
+  public Dimension getMinimumSize() {
+    return myMinSize != null ? myMinSize : calcHeaderSize();
+  }
+
+  @NotNull
+  private Dimension calcHeaderSize() {
+    Dimension sizeFromHeader = myHeaderPanel.getPreferredSize();
+
+    if (sizeFromHeader == null) {
+      sizeFromHeader = myHeaderPanel.getMinimumSize();
+    }
+
+    if (sizeFromHeader == null) {
+      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
+      sizeFromHeader = new Dimension(minimumSize, minimumSize);
+    }
+    return sizeFromHeader;
   }
 
   public void setOkHandler(Runnable okHandler) {
