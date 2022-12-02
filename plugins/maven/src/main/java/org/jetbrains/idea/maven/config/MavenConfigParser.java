@@ -77,23 +77,11 @@ public class MavenConfigParser {
         }
 
         if (addedToBuffer && arg.endsWith("\"")) {
-          String cleanArgPart = arg.substring(0, arg.length() - 1);
-          if (currentArg != null) {
-            if (addedToBuffer) {
-              currentArg.setLength(currentArg.length() - 1);
-            }
-            else {
-              currentArg.append(' ').append(cleanArgPart);
-            }
+          currentArg.setLength(currentArg.length() - 1);
 
-            cleaned.add(currentArg.toString());
-          }
-          else {
-            cleaned.add(cleanArgPart);
-          }
+          cleaned.add(currentArg.toString());
 
           currentArg = null;
-          addedToBuffer = false;
           continue;
         }
 
@@ -119,7 +107,7 @@ public class MavenConfigParser {
         cleanArgs = args;
       }
       else {
-        cleanArgs = cleaned.toArray(new String[0]);
+        cleanArgs = ArrayUtil.toStringArray(cleaned);
       }
       return cleanArgs;
     }

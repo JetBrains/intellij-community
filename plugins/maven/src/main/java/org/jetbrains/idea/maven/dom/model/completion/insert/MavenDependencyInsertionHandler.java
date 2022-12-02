@@ -76,18 +76,7 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
   protected void setDependency(@NotNull InsertionContext context,
                                MavenRepositoryArtifactInfo completionItem,
                                XmlFile contextFile, MavenDomShortArtifactCoordinates domCoordinates) {
-    if (completionItem.getGroupId() == null) {
-      return;
-    }
     domCoordinates.getGroupId().setStringValue(completionItem.getGroupId());
-
-    if (completionItem.getArtifactId() == null) {
-      domCoordinates.getArtifactId().setStringValue("");
-      int position = domCoordinates.getArtifactId().getXmlTag().getValue().getTextRange().getStartOffset();
-      context.getEditor().getCaretModel().moveToOffset(position);
-      MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
-      return;
-    }
 
     domCoordinates.getArtifactId().setStringValue(completionItem.getArtifactId());
 
@@ -127,7 +116,7 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
   private static void insertVersion(@NotNull InsertionContext context,
                                     MavenRepositoryArtifactInfo completionItem,
                                     MavenDomArtifactCoordinates domCoordinates) {
-    if (completionItem.getItems() != null && completionItem.getItems().length == 1 && completionItem.getVersion() != null) {
+    if (completionItem.getItems().length == 1 && completionItem.getVersion() != null) {
       domCoordinates.getVersion().setStringValue(completionItem.getVersion());
     }
     else {
