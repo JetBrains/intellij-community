@@ -72,7 +72,7 @@ class GitBranchesTreePopupStep(private val project: Project,
       topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
     }
 
-    _treeModel = GitBranchesTreeModelImpl(project, repositories, topLevelItems)
+    _treeModel = GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
   }
 
   private fun List<PopupFactoryImpl.ActionItem>.addSeparators(): List<Any> {

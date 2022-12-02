@@ -24,7 +24,7 @@ import kotlin.properties.Delegates.observable
 private typealias PathAndBranch = Pair<List<String>, GitBranch>
 private typealias MatchResult = Pair<Collection<GitBranch>, Pair<GitBranch, Int>?>
 
-class GitBranchesTreeModelImpl(
+class GitBranchesTreeMultiRepoFilteringModel(
   private val project: Project,
   private val repositories: List<GitRepository>,
   private val topLevelActions: List<Any> = emptyList()
