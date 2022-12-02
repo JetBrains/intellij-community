@@ -2,7 +2,10 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package com.intellij.openapi.file
 
+import com.intellij.openapi.file.CanonicalPathUtil.isAncestor
+import com.intellij.openapi.file.NioFileUtil.isAncestor
 import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
@@ -113,5 +116,20 @@ object IoFileUtil {
   @JvmStatic
   fun File.toNioPath(): Path {
     return toPath()
+  }
+
+  @JvmStatic
+  fun File.isAncestor(path: String, strict: Boolean): Boolean {
+    return toCanonicalPath().isAncestor(path, strict)
+  }
+
+  @JvmStatic
+  fun File.isAncestor(path: Path, strict: Boolean): Boolean {
+    return toNioPath().isAncestor(path, strict)
+  }
+
+  @JvmStatic
+  fun File.isAncestor(file: File, strict: Boolean): Boolean {
+    return FileUtil.isAncestor(this, file, strict)
   }
 }

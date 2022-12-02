@@ -8,6 +8,7 @@ import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativeNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
+import com.intellij.openapi.file.CanonicalPathUtil.isAncestor
 import com.intellij.openapi.fileSystem.NioFileSystemUtil
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
@@ -141,5 +142,15 @@ object NioFileUtil {
   @JvmStatic
   fun Path.getRelativeNioPath(path: Path): Path? {
     return toCanonicalPath().getRelativeNioPath(path.toCanonicalPath())
+  }
+
+  @JvmStatic
+  fun Path.isAncestor(canonicalPath: String, strict: Boolean): Boolean {
+    return toCanonicalPath().isAncestor(canonicalPath, strict)
+  }
+
+  @JvmStatic
+  fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
+    return FileUtil.isAncestor(this, path, strict)
   }
 }

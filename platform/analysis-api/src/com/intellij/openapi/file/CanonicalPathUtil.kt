@@ -2,6 +2,7 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package com.intellij.openapi.file
 
+import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
@@ -57,5 +58,15 @@ object CanonicalPathUtil {
   @JvmStatic
   fun String.getRelativeNioPath(path: String): Path? {
     return getRelativePath(path)?.toNioPath()
+  }
+
+  @JvmStatic
+  fun String.isAncestor(path: String, strict: Boolean): Boolean {
+    return FileUtil.isAncestor(this, path, strict)
+  }
+
+  @JvmStatic
+  fun String.isAncestor(path: Path, strict: Boolean): Boolean {
+    return isAncestor(path.toCanonicalPath(), strict)
   }
 }

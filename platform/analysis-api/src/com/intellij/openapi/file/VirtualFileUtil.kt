@@ -16,7 +16,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 import java.nio.file.Path
 
 @ApiStatus.Experimental
@@ -154,8 +153,9 @@ object VirtualFileUtil {
     return path
   }
 
-  fun VirtualFile.toIoFile(): File {
-    return toNioPath().toFile()
+  @JvmStatic
+  fun VirtualFile.toNioPathOrNull(): Path? {
+    return runCatching { toNioPath() }.getOrNull()
   }
 
   @JvmStatic
