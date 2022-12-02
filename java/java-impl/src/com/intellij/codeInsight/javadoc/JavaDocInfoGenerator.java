@@ -101,6 +101,7 @@ public class JavaDocInfoGenerator {
   private static final String INDEX_TAG = "index";
   private static final String SUMMARY_TAG = "summary";
   private static final String SNIPPET_TAG = "snippet";
+  private static final String RETURN_TAG = "return";
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
   private static final String NBSP = "&nbsp;";
@@ -1783,6 +1784,9 @@ public class JavaDocInfoGenerator {
         }
         else if (tagName.equals(SNIPPET_TAG)) {
           generateSnippetValue(buffer, tag);
+        }
+        else if (tagName.equals(RETURN_TAG)) {
+          generateInlineReturnValue(buffer, tag, provider);
         } else {
           generateUnknownInlineTagValue(buffer, tag);
         }
@@ -1932,6 +1936,14 @@ public class JavaDocInfoGenerator {
         }
         buffer.append(attributes != null ? getStyledSpan(true, attributes, text) : text);
       });
+  }
+
+  @Contract(mutates = "param1")
+  private void generateInlineReturnValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag, InheritDocProvider<PsiElement[]> provider) {
+    buffer.append("Returns ");
+    final PsiElement[] children = tag.getChildren();
+    generateValue(buffer, Arrays.copyOfRange(children, 2, children.length - 1), 0, provider);
+    buffer.append(".");
   }
 
   @Contract(pure = true)
@@ -3075,13 +3087,13 @@ public class JavaDocInfoGenerator {
     @Override
     public PsiDocTag find(PsiDocCommentOwner owner, PsiDocComment comment) {
       if (comment != null) {
-        PsiDocTag returnTag = comment.findTagByName("return");
+        PsiDocTag returnTag = comment.findTagByName(RETURN_TAG);
         if (returnTag != null) {
           return returnTag;
         }
         if (PsiUtil.isLanguageLevel16OrHigher(comment)) {
           for (PsiElement child : comment.getChildren()) {
-            if (child instanceof PsiDocTag && "return".equals(((PsiDocTag)child).getName())) {
+            if (child instanceof PsiDocTag && RETURN_TAG.equals(((PsiDocTag)child).getName())) {
               return (PsiDocTag)child;
             }
           }
