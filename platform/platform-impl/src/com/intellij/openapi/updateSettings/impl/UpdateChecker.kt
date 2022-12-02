@@ -372,12 +372,14 @@ object UpdateChecker {
       }
     }
 
+    fun IdeaPluginDescriptor.isKotlinPlugin(): Boolean = pluginId.idString == "org.jetbrains.kotlin"
+
     val incompatible = if (buildNumber == null) emptyList() else {
       // collecting plugins that aren't going to be updated and are incompatible with the new build
       // (the map may contain updateable bundled plugins - those are expected to have a compatible version in IDE)
       updateable.values.asSequence()
         .filterNotNull()
-        .filter { it.isEnabled && !it.isBundled && !PluginManagerCore.isCompatible(it, buildNumber) }
+        .filter { !it.isKotlinPlugin() && it.isEnabled && !it.isBundled && !PluginManagerCore.isCompatible(it, buildNumber) }
         .toSet()
     }
 
