@@ -236,10 +236,10 @@ private fun getFixes(cachedIntentions: CachedIntentions): Sequence<IntentionActi
     .plus(cachedIntentions.errorFixes)
 }
 
-fun findCopyIntention(project: Project,
-                      editorCopy: Editor,
-                      psiFileCopy: PsiFile,
-                      originalAction: IntentionAction): IntentionAction? {
+private fun findCopyIntention(project: Project,
+                              editorCopy: Editor,
+                              psiFileCopy: PsiFile,
+                              originalAction: IntentionAction): IntentionAction? {
   val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy, false)
   val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFileCopy, editorCopy, actionsToShow)
   return getFixes(cachedIntentions).find { it.text == originalAction.text }?.action
