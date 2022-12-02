@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.refactoring.rename
+package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.NameUtils

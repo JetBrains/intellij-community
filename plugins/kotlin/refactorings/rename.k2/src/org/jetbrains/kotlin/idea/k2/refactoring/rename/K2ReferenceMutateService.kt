@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.refactoring.rename
+package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*

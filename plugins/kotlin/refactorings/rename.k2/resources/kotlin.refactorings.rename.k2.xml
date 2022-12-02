@@ -1,20 +1,20 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.refactoring.rename">
+<idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring.rename">
   <dependencies>
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.refactorings.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
 
-<!--    <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDefaultRenameHandlerVetoCondition"/>-->
+<!--    <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.KotlinDefaultRenameHandlerVetoCondition"/>-->
 <!--    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"-->
-<!--              implementationClass="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameUsageSearcher"/>-->
-<!--    <rename.symbolRenameTargetFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameTargetProvider"/>-->
+<!--              implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.rename.KotlinRenameUsageSearcher"/>-->
+<!--    <rename.symbolRenameTargetFactory implementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.KotlinRenameTargetProvider"/>-->
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
-            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K2ReferenceMutateService"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.K2ReferenceMutateService"/>
 
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K2RenameRefactoringSupport"
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.K2RenameRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>
   </extensions>
 </idea-plugin>
