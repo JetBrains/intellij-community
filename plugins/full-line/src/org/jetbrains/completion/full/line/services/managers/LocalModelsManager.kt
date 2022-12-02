@@ -43,20 +43,20 @@ class LocalModelsManager : ConfigurableModelsManager {
   }
 
   private fun removeCurrentSchema(language: Language): ModelSchema? {
-    val schemaId = modelsSchema.models.indexOfFirst { it.currentLanguage == language.id.toLowerCase() }
+    val schemaId = modelsSchema.models.indexOfFirst { it.currentLanguage == language.id.lowercase() }
     if (schemaId < 0) {
       return null
     }
     return modelsSchema.models.removeAt(schemaId)
   }
 
-  override fun getLatest(language: Language, force: Boolean): ModelSchema {
-    return mavenManager.getLatest(language, force)
+  override fun getSchema(language: Language, force: Boolean): ModelSchema {
+    return mavenManager.getSchema(language, force)
   }
 
   override fun download(language: Language, force: Boolean): ModelSchema {
     return mavenManager.download(language, force).also {
-      it.currentLanguage = language.id.toLowerCase()
+      it.currentLanguage = language.id.lowercase()
       modelsSchema.models.add(it)
     }
   }

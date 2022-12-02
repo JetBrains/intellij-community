@@ -36,6 +36,7 @@ class KotlinSupporter : FullLineLanguageSupporterBase() {
     enabled = false,
     redCodePolicy = RedCodePolicy.SHOW,
   )
+  override val modelVersion = "0.0.4"
 
   override fun autoImportFix(file: PsiFile, editor: Editor, suggestionRange: TextRange): List<PsiElement> {
     //        TODO("Not implemented yet")

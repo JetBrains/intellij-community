@@ -21,7 +21,7 @@ interface FullLineLanguageSupporter {
   /**
    * Specific model version in cloud storage
    */
-  val modelVersion: String?
+  val modelVersion: String
 
   fun skipLocation(parameters: CompletionParameters): String?
 

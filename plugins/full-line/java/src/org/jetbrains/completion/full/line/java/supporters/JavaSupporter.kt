@@ -34,6 +34,8 @@ class JavaSupporter : FullLineLanguageSupporterBase() {
     localModelState = ModelState(numIterations = 8),
   )
 
+  override val modelVersion = "0.0.6"
+
   override fun autoImportFix(file: PsiFile, editor: Editor, suggestionRange: TextRange): List<PsiElement> {
     return SyntaxTraverser.psiTraverser()
       .withRoot(file)
