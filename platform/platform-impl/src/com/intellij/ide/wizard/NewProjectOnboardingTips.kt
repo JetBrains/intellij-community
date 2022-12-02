@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 @JvmDefaultWithCompatibility
 interface NewProjectOnboardingTips {
   @RequiresEdt
-  fun installTips(project: Project)
+  fun installTips(project: Project, simpleSampleText: String)
 
   companion object {
     @JvmField

@@ -14,11 +14,11 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileSystem.LocalFileSystemUtil
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.fileSystem.LocalFileSystemUtil
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
@@ -118,9 +118,11 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     }
 
     @JvmStatic
-    fun prepareTipsInEditor(project: Project) = whenProjectCreated(project) l@{
+    fun AssetsNewProjectWizardStep.prepareTipsInEditor(project: Project) = whenProjectCreated(project) l@{
+      val template = FileTemplateManager.getDefaultInstance().getInternalTemplate("SampleCode")
+      val simpleSampleText = template.getText(templateProperties)
       for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
-        extension.installTips(project)
+        extension.installTips(project, simpleSampleText)
       }
     }
 
