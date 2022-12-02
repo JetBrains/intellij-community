@@ -25,9 +25,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -44,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance(VirtualDirectoryImpl.class);
@@ -143,7 +142,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         myData.addAdoptedName(name, isCaseSensitive);
         return null;
       }
-
 
       if (ensureCanonicalName) {
         CharSequence persistedName = childInfo.getName();
@@ -343,7 +341,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @SuppressWarnings("SpellCheckingInspection")
   public @NotNull Iterable<VirtualFile> iterInDbChildren() {
     if (!getPersistence().wereChildrenAccessed(this)) {
       return Collections.emptyList();
@@ -359,7 +356,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @SuppressWarnings("SpellCheckingInspection")
   public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     if (!getPersistence().wereChildrenAccessed(this)) {
       return Collections.emptyList();
@@ -519,7 +515,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, false, true, getFileSystem());
   }
 
-
   @ApiStatus.Internal
   public VirtualFileSystemEntry doFindChildById(int id) {
     int i = ArrayUtil.indexOf(myData.myChildrenIds, id);
@@ -549,9 +544,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimisation: works faster than added.forEach(this::addChild)
   @ApiStatus.Internal
-  public void createAndAddChildren(@NotNull List<? extends ChildInfo> added,
-                                   boolean markAllChildrenLoaded,
-                                   @NotNull PairConsumer<? super VirtualFile, ? super ChildInfo> fileCreated) {
+  public void createAndAddChildren(@NotNull List<ChildInfo> added, boolean markAllChildrenLoaded, @NotNull BiConsumer<VirtualFile, ChildInfo> callback) {
     if (added.size() <= 1) {
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
@@ -564,7 +557,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           if (ArrayUtil.indexOf(oldIds, info.getId()) < 0) {
             VirtualFileSystemEntry file = createChild(info.getId(), info.getNameId(), attributes, isEmptyDirectory);
             addChild(file);
-            fileCreated.consume(file, info);
+            callback.accept(file, info);
           }
         }
       }
@@ -604,7 +597,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
           myData.removeAdoptedName(nextInfo.getName());
           VirtualFileSystemEntry file = createChild(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
-          fileCreated.consume(file, nextInfo);
+          callback.accept(file, nextInfo);
         }
         mergedIds.add(nextInfo.getId());
       });
@@ -653,7 +646,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // optimization: faster than forEach(this::removeChild)
-  public void removeChildren(@NotNull IntSet idsToRemove, @NotNull List<? extends CharSequence> namesToRemove) {
+  public void removeChildren(@NotNull IntSet idsToRemove, @NotNull List<CharSequence> namesToRemove) {
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
       // remove from the array by merging two sorted lists
@@ -667,7 +660,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
       if (o != newIds.length) {
-        newIds = o == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
+        newIds = o == 0 ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
       }
       myData.myChildrenIds = newIds;
 
