@@ -143,11 +143,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       if (body == null) return;
 
       List<UExpression> statements =
-        body instanceof UBlockExpression ? ((UBlockExpression)body).getExpressions() : Collections.singletonList(body);
+        body instanceof UBlockExpression blockExpression ? blockExpression.getExpressions() : Collections.singletonList(body);
       boolean isBaseExplicitlyCalled = false;
       if (!statements.isEmpty()) {
         UExpression first = statements.get(0);
-        if (first instanceof UCallExpression && ((UCallExpression)first).getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+        if (first instanceof UCallExpression callExpression && callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
           isBaseExplicitlyCalled = true;
         }
       }
@@ -231,8 +231,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       if (refManager.belongsToScope(psiSuperMethod)) {
         PsiElement sourceElement = RefJavaUtilImpl.returnToPhysical(psiSuperMethod);
         RefElement refElement = refManager.getReference(sourceElement);
-        if (refElement instanceof RefMethodImpl) {
-          RefMethodImpl refSuperMethod = (RefMethodImpl)refElement;
+        if (refElement instanceof RefMethodImpl refSuperMethod) {
           addSuperMethod(refSuperMethod);
           refManager.executeTask(() -> refSuperMethod.markExtended(this));
         }
@@ -251,9 +250,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (mySuperMethods == null) {
       mySuperMethods = refSuperMethod;
     }
-    else if (mySuperMethods instanceof RefMethod) {
+    else if (mySuperMethods instanceof RefMethod refMethod) {
       ArrayList<RefMethod> list = new ArrayList<>(2);
-      list.add((RefMethod)mySuperMethods);
+      list.add(refMethod);
       list.add(refSuperMethod);
       mySuperMethods = list;
     }
@@ -322,8 +321,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitMethod(this));
+    if (visitor instanceof RefJavaVisitor refJavaVisitor) {
+      ApplicationManager.getApplication().runReadAction(() -> refJavaVisitor.visitMethod(this));
     }
     else {
       super.accept(visitor);
@@ -510,15 +509,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     else {
       String newTemplate = null;
       final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-      if (expression instanceof ULiteralExpression) {
-        ULiteralExpression psiLiteralExpression = (ULiteralExpression)expression;
-        newTemplate = String.valueOf(psiLiteralExpression.getValue());
+      if (expression instanceof ULiteralExpression literalExpression) {
+        newTemplate = String.valueOf(literalExpression.getValue());
       }
-      else if (expression instanceof UResolvable) {
-        UResolvable referenceExpression = (UResolvable)expression;
-        UElement resolved = UResolvableKt.resolveToUElement(referenceExpression);
-        if (resolved instanceof UField) {
-          UField uField = (UField)resolved;
+      else if (expression instanceof UResolvable resolvable) {
+        UElement resolved = UResolvableKt.resolveToUElement(resolvable);
+        if (resolved instanceof UField uField) {
           PsiField psi = (PsiField)uField.getJavaPsi();
           if (uField.isStatic() &&
               uField.isFinal() &&
@@ -674,8 +670,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   public static boolean isEmptyExpression(@Nullable UExpression expression) {
     if (expression == null) return true;
-    if (expression instanceof UBlockExpression) return ((UBlockExpression)expression).getExpressions().isEmpty();
-    return false;
+    return expression instanceof UBlockExpression blockExpression && blockExpression.getExpressions().isEmpty();
   }
 
   @Nullable

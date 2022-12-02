@@ -21,8 +21,7 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
                                                            @NotNull InspectionManager manager,
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
-    if (refEntity instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refEntity;
+    if (refEntity instanceof RefMethod refMethod) {
 
       if (refMethod.isConstructor()) return null;
       if (refMethod.hasSuperMethods()) return null;
