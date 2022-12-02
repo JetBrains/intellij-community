@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -143,8 +142,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
   protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpenWithRemotes(previewFile)
 
   override fun closePreview() {
-    val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-    editorManager.closeFile(previewFile, closeAllCopies = true, moveFocus = true)
+    DiffPreview.closePreviewFile(project, previewFile)
     updatePreviewProcessor.clear()
   }
 

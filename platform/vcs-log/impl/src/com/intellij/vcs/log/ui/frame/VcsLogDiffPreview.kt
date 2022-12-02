@@ -8,7 +8,6 @@ import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
@@ -120,7 +119,7 @@ abstract class EditorDiffPreview(protected val project: Project,
 
   override fun closePreview() {
     if (previewFileDelegate.isInitialized()) {
-      FileEditorManager.getInstance(project).closeFile(previewFile)
+      DiffPreview.closePreviewFile(project, previewFile)
     }
   }
 
