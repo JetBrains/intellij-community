@@ -63,7 +63,7 @@ class XDebugSessionTab3(
   override fun getFramesContentId() = debuggerContentId
 
   private fun getWatchesViewImpl(session: XDebugSessionImpl, watchesIsVariables: Boolean): XWatchesViewImpl {
-    val useSplitterView = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider != null
+    val useSplitterView = session.debugProcess.getBottomLocalsComponentProvider() != null
     return if (useSplitterView)
       XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)
     else
@@ -99,13 +99,17 @@ class XDebugSessionTab3(
       isCloseable = false
     }
 
-    val optionsCollection = XDebugTabLayoutSettings(session, content, this)
-    content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
-    val customLayoutOptions = optionsCollection.threadsAndFramesOptions
+    val customLayoutOptions = if (session.debugProcess.allowFramesViewCustomization()) {
+      val optionsCollection = XDebugTabLayoutSettings(session, content, this)
+      content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
+      optionsCollection.threadsAndFramesOptions
+    }
+    else
+      null
 
-    val framesView = (customLayoutOptions.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(myProject)
+    val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(myProject)
     registerThreadsView(session, content, framesView, true)
-    framesView.mainComponent?.isVisible = !customLayoutOptions.isHidden
+    framesView.mainComponent?.isVisible = customLayoutOptions?.isHidden?.not() ?: true
     addVariablesAndWatches(session)
 
     myUi.addContent(content, 0, PlaceInGrid.center, false)
