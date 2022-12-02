@@ -50,6 +50,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val groovyVersionField = EventFields.Version
     private val groovySourceTypeField = BoundedStringEventField.lowercase("groovy_sdk_type", "maven", "local", NULL)
     private val pluginField = BoundedStringEventField.lowercase("plugin_selected", *NewProjectWizardConstants.Language.ALL)
+    private val projectsWithTipsField = EventFields.Int("projects_with_tips")
 
     //events
     private val open = GROUP.registerVarargEvent("wizard.dialog.open", sessionIdField, screenNumField)
@@ -81,6 +82,9 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val addPlugin = GROUP.registerVarargEvent("add.plugin.clicked", screenNumField)
     private val pluginSelected = GROUP.registerVarargEvent("plugin.selected", sessionIdField, screenNumField, pluginField)
 
+    private val disableOnboardingTipsEvent = GROUP.registerVarargEvent("onboarding.tips.disabled", projectsWithTipsField)
+    private val hideOnboardingTipsDisableProposalEvent = GROUP.registerVarargEvent("hide.onboarding.tips.disable.proposal", projectsWithTipsField)
+
     //finish events
     private val gitFinish = GROUP.registerVarargEvent("create.git.repo", sessionIdField, screenNumField, gitField)
     private val generatorFinished = GROUP.registerVarargEvent("generator.finished", sessionIdField, screenNumField, generatorTypeField)
@@ -102,6 +106,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     @JvmStatic fun logNext(context: WizardContext, inputMask: Long = -1) = next.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, inputMaskField with inputMask)
     @JvmStatic fun logPrev(context: WizardContext, inputMask: Long = -1) = prev.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, inputMaskField with inputMask)
     @JvmStatic fun logHelpNavigation(context: WizardContext) = helpNavigation.log(context.project,screenNumField with context.screen)
+    @JvmStatic fun logDisableOnboardingTips(project: Project?, projectsWithTips: Int) = disableOnboardingTipsEvent.log(project, projectsWithTipsField with projectsWithTips)
+    @JvmStatic fun logHideOnboardingTipsDisableProposal(project: Project?, projectsWithTips: Int) = hideOnboardingTipsDisableProposalEvent.log(project, projectsWithTipsField with projectsWithTips)
 
     //finish
     @JvmStatic fun logProjectCreated(project: Project?, context: WizardContext) = projectCreated.log(project,screenNumField with context.screen)

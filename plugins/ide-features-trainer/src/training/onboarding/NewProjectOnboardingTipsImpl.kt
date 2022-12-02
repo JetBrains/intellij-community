@@ -2,6 +2,7 @@
 package training.onboarding
 
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -130,6 +131,7 @@ private class DoNotGenerateTipsNotification : EditorNotificationProvider {
       EditorNotificationPanel(EditorNotificationPanel.Status.Info).apply {
         text = LearnBundle.message("onboarding.propose.to.disable.tips")
         createActionLabel(LearnBundle.message("onboarding.disable.tips.action")) {
+          NewProjectWizardCollector.logDisableOnboardingTips(project, onboardingGenerationNumber)
           disableNotification(file, project)
 
           PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, false)
@@ -140,6 +142,7 @@ private class DoNotGenerateTipsNotification : EditorNotificationProvider {
           }
         }
         setCloseAction {
+          NewProjectWizardCollector.logHideOnboardingTipsDisableProposal(project, onboardingGenerationNumber)
           disableNotification(file, project)
           onboardingGenerationShowDisableMessage = false
         }
