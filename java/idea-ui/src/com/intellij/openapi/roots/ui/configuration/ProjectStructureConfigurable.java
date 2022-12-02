@@ -162,7 +162,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   @NonNls
   public String getHelpTopic() {
     String topic = mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : null;
-    return Objects.requireNonNullElse(topic, "Working_with_projects");
+    return Objects.requireNonNullElse(topic, "reference.settingsdialog.project.structure.general");
   }
 
   @Override
