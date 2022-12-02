@@ -19,7 +19,7 @@ class GradleActionDelegatesToProvider : GrDelegatesToProvider {
     val argumentMapping = result.candidate?.argumentMapping ?: return null
     val type = argumentMapping.expectedType(ExpressionArgument(expression)) as? PsiClassType ?: return null
     val clazz = type.resolve() ?: return null
-    if (clazz.qualifiedName != "org.gradle.api.Action" && !clazz.hasAnnotation("org.gradle.api.HasImplicitReceiver")) {
+    if (clazz.qualifiedName != GradleCommonClassNames.GRADLE_API_ACTION && !clazz.hasAnnotation("org.gradle.api.HasImplicitReceiver")) {
       return null
     }
     val substitutedType = result.substitutor.substitute(type) as? PsiClassType ?: return null
