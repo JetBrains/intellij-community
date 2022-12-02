@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.util.PlatformUtils
+import com.intellij.util.messages.MessageBusConnection
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -86,16 +87,10 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
 
   override fun isEnabledForFile(file: VirtualFile?): Boolean = true
 
-  override fun registerCustomListeners() {
-    project
-      .messageBus
-      .connect(this)
-      .subscribe(
-        ProjectTopics.PROJECT_ROOTS,
-        object : ModuleRootListener {
-          override fun rootsChanged(event: ModuleRootEvent) = update()
-        }
-      )
+  override fun registerCustomListeners(connection: MessageBusConnection) {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) = update()
+    })
   }
 
   override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project, it).createPopup(context) }

@@ -39,6 +39,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -166,7 +167,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (file == null) {
       return WidgetState.HIDDEN;
     }
-    WidgetStatus status = getWidgetStatus(myProject, file);
+    WidgetStatus status = getWidgetStatus(getProject(), file);
     if (status == WidgetStatus.DISABLED) {
       return WidgetState.HIDDEN;
     }
@@ -175,7 +176,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
     boolean isJsonFile = language instanceof JsonLanguage;
 
-    if (DumbService.getInstance(myProject).isDumb()) {
+    if (DumbService.getInstance(getProject()).isDumb()) {
       return getDumbModeState(isJsonFile);
     }
 
@@ -271,7 +272,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
     JsonSchemaFileProvider provider = service.getSchemaProvider(schemaFile);
     if (provider != null) {
-      final boolean preferRemoteSchemas = JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isPreferRemoteSchemas();
+      final boolean preferRemoteSchemas = JsonSchemaCatalogProjectConfiguration.getInstance(getProject()).isPreferRemoteSchemas();
       final String remoteSource = provider.getRemoteSource();
       boolean useRemoteSource = preferRemoteSchemas && remoteSource != null
                                 && !JsonFileResolver.isSchemaUrl(remoteSource)
@@ -294,13 +295,13 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private void scheduleSuppressCheck(@NotNull VirtualFile file, @NotNull ProgressIndicator globalProgress) {
     Runnable update = () -> {
-      if (DumbService.getInstance(myProject).isDumb()) {
+      if (DumbService.getInstance(getProject()).isDumb()) {
         // Suppress check should be rescheduled when dumb mode ends.
         mySuppressInfoRef.set(null);
       }
       else {
         boolean suppress = ContainerUtil.exists(JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList(),
-                                                s -> s.suppressSwitcherWidget(file, myProject));
+                                                s -> s.suppressSwitcherWidget(file, getProject()));
         mySuppressInfoRef.set(Pair.create(file, suppress));
       }
       super.update(null);
@@ -428,7 +429,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   @Override
-  protected void registerCustomListeners() {
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
     class Listener implements DumbService.DumbModeListener {
       volatile boolean isDumbMode;
 
@@ -445,8 +446,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       }
     }
 
-    Listener listener = new Listener();
-    myConnection.subscribe(DumbService.DUMB_MODE, listener);
+    connection.subscribe(DumbService.DUMB_MODE, new Listener());
   }
 
   @Override

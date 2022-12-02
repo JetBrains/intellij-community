@@ -65,10 +65,12 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
   @Override
   public Consumer<MouseEvent> getClickConsumer() {
     return e -> {
-      final PsiFile file = getCurrentFile();
+      PsiFile file = getCurrentFile();
       if (file != null) {
-        if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
-        final HectorComponent component = myProject.getService(HectorComponentFactory.class).create(file);
+        if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) {
+          return;
+        }
+        HectorComponent component = getProject().getService(HectorComponentFactory.class).create(file);
         component.showComponent(e.getComponent(), d -> new Point(-d.width, -d.height));
       }
     };

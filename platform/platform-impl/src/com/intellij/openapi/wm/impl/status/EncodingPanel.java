@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Pair;
@@ -55,8 +54,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   }
 
   @Override
-  protected void registerCustomListeners() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
     // should update to reflect encoding-from-content
     connection.subscribe(EncodingManagerListener.ENCODING_MANAGER_CHANGES, (document, propertyName, oldValue, newValue) -> {
       if (propertyName.equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {

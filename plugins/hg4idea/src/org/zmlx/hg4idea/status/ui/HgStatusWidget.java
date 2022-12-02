@@ -49,7 +49,7 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
 
   @Override
   public StatusBarWidget copy() {
-    return new HgStatusWidget(myVcs, myProject, myProjectSettings);
+    return new HgStatusWidget(myVcs, getProject(), myProjectSettings);
   }
 
   @Override

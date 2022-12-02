@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
+import com.intellij.util.messages.MessageBusConnection
 import javax.swing.JPanel
 
 class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(project = project,
@@ -63,8 +64,8 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
     return null
   }
 
-  override fun registerCustomListeners() {
-    myConnection.subscribe(CodeStyleSettingsListener.TOPIC, this)
+  override fun registerCustomListeners(connection: MessageBusConnection) {
+    connection.subscribe(CodeStyleSettingsListener.TOPIC, this)
   }
 
   override fun codeStyleSettingsChanged(event: CodeStyleSettingsChangeEvent) {

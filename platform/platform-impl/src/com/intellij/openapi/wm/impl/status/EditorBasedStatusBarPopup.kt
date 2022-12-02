@@ -38,6 +38,7 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -124,7 +125,7 @@ abstract class EditorBasedStatusBarPopup(
       }
     })
 
-    registerCustomListeners()
+    registerCustomListeners(myConnection)
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
         val document = e.document
@@ -380,7 +381,13 @@ abstract class EditorBasedStatusBarPopup(
 
   protected abstract fun createPopup(context: DataContext): ListPopup?
 
+  @Deprecated(message="Use registerCustomListeners(MessageBusConnection)")
   protected open fun registerCustomListeners() {}
+
+  override fun registerCustomListeners(connection: MessageBusConnection) {
+    @Suppress("DEPRECATION")
+    registerCustomListeners()
+  }
 
   protected abstract fun createInstance(project: Project): StatusBarWidget
 }

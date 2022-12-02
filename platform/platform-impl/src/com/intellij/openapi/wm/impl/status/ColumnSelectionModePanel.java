@@ -83,7 +83,7 @@ final class ColumnSelectionModePanel extends EditorBasedWidget implements Status
   }
 
   private void updateStatus() {
-    if (myProject.isDisposed()) {
+    if (getProject().isDisposed()) {
       return;
     }
 

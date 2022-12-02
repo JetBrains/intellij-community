@@ -140,7 +140,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   public @Nullable JBPopup getPopup() {
     if (isDisposed()) return null;
     Project project = getProject();
-    T repository = guessCurrentRepository(project, DvcsUtil.getSelectedFile(myProject));
+    T repository = guessCurrentRepository(project, DvcsUtil.getSelectedFile(project));
     if (repository == null) return null;
 
     return getWidgetPopup(project, repository);
@@ -156,7 +156,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     UIUtil.invokeLaterIfNeeded(() -> {
       if (isDisposed()) return;
 
-      VirtualFile selectedFile = DvcsUtil.getSelectedFile(myProject);
+      VirtualFile selectedFile = DvcsUtil.getSelectedFile(getProject());
       myUpdateBackgroundAlarm.cancelAllRequests();
       myUpdateBackgroundAlarm.addRequest(() -> {
         if (isDisposed()) {

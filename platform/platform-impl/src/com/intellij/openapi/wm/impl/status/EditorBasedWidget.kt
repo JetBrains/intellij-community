@@ -17,7 +17,10 @@ import com.intellij.util.messages.MessageBusConnection
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 
-abstract class EditorBasedWidget protected constructor(@JvmField protected val myProject: Project) : StatusBarWidget {
+abstract class EditorBasedWidget protected constructor(
+  @Deprecated("Use project", ReplaceWith("project"))
+  @JvmField protected val myProject: Project
+) : StatusBarWidget {
   @JvmField
   protected var myStatusBar: StatusBar? = null
   @JvmField
@@ -27,12 +30,19 @@ abstract class EditorBasedWidget protected constructor(@JvmField protected val m
   protected var isDisposed = false
     private set
 
+  @Suppress("DEPRECATION")
   protected val project: Project
     get() = myProject
 
   init {
     @Suppress("LeakingThis")
     myConnection = project.messageBus.connect(this)
+
+    @Suppress("LeakingThis")
+    registerCustomListeners(myConnection)
+  }
+
+  protected open fun registerCustomListeners(connection: MessageBusConnection) {
   }
 
   protected open fun getEditor(): Editor? {
@@ -68,11 +78,9 @@ abstract class EditorBasedWidget protected constructor(@JvmField protected val m
 
   protected open fun getSelectedFile(): VirtualFile? {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      val textEditor = FileEditorManager.getInstance(project).selectedTextEditor
-      return textEditor?.virtualFile
+      return FileEditorManager.getInstance(project).selectedTextEditor?.virtualFile
     }
-    val fileEditor = StatusBarUtil.getCurrentFileEditor(myStatusBar)
-    return (fileEditor as? TextEditor)?.file
+    return (StatusBarUtil.getCurrentFileEditor(myStatusBar) as? TextEditor)?.file
   }
 
   override fun install(statusBar: StatusBar) {
