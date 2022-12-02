@@ -18,6 +18,7 @@ import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
+@Deprecated("The form is going to be removed")
 internal suspend fun showAuthenticationForm(credentials: Credentials?,
                                             @NlsSafe uri: String,
                                             @NlsSafe host: String?,
