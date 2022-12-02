@@ -82,6 +82,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   public static final Key<Boolean> TEMPLATE_RANGE_HIGHLIGHTER_KEY = Key.create("TemplateState.rangeHighlighterKey");
 
+  public static final Key<Boolean> FORCE_TEMPLATE_RUNNING = Key.create("TemplateState.forTemplateRunning");
+
   TemplateState(@NotNull Project project, @Nullable final Editor editor, @NotNull Document document,
                 @NotNull TemplateStateProcessor processor) {
     super(editor, document);
@@ -554,7 +556,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   boolean requiresWriteAction() {
     PsiFile file = getPsiFile();
-    return file == null || file.isPhysical();
+    return file == null || file.isPhysical() || FORCE_TEMPLATE_RUNNING.get(file);
   }
 
   private LookupElement @NotNull [] getCurrentExpressionLookupItems() {
