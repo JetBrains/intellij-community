@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.tests.impl
+package com.intellij.remoteDev.util.tests.impl
 
 import com.jetbrains.rd.util.reactive.IScheduler
 import org.jetbrains.annotations.ApiStatus

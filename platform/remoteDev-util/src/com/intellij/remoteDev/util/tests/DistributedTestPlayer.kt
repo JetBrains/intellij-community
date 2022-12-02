@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.tests
+package com.intellij.remoteDev.util.tests
 
 import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Method

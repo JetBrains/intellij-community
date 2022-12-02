@@ -1,6 +1,6 @@
-package com.intellij.remoteDev.tests
+package com.intellij.remoteDev.util.tests
 
-import com.intellij.remoteDev.tests.modelGenerated.RdAgentId
+import com.intellij.remoteDev.util.tests.modelGenerated.RdAgentId
 import org.jetbrains.annotations.ApiStatus
 
 /**

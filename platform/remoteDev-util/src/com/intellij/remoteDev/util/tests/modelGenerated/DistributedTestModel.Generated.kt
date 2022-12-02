@@ -1,5 +1,5 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE","EXPERIMENTAL_UNSIGNED_LITERALS","PackageDirectoryMismatch","UnusedImport","unused","LocalVariableName","CanBeVal","PropertyName","EnumEntryName","ClassName","ObjectPropertyName","UnnecessaryVariable","SpellCheckingInspection")
-package com.intellij.remoteDev.tests.modelGenerated
+package com.intellij.remoteDev.util.tests.modelGenerated
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*

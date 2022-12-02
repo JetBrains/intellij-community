@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.tests.impl
+package com.intellij.remoteDev.util.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
@@ -16,11 +16,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.remoteDev.tests.*
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
-import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
+import com.intellij.remoteDev.util.tests.modelGenerated.RdTestSessionException
+import com.intellij.remoteDev.util.tests.modelGenerated.RdTestSessionExceptionCause
+import com.intellij.remoteDev.util.tests.modelGenerated.RdTestSessionStackTraceElement
+import com.intellij.remoteDev.util.tests.modelGenerated.distributedTestModel
+import com.intellij.remoteDev.util.tests.*
 import com.intellij.util.alsoIfNull
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
