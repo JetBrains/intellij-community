@@ -342,7 +342,7 @@ open class ProjectFrameHelper internal constructor(
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val navBar = rootPane.navBarStatusWidgetComponent ?: return@withContext
-      statusBar!!.setCentralWidget({ IdeStatusBarImpl.NAVBAR_WIDGET_KEY }, navBar)
+      statusBar!!.setCentralWidget(IdeStatusBarImpl.NAVBAR_WIDGET_KEY, navBar)
     }
   }
 

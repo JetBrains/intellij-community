@@ -26,7 +26,6 @@ import javax.swing.JComponent
 interface StatusBar : StatusBarInfo {
   object Info {
     @Topic.ProjectLevel
-    @JvmField
     val TOPIC = Topic("IdeStatusBar.Text", StatusBarInfo::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmOverloads
@@ -96,10 +95,8 @@ interface StatusBar : StatusBarInfo {
 
   val project: Project?
 
+  @Deprecated("Use extension order")
   object Anchors {
-    @JvmField
-    val DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL)
-
     @JvmStatic
     fun before(widgetId: String): String = "before $widgetId"
 
@@ -133,6 +130,5 @@ interface StatusBar : StatusBarInfo {
    */
   @get:ApiStatus.Internal
   @get:ApiStatus.Experimental
-
   val currentEditor: () -> FileEditor?
 }

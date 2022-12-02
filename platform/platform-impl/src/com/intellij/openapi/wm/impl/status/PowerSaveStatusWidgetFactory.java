@@ -28,7 +28,7 @@ final class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
         if (statusBar != null) {
-          statusBar.updateWidget(getId());
+          statusBar.updateWidget(ID);
         }
       }
     });

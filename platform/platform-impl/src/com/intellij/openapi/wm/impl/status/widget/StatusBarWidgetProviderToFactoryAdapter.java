@@ -81,11 +81,6 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
     Disposer.dispose(widget);
   }
 
-  public @NotNull String getAnchor() {
-    //noinspection removal
-    return provider.getAnchor();
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

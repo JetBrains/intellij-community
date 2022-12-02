@@ -682,7 +682,7 @@
 
     <statusBarWidgetFactory id="light.edit.git" implementation="git4idea.light.LightGitStatusBarWidgetFactory"/>
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
-    <statusBarWidgetFactory id="gitWidget"
+    <statusBarWidgetFactory id="git"
                             implementation="git4idea.ui.branch.GitBranchWidget$Factory"
                             order="after CodeStyleStatusBarWidget,before ReadOnlyAttribute"/>
 

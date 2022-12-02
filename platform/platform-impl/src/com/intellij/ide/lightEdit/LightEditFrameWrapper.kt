@@ -7,6 +7,7 @@ import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -119,10 +120,10 @@ internal class LightEditFrameWrapper(
     val coroutineScope = project.coroutineScope
     statusBar.addWidgetToLeft(LightEditModeNotificationWidget())
     statusBar.init(project, extraItems = listOf(
-      LightEditPositionWidget(project, editorManager) to StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR),
-      LightEditAutosaveWidget(editorManager) to StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR),
-      LightEditEncodingWidgetWrapper(project, coroutineScope) to StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL),
-      LightEditLineSeparatorWidgetWrapper(project, coroutineScope) to StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
+      LightEditPositionWidget(project, editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
+      LightEditAutosaveWidget(editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
+      LightEditEncodingWidgetWrapper(project, coroutineScope) to LoadingOrder.after(StatusBar.StandardWidgets.POSITION_PANEL),
+      LightEditLineSeparatorWidgetWrapper(project, coroutineScope) to LoadingOrder.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
     ))
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -23,9 +24,24 @@ import kotlinx.coroutines.launch
 class StatusBarWidgetsManager(private val project: Project) : SimpleModificationTracker(), Disposable {
   companion object {
     private val LOG = logger<StatusBarWidgetsManager>()
+
+    internal fun anchorToOrder(anchor: String): LoadingOrder {
+      if (anchor.isEmpty() || anchor.equals("any", ignoreCase = true)) {
+        return LoadingOrder.ANY
+      }
+      else {
+        try {
+          return LoadingOrder(anchor)
+        }
+        catch (e: Throwable) {
+          LOG.error("Cannot parse anchor ${anchor}", e)
+          return LoadingOrder.ANY
+        }
+      }
+    }
   }
 
-  private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget?>()
+  private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
   fun updateAllWidgets() {
@@ -38,13 +54,11 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
 
   fun updateWidget(factoryExtension: Class<out StatusBarWidgetFactory>) {
     val factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension)
-    synchronized(widgetFactories) {
-      if (factory == null) {
-        LOG.info("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factoryExtension.name}")
-      }
-      else {
-        updateWidget(factory)
-      }
+    if (factory == null) {
+      LOG.warn("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factoryExtension.name}")
+    }
+    else {
+      updateWidget(factory)
     }
   }
 
@@ -55,38 +69,34 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     }
 
     synchronized(widgetFactories) {
-      val createdWidget = widgetFactories.get(factory)
-      if (createdWidget != null) {
+      if (widgetFactories.containsKey(factory)) {
         // widget is already enabled
         return
       }
 
+      val order = StatusBarWidgetFactory.EP_NAME.filterableLazySequence().firstOrNull { it.id == factory.id }?.order
+      if (order == null) {
+        LOG.warn("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factory.id}")
+        return
+      }
+
       @Suppress("DEPRECATION")
-      val widget = factory.createWidget(project, project.coroutineScope)
+      val scope = project.coroutineScope
+
+      val widget = factory.createWidget(project, scope)
       widgetFactories.put(factory, widget)
       widgetIdMap.put(widget.ID(), factory)
-      val anchor = getAnchor(factory = factory, availableFactories = widgetFactories.keys.toList())
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch(Dispatchers.EDT) {
-        val statusBar = WindowManager.getInstance().getStatusBar(project)
-        if (statusBar == null) {
-          LOG.error("Cannot add a widget for project without root status bar: ${factory.id}")
-        }
-        else {
-          if (statusBar is IdeStatusBarImpl) {
-            statusBar.addRightWidget(widget, anchor)
-          }
-          else {
+      scope.launch(Dispatchers.EDT) {
+        when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
+          null -> LOG.error("Cannot add a widget for project without root status bar: ${factory.id}")
+          is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
+          else -> {
             @Suppress("DEPRECATION")
-            statusBar.addWidget(widget, anchor)
+            statusBar.addWidget(widget, order.toString())
           }
         }
       }
     }
-  }
-
-  fun wasWidgetCreated(factory: StatusBarWidgetFactory?): Boolean {
-    synchronized(widgetFactories) { return widgetFactories.get(factory) != null }
   }
 
   fun wasWidgetCreated(factoryId: String): Boolean {
@@ -115,29 +125,6 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     return result
   }
 
-  private fun getAnchor(factory: StatusBarWidgetFactory, availableFactories: List<StatusBarWidgetFactory>): String {
-    if (factory is StatusBarWidgetProviderToFactoryAdapter) {
-      return factory.anchor
-    }
-
-    val indexOf = availableFactories.indexOf(factory)
-    for (i in indexOf + 1 until availableFactories.size) {
-      val nextFactory = availableFactories[i]
-      val widget = widgetFactories.get(nextFactory)
-      if (widget != null) {
-        return StatusBar.Anchors.before(widget.ID())
-      }
-    }
-    for (i in indexOf - 1 downTo 0) {
-      val prevFactory = availableFactories[i]
-      val widget = widgetFactories.get(prevFactory)
-      if (widget != null) {
-        return StatusBar.Anchors.after(widget.ID())
-      }
-    }
-    return StatusBar.Anchors.DEFAULT_ANCHOR
-  }
-
   private fun disableWidget(factory: StatusBarWidgetFactory) {
     synchronized(widgetFactories) {
       val createdWidget = widgetFactories.remove(factory) ?: return
@@ -152,10 +139,10 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
   }
 
-  internal fun init(): List<Pair<StatusBarWidget, String>> {
+  internal fun init(): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
-    val availableFactories = StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
+    val availableFactories: List<Pair<StatusBarWidgetFactory, LoadingOrder>> = StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
       .filter {
         val id = it.id
         if (id == null) {
@@ -167,17 +154,19 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
           !statusBarWidgetSettings.isExplicitlyDisabled(id)
         }
       }
-      .mapNotNull { it.instance }
-      .filter { !isLightEditProject || it is LightEditCompatible }
+      .mapNotNull { (it.instance ?: return@mapNotNull null) to it.order }
+      .filter { !isLightEditProject || it.first is LightEditCompatible }
       .toList()
 
-    val widgets: List<Pair<StatusBarWidget, String>> = synchronized(widgetFactories) {
+    val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
       val pendingFactories = availableFactories.toMutableList()
       @Suppress("removal", "DEPRECATION")
-      StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) { StatusBarWidgetProviderToFactoryAdapter(project, it) }
+      StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
+        StatusBarWidgetProviderToFactoryAdapter(project, it) to anchorToOrder(it.anchor)
+      }
 
-      val result = mutableListOf<Pair<StatusBarWidget, String>>()
-      for (factory in pendingFactories) {
+      val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
+      for ((factory, anchor) in pendingFactories) {
         if ((factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)) {
           continue
         }
@@ -191,7 +180,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
         val widget = factory.createWidget(project, project.coroutineScope)
         widgetFactories.put(factory, widget)
         widgetIdMap.put(widget.ID(), factory)
-        result.add(widget to getAnchor(factory = factory, availableFactories = availableFactories))
+        result.add(widget to anchor)
       }
       result
     }
@@ -210,7 +199,6 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
             return
           }
 
-          widgetFactories.put(extension, null)
           ApplicationManager.getApplication().invokeLater({
                                                             updateWidget(extension)
                                                             incModificationCount()
