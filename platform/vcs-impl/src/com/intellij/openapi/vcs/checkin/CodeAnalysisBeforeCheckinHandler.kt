@@ -51,8 +51,9 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import com.intellij.vcs.commit.CommitSessionCollector
 import com.intellij.vcs.commit.isPostCommitCheck
@@ -243,7 +244,7 @@ class ProfileChooser(private val project: Project,
                      private val profileTitleKey: @PropertyKey(resourceBundle = "messages.VcsBundle") String)
   : BooleanCommitOption(project, message(emptyTitleKey), true, property) {
 
-  override fun getComponent(): JComponent {
+  override fun Panel.createOptionContent() {
     var profile: InspectionProfileImpl? = null
     val profileName = profileProperty.get()
     if (profileName != null) {
@@ -258,7 +259,10 @@ class ProfileChooser(private val project: Project,
     }
     val configureFilterLink = LinkLabel(message("before.checkin.options.check.smells.choose.profile"), null, showFiltersPopup)
 
-    return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+    row {
+      cell(checkBox)
+      cell(configureFilterLink)
+    }
   }
 
   private fun setProfileText(profile: InspectionProfileImpl?) {

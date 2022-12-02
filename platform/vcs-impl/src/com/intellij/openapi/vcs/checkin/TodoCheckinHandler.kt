@@ -32,8 +32,9 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.search.TodoItem
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.text.DateFormatUtil.formatDateTime
-import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
@@ -98,7 +99,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent = TodoCommitOption().withCheckinHandler(this)
 
   private inner class TodoCommitOption : BooleanCommitOption(project, "", false, settings::CHECK_NEW_TODO) {
-    override fun getComponent(): JComponent {
+    override fun Panel.createOptionContent() {
       val filter = TodoConfiguration.getInstance().getTodoFilter(todoSettings.todoFilterName)
       setFilterText(filter?.name)
 
@@ -108,7 +109,10 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
       }
       val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
 
-      return simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+      row {
+        cell(checkBox)
+        cell(configureFilterLink)
+      }
     }
 
     private fun setFilter(filter: TodoFilter?) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
@@ -9,6 +9,8 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.commit.CommitSessionCollector
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
@@ -22,7 +24,7 @@ open class BooleanCommitOption(
   private val getter: () -> Boolean,
   private val setter: Consumer<Boolean>
 ) : RefreshableOnComponent,
-    UnnamedConfigurable {
+    UiDslUnnamedConfigurable {
 
   constructor(project: Project, @Nls text: String, disableWhenDumb: Boolean, property: KMutableProperty0<Boolean>) :
     this(project, text, disableWhenDumb, { property.get() }, Consumer { property.set(it) })
@@ -60,11 +62,35 @@ open class BooleanCommitOption(
     }
   }
 
-  override fun getComponent(): JComponent = checkBox
+  /**
+   * Implement [com.intellij.openapi.vcs.ui.RefreshableOnComponent]
+   */
+  final override fun getComponent(): JComponent = panel {
+    createOptionContent()
+  }
 
-  override fun createComponent(): JComponent {
+  /**
+   * Implement [com.intellij.openapi.options.UnnamedConfigurable]
+   */
+  final override fun createComponent(): JComponent {
     isInSettings = true
-    return component
+    return panel {
+      createOptionContent()
+    }
+  }
+
+  /**
+   * Implement [com.intellij.openapi.options.UiDslUnnamedConfigurable]
+   */
+  final override fun Panel.createContent() {
+    isInSettings = true
+    createOptionContent()
+  }
+
+  protected open fun Panel.createOptionContent() {
+    row {
+      cell(checkBox)
+    }
   }
 
   override fun isModified() = checkBox.isSelected != getter()
@@ -73,7 +99,7 @@ open class BooleanCommitOption(
 
   override fun reset() = restoreState()
 
-  fun setSelected(value: Boolean) {
+  protected fun setSelected(value: Boolean) {
     isDuringUpdate = true
     try {
       checkBox.isSelected = value

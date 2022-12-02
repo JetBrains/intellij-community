@@ -48,12 +48,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
-import javax.swing.JComponent
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
@@ -285,14 +284,18 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
   }
 
   private inner class RunTestCommitOption : BooleanCommitOption(project, getInitialText(), true, settings.myState::enabled) {
-    override fun getComponent(): JComponent {
+    override fun Panel.createOptionContent() {
       val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
         JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser())
       }
       val configureFilterLink = LinkLabel(SmRunnerBundle.message("link.label.choose.configuration.before.commit"), null, showFiltersPopup)
 
       checkBox.text = getInitialText()
-      return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+
+      row {
+        cell(checkBox)
+        cell(configureFilterLink)
+      }
     }
 
     private fun createConfigurationChooser(): ActionGroup {
