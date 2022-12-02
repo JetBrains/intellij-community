@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
@@ -71,8 +72,10 @@ class DetectAndAdjustIndentOptionsTask {
   private void adjustOptions(IndentOptionsAdjuster adjuster) {
     final PsiFile file = getFile();
     if (file == null) return;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return;
 
-    final IndentOptions currentDefault = getDefaultIndentOptions(file, myDocument);
+    final IndentOptions currentDefault = getDefaultIndentOptions(file.getProject(), virtualFile, myDocument);
     myOptionsToAdjust.copyFrom(currentDefault);
 
     adjuster.adjust(myOptionsToAdjust);
@@ -115,9 +118,9 @@ class DetectAndAdjustIndentOptionsTask {
   }
 
   @NotNull
-  static TimeStampedIndentOptions getDefaultIndentOptions(@NotNull PsiFile file, @NotNull Document document) {
+  static TimeStampedIndentOptions getDefaultIndentOptions(@NotNull Project project, @NotNull VirtualFile file, @NotNull Document document) {
     FileType fileType = file.getFileType();
-    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    CodeStyleSettings settings = CodeStyle.getSettings(project, file);
     return new TimeStampedIndentOptions(settings.getIndentOptions(fileType), document.getModificationStamp());
   }
 
