@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
-import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ModalTaskOwner
@@ -14,8 +13,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.DialogManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.nullize
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
 import java.awt.Component
@@ -24,8 +21,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JTextField
 
-@NlsContexts.DialogMessage
-internal fun validateUrl(url: String?, project: Project?): String? {
+internal fun validateUrl(url: String?, project: Project?): @NlsContexts.DialogMessage String? {
   return if (url == null) IcsBundle.message("dialog.error.message.url.empty") else icsManager.repositoryService.checkUrl(url, project)
 }
 

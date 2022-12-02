@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
@@ -14,7 +15,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
-internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, shortcutSupplier: Function<in String?, String?>,
+internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, shortcutSupplier: Function<in String, String?>,
                                  toolbar: JComponent) {
 
   lateinit var tabbedPane: JBTabbedPane
@@ -47,7 +48,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
       EmptyBorder(0, headerInsets.left, 0, headerInsets.right))
 
     for (tab in tabs) {
-      val shortcut = shortcutSupplier.apply(tab.id)
+      @NlsSafe val shortcut = shortcutSupplier.apply(tab.id)
       tabbedPane.addTab(tab.name, null, JPanel(), shortcut)
     }
   }

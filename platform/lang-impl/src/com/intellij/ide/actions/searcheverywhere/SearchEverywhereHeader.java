@@ -343,7 +343,7 @@ public class SearchEverywhereHeader {
       isSelected = selected;
     }
 
-    public String getID() {
+    public @NotNull @NonNls String getID() {
       return id;
     }
 
