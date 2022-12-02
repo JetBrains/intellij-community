@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 
 /**
  * Writeable interface to a storage. Use it if you need to build a storage from scratch or modify an existing storage in a way which requires
@@ -47,7 +48,7 @@ interface MutableEntityStorage : EntityStorage {
   /**
    * Please see [EntityStorage.getExternalMapping] for naming conventions
    */
-  fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
+  fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T>
   fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
 
   val modificationCount: Long

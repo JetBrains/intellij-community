@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
@@ -91,7 +92,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     loadedFromCache = false
   }
 
-  final override fun <R> updateProjectModel(description: String, updater: (MutableEntityStorage) -> R): R {
+  final override fun <R> updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (projectModelVersionUpdate.get() == entityStorage.pointer.version) {
       log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
@@ -153,7 +154,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
    * This method doesn't require write action.
    */
   @Synchronized
-  final override fun <R> updateProjectModelSilent(description: String, updater: (MutableEntityStorage) -> R): R {
+  final override fun <R> updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> R): R {
     if (projectModelVersionUpdate.get() == entityStorage.pointer.version) {
       log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.deft.annotations.Abstract
 
 /**
@@ -13,7 +14,7 @@ import org.jetbrains.deft.annotations.Abstract
  */
 interface SymbolicEntityId<out E : WorkspaceEntityWithSymbolicId> {
   /** Text which can be shown in an error message if id cannot be resolved */
-  val presentableName: String
+  val presentableName: @NlsSafe String
 
   fun resolve(storage: EntityStorage): E? = storage.resolve(this)
   override fun toString(): String

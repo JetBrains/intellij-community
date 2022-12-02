@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.NonNls
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -33,7 +34,7 @@ interface EntityStorage {
    *  - intellij.facets.bridge
    *  - rider.backend.id
    */
-  fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
+  fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T>
   fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
   fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E>

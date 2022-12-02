@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -519,7 +520,7 @@ internal class MutableEntityStorageImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T> {
+  override fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T> {
     try {
       lockWrite()
       val mapping = indexes.externalMappings.computeIfAbsent(
@@ -787,7 +788,7 @@ internal sealed class AbstractEntityStorage : EntityStorage {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T> {
+  override fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T> {
     val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import org.jetbrains.annotations.NonNls
 
 /**
  * Provides access to the storage which holds workspace model entities.
@@ -25,7 +26,7 @@ interface WorkspaceModel {
    * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
    *   For testing there is an extension method that doesn't require a description [com.intellij.testFramework.workspaceModel.updateProjectModel].
    */
-  fun <R> updateProjectModel(description: String, updater: (MutableEntityStorage) -> R): R
+  fun <R> updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> R): R
 
   @Deprecated("Zhenja please use the update method with the debug message")
   fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
@@ -39,7 +40,7 @@ interface WorkspaceModel {
    */
   @Deprecated("Method will be removed from interface. Use WorkspaceModelImpl#updateProjectModelSilent only " +
               "if you are absolutely sure you need it")
-  fun <R> updateProjectModelSilent(description: String, updater: (MutableEntityStorage) -> R): R
+  fun <R> updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> R): R
 
   /**
    * Get builder that can be updated in background and applied later and a project model.
