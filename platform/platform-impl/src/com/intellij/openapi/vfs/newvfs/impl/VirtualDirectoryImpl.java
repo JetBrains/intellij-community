@@ -36,7 +36,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -445,9 +444,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           files[i] = file;
         }
         if (!prevChildren.isEmpty()) {
-          LOG.error("Loaded child disappeared: " +
-                    "parent=" + verboseToString(this) +
-                    "; child=" + verboseToString(vfsData.getFileById(prevChildren.iterator().nextInt(), this, true)));
+          var missing = vfsData.getFileById(prevChildren.iterator().nextInt(), this, true);
+          LOG.error("Loaded child disappeared: parent=" + verboseToString(this) + "; child=" + verboseToString(missing));
         }
       }
 
@@ -477,11 +475,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (cmp <= 0) {
         VirtualFileSystemEntry prevFile = vfsData.getFileById(prev, this, true);
         VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
-        String info = "prevFile.isCaseSensitive()=" + (prevFile == null ? "?" : prevFile.isCaseSensitive()) + ";" +
-                      "child.isCaseSensitive()=" + (child == null ? "?" : child.isCaseSensitive()) + ";" +
+        String info = "prevFile.isCaseSensitive()=" + (prevFile == null ? "?" : prevFile.isCaseSensitive()) + ';' +
+                      "child.isCaseSensitive()=" + (child == null ? "?" : child.isCaseSensitive()) + ';' +
                       "this.isCaseSensitive()=" + this.isCaseSensitive();
-
-        String message = info + " but in "+this+" the " +verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child)+"\n";
+        String message = info + " but in " + this + " the " + verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child) + '\n';
         error(message, details);
       }
       synchronized (myData) {
@@ -495,24 +492,26 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private static @NotNull @NonNls String verboseToString(@Nullable VirtualFileSystemEntry file) {
-    if (file == null) return "null";
-    return file + " (name: '" + file.getName()
-           + "', " + file.getClass()
-           + ", parent: " + file.getParent()
-           + "; id: " + file.getId()
-           + "; FS: " + file.getFileSystem()
-           + "; fs.attrs: " + file.getFileSystem().getAttributes(file)
-           + "; isCaseSensitive: " + file.isCaseSensitive()
-           + "; canonical: " + file.getFileSystem().getCanonicallyCasedName(file)
-           + ") ";
+  private static String verboseToString(@Nullable VirtualFileSystemEntry file) {
+    return file == null ? "null" :
+           file +
+           " (name: '" + file.getName() + "'" +
+           ", " + file.getClass() +
+           ", parent: " + file.getParent() +
+           ", id: " + file.getId() +
+           ", FS: " + file.getFileSystem() +
+           ", fs.attrs: " + file.getFileSystem().getAttributes(file) +
+           ", isCaseSensitive: " + file.isCaseSensitive() +
+           ", canonical: " + file.getFileSystem().getCanonicallyCasedName(file) +
+           ')';
   }
 
-  private void error(@NonNls String message, @NonNls Object @NotNull ... details) {
-    VirtualFileSystemEntry[] array = getArraySafely(true);
-    String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
-    String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
-    throw new AssertionError(message + ";\n children: \n" + children + "\nDetails: " + detailsStr);
+  private void error(String message, Object... details) {
+    var builder = new StringBuilder().append(message).append("\n--- children ---");
+    for (var child : getArraySafely(true)) builder.append('\n').append(verboseToString(child));
+    builder.append("--- details ---");
+    for (var o : details) builder.append('\n').append(o instanceof Object[] ? Arrays.toString((Object[])o) : o.toString());
+    throw new AssertionError(builder.toString());
   }
 
   @Override
