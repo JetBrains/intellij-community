@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final int IS_APPMAIN_MASK            = 0b1_00000000_00000000; // 17th bit
@@ -507,25 +509,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
     }
     else {
-      String newTemplate = null;
-      final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-      if (expression instanceof ULiteralExpression literalExpression) {
-        newTemplate = String.valueOf(literalExpression.getValue());
-      }
-      else if (expression instanceof UResolvable resolvable) {
-        UElement resolved = UResolvableKt.resolveToUElement(resolvable);
-        if (resolved instanceof UField uField) {
-          PsiField psi = (PsiField)uField.getJavaPsi();
-          if (uField.isStatic() &&
-              uField.isFinal() &&
-              refUtil.compareAccess(refUtil.getAccessModifier(psi), getAccessModifier()) >= 0) {
-            newTemplate = PsiFormatUtil.formatVariable(psi, PsiFormatUtilBase.SHOW_NAME |
-                                                            PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                                                            PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
-          }
-        }
-      }
-      else if (refUtil.isCallToSuperMethod(expression, getUastElement())) return;
+      if (RefJavaUtil.getInstance().isCallToSuperMethod(expression, getUastElement())) return;
+      String newTemplate = createReturnValueTemplate(expression, this);
 
       synchronized (this) {
         //noinspection StringEquality
@@ -686,5 +671,33 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       parentRef = refManager.getReference(containingDeclaration, true);
     }
     return parentRef;
+  }
+
+  public static @Nullable String createReturnValueTemplate(UExpression expression) {
+    return createReturnValueTemplate(expression, Predicates.alwaysTrue());
+  }
+
+  public static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull RefMethodImpl refMethod) {
+    RefJavaUtil refUtil = RefJavaUtil.getInstance();
+    return createReturnValueTemplate(expression,
+                               field -> refUtil.compareAccess(refUtil.getAccessModifier(field), refMethod.getAccessModifier()) >= 0);
+  }
+
+  private static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull Predicate<PsiField> myPredicate) {
+    if (expression instanceof ULiteralExpression literalExpression) {
+      return String.valueOf(literalExpression.getValue());
+    }
+    else if (expression instanceof UResolvable resolvable) {
+      UElement resolved = UResolvableKt.resolveToUElement(resolvable);
+      if (resolved instanceof UField uField && uField.isStatic() && uField.isFinal()) {
+        PsiField psi = (PsiField)uField.getJavaPsi();
+        if (psi != null && myPredicate.test(psi)) {
+          return PsiFormatUtil.formatVariable(psi, PsiFormatUtilBase.SHOW_NAME |
+                                                   PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                   PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
+        }
+      }
+    }
+    return null;
   }
 }

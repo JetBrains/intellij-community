@@ -5,14 +5,19 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.uast.UastHintedVisitorAdapter;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
+import org.jetbrains.uast.visitor.AbstractUastVisitor;
+
+import java.util.List;
 
 public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
   @Override
@@ -92,5 +97,85 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
   @NotNull
   public String getShortName() {
     return "SameReturnValue";
+  }
+
+  @Nullable
+  @Override
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return new LocalSameReturnValueInspection(this);
+  }
+
+  private static final class LocalSameReturnValueInspection extends AbstractBaseUastLocalInspectionTool {
+    private final SameReturnValueInspection myGlobal;
+
+    private LocalSameReturnValueInspection(SameReturnValueInspection global) {
+      myGlobal = global;
+    }
+
+    @Override
+    public boolean runForWholeFile() {
+      return true;
+    }
+
+    @Override
+    @NotNull
+    public String getGroupDisplayName() {
+      return myGlobal.getGroupDisplayName();
+    }
+
+    @Override
+    @NotNull
+    public String getShortName() {
+      return myGlobal.getShortName();
+    }
+
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+      @SuppressWarnings("unchecked") Class<? extends UMethod>[] hint = new Class[]{UMethod.class};
+
+      return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+
+        @Override
+        public boolean visitMethod(@NotNull UMethod method) {
+          UElement anchor = method.getUastAnchor();
+          if (anchor == null) return true;
+          PsiElement psiAnchor = anchor.getSourcePsi();
+          if (psiAnchor == null) return true;
+          PsiMethod javaMethod = method.getJavaPsi();
+          final PsiType returnType = javaMethod.getReturnType();
+          if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
+            return true;
+          }
+          if (javaMethod.findSuperMethods().length != 0 || PsiUtil.canBeOverridden(javaMethod)) {
+            return true;
+          }
+          List<UExpression> returnExpressions = new SmartList<>();
+          final UExpression body = method.getUastBody();
+          if (body == null) return true;
+          body.accept(new AbstractUastVisitor() {
+            @Override
+            public boolean visitReturnExpression(@NotNull UReturnExpression node) {
+              if (node.getJumpTarget() == method) {
+                UExpression returnExpression = node.getReturnExpression();
+                if (returnExpression != null) {
+                  StreamEx.of(UastUtils.nonStructuralChildren(returnExpression)).forEach(returnExpressions::add);
+                }
+              }
+              return super.visitReturnExpression(node);
+            }
+          });
+          if (returnExpressions.size() < 2) return true;
+          String returnValue = RefMethodImpl.createReturnValueTemplate(returnExpressions.get(0));
+          if (returnValue != null &&
+              ContainerUtil.all(returnExpressions,
+                                returnExpression -> returnValue.equals(RefMethodImpl.createReturnValueTemplate(returnExpression)))) {
+            String message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor", returnValue);
+            holder.registerProblem(psiAnchor, message);
+          }
+          return true;
+        }
+      }, hint);
+    }
   }
 }

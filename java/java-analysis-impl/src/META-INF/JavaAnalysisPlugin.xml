@@ -246,7 +246,7 @@
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"
                       editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                       key="inspection.redundant.throws.display.name" bundle="messages.JavaAnalysisBundle"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="SameReturnValue" bundle="messages.JavaAnalysisBundle" key="inspection.same.return.value.display.name"
+    <globalInspection groupPath="Java" language="UAST" shortName="SameReturnValue" bundle="messages.JavaAnalysisBundle" key="inspection.same.return.value.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="CanBeFinal" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"

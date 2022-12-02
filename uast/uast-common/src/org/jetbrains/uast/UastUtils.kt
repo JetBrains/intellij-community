@@ -9,8 +9,13 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
+import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.io.File
+import java.util.stream.Stream
 
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
 
@@ -261,4 +266,38 @@ inline fun <reified T : UDeclaration> getUParentForDeclarationLineMarkerElement(
   val parent = getUParentForIdentifier(lineMarkerElement) as? T ?: return null
   if (parent.uastAnchor.sourcePsiElement != lineMarkerElement) return null
   return parent
+}
+
+/**
+ * Returns stream of sub-expressions of supplied expression which could be equal by reference to resulting
+ * value of the expression. The expression value is guaranteed to be equal to one of returned sub-expressions.
+ *
+ * E.g. for `(if (flag) (b) else (c))` the stream will contain b and c.
+ *
+ * @param expression expression to create a stream from
+ * @return a new stream
+ */
+fun nonStructuralChildren(expression: UExpression): Stream<UExpression> {
+  return StreamEx.ofTree(expression) { e ->
+    when (e) {
+      is UBlockExpression -> StreamEx.ofNullable(ContainerUtil.getLastItem(e.expressions))
+      is UIfExpression -> StreamEx.of(e.thenExpression, e.elseExpression).nonNull()
+      is UParenthesizedExpression -> StreamEx.ofNullable(e.expression)
+      is USwitchExpression -> {
+        val result: MutableList<UExpression> = SmartList()
+        e.accept(object : AbstractUastVisitor() {
+          override fun visitYieldExpression(node: UYieldExpression): Boolean {
+            if (e == node.jumpTarget && node.expression !is UReturnExpression) {
+              node.expression?.let { result.add(it) }
+            }
+            return true
+          }
+        })
+        StreamEx.of(result)
+      }
+      else -> null
+    }
+  }.remove { e ->
+    e is UBlockExpression || e is UIfExpression || e is UParenthesizedExpression || e is USwitchExpression || e is UReturnExpression
+  }
 }
