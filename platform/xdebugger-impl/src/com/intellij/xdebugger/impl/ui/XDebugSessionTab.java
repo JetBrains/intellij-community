@@ -76,9 +76,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (Registry.is("debugger.new.tool.window.layout")) {
       tab = new XDebugSessionTab3(session, icon, environment);
     }
-    else if (Registry.is("debugger.new.debug.tool.window.view")) {
-      tab = new XDebugSessionTab2(session, icon, environment);
-    }
     else {
       if (DebuggerUIExperimentCollector.startExperiment()) {
         tab = new XDebugSessionTab3(session, icon, environment);

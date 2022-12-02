@@ -99,17 +99,13 @@ class XDebugSessionTab3(
       isCloseable = false
     }
 
-    val customLayoutOptions = if (Registry.`is`("debugger.new.debug.tool.window.view")) {
-      val optionsCollection = XDebugTabLayoutSettings(session, content, this)
-      content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
-      optionsCollection.threadsAndFramesOptions
-    }
-    else
-      null
+    val optionsCollection = XDebugTabLayoutSettings(session, content, this)
+    content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
+    val customLayoutOptions = optionsCollection.threadsAndFramesOptions
 
-    val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(myProject)
+    val framesView = (customLayoutOptions.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(myProject)
     registerThreadsView(session, content, framesView, true)
-    framesView.mainComponent?.isVisible = customLayoutOptions?.isHidden?.not() ?: true
+    framesView.mainComponent?.isVisible = !customLayoutOptions.isHidden
     addVariablesAndWatches(session)
 
     myUi.addContent(content, 0, PlaceInGrid.center, false)
