@@ -185,6 +185,7 @@ public class CompareWithLocalDialog {
     protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
+        ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"),
         ActionManager.getInstance().getAction("Vcs.GetVersion")
       );
     }
