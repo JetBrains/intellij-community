@@ -21,7 +21,6 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.Component
 import java.awt.Container
 import javax.swing.JComponent
@@ -47,7 +46,7 @@ class GHCommentTextFieldFactory(private val model: CommentTextFieldModel) {
     val authorLabel = LinkLabel.create("") {
       BrowserUtil.browse(author.url)
     }.apply {
-      icon = avatarIconsProvider.getIcon(author.avatarUrl, GHUIUtil.AVATAR_SIZE)
+      icon = avatarIconsProvider.getIcon(author.avatarUrl, GHPRReviewCommentComponent.AVATAR_SIZE)
       isFocusable = true
       border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset() - 2, 0)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
@@ -87,7 +86,7 @@ class GHCommentTextFieldFactory(private val model: CommentTextFieldModel) {
           IdeFocusTraversalPolicy.getPreferredFocusedComponent(commentComponent) ?: super.getDefaultComponent(aContainer)
       }
 
-      add(authorLabel, CC().alignY("top").gapRight("6"))
+      add(authorLabel, CC().alignY("top").gapRight("${GHPRReviewCommentComponent.AVATAR_SIZE - 3}"))
       add(component, CC().grow().pushX())
     }
   }

@@ -38,10 +38,10 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.ChangeEvent
@@ -147,28 +147,24 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       isOpaque = false
       border = JBUI.Borders.empty(24, 20)
 
-      val maxWidth = GHUIUtil.getPRTimelineWidth()
-
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill()
                            .flowY(),
                          AC().grow().gap("push"))
 
-      add(header, CC().growX().maxWidth("${maxWidth}px"))
+      add(header, CC().growX().maxWidth("$TIMELINE_ITEM_WIDTH"))
       add(descriptionWrapper, CC().growX())
       add(timeline, CC().growX().minWidth(""))
 
-      val fullTimelineWidth = GHPRTimelineItemUIUtil.maxTimelineItemWidth
-
-      add(errorPanel, CC().hideMode(2).width("${fullTimelineWidth}px"))
-      add(loadingIcon, CC().hideMode(2).width("${fullTimelineWidth}px"))
+      add(errorPanel, CC().hideMode(2).width("$TIMELINE_ITEM_WIDTH"))
+      add(loadingIcon, CC().hideMode(2).width("$TIMELINE_ITEM_WIDTH"))
 
       if (editor.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
         val commentField = createCommentField(editor.commentsData,
                                               editor.avatarIconsProvider,
                                               editor.securityService.currentUser)
-        add(commentField, CC().growX().pushX().maxWidth("${fullTimelineWidth}px"))
+        add(commentField, CC().growX().pushX().maxWidth("$TIMELINE_ITEM_WIDTH"))
       }
     }
 

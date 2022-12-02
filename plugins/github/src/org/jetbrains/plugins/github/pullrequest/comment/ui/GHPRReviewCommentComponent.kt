@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -9,7 +8,6 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.AC
@@ -23,6 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -31,6 +30,9 @@ import javax.swing.JPanel
 
 
 object GHPRReviewCommentComponent {
+
+  const val AVATAR_SIZE = GHUIUtil.AVATAR_SIZE
+  const val AVATAR_GAP = 10
 
   fun create(project: Project,
              thread: GHPRReviewThreadModel,
@@ -43,7 +45,7 @@ object GHPRReviewCommentComponent {
     val avatarLabel = ActionLink("") {
       comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
     }.apply {
-      icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl, GHUIUtil.AVATAR_SIZE)
+      icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl, AVATAR_SIZE)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
@@ -84,12 +86,14 @@ object GHPRReviewCommentComponent {
       isVisible = comment.canBeDeleted
     }
 
+    val maxContentWidth = GHPRTimelineItemUIUtil.TIMELINE_CONTENT_WIDTH - AVATAR_SIZE - AVATAR_GAP
+
     return JPanel(null).apply {
       isOpaque = false
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill(),
-                         AC().gap("8"))
+                         AC().gap("${AVATAR_GAP}"))
 
       add(avatarLabel, CC().pushY())
       add(titlePane, CC().minWidth("0").split(5).alignX("left").pushX())
@@ -97,11 +101,9 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("12"))
       add(deleteButton, CC().hideMode(3).gapBefore("8"))
-      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX().maxWidth("${getMaxWidth()}px"))
+      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX().maxWidth("$maxContentWidth"))
     }
   }
-
-  private fun getMaxWidth() = GHUIUtil.getPRTimelineWidth() - JBUIScale.scale(GHUIUtil.AVATAR_SIZE) + AllIcons.Actions.Close.iconWidth
 
   private class Controller(private val project: Project,
                            private val thread: GHPRReviewThreadModel,

@@ -33,8 +33,8 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_CONTENT_WIDTH
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.Cursor
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
@@ -277,7 +277,7 @@ object GHPRReviewThreadComponent {
     return JPanel().apply {
       isOpaque = false
       layout = MigLayout(LC().insets("0"))
-      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + JBUIScale.scale(GHUIUtil.AVATAR_SIZE)}px"))
+      add(content, CC().grow().maxWidth("$TIMELINE_CONTENT_WIDTH"))
     }
   }
 
@@ -294,7 +294,7 @@ object GHPRReviewThreadComponent {
 
     return HorizontalBox().apply {
       isOpaque = false
-      border = JBUI.Borders.empty(6, 34, 6, 0)
+      border = JBUI.Borders.empty(6, GHPRReviewCommentComponent.AVATAR_SIZE + GHPRReviewCommentComponent.AVATAR_GAP, 6, 0)
 
       add(toggleReplyLink)
       add(Box.createHorizontalStrut(JBUIScale.scale(8)))

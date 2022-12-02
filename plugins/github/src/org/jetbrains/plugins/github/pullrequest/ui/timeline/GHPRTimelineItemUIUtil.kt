@@ -16,36 +16,34 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.math.roundToInt
 
 object GHPRTimelineItemUIUtil {
   private const val MAIN_AVATAR_SIZE = 30
   private const val AVATAR_CONTENT_GAP = 14
 
-  val maxTimelineItemTextWidth: Int
-    get() = GHUIUtil.getPRTimelineWidth()
-
-  val maxTimelineItemWidth: Int
-    get() = maxTimelineItemTextWidth + JBUIScale.scale(MAIN_AVATAR_SIZE) + JBUIScale.scale(AVATAR_CONTENT_GAP)
+  // 42em
+  val TIMELINE_CONTENT_WIDTH = (JBUIScale.DEF_SYSTEM_FONT_SIZE * 42).roundToInt()
+  val TIMELINE_ITEM_WIDTH = TIMELINE_CONTENT_WIDTH + MAIN_AVATAR_SIZE + AVATAR_CONTENT_GAP
 
   fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
                  actor: GHActor,
                  date: Date?,
                  content: JComponent,
                  actionsPanel: JComponent? = null): JComponent {
-    return createItem(avatarIconsProvider, actor, date, content, maxTimelineItemTextWidth, actionsPanel)
+    return createItem(avatarIconsProvider, actor, date, content, TIMELINE_CONTENT_WIDTH, actionsPanel)
   }
 
   fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
                  actor: GHActor,
                  date: Date?,
                  content: JComponent,
-                 maxContentWidth: Int = maxTimelineItemTextWidth,
+                 maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
                  actionsPanel: JComponent? = null): JComponent {
     val icon = avatarIconsProvider.getIcon(actor.avatarUrl.nullize(), MAIN_AVATAR_SIZE)
     val iconLabel = JLabel(icon).apply {
@@ -77,14 +75,14 @@ object GHPRTimelineItemUIUtil {
         .gapRight("$AVATAR_CONTENT_GAP"))
 
       add(titleTextPane, CC().grow().push().gapRight("push")
-        .maxWidth("${maxTimelineItemTextWidth}px"))
+        .maxWidth("$TIMELINE_CONTENT_WIDTH"))
 
       if (actionsPanel != null) {
         add(actionsPanel, CC().gapLeft("10"))
       }
       add(content, CC().push().grow().spanX(2).newline()
         .gapTop("4")
-        .minWidth("0").maxWidth("${maxContentWidth}px"))
+        .minWidth("0").maxWidth("$maxContentWidth"))
     }
   }
 
