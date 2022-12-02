@@ -42,8 +42,6 @@ public final class MacWinTabsHandler {
 
   private final JFrame myFrame;
   private final boolean myFrameAllowed;
-  private boolean myShowFrame;
-  private boolean myInitFrame;
 
   @SuppressWarnings("FieldCanBeLocal")
   private static Callback myObserverCallback; // don't convert to local var
@@ -61,6 +59,12 @@ public final class MacWinTabsHandler {
     rootPane.putClientProperty(WIN_TAB_FILLER, filler);
     rootPane.putClientProperty("Window.transparentTitleBarHeight", 28);
     return panel;
+  }
+
+  public static void fastInit(@NotNull IdeFrameImpl frame) {
+    if (JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null))) {
+      Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
+    }
   }
 
   public MacWinTabsHandler(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
@@ -83,35 +87,14 @@ public final class MacWinTabsHandler {
     return frame == null || frame instanceof IdeFrameImpl;
   }
 
-  // TODO: remove after release 2023.1
-  public void frameInit() {
-    if (!myFrameAllowed) {
-      return;
-    }
-
-    Foundation.executeOnMainThread(true, false, () -> {
-      ID window = MacUtil.getWindowFromJavaWindow(myFrame);
-      Foundation.invoke(window, "setTabbingIdentifier:", Foundation.nsString(getWindowId()));
-    });
-  }
-
   @NotNull
   private static String getWindowId() {
     return ApplicationNamesInfo.getInstance().getProductName() + (PluginManagerCore.isRunningFromSources() ? "-Snapshot" : "") + "-AwtWindow-WithTabs";
   }
 
-  public void frameShow() {
-    myShowFrame = true;
-    if (myInitFrame) {
-      initUpdateTabBars();
-    }
-  }
-
   public void setProject() {
-    myInitFrame = true;
-    if (myShowFrame) {
-      initUpdateTabBars();
-    }
+    // update tab logic only after call [NSWindow makeKeyAndOrderFront] and after add frame to window manager
+    ApplicationManager.getApplication().invokeLater(() -> updateTabBars(myFrame));
   }
 
   public void enteringFullScreen() {
@@ -140,11 +123,6 @@ public final class MacWinTabsHandler {
     });
   }
 
-  private void initUpdateTabBars() {
-    // update tab logic only after call [NSWindow makeKeyAndOrderFront] and after add frame to window manager
-    ApplicationManager.getApplication().invokeLater(() -> updateTabBars(myFrame));
-  }
-
   static void updateTabBars(@Nullable JFrame newFrame) {
     if (!isAllowedFrame(newFrame) || !JdkEx.isTabbingModeAvailable()) {
       return;
@@ -159,10 +137,7 @@ public final class MacWinTabsHandler {
         if (newFrame == null) {
           ProjectFrameHelper helper = (ProjectFrameHelper)frames[0];
           if (helper.isInFullScreen()) {
-            IdeFrameImpl frame = helper.getFrame();
-            if (frame != null) {
-              handleFullScreenResize(frame);
-            }
+            handleFullScreenResize(helper.getFrame());
           }
         }
         else {
@@ -362,9 +337,6 @@ public final class MacWinTabsHandler {
 
     for (int i = 0; i < length; i++) {
       IdeFrameImpl frame = ((ProjectFrameHelper)frames[i]).getFrame();
-      if (frame == null) {
-        return;
-      }
       JRootPane pane = frame.getRootPane();
       if (pane.getClientProperty(CLOSE_MARKER) != null) {
         return;

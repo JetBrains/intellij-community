@@ -211,6 +211,8 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
         ProjectFrameHelper(frame = frame, loadingState = loadingState)
       }
 
+      updateFullScreenState(frameHelper, getFrameInfo())
+
       watcher(frameHelper, loadingState)
 
       // in a separate EDT task, as EDT is used for write actions and frame initialization should not slow down project opening
@@ -234,7 +236,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
       return
     }
 
-    val frameInfo = options.frameInfo ?: RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)?.frame
+    val frameInfo = getFrameInfo()
     val frameProducer = createNewProjectFrame(frameInfo = frameInfo)
     val loadingState = MutableLoadingState(withContext(Dispatchers.IO) {
       readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId, device = frameProducer.deviceOrDefault)
@@ -243,9 +245,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
       val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
       // must be after preInit (frame decorator is required to set full screen mode)
       frameHelper.frame.isVisible = true
-      if (frameInfo != null && frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-        frameHelper.toggleFullScreen(true)
-      }
+      updateFullScreenState(frameHelper, frameInfo)
       frameHelper
     }
 
@@ -256,6 +256,14 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
       frameHelper.init()
     }
     deferredProjectFrameHelper.complete(frameHelper)
+  }
+
+  private fun getFrameInfo() = options.frameInfo ?: RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)?.frame
+
+  private fun updateFullScreenState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo?) {
+    if (frameInfo != null && frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+      frameHelper.toggleFullScreen(true)
+    }
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {

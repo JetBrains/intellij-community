@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.ui.BalloonLayout
+import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -54,20 +55,16 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   interface FrameDecorator {
     val isInFullScreen: Boolean
-    fun frameInit() {}
-    fun frameShow() {}
     fun appClosing() {}
-  }
-
-  override fun addNotify() {
-    super.addNotify()
-    frameHelper?.frameDecorator?.frameInit()
   }
 
   override fun createRootPane(): JRootPane? = null
 
   internal fun doSetRootPane(rootPane: JRootPane?) {
     super.setRootPane(rootPane)
+    if (rootPane != null && isVisible && SystemInfoRt.isMac) {
+      MacUtil.updateRootPane(this, rootPane)
+    }
   }
 
   // NB!: the root pane must be set before decorator,
@@ -102,10 +99,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   override fun show() {
     @Suppress("DEPRECATION")
     super.show()
-    SwingUtilities.invokeLater {
-      focusableWindowState = true
-      frameHelper?.frameDecorator?.frameShow()
-    }
+    SwingUtilities.invokeLater { focusableWindowState = true }
   }
 
   override fun getInsets(): Insets {

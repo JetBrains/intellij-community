@@ -6,14 +6,14 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.impl.onEdtInNonAnyModality
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressDialogUI
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.progress.util.createDialogWrapper
 import com.intellij.openapi.project.Project
@@ -35,6 +35,7 @@ import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Container
 import java.awt.EventQueue
+import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
 internal class PlatformTaskSupport : TaskSupport {
@@ -89,7 +90,7 @@ internal class PlatformTaskSupport : TaskSupport {
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,
   ): T = resetThreadContext().use {
-    inModalContext(cs.coroutineContext.job) { newModalityState ->
+    inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
       val deferredDialog = CompletableDeferred<DialogWrapper>()
       val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
         withModalIndicator(descriptor, deferredDialog, action)
@@ -106,6 +107,18 @@ internal class PlatformTaskSupport : TaskSupport {
       mainJob.getCompleted()
     }
   }
+}
+
+private class JobProviderWithOwnerContext(val modalJob: Job, val owner: ModalTaskOwner) : JobProvider {
+  override fun isPartOf(frame: JFrame, project: Project?): Boolean {
+    return when (owner) {
+      is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null) === frame
+      is ProjectModalTaskOwner -> owner.project === project
+      else -> ProgressWindow.calcParentWindow(null, null) === frame
+    }
+  }
+
+  override fun getJob(): Job = modalJob
 }
 
 private fun CoroutineScope.showIndicator(

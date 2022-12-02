@@ -200,6 +200,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
         }
       }
       frame.doSetRootPane(rootPane)
+      if (SystemInfoRt.isMac) {
+        MacWinTabsHandler.fastInit(frame)
+      }
     }
 
     @ApiStatus.Internal

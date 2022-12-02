@@ -30,7 +30,7 @@ suspend fun <T> onEdtInNonAnyModality(action: suspend CoroutineScope.() -> T): T
 }
 
 @Internal
-fun <T> inModalContext(modalJob: Job, action: (ModalityState) -> T): T {
+fun <T> inModalContext(modalJob: JobProvider, action: (ModalityState) -> T): T {
   val newModalityState = LaterInvocator.getCurrentModalityState().appendEntity(modalJob)
   LaterInvocator.enterModal(modalJob, newModalityState)
   try {

@@ -353,7 +353,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   @Internal
   @VisibleForTesting
   class MyProjectListener : ProjectCloseListener {
-    override fun projectClosing(project: Project) {
+    override fun projectClosingBeforeSave(project: Project) {
       val app = ApplicationManagerEx.getApplicationEx()
       if (app.isExitInProgress) {
         // appClosing updates project info (even more - on project closed full screen state maybe not correct)
