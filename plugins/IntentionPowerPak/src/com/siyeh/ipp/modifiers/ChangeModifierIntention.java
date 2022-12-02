@@ -34,7 +34,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -251,11 +250,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
     void undoChange() {
       Project project = myFile.getProject();
-      VirtualFile virtualFile = myFile.getVirtualFile();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-      FileEditor fileEditor = virtualFile != null ? fileEditorManager.getSelectedEditor(virtualFile) : null;
+      FileEditor fileEditor = fileEditorManager.getSelectedEditor(myFile.getVirtualFile());
       UndoManager manager = UndoManager.getInstance(project);
-      if (fileEditor != null && manager.isUndoAvailable(fileEditor)) {
+      if (manager.isUndoAvailable(fileEditor)) {
         manager.undo(fileEditor);
       }
       else {
