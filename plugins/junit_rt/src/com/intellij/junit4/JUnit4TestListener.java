@@ -102,8 +102,7 @@ public class JUnit4TestListener extends RunListener {
     }
 
     if (methodName == null) {
-      methodName = getFullMethodName(description, parentsHierarchy.isEmpty() ? null
-                                                                             : parentsHierarchy.get(parentsHierarchy.size() - 1));
+      methodName = getFullMethodName(description, parentsHierarchy.get(parentsHierarchy.size() - 1));
       if (methodName == null) return;
     }
 

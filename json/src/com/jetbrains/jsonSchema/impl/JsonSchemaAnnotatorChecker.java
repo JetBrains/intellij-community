@@ -309,19 +309,17 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
   @Nullable
   public static JsonSchemaType getMatchingSchemaType(@NotNull JsonSchemaObject schema, @NotNull JsonSchemaType input) {
-    if (schema.getType() != null) {
-      final JsonSchemaType matchType = schema.getType();
-      if (matchType != null) {
-        if (JsonSchemaType._integer.equals(input) && JsonSchemaType._number.equals(matchType)) {
-          return input;
-        }
-        if (JsonSchemaType._string_number.equals(input) && (JsonSchemaType._number.equals(matchType)
-                                                            || JsonSchemaType._integer.equals(matchType)
-                                                            || JsonSchemaType._string.equals(matchType))) {
-          return input;
-        }
-        return matchType;
+    final JsonSchemaType matchType = schema.getType();
+    if (matchType != null) {
+      if (JsonSchemaType._integer.equals(input) && JsonSchemaType._number.equals(matchType)) {
+        return input;
       }
+      if (JsonSchemaType._string_number.equals(input) && (JsonSchemaType._number.equals(matchType)
+                                                          || JsonSchemaType._integer.equals(matchType)
+                                                          || JsonSchemaType._string.equals(matchType))) {
+        return input;
+      }
+      return matchType;
     }
     if (schema.getTypeVariants() != null) {
       Set<JsonSchemaType> matchTypes = schema.getTypeVariants();

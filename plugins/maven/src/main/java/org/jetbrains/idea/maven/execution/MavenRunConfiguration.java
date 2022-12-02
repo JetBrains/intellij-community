@@ -538,8 +538,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
       buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
 
-      AnAction[] actions = buildView != null ?
-                           new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)} : AnAction.EMPTY_ARRAY;
+      AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
       DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration)) {
         MavenResumeAction resumeAction =

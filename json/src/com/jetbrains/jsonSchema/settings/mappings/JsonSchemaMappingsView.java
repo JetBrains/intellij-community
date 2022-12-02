@@ -296,9 +296,6 @@ public class JsonSchemaMappingsView implements Disposable {
     @Override
     public void run(AnActionButton button) {
       RelativePoint point = button.getPreferredPopupPoint();
-      if (point == null) {
-        point = new RelativePoint(button.getContextComponent(), new Point(0, 0));
-      }
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(null,
                                                                            JsonMappingKind.values()) {
         @NotNull

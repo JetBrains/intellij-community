@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class MavenArchetype implements Serializable {
   public final @NotNull String groupId;
@@ -48,18 +49,14 @@ public class MavenArchetype implements Serializable {
 
     MavenArchetype that = (MavenArchetype)o;
 
-    if (groupId != null ? !groupId.equals(that.groupId) : that.groupId != null) return false;
-    if (artifactId != null ? !artifactId.equals(that.artifactId) : that.artifactId != null) return false;
-    if (version != null ? !version.equals(that.version) : that.version != null) return false;
-
-    return true;
+    return Objects.equals(groupId, that.groupId) && Objects.equals(artifactId, that.artifactId) && Objects.equals(version, that.version);
   }
 
   @Override
   public int hashCode() {
-    int result = groupId != null ? groupId.hashCode() : 0;
-    result = 31 * result + (artifactId != null ? artifactId.hashCode() : 0);
-    result = 31 * result + (version != null ? version.hashCode() : 0);
+    int result = groupId.hashCode();
+    result = 31 * result + artifactId.hashCode();
+    result = 31 * result + version.hashCode();
     return result;
   }
 }
