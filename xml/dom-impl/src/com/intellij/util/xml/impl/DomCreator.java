@@ -2,11 +2,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,10 +20,12 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IdempotenceChecker;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.EvaluatedXmlNameImpl;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -217,7 +216,7 @@ final class DomCreator {
   }
 
   @Nullable
-  private static DomFileDescription<?> findFileDescription(XmlFile file) {
+  static DomFileDescription<?> findFileDescription(XmlFile file) {
     DomFileDescription<?> mockDescription = file.getUserData(DomManagerImpl.MOCK_DESCRIPTION);
     if (mockDescription != null) return mockDescription;
 
@@ -232,11 +231,7 @@ final class DomCreator {
       return element == null ? null : element.getFileDescription();
     }
 
-    Module module = ModuleUtilCore.findModuleForFile(file);
-    Condition<DomFileDescription<?>> condition = d -> d.isMyFile(file, module);
-    String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();
-    DomFileDescription<?> description = ContainerUtil.find(domManager.getFileDescriptions(rootTagLocalName), condition);
-    return description != null ? description : ContainerUtil.find(domManager.getAcceptingOtherRootTagNameDescriptions(), condition);
+    return DomApplicationComponent.getInstance().findDescription(file);
   }
 
   @Nullable
