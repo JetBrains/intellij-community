@@ -136,6 +136,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       }
 
       if (value instanceof PsiElement) {
+        //noinspection unchecked
         T element = (T)value;
         @NlsContexts.Label String name = ((PsiElement)value).isValid() ? getElementText(element) : "INVALID";
 
@@ -376,7 +377,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     installSpeedSearch(builder, false);
   }
 
-  public void installSpeedSearch(IPopupChooserBuilder builder, final boolean includeContainerText) {
+  public void installSpeedSearch(@NotNull IPopupChooserBuilder builder, final boolean includeContainerText) {
     builder.setNamerForFiltering(o -> {
       if (o instanceof PsiElement) {
         final String elementText = getElementText((T)o);
@@ -385,16 +386,14 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
         return elementText;
       }
-      else {
-        return o.toString();
-      }
+      return o.toString();
     });
   }
 
   @ApiStatus.Internal
-  @SuppressWarnings("unchecked")
   @RequiresReadLock
   public final @NotNull TargetPresentation computePresentation(@NotNull PsiElement element) {
+    //noinspection unchecked
     return targetPresentation(
       (T)element,
       myRenderingInfo,
@@ -404,8 +403,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     );
   }
 
-  private final PsiElementRenderingInfo<T> myRenderingInfo = new PsiElementRenderingInfo<T>() {
-
+  private final PsiElementRenderingInfo<T> myRenderingInfo = new PsiElementRenderingInfo<>() {
     @Override
     public @Nullable Icon getIcon(@NotNull T element) {
       return PsiElementListCellRenderer.this.getIcon(element);
