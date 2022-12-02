@@ -103,9 +103,24 @@ class CompletionGolfFileReportGenerator(
   private fun FlowContent.prepareLine(expectedText: String, lookups: List<Lookup>, tab: String, id: String) {
     consumer.onTagContentUnsafe { +StringEscapeUtils.escapeHtml(tab) }
     var offset = 0
+    var stubAdded = false
 
     lookups.dropLast(1).forEachIndexed { index, lookup ->
-      offset = prepareSpan(expectedText, lookup, id, index, offset, "delimiter")
+      if (lookup.stubText.isNotEmpty()) {
+        stubAdded = true
+        consumer.onTagContentUnsafe { +StringEscapeUtils.escapeHtml(lookup.stubText) }
+        offset += lookup.stubText.length
+      }
+      else {
+        val delimiter = if (stubAdded) {
+          stubAdded = false
+          "delimiter delimiter-pre"
+        }
+        else "delimiter"
+
+        offset += prepareSpan(expectedText, lookup, id, index, offset, delimiter).length
+      }
+
     }
     prepareSpan(expectedText, lookups.last(), id, lookups.size - 1, offset)
   }
@@ -115,7 +130,7 @@ class CompletionGolfFileReportGenerator(
                                       uuid: String,
                                       columnId: Int,
                                       offset: Int,
-                                      delimiter: String = ""): Int {
+                                      delimiter: String = ""): String {
     val kinds = lookup.suggestions.map { suggestion -> suggestion.kind }
     val kindClass = when {
       SuggestionKind.LINE in kinds -> "cg-line"
@@ -131,7 +146,7 @@ class CompletionGolfFileReportGenerator(
       attributes["data-id"] = uuid
       +text
     }
-    return offset + text.length
+    return text
   }
 
   private fun TBODY.defaultText(text: String, lineNumbers: Int): Int {

@@ -6,7 +6,8 @@ data class Lookup(
   val latency: Long,
   var features: Features? = null,
   val selectedPosition: Int,
-  val isNew: Boolean
+  val isNew: Boolean,
+  val stubText: String = "",
 ) {
   fun clearFeatures() {
     features = null

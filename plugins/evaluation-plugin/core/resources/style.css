@@ -159,21 +159,24 @@ td {
 }
 
 /*∫*/
-.delimiter:after {
+.delimiter:after,
+.delimiter.delimiter-pre:before {
     font-weight: normal;
     color: #333333;
     content: "\222B";
 }
 
 /*❙*/
-.del-box-small:after {
+.del-box-small:after,
+.del-box-small.delimiter-pre:before {
     font-weight: normal;
     color: #333333;
     content: "\2759";
 }
 
 /*❚*/
-.del-box-big:after {
+.del-box-big:after,
+.del-box-big.delimiter-pre:before {
     font-weight: normal;
     color: #333333;
     content: "\275A";
