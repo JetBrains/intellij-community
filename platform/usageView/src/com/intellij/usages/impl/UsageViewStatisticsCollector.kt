@@ -35,7 +35,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 12)
+    val GROUP = EventLogGroup("usage.view", 13)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
@@ -50,8 +50,6 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val UI_LOCATION = EventFields.Enum("ui_location", CodeNavigateSource::class.java)
     private val USAGE_SHOWN = GROUP.registerVarargEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language, UI_LOCATION)
     private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
-
-    private val itemChosen = GROUP.registerEvent("item.chosen", USAGE_VIEW, UI_LOCATION, EventFields.Language)
 
     const val SCOPE_RULE_ID = "scopeRule"
 
@@ -84,6 +82,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                                                            UI_LOCATION,
                                                            USAGE_VIEW)
 
+    private val itemChosen = GROUP.registerVarargEvent("item.chosen", USAGE_VIEW, UI_LOCATION, REFERENCE_CLASS, EventFields.Language)
     private val tabSwitched = GROUP.registerEvent("switch.tab", USAGE_VIEW)
 
     private val PREVIOUS_SCOPE = EventFields.StringValidatedByCustomRule("previous", ScopeRuleValidator::class.java)
@@ -135,10 +134,15 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logItemChosen(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language) = itemChosen.log(project,
-                                                                                                                                usageView,
-                                                                                                                                source,
-                                                                                                                                language)
+    fun logItemChosen(project: Project?,
+                      usageView: UsageView,
+                      source: CodeNavigateSource,
+                      language: Language,
+                      usageClass: Class<out Any>?) = itemChosen.log(project,
+                                                                    USAGE_VIEW.with(usageView),
+                                                                    UI_LOCATION.with(source),
+                                                                    REFERENCE_CLASS.with(usageClass),
+                                                                    EventFields.Language.with(language))
 
     @JvmStatic
     fun logSearchCancelled(project: Project?,
