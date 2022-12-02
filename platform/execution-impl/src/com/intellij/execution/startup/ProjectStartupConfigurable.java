@@ -301,11 +301,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
   private void showPopup(AnActionButton button, JBPopup popup) {
     final RelativePoint point = button.getPreferredPopupPoint();
-    if (point != null) {
-      popup.show(point);
-    } else {
-      popup.showInCenterOf(myDecorator.getActionsPanel());
-    }
+    popup.show(point);
   }
 
   @Override
