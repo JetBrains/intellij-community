@@ -15467,6 +15467,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDerivedClassParentMethod.kt");
         }
 
+        @TestMetadata("necessaryFileOptInWithSubclassOptInRequired.kt")
+        public void testNecessaryFileOptInWithSubclassOptInRequired() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFileOptInWithSubclassOptInRequired.kt");
+        }
+
         @TestMetadata("necessaryFqAnnotation.kt")
         public void testNecessaryFqAnnotation() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFqAnnotation.kt");
@@ -15510,6 +15515,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("necessaryInlineReifiedFunction.kt")
         public void testNecessaryInlineReifiedFunction() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryInlineReifiedFunction.kt");
+        }
+
+        @TestMetadata("necessaryOptInWithSubclassOptInRequired.kt")
+        public void testNecessaryOptInWithSubclassOptInRequired() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOptInWithSubclassOptInRequired.kt");
         }
 
         @TestMetadata("necessaryOverride.kt")
@@ -15690,6 +15700,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("redundantImportAlias.kt")
         public void testRedundantImportAlias() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantImportAlias.kt");
+        }
+
+        @TestMetadata("redundantOptInWithSubclassOptInRequired1.kt")
+        public void testRedundantOptInWithSubclassOptInRequired1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOptInWithSubclassOptInRequired1.kt");
+        }
+
+        @TestMetadata("redundantOptInWithSubclassOptInRequired2.kt")
+        public void testRedundantOptInWithSubclassOptInRequired2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOptInWithSubclassOptInRequired2.kt");
+        }
+
+        @TestMetadata("redundantOptInWithSubclassOptInRequired3.kt")
+        public void testRedundantOptInWithSubclassOptInRequired3() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOptInWithSubclassOptInRequired3.kt");
+        }
+
+        @TestMetadata("redundantOptInWithSubclassOptInRequired4.kt")
+        public void testRedundantOptInWithSubclassOptInRequired4() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOptInWithSubclassOptInRequired4.kt");
         }
 
         @TestMetadata("redundantProperty.kt")
