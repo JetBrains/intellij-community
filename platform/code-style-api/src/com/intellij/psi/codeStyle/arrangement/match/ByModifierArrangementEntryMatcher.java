@@ -29,7 +29,7 @@ public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatche
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof ModifierAwareArrangementEntry) {
-      final Set<ArrangementSettingsToken> modifiers = ((ModifierAwareArrangementEntry)entry).getModifiers();
+      final Set<? extends ArrangementSettingsToken> modifiers = ((ModifierAwareArrangementEntry)entry).getModifiers();
       for (ArrangementAtomMatchCondition condition : myModifiers) {
         final Object value = condition.getValue();
         boolean isInverted = value instanceof Boolean && !((Boolean)value);
