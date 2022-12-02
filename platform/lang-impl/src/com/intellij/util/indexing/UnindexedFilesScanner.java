@@ -500,7 +500,11 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   @Override
   public void perform(@NotNull ProgressIndicator indicator) {
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
-    performScanningAndIndexing(indicator);
+    try {
+      performScanningAndIndexing(indicator);
+    } finally {
+      myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
+    }
   }
 
   protected @NotNull ProjectIndexingHistoryImpl performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
@@ -523,7 +527,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
     finally {
       myIndex.filesUpdateFinished(myProject);
-      myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
       projectIndexingHistory.finishTotalUpdatingTime();
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
         DependenciesIndexedStatusService.getInstance(myProject)
