@@ -123,23 +123,6 @@
     <renamePsiElementProcessor id="KotlinAwareJavaGetter"
                                implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAwareJavaGetterRenameProcessor"
                                order="first"/>
-    <renamePsiElementProcessor id="KotlinClass"
-                               implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinClassifierProcessor"
-                               order="first"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinFunctionProcessor"
-                               id="KotlinFunction"
-                               order="first"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinPropertyProcessor"
-                               id="KotlinProperty"
-                               order="first"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinParameterProcessor"
-                               id="KotlinParameter"
-                               order="first"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinFileProcessor"
-                               id="KotlinFile"
-                               order="first"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinTypeParameterProcessor"
-                               id="KotlinTypeParameter"/>
     <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler$Processor"
                                id="JavaSyntheticPropertyFromKotlin"/>
 
