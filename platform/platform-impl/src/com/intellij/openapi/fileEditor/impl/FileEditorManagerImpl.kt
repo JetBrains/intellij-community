@@ -793,7 +793,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
   }
 
-  private fun closeFileEditor(editor: FileEditor, moveFocus: Boolean = false) {
+  private fun closeFileEditor(editor: FileEditor, moveFocus: Boolean = true) {
     val file = editor.file ?: return
     if (ClientId.isCurrentlyUnderLocalId) {
       CommandProcessor.getInstance().executeCommand(project, {
