@@ -711,7 +711,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       JComponent component = (JComponent)result;
       if (isStriped()) {
         if (isTableDecorationSupported()) {
-          setRendererBackground(component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
+          setRendererBackground(component, row % 2 == 1 ? getBackground() : ObjectUtils.chooseNotNull(getStripeColor(), getBackground()));
         }
       }
       else {
@@ -738,6 +738,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       ((JCheckBox)renderer).getModel().setRollover(rollOverCell != null && rollOverCell.at(row, column));
     }
     return result;
+  }
+
+  @Nullable
+  protected Color getStripeColor() {
+    return UIUtil.getDecoratedRowColor();
   }
 
   /**
