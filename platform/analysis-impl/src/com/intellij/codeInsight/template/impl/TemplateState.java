@@ -556,7 +556,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   boolean requiresWriteAction() {
     PsiFile file = getPsiFile();
-    return file == null || file.isPhysical() || FORCE_TEMPLATE_RUNNING.get(file);
+    return file == null || file.isPhysical() || FORCE_TEMPLATE_RUNNING.isIn(file);
   }
 
   private LookupElement @NotNull [] getCurrentExpressionLookupItems() {
