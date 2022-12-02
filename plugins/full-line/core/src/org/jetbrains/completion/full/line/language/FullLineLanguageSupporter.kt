@@ -18,6 +18,11 @@ interface FullLineLanguageSupporter {
   val psiFormatter: PsiCodeFormatter
   val langState: LangState
 
+  /**
+   * Specific model version in cloud storage
+   */
+  val modelVersion: String?
+
   fun skipLocation(parameters: CompletionParameters): String?
 
   fun configure(parameters: CompletionParameters): FullLineConfiguration

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
-import kotlinx.coroutines.Dispatchers
 import org.jetbrains.completion.full.line.FullLineCompletionMode
 import org.jetbrains.completion.full.line.FullLineProposal
 import org.jetbrains.completion.full.line.RawFullLineProposal
@@ -73,7 +72,7 @@ class LocalFullLineCompletionProvider private constructor(
         ApplicationManager.getApplication().executeOnPooledThread {
           service<ConfigurableModelsManager>().run {
             val project = ProjectManager.getInstance().currentOpenProject() ?: return@run
-            getLatest(language, true).also {
+            getSchema(language, true).also {
               checkedLanguages.add(language.id)
               val cur = modelsSchema.targetLanguage(language)
               if (cur?.version != it.version) {

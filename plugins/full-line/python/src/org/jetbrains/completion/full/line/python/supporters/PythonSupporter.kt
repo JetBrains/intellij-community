@@ -51,6 +51,8 @@ class PythonSupporter : FullLineLanguageSupporterBase(listOf(PythonLocationMatch
 
   override val langState: LangState = LangState(redCodePolicy = RedCodePolicy.DECORATE)
 
+  override val modelVersion = "0.0.8"
+
   override fun isLanguageSupported(language: Language): Boolean {
     return super.isLanguageSupported(language) || additionalLanguages.contains(language.id)
   }
