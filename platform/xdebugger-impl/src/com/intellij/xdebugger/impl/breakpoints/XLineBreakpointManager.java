@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.AppTopics;
@@ -7,7 +7,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Document;
@@ -31,7 +30,9 @@ import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -91,7 +92,7 @@ public final class XLineBreakpointManager {
         }
       }));
     }
-    myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
+    myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
 
     // Update breakpoints colors if global color schema was changed
     busConnection.subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
@@ -111,18 +112,12 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    StartupManager.getInstance(myProject).runAfterOpened(() -> {
-      for (XLineBreakpointImpl<?> breakpoint : myBreakpoints.keySet()) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          breakpoint.updateUI();
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
-      }
-    });
+    StartupManager.getInstance(myProject).runAfterOpened(this::queueAllBreakpointsUpdate);
   }
 
   public void registerBreakpoint(XLineBreakpointImpl breakpoint, final boolean initUI) {
     if (initUI) {
-      breakpoint.updateUI();
+      updateBreakpointNow(breakpoint);
     }
     myBreakpoints.put(breakpoint, breakpoint.getFileUrl());
   }
@@ -147,6 +142,7 @@ public final class XLineBreakpointManager {
     return myBreakpoints.keySet().stream();
   }
 
+  @RequiresEdt
   private void updateBreakpoints(@NotNull Document document) {
     Collection<XLineBreakpointImpl> breakpoints = getDocumentBreakpoints(document);
 
@@ -177,7 +173,7 @@ public final class XLineBreakpointManager {
 
   public void breakpointChanged(XLineBreakpointImpl breakpoint) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      breakpoint.updateUI();
+      updateBreakpointNow(breakpoint);
     }
     else {
       queueBreakpointUpdate(breakpoint);
@@ -194,18 +190,21 @@ public final class XLineBreakpointManager {
     }
   }
 
-  public void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint) {
+  // Skip waiting 300ms in myBreakpointsUpdateQueue (good for sync updates like enable/disable or create new breakpoint)
+  private void updateBreakpointNow(@NotNull final XLineBreakpointImpl<?> breakpoint) {
+    queueBreakpointUpdate(breakpoint, null);
+    myBreakpointsUpdateQueue.sendFlush();
+  }
+
+  void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint) {
     queueBreakpointUpdate(breakpoint, null);
   }
 
-  public void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint, @Nullable Runnable callOnUpdate) {
+  void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint, @Nullable Runnable callOnUpdate) {
     myBreakpointsUpdateQueue.queue(new Update(breakpoint) {
       @Override
       public void run() {
-        breakpoint.updateUI();
-        if (callOnUpdate != null) {
-          callOnUpdate.run();
-        }
+        breakpoint.doUpdateUI(callOnUpdate);
       }
     });
   }
@@ -214,9 +213,11 @@ public final class XLineBreakpointManager {
     myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
       @Override
       public void run() {
-        breakpoints().forEach(XLineBreakpointImpl::updateUI);
+        breakpoints().forEach(b -> b.doUpdateUI(null));
       }
     });
+    // skip waiting
+    myBreakpointsUpdateQueue.sendFlush();
   }
 
   private class MyDocumentListener implements DocumentListener {
@@ -228,7 +229,9 @@ public final class XLineBreakpointManager {
         myBreakpointsUpdateQueue.queue(new Update(document) {
           @Override
           public void run() {
-            updateBreakpoints(document);
+            ApplicationManager.getApplication().invokeLater(() -> {
+              updateBreakpoints(document);
+            });
           }
         });
       }
