@@ -59,7 +59,7 @@ class Main {
 
         for (var v:<error descr="Expression expected"> </error>) {}
 
-        for (var v: <error descr="foreach not applicable to type 'null'">null</error>) {}
+        for (var v: <error descr="Foreach not applicable to type 'null'">null</error>) {}
 
         for (var v: (<error descr="Cannot resolve symbol 'v'">v</error>)) {}
     }
@@ -74,7 +74,7 @@ class Main {
                                               Hello iterableExistingHello,
                                               <error descr="Cannot resolve symbol 'World'">World</error> iterableUnresolvedWorld) {
         for (String arg: iterableStrings) { }
-        for (String arg: <error descr="foreach not applicable to type 'Main.Hello'">iterableExistingHello</error>) { }
+        for (String arg: <error descr="Foreach not applicable to type 'Main.Hello'">iterableExistingHello</error>) { }
         for (String arg: iterableUnresolvedWorld) {}
     }
 
@@ -82,12 +82,12 @@ class Main {
     interface B {}
     void test(Object x) {
         java.util.Optional.of((A & B)x).ifPresent(valueOfAandB -> {
-            for(Object foo : <error descr="foreach not applicable to type 'Main.A & Main.B'">valueOfAandB</error>) {
+            for(Object foo : <error descr="Foreach not applicable to type 'Main.A & Main.B'">valueOfAandB</error>) {
                 System.out.println(foo);
             }
         });
         java.util.Optional.of((A & <error descr="Cannot resolve symbol 'World'">World</error>)x).ifPresent(valueOfAandUnresolvedWorld -> {
-            for(Object foo : <error descr="foreach not applicable to type 'Main.A & World'">valueOfAandUnresolvedWorld</error>) {
+            for(Object foo : <error descr="Foreach not applicable to type 'Main.A & World'">valueOfAandUnresolvedWorld</error>) {
                 System.out.println(foo);
             }
         });
