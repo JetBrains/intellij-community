@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @HardwareAgentRequired
 public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCase {
+  private static final boolean DEBUG = false;
+
   public void testHugeAppendChainDoesNotCauseSOE() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
@@ -209,8 +211,6 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
   }
 
   public void testTypingLatencyPerformance() throws Throwable {
-    final boolean debug = false;
-
     @NonNls String filePath = "/psi/resolve/ThinletBig.java";
 
     configureByFile(filePath);
@@ -219,7 +219,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     CompletionContributor.forLanguage(getFile().getLanguage());
     long s = System.currentTimeMillis();
     highlightErrors();
-    if (debug) {
+    if (DEBUG) {
       System.out.println("Hi elapsed: "+(System.currentTimeMillis() - s));
     }
 
@@ -241,7 +241,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         }
         // uncomment to debug what's causing pauses
         AtomicBoolean finished = new AtomicBoolean();
-        if (debug) {
+        if (DEBUG) {
           AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
             if (!finished.get()) {
               dumps.add(ThreadDumper.dumpThreadsToString());
@@ -275,7 +275,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
 
     System.out.println("Interrupt times: " + Arrays.toString(interruptTimes));
 
-    if (debug) {
+    if (DEBUG) {
       for (String dump : dumps) {
         System.out.println("\n\n-----------------------------\n\n" + dump);
       }

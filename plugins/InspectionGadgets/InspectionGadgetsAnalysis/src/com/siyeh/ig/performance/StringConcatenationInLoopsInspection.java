@@ -749,11 +749,9 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiExpression.class);
       if (expression == null) return;
-      PsiVariable variable = getAppendedVariable(expression);
-      if (!(variable instanceof PsiLocalVariable)) return;
+      if (!(getAppendedVariable(expression) instanceof PsiLocalVariable variable)) return;
       variable.normalizeDeclaration();
       PsiTypeElement typeElement = variable.getTypeElement();
-      if (typeElement == null) return;
       CommentTracker ct = new CommentTracker();
       StringBuilderReplacer replacer = new StringBuilderReplacer(myTargetType, myNullSafe);
       replacer.replaceAll(variable, variable, null, ct);

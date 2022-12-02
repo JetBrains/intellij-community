@@ -1082,10 +1082,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       String defaultModuleName = "untitled";
-      MyNode selectedNode = getSelectedNode();
-      if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && selectedNode instanceof ModuleGroupNodeImpl) {
-        ModuleGroup group = ((ModuleGroupNode)selectedNode).getModuleGroup();
-        if (group != null && !group.getGroupPathList().isEmpty()) {
+      if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && getSelectedNode() instanceof ModuleGroupNodeImpl selectedNode) {
+        ModuleGroup group = selectedNode.getModuleGroup();
+        if (!group.getGroupPathList().isEmpty()) {
           defaultModuleName = StringUtil.join(group.getGroupPathList(), ".") + ".untitled";
         }
       }

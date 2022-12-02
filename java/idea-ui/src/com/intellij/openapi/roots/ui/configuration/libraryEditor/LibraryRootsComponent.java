@@ -238,7 +238,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        if (button.getPreferredPopupPoint() == null) return;
         AttachFilesAction attachFilesAction = new AttachFilesAction(myDescriptor.getAttachFilesActionName());
         if (popupItems.isEmpty()) {
           attachFilesAction.perform();
