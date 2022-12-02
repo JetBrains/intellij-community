@@ -22,17 +22,18 @@ class Fe10SuggestVariableNameMacro(private val defaultName: String? = null) : Ab
     override fun suggestNames(declaration: KtCallableDeclaration): Collection<String> {
         val initializer = (declaration as? KtDeclarationWithInitializer)?.initializer
 
-        if (initializer != null) {
-            val bindingContext = initializer.analyze(BodyResolveMode.PARTIAL)
-            return Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(initializer, null, bindingContext, { true }, null)
-        }
-
-        val parent = declaration.parent
         val nameValidator = Fe10KotlinNewDeclarationNameValidator(
             declaration,
             declaration.siblings(withItself = false),
             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
         )
+
+        if (initializer != null) {
+            val bindingContext = initializer.analyze(BodyResolveMode.PARTIAL)
+            return Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(initializer, null, bindingContext, nameValidator, null)
+        }
+
+        val parent = declaration.parent
         if (parent is KtForExpression && declaration == parent.loopParameter) {
             suggestIterationVariableName(parent, nameValidator)?.let { return it }
         }
