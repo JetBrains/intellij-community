@@ -180,7 +180,10 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.filter(navigatables, n -> n.canNavigateToSource() && n instanceof PsiElementUsage).
         forEach(n -> {
           PsiElement psiElement = ((PsiElementUsage)n).getElement();
-          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), this, CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
+          if (psiElement != null) {
+            UsageViewStatisticsCollector.logItemChosen(getProject(), this, CodeNavigateSource.FindToolWindow, psiElement.getLanguage(),
+                                                       n.getClass());
+          }
       });
     }
   };
