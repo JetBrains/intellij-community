@@ -27,6 +27,8 @@ import org.apache.thrift.TException
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.Callable
 
+private val LOG = Logger.getInstance(MethodHandles.lookup().lookupClass())
+
 class ConsolePandasColumnNameCompletionContributor : CompletionContributor(), DumbAware {
 
   init {
@@ -79,8 +81,8 @@ class ConsolePandasColumnNameCompletionContributor : CompletionContributor(), Du
   }
 
   companion object {
-    val LOG = Logger.getInstance(MethodHandles.lookup().lookupClass())
-    const val COMPLETION_LOG_MESSAGE = "Incorrectly created python script with expression: "
+    const val COMPLETION_SCRIPT_LOG_MESSAGE = "Incorrectly created python script with expression: "
+    const val COMPLETION_EVALUATE_LOG_MESSAGE = "Evaluation script for completion failed with expression: "
   }
 
 }
@@ -105,14 +107,14 @@ class ConsolePandasColumnNameRetrievalServiceImpl(val project: Project) : Consol
         "str" -> debugValue.value?.let { parseDebugValue(it) } ?: emptyList()
         "NameError" -> emptyList()
         "SyntaxError" -> {
-          ConsolePandasColumnNameCompletionContributor.LOG.info(ConsolePandasColumnNameCompletionContributor.COMPLETION_LOG_MESSAGE + name)
+          LOG.info(ConsolePandasColumnNameCompletionContributor.COMPLETION_SCRIPT_LOG_MESSAGE + name)
           emptyList()
         }
         else -> emptyList()
       }
     }
     catch (e: TException) {
-      ConsolePandasColumnNameCompletionContributor.LOG.warn(e)
+      LOG.warn(ConsolePandasColumnNameCompletionContributor.COMPLETION_EVALUATE_LOG_MESSAGE + name)
       return emptyList()
     }
   }
