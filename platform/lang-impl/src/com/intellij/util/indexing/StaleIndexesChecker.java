@@ -9,10 +9,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 public final class StaleIndexesChecker {
@@ -102,7 +102,8 @@ public final class StaleIndexesChecker {
 
   static void clearStaleIndexesForId(int staleInputId) {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    fileBasedIndex.removeDataFromIndicesForFile(staleInputId, new DeletedVirtualFileStub(staleInputId), "stale indexes removal");
+    Collection<ID<?, ?>> indexIds = fileBasedIndex.getRegisteredIndexes().getState().getIndexIDs();
+    fileBasedIndex.removeFileDataFromIndices(indexIds, staleInputId, null);
   }
 
   @NotNull

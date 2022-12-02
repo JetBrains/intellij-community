@@ -633,7 +633,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         PersistentIndicesConfiguration.saveConfiguration();
 
         IntSet dirtyFileIds = new IntOpenHashSet();
-        //TODO mark them as dirty using attributes
         for (VirtualFile file : getChangedFilesCollector().getAllPossibleFilesToUpdate()) {
           PingProgress.interactWithEdtProgress();
           int fileId = getFileId(file);
@@ -706,16 +705,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  private void removeFileDataFromIndices(@NotNull Collection<? extends ID<?, ?>> affectedIndices, int inputId, @Nullable VirtualFile file) {
+  public void removeFileDataFromIndices(@NotNull Collection<? extends ID<?, ?>> indexIds, int fileId, @Nullable VirtualFile file) {
     assert ProgressManager.getInstance().isInNonCancelableSection();
     try {
       // document diff can depend on previous value that will be removed
-      removeTransientFileDataFromIndices(affectedIndices, inputId, file);
+      removeTransientFileDataFromIndices(indexIds, fileId, file);
 
       Throwable unexpectedError = null;
-      for (ID<?, ?> indexId : affectedIndices) {
+      for (ID<?, ?> indexId : indexIds) {
         try {
-          removeSingleIndexValue(indexId, inputId);
+          removeSingleIndexValue(indexId, fileId);
         }
         catch (Throwable e) {
           LOG.info(e);
@@ -730,7 +729,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
     finally {
-      IndexingStamp.flushCache(inputId);
+      IndexingStamp.flushCache(fileId);
     }
   }
 
