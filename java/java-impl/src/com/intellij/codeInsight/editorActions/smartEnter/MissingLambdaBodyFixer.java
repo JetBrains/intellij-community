@@ -18,26 +18,32 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 
 public class MissingLambdaBodyFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (!(psiElement instanceof PsiLambdaExpression lambda)) return;
-    PsiElement body = lambda.getBody();
+    PsiElement body;
+    if (psiElement instanceof PsiLambdaExpression lambda) {
+      body = lambda.getBody();
+    } else if (psiElement instanceof PsiSwitchLabeledRuleStatement rule) {
+      body = rule.getBody();
+    } else return;
     if (body != null) return;
     Document doc = editor.getDocument();
-    PsiElement arrow = PsiTreeUtil.getDeepestVisibleLast(lambda);
+    PsiElement arrow = PsiTreeUtil.getDeepestVisibleLast(psiElement);
     if (!PsiUtil.isJavaToken(arrow, JavaTokenType.ARROW)) return;
     int offset = arrow.getTextRange().getEndOffset();
     doc.insertString(offset, "{\n}");
     editor.getCaretModel().moveToOffset(offset + 1);
     processor.commit(editor);
-    processor.reformat(lambda);
-    processor.setSkipEnter(true);
+    processor.reformat(psiElement);
+    processor.setSkipEnter(psiElement instanceof PsiLambdaExpression);
   }
 }

@@ -217,6 +217,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSwitchAtTheEndOfClass() { doTest(); }
   public void testAddMissingLambdaBody() { doTest(); }
   public void testAddMissingLambdaBody2() { doTest(); }
+  public void testBlockInSwitchRule() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
