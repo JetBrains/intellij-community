@@ -2,9 +2,12 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.ProgressReporter
+import com.intellij.openapi.progress.RawProgressReporter
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -43,6 +46,28 @@ class TextDetailsProgressReporter(parentScope: CoroutineScope) : BaseProgressRep
         return step
       }
       else -> error("keeping compiler happy")
+    }
+  }
+
+  override fun asRawReporter(): RawProgressReporter = object : RawProgressReporter {
+
+    override fun text(text: ProgressText?) {
+      childrenHandler.progressState.update { fractionState ->
+        fractionState.copy(state = fractionState.state.copy(text = text))
+      }
+    }
+
+    override fun details(details: @ProgressDetails String?) {
+      childrenHandler.progressState.update { fractionState ->
+        fractionState.copy(state = fractionState.state.copy(details = details))
+      }
+    }
+
+    override fun fraction(fraction: Double?) {
+      check(fraction == null || fraction in .0..1.0)
+      childrenHandler.progressState.update { fractionState ->
+        fractionState.copy(fraction = fraction ?: -1.0)
+      }
     }
   }
 }

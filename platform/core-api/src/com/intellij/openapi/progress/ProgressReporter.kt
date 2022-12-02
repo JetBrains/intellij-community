@@ -149,6 +149,16 @@ interface ProgressReporter : AutoCloseable {
    */
   override fun close()
 
+  /**
+   * Makes this reporter raw.
+   * A raw reporter cannot start child steps.
+   * A reporter which has child steps cannot be made raw.
+   * This function cannot be called twice.
+   *
+   * @return a handle to feed the progress updates
+   */
+  fun rawReporter(): RawProgressReporter
+
   companion object {
 
     @JvmStatic
@@ -196,12 +206,30 @@ private suspend fun <T> progressStep(
   }
 }
 
-fun ProgressReporter.asContextElement(): CoroutineContext.Element = ProgressStepElement(this)
+/**
+ * Switches from context [ProgressReporter] to [RawProgressReporter] via [ProgressReporter.rawReporter].
+ * This means, that the context [ProgressReporter] is marked raw.
+ * If the context [ProgressReporter] already has children, then the caller should wrap this call
+ * into [progressStep] or [indeterminateStep] to start a new child progress step, which then can be marked raw.
+ *
+ * The [action] loses [progressReporter] and receives [rawProgressReporter] in its context instead.
+ */
+suspend fun <X> withRawProgressReporter(action: suspend CoroutineScope.() -> X): X {
+  val progressReporter = coroutineContext.progressReporter
+                         ?: return coroutineScope(action)
+  return withContext(progressReporter.rawReporter().asContextElement(), action)
+}
 
-val CoroutineContext.progressReporter: ProgressReporter? get() = this[ProgressStepElement]?.reporter
-
+fun ProgressReporter.asContextElement(): CoroutineContext.Element = ProgressReporterElement.Step(this)
+val CoroutineContext.progressReporter: ProgressReporter? get() = (this[ProgressReporterElement] as? ProgressReporterElement.Step)?.reporter
 val CoroutineScope.progressReporter: ProgressReporter? get() = coroutineContext.progressReporter
 
-private class ProgressStepElement(val reporter: ProgressReporter) : AbstractCoroutineContextElement(ProgressStepElement) {
-  companion object : CoroutineContext.Key<ProgressStepElement>
+fun RawProgressReporter.asContextElement(): CoroutineContext.Element = ProgressReporterElement.Raw(this)
+val CoroutineContext.rawProgressReporter: RawProgressReporter? get() = (this[ProgressReporterElement] as? ProgressReporterElement.Raw)?.reporter
+val CoroutineScope.rawProgressReporter: RawProgressReporter? get() = coroutineContext.rawProgressReporter
+
+private sealed class ProgressReporterElement : AbstractCoroutineContextElement(ProgressReporterElement) {
+  companion object : CoroutineContext.Key<ProgressReporterElement>
+  class Step(val reporter: ProgressReporter) : ProgressReporterElement()
+  class Raw(val reporter: RawProgressReporter) : ProgressReporterElement()
 }

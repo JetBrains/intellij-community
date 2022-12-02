@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.ProgressReporter
+import com.intellij.openapi.progress.RawProgressReporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -26,6 +27,13 @@ internal class IndeterminateTextProgressReporter(parentScope: CoroutineScope) : 
       val reporter = SilentProgressReporter(cs)
       childrenHandler.applyChildUpdates(reporter, flowOf(text))
       return reporter
+    }
+  }
+
+  override fun asRawReporter(): RawProgressReporter = object : RawProgressReporter {
+
+    override fun text(text: ProgressText?) {
+      childrenHandler.progressState.value = FractionState(-1.0, text)
     }
   }
 }

@@ -2,10 +2,12 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.ProgressReporter
+import com.intellij.openapi.progress.RawProgressReporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 
 internal class TextProgressReporter(parentScope: CoroutineScope) : BaseProgressReporter(parentScope) {
 
@@ -38,6 +40,22 @@ internal class TextProgressReporter(parentScope: CoroutineScope) : BaseProgressR
         return step
       }
       else -> error("keeping compiler happy")
+    }
+  }
+
+  override fun asRawReporter(): RawProgressReporter = object : RawProgressReporter {
+
+    override fun text(text: ProgressText?) {
+      childrenHandler.progressState.update { fractionState ->
+        fractionState.copy(state = text)
+      }
+    }
+
+    override fun fraction(fraction: Double?) {
+      check(fraction == null || fraction in 0.0..1.0)
+      childrenHandler.progressState.update { fractionState ->
+        fractionState.copy(fraction = fraction ?: -1.0)
+      }
     }
   }
 }

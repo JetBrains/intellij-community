@@ -3,6 +3,7 @@ package com.intellij.openapi.progress.impl
 
 import com.google.common.util.concurrent.AtomicDouble
 import com.intellij.openapi.progress.ProgressReporter
+import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -23,25 +24,37 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
   }
 
   /**
+   * (-♾️; 0.0) -> this reporter has indeterminate children
    * 0.0 -> initial
    * (0.0; 1.0] -> this reporter has determinate children
+   * (1.0; +♾️) -> this reporter is raw
    */
   private val lastFraction = AtomicDouble(.0)
 
   private fun duration(endFraction: Double?): Double? {
     if (endFraction == null) {
+      lastFraction.getAndUpdate {
+        when {
+          it <= .0 -> it - 1.0 // indicate that this reporter has an indeterminate child, so rawReporter() would fail
+          it > 1.0 -> error("Cannot start an indeterminate child because this reporter is raw.")
+          else -> it // don't change
+        }
+      }
       return null
     }
     require(.0 < endFraction && endFraction <= 1.0) {
       "End fraction must be in (0.0; 1.0], got: $endFraction"
     }
     val previousFraction = lastFraction.getAndUpdate {
-      require(endFraction > it) {
-        "New end fraction $endFraction must be greater than the previous end fraction $it"
+      when {
+        it > 1.0 -> error("Cannot start a child because this reporter is raw.")
+        endFraction <= it -> {
+          throw IllegalArgumentException("New end fraction $endFraction must be greater than the previous end fraction $it")
+        }
+        else -> endFraction
       }
-      endFraction
     }
-    return endFraction - previousFraction
+    return endFraction - previousFraction.coerceAtLeast(.0)
   }
 
   final override fun step(text: ProgressText?, endFraction: Double?): ProgressReporter {
@@ -49,4 +62,17 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
   }
 
   protected abstract fun createStep(duration: Double?, text: ProgressText?): ProgressReporter
+
+  final override fun rawReporter(): RawProgressReporter {
+    lastFraction.getAndUpdate {
+      check(it == .0) {
+        "This reporter already has child steps." +
+        "Wrap the call into step(endFraction=...) and call rawReporter() inside the newly started child step."
+      }
+      2.0
+    }
+    return asRawReporter()
+  }
+
+  protected abstract fun asRawReporter(): RawProgressReporter
 }

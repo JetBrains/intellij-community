@@ -534,6 +534,171 @@ class ProgressReporterTest {
       }
     }
   }
+
+  @Test
+  fun `raw step contracts`() {
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        indeterminateStep {}
+        checkNotNull(progressReporter).rawReporter()
+      }
+    }
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        indeterminateStep {}
+        progressStep {}
+        checkNotNull(progressReporter).rawReporter()
+      }
+    }
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        progressStep {}
+        indeterminateStep {}
+        checkNotNull(progressReporter).rawReporter()
+      }
+    }
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        checkNotNull(progressReporter).rawReporter()
+        indeterminateStep {}
+      }
+    }
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        checkNotNull(progressReporter).rawReporter()
+        progressStep {}
+      }
+    }
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        checkNotNull(progressReporter).rawReporter()
+        checkNotNull(progressReporter).rawReporter()
+      }
+    }
+  }
+
+  @Test
+  fun `raw step`() {
+    progressReporterTest(
+      ProgressState(text = null, details = null, fraction = 1.0),
+      ProgressState(text = null, details = "ud", fraction = 1.0),
+      ProgressState(text = "ut", details = "ud", fraction = 1.0),
+      ProgressState(text = "ut", details = "ud", fraction = 0.5),
+      ProgressState(text = null, details = "ud", fraction = 0.5),
+      ProgressState(text = null, details = "ud", fraction = -1.0),
+    ) {
+      rawTest()
+    }
+  }
+
+  @Test
+  fun `raw step inside indeterminate step no text`() {
+    progressReporterTest(
+      ProgressState(text = null, details = "ud", fraction = -1.0),
+      ProgressState(text = "ut", details = "ud", fraction = -1.0),
+      ProgressState(text = null, details = "ud", fraction = -1.0),
+      ProgressState(text = null, details = null, fraction = -1.0),
+    ) {
+      indeterminateStep {
+        rawTest()
+      }
+    }
+  }
+
+  @Test
+  fun `raw step inside determinate step no text no fraction`() {
+    progressReporterTest(
+      ProgressState(text = null, details = null, fraction = 0.0),
+      ProgressState(text = null, details = null, fraction = 1.0),
+      ProgressState(text = null, details = "ud", fraction = 1.0),
+      ProgressState(text = "ut", details = "ud", fraction = 1.0),
+      ProgressState(text = "ut", details = "ud", fraction = 0.5),
+      ProgressState(text = null, details = "ud", fraction = 0.5),
+      ProgressState(text = null, details = "ud", fraction = 0.0),
+    ) {
+      progressStep {
+        rawTest()
+      }
+    }
+  }
+
+  @Test
+  fun `raw step inside determinate step no text with fraction`() {
+    progressReporterTest(
+      ProgressState(text = null, details = null, fraction = 0.0),
+      ProgressState(text = null, details = null, fraction = 1.0 * 0.7),
+      ProgressState(text = null, details = "ud", fraction = 1.0 * 0.7),
+      ProgressState(text = "ut", details = "ud", fraction = 1.0 * 0.7),
+      ProgressState(text = "ut", details = "ud", fraction = 0.5 * 0.7),
+      ProgressState(text = null, details = "ud", fraction = 0.5 * 0.7),
+      ProgressState(text = null, details = "ud", fraction = 0.0 * 0.7),
+      ProgressState(text = null, details = null, fraction = 0.7),
+    ) {
+      progressStep(endFraction = 0.7) {
+        rawTest()
+      }
+    }
+  }
+
+  @Test
+  fun `raw step inside indeterminate step with text`() {
+    progressReporterTest(
+      ProgressState(text = "outer", details = null, fraction = -1.0),
+      ProgressState(text = "outer", details = "ut", fraction = -1.0),
+      ProgressState(text = "outer", details = null, fraction = -1.0),
+      ProgressState(text = null, details = null, fraction = -1.0),
+    ) {
+      indeterminateStep(text = "outer") {
+        rawTest()
+      }
+    }
+  }
+
+  @Test
+  fun `raw step inside determinate step with text no fraction`() {
+    progressReporterTest(
+      ProgressState(text = "outer", details = null, fraction = 0.0),
+      ProgressState(text = "outer", details = null, fraction = 1.0),
+      ProgressState(text = "outer", details = "ut", fraction = 1.0),
+      ProgressState(text = "outer", details = "ut", fraction = 0.5),
+      ProgressState(text = "outer", details = null, fraction = 0.5),
+      ProgressState(text = "outer", details = null, fraction = 0.0),
+    ) {
+      progressStep(text = "outer") {
+        rawTest()
+      }
+    }
+  }
+
+  @Test
+  fun `raw step inside determinate step with text with fraction`() {
+    progressReporterTest(
+      ProgressState(text = "outer", details = null, fraction = 0.0),
+      ProgressState(text = "outer", details = null, fraction = 1.0 * 0.7),
+      ProgressState(text = "outer", details = "ut", fraction = 1.0 * 0.7),
+      ProgressState(text = "outer", details = "ut", fraction = 0.5 * 0.7),
+      ProgressState(text = "outer", details = null, fraction = 0.5 * 0.7),
+      ProgressState(text = "outer", details = null, fraction = 0.0 * 0.7),
+      ProgressState(text = null, details = null, fraction = 0.7),
+    ) {
+      progressStep(text = "outer", endFraction = 0.7) {
+        rawTest()
+      }
+    }
+  }
+
+  private suspend fun rawTest() {
+    withRawProgressReporter {
+      check(progressReporter == null)
+      val raw = checkNotNull(rawProgressReporter)
+      raw.fraction(1.0)
+      raw.details("ud") // can set details without text
+      raw.text("ut")
+      raw.fraction(0.5) // can go back
+      raw.text(null) // clearing the text does not clear details
+      raw.fraction(null) // can become indeterminate after being determinate
+    }
+  }
 }
 
 private fun progressReporterTest(

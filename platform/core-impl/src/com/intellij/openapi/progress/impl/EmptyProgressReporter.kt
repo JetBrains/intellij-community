@@ -2,8 +2,10 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.ProgressReporter
+import com.intellij.openapi.progress.RawProgressReporter
 
 internal object EmptyProgressReporter : ProgressReporter {
   override fun step(text: ProgressText?, endFraction: Double?): ProgressReporter = EmptyProgressReporter
   override fun close(): Unit = Unit
+  override fun rawReporter(): RawProgressReporter = EmptyRawProgressReporter
 }
