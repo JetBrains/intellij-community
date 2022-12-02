@@ -52,9 +52,11 @@ public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTest
 
   @Test
   public void testSingleMavenProject() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
     withVariantsFor("", variants -> {
       Function<String, String> classifier = it -> it.contains(":") ? substringBefore(it, ":") : startsWith(it, "-") ? "-" : "";
       Map<String, List<String>> groupedValues = variants.stream().collect(groupingBy(classifier));
@@ -82,23 +84,27 @@ public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTest
   @Test
   public void testMavenProjectWithModules() {
     VirtualFile m1 =
-      createModulePom("m1", "<groupId>test</groupId>" +
-                            "<artifactId>m1</artifactId>" +
-                            "<version>1</version>" +
-                            "<build>" +
-                            "  <plugins>" +
-                            "    <plugin>" +
-                            "      <groupId>org.apache.maven.plugins</groupId>" +
-                            "      <artifactId>maven-war-plugin</artifactId>" +
-                            "      <version>3.2.2</version>" +
-                            "    </plugin>" +
-                            "  </plugins>" +
-                            "</build>");
+      createModulePom("m1", """
+        <groupId>test</groupId>
+        <artifactId>m1</artifactId>
+        <version>1</version>
+        <build>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-war-plugin</artifactId>
+              <version>3.2.2</version>
+            </plugin>
+          </plugins>
+        </build>
+        """);
 
     VirtualFile m2 =
-      createModulePom("m2", "<groupId>test</groupId>" +
-                            "<artifactId>m2</artifactId>" +
-                            "<version>1</version>");
+      createModulePom("m2", """
+        <groupId>test</groupId>
+        <artifactId>m2</artifactId>
+        <version>1</version>
+        """);
     importProjects(m1, m2);
     resolvePlugins();
 

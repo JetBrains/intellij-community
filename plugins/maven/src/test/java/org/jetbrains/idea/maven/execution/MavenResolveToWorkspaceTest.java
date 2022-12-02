@@ -39,38 +39,45 @@ public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImpor
 
   @Test
   public void testIgnoredProject() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<modules>" +
-                     "  <module>moduleA</module>" +
-                     "  <module>moduleIgnored</module>" +
-                     "  <module>moduleB</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>moduleA</module>
+                         <module>moduleIgnored</module>
+                         <module>moduleB</module>
+                       </modules>
+                       """);
 
-    VirtualFile moduleA = createModulePom("moduleA", "<groupId>test</groupId>" +
-                                                     "<artifactId>moduleA</artifactId>" +
-                                                     "<version>1</version>");
+    VirtualFile moduleA = createModulePom("moduleA", """
+      <groupId>test</groupId>
+      <artifactId>moduleA</artifactId>
+      <version>1</version>
+      """);
 
-    VirtualFile moduleIgnored = createModulePom("moduleIgnored", "<groupId>test</groupId>" +
-                                                                 "<artifactId>moduleIgnored</artifactId>" +
-                                                                 "<version>1</version>");
+    VirtualFile moduleIgnored = createModulePom("moduleIgnored", """
+      <groupId>test</groupId>
+      <artifactId>moduleIgnored</artifactId>
+      <version>1</version>
+      """);
 
-    VirtualFile moduleB = createModulePom("moduleB", "<groupId>test</groupId>" +
-                                                     "<artifactId>moduleB</artifactId>" +
-                                                     "<version>1</version>" +
-                                                     "<dependencies>" +
-                                                     "  <dependency>" +
-                                                     "    <groupId>test</groupId>" +
-                                                     "    <artifactId>moduleA</artifactId>" +
-                                                     "    <version>1</version>" +
-                                                     "  </dependency>" +
-                                                     "  <dependency>" +
-                                                     "    <groupId>test</groupId>" +
-                                                     "    <artifactId>moduleIgnored</artifactId>" +
-                                                     "    <version>1</version>" +
-                                                     "  </dependency>" +
-                                                     "</dependencies>"
+    VirtualFile moduleB = createModulePom("moduleB", """
+      <groupId>test</groupId>
+      <artifactId>moduleB</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>moduleA</artifactId>
+          <version>1</version>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>moduleIgnored</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>"""
     );
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(moduleIgnored.getPath()));

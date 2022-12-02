@@ -52,9 +52,10 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     });
 
     WriteAction.computeAndWait(()->
-        createProjectPom("<groupId>test</groupId>" +
-                         "<artifactId>project</artifactId>" +
-                         "<version>1</version>")
+        createProjectPom("""
+                           <groupId>test</groupId>
+                           <artifactId>project</artifactId>
+                           <version>1</version>""")
     );
 
     assertFalse(new File(getProjectPath(), "target").exists());
@@ -71,9 +72,11 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     WriteAction.runAndWait(() -> {
       createStdProjectFolders();
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """);
 
       createProjectSubDirs("target/generated-sources/foo",
                            "target/bar");

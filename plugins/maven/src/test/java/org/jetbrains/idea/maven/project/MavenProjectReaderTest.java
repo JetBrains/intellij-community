@@ -26,9 +26,11 @@ import java.util.List;
 
 public class MavenProjectReaderTest extends MavenTestCase {
   public void testBasics() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     MavenId p = readProject(myProjectPom).getMavenId();
 
@@ -38,18 +40,20 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testInvalidXml() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     assertProblems(readProject(myProjectPom, new NullProjectLocator()));
 
-    createProjectPom("<foo>" +
-                     "</bar>" +
-                     "<" +
-                     "<groupId>test</groupId" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <foo>
+                       </bar>
+                       <<groupId>test</groupId<artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(result, "'pom.xml' has syntax errors");
@@ -61,9 +65,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testInvalidXmlCharData() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     assertProblems(readProject(myProjectPom, new NullProjectLocator()));
 
@@ -72,7 +78,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "a</name><fo" +
                      new String(new byte[]{0x0},
                                 StandardCharsets.UTF_8) +
-                     "o></foo>");
+                     "o></foo>\n");
 
     MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(result, "'pom.xml' has syntax errors");
@@ -82,46 +88,54 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testInvalidParentXml() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-                     "<foo");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <foo""");
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           """);
 
     assertProblems(readProject(module, new NullProjectLocator()), "Parent 'test:parent:1' has problems");
   }
 
   public void testProjectWithAbsentParentXmlIsValid() {
-    createProjectPom("<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "</parent>");
+    createProjectPom("""
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                       </parent>
+                       """);
     assertProblems(readProject(myProjectPom, new NullProjectLocator()));
   }
 
   public void testProjectWithSelfParentIsInvalid() {
-    createProjectPom("<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "</parent>" +
-
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>");
+    createProjectPom("""
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                       </parent>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       """);
     assertProblems(readProject(myProjectPom, new NullProjectLocator()), "Self-inheritance found");
   }
 
   public void testInvalidProfilesXml() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     createProfilesXml("<profiles");
 
@@ -129,9 +143,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testInvalidSettingsXml() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     updateSettingsXml("<settings");
 
@@ -139,10 +155,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testInvalidXmlWithNotClosedTag() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1" +
-                     "<name>foo</name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1<name>foo</name>
+                       """);
 
     MavenProjectReaderResult readResult = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(readResult, "'pom.xml' has syntax errors");
@@ -158,10 +175,12 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testInvalidXmlWithWrongClosingTag() {
     //waiting for IDEA-272809
     Assume.assumeTrue(false);
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</vers>" +
-                     "<name>foo</name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</vers>
+                       <name>foo</name>
+                       """);
 
     MavenProjectReaderResult readResult = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(readResult, "'pom.xml' has syntax errors");
@@ -235,11 +254,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testDefaults() throws IOException {
     VirtualFile file = WriteAction.compute(() -> {
       VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
-      VfsUtil.saveText(res, "<project>" +
-                            "  <groupId>test</groupId>" +
-                            "  <artifactId>project</artifactId>" +
-                            "  <version>1</version>" +
-                            "</project>");
+      VfsUtil.saveText(res, """
+        <project>
+          <groupId>test</groupId>
+          <artifactId>project</artifactId>
+          <version>1</version>
+        </project>
+        """);
       return res;
     });
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -267,13 +288,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testDefaultsForParent() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     "  dummy" +
-                     "</parent>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <parent>
+                         dummy</parent>
+                       """);
 
     MavenModel p = readProject(myProjectPom);
 
@@ -281,11 +302,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testTakingCoordinatesFromParent() {
-    createProjectPom("<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>project</artifactId>" +
-                     "  <version>1</version>" +
-                     "</parent>");
+    createProjectPom("""
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                       </parent>
+                       """);
 
     MavenId id = readProject(myProjectPom).getMavenId();
 
@@ -297,47 +320,47 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testCustomSettings() throws IOException {
     VirtualFile file = WriteAction.compute(() -> {
       VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
-      VfsUtil.saveText(res, "<project>" +
-                            "  <modelVersion>1.2.3</modelVersion>" +
-                            "  <groupId>test</groupId>" +
-                            "  <artifactId>project</artifactId>" +
-                            "  <version>1</version>" +
-                            "  <name>foo</name>" +
-                            "  <packaging>pom</packaging>" +
-
-                            "  <parent>" +
-                            "    <groupId>testParent</groupId>" +
-                            "    <artifactId>projectParent</artifactId>" +
-                            "    <version>2</version>" +
-                            "    <relativePath>../parent/pom.xml</relativePath>" +
-                            "  </parent>" +
-
-                            "  <build>" +
-                            "    <finalName>xxx</finalName>" +
-                            "    <defaultGoal>someGoal</defaultGoal>" +
-                            "    <sourceDirectory>mySrc</sourceDirectory>" +
-                            "    <testSourceDirectory>myTestSrc</testSourceDirectory>" +
-                            "    <scriptSourceDirectory>myScriptSrc</scriptSourceDirectory>" +
-                            "    <resources>" +
-                            "      <resource>" +
-                            "        <directory>myRes</directory>" +
-                            "        <filtering>true</filtering>" +
-                            "        <targetPath>dir</targetPath>" +
-                            "        <includes><include>**.properties</include></includes>" +
-                            "        <excludes><exclude>**.xml</exclude></excludes>" +
-                            "      </resource>" +
-                            "    </resources>" +
-                            "    <testResources>" +
-                            "      <testResource>" +
-                            "        <directory>myTestRes</directory>" +
-                            "        <includes><include>**.properties</include></includes>" +
-                            "      </testResource>" +
-                            "    </testResources>" +
-                            "    <directory>myOutput</directory>" +
-                            "    <outputDirectory>myClasses</outputDirectory>" +
-                            "    <testOutputDirectory>myTestClasses</testOutputDirectory>" +
-                            "  </build>" +
-                            "</project>");
+      VfsUtil.saveText(res, """
+        <project>
+          <modelVersion>1.2.3</modelVersion>
+          <groupId>test</groupId>
+          <artifactId>project</artifactId>
+          <version>1</version>
+          <name>foo</name>
+          <packaging>pom</packaging>
+          <parent>
+            <groupId>testParent</groupId>
+            <artifactId>projectParent</artifactId>
+            <version>2</version>
+            <relativePath>../parent/pom.xml</relativePath>
+          </parent>
+          <build>
+            <finalName>xxx</finalName>
+            <defaultGoal>someGoal</defaultGoal>
+            <sourceDirectory>mySrc</sourceDirectory>
+            <testSourceDirectory>myTestSrc</testSourceDirectory>
+            <scriptSourceDirectory>myScriptSrc</scriptSourceDirectory>
+            <resources>
+              <resource>
+                <directory>myRes</directory>
+                <filtering>true</filtering>
+                <targetPath>dir</targetPath>
+                <includes><include>**.properties</include></includes>
+                <excludes><exclude>**.xml</exclude></excludes>
+              </resource>
+            </resources>
+            <testResources>
+              <testResource>
+                <directory>myTestRes</directory>
+                <includes><include>**.properties</include></includes>
+              </testResource>
+            </testResources>
+            <directory>myOutput</directory>
+            <outputDirectory>myClasses</outputDirectory>
+            <testOutputDirectory>myTestClasses</testOutputDirectory>
+          </build>
+        </project>
+        """);
       return res;
     });
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -366,12 +389,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testOutputPathsAreBasedOnTargetPath() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<build>" +
-                     "  <directory>my-target</directory>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <directory>my-target</directory>
+                       </build>
+                       """);
 
     MavenModel p = readProject(myProjectPom);
 
@@ -381,24 +406,26 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testDoesNotIncludeResourcesWithoutDirectory() {
-    createProjectPom("<build>" +
-                     "  <resources>" +
-                     "    <resource>" +
-                     "      <directory></directory>" +
-                     "    </resource>" +
-                     "    <resource>" +
-                     "      <directory>myRes</directory>" +
-                     "    </resource>" +
-                     "  </resources>" +
-                     "  <testResources>" +
-                     "    <testResource>" +
-                     "      <filtering>true</filtering>" +
-                     "    </testResource>" +
-                     "    <testResource>" +
-                     "      <directory>myTestRes</directory>" +
-                     "    </testResource>" +
-                     "  </testResources>" +
-                     "</build>");
+    createProjectPom("""
+                       <build>
+                         <resources>
+                           <resource>
+                             <directory></directory>
+                           </resource>
+                           <resource>
+                             <directory>myRes</directory>
+                           </resource>
+                         </resources>
+                         <testResources>
+                           <testResource>
+                             <filtering>true</filtering>
+                           </testResource>
+                           <testResource>
+                             <directory>myTestRes</directory>
+                           </testResource>
+                         </testResources>
+                       </build>
+                       """);
 
     MavenModel p = readProject(myProjectPom);
 
@@ -464,31 +491,33 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testPathsWithProperties() {
-    createProjectPom("<properties>" +
-                     "  <foo>subDir</foo>" +
-                     "  <emptyProperty />" +
-                     "</properties>" +
-                     "<build>" +
-                     "  <sourceDirectory>${foo}/mySrc</sourceDirectory>" +
-                     "  <testSourceDirectory>${foo}/myTestSrc</testSourceDirectory>" +
-                     "  <scriptSourceDirectory>${foo}/myScriptSrc</scriptSourceDirectory>" +
-                     "  <resources>" +
-                     "    <resource>" +
-                     "      <directory>${foo}/myRes</directory>" +
-                     "    </resource>" +
-                     "    <resource>" +
-                     "      <directory>aaa/${emptyProperty}/${unexistingProperty}</directory>" +
-                     "    </resource>" +
-                     "  </resources>" +
-                     "  <testResources>" +
-                     "    <testResource>" +
-                     "      <directory>${foo}/myTestRes</directory>" +
-                     "    </testResource>" +
-                     "  </testResources>" +
-                     "  <directory>${foo}/myOutput</directory>" +
-                     "  <outputDirectory>${foo}/myClasses</outputDirectory>" +
-                     "  <testOutputDirectory>${foo}/myTestClasses</testOutputDirectory>" +
-                     "</build>");
+    createProjectPom("""
+                       <properties>
+                         <foo>subDir</foo>
+                         <emptyProperty />
+                       </properties>
+                       <build>
+                         <sourceDirectory>${foo}/mySrc</sourceDirectory>
+                         <testSourceDirectory>${foo}/myTestSrc</testSourceDirectory>
+                         <scriptSourceDirectory>${foo}/myScriptSrc</scriptSourceDirectory>
+                         <resources>
+                           <resource>
+                             <directory>${foo}/myRes</directory>
+                           </resource>
+                           <resource>
+                             <directory>aaa/${emptyProperty}/${unexistingProperty}</directory>
+                           </resource>
+                         </resources>
+                         <testResources>
+                           <testResource>
+                             <directory>${foo}/myTestRes</directory>
+                           </testResource>
+                         </testResources>
+                         <directory>${foo}/myOutput</directory>
+                         <outputDirectory>${foo}/myClasses</outputDirectory>
+                         <testOutputDirectory>${foo}/myTestClasses</testOutputDirectory>
+                       </build>
+                       """);
 
     MavenModel p = readProject(myProjectPom);
 
@@ -510,13 +539,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testExpandingProperties() {
-    createProjectPom("<properties>" +
-                     "  <prop1>value1</prop1>" +
-                     "  <prop2>value2</prop2>" +
-                     "</properties>" +
-
-                     "<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>");
+    createProjectPom("""
+                       <properties>
+                         <prop1>value1</prop1>
+                         <prop2>value2</prop2>
+                       </properties>
+                       <name>${prop1}</name>
+                       <packaging>${prop2}</packaging>
+                       """);
     MavenModel p = readProject(myProjectPom);
 
     assertEquals("value1", p.getName());
@@ -524,13 +554,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testExpandingPropertiesRecursively() {
-    createProjectPom("<properties>" +
-                     "  <prop1>value1</prop1>" +
-                     "  <prop2>${prop1}2</prop2>" +
-                     "</properties>" +
-
-                     "<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>");
+    createProjectPom("""
+                       <properties>
+                         <prop1>value1</prop1>
+                         <prop2>${prop1}2</prop2>
+                       </properties>
+                       <name>${prop1}</name>
+                       <packaging>${prop2}</packaging>
+                       """);
     MavenModel p = readProject(myProjectPom);
 
     assertEquals("value1", p.getName());
@@ -538,13 +569,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testHandlingRecursiveProperties() {
-    createProjectPom("<properties>" +
-                     "  <prop1>${prop2}</prop1>" +
-                     "  <prop2>${prop1}</prop2>" +
-                     "</properties>" +
-
-                     "<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>");
+    createProjectPom("""
+                       <properties>
+                         <prop1>${prop2}</prop1>
+                         <prop2>${prop1}</prop2>
+                       </properties>
+                       <name>${prop1}</name>
+                       <packaging>${prop2}</packaging>
+                       """);
     MavenModel p = readProject(myProjectPom);
 
     assertEquals("${prop1}", p.getName());
@@ -557,30 +589,33 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     File parentFile = new File(repositoryPath, "test/parent/1/parent-1.pom");
     parentFile.getParentFile().mkdirs();
-    FileUtil.writeToFile(parentFile, createPomXml("<groupId>test</groupId>" +
-                                                  "<artifactId>parent</artifactId>" +
-                                                  "<version>1</version>").getBytes(StandardCharsets.UTF_8));
+    FileUtil.writeToFile(parentFile, createPomXml("""
+                                                    <groupId>test</groupId>
+                                                    <artifactId>parent</artifactId>
+                                                    <version>1</version>""").getBytes(StandardCharsets.UTF_8));
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>not-a-project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     " <groupId>test</groupId>" +
-                     " <artifactId>parent</artifactId>" +
-                     " <version>1</version>" +
-                     "</parent>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>not-a-project</artifactId>
+                       <version>1</version>
+                       <parent>
+                        <groupId>test</groupId>
+                        <artifactId>parent</artifactId>
+                        <version>1</version>
+                       </parent>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>child</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        " <groupId>test</groupId>" +
-                                        " <artifactId>parent</artifactId>" +
-                                        " <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>child</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                          </parent>
+                                          """);
 
     MavenProjectReaderResult readResult = readProject(child, new NullProjectLocator());
     assertProblems(readResult);
@@ -588,34 +623,36 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testDoNotGoIntoRecursionWhenTryingToResolveParentInDefaultPath() {
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>child</artifactId>" +
-                                        "<version>1</version>" +
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>child</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>subChild</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>child</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <relativePath>child/pom.xml</relativePath>" +
-                     "</parent>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>subChild</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>child</artifactId>
+                         <version>1</version>
+                         <relativePath>child/pom.xml</relativePath>
+                       </parent>
+                       """);
 
     MavenProjectReaderResult readResult = readProject(child, new NullProjectLocator());
     assertProblems(readResult);
   }
 
   public void testExpandingSystemAndEnvProperties() {
-    createProjectPom("<name>${java.home}</name>" +
-                     "<packaging>${env." + getEnvVar() + "}</packaging>");
+    createProjectPom("<name>${java.home}</name>\n" +
+                     "<packaging>${env." + getEnvVar() + "}</packaging>\n");
 
     MavenModel p = readProject(myProjectPom);
     assertEquals(System.getProperty("java.home"), p.getName());
@@ -623,26 +660,27 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testExpandingPropertiesFromProfiles() {
-    createProjectPom("<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "    <properties>" +
-                     "      <prop1>value1</prop1>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <properties>" +
-                     "      <prop2>value2</prop2>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <name>${prop1}</name>
+                       <packaging>${prop2}</packaging>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                           <properties>
+                             <prop1>value1</prop1>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <properties>
+                             <prop2>value2</prop2>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       """);
 
     MavenModel p = readProject(myProjectPom);
     assertEquals("value1", p.getName());
@@ -650,26 +688,27 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testExpandingPropertiesFromManuallyActivatedProfiles() {
-    createProjectPom("<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "    <properties>" +
-                     "      <prop1>value1</prop1>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <properties>" +
-                     "      <prop2>value2</prop2>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <name>${prop1}</name>
+                       <packaging>${prop2}</packaging>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                           <properties>
+                             <prop1>value1</prop1>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <properties>
+                             <prop2>value2</prop2>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       """);
 
     MavenModel p = readProject(myProjectPom, "two");
     assertEquals("${prop1}", p.getName());
@@ -677,42 +716,48 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testExpandingPropertiesFromParent() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <prop>value</prop>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <prop>value</prop>
+                       </properties>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>" +
-                                         "<name>${prop}</name>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           <name>${prop}</name>
+                                           """);
 
     MavenModel p = readProject(module);
     assertEquals("value", p.getName());
   }
 
   public void testDoNotExpandPropertiesFromParentWithWrongCoordinates() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <prop>value</prop>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <prop>value</prop>
+                       </properties>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>invalid</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>" +
-                                         "<name>${prop}</name>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>invalid</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           <name>${prop}</name>
+                                           """);
 
     MavenModel p = readProject(module);
     assertEquals("${prop}", p.getName());
@@ -720,53 +765,59 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testExpandingPropertiesFromParentNotInVfs() throws Exception {
     FileUtil.writeToFile(new File(myProjectRoot.getPath(), "pom.xml"),
-                         createPomXml("<groupId>test</groupId>" +
-                                      "<artifactId>parent</artifactId>" +
-                                      "<version>1</version>" +
-
-                                      "<properties>" +
-                                      "  <prop>value</prop>" +
-                                      "</properties>").getBytes(StandardCharsets.UTF_8));
+                         createPomXml("""
+                                        <groupId>test</groupId>
+                                        <artifactId>parent</artifactId>
+                                        <version>1</version>
+                                        <properties>
+                                          <prop>value</prop>
+                                        </properties>""").getBytes(StandardCharsets.UTF_8));
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>" +
-                                         "<name>${prop}</name>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           <name>${prop}</name>
+                                           """);
 
     MavenModel p = readProject(module);
     assertEquals("value", p.getName());
   }
 
   public void testExpandingPropertiesFromIndirectParent() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <prop>value</prop>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <prop>value</prop>
+                       </properties>
+                       """);
 
     createModulePom("module",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>module</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>parent</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>module</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>parent</artifactId>
+                        <version>1</version>
+                      </parent>
+                      """);
 
     VirtualFile subModule = createModulePom("module/subModule",
-                                            "<parent>" +
-                                            "  <groupId>test</groupId>" +
-                                            "  <artifactId>module</artifactId>" +
-                                            "  <version>1</version>" +
-                                            "</parent>" +
-                                            "<name>${prop}</name>");
+                                            """
+                                              <parent>
+                                                <groupId>test</groupId>
+                                                <artifactId>module</artifactId>
+                                                <version>1</version>
+                                              </parent>
+                                              <name>${prop}</name>
+                                              """);
 
     MavenModel p = readProject(subModule);
     assertEquals("value", p.getName());
@@ -774,22 +825,25 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testExpandingPropertiesFromParentInSpecifiedLocation() {
     createModulePom("parent",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>parent</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<properties>" +
-                    "  <prop>value</prop>" +
-                    "</properties>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>parent</artifactId>
+                      <version>1</version>
+                      <properties>
+                        <prop>value</prop>
+                      </properties>
+                      """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "  <relativePath>../parent/pom.xml</relativePath>" +
-                                         "</parent>" +
-                                         "<name>${prop}</name>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                             <relativePath>../parent/pom.xml</relativePath>
+                                           </parent>
+                                           <name>${prop}</name>
+                                           """);
 
     MavenModel p = readProject(module);
     assertEquals("value", p.getName());
@@ -797,22 +851,25 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testExpandingPropertiesFromParentInSpecifiedLocationWithoutFile() {
     createModulePom("parent",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>parent</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<properties>" +
-                    "  <prop>value</prop>" +
-                    "</properties>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>parent</artifactId>
+                      <version>1</version>
+                      <properties>
+                        <prop>value</prop>
+                      </properties>
+                      """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "  <relativePath>../parent</relativePath>" +
-                                         "</parent>" +
-                                         "<name>${prop}</name>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                             <relativePath>../parent</relativePath>
+                                           </parent>
+                                           <name>${prop}</name>
+                                           """);
 
     MavenModel p = readProject(module);
     assertEquals("value", p.getName());
@@ -825,20 +882,22 @@ public class MavenProjectReaderTest extends MavenTestCase {
     File parentFile = new File(repositoryPath, "org/test/parent/1/parent-1.pom");
     parentFile.getParentFile().mkdirs();
     FileUtil.writeToFile(parentFile,
-                         createPomXml("<groupId>org.test</groupId>" +
-                                      "<artifactId>parent</artifactId>" +
-                                      "<version>1</version>" +
+                         createPomXml("""
+                                        <groupId>org.test</groupId>
+                                        <artifactId>parent</artifactId>
+                                        <version>1</version>
+                                        <properties>
+                                          <prop>value</prop>
+                                        </properties>""").getBytes(StandardCharsets.UTF_8));
 
-                                      "<properties>" +
-                                      "  <prop>value</prop>" +
-                                      "</properties>").getBytes(StandardCharsets.UTF_8));
-
-    createProjectPom("<parent>" +
-                     "  <groupId>org.test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "</parent>" +
-                     "<name>${prop}</name>");
+    createProjectPom("""
+                       <parent>
+                         <groupId>org.test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                       </parent>
+                       <name>${prop}</name>
+                       """);
 
     MavenModel p = readProject(myProjectPom);
     assertEquals("value", p.getName());
@@ -846,21 +905,24 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testExpandingPropertiesFromParentInInvalidLocation() {
     final VirtualFile parent = createModulePom("parent",
-                                               "<groupId>test</groupId>" +
-                                               "<artifactId>parent</artifactId>" +
-                                               "<version>1</version>" +
-
-                                               "<properties>" +
-                                               "  <prop>value</prop>" +
-                                               "</properties>");
+                                               """
+                                                 <groupId>test</groupId>
+                                                 <artifactId>parent</artifactId>
+                                                 <version>1</version>
+                                                 <properties>
+                                                   <prop>value</prop>
+                                                 </properties>
+                                                 """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>" +
-                                         "<name>${prop}</name>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           <name>${prop}</name>
+                                           """);
 
     MavenModel p = readProject(module, new MavenProjectReaderProjectLocator() {
       @Override
@@ -872,92 +934,105 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testPropertiesFromParentInParentSection() {
-    createProjectPom("<groupId>${groupProp}</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>${versionProp}</version>" +
-
-                     "<properties>" +
-                     "  <groupProp>test</groupProp>" +
-                     "  <versionProp>1</versionProp>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>${groupProp}</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>${versionProp}</version>
+                       <properties>
+                         <groupProp>test</groupProp>
+                         <versionProp>1</versionProp>
+                       </properties>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>${groupProp}</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>${versionProp}</version>" +
-                                         "</parent>" +
-                                         "<artifactId>module</artifactId>");
+                                         """
+                                           <parent>
+                                             <groupId>${groupProp}</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>${versionProp}</version>
+                                           </parent>
+                                           <artifactId>module</artifactId>
+                                           """);
 
     MavenId id = readProject(module).getMavenId();
     assertEquals("test:module:1", id.getGroupId() + ":" + id.getArtifactId() + ":" + id.getVersion());
   }
 
   public void testInheritingSettingsFromParentAndAlignCorrectly() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-                     "<build>" +
-                     "  <directory>custom</directory>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <build>
+                         <directory>custom</directory>
+                       </build>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           """);
 
     MavenModel p = readProject(module);
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "custom"), p.getBuild().getDirectory());
   }
 
   public void testExpandingPropertiesAfterInheritingSettingsFromParent() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <prop>subDir</prop>" +
-                     "</properties>" +
-                     "<build>" +
-                     "  <directory>${basedir}/${prop}/custom</directory>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <prop>subDir</prop>
+                       </properties>
+                       <build>
+                         <directory>${basedir}/${prop}/custom</directory>
+                       </build>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           """);
 
     MavenModel p = readProject(module);
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
   }
 
   public void testExpandingPropertiesAfterInheritingSettingsFromParentProfiles() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <properties>" +
-                     "      <prop>subDir</prop>" +
-                     "    </properties>" +
-                     "    <build>" +
-                     "      <directory>${basedir}/${prop}/custom</directory>" +
-                     "    </build>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <prop>subDir</prop>
+                           </properties>
+                           <build>
+                             <directory>${basedir}/${prop}/custom</directory>
+                           </build>
+                         </profile>
+                       </profiles>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>");
+                                         """
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           """);
 
     MavenModel p = readProject(module, "one");
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
@@ -965,12 +1040,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testPropertiesFromProfilesXmlOldStyle() {
     createProjectPom("<name>${prop}</name>");
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <properties>" +
-                              "    <prop>foo</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+    createProfilesXmlOldStyle("""
+                                <profile>
+                                  <id>one</id>
+                                  <properties>
+                                    <prop>foo</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     MavenModel mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
@@ -981,12 +1058,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testPropertiesFromProfilesXmlNewStyle() {
     createProjectPom("<name>${prop}</name>");
-    createProfilesXml("<profile>" +
-                      "  <id>one</id>" +
-                      "  <properties>" +
-                      "    <prop>foo</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+    createProfilesXml("""
+                        <profile>
+                          <id>one</id>
+                          <properties>
+                            <prop>foo</prop>
+                          </properties>
+                        </profile>
+                        """);
 
     MavenModel mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
@@ -997,14 +1076,16 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testPropertiesFromSettingsXml() throws Exception {
     createProjectPom("<name>${prop}</name>");
-    updateSettingsXml("<profiles>" +
-                      "  <profile>" +
-                      "    <id>one</id>" +
-                      "    <properties>" +
-                      "      <prop>foo</prop>" +
-                      "    </properties>" +
-                      "  </profile>" +
-                      "</profiles>");
+    updateSettingsXml("""
+                        <profiles>
+                          <profile>
+                            <id>one</id>
+                            <properties>
+                              <prop>foo</prop>
+                            </properties>
+                          </profile>
+                        </profiles>
+                        """);
 
     MavenModel mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
@@ -1014,44 +1095,49 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testDoNoInheritParentFinalNameIfUnspecified() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>module</artifactId>" +
-                                         "<version>2</version>" +
-
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>2</version>
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           """);
 
     MavenModel p = readProject(module, "one");
     assertEquals("module-2", p.getBuild().getFinalName());
   }
 
   public void testDoInheritingParentFinalNameIfSpecified() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <finalName>xxx</finalName>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <build>
+                         <finalName>xxx</finalName>
+                       </build>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>module</artifactId>" +
-                                         "<version>2</version>" +
-
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>2</version>
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           """);
 
     MavenModel p = readProject(module, "one");
     assertEquals("xxx", p.getBuild().getFinalName());
@@ -1059,32 +1145,33 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
 
   public void testInheritingParentProfiles() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>profileFromParent</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>profileFromParent</id>
+                         </profile>
+                       </profiles>
+                       """);
 
     VirtualFile module = createModulePom("module",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>module</artifactId>" +
-                                         "<version>1</version>" +
-
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>" +
-
-                                         "<profiles>" +
-                                         "  <profile>" +
-                                         "    <id>profileFromChild</id>" +
-                                         "  </profile>" +
-                                         "</profiles>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           <profiles>
+                                             <profile>
+                                               <id>profileFromChild</id>
+                                             </profile>
+                                           </profiles>
+                                           """);
 
     MavenModel p = readProject(module);
     assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), (Function<MavenProfile, Object>)profile -> profile.getId()),
@@ -1092,52 +1179,59 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testCorrectlyCollectProfilesFromDifferentSources() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>profile</id>
+                           <modules><module>parent</module></modules>
+                         </profile>
+                       </profiles>
+                       """);
 
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>profile</id>" +
-                     "    <modules><module>parent</module></modules>" +
-                     "  </profile>" +
-                     "</profiles>");
-
-    final VirtualFile parentProfiles = createProfilesXml("<profile>" +
-                                                         "  <id>profile</id>" +
-                                                         "  <modules><module>parentProfiles</module></modules>" +
-                                                         "</profile>");
+    final VirtualFile parentProfiles = createProfilesXml("""
+                                                           <profile>
+                                                             <id>profile</id>
+                                                             <modules><module>parentProfiles</module></modules>
+                                                           </profile>
+                                                           """);
 
     VirtualFile module = createModulePom("module",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>module</artifactId>" +
-                                         "<version>1</version>" +
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
+                                           <parent>
+                                             <groupId>test</groupId>
+                                             <artifactId>parent</artifactId>
+                                             <version>1</version>
+                                           </parent>
+                                           <profiles>
+                                             <profile>
+                                               <id>profile</id>
+                                               <modules><module>pom</module></modules>
+                                             </profile>
+                                           </profiles>
+                                           """);
 
-                                         "<parent>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>parent</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "</parent>" +
-
-                                         "<profiles>" +
-                                         "  <profile>" +
-                                         "    <id>profile</id>" +
-                                         "    <modules><module>pom</module></modules>" +
-                                         "  </profile>" +
-                                         "</profiles>");
-
-    updateSettingsXml("<profiles>" +
-                      "  <profile>" +
-                      "    <id>profile</id>" +
-                      "    <modules><module>settings</module></modules>" +
-                      "  </profile>" +
-                      "</profiles>");
+    updateSettingsXml("""
+                        <profiles>
+                          <profile>
+                            <id>profile</id>
+                            <modules><module>settings</module></modules>
+                          </profile>
+                        </profiles>
+                        """);
 
     final VirtualFile profiles = createProfilesXml("module",
-                                                   "<profile>" +
-                                                   "  <id>profile</id>" +
-                                                   "  <modules><module>profiles</module></modules>" +
-                                                   "</profile>");
+                                                   """
+                                                     <profile>
+                                                       <id>profile</id>
+                                                       <modules><module>profiles</module></modules>
+                                                     </profile>
+                                                     """);
 
     MavenModel p = readProject(module);
     assertEquals(1, p.getProfiles().size());
@@ -1145,15 +1239,16 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("pom", p.getProfiles().get(0).getSource());
 
     createModulePom("module",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>module</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>parent</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>module</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>parent</artifactId>
+                        <version>1</version>
+                      </parent>
+                      """);
 
     p = readProject(module);
     assertEquals(1, p.getProfiles().size());
@@ -1168,9 +1263,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEmpty("parent", p.getProfiles().get(0).getModules());
     assertEquals("pom", p.getProfiles().get(0).getSource());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       """);
 
     p = readProject(module);
     assertEquals(1, p.getProfiles().size());
@@ -1187,73 +1284,81 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testModulesAreNotInheritedFromParentsProfiles() {
-    VirtualFile p = createProjectPom("<groupId>test</groupId>" +
-                                     "<artifactId>project</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
+    VirtualFile p = createProjectPom("""
+                                       <groupId>test</groupId>
+                                       <artifactId>project</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <profiles>
+                                        <profile>
+                                         <id>one</id>
+                                          <modules>
+                                           <module>m</module>
+                                          </modules>
+                                        </profile>
+                                       </profiles>
+                                       """);
 
-                                     "<profiles>" +
-                                     " <profile>" +
-                                     "  <id>one</id>" +
-                                     "   <modules>" +
-                                     "    <module>m</module>" +
-                                     "   </modules>" +
-                                     " </profile>" +
-                                     "</profiles>");
-
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>" +
-                                         "<parent>" +
-                                         " <groupId>test</groupId>" +
-                                         " <artifactId>project</artifactId>" +
-                                         " <version>1</version>" +
-                                         "</parent>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      <parent>
+       <groupId>test</groupId>
+       <artifactId>project</artifactId>
+       <version>1</version>
+      </parent>
+      """);
 
     assertSize(1, readProject(p, "one").getModules());
     assertSize(0, readProject(m, "one").getModules());
   }
 
   public void testActivatingProfilesByDefault() {
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>false</activeByDefault>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <activation>
+                             <activeByDefault>false</activeByDefault>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("one");
   }
 
   public void testActivatingProfilesAfterResolvingInheritance() {
     createModulePom("parent",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>parent</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>parent</artifactId>
+                      <version>1</version>
+                      """);
 
-    createProjectPom("<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <relativePath>parent/pom.xml</relativePath>" +
-                     "</parent>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>parent/pom.xml</relativePath>
+                       </parent>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("one");
   }
@@ -1261,77 +1366,81 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testActivatingProfilesByOS() {
     String os = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "unix";
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <os><family>" + os + "</family></os>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <activation>" +
-                     "      <os><family>xxx</family></os>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("<profiles>\n" +
+                     "  <profile>\n" +
+                     "    <id>one</id>\n" +
+                     "    <activation>\n" +
+                     "      <os><family>\n" + os + "</family></os>\n" +
+                     "    </activation>\n" +
+                     "  </profile>\n" +
+                     "  <profile>\n" +
+                     "    <id>two</id>\n" +
+                     "    <activation>\n" +
+                     "      <os><family>xxx</family></os>\n" +
+                     "    </activation>\n" +
+                     "  </profile>\n" +
+                     "</profiles>\n");
 
     assertActiveProfiles("one");
   }
 
   public void testActivatingProfilesByJdk() {
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <jdk>[1.5,)</jdk>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <activation>" +
-                     "      <jdk>(,1.5)</jdk>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <jdk>[1.5,)</jdk>
+                           </activation>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <activation>
+                             <jdk>(,1.5)</jdk>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("one");
   }
 
   public void testActivatingProfilesByStrictJdkVersion() {
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <jdk>1.4</jdk>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <jdk>1.4</jdk>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles();
   }
 
   public void testActivatingProfilesByProperty() {
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <property>" +
-                     "        <name>os.name</name>" +
-                     "        <value>" + System.getProperty("os.name") + "</value>" +
-                     "      </property>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <activation>" +
-                     "      <property>" +
-                     "        <name>os.name</name>" +
-                     "        <value>xxx</value>" +
-                     "      </property>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("<profiles>\n" +
+                     "  <profile>\n" +
+                     "    <id>one</id>\n" +
+                     "    <activation>\n" +
+                     "      <property>\n" +
+                     "        <name>os.name</name>\n" +
+                     "        <value>\n" + System.getProperty("os.name") + "</value>\n" +
+                     "      </property>\n" +
+                     "    </activation>\n" +
+                     "  </profile>\n" +
+                     "  <profile>\n" +
+                     "    <id>two</id>\n" +
+                     "    <activation>\n" +
+                     "      <property>\n" +
+                     "        <name>os.name</name>\n" +
+                     "        <value>xxx</value>\n" +
+                     "      </property>\n" +
+                     "    </activation>\n" +
+                     "  </profile>\n" +
+                     "</profiles>\n");
 
     assertActiveProfiles("one");
   }
@@ -1339,26 +1448,26 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testActivatingProfilesByEnvProperty() {
     String value = System.getenv(getEnvVar());
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <property>" +
-                     "        <name>env." + getEnvVar() + "</name>" +
-                     "        <value>" + value + "</value>" +
-                     "      </property>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <activation>" +
-                     "      <property>" +
-                     "        <name>ffffff</name>" +
-                     "        <value>ffffff</value>" +
-                     "      </property>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("<profiles>\n" +
+                     "  <profile>\n" +
+                     "    <id>one</id>\n" +
+                     "    <activation>\n" +
+                     "      <property>\n" +
+                     "        <name>env." + getEnvVar() + "</name>\n" +
+                     "        <value>\n" + value + "</value>\n" +
+                     "      </property>\n" +
+                     "    </activation>\n" +
+                     "  </profile>\n" +
+                     "  <profile>\n" +
+                     "    <id>two</id>\n" +
+                     "    <activation>\n" +
+                     "      <property>\n" +
+                     "        <name>ffffff</name>\n" +
+                     "        <value>ffffff</value>\n" +
+                     "      </property>\n" +
+                     "    </activation>\n" +
+                     "  </profile>\n" +
+                     "</profiles>\n");
 
     assertActiveProfiles("one");
   }
@@ -1366,249 +1475,290 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testActivatingProfilesByFile() throws Exception {
     createProjectSubFile("dir/file.txt");
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <activation>" +
-                     "      <file>" +
-                     "        <exists>${basedir}/dir/file.txt</exists>" +
-                     "      </file>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <activation>" +
-                     "      <file>" +
-                     "        <missing>${basedir}/dir/file.txt</missing>" +
-                     "      </file>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <activation>
+                             <file>
+                               <exists>${basedir}/dir/file.txt</exists>
+                             </file>
+                           </activation>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <activation>
+                             <file>
+                               <missing>${basedir}/dir/file.txt</missing>
+                             </file>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("one");
   }
 
   public void testActivateDefaultProfileEventIfThereAreExplicitOnesButAbsent() {
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>default</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>explicit</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>default</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                         </profile>
+                         <profile>
+                           <id>explicit</id>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles(Arrays.asList("foofoofoo"), "default");
   }
 
   public void testDoNotActivateDefaultProfileIfThereAreActivatedImplicit() {
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>default</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>implicit</id>" +
-                     "    <activation>" +
-                     "      <jdk>[1.5,)</jdk>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>default</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                         </profile>
+                         <profile>
+                           <id>implicit</id>
+                           <activation>
+                             <jdk>[1.5,)</jdk>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("implicit");
   }
 
   public void testActivatingImplicitProfilesEventWhenThereAreExplicitOnes() {
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>explicit</id>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>implicit</id>" +
-                     "    <activation>" +
-                     "      <jdk>[1.5,)</jdk>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>explicit</id>
+                         </profile>
+                         <profile>
+                           <id>implicit</id>
+                           <activation>
+                             <jdk>[1.5,)</jdk>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles(Arrays.asList("explicit"), "explicit", "implicit");
   }
 
   public void testAlwaysActivatingActiveProfilesInSettingsXml() throws Exception {
-    updateSettingsXml("<activeProfiles>" +
-                      "  <activeProfile>settings</activeProfile>" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <activeProfiles>
+                          <activeProfile>settings</activeProfile>
+                        </activeProfiles>
+                        """);
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>explicit</id>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>settings</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>explicit</id>
+                         </profile>
+                         <profile>
+                           <id>settings</id>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("settings");
     assertActiveProfiles(Arrays.asList("explicit"), "explicit", "settings");
   }
 
   public void testAlwaysActivatingActiveProfilesInProfilesXml() {
-    createFullProfilesXml("<?xml version=\"1.0\"?>" +
-                          "<profilesXml>" +
-                          "  <activeProfiles>" +
-                          "    <activeProfile>profiles</activeProfile>" +
-                          "  </activeProfiles>" +
-                          "</profilesXml>");
+    createFullProfilesXml("""
+                            <?xml version="1.0"?>
+                            <profilesXml>
+                              <activeProfiles>
+                                <activeProfile>profiles</activeProfile>
+                              </activeProfiles>
+                            </profilesXml>
+                            """);
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>explicit</id>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>profiles</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>explicit</id>
+                         </profile>
+                         <profile>
+                           <id>profiles</id>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("profiles");
     assertActiveProfiles(Arrays.asList("explicit"), "explicit", "profiles");
   }
 
   public void testActivatingBothActiveProfilesInSettingsXmlAndImplicitProfiles() throws Exception {
-    updateSettingsXml("<activeProfiles>" +
-                      "  <activeProfile>settings</activeProfile>" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <activeProfiles>
+                          <activeProfile>settings</activeProfile>
+                        </activeProfiles>
+                        """);
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>implicit</id>" +
-                     "    <activation>" +
-                     "      <jdk>[1.5,)</jdk>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>settings</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>implicit</id>
+                           <activation>
+                             <jdk>[1.5,)</jdk>
+                           </activation>
+                         </profile>
+                         <profile>
+                           <id>settings</id>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("settings", "implicit");
   }
 
   public void testDoNotActivateDefaultProfilesWhenThereAreAlwaysOnProfilesInPomXml() throws Exception {
-    updateSettingsXml("<activeProfiles>" +
-                      "  <activeProfile>settings</activeProfile>" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <activeProfiles>
+                          <activeProfile>settings</activeProfile>
+                        </activeProfiles>
+                        """);
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>default</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>settings</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>default</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                         </profile>
+                         <profile>
+                           <id>settings</id>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("settings");
   }
 
   public void testActivateDefaultProfilesWhenThereAreActiveProfilesInSettingsXml() throws Exception {
-    updateSettingsXml("<profiles>" +
-                      "  <profile>" +
-                      "    <id>settings</id>" +
-                      "  </profile>" +
-                      "</profiles>" +
-                      "<activeProfiles>" +
-                      "  <activeProfile>settings</activeProfile>" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <profiles>
+                          <profile>
+                            <id>settings</id>
+                          </profile>
+                        </profiles>
+                        <activeProfiles>
+                          <activeProfile>settings</activeProfile>
+                        </activeProfiles>
+                        """);
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>default</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>default</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("default", "settings");
   }
 
   public void testActivateDefaultProfilesWhenThereAreActiveProfilesInProfilesXml() {
-    createFullProfilesXml("<?xml version=\"1.0\"?>" +
-                          "<profilesXml>" +
-                          "  <profiles>" +
-                          "    <profile>" +
-                          "      <id>profiles</id>" +
-                          "    </profile>" +
-                          "  </profiles>" +
-                          "  <activeProfiles>" +
-                          "    <activeProfile>profiles</activeProfile>" +
-                          "  </activeProfiles>" +
-                          "</profilesXml>");
+    createFullProfilesXml("""
+                            <?xml version="1.0"?>
+                            <profilesXml>
+                              <profiles>
+                                <profile>
+                                  <id>profiles</id>
+                                </profile>
+                              </profiles>
+                              <activeProfiles>
+                                <activeProfile>profiles</activeProfile>
+                              </activeProfiles>
+                            </profilesXml>
+                            """);
 
-    createProjectPom("<profiles>" +
-                     "  <profile>" +
-                     "    <id>default</id>" +
-                     "    <activation>" +
-                     "      <activeByDefault>true</activeByDefault>" +
-                     "    </activation>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <profiles>
+                         <profile>
+                           <id>default</id>
+                           <activation>
+                             <activeByDefault>true</activeByDefault>
+                           </activation>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("default", "profiles");
   }
 
   public void testActiveProfilesInSettingsXmlOrProfilesXmlThroughInheritance() throws Exception {
-    updateSettingsXml("<activeProfiles>" +
-                      "  <activeProfile>settings</activeProfile>" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <activeProfiles>
+                          <activeProfile>settings</activeProfile>
+                        </activeProfiles>
+                        """);
 
     createFullProfilesXml("parent",
-                          "<?xml version=\"1.0\"?>" +
-                          "<profilesXml>" +
-                          "  <activeProfiles>" +
-                          "    <activeProfile>parent</activeProfile>" +
-                          "  </activeProfiles>" +
-                          "</profilesXml>");
+                          """
+                            <?xml version="1.0"?>
+                            <profilesXml>
+                              <activeProfiles>
+                                <activeProfile>parent</activeProfile>
+                              </activeProfiles>
+                            </profilesXml>
+                            """);
 
     createModulePom("parent",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>parent</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>parent</artifactId>
+                      <version>1</version>
+                      """);
 
-    createFullProfilesXml("<?xml version=\"1.0\"?>" +
-                          "<profilesXml>" +
-                          "  <activeProfiles>" +
-                          "    <activeProfile>project</activeProfile>" +
-                          "  </activeProfiles>" +
-                          "</profilesXml>");
+    createFullProfilesXml("""
+                            <?xml version="1.0"?>
+                            <profilesXml>
+                              <activeProfiles>
+                                <activeProfile>project</activeProfile>
+                              </activeProfiles>
+                            </profilesXml>
+                            """);
 
 
-    createProjectPom("<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <relativePath>parent/pom.xml</relativePath>" +
-                     "</parent>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>project</id>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>parent</id>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>settings</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>parent/pom.xml</relativePath>
+                       </parent>
+                       <profiles>
+                         <profile>
+                           <id>project</id>
+                         </profile>
+                         <profile>
+                           <id>parent</id>
+                         </profile>
+                         <profile>
+                           <id>settings</id>
+                         </profile>
+                       </profiles>
+                       """);
 
     assertActiveProfiles("project", "settings");
   }

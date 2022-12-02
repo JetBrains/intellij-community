@@ -18,24 +18,27 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
   protected void setUp() throws Exception {
     super.setUp();
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
   }
 
   @Test
   public void testGroupIdCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension>" +
-                     "      <groupId><caret></groupId>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <extensions>
+                           <extension>
+                             <groupId><caret></groupId>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
 
     assertCompletionVariants(myProjectPom, RENDERING_TEXT,
                              "org.apache.maven.plugins", "org.codehaus.plexus", "test", "intellij.test", "org.codehaus.mojo");
@@ -43,18 +46,19 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
   @Test 
   public void testArtifactIdCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension>" +
-                     "      <groupId>org.apache.maven.plugins</groupId>" +
-                     "      <artifactId><caret></artifactId>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <extensions>
+                           <extension>
+                             <groupId>org.apache.maven.plugins</groupId>
+                             <artifactId><caret></artifactId>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
 
 
     assertCompletionVariants(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
@@ -64,17 +68,18 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
   @Test 
   public void testArtifactWithoutGroupCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension>" +
-                     "      <artifactId><caret></artifactId>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <extensions>
+                           <extension>
+                             <artifactId><caret></artifactId>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
                              "maven-clean-plugin",
@@ -93,15 +98,16 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
   @Test 
   public void testCompletionInsideTag() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension><caret></extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <extensions>
+                           <extension><caret></extension>
+                         </extensions>
+                       </build>
+                       """);
 
     assertDependencyCompletionVariantsInclude(myProjectPom,
                                               "org.apache.maven.plugins:maven-clean-plugin:2.5",
@@ -120,17 +126,18 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
   @Test 
   public void testResolving() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension>" +
-                     "      <artifactId><caret>maven-compiler-plugin</artifactId>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <extensions>
+                           <extension>
+                             <artifactId><caret>maven-compiler-plugin</artifactId>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
 
     String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/3.1/maven-compiler-plugin-3.1.pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
@@ -142,17 +149,18 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
   public void testResolvingAbsentPlugins() {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension>" +
-                     "      <artifactId><caret>maven-compiler-plugin</artifactId>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <extensions>
+                           <extension>
+                             <artifactId><caret>maven-compiler-plugin</artifactId>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
 
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
@@ -161,32 +169,34 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
   @Test 
   public void testDoNotHighlightAbsentGroupIdAndVersion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension>" +
-                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <extensions>
+                           <extension>
+                             <artifactId>maven-compiler-plugin</artifactId>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightingAbsentArtifactId() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <<error descr=\"'artifactId' child tag should be defined\">extension</error>>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <extensions>
+                           <<error descr="'artifactId' child tag should be defined">extension</error>>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
 
     checkHighlighting();
   }

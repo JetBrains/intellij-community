@@ -42,10 +42,12 @@ public class MavenUtilTest extends MavenTestCase {
   }
 
   public void testFindLocalRepoWithoutXmls() throws IOException {
-    VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                "<settings>" +
-                                                                "  <localRepository>mytestpath</localRepository>" +
-                                                                "</settings>");
+    VirtualFile file = createProjectSubFile("testsettings.xml", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <settings>
+        <localRepository>mytestpath</localRepository>
+      </settings>
+      """);
     assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
   }
 
@@ -62,10 +64,12 @@ public class MavenUtilTest extends MavenTestCase {
 
     try {
       MavenServerUtil.addProperty("testSystemPropertiesRepoPath", "test");
-      VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                  "<settings>" +
-                                                                  "  <localRepository>${testSystemPropertiesRepoPath}/testpath</localRepository>" +
-                                                                  "</settings>");
+      VirtualFile file = createProjectSubFile("testsettings.xml", """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <settings>
+          <localRepository>${testSystemPropertiesRepoPath}/testpath</localRepository>
+        </settings>
+        """);
       assertEquals("test/testpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
     } finally {
       MavenServerUtil.removeProperty("testSystemPropertiesRepoPath");
@@ -74,10 +78,10 @@ public class MavenUtilTest extends MavenTestCase {
 
   public void testGetRepositoryFromSettingsWithBadSymbols() throws IOException {
     VirtualFile file = createProjectSubFile("testsettings.xml");
-    String str = "<settings> " +
-                 "<!-- Bad UTF-8 symbol: ü -->" +
-                 "  <localRepository>mytestpath</localRepository>" +
-                 "</settings>";
+    String str = """
+      <settings> <!-- Bad UTF-8 symbol: ü -->
+        <localRepository>mytestpath</localRepository>
+      </settings>""";
     Files.writeString(file.toNioPath(), str, StandardCharsets.ISO_8859_1);
     assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
   }

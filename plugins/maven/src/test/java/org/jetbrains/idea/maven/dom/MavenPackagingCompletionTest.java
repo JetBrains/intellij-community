@@ -21,30 +21,36 @@ import org.junit.Test;
 public class MavenPackagingCompletionTest extends MavenDomTestCase {
   @Test
   public void testVariants() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<packaging><caret></packaging>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging><caret></packaging>
+                       """);
 
     assertCompletionVariants(myProjectPom, "jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin");
   }
 
   @Test
   public void testDoNotHighlightUnknownPackagingTypes() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<packaging>xxx</packaging>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>xxx</packaging>
+                       """);
 
     checkHighlighting();
   }

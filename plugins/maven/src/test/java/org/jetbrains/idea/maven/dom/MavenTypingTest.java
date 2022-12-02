@@ -22,117 +22,147 @@ import org.junit.Test;
 public class MavenTypingTest extends MavenDomTestCase {
   @Test
   public void testTypingOpenBrace() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>$<caret></name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>$<caret></name>
+                       """);
 
     assertTypeResult('{',
-                     "<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<caret>}</name>");
+                     """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${<caret>}</name>
+                       """);
   }
 
   @Test 
   public void testTypingOpenBraceInsideOtherBrace() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<caret></name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${<caret></name>
+                       """);
 
     assertTypeResult('{',
-                     "<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${{<caret></name>");
+                     """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${{<caret></name>
+                       """);
   }
 
   @Test 
   public void testTypingOpenBraceWithExistingClosedBrace() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>$<caret>}</name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>$<caret>}</name>
+                       """);
 
     assertTypeResult('{',
-                     "<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<caret>}</name>");
+                     """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${<caret>}</name>
+                       """);
   }
 
   @Test 
   public void testTypingOpenBraceBeforeChar() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>$<caret>foo</name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>$<caret>foo</name>
+                       """);
 
     assertTypeResult('{',
-                     "<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<caret>foo</name>");
+                     """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${<caret>foo</name>
+                       """);
   }
 
   @Test 
   public void testTypingOpenBraceBeforeWhitespace() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>$<caret> foo</name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>$<caret> foo</name>
+                       """);
 
     assertTypeResult('{',
-                     "<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<caret>} foo</name>");
+                     """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${<caret>} foo</name>
+                       """);
   }
 
   @Test 
   public void testTypingOpenBraceWithoutDollar() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name><caret></name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name><caret></name>
+                       """);
 
     assertTypeResult('{',
-                     "<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>{<caret></name>");
+                     """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>{<caret></name>
+                       """);
   }
 
   @Test 
   public void testTypingOpenBraceInTheEndOfFile() throws Exception {
     VirtualFile f = createProjectSubFile("pom.xml",
-                                         "<project>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>project</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "  <name>$<caret>");
+                                         """
+                                           <project>
+                                             <groupId>test</groupId>
+                                             <artifactId>project</artifactId>
+                                             <version>1</version>
+                                             <name>$<caret>""");
 
     assertTypeResultInRegularFile(f, '{',
-                                  "<project>" +
-                                  "  <groupId>test</groupId>" +
-                                  "  <artifactId>project</artifactId>" +
-                                  "  <version>1</version>" +
-                                  "  <name>${<caret>}");
+                                  """
+                                    <project>
+                                      <groupId>test</groupId>
+                                      <artifactId>project</artifactId>
+                                      <version>1</version>
+                                      <name>${<caret>}""");
   }
 
   @Test 
   public void testTypingOpenBraceInsideTag() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<$<caret>name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <$<caret>name>
+                       """);
 
     assertTypeResult('{',
-                     "<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<${<caret>}name>");
+                     """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <${<caret>}name>
+                       """);
   }
 
   @Test 
@@ -146,18 +176,19 @@ public class MavenTypingTest extends MavenDomTestCase {
   public void testWorksInFilteredResources() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=$<caret>");
@@ -169,18 +200,19 @@ public class MavenTypingTest extends MavenDomTestCase {
   public void testDoesNotWorInNotFilteredResources() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>false</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>false</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=$<caret>");
@@ -190,41 +222,53 @@ public class MavenTypingTest extends MavenDomTestCase {
 
   @Test 
   public void testDeletingOpenBrace() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<caret>}</name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${<caret>}</name>
+                       """);
 
-    assertBackspaceResult("<groupId>test</groupId>" +
-                          "<artifactId>project</artifactId>" +
-                          "<version>1</version>" +
-                          "<name>$<caret></name>");
+    assertBackspaceResult("""
+                            <groupId>test</groupId>
+                            <artifactId>project</artifactId>
+                            <version>1</version>
+                            <name>$<caret></name>
+                            """);
   }
 
   @Test 
   public void testDeletingOpenBraceWithTextInside() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<caret>foo}</name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${<caret>foo}</name>
+                       """);
 
-    assertBackspaceResult("<groupId>test</groupId>" +
-                          "<artifactId>project</artifactId>" +
-                          "<version>1</version>" +
-                          "<name>$<caret>foo}</name>");
+    assertBackspaceResult("""
+                            <groupId>test</groupId>
+                            <artifactId>project</artifactId>
+                            <version>1</version>
+                            <name>$<caret>foo}</name>
+                            """);
   }
 
   @Test 
   public void testDeletingOpenBraceWithoutClosed() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<name>${<caret></name>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${<caret></name>
+                       """);
 
-    assertBackspaceResult("<groupId>test</groupId>" +
-                          "<artifactId>project</artifactId>" +
-                          "<version>1</version>" +
-                          "<name>$<caret></name>");
+    assertBackspaceResult("""
+                            <groupId>test</groupId>
+                            <artifactId>project</artifactId>
+                            <version>1</version>
+                            <name>$<caret></name>
+                            """);
   }
 
   @Test 
@@ -236,18 +280,22 @@ public class MavenTypingTest extends MavenDomTestCase {
   @Test 
   public void testDeletingInTheEndOfFile() throws Exception {
     VirtualFile f = createProjectSubFile("pom.xml",
-                                         "<project>" +
-                                         "  <groupId>test</groupId>" +
-                                         "  <artifactId>project</artifactId>" +
-                                         "  <version>1</version>" +
-                                         "  <name>${<caret>");
+                                         """
+                                           <project>
+                                             <groupId>test</groupId>
+                                             <artifactId>project</artifactId>
+                                             <version>1</version>
+                                             <name>${<caret>
+                                           """);
 
     assertBackspaceResultInRegularFile(f,
-                                       "<project>" +
-                                       "  <groupId>test</groupId>" +
-                                       "  <artifactId>project</artifactId>" +
-                                       "  <version>1</version>" +
-                                       "  <name>$<caret>");
+                                       """
+                                         <project>
+                                           <groupId>test</groupId>
+                                           <artifactId>project</artifactId>
+                                           <version>1</version>
+                                           <name>$<caret>
+                                         """);
   }
 
   private void assertTypeResult(char c, String xml) {

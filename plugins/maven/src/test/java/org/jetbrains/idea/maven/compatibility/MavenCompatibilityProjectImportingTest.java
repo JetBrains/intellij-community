@@ -97,9 +97,11 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   public void testSmokeImport() {
     assertCorrectVersion();
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
 
     assertModules("project");
@@ -113,20 +115,21 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   public void testInterpolateModel() {
     assertCorrectVersion();
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<properties>\n" +
-                  "    <junitVersion>4.0</junitVersion>" +
-                  "  </properties>" +
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>${junitVersion}</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                        <junitVersion>4.0</junitVersion>
+                      </properties>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>${junitVersion}</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     assertModules("project");
 
@@ -139,32 +142,34 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
 
     assertCorrectVersion();
 
-    createModulePom("module1", "<parent>" +
-                               "<groupId>test</groupId>" +
-                               "<artifactId>project</artifactId>" +
-                               "<version>1</version>" +
-                               "</parent>" +
-                               "<artifactId>module1</artifactId>" +
-                               "<dependencies>" +
-                               "  <dependency>" +
-                               "    <groupId>junit</groupId>" +
-                               "    <artifactId>junit</artifactId>" +
-                               "    <version>${junitVersion}</version>" +
-                               "  </dependency>" +
-                               "</dependencies>"
+    createModulePom("module1", """
+      <parent>
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      </parent>
+      <artifactId>module1</artifactId>
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>${junitVersion}</version>
+        </dependency>
+      </dependencies>"""
     );
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
-
-                  "<properties>" +
-                  "    <junitVersion>4.0</junitVersion>" +
-                  "  </properties>" +
-                  "<modules>" +
-                  "<module>module1</module>" +
-                  "</modules>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <properties>
+                        <junitVersion>4.0</junitVersion>
+                      </properties>
+                    <modules>
+                    <module>module1</module>
+                    </modules>
+                    """);
 
     waitForReadingCompletion();
     assertModules("project", mn("project", "module1"));
@@ -179,32 +184,34 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
 
     assertCorrectVersion();
 
-    createModulePom("module1", "<parent>" +
-                               "<groupId>test</groupId>" +
-                               "<artifactId>project</artifactId>" +
-                               "<version>1</version>" +
-                               "</parent>" +
-                               "<artifactId>module1</artifactId>" +
-                               "<dependencies>" +
-                               "  <dependency>" +
-                               "    <groupId>org.example</groupId>" +
-                               "    <artifactId>intellijmaventest</artifactId>" +
-                               "    <version>${libVersion}</version>" +
-                               "  </dependency>" +
-                               "</dependencies>"
+    createModulePom("module1", """
+      <parent>
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      </parent>
+      <artifactId>module1</artifactId>
+      <dependencies>
+        <dependency>
+          <groupId>org.example</groupId>
+          <artifactId>intellijmaventest</artifactId>
+          <version>${libVersion}</version>
+        </dependency>
+      </dependencies>"""
     );
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
-
-                  "<properties>" +
-                  "    <libVersion>1.0</libVersion>" +
-                  "  </properties>" +
-                  "<modules>" +
-                  "<module>module1</module>" +
-                  "</modules>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <properties>
+                        <libVersion>1.0</libVersion>
+                      </properties>
+                    <modules>
+                    <module>module1</module>
+                    </modules>
+                    """);
 
     waitForReadingCompletion();
     assertModules("project", mn("project", "module1"));
@@ -214,33 +221,35 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
       /*myWrapperTestFixture.tearDown();
       myWrapperTestFixture.setUp();*/
 
-    createModulePom("module1", "<parent>" +
-                               "<groupId>test</groupId>" +
-                               "<artifactId>project</artifactId>" +
-                               "<version>1</version>" +
-                               "</parent>" +
-                               "<artifactId>module1</artifactId>" +
-                               "<dependencies>" +
-                               "  <dependency>" +
-                               "    <groupId>org.example</groupId>" +
-                               "    <artifactId>intellijmaventest</artifactId>" +
-                               "    <version>${libVersion2}</version>" +
-                               "  </dependency>" +
-                               "</dependencies>"
+    createModulePom("module1", """
+      <parent>
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      </parent>
+      <artifactId>module1</artifactId>
+      <dependencies>
+        <dependency>
+          <groupId>org.example</groupId>
+          <artifactId>intellijmaventest</artifactId>
+          <version>${libVersion2}</version>
+        </dependency>
+      </dependencies>"""
     );
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
-
-                  "<properties>" +
-                  "    <libVersion>1.0</libVersion>" +
-                  "    <libVersion2>2.0</libVersion2>" +
-                  "  </properties>" +
-                  "<modules>" +
-                  "<module>module1</module>" +
-                  "</modules>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <properties>
+                        <libVersion>1.0</libVersion>
+                        <libVersion2>2.0</libVersion2>
+                      </properties>
+                    <modules>
+                    <module>module1</module>
+                    </modules>
+                    """);
     waitForReadingCompletion();
     assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:2.0");
   }
@@ -251,23 +260,27 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
 
     assertCorrectVersion();
 
-    createModulePom("module1", "<parent>" +
-                               "<groupId>test</groupId>" +
-                               "<artifactId>project</artifactId>" +
-                               "<version>${revision}</version>" +
-                               "</parent>" +
-                               "<artifactId>module1</artifactId>");
+    createModulePom("module1", """
+      <parent>
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>${revision}</version>
+      </parent>
+      <artifactId>module1</artifactId>
+      """);
 
-    importProject("<groupId>test</groupId>" +
-                  "    <artifactId>project</artifactId>" +
-                  "    <version>${revision}</version>" +
-                  "    <packaging>pom</packaging>" +
-                  "    <modules>" +
-                  "        <module>module1</module>\n" +
-                  "    </modules>" +
-                  "    <properties>" +
-                  "        <revision>1.0-SNAPSHOT</revision>" +
-                  "    </properties>");
+    importProject("""
+                    <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>${revision}</version>
+                        <packaging>pom</packaging>
+                        <modules>
+                            <module>module1</module>
+                        </modules>
+                        <properties>
+                            <revision>1.0-SNAPSHOT</revision>
+                        </properties>
+                    """);
     waitForReadingCompletion();
 
     assertModules("project", mn("project", "module1"));

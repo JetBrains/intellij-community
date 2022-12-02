@@ -33,49 +33,55 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
   @Test
   public void testResetDependenciesWhenProjectContainsErrors() {
     //Registry.get("maven.server.debug").setValue(true);
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>jar</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>jar</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>somegroup</groupId>" +
-                          "    <artifactId>artifact</artifactId>" +
-                          "    <version>1.0</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>somegroup</groupId>
+          <artifactId>artifact</artifactId>
+          <version>1.0</version>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjectWithErrors();
     assertModules("project", "m1");
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0");
 
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>jar</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>somegroup</groupId>" +
-                          "    <artifactId>artifact</artifactId>" +
-                          "    <version>2.0</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>jar</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>somegroup</groupId>
+          <artifactId>artifact</artifactId>
+          <version>2.0</version>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjectWithErrors();
     assertModules("project", "m1");
@@ -84,47 +90,52 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testShouldNotResetDependenciesWhenProjectContainsUnrecoverableErrors() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>jar</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>jar</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>somegroup</groupId>" +
-                          "    <artifactId>artifact</artifactId>" +
-                          "    <version>1.0</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>somegroup</groupId>
+          <artifactId>artifact</artifactId>
+          <version>1.0</version>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjectWithErrors();
     assertModules("project", "m1");
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0");
 
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<packaging>jar</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-                          "  <dependency>" +
-                          "    <groupId>somegroup</groupId>" +
-                          "    <artifactId>artifact</artifactId>" +
-                          "    <version>2.0" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <packaging>jar</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+        <dependency>
+          <groupId>somegroup</groupId>
+          <artifactId>artifact</artifactId>
+          <version>2.0  </dependency>
+      </dependencies>
+      """);
 
     importProjectWithErrors();
     assertModules("project", "m1");
@@ -146,9 +157,11 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testUndefinedPropertyInHeader() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>${undefined}</artifactId>" +
-                            "<version>1</version>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>${undefined}</artifactId>
+                              <version>1</version>
+                              """);
 
     assertModules("project");
     MavenProject root = getRootProjects().get(0);
@@ -157,17 +170,18 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testRecursiveInterpolation() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>${version}</version>" +
-
-                            "<dependencies>" +
-                            "  <dependency>" +
-                            "    <groupId>group</groupId>" +
-                            "    <artifactId>artifact</artifactId>" +
-                            "    <version>1</version>" +
-                            "   </dependency>" +
-                            "</dependencies>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>${version}</version>
+                              <dependencies>
+                                <dependency>
+                                  <groupId>group</groupId>
+                                  <artifactId>artifact</artifactId>
+                                  <version>1</version>
+                                 </dependency>
+                              </dependencies>
+                              """);
 
     assertModules("project");
 
@@ -179,15 +193,16 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testUnresolvedParent() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<parent>" +
-                            "  <groupId>test</groupId>" +
-                            "  <artifactId>parent</artifactId>" +
-                            "  <version>1</version>" +
-                            "</parent>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <parent>
+                                <groupId>test</groupId>
+                                <artifactId>parent</artifactId>
+                                <version>1</version>
+                              </parent>
+                              """);
 
     assertModules("project");
 
@@ -199,20 +214,20 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testUnresolvedParentForInvalidProject() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<parent>" +
-                            "  <groupId>test</groupId>" +
-                            "  <artifactId>parent</artifactId>" +
-                            "  <version>1</version>" +
-                            "</parent>" +
-
-                            // not of the 'pom' type
-                            "<modules>" +
-                            "  <module>foo</module>" +
-                            "</modules>");
+    // not of the 'pom' type
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <parent>
+                                <groupId>test</groupId>
+                                <artifactId>parent</artifactId>
+                                <version>1</version>
+                              </parent>
+                              <modules>
+                                <module>foo</module>
+                              </modules>
+                              """);
 
     MavenProject root = getRootProjects().get(0);
     List<MavenProjectProblem> problems = root.getProblems();
@@ -223,14 +238,15 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testMissingModules() throws IOException {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-                            "<packaging>pom</packaging>" +
-
-                            "<modules>" +
-                            "  <module>foo</module>" +
-                            "</modules>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <packaging>pom</packaging>
+                              <modules>
+                                <module>foo</module>
+                              </modules>
+                              """);
     resolvePlugins();
 
     assertModules("project");
@@ -263,18 +279,22 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testInvalidProjectModel() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>jar</packaging>" + // invalid packaging
+    // invalid packaging
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>jar</packaging>
+                       <modules>
+                         <module>foo</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>foo</module>" +
-                     "</modules>");
-
-    createModulePom("foo", "<groupId>test</groupId>" +
-                           "<artifactId>foo</artifactId>" +
-                           "<version>1</version>");
+    createModulePom("foo", """
+      <groupId>test</groupId>
+      <artifactId>foo</artifactId>
+      <version>1</version>
+      """);
     importProjectWithErrors();
     assertModules("project", "foo");
 
@@ -284,18 +304,20 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testInvalidModuleModel() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>foo</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>foo</module>" +
-                     "</modules>");
-
-    createModulePom("foo", "<groupId>test</groupId>" +
-                           "<artifactId>foo</artifactId>" +
-                           "<version>1"); //  invalid tag
+    createModulePom("foo", """
+      <groupId>test</groupId>
+      <artifactId>foo</artifactId>
+      <version>1"""); //  invalid tag
 
     importProjectWithErrors();
     //resolvePlugins();
@@ -309,33 +331,38 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testSeveratInvalidModulesAndWithSameName() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>foo</module>
+                         <module>bar1</module>
+                         <module>bar2</module>
+                         <module>bar3</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>foo</module>" +
-                     "  <module>bar1</module>" +
-                     "  <module>bar2</module>" +
-                     "  <module>bar3</module>" +
-                     "</modules>");
+    createModulePom("foo", """
+      <groupId>test</groupId>
+      <artifactId>foo</artifactId>
+      <version>1"""); //  invalid tag
 
-    createModulePom("foo", "<groupId>test</groupId>" +
-                           "<artifactId>foo</artifactId>" +
-                           "<version>1"); //  invalid tag
+    createModulePom("bar1", """
+      <groupId>test</groupId>
+      <artifactId>bar</artifactId>
+      <version>1"""); //  invalid tag
 
-    createModulePom("bar1", "<groupId>test</groupId>" +
-                            "<artifactId>bar</artifactId>" +
-                            "<version>1"); //  invalid tag
+    createModulePom("bar2", """
+      <groupId>test</groupId>
+      <artifactId>bar</artifactId>
+      <version>1"""); //  invalid tag
 
-    createModulePom("bar2", "<groupId>test</groupId>" +
-                            "<artifactId>bar</artifactId>" +
-                            "<version>1"); //  invalid tag
-
-    createModulePom("bar3", "<groupId>org.test</groupId>" +
-                            "<artifactId>bar</artifactId>" +
-                            "<version>1"); //  invalid tag
+    createModulePom("bar3", """
+      <groupId>org.test</groupId>
+      <artifactId>bar</artifactId>
+      <version>1"""); //  invalid tag
 
     importProjectWithErrors();
     assertModules("project", "foo", "bar (1)", "bar (2)", "bar (3) (org.test)");
@@ -343,17 +370,20 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testInvalidProjectWithModules() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1" + // invalid tag
+    // invalid tag
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1<modules>
+                         <module>foo</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>foo</module>" +
-                     "</modules>");
-
-    createModulePom("foo", "<groupId>test</groupId>" +
-                           "<artifactId>foo</artifactId>" +
-                           "<version>1</version>");
+    createModulePom("foo", """
+      <groupId>test</groupId>
+      <artifactId>foo</artifactId>
+      <version>1</version>
+      """);
 
     importProjectWithErrors();
 
@@ -362,17 +392,20 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testNonPOMProjectWithModules() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>foo</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>foo</module>" +
-                     "</modules>");
-
-    createModulePom("foo", "<groupId>test</groupId>" +
-                           "<artifactId>foo</artifactId>" +
-                           "<version>1</version>");
+    createModulePom("foo", """
+      <groupId>test</groupId>
+      <artifactId>foo</artifactId>
+      <version>1</version>
+      """);
 
     importProjectWithErrors();
 
@@ -381,24 +414,25 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testDoNotFailIfRepositoryHasEmptyLayout() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<repositories>" +
-                            " <repository>" +
-                            "   <id>foo1</id>" +
-                            "   <url>bar1</url>" +
-                            "   <layout/>" +
-                            " </repository>" +
-                            "</repositories>" +
-                            "<pluginRepositories>" +
-                            " <pluginRepository>" +
-                            "   <id>foo2</id>" +
-                            "   <url>bar2</url>" +
-                            "   <layout/>" +
-                            " </pluginRepository>" +
-                            "</pluginRepositories>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <repositories>
+                               <repository>
+                                 <id>foo1</id>
+                                 <url>bar1</url>
+                                 <layout/>
+                               </repository>
+                              </repositories>
+                              <pluginRepositories>
+                               <pluginRepository>
+                                 <id>foo2</id>
+                                 <url>bar2</url>
+                                 <layout/>
+                               </pluginRepository>
+                              </pluginRepositories>
+                              """);
     resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
@@ -407,17 +441,18 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testDoNotFailIfDistributionRepositoryHasEmptyValues() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<distributionManagement>" +
-                            "  <repository>" +
-                            "   <id/>" +
-                            "   <url/>" +
-                            "   <layout/>" +
-                            "  </repository>" +
-                            "</distributionManagement>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <distributionManagement>
+                                <repository>
+                                 <id/>
+                                 <url/>
+                                 <layout/>
+                                </repository>
+                              </distributionManagement>
+                              """);
     resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
@@ -426,44 +461,47 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testUnresolvedDependencies() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>xxx</groupId>
+          <artifactId>xxx</artifactId>
+          <version>1</version>
+        </dependency>
+        <dependency>
+          <groupId>yyy</groupId>
+          <artifactId>yyy</artifactId>
+          <version>2</version>
+        </dependency>
+      </dependencies>
+      """);
 
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>xxx</groupId>" +
-                          "    <artifactId>xxx</artifactId>" +
-                          "    <version>1</version>" +
-                          "  </dependency>" +
-                          "  <dependency>" +
-                          "    <groupId>yyy</groupId>" +
-                          "    <artifactId>yyy</artifactId>" +
-                          "    <version>2</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>zzz</groupId>" +
-                          "    <artifactId>zzz</artifactId>" +
-                          "    <version>3</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>zzz</groupId>
+          <artifactId>zzz</artifactId>
+          <version>3</version>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjectWithErrors();
     resolvePlugins();
@@ -480,18 +518,19 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testUnresolvedPomTypeDependency() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>yyy</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "    <type>pom</type>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>xxx</groupId>
+                           <artifactId>yyy</artifactId>
+                           <version>4.0</version>
+                           <type>pom</type>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     importProjectWithErrors();
     resolvePlugins();
@@ -504,31 +543,35 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testDoesNotReportInterModuleDependenciesAsUnresolved() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m2</artifactId>" +
-                          "    <version>1</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProjectWithErrors();
     resolvePlugins();
@@ -542,52 +585,56 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
   @Test
   public void testCircularDependencies() {
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                         <module>m3</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "  <module>m3</module>" +
-                     "</modules>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m3</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m2</artifactId>" +
-                          "    <version>1</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m3</artifactId>" +
-                          "    <version>1</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m3", "<groupId>test</groupId>" +
-                          "<artifactId>m3</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m1</artifactId>" +
-                          "    <version>1</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createModulePom("m3", """
+      <groupId>test</groupId>
+      <artifactId>m3</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m1</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjectWithErrors();
 
@@ -600,19 +647,20 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testUnresolvedExtensionsAfterResolve() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<build>" +
-                            " <extensions>" +
-                            "   <extension>" +
-                            "     <groupId>xxx</groupId>" +
-                            "     <artifactId>yyy</artifactId>" +
-                            "     <version>1</version>" +
-                            "    </extension>" +
-                            "  </extensions>" +
-                            "</build>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <build>
+                               <extensions>
+                                 <extension>
+                                   <groupId>xxx</groupId>
+                                   <artifactId>yyy</artifactId>
+                                   <version>1</version>
+                                  </extension>
+                                </extensions>
+                              </build>
+                              """);
 
     resolveDependenciesAndImport();
     MavenProject root = getRootProjects().get(0);
@@ -623,21 +671,22 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testDoesNotReportExtensionsThatWereNotTriedToBeResolved() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            // for some reasons this plugins is not rtied to be resolved by embedder.
-                            // we shouldn't report it as unresolved.
-                            "<build>" +
-                            "  <extensions>" +
-                            "   <extension>" +
-                            "      <groupId>org.apache.maven.wagon</groupId>" +
-                            "      <artifactId>wagon-ssh-external</artifactId>" +
-                            "      <version>1.0-alpha-6</version>" +
-                            "    </extension>" +
-                            "  </extensions>" +
-                            "</build>");
+    // for some reasons this plugins is not rtied to be resolved by embedder.
+    // we shouldn't report it as unresolved.
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <build>
+                                <extensions>
+                                 <extension>
+                                    <groupId>org.apache.maven.wagon</groupId>
+                                    <artifactId>wagon-ssh-external</artifactId>
+                                    <version>1.0-alpha-6</version>
+                                  </extension>
+                                </extensions>
+                              </build>
+                              """);
     resolvePlugins();
 
     assertProblems(getRootProjects().get(0));
@@ -648,50 +697,53 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testUnresolvedBuildExtensionsInModules() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    " <extensions>" +
-                    "   <extension>" +
-                    "     <groupId>xxx</groupId>" +
-                    "     <artifactId>xxx</artifactId>" +
-                    "     <version>1</version>" +
-                    "    </extension>" +
-                    "  </extensions>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <build>
+                       <extensions>
+                         <extension>
+                           <groupId>xxx</groupId>
+                           <artifactId>xxx</artifactId>
+                           <version>1</version>
+                          </extension>
+                        </extensions>
+                      </build>
+                      """);
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    " <extensions>" +
-                    "   <extension>" +
-                    "     <groupId>yyy</groupId>" +
-                    "     <artifactId>yyy</artifactId>" +
-                    "     <version>1</version>" +
-                    "    </extension>" +
-                    "   <extension>" +
-                    "     <groupId>zzz</groupId>" +
-                    "     <artifactId>zzz</artifactId>" +
-                    "     <version>1</version>" +
-                    "    </extension>" +
-                    "  </extensions>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      <build>
+                       <extensions>
+                         <extension>
+                           <groupId>yyy</groupId>
+                           <artifactId>yyy</artifactId>
+                           <version>1</version>
+                          </extension>
+                         <extension>
+                           <groupId>zzz</groupId>
+                           <artifactId>zzz</artifactId>
+                           <version>1</version>
+                          </extension>
+                        </extensions>
+                      </build>
+                      """);
 
     importProjectWithErrors();
 
@@ -711,19 +763,20 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testUnresolvedPlugins() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<build>" +
-                            " <plugins>" +
-                            "   <plugin>" +
-                            "     <groupId>xxx</groupId>" +
-                            "     <artifactId>yyy</artifactId>" +
-                            "     <version>1</version>" +
-                            "    </plugin>" +
-                            "  </plugins>" +
-                            "</build>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <build>
+                               <plugins>
+                                 <plugin>
+                                   <groupId>xxx</groupId>
+                                   <artifactId>yyy</artifactId>
+                                   <version>1</version>
+                                  </plugin>
+                                </plugins>
+                              </build>
+                              """);
     resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
@@ -736,39 +789,41 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
     setRepositoryPath(helper.getTestDataPath("plugins"));
 
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<build>" +
-                            " <plugins>" +
-                            "   <plugin>" +
-                            "     <groupId>org.apache.maven.plugins</groupId>" +
-                            "     <artifactId>maven-compiler-plugin</artifactId>" +
-                            "     <version>2.0.2</version>" +
-                            "    </plugin>" +
-                            "  </plugins>" +
-                            "</build>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <build>
+                               <plugins>
+                                 <plugin>
+                                   <groupId>org.apache.maven.plugins</groupId>
+                                   <artifactId>maven-compiler-plugin</artifactId>
+                                   <version>2.0.2</version>
+                                  </plugin>
+                                </plugins>
+                              </build>
+                              """);
 
     assertProblems(getRootProjects().get(0));
   }
 
   @Test
   public void testUnresolvedPluginsAsExtensions() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<build>" +
-                            " <plugins>" +
-                            "   <plugin>" +
-                            "     <groupId>xxx</groupId>" +
-                            "     <artifactId>yyy</artifactId>" +
-                            "     <version>1</version>" +
-                            "     <extensions>true</extensions>" +
-                            "    </plugin>" +
-                            "  </plugins>" +
-                            "</build>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <build>
+                               <plugins>
+                                 <plugin>
+                                   <groupId>xxx</groupId>
+                                   <artifactId>yyy</artifactId>
+                                   <version>1</version>
+                                   <extensions>true</extensions>
+                                  </plugin>
+                                </plugins>
+                              </build>
+                              """);
     resolvePlugins();
 
     assertModules("project");
@@ -784,9 +839,11 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
   public void testInvalidSettingsXml() throws Exception {
     updateSettingsXml("<localRepo<<");
 
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              """);
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);
@@ -797,9 +854,11 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
   public void testInvalidProfilesXml() {
     createProfilesXml("<prof<<");
 
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>");
+    importProjectWithErrors("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              """);
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);

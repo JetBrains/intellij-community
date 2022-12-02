@@ -28,48 +28,49 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     if (!hasMavenInstallation()) return;
 
     setRepositoryPath(new File(myDir, "/repo").getPath());
-    updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
+    updateSettingsXml("<localRepository>\n" + getRepositoryPath() + "</localRepository>");
 
     createModulePom("__temp",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>bom</artifactId>" +
-                    "<packaging>pom</packaging>" +
-                    "<version>1</version>" +
-
-                    "<dependencyManagement>" +
-                    "  <dependencies>" +
-                    "    <dependency>" +
-                    "      <groupId>junit</groupId>" +
-                    "      <artifactId>junit</artifactId>" +
-                    "      <version>4.0</version>" +
-                    "    </dependency>" +
-                    "  </dependencies>" +
-                    "</dependencyManagement>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>bom</artifactId>
+                      <packaging>pom</packaging>
+                      <version>1</version>
+                      <dependencyManagement>
+                        <dependencies>
+                          <dependency>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
+                            <version>4.0</version>
+                          </dependency>
+                        </dependencies>
+                      </dependencyManagement>
+                      """);
 
     executeGoal("__temp", "install");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencyManagement>" +
-                  "  <dependencies>" +
-                  "    <dependency>" +
-                  "      <groupId>test</groupId>" +
-                  "      <artifactId>bom</artifactId>" +
-                  "      <version>1</version>" +
-                  "      <type>pom</type>" +
-                  "      <scope>import</scope>" +
-                  "    </dependency>" +
-                  "  </dependencies>" +
-                  "</dependencyManagement>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencyManagement>
+                      <dependencies>
+                        <dependency>
+                          <groupId>test</groupId>
+                          <artifactId>bom</artifactId>
+                          <version>1</version>
+                          <type>pom</type>
+                          <scope>import</scope>
+                        </dependency>
+                      </dependencies>
+                    </dependencyManagement>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
@@ -79,47 +80,48 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     if (ignore()) return;
 
     setRepositoryPath(new File(myDir, "/repo").getPath());
-    updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
+    updateSettingsXml("<localRepository>\n" + getRepositoryPath() + "</localRepository>");
 
     VirtualFile bom = createModulePom("bom",
-                                      "<groupId>test</groupId>" +
-                                      "<artifactId>bom</artifactId>" +
-                                      "<packaging>pom</packaging>" +
-                                      "<version>1</version>" +
-
-                                      "<dependencyManagement>" +
-                                      "  <dependencies>" +
-                                      "    <dependency>" +
-                                      "      <groupId>junit</groupId>" +
-                                      "      <artifactId>junit</artifactId>" +
-                                      "      <version>4.0</version>" +
-                                      "    </dependency>" +
-                                      "  </dependencies>" +
-                                      "</dependencyManagement>");
+                                      """
+                                        <groupId>test</groupId>
+                                        <artifactId>bom</artifactId>
+                                        <packaging>pom</packaging>
+                                        <version>1</version>
+                                        <dependencyManagement>
+                                          <dependencies>
+                                            <dependency>
+                                              <groupId>junit</groupId>
+                                              <artifactId>junit</artifactId>
+                                              <version>4.0</version>
+                                            </dependency>
+                                          </dependencies>
+                                        </dependencyManagement>
+                                        """);
 
     VirtualFile project = createModulePom("project",
-                                          "<groupId>test</groupId>" +
-                                          "<artifactId>project</artifactId>" +
-                                          "<version>1</version>" +
-
-                                          "<dependencyManagement>" +
-                                          "  <dependencies>" +
-                                          "    <dependency>" +
-                                          "      <groupId>test</groupId>" +
-                                          "      <artifactId>bom</artifactId>" +
-                                          "      <version>1</version>" +
-                                          "      <type>pom</type>" +
-                                          "      <scope>import</scope>" +
-                                          "    </dependency>" +
-                                          "  </dependencies>" +
-                                          "</dependencyManagement>" +
-
-                                          "<dependencies>" +
-                                          "  <dependency>" +
-                                          "    <groupId>junit</groupId>" +
-                                          "    <artifactId>junit</artifactId>" +
-                                          "  </dependency>" +
-                                          "</dependencies>");
+                                          """
+                                            <groupId>test</groupId>
+                                            <artifactId>project</artifactId>
+                                            <version>1</version>
+                                            <dependencyManagement>
+                                              <dependencies>
+                                                <dependency>
+                                                  <groupId>test</groupId>
+                                                  <artifactId>bom</artifactId>
+                                                  <version>1</version>
+                                                  <type>pom</type>
+                                                  <scope>import</scope>
+                                                </dependency>
+                                              </dependencies>
+                                            </dependencyManagement>
+                                            <dependencies>
+                                              <dependency>
+                                                <groupId>junit</groupId>
+                                                <artifactId>junit</artifactId>
+                                              </dependency>
+                                            </dependencies>
+                                            """);
     importProjectsWithErrors(bom, project);
     assertModules("bom", "project");
 
@@ -139,41 +141,42 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     // see previous test for more information
 
     setRepositoryPath(new File(myDir, "/repo").getPath());
-    updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
+    updateSettingsXml("<localRepository>\n" + getRepositoryPath() + "</localRepository>");
 
     VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>parent</artifactId>" +
-                                         "<packaging>pom</packaging>" +
-                                         "<version>1</version>" +
-
-                                         "<dependencyManagement>" +
-                                         "  <dependencies>" +
-                                         "    <dependency>" +
-                                         "      <groupId>junit</groupId>" +
-                                         "      <artifactId>junit</artifactId>" +
-                                         "      <version>4.0</version>" +
-                                         "    </dependency>" +
-                                         "  </dependencies>" +
-                                         "</dependencyManagement>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <packaging>pom</packaging>
+                                           <version>1</version>
+                                           <dependencyManagement>
+                                             <dependencies>
+                                               <dependency>
+                                                 <groupId>junit</groupId>
+                                                 <artifactId>junit</artifactId>
+                                                 <version>4.0</version>
+                                               </dependency>
+                                             </dependencies>
+                                           </dependencyManagement>
+                                           """);
 
     VirtualFile project = createModulePom("project",
-                                          "<groupId>test</groupId>" +
-                                          "<artifactId>project</artifactId>" +
-                                          "<version>1</version>" +
-
-                                          "<parent>" +
-                                          "  <groupId>test</groupId>" +
-                                          "  <artifactId>parent</artifactId>" +
-                                          "  <version>1</version>" +
-                                          "</parent>" +
-
-                                          "<dependencies>" +
-                                          "  <dependency>" +
-                                          "    <groupId>junit</groupId>" +
-                                          "    <artifactId>junit</artifactId>" +
-                                          "  </dependency>" +
-                                          "</dependencies>");
+                                          """
+                                            <groupId>test</groupId>
+                                            <artifactId>project</artifactId>
+                                            <version>1</version>
+                                            <parent>
+                                              <groupId>test</groupId>
+                                              <artifactId>parent</artifactId>
+                                              <version>1</version>
+                                            </parent>
+                                            <dependencies>
+                                              <dependency>
+                                                <groupId>junit</groupId>
+                                                <artifactId>junit</artifactId>
+                                              </dependency>
+                                            </dependencies>
+                                            """);
     importProjects(parent, project);
     assertModules("parent", "project");
 

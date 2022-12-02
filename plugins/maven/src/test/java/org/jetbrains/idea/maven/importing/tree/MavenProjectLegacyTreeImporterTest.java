@@ -23,14 +23,16 @@ public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImporti
   @Test
   public void testImportWithTestSourceAndTestTargetVersion() throws IOException {
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>project</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      """);
     createProjectSubFile("m1/src/main/java/com/A.java", "package com; class A {}");
     createProjectSubFile("m1/src/test/java/com/ATest.java", "package com; class ATest {}");
 
@@ -38,44 +40,44 @@ public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImporti
     createProjectSubFile("m1/src/test/resources/test.txt", "test resource");
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>project</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>" +
-
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>test</groupId>" +
-                    "    <artifactId>m1</artifactId>" +
-                    "    <version>1</version>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      <dependencies>
+                        <dependency>
+                          <groupId>test</groupId>
+                          <artifactId>m1</artifactId>
+                          <version>1</version>
+                        </dependency>
+                      </dependencies>
+                      """);
     createProjectSubFile("m2/src/main/java/com/B.java", "package com; class B {}");
     createProjectSubFile("m2/src/test/java/com/BTest.java", "package com; class BTest {}");
     createProjectSubFile("m2/src/main/resources/test.txt", "resource");
     createProjectSubFile("m2/src/test/resources/test.txt", "test resource");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
-
-                  "<properties>" +
-                  "  <maven.compiler.source>8</maven.compiler.source>" +
-                  "  <maven.compiler.target>8</maven.compiler.target>" +
-                  "  <maven.compiler.testSource>11</maven.compiler.testSource>" +
-                  "  <maven.compiler.testTarget>11</maven.compiler.testTarget>" +
-                  "</properties>" +
-
-                  "<modules>" +
-                  "  <module>m1</module>" +
-                  "  <module>m2</module>" +
-                  "</modules>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <properties>
+                      <maven.compiler.source>8</maven.compiler.source>
+                      <maven.compiler.target>8</maven.compiler.target>
+                      <maven.compiler.testSource>11</maven.compiler.testSource>
+                      <maven.compiler.testTarget>11</maven.compiler.testTarget>
+                    </properties>
+                    <modules>
+                      <module>m1</module>
+                      <module>m2</module>
+                    </modules>
+                    """);
 
     assertModules("project",
                   mn("project", "m1"),
@@ -120,16 +122,16 @@ public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImporti
   public void testMultipleContentRootsWithGeneratedSources() throws IOException {
     createProjectSubFile("target/generated-sources/src1/com/GenA.java", "package com; class GenA {}");
     createProjectSubFile("src/main/java/com/A.java", "package com; class A {}");
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<properties>" +
-                  "  <maven.compiler.source>8</maven.compiler.source>" +
-                  "  <maven.compiler.target>8</maven.compiler.target>" +
-                  "  <maven.compiler.testSource>11</maven.compiler.testSource>" +
-                  "  <maven.compiler.testTarget>11</maven.compiler.testTarget>" +
-                  "</properties>"
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <maven.compiler.source>8</maven.compiler.source>
+                      <maven.compiler.target>8</maven.compiler.target>
+                      <maven.compiler.testSource>11</maven.compiler.testSource>
+                      <maven.compiler.testTarget>11</maven.compiler.testTarget>
+                    </properties>"""
     );
 
     assertModules("project", "project.main", "project.test");
@@ -143,37 +145,38 @@ public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImporti
   @Test
   public void testContentRootOutsideOfModuleDir() throws Exception {
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>project</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>" +
-
-                    "<build>" +
-                    "  <sourceDirectory>../custom-sources</sourceDirectory>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      <build>
+                        <sourceDirectory>../custom-sources</sourceDirectory>
+                      </build>
+                      """);
 
     createProjectSubFile("custom-sources/com/CustomSource.java", "package com; class CustomSource {}");
     createProjectSubFile("m1/src/main/resources/test.txt", "resource");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
-
-                  "<properties>" +
-                  "  <maven.compiler.source>8</maven.compiler.source>" +
-                  "  <maven.compiler.target>8</maven.compiler.target>" +
-                  "  <maven.compiler.testSource>11</maven.compiler.testSource>" +
-                  "  <maven.compiler.testTarget>11</maven.compiler.testTarget>" +
-                  "</properties>" +
-
-                  "<modules>" +
-                  "  <module>m1</module>" +
-                  "</modules>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <properties>
+                      <maven.compiler.source>8</maven.compiler.source>
+                      <maven.compiler.target>8</maven.compiler.target>
+                      <maven.compiler.testSource>11</maven.compiler.testSource>
+                      <maven.compiler.testTarget>11</maven.compiler.testTarget>
+                    </properties>
+                    <modules>
+                      <module>m1</module>
+                    </modules>
+                    """);
 
     assertModules("project", mn("project", "m1"), mn("project", "m1.main"), mn("project", "m1.test"));
 
@@ -188,22 +191,22 @@ public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImporti
 
   @Test
   public void testReleaseCompilerProperty() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<properties>" +
-                  "  <maven.compiler.release>8</maven.compiler.release>" +
-                  "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
-                  "</properties>" +
-                  " <build>\n" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <version>3.10.0</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>"
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <maven.compiler.release>8</maven.compiler.release>
+                      <maven.compiler.testRelease>11</maven.compiler.testRelease>
+                    </properties>
+                     <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.10.0</version>
+                        </plugin>
+                      </plugins>
+                    </build>"""
     );
 
     assertModules("project", "project.main", "project.test");

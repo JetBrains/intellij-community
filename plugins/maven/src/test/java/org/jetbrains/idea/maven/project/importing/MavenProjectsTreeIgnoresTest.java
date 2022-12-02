@@ -34,14 +34,18 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
     super.setUpInWriteAction();
     myTree.addListener(new MyLoggingListener(), getTestRootDisposable());
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
     updateAll(m1, m2);
     myRoots = myTree.getRootProjects();
   }

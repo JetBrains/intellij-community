@@ -47,20 +47,24 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testRestarting() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<name>1</name>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <name>1</name>
+                    """);
 
     assertModules("project");
     assertEquals("1", getProjectsTree().getRootProjects().get(0).getName());
 
     MavenServerManager.getInstance().shutdown(true);
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<name>2</name>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <name>2</name>
+                    """);
 
     assertModules("project");
     assertEquals("2", getProjectsTree().getRootProjects().get(0).getName());
@@ -72,10 +76,12 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     try {
       WorkspaceProjectImporterKt.setWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE(true);
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-                    "<name>1</name>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      <name>1</name>
+                      """);
 
       assertModules("project");
 
@@ -89,31 +95,35 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testDoNotFailOnInvalidMirrors() throws Exception {
-    updateSettingsXmlFully("<settings>" +
-                           "<mirrors>" +
-                           "  <mirror>" +
-                           "  </mirror>" +
-                           "  <mirror>" +
-                           "    <id/>" +
-                           "    <url/>" +
-                           "    <mirrorOf/>" +
-                           "  </mirror>" +
-                           "  <mirror>" +
-                           "    <id/>" +
-                           "    <url>foo</url>" +
-                           "    <mirrorOf>*</mirrorOf>" +
-                           "  </mirror>" +
-                           "  <mirror>" +
-                           "    <id>foo</id>" +
-                           "    <url/>" +
-                           "    <mirrorOf>*</mirrorOf>" +
-                           "  </mirror>" +
-                           "</mirrors>" +
-                           "</settings>");
+    updateSettingsXmlFully("""
+                             <settings>
+                             <mirrors>
+                               <mirror>
+                               </mirror>
+                               <mirror>
+                                 <id/>
+                                 <url/>
+                                 <mirrorOf/>
+                               </mirror>
+                               <mirror>
+                                 <id/>
+                                 <url>foo</url>
+                                 <mirrorOf>*</mirrorOf>
+                               </mirror>
+                               <mirror>
+                                 <id>foo</id>
+                                 <url/>
+                                 <mirrorOf>*</mirrorOf>
+                               </mirror>
+                             </mirrors>
+                             </settings>
+                             """);
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertModules("project");
   }
@@ -126,14 +136,18 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                          "m2/src/main/java");
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      """);
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
 
     assertSources("m1");
     assertSources("m2");
@@ -149,9 +163,11 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testImportingFiresRootChangesOnlyOnce() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     myEventsTestHelper.assertRootsChanged(1);
     myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
@@ -159,32 +175,34 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testDoRootChangesOnProjectReimportWhenNothingChanges() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     myEventsTestHelper.assertRootsChanged(1);
     myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     myEventsTestHelper.assertRootsChanged(isWorkspaceImport() ? 0 : 1);
     myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 0 : 1);
@@ -194,40 +212,46 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   public void testSendWorkspaceEventsOnlyForChangedEntities() {
     Assume.assumeTrue(isWorkspaceImport());
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
-
-                  "<modules>" +
-                  "  <module>m1</module>" +
-                  "  <module>m2</module>" +
-                  "</modules>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                      <module>m2</module>
+                    </modules>
+                    """);
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      """);
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
 
     importProject();
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>junit</groupId>" +
-                    "    <artifactId>junit</artifactId>" +
-                    "    <version>4.0</version>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <dependencies>
+                        <dependency>
+                          <groupId>junit</groupId>
+                          <artifactId>junit</artifactId>
+                          <version>4.0</version>
+                        </dependency>
+                      </dependencies>
+                      """);
 
     var changeLog = new HashSet<String>();
     myProject.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
@@ -267,9 +291,11 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testResolvingFiresRootChangesOnlyOnce() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     myEventsTestHelper.assertRootsChanged(1);
     myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
@@ -277,9 +303,11 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testDoNotRecreateModulesBeforeResolution() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     Module m = getModule("project");
     resolveDependenciesAndImport();
@@ -292,17 +320,18 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     removeFromLocalRepository("junit");
 
@@ -314,15 +343,17 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     myProjectsManager.listenForExternalChanges();
 
-    updateSettingsXml("<proxies>" +
-                      " <proxy>" +
-                      "    <id>my</id>" +
-                      "    <active>true</active>" +
-                      "    <protocol>http</protocol>" +
-                      "    <host>invalid.host.in.intellij.net</host>" +
-                      "    <port>3128</port>" +
-                      "  </proxy>" +
-                      "</proxies>");
+    updateSettingsXml("""
+                        <proxies>
+                         <proxy>
+                            <id>my</id>
+                            <active>true</active>
+                            <protocol>http</protocol>
+                            <host>invalid.host.in.intellij.net</host>
+                            <port>3128</port>
+                          </proxy>
+                        </proxies>
+                        """);
 
     removeFromLocalRepository("junit");
     assertFalse(jarFile.exists());
@@ -352,18 +383,20 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
       setRepositoryPath(helper.getTestDataPath("plugins"));
       getMavenGeneralSettings().setWorkOffline(true);
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-                    "<build>" +
-                    "  <extensions>" +
-                    "    <extension>" +
-                    "      <groupId>intellij.test</groupId>" +
-                    "      <artifactId>maven-extension</artifactId>" +
-                    "      <version>1.0</version>" +
-                    "    </extension>" +
-                    "  </extensions>" +
-                    "</build>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      <build>
+                        <extensions>
+                          <extension>
+                            <groupId>intellij.test</groupId>
+                            <artifactId>maven-extension</artifactId>
+                            <version>1.0</version>
+                          </extension>
+                        </extensions>
+                      </build>
+                      """);
 
       List<MavenProject> projects = getProjectsTree().getProjects();
       assertEquals(1, projects.size());
@@ -383,19 +416,21 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     setRepositoryPath(helper.getTestDataPath("plugins"));
     getMavenGeneralSettings().setWorkOffline(true);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<description>throw!</description>" +
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension>" +
-                     "      <groupId>intellij.test</groupId>" +
-                     "      <artifactId>maven-extension</artifactId>" +
-                     "      <version>1.0</version>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <description>throw!</description>
+                       <build>
+                         <extensions>
+                           <extension>
+                             <groupId>intellij.test</groupId>
+                             <artifactId>maven-extension</artifactId>
+                             <version>1.0</version>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
     importProjectWithErrors();
 
     List<MavenProject> projects = getProjectsTree().getProjects();
@@ -407,25 +442,30 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
-
-                  "<modules>" +
-                  "  <module>m1</module>" +
-                  "  <module>m2</module>" +
-                  "</modules>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                      <module>m2</module>
+                    </modules>
+                    """);
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      """);
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
 
     importProject();
     assertModules("project", "m1", "m2");
@@ -450,10 +490,12 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
       ExtensionTestUtil.maskExtensions(MavenImporter.EXTENSION_POINT_NAME,
                                        Collections.<MavenImporter>singletonList(new NameSettingMavenImporter("name-from-properties")),
                                        disposable);
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-                    "<name>${myName}</name>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      <name>${myName}</name>
+                      """);
     }
     finally {
       Disposer.dispose(disposable);

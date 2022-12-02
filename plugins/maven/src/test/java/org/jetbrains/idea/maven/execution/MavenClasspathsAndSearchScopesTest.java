@@ -54,43 +54,49 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testConfiguringModuleDependencies() throws Exception {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m3</artifactId>
+          <version>1</version>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m4</artifactId>
+          <version>1</version>
+          <optional>true</optional>
+        </dependency>
+      </dependencies>
+      """);
 
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m3 = createModulePom("m3", """
+      <groupId>test</groupId>
+      <artifactId>m3</artifactId>
+      <version>1</version>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m3</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m4</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <optional>true</optional>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
-                                           "<artifactId>m3</artifactId>" +
-                                           "<version>1</version>");
-
-    VirtualFile m4 = createModulePom("m4", "<groupId>test</groupId>" +
-                                           "<artifactId>m4</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m4 = createModulePom("m4", """
+      <groupId>test</groupId>
+      <artifactId>m4</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2, m3, m4);
     assertModules("m1", "m2", "m3", "m4");
@@ -145,27 +151,31 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testDoNotIncludeTargetDirectoriesOfModuleDependenciesToLibraryClassesRoots() {
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>" +
-                                         "<dependencies>" +
-                                         "  <dependency>" +
-                                         "    <groupId>test</groupId>" +
-                                         "    <artifactId>dep</artifactId>" +
-                                         "    <version>1</version>" +
-                                         "  </dependency>" +
-                                         "</dependencies>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>dep</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-    VirtualFile dep = createModulePom("dep", "<groupId>test</groupId>" +
-                                           "<artifactId>dep</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
+    VirtualFile dep = createModulePom("dep", """
+      <groupId>test</groupId>
+      <artifactId>dep</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjects(m, dep);
     assertModules("m", "dep");
@@ -185,21 +195,24 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testDoNotIncludeTestClassesWhenConfiguringModuleDependenciesForProductionCode() throws Exception {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2);
     assertModules("m1", "m2");
@@ -224,31 +237,36 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testConfiguringModuleDependenciesOnTestJar() throws Exception {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+          <type>test-jar</type>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m3</artifactId>
+          <version>1</version>
+          <classifier>tests</classifier>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <type>test-jar</type>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m3</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <classifier>tests</classifier>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
-    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
-                                           "<artifactId>m3</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
+    VirtualFile m3 = createModulePom("m3", """
+      <groupId>test</groupId>
+      <artifactId>m3</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2, m3);
     assertModules("m1", "m2", "m3");
@@ -280,33 +298,38 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testConfiguringModuleDependenciesOnTestJarWithTestScope() throws Exception {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m3</artifactId>
+          <version>1</version>
+          <classifier>tests</classifier>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <type>test-jar</type>" +
-                                           "    <scope>test</scope>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m3</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <classifier>tests</classifier>" +
-                                           "    <scope>test</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
-    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
-                                           "<artifactId>m3</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
+    VirtualFile m3 = createModulePom("m3", """
+      <groupId>test</groupId>
+      <artifactId>m3</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2, m3);
     assertModules("m1", "m2", "m3");
@@ -334,27 +357,30 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testConfiguringModuleDependenciesOnBothNormalAndTestJar() throws Exception {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+          <type>test-jar</type>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <type>test-jar</type>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2);
     assertModules("m1", "m2");
@@ -388,28 +414,31 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testConfiguringModuleDependenciesOnNormalAndTestJarWithTestScope() throws Exception {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <type>test-jar</type>" +
-                                           "    <scope>test</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2);
     assertModules("m1", "m2");
@@ -441,35 +470,37 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
   @Test
   public void testOptionalLibraryDependencies() throws Exception {
     createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar");
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>" +
-
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>jmock</groupId>" +
-                                           "    <artifactId>jmock</artifactId>" +
-                                           "    <version>1.0</version>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "    <optional>true</optional>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>jmock</groupId>
+          <artifactId>jmock</artifactId>
+          <version>1.0</version>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+          <optional>true</optional>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjects(m1, m2);
     assertModules("m1", "m2");
@@ -526,45 +557,49 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
   @Test
   public void testProvidedAndTestDependencies() throws Exception {
     createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar");
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m3</artifactId>
+          <version>1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>jmock</groupId>
+          <artifactId>jmock</artifactId>
+          <version>4.0</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>provided</scope>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "    <scope>provided</scope>" +
-                                           "  </dependency>" +
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m3</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>test</scope>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>jmock</groupId>" +
-                                           "    <artifactId>jmock</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "    <scope>test</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
-
-    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
-                                           "<artifactId>m3</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m3 = createModulePom("m3", """
+      <groupId>test</groupId>
+      <artifactId>m3</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2, m3);
     assertModules("m1", "m2", "m3");
@@ -607,28 +642,31 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
   @Test
   public void testRuntimeDependency() throws Exception {
     createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar");
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+          <scope>runtime</scope>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>runtime</scope>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "    <scope>runtime</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2);
     assertModules("m1", "m2");
@@ -667,36 +705,38 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
   @Test
   public void testDoNotIncludeProvidedAndTestTransitiveDependencies() throws Exception {
     createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar");
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>" +
-
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>jmock</groupId>" +
-                                           "    <artifactId>jmock</artifactId>" +
-                                           "    <version>1.0</version>" +
-                                           "    <scope>provided</scope>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "    <scope>test</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>jmock</groupId>
+          <artifactId>jmock</artifactId>
+          <version>1.0</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjects(m1, m2);
     assertModules("m1", "m2");
@@ -752,29 +792,32 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testLibraryScopeForTwoDependentModules() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>" +
-                                           "    <dependencies>" +
-                                           "        <dependency>" +
-                                           "            <groupId>junit</groupId>" +
-                                           "            <artifactId>junit</artifactId>" +
-                                           "            <version>4.0</version>" +
-                                           "            <scope>provided</scope>" +
-                                           "        </dependency>" +
-                                           "    </dependencies>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+          <dependencies>
+              <dependency>
+                  <groupId>junit</groupId>
+                  <artifactId>junit</artifactId>
+                  <version>4.0</version>
+                  <scope>provided</scope>
+              </dependency>
+          </dependencies>
+      """);
     importProjects(m1, m2);
     assertModules("m1", "m2");
 
@@ -808,46 +851,49 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() throws Exception {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m3</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m3</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+        </dependency>
+      </dependencies>
+      """);
 
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>" +
-
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
-                                           "<artifactId>m3</artifactId>" +
-                                           "<version>1</version>" +
-
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.5</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
+    VirtualFile m3 = createModulePom("m3", """
+      <groupId>test</groupId>
+      <artifactId>m3</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.5</version>
+        </dependency>
+      </dependencies>
+      """);
 
     importProjects(m1, m2, m3);
     assertModules("m1", "m2", "m3");
@@ -883,34 +929,34 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     VirtualFile f2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof2);
     VirtualFile f3 = createProjectSubDir("m1/foo/bar3");
 
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
+                                           "<artifactId>m1</artifactId>\n" +
+                                           "<version>1</version>\n" +
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>" +
+                                           "<dependencies>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>junit</groupId>\n" +
+                                           "    <artifactId>junit</artifactId>\n" +
+                                           "    <version>4.0</version>\n" +
+                                           "  </dependency>\n" +
+                                           "</dependencies>\n" +
 
-                                           "<build>" +
-                                           "  <plugins>" +
-                                           "    <plugin>" +
-                                           "      <groupId>org.apache.maven.plugins</groupId>" +
-                                           "      <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "      <version>2.5</version>" +
-                                           "      <configuration>" +
-                                           "        <additionalClasspathElements>" +
-                                           "          <additionalClasspathElement>" + f1.getPath() + "</additionalClasspathElement>" +
-                                           "          <additionalClasspathElement>" + f2.getPath() + "</additionalClasspathElement>" +
-                                           "          <additionalClasspathElement>${project.basedir}/foo/bar3</additionalClasspathElement>" +
-                                           "        </additionalClasspathElements>" +
-                                           "      </configuration>" +
-                                           "    </plugin>" +
-                                           "  </plugins>" +
-                                           "</build>");
+                                           "<build>\n" +
+                                           "  <plugins>\n" +
+                                           "    <plugin>\n" +
+                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
+                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
+                                           "      <version>2.5</version>\n" +
+                                           "      <configuration>\n" +
+                                           "        <additionalClasspathElements>\n" +
+                                           "          <additionalClasspathElement>\n" + f1.getPath() + "</additionalClasspathElement>\n" +
+                                           "          <additionalClasspathElement>\n" + f2.getPath() + "</additionalClasspathElement>\n" +
+                                           "          <additionalClasspathElement>${project.basedir}/foo/bar3</additionalClasspathElement>\n" +
+                                           "        </additionalClasspathElements>\n" +
+                                           "      </configuration>\n" +
+                                           "    </plugin>\n" +
+                                           "  </plugins>\n" +
+                                           "</build>\n");
 
     importProjects(m1);
     assertModules("m1");
@@ -951,30 +997,33 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
   @Test
   public void testDoNotChangeClasspathForRegularModules() throws Exception {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+          <scope>runtime</scope>
+          <optional>true</optional>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+          <scope>provided</scope>
+          <optional>true</optional>
+        </dependency>
+      </dependencies>
+      """);
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>runtime</scope>" +
-                                           "    <optional>true</optional>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "    <scope>provided</scope>" +
-                                           "    <optional>true</optional>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(m1, m2);
     assertModules("m1", "m2");
@@ -1065,62 +1114,64 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     //         m5 -> m6
     // Dependencies are set up to be under the given scope, except that jmock is under a test scope,
     // and the m5 -> m6 dep is always under a compile scope.
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>" + scope + "</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m3</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>" + scope + "</scope>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>jmock</groupId>" +
-                                           "    <artifactId>jmock</artifactId>" +
-                                           "    <version>1.0</version>" +
-                                           "    <scope>test</scope>" +
-                                           "  </dependency>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m5</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>" + scope + "</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
-                                           "<artifactId>m3</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>jmock</groupId>" +
-                                           "    <artifactId>jmock</artifactId>" +
-                                           "    <version>1.0</version>" +
-                                           "    <scope>test</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-    VirtualFile m4 = createModulePom("m4", "<groupId>test</groupId>" +
-                                           "<artifactId>m4</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m3</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>" + scope + "</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
+                                           "<artifactId>m1</artifactId>\n" +
+                                           "<version>1</version>\n" +
+                                           "<dependencies>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>test</groupId>\n" +
+                                           "    <artifactId>m2</artifactId>\n" +
+                                           "    <version>1</version>\n" +
+                                           "    <scope>\n" + scope + "</scope>\n" +
+                                           "  </dependency>\n" +
+                                           "</dependencies>\n");
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>\n" +
+                                           "<artifactId>m2</artifactId>\n" +
+                                           "<version>1</version>\n" +
+                                           "<dependencies>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>test</groupId>\n" +
+                                           "    <artifactId>m3</artifactId>\n" +
+                                           "    <version>1</version>\n" +
+                                           "    <scope>\n" + scope + "</scope>\n" +
+                                           "  </dependency>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>jmock</groupId>\n" +
+                                           "    <artifactId>jmock</artifactId>\n" +
+                                           "    <version>1.0</version>\n" +
+                                           "    <scope>test</scope>\n" +
+                                           "  </dependency>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>test</groupId>\n" +
+                                           "    <artifactId>m5</artifactId>\n" +
+                                           "    <version>1</version>\n" +
+                                           "    <scope>\n" + scope + "</scope>\n" +
+                                           "  </dependency>\n" +
+                                           "</dependencies>\n");
+    VirtualFile m3 = createModulePom("m3", """
+      <groupId>test</groupId>
+      <artifactId>m3</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>jmock</groupId>
+          <artifactId>jmock</artifactId>
+          <version>1.0</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      """);
+    VirtualFile m4 = createModulePom("m4", "<groupId>test</groupId>\n" +
+                                           "<artifactId>m4</artifactId>\n" +
+                                           "<version>1</version>\n" +
+                                           "<dependencies>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>test</groupId>\n" +
+                                           "    <artifactId>m3</artifactId>\n" +
+                                           "    <version>1</version>\n" +
+                                           "    <scope>\n" + scope + "</scope>\n" +
+                                           "  </dependency>\n" +
+                                           "</dependencies>\n");
     // The default setupInWriteAction only creates directories up to m4.
     // Create directories for m5 and m6 which we will use for this test.
     WriteCommandAction.writeCommandAction(myProject).run(() -> createProjectSubDirs("m5/src/main/java",
@@ -1128,20 +1179,24 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
                                                                                     "m6/src/main/java",
                                                                                     "m6/src/test/java"));
-    VirtualFile m5 = createModulePom("m5", "<groupId>test</groupId>" +
-                                           "<artifactId>m5</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m6</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "    <scope>compile</scope>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
-    VirtualFile m6 = createModulePom("m6", "<groupId>test</groupId>" +
-                                           "<artifactId>m6</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m5 = createModulePom("m5", """
+      <groupId>test</groupId>
+      <artifactId>m5</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m6</artifactId>
+          <version>1</version>
+          <scope>compile</scope>
+        </dependency>
+      </dependencies>
+      """);
+    VirtualFile m6 = createModulePom("m6", """
+      <groupId>test</groupId>
+      <artifactId>m6</artifactId>
+      <version>1</version>
+      """);
     importProjects(m1, m2, m3, m4, m5, m6);
     assertModules("m1", "m2", "m3", "m4", "m5", "m6");
     createOutputDirectories();
