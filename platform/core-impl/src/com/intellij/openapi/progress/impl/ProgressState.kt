@@ -8,6 +8,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 data class ProgressState(
   val text: @ProgressText String?,
-  val details: @ProgressDetails String?,
+  val details: @ProgressDetails String? = null,
   val fraction: Double,
 )
