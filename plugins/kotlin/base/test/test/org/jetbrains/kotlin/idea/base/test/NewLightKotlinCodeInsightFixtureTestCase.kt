@@ -28,7 +28,7 @@ import kotlin.io.path.writeText
 abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
     protected abstract val pluginKind: KotlinPluginKind
 
-    val testRoot: String by lazy {
+    private val testRoot: String by lazy {
         val testClassPath = javaClass.getAnnotation(TestMetadata::class.java)?.value
         ?: error("@${TestMetadata::class.java} annotation not found on class '${javaClass.name}'")
         val pathString = KotlinTestHelpers.getTestRootPath(javaClass).resolve(testClassPath).absolutePathString()
@@ -50,7 +50,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         directiveParser.build()
     }
 
-    protected val testMethodPath: Path by lazy {
+    private val testMethodPath: Path by lazy {
         val testName = this.name
         val testClass = javaClass
         val testMethod = testClass.methods
@@ -115,7 +115,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         }
     }
 
-    protected fun getExpectedPath(expectedSuffix: String): String = buildString {
+    private fun getExpectedPath(expectedSuffix: String): String = buildString {
         append(testMethodPath.nameWithoutExtension)
         append(expectedSuffix)
         append(".")
