@@ -145,7 +145,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun getName(node: DefaultMutableTreeNode?, parent: DefaultMutableTreeNode?): String {
     when (val item = node?.userObject) {
       is InlayGroupSettingProvider -> return item.group.toString()
-      is InlayGroup -> return item.toString()
+      is InlayGroup -> return item.toString() //NON-NLS
       is Language -> return item.displayName
       is InlayProviderSettingsModel -> return if (parent?.userObject is InlayGroup) item.language.displayName else item.name
       is ImmediateConfigurable.Case -> return item.name
