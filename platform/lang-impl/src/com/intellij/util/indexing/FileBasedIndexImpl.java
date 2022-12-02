@@ -606,7 +606,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
     finally {
-      LOG.info("START INDEX SHUTDOWN");
+      long ms = System.currentTimeMillis();
+      LOG.info("Index dispose started");
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
@@ -659,7 +660,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       finally {
         IndexVersion.clearCachedIndexVersions();
       }
-      LOG.info("END INDEX SHUTDOWN");
+      LOG.info("Index dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
     }
   }
 
