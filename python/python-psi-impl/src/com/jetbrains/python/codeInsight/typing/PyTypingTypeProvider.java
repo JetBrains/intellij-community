@@ -363,6 +363,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         if (typeRef != null) {
           return Ref.create(toAsyncIfNeeded(function, typeRef.get()));
         }
+        // Don't rely on other type providers if a type hint is present, but cannot be resolved.
+        return Ref.create();
       }
     }
     return null;
