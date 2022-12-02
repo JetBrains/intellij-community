@@ -1083,9 +1083,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
              (n = tab.length) < MAXIMUM_CAPACITY) {
         int rs = resizeStamp(n);
         if (sc < 0) {
-          if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
-              sc == rs + MAX_RESIZERS || (nt = nextTable) == null ||
-              transferIndex <= 0) {
+          if (sc >>> RESIZE_STAMP_SHIFT != rs || (nt = nextTable) == null || transferIndex <= 0) {
             break;
           }
           if (SIZECTL.compareAndSet(this, sc, sc + 1)) {
@@ -2624,23 +2622,18 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     @Override
     public boolean contains(Object o) {
-      Object v;
-      Object r;
-      Entry<?> e;
-      return ((o instanceof IntObjectMap.Entry) &&
-              (r = map.get((e = (Entry)o).getKey())) != null &&
-              (v = e.getValue()) != null &&
-              (v == r || v.equals(r)));
+      if (!(o instanceof Map.Entry<?, ?> e) || !(e.getKey() instanceof Integer key)) return false;
+      Object r = map.get(key);
+      if (r == null) return false;
+      Object v = e.getValue();
+      return v != null && (v == r || v.equals(r));
     }
 
     @Override
     public boolean remove(Object o) {
-      Object v;
-      Entry<?> e;
-      return ((o instanceof Map.Entry) &&
-              (e = (Entry<?>)o) != null &&
-              (v = e.getValue()) != null &&
-              map.remove(e.getKey(), v));
+      if (!(o instanceof Map.Entry<?, ?> e) || !(e.getKey() instanceof Integer key)) return false;
+      Object v = e.getValue();
+      return v != null && map.remove(key, v);
     }
 
     /**
