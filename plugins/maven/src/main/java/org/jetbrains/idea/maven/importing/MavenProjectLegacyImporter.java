@@ -311,10 +311,10 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     obsoleteModulesToConfirm.removeIf(module -> myNewlyIgnoredModules.contains(module));
 
     // don't ask about module deletion if the pom file was moved to another directory
-    var renamingModuleNames = myMavenProjectToModuleName.keySet().stream()
+    var movedModuleNames = myMavenProjectToModuleName.keySet().stream()
       .filter(mavenProject -> !myMavenProjectToModule.containsKey(mavenProject))
       .map(mavenProject -> myMavenProjectToModuleName.get(mavenProject)).collect(Collectors.toSet());
-    obsoleteModulesToConfirm.removeIf(module -> renamingModuleNames.contains(module.getName()));
+    obsoleteModulesToConfirm.removeIf(module -> movedModuleNames.contains(module.getName()));
 
     if (obsoleteModulesToConfirm.isEmpty()) {
       return true;
