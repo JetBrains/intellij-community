@@ -20,7 +20,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
+public class MergingTaskQueueTest extends BasePlatformTestCase {
   private final DumbServiceMergingTaskQueue myQueue = new DumbServiceMergingTaskQueue();
 
   private void runAllTasks() {
