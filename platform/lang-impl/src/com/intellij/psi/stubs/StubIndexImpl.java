@@ -228,16 +228,7 @@ public final class StubIndexImpl extends StubIndexEx {
       FileBasedIndex.getInstance();
 
       myStateFuture = new CompletableFuture<>();
-      Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
-
-      if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
-        try {
-          future.get();
-        }
-        catch (Throwable t) {
-          LOG.error(t);
-        }
-      }
+      IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
     }
   }
 

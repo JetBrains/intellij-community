@@ -42,18 +42,11 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
       return
     }
 
-    if (ourDoParallelIndicesInitialization) {
-      runBlocking(Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads())) {
-        for (task in tasks) {
-          launch {
-            executeTask(task)
-          }
+    runBlocking(Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads())) {
+      for (task in tasks) {
+        launch {
+          executeTask(task)
         }
-      }
-    }
-    else {
-      for (callable in tasks) {
-        executeTask(callable)
       }
     }
   }
@@ -79,10 +72,7 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
 
   companion object {
     private val LOG = Logger.getInstance(IndexDataInitializer::class.java)
-    private val ourDoParallelIndicesInitialization = SystemProperties.getBooleanProperty("idea.parallel.indices.initialization", true)
 
-    @JvmField
-    val ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true)
     @OptIn(ExperimentalCoroutinesApi::class)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
