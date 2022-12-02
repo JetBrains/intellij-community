@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1457,12 +1454,12 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T getFirstItem(@Nullable Collection<? extends T> items) {
+  public static <T> @UnknownNullability T getFirstItem(@Nullable Collection<? extends T> items) {
     return getFirstItem(items, null);
   }
 
   @Contract(pure=true)
-  public static <T> T getFirstItem(@Nullable List<? extends T> items) {
+  public static <T> @UnknownNullability T getFirstItem(@Nullable List<? extends T> items) {
     return items == null || items.isEmpty() ? null : items.get(0);
   }
 
@@ -1479,7 +1476,7 @@ public final class ContainerUtil {
    * @return the only collection element or null
    */
   @Contract(pure=true)
-  public static <T> T getOnlyItem(@Nullable Collection<? extends T> items) {
+  public static <T> @UnknownNullability T getOnlyItem(@Nullable Collection<? extends T> items) {
     return getOnlyItem(items, null);
   }
 
@@ -1601,7 +1598,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T getLastItem(@Nullable List<? extends T> list) {
+  public static <T>  @UnknownNullability T getLastItem(@Nullable List<? extends T> list) {
     return getLastItem(list, null);
   }
 
