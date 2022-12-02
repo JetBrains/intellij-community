@@ -24,6 +24,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -77,6 +78,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private TableCell rollOverCell;
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
+  private boolean myShowLastHorizontalLine;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -415,6 +417,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       GraphicsUtil.setupAntialiasing(g);
     }
     super.paintComponent(g);
+    if (!showHorizontalLines && myShowLastHorizontalLine && getRowCount() > 0 && getColumnCount() > 0) {
+      Color color = g.getColor();
+      Rectangle leftCell = getCellRect(getRowCount() - 1, 0, true);
+      Rectangle rightCell = getCellRect(getRowCount() - 1, getColumnCount() - 1, true);
+      g.setColor(getGridColor());
+      SwingUtilities2.drawHLine(g, leftCell.x, rightCell.x + rightCell.width, leftCell.y + leftCell.height);
+      g.setColor(color);
+    }
     getEmptyText().paint(this, g);
   }
 
@@ -627,6 +637,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
     }
     super.setShowHorizontalLines(showHorizontalLines);
+  }
+
+  public void setShowLastHorizontalLine(boolean showLastHorizontalLine) {
+    myShowLastHorizontalLine = showLastHorizontalLine;
+  }
+
+  public boolean getShowLastHorizontalLine() {
+    return myShowLastHorizontalLine;
   }
 
   @Override
