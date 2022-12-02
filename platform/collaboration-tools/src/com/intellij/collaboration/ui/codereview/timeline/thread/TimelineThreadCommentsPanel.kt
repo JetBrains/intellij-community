@@ -33,7 +33,7 @@ class TimelineThreadCommentsPanel<T>(
     private const val FOLD_THRESHOLD = 3
   }
 
-  private val foldModel = SingleValueModel(true)
+  val foldModel = SingleValueModel(true)
 
   private val unfoldButtonPanel = BorderLayoutPanel().apply {
     isOpaque = false
@@ -87,7 +87,7 @@ class TimelineThreadCommentsPanel<T>(
     })
 
     foldModel.addListener { updateFolding(it) }
-    updateFolding(true)
+    updateFolding(foldModel.value)
   }
 
   private fun updateFolding(folded: Boolean) {

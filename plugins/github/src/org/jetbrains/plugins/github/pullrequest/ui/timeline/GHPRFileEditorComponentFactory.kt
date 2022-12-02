@@ -3,12 +3,16 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -20,6 +24,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.flow.MutableStateFlow
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -31,7 +36,10 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory.ActionsConfig
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory.AvatarConfig
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.submitAction
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
@@ -210,7 +218,19 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val model = GHCommentTextFieldModel(project) {
       commentService.addComment(EmptyProgressIndicator(), it)
     }
-    return GHCommentTextFieldFactory(model).create(avatarIconsProvider, currentUser)
+
+    val submitShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommentInputComponentFactory.defaultSubmitShortcut)
+    val newLineShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
+
+    val actions = ActionsConfig(CommentInputActionsComponentFactory.Config(
+      primaryAction = MutableStateFlow(model.submitAction(GithubBundle.message("action.comment.text"))),
+      hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
+        submitHint = GithubBundle.message("pull.request.comment.hint", submitShortcutText),
+        newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
+      ))
+    ))
+    val avatarConfig = AvatarConfig(avatarIconsProvider, currentUser, GHCommentTextFieldFactory.AvatarMode.TIMELINE)
+    return GHCommentTextFieldFactory(model).create(actions, avatarConfig)
   }
 
   private fun createItemComponentFactory(project: Project,

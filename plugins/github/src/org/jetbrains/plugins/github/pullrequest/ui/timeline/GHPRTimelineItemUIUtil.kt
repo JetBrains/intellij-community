@@ -5,7 +5,6 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels
@@ -16,21 +15,22 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import kotlin.math.roundToInt
 
-object GHPRTimelineItemUIUtil {
-  private const val MAIN_AVATAR_SIZE = 30
-  private const val AVATAR_CONTENT_GAP = 14
+internal object GHPRTimelineItemUIUtil {
+  const val MAIN_AVATAR_SIZE = 30
+  const val AVATAR_CONTENT_GAP = 14
+  const val TIMELINE_ICON_AND_GAP_WIDTH = MAIN_AVATAR_SIZE + AVATAR_CONTENT_GAP
 
   // 42em
-  val TIMELINE_CONTENT_WIDTH = (JBUIScale.DEF_SYSTEM_FONT_SIZE * 42).roundToInt()
-  val TIMELINE_ITEM_WIDTH = TIMELINE_CONTENT_WIDTH + MAIN_AVATAR_SIZE + AVATAR_CONTENT_GAP
+  val TIMELINE_CONTENT_WIDTH = GHUIUtil.TEXT_CONTENT_WIDTH
+  val TIMELINE_ITEM_WIDTH = TIMELINE_CONTENT_WIDTH + TIMELINE_ICON_AND_GAP_WIDTH
 
   fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
                  actor: GHActor,
@@ -40,7 +40,7 @@ object GHPRTimelineItemUIUtil {
     return createItem(avatarIconsProvider, actor, date, content, TIMELINE_CONTENT_WIDTH, actionsPanel = actionsPanel)
   }
 
-  private fun createTitleTextPane(actor: GHActor, date: Date?): HtmlEditorPane {
+  fun createTitleTextPane(actor: GHActor, date: Date?): HtmlEditorPane {
     val titleText = HtmlBuilder()
       .appendLink(actor.url, actor.getPresentableName())
       .append(HtmlChunk.nbsp())
@@ -63,7 +63,8 @@ object GHPRTimelineItemUIUtil {
                  actionsPanel: JComponent? = null): JComponent {
     val icon = avatarIconsProvider.getIcon(actor.avatarUrl, MAIN_AVATAR_SIZE)
     val titleTextPane = createTitleTextPane(actor, date)
-    return createItem(icon, titleTextPane, content, maxContentWidth, actionsPanel = actionsPanel)
+    return createItem(icon, titleTextPane, content, maxContentWidth,
+                      actionsPanel = actionsPanel)
   }
 
   fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
@@ -82,15 +83,17 @@ object GHPRTimelineItemUIUtil {
       }
     }
 
-    return createItem(icon, titlePanel, content, maxContentWidth, additionalContent, actionsPanel)
+    return createItem(icon, titlePanel, content, maxContentWidth,
+                      actionsPanel = actionsPanel,
+                      additionalContent = additionalContent)
   }
 
   private fun createItem(mainIcon: Icon,
                          title: JComponent,
                          content: JComponent,
                          maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
-                         additionalContent: JComponent? = null,
-                         actionsPanel: JComponent? = null): JComponent {
+                         actionsPanel: JComponent? = null,
+                         additionalContent: JComponent? = null): JComponent {
     val iconLabel = JLabel(mainIcon)
 
     return JPanel(null).apply {
@@ -107,7 +110,7 @@ object GHPRTimelineItemUIUtil {
         .gapRight("$AVATAR_CONTENT_GAP"))
 
       add(title, CC().push().split(2)
-        .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+        .minWidth("0").maxWidth("$TIMELINE_CONTENT_WIDTH"))
 
       if (actionsPanel != null) {
         add(actionsPanel, CC().gapLeft("10:push"))
@@ -117,9 +120,9 @@ object GHPRTimelineItemUIUtil {
         .minWidth("0").maxWidth("$maxContentWidth"))
 
       if (additionalContent != null) {
-        add(additionalContent, CC().push().grow().newline().spanX(2)
+        add(additionalContent, CC().grow().spanX(2).newline()
           .gapTop("4")
-          .minWidth("0").maxWidth("$TIMELINE_ITEM_WIDTH"))
+          .minWidth("0"))
       }
     }
   }

@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -25,8 +23,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHe
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 
 
@@ -42,20 +40,15 @@ object GHPRReviewCommentComponent {
              reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider,
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
-             showResolvedMarker: Boolean = true): JComponent {
+             showResolvedMarker: Boolean = true,
+             maxContentWidth: Int = GHUIUtil.TEXT_CONTENT_WIDTH): JComponent {
 
     val author = comment.author ?: ghostUser
-    val avatarLabel = ActionLink("") {
-      BrowserUtil.browse(author.url)
-    }.apply {
-      icon = avatarIconsProvider.getIcon(author.avatarUrl, AVATAR_SIZE)
+    val avatarLabel = JLabel(avatarIconsProvider.getIcon(author.avatarUrl, AVATAR_SIZE))
+    val titlePane = GHPRTimelineItemUIUtil.createTitleTextPane(author, comment.dateCreated).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    val titlePane = HtmlEditorPane().apply {
-      foreground = UIUtil.getContextHelpForeground()
-      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-    }
     val pendingLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.pending")} ", UIUtil.ComponentStyle.SMALL).apply {
       foreground = UIUtil.getContextHelpForeground()
       background = JBUI.CurrentTheme.Validator.warningBackgroundColor()
@@ -71,9 +64,9 @@ object GHPRReviewCommentComponent {
     }
 
     Controller(project,
-               thread, comment, ghostUser,
+               thread, comment,
                suggestedChangeHelper,
-               titlePane, pendingLabel, resolvedLabel, commentPanel,
+               pendingLabel, resolvedLabel, commentPanel,
                showResolvedMarker)
 
     val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentPanel, comment::body) {
@@ -89,31 +82,37 @@ object GHPRReviewCommentComponent {
       isVisible = comment.canBeDeleted
     }
 
-    val maxContentWidth = GHPRTimelineItemUIUtil.TIMELINE_CONTENT_WIDTH - AVATAR_SIZE - AVATAR_GAP
+    val actionsPanel = JPanel(HorizontalLayout(8)).apply {
+      isOpaque = false
+      isVisible = editButton.isVisible && deleteButton.isVisible
 
+      add(editButton)
+      add(deleteButton)
+    }
+
+    val maxTextWidth = maxContentWidth.let { it - AVATAR_SIZE - AVATAR_GAP }
     return JPanel(null).apply {
       isOpaque = false
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
-                           .fill(),
-                         AC().gap("${AVATAR_GAP}"))
+                           .fill().hideMode(3),
+                         AC().gap("$AVATAR_GAP"))
 
       add(avatarLabel, CC().pushY())
-      add(titlePane, CC().minWidth("0").split(5).alignX("left").pushX())
-      add(pendingLabel, CC().hideMode(3).alignX("left"))
-      add(resolvedLabel, CC().hideMode(3).alignX("left"))
-      add(editButton, CC().hideMode(3).gapBefore("12"))
-      add(deleteButton, CC().hideMode(3).gapBefore("8"))
-      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX().maxWidth("$maxContentWidth"))
+      add(titlePane, CC().minWidth("0").split(4).alignX("left").pushX())
+      add(pendingLabel, CC().alignX("left"))
+      add(resolvedLabel, CC().alignX("left"))
+      add(actionsPanel, CC().gapBefore("12:push"))
+      add(editablePaneHandle.panel, CC().newline().skip()
+        .push()
+        .minWidth("0").maxWidth("$maxTextWidth"))
     }
   }
 
   private class Controller(private val project: Project,
                            private val thread: GHPRReviewThreadModel,
                            private val comment: GHPRReviewCommentModel,
-                           private val ghostUser: GHUser,
                            private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
-                           private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
                            private val commentPanel: JComponent,
@@ -140,21 +139,13 @@ object GHPRReviewCommentComponent {
       commentPanel.removeAll()
       commentPanel.add(commentComponent)
 
-      val author = comment.author ?: ghostUser
-      val authorLink = HtmlBuilder()
-        .appendLink(author.url, author.login)
-        .toString()
-
       when (comment.state) {
         GHPullRequestReviewCommentState.PENDING -> {
           pendingLabel.isVisible = true
-          titlePane.setBody(authorLink)
         }
 
         GHPullRequestReviewCommentState.SUBMITTED -> {
           pendingLabel.isVisible = false
-          titlePane.setBody(GithubBundle.message("pull.request.review.commented", authorLink,
-                                                 GHUIUtil.formatActionDate(comment.dateCreated)))
         }
       }
 
@@ -168,7 +159,8 @@ object GHPRReviewCommentComponent {
               reviewDataProvider: GHPRReviewDataProvider,
               avatarIconsProvider: GHAvatarIconsProvider,
               suggestedChangeHelper: GHPRSuggestedChangeHelper,
-              showResolvedMarkerOnFirstComment: Boolean = true)
+              showResolvedMarkerOnFirstComment: Boolean = true,
+              maxContentWidth: Int = GHUIUtil.TEXT_CONTENT_WIDTH)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
       create(
@@ -176,7 +168,8 @@ object GHPRReviewCommentComponent {
         thread, comment, ghostUser,
         reviewDataProvider, avatarIconsProvider,
         suggestedChangeHelper,
-        showResolvedMarkerOnFirstComment)
+        showResolvedMarkerOnFirstComment,
+        maxContentWidth)
     }
   }
 }
