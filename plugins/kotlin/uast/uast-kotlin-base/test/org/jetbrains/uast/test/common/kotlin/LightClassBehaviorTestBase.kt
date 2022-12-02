@@ -11,6 +11,7 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
 interface LightClassBehaviorTestBase : UastPluginSelection {
@@ -129,6 +130,56 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         TestCase.assertEquals(getAMethodModifierList.textOffset, ktPropertyAccessorModifierList.textOffset)
         TestCase.assertEquals(getAMethodModifierList.textRange, ktPropertyAccessorModifierList.textRange)
+    }
+
+    fun checkThrowsList(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                abstract class Base
+                
+                class MyException : Exception()
+
+                class Test
+                @Throws(MyException::class)
+                constructor(
+                    private val p1: Int
+                ) : Base() {
+                    @Throws(MyException::class)
+                    fun readSomething(file: File) {
+                      throw MyException()
+                    }
+
+                    @get:Throws(MyException::class)
+                    val foo : String = "42"
+                    
+                    val boo : String = "42"
+                        @Throws(MyException::class)
+                        get
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val aClass = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+            .orFail("can't find class Test")
+
+        val visitedMethod = mutableListOf<UMethod>()
+        aClass.accept(object : AbstractUastVisitor() {
+            override fun visitMethod(node: UMethod): Boolean {
+                visitedMethod.add(node)
+
+                val throwTypes = node.javaPsi.throwsList.referencedTypes
+                TestCase.assertEquals(node.name, 1, throwTypes.size)
+                TestCase.assertEquals("MyException", throwTypes.single().className)
+
+                return super.visitMethod(node)
+            }
+        })
+
+        TestCase.assertNotNull(visitedMethod.singleOrNull { it.isConstructor })
+        TestCase.assertNotNull(visitedMethod.singleOrNull { it.name == "readSomething" })
+        TestCase.assertNotNull(visitedMethod.singleOrNull { it.name == "getFoo" })
+        TestCase.assertNotNull(visitedMethod.singleOrNull { it.name == "getBoo" })
     }
 
 }
