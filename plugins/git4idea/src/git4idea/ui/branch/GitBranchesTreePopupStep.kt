@@ -25,6 +25,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.RowIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.FList
 import git4idea.GitBranch
@@ -51,13 +52,13 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   override fun getFinalRunnable() = finalRunnable
 
-  private val _treeModel: GitBranchesTreeModel
+  private var _treeModel: GitBranchesTreeModel
   val treeModel: TreeModel
     get() = _treeModel
 
+  private val topLevelItems = mutableListOf<Any>()
 
   init {
-    val topLevelItems = mutableListOf<Any>()
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
       if (experimentalUIActionsGroup != null) {
@@ -72,7 +73,14 @@ class GitBranchesTreePopupStep(private val project: Project,
       topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
     }
 
-    _treeModel = GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
+    _treeModel = createTreeModel(false)
+  }
+  private fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
+    return when {
+      filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
+      !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositories, topLevelItems)
+      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems)
+    }
   }
 
   private fun List<PopupFactoryImpl.ActionItem>.addSeparators(): List<Any> {
@@ -97,7 +105,7 @@ class GitBranchesTreePopupStep(private val project: Project,
   }
 
   fun createTreePathFor(value: Any): TreePath? {
-    return _treeModel.createTreePathFor(value)
+    return createTreePathFor(_treeModel, value)
   }
 
   internal fun setPrefixGrouping(state: Boolean) {
@@ -130,9 +138,17 @@ class GitBranchesTreePopupStep(private val project: Project,
     _treeModel.filterBranches(branchType, matcher)
   }
 
+  fun updateTreeModelIfNeeded(tree: Tree, pattern: String?) {
+    if (!isFirstStep || repositories.size == 1) return
+
+    val filterActive = !(pattern.isNullOrBlank() || pattern == "/")
+    _treeModel = createTreeModel(filterActive)
+    tree.model = _treeModel
+  }
+
   override fun hasSubstep(selectedValue: Any?): Boolean {
     val userValue = selectedValue ?: return false
-    return (userValue is GitRepository && !_treeModel.isFilterActive()) ||
+    return (userValue is GitRepository && _treeModel !is GitBranchesTreeMultiRepoFilteringModel) ||
            userValue is GitBranch ||
            userValue is GitBranchesTreeModel.BranchUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled && userValue.action is ActionGroup)
@@ -140,7 +156,7 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   fun isSelectable(node: Any?): Boolean {
     val userValue = node ?: return false
-    return (userValue is GitRepository && !_treeModel.isFilterActive()) ||
+    return (userValue is GitRepository && _treeModel !is GitBranchesTreeMultiRepoFilteringModel) ||
            userValue is GitBranch ||
            userValue is GitBranchesTreeModel.BranchUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled)

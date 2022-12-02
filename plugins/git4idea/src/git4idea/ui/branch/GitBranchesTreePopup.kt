@@ -147,6 +147,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun isChild() = parent != null
 
   private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
+    treeStep.updateTreeModelIfNeeded(tree, pattern)
     treeStep.setSearchPattern(pattern)
     val haveBranches = traverseNodesAndExpand()
     if (haveBranches) {
