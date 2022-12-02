@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.SymbolicEntityId
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.annotations.Open
 import java.io.Serializable
 
-data class ModuleId(val name: String) : SymbolicEntityId<ModuleEntity> {
+data class ModuleId(val name: @NlsSafe String) : SymbolicEntityId<ModuleEntity> {
   override val presentableName: String
     get() = name
 
@@ -18,12 +20,12 @@ data class ModuleId(val name: String) : SymbolicEntityId<ModuleEntity> {
   override fun hashCode(): Int  = name.hashCode()
 }
 
-data class FacetId(val name: String, val type: String, val parentId: ModuleId) : SymbolicEntityId<FacetEntity> {
+data class FacetId(val name: @NlsSafe String, val type: @NonNls String, val parentId: ModuleId) : SymbolicEntityId<FacetEntity> {
   override val presentableName: String
     get() = name
 }
 
-data class ArtifactId(val name: String) : SymbolicEntityId<ArtifactEntity> {
+data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEntity> {
   override val presentableName: String
     get() = name
 }
@@ -78,9 +80,9 @@ sealed class LibraryTableId : Serializable {
       get() = "project"
   }
 
-  data class GlobalLibraryTableId(override val level: String) : LibraryTableId()
+  data class GlobalLibraryTableId(override val level: @NonNls String) : LibraryTableId()
 
-  abstract val level: String
+  abstract val level: @NonNls String
 }
 
 data class LibraryId(val name: String, val tableId: LibraryTableId) : SymbolicEntityId<LibraryEntity> {

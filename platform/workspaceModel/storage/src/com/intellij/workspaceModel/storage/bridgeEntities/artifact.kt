@@ -1,15 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -18,7 +13,7 @@ import org.jetbrains.deft.annotations.Child
 interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     val name: String
 
-    val artifactType: String
+    val artifactType: @NonNls String
     val includeInProjectBuild: Boolean
     val outputUrl: VirtualFileUrl?
 
@@ -74,8 +69,8 @@ var ArtifactEntity.Builder.artifactExternalSystemIdEntity: @Child ArtifactExtern
 interface ArtifactPropertiesEntity : WorkspaceEntity {
     val artifact: ArtifactEntity
 
-    val providerType: String
-    val propertiesXmlTag: String?
+    val providerType: @NonNls String
+    val propertiesXmlTag: @NonNls String?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -164,7 +159,7 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
 }
 
 interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
-    val directoryName: String
+    val directoryName: @NlsSafe String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -201,7 +196,7 @@ fun MutableEntityStorage.modifyEntity(entity: DirectoryPackagingElementEntity,
 //endregion
 
 interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
-    val fileName: String
+    val fileName: @NlsSafe String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -501,7 +496,7 @@ fun MutableEntityStorage.modifyEntity(entity: DirectoryCopyPackagingElementEntit
 //endregion
 
 interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElementEntity {
-    val pathInArchive: String
+    val pathInArchive: @NlsSafe String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -539,7 +534,7 @@ fun MutableEntityStorage.modifyEntity(entity: ExtractedDirectoryPackagingElement
 //endregion
 
 interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
-    val renamedOutputFileName: String?
+    val renamedOutputFileName: @NlsSafe String?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -575,8 +570,8 @@ fun MutableEntityStorage.modifyEntity(entity: FileCopyPackagingElementEntity,
 //endregion
 
 interface CustomPackagingElementEntity : CompositePackagingElementEntity {
-    val typeId: String
-    val propertiesXmlTag: String
+    val typeId: @NonNls String
+    val propertiesXmlTag: @NonNls String
 
   //region generated code
   @GeneratedCodeApiVersion(1)

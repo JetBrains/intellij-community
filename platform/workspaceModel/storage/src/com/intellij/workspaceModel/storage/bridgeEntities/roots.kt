@@ -1,16 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -21,7 +16,7 @@ interface ContentRootEntity : WorkspaceEntity {
     @EqualsBy
     val url: VirtualFileUrl
     val excludedUrls: List<@Child ExcludeUrlEntity>
-    val excludedPatterns: List<String>
+    val excludedPatterns: List<@NlsSafe String>
     val sourceRoots: List<@Child SourceRootEntity>
     @Child val sourceRootOrder: SourceRootOrderEntity?
 
@@ -68,7 +63,7 @@ interface SourceRootEntity : WorkspaceEntity {
     val contentRoot: ContentRootEntity
 
     val url: VirtualFileUrl
-    val rootType: String
+    val rootType: @NonNls String
 
     @Child val customSourceRootProperties: CustomSourceRootPropertiesEntity?
     val javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
@@ -150,7 +145,7 @@ fun MutableEntityStorage.modifyEntity(entity: SourceRootOrderEntity, modificatio
 interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
     val sourceRoot: SourceRootEntity
 
-    val propertiesXmlTag: String
+    val propertiesXmlTag: @NonNls String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -188,7 +183,7 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
     val sourceRoot: SourceRootEntity
 
     val generated: Boolean
-    val packagePrefix: String
+    val packagePrefix: @NlsSafe String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -229,7 +224,7 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
     val sourceRoot: SourceRootEntity
 
     val generated: Boolean
-    val relativeOutputPath: String
+    val relativeOutputPath: @NlsSafe String
 
   //region generated code
   @GeneratedCodeApiVersion(1)

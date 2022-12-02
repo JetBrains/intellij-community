@@ -1,25 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 /**
  * This entity stores order of facets in iml file. This is needed to ensure that facet tags are saved in the same order to avoid
  * unnecessary modifications of iml file.
  */
 interface FacetsOrderEntity : WorkspaceEntity {
-  val orderOfFacets: List<String>
+  val orderOfFacets: List<@NlsSafe String>
   val moduleEntity: ModuleEntity
 
   //region generated code
@@ -58,7 +53,7 @@ val ModuleEntity.facetOrder: @Child FacetsOrderEntity?
  * This property indicates that external-system-id attribute should be stored in facet configuration to avoid unnecessary modifications
  */
 interface FacetExternalSystemIdEntity : WorkspaceEntity {
-  val externalSystemId: String
+  val externalSystemId: @NonNls String
   val facet: FacetEntity
 
   //region generated code
@@ -100,7 +95,7 @@ val FacetEntity.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
  * This property indicates that external-system-id attribute should be stored in artifact configuration file to avoid unnecessary modifications
  */
 interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
-  val externalSystemId: String
+  val externalSystemId: @NonNls String
   val artifactEntity: ArtifactEntity
 
   //region generated code
@@ -142,7 +137,7 @@ val ArtifactEntity.artifactExternalSystemIdEntity: @Child ArtifactExternalSystem
  * This property indicates that external-system-id attribute should be stored in library configuration file to avoid unnecessary modifications
  */
 interface LibraryExternalSystemIdEntity: WorkspaceEntity {
-  val externalSystemId: String
+  val externalSystemId: @NonNls String
   val library: LibraryEntity
 
   //region generated code
@@ -185,7 +180,7 @@ val LibraryEntity.externalSystemId: @Child LibraryExternalSystemIdEntity?
  * unnecessary modifications of ipr file.
  */
 interface ArtifactsOrderEntity : WorkspaceEntity {
-  val orderOfArtifacts: List<String>
+  val orderOfArtifacts: List<@NlsSafe String>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
