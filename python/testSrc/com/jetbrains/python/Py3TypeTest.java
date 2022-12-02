@@ -1456,7 +1456,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("UnionType",
            """
              class MyMeta(type):
-                 def __or__(self, other) -> Any:
+                 def __or__(self, other):
                      return other
 
              class Foo(metaclass=MyMeta):
