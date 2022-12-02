@@ -499,6 +499,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
   @Override
   public void perform(@NotNull ProgressIndicator indicator) {
+    LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != Boolean.TRUE, "Scanning is already in progress");
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
     try {
       performScanningAndIndexing(indicator);
