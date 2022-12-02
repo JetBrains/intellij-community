@@ -22,7 +22,7 @@ UFile (package = ) [public abstract interface Pizza {...]
         UField (name = size) [@org.jetbrains.annotations.NotNull private final var size: int = 42]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULiteralExpression (value = 42) [42] = 42
-        UMethod (name = getName) [public fun getName() : java.lang.String {...}]
+        UMethod (name = getName) [public final fun getName() : java.lang.String {...}]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return java.lang.<init>("Margherita")] = Nothing
                     UQualifiedReferenceExpression [java.lang.<init>("Margherita")] = external <init>("Margherita")("Margherita")
@@ -33,13 +33,13 @@ UFile (package = ) [public abstract interface Pizza {...]
                             UIdentifier (Identifier (String)) [UIdentifier (Identifier (String))]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: String) [<init>] = external <init>("Margherita")("Margherita")
                             ULiteralExpression (value = "Margherita") ["Margherita"] = "Margherita"
-        UMethod (name = contains) [public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {...}]
+        UMethod (name = contains) [public final fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {...}]
             UParameter (name = ingredient) [@org.jetbrains.annotations.NotNull var ingredient: Pizza.Ingredient]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return false] = Nothing
                     ULiteralExpression (value = false) [false] = false
-        UMethod (name = getSize) [public fun getSize() : int = UastEmptyExpression]
+        UMethod (name = getSize) [public final fun getSize() : int = UastEmptyExpression]
         UMethod (name = Margherita) [public fun Margherita(@org.jetbrains.annotations.NotNull size: int) = UastEmptyExpression]
             UParameter (name = size) [@org.jetbrains.annotations.NotNull var size: int = 42]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

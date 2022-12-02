@@ -15,13 +15,13 @@ public abstract interface Pizza {
 
 public final class Margherita : Pizza {
     @org.jetbrains.annotations.NotNull private final var size: int = 42
-    public fun getName() : java.lang.String {
+    public final fun getName() : java.lang.String {
         return java.lang.<init>("Margherita")
     }
-    public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {
+    public final fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {
         return false
     }
-    public fun getSize() : int = UastEmptyExpression
+    public final fun getSize() : int = UastEmptyExpression
     public fun Margherita(@org.jetbrains.annotations.NotNull size: int) = UastEmptyExpression
     public fun Margherita() = UastEmptyExpression
 }

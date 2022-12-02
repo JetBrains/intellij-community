@@ -29,7 +29,7 @@ public final class B : A {
 }
 
 public final class C : A {
-    public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {
+    public final fun foo(@org.jetbrains.annotations.NotNull a: long) : void {
         super.foo(a)
     }
     public fun C(@org.jetbrains.annotations.NotNull p: java.lang.String) {

@@ -70,7 +70,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
                     USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
                     USimpleNameReferenceExpression (identifier = param) [param] : PsiType:String
     UClass (name = C) [public final class C : A {...}]
-        UMethod (name = foo) [public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {...}]
+        UMethod (name = foo) [public final fun foo(@org.jetbrains.annotations.NotNull a: long) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: long]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:void

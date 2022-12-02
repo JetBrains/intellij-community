@@ -14,7 +14,7 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
     UClass (name = BaseImpl) [public final class BaseImpl : Base {...}]
         UField (name = x) [@org.jetbrains.annotations.NotNull private final var x: int]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-        UMethod (name = print) [public fun print() : void {...}]
+        UMethod (name = print) [public final fun print() : void {...}]
             UBlockExpression [{...}] = external print(x)(Undetermined)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [print(x)] = external print(x)(Undetermined)
                     UIdentifier (Identifier (print)) [UIdentifier (Identifier (print))]

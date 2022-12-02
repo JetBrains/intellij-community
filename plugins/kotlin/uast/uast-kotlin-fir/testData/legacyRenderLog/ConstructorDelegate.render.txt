@@ -10,7 +10,7 @@ public abstract interface Base {
 
 public final class BaseImpl : Base {
     @org.jetbrains.annotations.NotNull private final var x: int
-    public fun print() : void {
+    public final fun print() : void {
         print(x)
     }
     public final fun getX() : int = UastEmptyExpression

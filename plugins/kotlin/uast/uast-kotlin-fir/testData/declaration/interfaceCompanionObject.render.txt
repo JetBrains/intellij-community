@@ -3,7 +3,7 @@ package test.pkg
 public abstract interface Foo {
     @null public static final var Companion: test.pkg.Foo.Companion
     @org.jetbrains.annotations.NotNull @kotlin.jvm.JvmField public static final var answer: int = 42
-    public static default fun sayHello() : void {
+    public static final default fun sayHello() : void {
         println("Hello, world!")
     }
     public static final class Companion {

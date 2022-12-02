@@ -1,7 +1,7 @@
 public final class Foo {
     @org.jetbrains.annotations.NotNull private final var p1: java.lang.String
     @org.jetbrains.annotations.NotNull private final var p2: java.lang.String
-    public fun toString() : java.lang.String {
+    public final fun toString() : java.lang.String {
         return buildString({
             append("(")
             append(p1)

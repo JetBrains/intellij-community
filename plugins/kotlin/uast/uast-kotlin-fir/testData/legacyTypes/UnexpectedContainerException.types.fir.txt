@@ -28,7 +28,7 @@ UFile (package = ) [public abstract interface Callback {...]
                                 UReturnExpression [return anonymous object : Callback {...            }]
                                     UObjectLiteralExpression [anonymous object : Callback {...            }] : PsiType:Callback
                                         UClass (name = null) [final class null : Callback {...}]
-                                            UMethod (name = onError) [public fun onError(@org.jetbrains.annotations.NotNull throwable: java.lang.Throwable) : void {...}]
+                                            UMethod (name = onError) [public final fun onError(@org.jetbrains.annotations.NotNull throwable: java.lang.Throwable) : void {...}]
                                                 UParameter (name = throwable) [@org.jetbrains.annotations.NotNull var throwable: java.lang.Throwable]
                                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                                 UBlockExpression [{...}] : PsiType:Void
