@@ -34,11 +34,15 @@ public class CompressedRefs {
       assert root.get() == null || root.get().equals(ref.getRoot()) : "All references are supposed to be from the single root";
       root.set(ref.getRoot());
 
+      int index = myStorage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
       if (ref.getType().isBranch()) {
-        putRef(myBranches, ref, myStorage);
+        myBranches.computeIfAbsent(index, key -> new SmartList<>()).add(ref);
       }
       else {
-        putRefIndex(myTags, ref, myStorage);
+        int refIndex = myStorage.getRefIndex(ref);
+        if (refIndex != VcsLogStorageImpl.NO_INDEX) {
+          myTags.computeIfAbsent(index, key -> new IntArrayList()).add(refIndex);
+        }
       }
     });
     //noinspection SSBasedInspection
@@ -110,20 +114,5 @@ public class CompressedRefs {
     myBranches.keySet().intStream().forEach(result::add);
     myTags.keySet().intStream().forEach(result::add);
     return result;
-  }
-
-  private static void putRef(@NotNull Int2ObjectMap<List<VcsRef>> map, @NotNull VcsRef ref, @NotNull VcsLogStorage storage) {
-    int index = storage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-    List<VcsRef> list = map.get(index);
-    if (list == null) map.put(index, list = new SmartList<>());
-    list.add(ref);
-  }
-
-  private static void putRefIndex(@NotNull Int2ObjectMap<IntArrayList> map, @NotNull VcsRef ref, @NotNull VcsLogStorage storage) {
-    int index = storage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-    //noinspection SSBasedInspection
-    IntArrayList list = map.get(index);
-    if (list == null) map.put(index, list = new IntArrayList());
-    list.add(storage.getRefIndex(ref));
   }
 }
