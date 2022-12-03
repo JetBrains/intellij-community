@@ -113,7 +113,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                                         ?: return false
                                 val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
                                 val fqName = annotationType.classId.asFqNameString()
-                                fqName == annotationFQN
+                                if (fqName != annotationFQN) return true
                             }
                         }
                     }
