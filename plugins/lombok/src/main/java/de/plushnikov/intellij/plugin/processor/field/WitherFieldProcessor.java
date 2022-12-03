@@ -99,12 +99,12 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private boolean validIsWitherUnique(@NotNull PsiField psiField, @NotNull final ProblemSink builder) {
     final PsiClass fieldContainingClass = psiField.getContainingClass();
-    final String psiFieldName = psiField.getName();
     if (fieldContainingClass != null) {
       final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(fieldContainingClass);
       filterToleratedElements(classMethods);
 
       final AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
+      final String psiFieldName = psiField.getName();
       final Collection<String> possibleWitherNames =
         LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
       for (String witherName : possibleWitherNames) {
@@ -178,10 +178,8 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
     final PsiClass psiFieldContainingClass = psiField.getContainingClass();
     if (psiFieldContainingClass != null) {
       final PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiFieldContainingClass);
-      final String psiFieldName = psiField.getName();
-      final PsiType psiFieldType = psiField.getType();
 
-      methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), getWitherName(accessorsInfo, psiFieldName, psiFieldType))
+      methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), LombokUtils.getWitherName(psiField, accessorsInfo))
         .withMethodReturnType(returnType)
         .withContainingClass(psiFieldContainingClass)
         .withNavigationElement(psiField)
@@ -195,6 +193,8 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
       PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
       LombokCopyableAnnotations.copyOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
 
+      final String psiFieldName = psiField.getName();
+      final PsiType psiFieldType = psiField.getType();
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder);
       methodBuilder.withParameter(methodParameter);
 
@@ -218,10 +218,6 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private static AccessorsInfo buildAccessorsInfo(@NotNull PsiField psiField) {
     return AccessorsInfo.buildFor(psiField).withFluent(false);
-  }
-
-  private static String getWitherName(@NotNull AccessorsInfo accessorsInfo, String psiFieldName, PsiType psiFieldType) {
-    return LombokUtils.toWitherName(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiFieldType));
   }
 
   private static String getConstructorCall(@NotNull PsiField psiField, @NotNull PsiClass psiClass) {
