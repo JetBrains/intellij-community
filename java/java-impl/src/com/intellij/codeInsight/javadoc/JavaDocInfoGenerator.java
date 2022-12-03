@@ -1940,7 +1940,8 @@ public class JavaDocInfoGenerator {
 
   @Contract(mutates = "param1")
   private void generateInlineReturnValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag, InheritDocProvider<PsiElement[]> provider) {
-    buffer.append("Returns ");
+    // According to the spec (https://docs.oracle.com/en/java/javase/16/docs/specs/javadoc/doc-comment-spec.html#return), the format is "Returns<description>."
+    buffer.append("Returns");
     final PsiElement[] children = tag.getChildren();
     generateValue(buffer, Arrays.copyOfRange(children, 2, children.length - 1), 0, provider);
     buffer.append(".");
