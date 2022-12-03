@@ -114,12 +114,7 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.providerType != dataSource.providerType) this.providerType = dataSource.providerType
       if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
-      if (parents != null) {
-        val artifactNew = parents.filterIsInstance<ArtifactEntity>().single()
-        if ((this.artifact as WorkspaceEntityBase).id != (artifactNew as WorkspaceEntityBase).id) {
-          this.artifact = artifactNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

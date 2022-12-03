@@ -104,8 +104,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.versions != dataSource.versions) this.versions = dataSource.versions.toMutableSet()
       if (this.names != dataSource.names) this.names = dataSource.names.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

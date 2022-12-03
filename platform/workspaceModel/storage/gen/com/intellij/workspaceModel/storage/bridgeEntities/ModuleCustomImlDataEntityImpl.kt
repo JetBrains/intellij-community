@@ -116,12 +116,7 @@ open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEnti
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.rootManagerTagCustomData != dataSource?.rootManagerTagCustomData) this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
       if (this.customModuleOptions != dataSource.customModuleOptions) this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
-      if (parents != null) {
-        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
-          this.module = moduleNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

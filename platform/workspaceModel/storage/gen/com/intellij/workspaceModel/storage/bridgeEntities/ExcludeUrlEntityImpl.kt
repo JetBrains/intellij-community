@@ -91,8 +91,7 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
       dataSource as ExcludeUrlEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.url != dataSource.url) this.url = dataSource.url
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

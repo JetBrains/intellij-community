@@ -123,12 +123,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       if (this.compilerOutput != dataSource?.compilerOutput) this.compilerOutput = dataSource.compilerOutput
       if (this.compilerOutputForTests != dataSource?.compilerOutputForTests) this.compilerOutputForTests = dataSource.compilerOutputForTests
       if (this.languageLevelId != dataSource?.languageLevelId) this.languageLevelId = dataSource.languageLevelId
-      if (parents != null) {
-        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
-          this.module = moduleNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

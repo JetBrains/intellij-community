@@ -20,9 +20,6 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -115,12 +112,7 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.generated != dataSource.generated) this.generated = dataSource.generated
       if (this.relativeOutputPath != dataSource.relativeOutputPath) this.relativeOutputPath = dataSource.relativeOutputPath
-      if (parents != null) {
-        val sourceRootNew = parents.filterIsInstance<SourceRootEntity>().single()
-        if ((this.sourceRoot as WorkspaceEntityBase).id != (sourceRootNew as WorkspaceEntityBase).id) {
-          this.sourceRoot = sourceRootNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

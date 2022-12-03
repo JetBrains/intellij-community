@@ -20,6 +20,9 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 import java.util.UUID
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -98,12 +101,7 @@ open class ChildSampleEntityImpl(val dataSource: ChildSampleEntityData) : ChildS
       dataSource as ChildSampleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<SampleEntity?>().singleOrNull()
-        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
-          this.parentEntity = parentEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

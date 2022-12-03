@@ -100,12 +100,7 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
       dataSource as DirectoryCopyPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
-        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
-          this.parentEntity = parentEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

@@ -86,8 +86,7 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
       dataSource as FinalFieldsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

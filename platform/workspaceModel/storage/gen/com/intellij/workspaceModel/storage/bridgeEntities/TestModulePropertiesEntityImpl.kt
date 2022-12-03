@@ -115,12 +115,7 @@ open class TestModulePropertiesEntityImpl(val dataSource: TestModulePropertiesEn
       dataSource as TestModulePropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.productionModuleId != dataSource.productionModuleId) this.productionModuleId = dataSource.productionModuleId
-      if (parents != null) {
-        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
-          this.module = moduleNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

@@ -20,9 +20,6 @@ import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -119,12 +116,7 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       dataSource as FacetsOrderEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.orderOfFacets != dataSource.orderOfFacets) this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
-      if (parents != null) {
-        val moduleEntityNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.moduleEntity as WorkspaceEntityBase).id != (moduleEntityNew as WorkspaceEntityBase).id) {
-          this.moduleEntity = moduleEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

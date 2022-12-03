@@ -83,8 +83,7 @@ open class UnknownPropertyTypeEntityImpl(val dataSource: UnknownPropertyTypeEnti
       dataSource as UnknownPropertyTypeEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.date != dataSource.date) this.date = dataSource.date
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

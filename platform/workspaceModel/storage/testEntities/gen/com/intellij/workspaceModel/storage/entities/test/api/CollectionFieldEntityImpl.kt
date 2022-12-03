@@ -17,6 +17,9 @@ import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -107,8 +110,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.versions != dataSource.versions) this.versions = dataSource.versions.toMutableSet()
       if (this.names != dataSource.names) this.names = dataSource.names.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

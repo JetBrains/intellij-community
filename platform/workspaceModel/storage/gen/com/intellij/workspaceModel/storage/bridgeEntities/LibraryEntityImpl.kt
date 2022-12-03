@@ -163,8 +163,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.tableId != dataSource.tableId) this.tableId = dataSource.tableId
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
     private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>) {

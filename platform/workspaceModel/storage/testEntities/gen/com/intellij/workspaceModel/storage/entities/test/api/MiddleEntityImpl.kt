@@ -16,6 +16,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -94,12 +97,7 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
       dataSource as MiddleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.property != dataSource.property) this.property = dataSource.property
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<CompositeBaseEntity?>().singleOrNull()
-        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
-          this.parentEntity = parentEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

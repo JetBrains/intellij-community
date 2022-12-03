@@ -136,16 +136,7 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
       if (this.facetType != dataSource.facetType) this.facetType = dataSource.facetType
       if (this.configurationXmlTag != dataSource?.configurationXmlTag) this.configurationXmlTag = dataSource.configurationXmlTag
       if (this.moduleId != dataSource.moduleId) this.moduleId = dataSource.moduleId
-      if (parents != null) {
-        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
-          this.module = moduleNew
-        }
-        val underlyingFacetNew = parents.filterIsInstance<FacetEntity?>().singleOrNull()
-        if ((underlyingFacetNew == null && this.underlyingFacet != null) || (underlyingFacetNew != null && this.underlyingFacet == null) || (underlyingFacetNew != null && this.underlyingFacet != null && (this.underlyingFacet as WorkspaceEntityBase).id != (underlyingFacetNew as WorkspaceEntityBase).id)) {
-          this.underlyingFacet = underlyingFacetNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

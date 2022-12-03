@@ -14,6 +14,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -92,8 +95,7 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
       if (this.data != dataSource.data) this.data = dataSource.data
       if (this.boolData != dataSource.boolData) this.boolData = dataSource.boolData
       if (this.optionalData != dataSource?.optionalData) this.optionalData = dataSource.optionalData
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

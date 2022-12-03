@@ -145,8 +145,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       if (this.artifactType != dataSource.artifactType) this.artifactType = dataSource.artifactType
       if (this.includeInProjectBuild != dataSource.includeInProjectBuild) this.includeInProjectBuild = dataSource.includeInProjectBuild
       if (this.outputUrl != dataSource?.outputUrl) this.outputUrl = dataSource.outputUrl
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

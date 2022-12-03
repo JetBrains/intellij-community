@@ -100,12 +100,7 @@ open class ArtifactOutputPackagingElementEntityImpl(val dataSource: ArtifactOutp
       dataSource as ArtifactOutputPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.artifact != dataSource?.artifact) this.artifact = dataSource.artifact
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
-        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
-          this.parentEntity = parentEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

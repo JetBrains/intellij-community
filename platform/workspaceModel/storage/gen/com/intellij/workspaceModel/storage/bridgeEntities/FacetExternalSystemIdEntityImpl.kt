@@ -19,9 +19,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -111,12 +108,7 @@ open class FacetExternalSystemIdEntityImpl(val dataSource: FacetExternalSystemId
       dataSource as FacetExternalSystemIdEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.externalSystemId != dataSource.externalSystemId) this.externalSystemId = dataSource.externalSystemId
-      if (parents != null) {
-        val facetNew = parents.filterIsInstance<FacetEntity>().single()
-        if ((this.facet as WorkspaceEntityBase).id != (facetNew as WorkspaceEntityBase).id) {
-          this.facet = facetNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

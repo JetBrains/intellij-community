@@ -103,8 +103,7 @@ open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : Main
       dataSource as MainEntityToParent
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.x != dataSource.x) this.x = dataSource.x
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

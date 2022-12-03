@@ -25,9 +25,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -173,12 +170,7 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.url != dataSource.url) this.url = dataSource.url
       if (this.excludedPatterns != dataSource.excludedPatterns) this.excludedPatterns = dataSource.excludedPatterns.toMutableList()
-      if (parents != null) {
-        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
-          this.module = moduleNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

@@ -130,16 +130,7 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
       dataSource as ArchivePackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.fileName != dataSource.fileName) this.fileName = dataSource.fileName
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
-        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
-          this.parentEntity = parentEntityNew
-        }
-        val artifactNew = parents.filterIsInstance<ArtifactEntity?>().singleOrNull()
-        if ((artifactNew == null && this.artifact != null) || (artifactNew != null && this.artifact == null) || (artifactNew != null && this.artifact != null && (this.artifact as WorkspaceEntityBase).id != (artifactNew as WorkspaceEntityBase).id)) {
-          this.artifact = artifactNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

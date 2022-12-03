@@ -9,22 +9,33 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
+import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
 open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase() {
 
   companion object {
-
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
+                                                                               ContentRootEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, true)
 
     val connections = listOf<ConnectionId>(
+      CONTENTROOT_CONNECTION_ID,
     )
 
   }
@@ -34,6 +45,9 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
 
   override val descriptor: Descriptor
     get() = dataSource.descriptor
+
+  override val contentRoot: ContentRootEntity?
+    get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -93,8 +107,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.info != dataSource.info) this.info = dataSource.info
       if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -122,6 +135,41 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
         getEntityData(true).descriptor = value
         changedProperty.add("descriptor")
 
+      }
+
+    override var contentRoot: ContentRootEntity?
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                     CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+        }
+        else {
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+        }
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
+          _diff.updateOneToOneChildOfParent(CONTENTROOT_CONNECTION_ID, this, value)
+        }
+        else {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = value
+        }
+        changedProperty.add("contentRoot")
       }
 
     override fun getEntityClass(): Class<ProjectModelTestEntity> = ProjectModelTestEntity::class.java

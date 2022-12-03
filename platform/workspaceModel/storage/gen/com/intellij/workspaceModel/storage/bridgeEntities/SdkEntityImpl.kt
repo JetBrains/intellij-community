@@ -113,12 +113,7 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       dataSource as SdkEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.homeUrl != dataSource.homeUrl) this.homeUrl = dataSource.homeUrl
-      if (parents != null) {
-        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
-        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
-          this.library = libraryNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

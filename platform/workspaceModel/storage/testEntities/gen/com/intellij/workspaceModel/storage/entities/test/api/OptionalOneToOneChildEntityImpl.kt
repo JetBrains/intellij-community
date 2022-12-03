@@ -17,6 +17,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -96,12 +99,7 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
       dataSource as OptionalOneToOneChildEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (parents != null) {
-        val parentNew = parents.filterIsInstance<OptionalOneToOneParentEntity?>().singleOrNull()
-        if ((parentNew == null && this.parent != null) || (parentNew != null && this.parent == null) || (parentNew != null && this.parent != null && (this.parent as WorkspaceEntityBase).id != (parentNew as WorkspaceEntityBase).id)) {
-          this.parent = parentNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

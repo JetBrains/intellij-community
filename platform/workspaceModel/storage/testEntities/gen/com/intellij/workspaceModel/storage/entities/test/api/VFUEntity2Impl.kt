@@ -15,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -114,8 +117,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       if (this.filePath != dataSource?.filePath) this.filePath = dataSource.filePath
       if (this.directoryPath != dataSource.directoryPath) this.directoryPath = dataSource.directoryPath
       if (this.notNullRoots != dataSource.notNullRoots) this.notNullRoots = dataSource.notNullRoots.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

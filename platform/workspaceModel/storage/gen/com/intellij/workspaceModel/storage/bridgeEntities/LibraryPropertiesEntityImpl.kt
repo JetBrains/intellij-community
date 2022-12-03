@@ -117,12 +117,7 @@ open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityDa
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.libraryType != dataSource.libraryType) this.libraryType = dataSource.libraryType
       if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
-      if (parents != null) {
-        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
-        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
-          this.library = libraryNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

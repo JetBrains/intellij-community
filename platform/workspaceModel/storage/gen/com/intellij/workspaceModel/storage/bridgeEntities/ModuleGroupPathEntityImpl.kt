@@ -120,12 +120,7 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       dataSource as ModuleGroupPathEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.path != dataSource.path) this.path = dataSource.path.toMutableList()
-      if (parents != null) {
-        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
-          this.module = moduleNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

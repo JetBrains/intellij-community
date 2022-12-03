@@ -15,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -93,12 +96,7 @@ open class AttachedEntityListImpl(val dataSource: AttachedEntityListData) : Atta
       dataSource as AttachedEntityList
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (parents != null) {
-        val refNew = parents.filterIsInstance<MainEntityList?>().singleOrNull()
-        if ((refNew == null && this.ref != null) || (refNew != null && this.ref == null) || (refNew != null && this.ref != null && (this.ref as WorkspaceEntityBase).id != (refNew as WorkspaceEntityBase).id)) {
-          this.ref = refNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

@@ -2,6 +2,10 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
@@ -22,15 +26,15 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
     override val symbolicId: ScriptId
         get() = ScriptId(path)
 
-    //region generated code
-    @GeneratedCodeApiVersion(1)
-    interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
-        override var entitySource: EntitySource
-        override var path: String
-        override var dependencies: List<KotlinScriptLibraryEntity>
-    }
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
+    override var entitySource: EntitySource
+    override var path: String
+    override var dependencies: List<KotlinScriptLibraryEntity>
+  }
 
-    companion object : Type<KotlinScriptEntity, Builder>() {
+  companion object : Type<KotlinScriptEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -47,8 +51,8 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KotlinScriptEntity, modification: KotlinScriptEntity.Builder.() -> Unit) =
-    modifyEntity(KotlinScriptEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: KotlinScriptEntity, modification: KotlinScriptEntity.Builder.() -> Unit) = modifyEntity(
+  KotlinScriptEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?): EntitySource

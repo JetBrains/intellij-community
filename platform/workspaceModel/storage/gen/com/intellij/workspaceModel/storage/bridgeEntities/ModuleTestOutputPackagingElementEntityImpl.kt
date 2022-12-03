@@ -100,12 +100,7 @@ open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTest
       dataSource as ModuleTestOutputPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.module != dataSource?.module) this.module = dataSource.module
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
-        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
-          this.parentEntity = parentEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

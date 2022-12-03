@@ -19,9 +19,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -112,12 +109,7 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
       dataSource as LibraryExternalSystemIdEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.externalSystemId != dataSource.externalSystemId) this.externalSystemId = dataSource.externalSystemId
-      if (parents != null) {
-        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
-        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
-          this.library = libraryNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

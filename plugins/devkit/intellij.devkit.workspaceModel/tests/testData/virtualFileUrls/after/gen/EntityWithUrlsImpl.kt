@@ -113,8 +113,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       if (this.nullableUrl != dataSource?.nullableUrl) this.nullableUrl = dataSource.nullableUrl
       if (this.listOfUrls != dataSource.listOfUrls) this.listOfUrls = dataSource.listOfUrls.toMutableList()
       if (this.dataClassWithUrl != dataSource.dataClassWithUrl) this.dataClassWithUrl = dataSource.dataClassWithUrl
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

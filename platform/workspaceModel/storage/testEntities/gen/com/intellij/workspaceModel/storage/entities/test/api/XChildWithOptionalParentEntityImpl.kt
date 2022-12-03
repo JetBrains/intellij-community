@@ -16,6 +16,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -95,12 +98,7 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
       dataSource as XChildWithOptionalParentEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.childProperty != dataSource.childProperty) this.childProperty = dataSource.childProperty
-      if (parents != null) {
-        val optionalParentNew = parents.filterIsInstance<XParentEntity?>().singleOrNull()
-        if ((optionalParentNew == null && this.optionalParent != null) || (optionalParentNew != null && this.optionalParent == null) || (optionalParentNew != null && this.optionalParent != null && (this.optionalParent as WorkspaceEntityBase).id != (optionalParentNew as WorkspaceEntityBase).id)) {
-          this.optionalParent = optionalParentNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

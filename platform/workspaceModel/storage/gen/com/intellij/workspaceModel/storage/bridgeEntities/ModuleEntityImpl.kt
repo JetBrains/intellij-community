@@ -187,8 +187,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.type != dataSource?.type) this.type = dataSource.type
       if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

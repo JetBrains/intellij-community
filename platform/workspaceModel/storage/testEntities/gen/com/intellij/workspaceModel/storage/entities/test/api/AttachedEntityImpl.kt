@@ -15,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -103,12 +106,7 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
       dataSource as AttachedEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (parents != null) {
-        val refNew = parents.filterIsInstance<MainEntity>().single()
-        if ((this.ref as WorkspaceEntityBase).id != (refNew as WorkspaceEntityBase).id) {
-          this.ref = refNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

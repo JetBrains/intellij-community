@@ -110,22 +110,7 @@ ${
           }
         }
 
-        `if`("parents != null") {
-          allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
-            val parentType = it.valueType
-            if (parentType is ValueType.Optional) {
-              line("val ${it.name}New = parents.filterIsInstance<${parentType.javaType}>().singleOrNull()")
-              `if`("(${it.name}New == null && this.${it.name} != null) || (${it.name}New != null && this.${it.name} == null) || (${it.name}New != null && this.${it.name} != null && (this.${it.name} as WorkspaceEntityBase).id != (${it.name}New as WorkspaceEntityBase).id)") {
-                line("this.${it.name} = ${it.name}New")
-              }
-            } else {
-              line("val ${it.name}New = parents.filterIsInstance<${parentType.javaType}>().single()")
-              `if`("(this.${it.name} as WorkspaceEntityBase).id != (${it.name}New as WorkspaceEntityBase).id") {
-                line("this.${it.name} = ${it.name}New")
-              }
-            }
-          }
-        }
+        line("updateChildToParentReferences(parents)")
       }
 
       if (name == LibraryEntity::class.simpleName) {

@@ -18,6 +18,9 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -104,8 +107,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
       if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty.toMutableSet()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

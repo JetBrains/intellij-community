@@ -123,16 +123,7 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactRootElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
-        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
-          this.parentEntity = parentEntityNew
-        }
-        val artifactNew = parents.filterIsInstance<ArtifactEntity?>().singleOrNull()
-        if ((artifactNew == null && this.artifact != null) || (artifactNew != null && this.artifact == null) || (artifactNew != null && this.artifact != null && (this.artifact as WorkspaceEntityBase).id != (artifactNew as WorkspaceEntityBase).id)) {
-          this.artifact = artifactNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

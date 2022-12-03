@@ -15,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -93,8 +96,7 @@ open class ParentNullableEntityImpl(val dataSource: ParentNullableEntityData) : 
       dataSource as ParentNullableEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.parentData != dataSource.parentData) this.parentData = dataSource.parentData
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

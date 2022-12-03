@@ -134,12 +134,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       if (this.rootProjectPath != dataSource?.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
       if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
       if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType = dataSource.externalSystemModuleType
-      if (parents != null) {
-        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
-          this.module = moduleNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

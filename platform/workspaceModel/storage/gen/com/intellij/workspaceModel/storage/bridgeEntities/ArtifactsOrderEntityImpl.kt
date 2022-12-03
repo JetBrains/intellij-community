@@ -17,9 +17,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -101,8 +98,7 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
       dataSource as ArtifactsOrderEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.orderOfArtifacts != dataSource.orderOfArtifacts) this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

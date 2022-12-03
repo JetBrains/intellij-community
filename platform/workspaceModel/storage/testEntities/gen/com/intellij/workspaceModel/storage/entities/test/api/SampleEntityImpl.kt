@@ -21,6 +21,9 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 import java.util.UUID
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -147,8 +150,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
       if (this.nullableData != dataSource?.nullableData) this.nullableData = dataSource.nullableData
       if (this.randomUUID != dataSource?.randomUUID) this.randomUUID = dataSource.randomUUID
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
