@@ -1947,6 +1947,18 @@ public class JavaDocInfoGenerator {
     buffer.append(".");
   }
 
+  private PsiElement[] getNestedChildren(PsiElement[] children) {
+    List<PsiElement> elements = new ArrayList<>();
+    boolean isIn
+    for (int i = 0; i < children.length; i++) {
+      PsiElement child = children[i];
+      if (child instanceof PsiDocToken token && token.getTokenType() == JavaDocTokenType.DOC_INLINE_TAG_START) {
+
+      }
+    }
+    return elements.toArray(PsiElement[]::new);
+  }
+
   @Contract(pure = true)
   private static String getWhitespacesBeforeLFWhenLeadingAsterisk(PsiElement element) {
     final PsiElement sibling = element.getNextSibling();
