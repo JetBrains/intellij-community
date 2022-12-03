@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -12,6 +13,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.DefaultPropertyAccessorDetector;
+import com.intellij.psi.util.PropertyAccessorDetector;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,28 +51,26 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
   }
 
   public static PropertyGroup createOn(PsiElement object, final TreeElement treeElement) {
-    if (object instanceof PsiField) {
-      PsiField field = (PsiField)object;
+    if (object instanceof PsiField field) {
       PropertyGroup group = new PropertyGroup(PropertyUtilBase.suggestPropertyName(field), field.getType(),
-                                              field.hasModifierProperty(PsiModifier.STATIC), object.getProject());
+                                              field.hasModifierProperty(PsiModifier.STATIC), field.getProject());
       group.setField(field);
       group.myChildren.add(treeElement);
       return group;
     }
-    else if (object instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)object;
-      if (PropertyUtilBase.isSimplePropertyGetter(method)) {
-        PropertyGroup group = new PropertyGroup(PropertyUtilBase.getPropertyNameByGetter(method), method.getReturnType(),
-                                                method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
-        group.setGetter(method);
-        group.myChildren.add(treeElement);
-        return group;
-      }
-      else if (PropertyUtilBase.isSimplePropertySetter(method)) {
-        PropertyGroup group =
-          new PropertyGroup(PropertyUtilBase.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType(),
-                            method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
-        group.setSetter(method);
+    else if (object instanceof PsiMethod method) {
+      final PropertyAccessorDetector.PropertyAccessorInfo accessorInfo = DefaultPropertyAccessorDetector.detectFrom(method);
+      if (null != accessorInfo &&
+          (accessorInfo.isKindOf(PropertyKind.GETTER) || accessorInfo.isKindOf(PropertyKind.SETTER))) {
+
+        PropertyGroup group = new PropertyGroup(accessorInfo.getPropertyName(), accessorInfo.getPropertyType(),
+                                                method.hasModifierProperty(PsiModifier.STATIC), method.getProject());
+        if (accessorInfo.isKindOf(PropertyKind.GETTER)) {
+          group.setGetter(method);
+        }
+        else {
+          group.setSetter(method);
+        }
         group.myChildren.add(treeElement);
         return group;
       }
@@ -113,7 +114,6 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
         return PROPERTY_WRITE_ICON;
       }
     }
-
   }
 
   private boolean isStatic() {

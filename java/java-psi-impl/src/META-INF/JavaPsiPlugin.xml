@@ -28,6 +28,7 @@
     <extensionPoint qualifiedName="com.intellij.jvm.elementProvider" area="IDEA_PROJECT" interface="com.intellij.lang.jvm.facade.JvmElementProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.classTypePointerFactory" interface="com.intellij.psi.ClassTypePointerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.propertyAccessorDetector" interface="com.intellij.psi.util.PropertyAccessorDetector" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.customJavadocTagProvider" interface="com.intellij.psi.javadoc.CustomJavadocTagProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.importFilter" interface="com.intellij.codeInsight.ImportFilter" dynamic="true"/>
