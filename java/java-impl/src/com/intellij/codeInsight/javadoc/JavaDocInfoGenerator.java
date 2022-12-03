@@ -1942,22 +1942,10 @@ public class JavaDocInfoGenerator {
   private void generateInlineReturnValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag, InheritDocProvider<PsiElement[]> provider) {
     // According to the spec (https://docs.oracle.com/en/java/javase/16/docs/specs/javadoc/doc-comment-spec.html#return), the format is "Returns<description>."
     buffer.append("Returns");
-    final PsiElement[] children = tag.getChildren();
-    generateValue(buffer, Arrays.copyOfRange(children, 2, children.length - 1), 0, provider);
+    generateValue(buffer, tag.getDataElements(), 0, provider);
     buffer.append(".");
   }
 
-  private PsiElement[] getNestedChildren(PsiElement[] children) {
-    List<PsiElement> elements = new ArrayList<>();
-    boolean isIn
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      if (child instanceof PsiDocToken token && token.getTokenType() == JavaDocTokenType.DOC_INLINE_TAG_START) {
-
-      }
-    }
-    return elements.toArray(PsiElement[]::new);
-  }
 
   @Contract(pure = true)
   private static String getWhitespacesBeforeLFWhenLeadingAsterisk(PsiElement element) {
