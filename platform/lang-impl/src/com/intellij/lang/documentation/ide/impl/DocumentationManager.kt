@@ -262,3 +262,5 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     }
   }
 }
+
+fun isDocumentationPopupVisible(project: Project) = DocumentationManager.instance(project).isPopupVisible
