@@ -39,10 +39,7 @@ public class CompressedRefs {
         myBranches.computeIfAbsent(index, key -> new SmartList<>()).add(ref);
       }
       else {
-        int refIndex = myStorage.getRefIndex(ref);
-        if (refIndex != VcsLogStorageImpl.NO_INDEX) {
-          myTags.computeIfAbsent(index, IntArrayList::new).add(refIndex);
-        }
+        myTags.computeIfAbsent(index, IntArrayList::new).add(myStorage.getRefIndex(ref));
       }
     });
     //noinspection SSBasedInspection
