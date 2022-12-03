@@ -80,9 +80,13 @@ public final class StaleIndexesChecker {
 
   static void clearStaleIndexes(@NotNull IntSet staleIds) {
     IS_IN_STALE_IDS_DELETION.set(Boolean.TRUE);
+    boolean unitTest = ApplicationManager.getApplication().isUnitTestMode();
     try {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         staleIds.forEach((staleId) -> {
+          if (unitTest) {
+            LOG.info("clearing stale id = " + staleId + ", path =  " + getRecordPath(staleId));
+          }
           clearStaleIndexesForId(staleId);
         });
       });
