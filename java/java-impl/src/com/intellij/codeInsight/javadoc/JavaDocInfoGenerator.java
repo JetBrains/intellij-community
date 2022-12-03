@@ -1946,7 +1946,6 @@ public class JavaDocInfoGenerator {
     buffer.append(".");
   }
 
-
   @Contract(pure = true)
   private static String getWhitespacesBeforeLFWhenLeadingAsterisk(PsiElement element) {
     final PsiElement sibling = element.getNextSibling();
