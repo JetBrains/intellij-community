@@ -116,7 +116,7 @@ abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
     var connectionId =
       mySnapshot.refs.findConnectionId(getEntityInterface(), entityClass)
     if (connectionId != null) {
-      return when (connectionId.connectionType) {
+      val entitiesSequence = when (connectionId.connectionType) {
         ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyChildren(connectionId, id)
         ConnectionId.ConnectionType.ONE_TO_ONE -> mySnapshot.extractOneToOneChild<R>(connectionId, id)
           ?.let { sequenceOf(it) }
@@ -128,6 +128,10 @@ abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
         ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> /*mySnapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
           sequenceOf(it)
         } ?: */emptySequence()
+      }
+      // If resulting sequence is empty, and it's connection between two entities of the same type we should continue search
+      if (entitiesSequence.any() || getEntityInterface() != entityClass) {
+        return entitiesSequence
       }
     }
     connectionId =
