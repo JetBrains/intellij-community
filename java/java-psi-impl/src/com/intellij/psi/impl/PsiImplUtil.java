@@ -161,22 +161,22 @@ public final class PsiImplUtil {
     return processor.getResults().toArray();
   }
 
-  public static boolean processDeclarationsInMethod(@NotNull final PsiMethod method,
-                                                    @NotNull final PsiScopeProcessor processor,
-                                                    @NotNull final ResolveState state,
+  public static boolean processDeclarationsInMethod(@NotNull PsiMethod method,
+                                                    @NotNull PsiScopeProcessor processor,
+                                                    @NotNull ResolveState state,
                                                     PsiElement lastParent,
-                                                    @NotNull final PsiElement place) {
+                                                    @NotNull PsiElement place) {
     if (lastParent instanceof DummyHolder) lastParent = lastParent.getFirstChild();
     boolean fromBody = lastParent instanceof PsiCodeBlock;
     PsiTypeParameterList typeParameterList = method.getTypeParameterList();
     return processDeclarationsInMethodLike(method, processor, state, place, fromBody, typeParameterList);
   }
 
-  public static boolean processDeclarationsInLambda(@NotNull final PsiLambdaExpression lambda,
-                                                    @NotNull final PsiScopeProcessor processor,
-                                                    @NotNull final ResolveState state,
-                                                    final PsiElement lastParent,
-                                                    @NotNull final PsiElement place) {
+  public static boolean processDeclarationsInLambda(@NotNull PsiLambdaExpression lambda,
+                                                    @NotNull PsiScopeProcessor processor,
+                                                    @NotNull ResolveState state,
+                                                    PsiElement lastParent,
+                                                    @NotNull PsiElement place) {
     boolean fromBody;
     if (lastParent instanceof DummyHolder) {
       PsiElement firstChild = lastParent.getFirstChild();
@@ -188,12 +188,12 @@ public final class PsiImplUtil {
     return processDeclarationsInMethodLike(lambda, processor, state, place, fromBody, null);
   }
 
-  private static boolean processDeclarationsInMethodLike(@NotNull final PsiParameterListOwner element,
-                                                         @NotNull final PsiScopeProcessor processor,
-                                                         @NotNull final ResolveState state,
-                                                         @NotNull final PsiElement place,
-                                                         final boolean fromBody,
-                                                         @Nullable final PsiTypeParameterList typeParameterList) {
+  private static boolean processDeclarationsInMethodLike(@NotNull PsiParameterListOwner element,
+                                                         @NotNull PsiScopeProcessor processor,
+                                                         @NotNull ResolveState state,
+                                                         @NotNull PsiElement place,
+                                                         boolean fromBody,
+                                                         @Nullable PsiTypeParameterList typeParameterList) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, element);
 
     if (typeParameterList != null) {
@@ -213,10 +213,10 @@ public final class PsiImplUtil {
     return true;
   }
 
-  public static boolean processDeclarationsInResourceList(@NotNull final PsiResourceList resourceList,
-                                                          @NotNull final PsiScopeProcessor processor,
-                                                          @NotNull final ResolveState state,
-                                                          final PsiElement lastParent) {
+  public static boolean processDeclarationsInResourceList(@NotNull PsiResourceList resourceList,
+                                                          @NotNull PsiScopeProcessor processor,
+                                                          @NotNull ResolveState state,
+                                                          PsiElement lastParent) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
     if (hint != null && !hint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
 
@@ -466,12 +466,12 @@ public final class PsiImplUtil {
     return visitor.isExtended();
   }
 
-  public static boolean isInServerPage(@Nullable final PsiElement element) {
+  public static boolean isInServerPage(@Nullable PsiElement element) {
     return getServerPageFile(element) != null;
   }
 
   @Nullable
-  private static ServerPageFile getServerPageFile(final PsiElement element) {
+  private static ServerPageFile getServerPageFile(PsiElement element) {
     final PsiFile psiFile = PsiUtilCore.getTemplateLanguageFile(element);
     return psiFile instanceof ServerPageFile ? (ServerPageFile)psiFile : null;
   }
@@ -565,12 +565,12 @@ public final class PsiImplUtil {
   }
 
   @Nullable
-  public static ASTNode skipWhitespaceAndComments(final ASTNode node) {
+  public static ASTNode skipWhitespaceAndComments(ASTNode node) {
     return TreeUtil.skipWhitespaceAndComments(node, true);
   }
 
   @Nullable
-  public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, @NotNull TokenSet alsoSkip) {
+  public static ASTNode skipWhitespaceCommentsAndTokens(ASTNode node, @NotNull TokenSet alsoSkip) {
     return TreeUtil.skipWhitespaceCommentsAndTokens(node, alsoSkip, true);
   }
 
@@ -579,7 +579,7 @@ public final class PsiImplUtil {
   }
 
   @Nullable
-  public static ASTNode skipWhitespaceAndCommentsBack(final ASTNode node) {
+  public static ASTNode skipWhitespaceAndCommentsBack(ASTNode node) {
     if (node == null) return null;
     if (!isWhitespaceOrComment(node)) return node;
 
@@ -764,7 +764,7 @@ public final class PsiImplUtil {
     return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
   }
 
-  public static PsiType buildTypeFromTypeString(@NotNull final String typeName, @NotNull final PsiElement context, @NotNull final PsiFile psiFile) {
+  public static PsiType buildTypeFromTypeString(@NotNull String typeName, @NotNull PsiElement context, @NotNull PsiFile psiFile) {
     final PsiManager psiManager = psiFile.getManager();
 
     if (typeName.indexOf('<') != -1 || typeName.indexOf('[') != -1 || typeName.indexOf('.') == -1) {
