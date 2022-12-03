@@ -379,7 +379,7 @@ public final class LombokUtils {
     return getGetterName(psiField, accessorsInfo);
   }
 
-  public static String getGetterName(@NotNull PsiField psiField, AccessorsInfo accessorsInfo) {
+  public static String getGetterName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
     final String psiFieldName = psiField.getName();
     final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
@@ -391,8 +391,12 @@ public final class LombokUtils {
     return getSetterName(psiField, accessorsInfo);
   }
 
-  public static String getSetterName(@NotNull PsiField psiField, AccessorsInfo accessorsInfo) {
+  public static String getSetterName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
     return toSetterName(accessorsInfo, psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
+  }
+
+  public static String getWitherName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
+    return toWitherName(accessorsInfo.withFluent(false), psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
   }
 
   /**
@@ -415,7 +419,7 @@ public final class LombokUtils {
    * @param isBoolean if the field is of type 'boolean'. For fields of type {@code java.lang.Boolean}, you should provide {@code false}.
    * @return The getter name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
-  public static String toGetterName(AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+  public static String toGetterName(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
     return toAccessorName(accessors, fieldName, isBoolean, "is", "get");
   }
 
@@ -439,7 +443,7 @@ public final class LombokUtils {
    * @param isBoolean if the field is of type 'boolean'. For fields of type {@code java.lang.Boolean}, you should provide {@code false}.
    * @return The setter name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
-  public static String toSetterName(AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+  public static String toSetterName(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
     return toAccessorName(accessors, fieldName, isBoolean, "set", "set");
   }
 
@@ -462,14 +466,14 @@ public final class LombokUtils {
    * @param isBoolean if the field is of type 'boolean'. For fields of type {@code java.lang.Boolean}, you should provide {@code false}.
    * @return The wither name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
-  public static String toWitherName(AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+  public static String toWitherName(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
     if (accessors.isFluent()) {
       throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
     }
     return toAccessorName(accessors, fieldName, isBoolean, "with", "with");
   }
 
-  private static String toAccessorName(AccessorsInfo accessorsInfo,
+  private static String toAccessorName(@NotNull AccessorsInfo accessorsInfo,
                                        String fieldName,
                                        boolean isBoolean,
                                        String booleanPrefix,
@@ -508,7 +512,7 @@ public final class LombokUtils {
    * @param fieldName     the name of the field.
    * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
-  public static Collection<String> toAllGetterNames(AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
+  public static Collection<String> toAllGetterNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
     return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "is", "get");
   }
 
@@ -521,7 +525,7 @@ public final class LombokUtils {
    * @param fieldName     the name of the field.
    * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
-  public static Collection<String> toAllSetterNames(AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
+  public static Collection<String> toAllSetterNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
     return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "set", "set");
   }
 
@@ -534,14 +538,14 @@ public final class LombokUtils {
    * @param fieldName     the name of the field.
    * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
-  public static Collection<String> toAllWitherNames(AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
+  public static Collection<String> toAllWitherNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
     if (accessorsInfo.isFluent()) {
       throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
     }
     return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "with", "with");
   }
 
-  private static Collection<String> toAllAccessorNames(AccessorsInfo accessorsInfo,
+  private static Collection<String> toAllAccessorNames(@NotNull AccessorsInfo accessorsInfo,
                                                        String fieldName,
                                                        boolean isBoolean,
                                                        String booleanPrefix,

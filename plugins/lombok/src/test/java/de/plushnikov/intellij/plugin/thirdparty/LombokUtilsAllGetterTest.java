@@ -13,17 +13,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsAllGetterTest {
 
-  private final List<String> lombokResult = new ArrayList<>();
   private final List<String> result = new ArrayList<>();
 
   private void makeResults(String fieldName, boolean isBoolean, AccessorsInfo accessorsInfo) {
-    lombokResult.clear();
     result.clear();
-
-    lombokResult.addAll(LombokHandlerUtil.toAllGetterNames(accessorsInfo, fieldName, isBoolean));
     result.addAll(LombokUtils.toAllGetterNames(accessorsInfo, fieldName, isBoolean));
-
-    assertThat(result, is(lombokResult));
   }
 
   @Test

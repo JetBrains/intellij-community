@@ -4,7 +4,6 @@ import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsPrefixedFluentTest {
@@ -13,11 +12,7 @@ public class LombokUtilsPrefixedFluentTest {
                                                                      CapitalizationStrategy.defaultValue(), "m", "");
 
   private static String makeResults(String fieldName, boolean isBoolean) {
-    String lombokResult = LombokHandlerUtil.toGetterName(ACCESSORS, fieldName, isBoolean);
-    String result = LombokUtils.toGetterName(ACCESSORS, fieldName, isBoolean);
-
-    assertThat(result, is(lombokResult));
-    return result;
+    return LombokUtils.toGetterName(ACCESSORS, fieldName, isBoolean);
   }
 
   @Test

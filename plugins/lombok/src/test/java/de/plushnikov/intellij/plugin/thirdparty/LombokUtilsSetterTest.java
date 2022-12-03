@@ -4,17 +4,12 @@ import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsSetterTest {
 
   private static String makeResults(String fieldName, boolean isBoolean) {
-    String lombokResult = LombokHandlerUtil.toSetterName(AccessorsInfo.DEFAULT, fieldName, isBoolean);
-    String result = LombokUtils.toSetterName(AccessorsInfo.DEFAULT, fieldName, isBoolean);
-
-    assertThat(result, is(lombokResult));
-    return result;
+    return LombokUtils.toSetterName(AccessorsInfo.DEFAULT, fieldName, isBoolean);
   }
 
   @Test

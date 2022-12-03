@@ -13,18 +13,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsAllWitherTest {
 
-  private final List<String> lombokResult = new ArrayList<>();
   private final List<String> result = new ArrayList<>();
 
   private void makeResults(String fieldName, boolean isBoolean) {
-    lombokResult.clear();
     result.clear();
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.DEFAULT;
-    lombokResult.addAll(LombokHandlerUtil.toAllWitherNames(accessorsInfo, fieldName, isBoolean));
     result.addAll(LombokUtils.toAllWitherNames(accessorsInfo, fieldName, isBoolean));
-
-    assertThat(result, is(lombokResult));
   }
 
   @Test
