@@ -20,8 +20,6 @@ import com.intellij.ui.ToolbarUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.CustomWindowDecoration;
-import com.jetbrains.JBR;
 import com.sun.jna.Native;
 import com.sun.jna.platform.mac.CoreFoundation;
 import org.jetbrains.annotations.NotNull;
@@ -141,45 +139,31 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2 && e.getY() <= UIUtil.getTransparentTitleBarHeight(frame.getRootPane())) {
-          int hitTestSpot = CustomWindowDecoration.NO_HIT_SPOT;
-          if (JBR.isCustomWindowDecorationSupported()) {
-            var spots = JBR.getCustomWindowDecoration().getCustomDecorationHitTestSpots(frame);
-            if (spots != null) {
-              for (var spot : spots) {
-                if (spot.getKey().contains(e.getPoint())) {
-                  hitTestSpot = spot.getValue();
-                  break;
-                }
-              }
-            }
-          }
-          if (hitTestSpot != CustomWindowDecoration.NO_HIT_SPOT) {
-            CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
-            CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
-            CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
-              appleActionOnDoubleClick,
-              apple_global_domain);
-            if (res != null && !res.stringValue().equals("Maximize")) {
-              if (frame.getExtendedState() == Frame.ICONIFIED) {
-                frame.setExtendedState(Frame.NORMAL);
-              }
-              else {
-                frame.setExtendedState(Frame.ICONIFIED);
-              }
+          CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
+          CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
+          CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
+            appleActionOnDoubleClick,
+            apple_global_domain);
+          if (res != null && !res.stringValue().equals("Maximize")) {
+            if (frame.getExtendedState() == Frame.ICONIFIED) {
+              frame.setExtendedState(Frame.NORMAL);
             }
             else {
-              if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
-                frame.setExtendedState(Frame.NORMAL);
-              }
-              else {
-                frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-              }
+              frame.setExtendedState(Frame.ICONIFIED);
             }
-            apple_global_domain.release();
-            appleActionOnDoubleClick.release();
-            if (res != null) {
-              res.release();
+          }
+          else {
+            if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
+              frame.setExtendedState(Frame.NORMAL);
             }
+            else {
+              frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            }
+          }
+          apple_global_domain.release();
+          appleActionOnDoubleClick.release();
+          if(res != null) {
+            res.release();
           }
         }
         super.mouseClicked(e);
