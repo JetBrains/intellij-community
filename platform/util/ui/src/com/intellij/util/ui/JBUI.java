@@ -515,7 +515,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color borderColor() {
-        return JBColor.namedColor("DefaultTabs.borderColor", UIUtil.CONTRAST_BORDER_COLOR);
+        return JBColor.namedColor("DefaultTabs.borderColor", JBColor.border());
       }
 
       public static @NotNull Color background() {
@@ -695,7 +695,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color borderColor() {
-        return JBColor.namedColor("ToolWindow.HeaderTab.borderColor", DefaultTabs.borderColor());
+        return JBColor.border();
       }
 
       public static @NotNull Color underlinedTabForeground() {
