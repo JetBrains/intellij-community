@@ -215,7 +215,11 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
               myDiff.addEntity(item)
             }
           }
-          myDiff.updateOneToManyChildrenOfParent(foundConnectionId, this, entities.filterNotNull())
+          if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+            myDiff.updateOneToAbstractManyChildrenOfParent(foundConnectionId, this, entities.filterNotNull().asSequence())
+          } else {
+            myDiff.updateOneToManyChildrenOfParent(foundConnectionId, this, entities.filterNotNull())
+          }
         } else {
           // One - to -one connection
           val item = entities.single()
@@ -224,7 +228,11 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
             myDiff.addEntity(item)
           }
-          myDiff.updateOneToOneChildOfParent(foundConnectionId, this, item)
+          if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
+            myDiff.updateOneToAbstractOneChildOfParent(foundConnectionId, this, item)
+          } else {
+            myDiff.updateOneToOneChildOfParent(foundConnectionId, this, item)
+          }
         }
       }
       else {
@@ -237,7 +245,11 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = (item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] as? List<Any> ?: emptyList()) + this
             myDiff.addEntity(item)
           }
-          myDiff.updateOneToManyParentOfChild(foundConnectionId, this, item)
+          if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+            myDiff.updateOneToAbstractManyParentOfChild(foundConnectionId, this, item)
+          } else {
+            myDiff.updateOneToManyParentOfChild(foundConnectionId, this, item)
+          }
         }
         else {
           // One - to -one connection
@@ -247,7 +259,11 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
             myDiff.addEntity(item)
           }
-          myDiff.updateOneToOneParentOfChild(foundConnectionId, this, item)
+          if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
+            myDiff.updateOneToAbstractOneParentOfChild(foundConnectionId, this, item)
+          } else {
+            myDiff.updateOneToOneParentOfChild(foundConnectionId, this, item)
+          }
         }
       }
     }
