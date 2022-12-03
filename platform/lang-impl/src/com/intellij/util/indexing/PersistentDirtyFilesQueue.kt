@@ -75,7 +75,8 @@ internal object PersistentDirtyFilesQueue {
       thisLogger().error(e)
     }
     if (isUnittestMode) {
-      thisLogger().info("dirty file ids stored: ${fileIds.toIntArray().contentToString()}")
+      val idsToPaths = mapOf(*fileIds.map { it to StaleIndexesChecker.getStaleRecordOrExceptionMessage(it) }.toTypedArray())
+      thisLogger().info("dirty file ids stored. Ids & filenames: ${idsToPaths.toString().take(300)}")
     }
   }
 }

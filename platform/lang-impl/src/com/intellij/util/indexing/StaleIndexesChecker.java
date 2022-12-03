@@ -43,12 +43,7 @@ public final class StaleIndexesChecker {
       Object data = ContainerUtil.getFirstItem(dataAsMap.values());
       if (data != null) {
         String name;
-        try {
-          name = getRecordPath(freeRecord);
-        }
-        catch (Exception e) {
-          name = e.getMessage();
-        }
+        name = getStaleRecordOrExceptionMessage(freeRecord);
         staleFiles.put(freeRecord, name);
       }
     }
@@ -66,6 +61,15 @@ public final class StaleIndexesChecker {
     }
 
     return staleFiles.keySet();
+  }
+
+  static String getStaleRecordOrExceptionMessage(int record) {
+    try {
+      return getRecordPath(record);
+    }
+    catch (Exception e) {
+      return e.getMessage();
+    }
   }
 
   private static String getRecordPath(int record) {
@@ -105,7 +109,7 @@ public final class StaleIndexesChecker {
   private static String getStaleInputIdsMessage(Int2ObjectMap<String> staleTrees, IndexId<?, ?> indexId) {
     return "`" + indexId + "` index contains several stale file ids (size = "
            + staleTrees.size()
-           + "). Ids & filenames: "
+           + "). Ids & paths: "
            + StringUtil.first(staleTrees.toString(), 300, true)
            + ".";
   }
