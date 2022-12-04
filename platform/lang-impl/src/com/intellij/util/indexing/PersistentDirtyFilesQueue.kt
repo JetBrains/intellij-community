@@ -64,6 +64,9 @@ internal object PersistentDirtyFilesQueue {
 
   fun storeIndexingQueue(fileIds: IntCollection) {
     try {
+      if (fileIds.isEmpty()) {
+        dirtyFilesQueueFile.deleteIfExists()
+      }
       dirtyFilesQueueFile.parent.createDirectories()
       DataOutputStream(dirtyFilesQueueFile.outputStream().buffered()).use {
         fileIds.forEach { fileId ->
