@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.PingProgress;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -652,21 +653,25 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
+        List<ThrowableRunnable<?>> indexDisposeTasks = new ArrayList<>();
         IndexConfiguration state = getState();
         for (ID<?, ?> indexId : state.getIndexIDs()) {
           PingProgress.interactWithEdtProgress();
-          try {
-            UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
-            if (!RebuildStatus.isOk(indexId)) {
-              clearIndex(indexId); // if the index was scheduled for rebuild, only clean it
+          indexDisposeTasks.add(() -> {
+            try {
+              UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
+              if (!RebuildStatus.isOk(indexId)) {
+                clearIndex(indexId); // if the index was scheduled for rebuild, only clean it
+              }
+              index.dispose();
             }
-            index.dispose();
-          }
-          catch (Throwable throwable) {
-            LOG.info("Problem disposing " + indexId, throwable);
-          }
+            catch (Throwable throwable) {
+              LOG.info("Problem disposing " + indexId, throwable);
+            }
+          });
         }
 
+        IndexDataInitializer.runParallelTasks(indexDisposeTasks, false);
         FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList().forEach(ex -> ex.shutdown());
         SnapshotHashEnumeratorService.closeIfCreated();
         if (!keepConnection) {
