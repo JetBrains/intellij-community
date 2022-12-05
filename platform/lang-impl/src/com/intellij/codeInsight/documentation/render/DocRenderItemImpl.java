@@ -131,7 +131,6 @@ public final class DocRenderItemImpl implements DocRenderItem {
       };
       if (foldingTasks == null) {
         foldingModel.runBatchFoldingOperation(foldingTask, true, false);
-        foldRegion.update();
       }
       else {
         foldingTasks.add(foldingTask);
@@ -208,7 +207,7 @@ public final class DocRenderItemImpl implements DocRenderItem {
   }
 
   @Override
-  public AnAction createToggleAction() {
+  public @NotNull AnAction createToggleAction() {
     return new ToggleRenderingAction(this);
   }
 

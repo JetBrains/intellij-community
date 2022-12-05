@@ -133,14 +133,6 @@ public class DocRenderItemManagerImpl implements DocRenderItemManager {
         }
       }
       editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
-      if (!newRenderItems.isEmpty() && collapseNewItems) {
-        for (DocRenderItemImpl item : newRenderItems) {
-          CustomFoldRegion r = item.getFoldRegion();
-          if (r != null) {
-            r.update();
-          }
-        }
-      }
       for (int i = 0; i < itemsToUpdateRenderers.size(); i++) {
         itemsToUpdateRenderers.get(i).setTextToRender(itemsToUpdateText.get(i));
       }

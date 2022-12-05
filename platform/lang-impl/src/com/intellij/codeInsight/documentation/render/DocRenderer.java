@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCssFontResolver;
-import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -121,9 +120,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       int indent = 0;
       // optimize editor opening: skip 'proper' width calculation for 'Loading...' inlays
       if (myItem.getTextToRender() != null) {
-        if (((FoldingModelImpl)myItem.getEditor().getFoldingModel()).isInBatchFoldingOperation()) {
-          return myCachedHeight;
-        }
         indent = calcInlayStartX() - editor.getInsets().left;
       }
       int width = Math.max(0, calcWidth(editor) - indent - scale(LEFT_INSET) - scale(RIGHT_INSET));

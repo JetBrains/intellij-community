@@ -29,5 +29,5 @@ interface DocRenderItem {
 
   fun getInlineDocumentationTarget(): DocumentationTarget?
 
-  fun createToggleAction(): AnAction?
+  fun createToggleAction(): AnAction
 }
