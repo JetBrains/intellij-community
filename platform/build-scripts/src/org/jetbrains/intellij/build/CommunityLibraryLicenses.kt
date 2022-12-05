@@ -168,7 +168,12 @@ object CommunityLibraryLicenses {
                      "lucene-queryparser",
                      "lucene-queries",
                      "lucene-analyzers-common",
-                     "org.apache.lucene:lucene-core:2.4.1"
+                     "org.apache.lucene:lucene-core:2.4.1",
+                     "lucene-query-parser:ind-deps",
+                     "lucene-core:ind-deps",
+                     "lucene-analyzer:ind-deps",
+                     "lucene-highlighter:ind-deps",
+                     "lucene-backward-codecs:ind-deps"
                    )).apache(),
     LibraryLicense(name = "Apache Tuweni-Toml", libraryName = "tuweni-toml",
                    url = "https://github.com/apache/incubator-tuweni/tree/main/toml")
@@ -585,6 +590,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "lz4-java", libraryName = "lz4-java",
                    url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
+
     LibraryLicense(name = "markdown4j", libraryName = "markdown4j", url = "https://code.google.com/p/markdown4j/").newBsd(),
     LibraryLicense(name = "MarkdownJ", libraryName = "markdownj", version = "0.4.2", url = "https://github.com/myabc/markdownj").newBsd(),
     LibraryLicense(name = "MathJax", attachedTo = "intellij.python", version = "2.6.1",
@@ -609,7 +615,8 @@ object CommunityLibraryLicenses {
                    url = "https://maven.apache.org/ref/3.6.1/maven-resolver-provider/", libraryName = "maven-resolver-provider",
                    additionalLibraryNames = listOf("org.apache.maven.resolver:maven-resolver-connector-basic",
                                                    "org.apache.maven.resolver:maven-resolver-transport-http",
-                                                   "org.apache.maven.resolver:maven-resolver-transport-file")).apache(),
+                                                   "org.apache.maven.resolver:maven-resolver-transport-file",
+                                                   "maven-resolver-util:ind-deps")).apache("https://maven.apache.org/"),
     LibraryLicense(name = "Maven wagon provider api", libraryName="apache.maven.wagon.provider.api:3.5.2",
                    url = "https://maven.apache.org/wagon/wagon-provider-api/index.html")
       .apache("https://github.com/apache/maven-wagon"),
