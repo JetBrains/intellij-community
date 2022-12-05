@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.util.Url
+import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
@@ -91,24 +92,28 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
       session.addRestartActions(*executionResult.restartActions)
     }
     connection.stateChanged {
-      when (it.status) {
-        ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED -> {
-          if (it.status == ConnectionStatus.DETACHED) {
-            if (realProcessHandler != null) {
-              // here must we must use effective process handler
-              processHandler.detachProcess()
-            }
+      handleConnectionStateChanged(it)
+    }
+  }
+
+  protected open fun handleConnectionStateChanged(state: ConnectionState) {
+    when (state.status) {
+      ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED -> {
+        if (state.status == ConnectionStatus.DETACHED) {
+          if (realProcessHandler != null) {
+            // here must we must use effective process handler
+            processHandler.detachProcess()
           }
-          getSession().stop()
         }
-
-        ConnectionStatus.CONNECTION_FAILED -> {
-          getSession().reportMessage(it.message, MessageType.ERROR, BrowserHyperlinkListener.INSTANCE)
-          getSession().stop()
-        }
-
-        else -> getSession().rebuildViews()
+        session.stop()
       }
+
+      ConnectionStatus.CONNECTION_FAILED -> {
+        session.reportMessage(state.message, MessageType.ERROR, BrowserHyperlinkListener.INSTANCE)
+        session.stop()
+      }
+
+      else -> session.rebuildViews()
     }
   }
 
