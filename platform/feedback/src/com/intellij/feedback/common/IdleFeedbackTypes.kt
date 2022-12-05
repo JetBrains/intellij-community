@@ -23,7 +23,7 @@ import java.time.LocalDateTime
 enum class IdleFeedbackTypes {
   NEW_UI_FEEDBACK {
     override val suitableIdeVersion: String = "2022.3"
-    private val lastDayCollectFeedback = LocalDate(2022, 12, 31)
+    private val lastDayCollectFeedback = LocalDate(2022, 12, 6)
     private val maxNumberNotificationShowed = 1
     private val minNumberDaysElapsed = 5
 
