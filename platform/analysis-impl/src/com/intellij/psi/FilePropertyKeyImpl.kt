@@ -4,7 +4,6 @@ package com.intellij.psi
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream
@@ -15,6 +14,8 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.function.Function
+import java.util.function.IntFunction
+import java.util.function.ToIntFunction
 
 abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
                                                                  private val persistentAttribute: FileAttribute) : FilePropertyKey<T> {
@@ -184,9 +185,9 @@ internal class FilePropertyStringKey<T>(name: String, persistentAttribute: FileA
 
 internal class FilePropertyIntKey<T>(name: String,
                                      persistentAttribute: FileAttribute,
-                                     private val fnToRaw: Function<T, Int>,
-                                     private val fnFromRaw: Function<Int, T?>) : FilePropertyKeyImpl<T, Int>(name,
-                                                                                                             persistentAttribute) {
+                                     private val fnToRaw: ToIntFunction<T>,
+                                     private val fnFromRaw: IntFunction<T?>) : FilePropertyKeyImpl<T, Int>(name,
+                                                                                                           persistentAttribute) {
   @Throws(IOException::class)
   override fun readValue(stream: AttributeInputStream): Int = DataInputOutputUtil.readINT(stream)
 
@@ -196,5 +197,5 @@ internal class FilePropertyIntKey<T>(name: String,
   }
 
   override fun fromRaw(value: Int): T? = fnFromRaw.apply(value)
-  override fun toRaw(value: T): Int = fnToRaw.apply(value)
+  override fun toRaw(value: T): Int = fnToRaw.applyAsInt(value)
 }
