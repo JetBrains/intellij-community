@@ -26,7 +26,7 @@ open class HiddenStateCache {
       if (pastStatesInfo != null) {
         val (processedPastStates, processedContextLen, croppedPast) = pastStatesInfo
         val newInputIds = inputIds.slice(processedContextLen until inputIds.size).toIntArray()
-        return@let QueryResult(newInputIds, processedPastStates, null, !croppedPast)
+        return@let QueryResult(newInputIds, processedPastStates, null, true)
       }
       return@let null
     } ?: QueryResult(inputIds, null, null, true)
