@@ -7,7 +7,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ImmutableList;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.JavaPsiMathUtil;
@@ -25,11 +24,11 @@ import static com.siyeh.ipp.integer.JavaNumberConverters.*;
 public class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
 
   private static class Holder {
-    static final ImmutableList<NumberConverter> JAVA_1_CONVERTERS = immutableList(
+    static final List<NumberConverter> JAVA_1_CONVERTERS = immutableList(
       INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC);
-    static final ImmutableList<NumberConverter> JAVA_5_CONVERTERS = immutableList(
+    static final List<NumberConverter> JAVA_5_CONVERTERS = immutableList(
       INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
-    static final ImmutableList<NumberConverter> JAVA_7_CONVERTERS = immutableList(
+    static final List<NumberConverter> JAVA_7_CONVERTERS = immutableList(
       INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_BINARY, INTEGER_TO_OCTAL,
       FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
   }
