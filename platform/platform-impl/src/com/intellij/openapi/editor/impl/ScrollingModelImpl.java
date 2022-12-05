@@ -308,6 +308,13 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
+  public void centerHorizontally(@NotNull LogicalPosition pos) {
+    Point point = mySupplier.getScrollingHelper().calculateScrollingLocation(mySupplier.getEditor(), pos);
+    int editorWidth = mySupplier.getScrollPane().getHorizontalScrollBar().getWidth();
+    scrollHorizontally(Math.max(0, point.x - editorWidth / 2));
+  }
+
+  @Override
   public void scrollHorizontally(int scrollOffset) {
     scroll(scrollOffset, getVerticalScrollOffset());
   }
