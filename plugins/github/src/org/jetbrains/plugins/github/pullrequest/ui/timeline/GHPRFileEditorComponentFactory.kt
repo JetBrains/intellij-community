@@ -134,7 +134,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val descriptionWrapper = Wrapper().apply {
       isOpaque = false
     }
-    detailsModel.addListener {
+    detailsModel.addAndInvokeListener {
       descriptionWrapper.setContent(itemComponentFactory.createComponent(detailsModel.value))
     }
 

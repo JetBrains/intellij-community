@@ -16,18 +16,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -58,6 +62,7 @@ import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.*
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
@@ -160,14 +165,28 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     return createItem(actor, commits.singleOrNull()?.commit?.author?.date, contentPanel)
   }
 
+  private val noDescriptionHtmlText by lazy {
+    HtmlBuilder()
+      .append(GithubBundle.message("pull.request.timeline.no.description"))
+      .wrapWith(HtmlChunk.font(ColorUtil.toHex(UIUtil.getContextHelpForeground())))
+      .wrapWith("i")
+      .toString()
+  }
+
   fun createComponent(details: GHPullRequestShort): JComponent {
     val contentPanel: JPanel?
     val actionsPanel: JPanel?
     if (details is GHPullRequest) {
-      val textPane = HtmlEditorPane(details.body.convertToHtml(project))
+      val textPane = HtmlEditorPane()
+      fun HtmlEditorPane.updateText(body: @Nls String) {
+        val text = body.takeIf { it.isNotBlank() }?.convertToHtml(project) ?: noDescriptionHtmlText
+        setBody(text)
+      }
+      textPane.updateText(details.body)
+
       val panelHandle = GHEditableHtmlPaneHandle(project, textPane, details::body) { newText ->
         detailsDataProvider.updateDetails(EmptyProgressIndicator(), description = newText)
-          .successOnEdt { textPane.setHtmlBody(it.body.convertToHtml(project)) }
+          .successOnEdt { textPane.updateText(it.body) }
       }
       contentPanel = panelHandle.panel
       actionsPanel = if (details.viewerCanUpdate) NonOpaquePanel(HorizontalLayout(8)).apply {
@@ -176,11 +195,13 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       else null
     }
     else {
-      contentPanel = null
+      contentPanel = NonOpaquePanel(SingleComponentCenteringLayout()).apply {
+        add(JLabel(AnimatedIcon.Default()))
+      }
       actionsPanel = null
     }
 
-    return createItem(details.author, details.createdAt, contentPanel ?: JPanel(null), actionsPanel)
+    return createItem(details.author, details.createdAt, contentPanel, actionsPanel)
   }
 
   private fun createComponent(comment: GHIssueComment): JComponent {
