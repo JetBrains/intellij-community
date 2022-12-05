@@ -67,6 +67,7 @@
     <extensionPoint name="daemon.statusItemMerger" interface="com.intellij.codeInsight.daemon.impl.StatusItemMerger" dynamic="true"/>
 
     <extensionPoint name="implicitUsageProvider" interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider" dynamic="true"/>
+    <extensionPoint name="overrideImplementsAnnotationsFilter" interface="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter" dynamic="true"/>
 
     <!-- com.intellij.psi.PsiElement -->
     <extensionPoint name="cantBeStatic" interface="com.intellij.openapi.util.Condition" dynamic="true"/>

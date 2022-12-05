@@ -18,22 +18,21 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
- * Allows plugging in annotations processing during override/implement.
- * <p/>
- * Parameter annotations would not be copied, if they are not specified in {@link #getAnnotations(PsiFile)}.
+ * Extends {@link OverrideImplementsAnnotationsFilter} with java-specific functionality.
  * 
- * {@link #transferToTarget(String, PsiModifierListOwner, PsiModifierListOwner)} can be used, to adjust annotations to the target place e.g.,
- * convert library's Nullable/NotNull annotations to project ones.
+ * {@link #transferToTarget(String, PsiModifierListOwner, PsiModifierListOwner)} can be used, to adjust annotations to the target place
+ * e.g., convert library's Nullable/NotNull annotations to project ones.
  * <p/>
  * @see JavaCodeStyleSettings#getRepeatAnnotations()
  */
-public interface OverrideImplementsAnnotationsHandler {
+public interface OverrideImplementsAnnotationsHandler extends OverrideImplementsAnnotationsFilter {
   ExtensionPointName<OverrideImplementsAnnotationsHandler> EP_NAME = ExtensionPointName.create("com.intellij.overrideImplementsAnnotationsHandler");
 
   /**
    * Returns annotations which should be copied from a source to an implementation (by default, no annotations are copied).
    */
   @Contract(pure = true)
+  @Override
   default String[] getAnnotations(@NotNull PsiFile file) {
     return getAnnotations(file.getProject());
   }
