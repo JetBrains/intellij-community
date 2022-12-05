@@ -183,6 +183,7 @@ final class FilePageCache {
       @Override
       public DirectBufferWrapper remove(long key) {
         assert pagesAccessLock.isHeldByCurrentThread();
+        assert pagesAllocationLock.isHeldByCurrentThread();
         // this method can be called after removeEldestEntry
         DirectBufferWrapper wrapper = super.remove(key);
         if (wrapper != null) {
