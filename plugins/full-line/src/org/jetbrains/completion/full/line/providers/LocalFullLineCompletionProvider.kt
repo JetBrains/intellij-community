@@ -9,6 +9,7 @@ import org.jetbrains.completion.full.line.FullLineCompletionMode
 import org.jetbrains.completion.full.line.FullLineProposal
 import org.jetbrains.completion.full.line.RawFullLineProposal
 import org.jetbrains.completion.full.line.currentOpenProject
+import org.jetbrains.completion.full.line.language.FullLineLanguageSupporter
 import org.jetbrains.completion.full.line.language.ModelState
 import org.jetbrains.completion.full.line.local.CompletionException
 import org.jetbrains.completion.full.line.local.ExecutionContext
@@ -68,9 +69,10 @@ class LocalFullLineCompletionProvider private constructor(
 
   companion object {
     fun create(language: Language): FullLineCompletionProvider? {
+      val modelsManager = service<ConfigurableModelsManager>()
       if (!checkedLanguages.contains(language.id)) {
         ApplicationManager.getApplication().executeOnPooledThread {
-          service<ConfigurableModelsManager>().run {
+          modelsManager.run {
             val project = ProjectManager.getInstance().currentOpenProject() ?: return@run
             getSchema(language, true).also {
               checkedLanguages.add(language.id)
@@ -81,6 +83,12 @@ class LocalFullLineCompletionProvider private constructor(
             }
           }
         }
+      }
+
+      FullLineLanguageSupporter.getInstance(language)?.modelVersion?.let {
+        val curSchema = modelsManager.modelsSchema.targetLanguage(language)?.version
+        if (curSchema?.startsWith("SNAPSHOT", true) == true || curSchema != it)
+          return null
       }
 
       val model = LocalModelsCache.getInstance().tryGetModel(language) ?: return null
