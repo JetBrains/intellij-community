@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -58,6 +59,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -82,7 +84,7 @@ public final class CompileDriver {
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    doRebuild(callback, new ProjectCompileScope(myProject));
+    startup(new ProjectCompileScope(myProject), true, false, false, callback, null);
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
@@ -90,12 +92,7 @@ public final class CompileDriver {
   }
 
   public void make(CompileScope scope, boolean withModalProgress, CompileStatusNotification callback) {
-    if (validateCompilerConfiguration(scope)) {
-      startup(scope, false, false, withModalProgress, callback, null);
-    }
-    else {
-      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
-    }
+    startup(scope, false, false, withModalProgress, callback, null);
   }
 
   public boolean isUpToDate(@NotNull CompileScope scope, final @Nullable ProgressIndicator progress) {
@@ -161,21 +158,7 @@ public final class CompileDriver {
   }
 
   public void compile(CompileScope scope, CompileStatusNotification callback) {
-    if (validateCompilerConfiguration(scope)) {
-      startup(scope, false, true, callback, null);
-    }
-    else {
-      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
-    }
-  }
-
-  private void doRebuild(CompileStatusNotification callback, final CompileScope compileScope) {
-    if (validateCompilerConfiguration(compileScope)) {
-      startup(compileScope, true, false, callback, null);
-    }
-    else {
-      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
-    }
+    startup(scope, false, true, false, callback, null);
   }
 
   public static void setCompilationStartedAutomatically(CompileScope scope) {
@@ -407,15 +390,11 @@ public final class CompileDriver {
       });
   }
 
-  private void startup(final CompileScope scope, final boolean isRebuild, final boolean forceCompile,
-                       final CompileStatusNotification callback, final CompilerMessage message) {
-    startup(scope, isRebuild, forceCompile, false, callback, message);
-  }
-
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
                        final boolean forceCompile,
-                       boolean withModalProgress, final CompileStatusNotification callback,
+                       final boolean withModalProgress,
+                       final CompileStatusNotification callback,
                        final CompilerMessage message) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -437,7 +416,7 @@ public final class CompileDriver {
     span.complete();
     final Runnable compileWork = () -> {
       final ProgressIndicator indicator = compileContext.getProgressIndicator();
-      if (indicator.isCanceled() || myProject.isDisposed()) {
+      if (indicator.isCanceled() || myProject.isDisposed() || !validateCompilerConfiguration(scope)) {
         if (callback != null) {
           callback.finished(true, 0, 0, compileContext);
         }
@@ -525,11 +504,11 @@ public final class CompileDriver {
           CommonBundle.message("button.build"), JavaCompilerBundle.message("button.rebuild"), Messages.getQuestionIcon()
         );
         if (rv == Messages.OK /*yes, please, do run make*/) {
-          startup(scope, false, false, callback, null);
+          startup(scope, false, false, false, callback, null);
           return;
         }
       }
-      startup(scope, isRebuild, forceCompile, callback, message);
+      startup(scope, isRebuild, forceCompile, false, callback, message);
     });
   }
 
@@ -698,25 +677,31 @@ public final class CompileDriver {
   }
 
   private boolean validateCompilerConfiguration(@NotNull final CompileScope scope) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
-      final Module[] scopeModules = scope.getAffectedModules();
-      final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-      List<Module> modulesWithSources = ContainerUtil.filter(scopeModules, module -> {
-        if (!compilerManager.isValidationEnabled(module)) return false;
-        final boolean hasSources = hasSources(module, JavaSourceRootType.SOURCE);
-        final boolean hasTestSources = hasSources(module, JavaSourceRootType.TEST_SOURCE);
-        if (!hasSources && !hasTestSources) {
-          // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
-          // todo still there may be problems with this approach if some generated files are attributed by this module
-          return false;
-        }
-        return true;
+      final Pair<List<Module>, List<Module>> scopeModules = runWithReadAccess(() -> {
+        final Module[] affectedModules = scope.getAffectedModules();
+        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+        return Pair.create(Arrays.asList(affectedModules), ContainerUtil.filter(affectedModules, module -> {
+          if (!compilerManager.isValidationEnabled(module)) {
+            return false;
+          }
+          final boolean hasSources = hasSources(module, JavaSourceRootType.SOURCE);
+          final boolean hasTestSources = hasSources(module, JavaSourceRootType.TEST_SOURCE);
+          if (!hasSources && !hasTestSources) {
+            // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
+            // todo still there may be problems with this approach if some generated files are attributed by this module
+            return false;
+          }
+          return true;
+        }));
       });
+      final List<Module> modulesWithSources = scopeModules.second;
 
-      if (!validateJdks(modulesWithSources, true)) return false;
-      if (!validateOutputs(modulesWithSources)) return false;
-      if (!validateCyclicDependencies(scopeModules)) return false;
-      return true;
+      if (!validateJdks(modulesWithSources, true)) {
+        return false;
+      }
+      return runWithReadAccess(() -> validateOutputs(modulesWithSources) && validateCyclicDependencies(scopeModules.first));
     }
     catch (ProcessCanceledException e) {
       return false;
@@ -725,6 +710,10 @@ public final class CompileDriver {
       LOG.error(e);
       return false;
     }
+  }
+
+  private <T> T runWithReadAccess(Callable<? extends T> task) {
+    return ReadAction.nonBlocking(task).expireWhen(myProject::isDisposed).executeSynchronously();
   }
 
   private boolean validateJdks(@NotNull List<Module> scopeModules, boolean runUnknownSdkCheck) {
@@ -793,8 +782,8 @@ public final class CompileDriver {
     return false;
   }
 
-  private boolean validateCyclicDependencies(Module[] scopeModules) {
-    final List<Chunk<ModuleSourceSet>> chunks = ModuleCompilerUtil.getCyclicDependencies(myProject, Arrays.asList(scopeModules));
+  private boolean validateCyclicDependencies(List<Module> scopeModules) {
+    final List<Chunk<ModuleSourceSet>> chunks = ModuleCompilerUtil.getCyclicDependencies(myProject, scopeModules);
     for (final Chunk<ModuleSourceSet> chunk : chunks) {
       final Set<ModuleSourceSet> sourceSets = chunk.getNodes();
       if (sourceSets.size() <= 1) {
