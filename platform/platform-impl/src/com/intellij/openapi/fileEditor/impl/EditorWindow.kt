@@ -329,9 +329,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       trimToSize(fileToIgnore = file, transferFocus = false)
       owner.updateFileIconImmediately(file = file, icon = IconUtil.computeBaseFileIcon(file))
       owner.updateFileIcon(file)
-      owner.updateFileColor(file)
+      owner.updateFileColorAsync(file)
     }
-    owner.updateFileColor(composite.file)
+    owner.updateFileColorAsync(composite.file)
     if (options.selectAsCurrent) {
       setSelectedComposite(composite, options.requestFocus)
     }
@@ -1078,7 +1078,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     composite.isPinned = pinned
     if (composite.isPreview && pinned) {
       composite.isPreview = false
-      owner.updateFileColor(file)
+      owner.updateFileColorAsync(file)
     }
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread) {
       ObjectUtils.consumeIfCast(tabbedPane.tabs, JBTabsImpl::class.java) { obj: JBTabsImpl -> obj.doLayout() }

@@ -411,7 +411,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       EditorComposite composite = ((EditorWindowTopComponent)info.getComponent()).composite;
       if (composite.isPreview()) {
         composite.setPreview(false);
-        myWindow.getOwner().updateFileColor(composite.getFile());
+        myWindow.getOwner().updateFileColorAsync(composite.getFile());
         return;
       }
     }

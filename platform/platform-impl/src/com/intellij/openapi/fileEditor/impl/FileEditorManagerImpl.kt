@@ -167,9 +167,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
       for (each in splitters) {
         each.doUpdateFileIcon(file)
-        withContext(Dispatchers.EDT) {
-          each.updateFileColor(file)
-        }
+        each.updateFileColor(file)
         if (!isNewUI) {
           each.updateFileBackgroundColor(file)
         }
@@ -595,7 +593,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
 
     for (each in getAllSplitters()) {
-      each.updateFileColor(file)
+      each.updateFileColorAsync(file)
     }
   }
 

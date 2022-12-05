@@ -399,29 +399,44 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
   }
 
-  fun updateFileColor(file: VirtualFile) {
-    val windows = findWindows(file)
+  fun updateFileColorAsync(file: VirtualFile) {
+    @Suppress("DEPRECATION")
+    manager.project.coroutineScope.launch {
+      updateFileColor(file)
+    }
+  }
+
+  internal suspend fun updateFileColor(file: VirtualFile) {
+    val windows = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      findWindows(file)
+    }
     if (windows.isEmpty()) {
       return
     }
 
-    val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
-    for (window in windows) {
-      val composite = window.getComposite(file)!!
-      val index = window.findCompositeIndex(composite)
-      LOG.assertTrue(index != -1)
-      val manager = manager
-      var resultAttributes = TextAttributes()
-      var attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
-      if (composite.isPreview) {
-        val italic = TextAttributes(null, null, null, null, Font.ITALIC)
-        attributes = if (attributes == null) italic else TextAttributes.merge(italic, attributes)
+    val (fileColor, foregroundFileColor) = readAction {
+      manager.getFileColor(file) to getForegroundColorForFile(manager.project, file)
+    }
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
+      for (window in windows) {
+        val composite = window.getComposite(file)!!
+        val index = window.findCompositeIndex(composite)
+        LOG.assertTrue(index != -1)
+        val manager = manager
+        var resultAttributes = TextAttributes()
+        var attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
+        if (composite.isPreview) {
+          val italic = TextAttributes(null, null, null, null, Font.ITALIC)
+          attributes = if (attributes == null) italic else TextAttributes.merge(italic, attributes)
+        }
+        resultAttributes = TextAttributes.merge(resultAttributes, attributes)
+        window.setForegroundAt(index, fileColor)
+        window.setTextAttributes(index, resultAttributes.apply {
+          this.foregroundColor = colorScheme.getColor(foregroundFileColor)
+        })
       }
-      resultAttributes = TextAttributes.merge(resultAttributes, attributes)
-      window.setForegroundAt(index, manager.getFileColor(file))
-      window.setTextAttributes(index, resultAttributes.apply {
-        this.foregroundColor = colorScheme.getColor(getForegroundColorForFile(manager.project, file))
-      })
     }
   }
 
@@ -591,7 +606,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     for (file in openFileList) {
       updateFileBackgroundColorAsync(file)
       updateFileIcon(file)
-      updateFileColor(file)
+      updateFileColorAsync(file)
     }
   }
 
