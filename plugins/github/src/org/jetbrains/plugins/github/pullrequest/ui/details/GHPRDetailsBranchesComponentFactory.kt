@@ -2,44 +2,72 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ActionPopupMenu
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
-import com.intellij.ui.CardLayoutPanel
-import com.intellij.ui.components.AnActionLink
-import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.repo.GitRepository
 import icons.CollaborationToolsIcons
 import icons.DvcsImplIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.GithubIcons
-import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesModel
+import java.awt.BorderLayout
+import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal object GHPRDetailsBranchesComponentFactory {
+  private const val BRANCHES_GAP = 4
+  private const val POPUP_OFFSET = 8
+  private const val BRANCH_HOVER_BORDER = 2
+  private const val BRANCH_MIN_WIDTH = 30
 
-  fun create(model: GHPRBranchesModel): JComponent {
-    val from = createLabel()
+  fun create(project: Project, repositoryDataService: GHPRRepositoryDataService, model: GHPRBranchesModel): JComponent {
+    val arrowLabel = JLabel(AllIcons.Chooser.Left)
+    val from = createLabel().apply {
+      border = JBUI.Borders.empty(BRANCH_HOVER_BORDER)
+      addHoverAndPressStateListener(comp = this, pressedStateCallback = { branchLabel, isPressed ->
+        if (!isPressed) return@addHoverAndPressStateListener
+        branchLabel as JComponent
+        val popup = branchActionPopup(project, repositoryDataService.remoteCoordinates.repository, model)
+        val point = RelativePoint.getSouthWestOf(branchLabel).originalPoint
+        popup.component.show(branchLabel, point.x, point.y + POPUP_OFFSET)
+      })
+    }
     val to = createLabel()
-    val branchActionsToolbar = BranchActionsToolbar()
 
-    Controller(model, from, to, branchActionsToolbar)
+    Controller(model, from, to)
+    val activatableFromBranch = RoundedPanel(BorderLayout()).apply {
+      UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      border = JBUI.Borders.empty()
+      background = UIUtil.getListBackground()
+      addHoverAndPressStateListener(comp = this, hoveredStateCallback = { component, isHovered ->
+        component.background = if (isHovered) UIUtil.getLabelBackground() else UIUtil.getListBackground()
+      })
+      add(from, BorderLayout.CENTER)
+    }
 
     return NonOpaquePanel().apply {
       layout = MigLayout(LC()
@@ -47,13 +75,9 @@ internal object GHPRDetailsBranchesComponentFactory {
                            .gridGap("0", "0")
                            .insets("0", "0", "0", "0"))
 
-    add(to, CC().minWidth("30"))
-      add(JLabel(" ${UIUtil.leftArrow()} ").apply {
-        foreground = CurrentBranchComponent.TEXT_COLOR
-        border = JBUI.Borders.empty(0, 5)
-      })
-    add(from, CC().minWidth("30"))
-      add(branchActionsToolbar)
+      add(to, CC().minWidth("$BRANCH_MIN_WIDTH"))
+      add(arrowLabel, CC().gapX("$BRANCHES_GAP", "$BRANCHES_GAP"))
+      add(activatableFromBranch, CC().minWidth("$BRANCH_MIN_WIDTH"))
     }
   }
 
@@ -63,10 +87,27 @@ internal object GHPRDetailsBranchesComponentFactory {
     }
   }
 
+  private fun branchActionPopup(project: Project, repository: GitRepository, model: GHPRBranchesModel): ActionPopupMenu {
+    val group = ActionManager.getInstance().getAction("Git.Branch") as ActionGroup
+    val popupMenu = ActionManager.getInstance().createActionPopupMenu("github.review.details", group)
+    popupMenu.setDataContext {
+      val localBranch = with(repository.branches) { model.localBranch?.run(::findLocalBranch) }
+      val isCurrentBranchCheckedOut = repository.currentBranchName != null && repository.currentBranchName == localBranch?.name
+      val branchName = if (isCurrentBranchCheckedOut) model.headBranch else "${model.prRemote!!.name}/${model.headBranch}"
+      val branch = repository.branches.findBranchByName(branchName)
+      SimpleDataContext.builder()
+        .add(CommonDataKeys.PROJECT, project)
+        .add(GitBranchActionsUtil.REPOSITORIES_KEY, listOf(repository))
+        .add(GitBranchActionsUtil.BRANCHES_KEY, branch?.let(::listOf))
+        .build()
+    }
+
+    return popupMenu
+  }
+
   private class Controller(private val model: GHPRBranchesModel,
-                           private val from: JBLabel,
-                           private val to: JBLabel,
-                           private val branchActionsToolbar: BranchActionsToolbar) {
+                           private val from: JLabel,
+                           private val to: JLabel) {
 
     val branchesTooltipFactory = GHPRBranchesTooltipFactory()
 
@@ -74,7 +115,6 @@ internal object GHPRDetailsBranchesComponentFactory {
       branchesTooltipFactory.installTooltip(from)
 
       model.addAndInvokeChangeListener {
-        updateBranchActionsToolbar()
         updateBranchLabels()
       }
     }
@@ -100,109 +140,13 @@ internal object GHPRDetailsBranchesComponentFactory {
         remoteBranchName = remoteBranch?.name
       }
     }
-
-    private fun updateBranchActionsToolbar() {
-      val prRemote = model.prRemote
-      if (prRemote == null) {
-        branchActionsToolbar.showCheckoutAction()
-        return
-      }
-
-      val localBranch = model.localBranch
-
-      val updateActionExist = localBranch != null
-      val multipleActionsExist = updateActionExist && model.localRepository.currentBranchName != localBranch
-
-      with(branchActionsToolbar) {
-        when {
-          multipleActionsExist -> showMultiple()
-          updateActionExist -> showUpdateAction()
-          else -> showCheckoutAction()
-        }
-      }
-    }
-  }
-
-  internal class BranchActionsToolbar : CardLayoutPanel<BranchActionsToolbar.State, BranchActionsToolbar.StateUi, JComponent>() {
-
-    companion object {
-      const val BRANCH_ACTIONS_TOOLBAR = "Github.PullRequest.Branch.Actions.Toolbar"
-    }
-
-    enum class State(private val text: String) {
-      CHECKOUT_ACTION(VcsBundle.message("vcs.command.name.checkout")),
-      UPDATE_ACTION(VcsBundle.message("vcs.command.name.update")),
-      MULTIPLE_ACTIONS(GithubBundle.message("pull.request.branch.action.group.name"));
-
-      override fun toString(): String = text
-    }
-
-    fun showCheckoutAction() {
-      select(State.CHECKOUT_ACTION, true)
-    }
-
-    fun showUpdateAction() {
-      select(State.UPDATE_ACTION, true)
-    }
-
-    fun showMultiple() {
-      select(State.MULTIPLE_ACTIONS, true)
-    }
-
-    sealed class StateUi {
-
-      abstract fun createUi(): JComponent
-
-      object CheckoutActionUi : SingleActionUi("Github.PullRequest.Branch.Create", VcsBundle.message("vcs.command.name.checkout"))
-      object UpdateActionUi : SingleActionUi("Github.PullRequest.Branch.Update", VcsBundle.message("vcs.command.name.update"))
-
-      abstract class SingleActionUi(private val actionId: String, @NlsContexts.LinkLabel private val actionName: String) : StateUi() {
-        override fun createUi(): JComponent =
-          AnActionLink(actionId, BRANCH_ACTIONS_TOOLBAR)
-            .apply {
-              text = actionName
-              border = JBUI.Borders.emptyLeft(8)
-            }
-      }
-
-      object MultipleActionUi : StateUi() {
-
-        private lateinit var dropDownLink: DropDownLink<State>
-
-        private val invokeAction: JComponent.(String) -> Unit = { actionId ->
-          val action = ActionManager.getInstance().getAction(actionId)
-          ActionUtil.invokeAction(action, this, BRANCH_ACTIONS_TOOLBAR, null, null)
-        }
-
-        override fun createUi(): JComponent {
-          dropDownLink = DropDownLink(State.MULTIPLE_ACTIONS, listOf(State.CHECKOUT_ACTION, State.UPDATE_ACTION), Consumer { state ->
-            when (state) {
-              State.CHECKOUT_ACTION -> dropDownLink.invokeAction("Github.PullRequest.Branch.Create")
-              State.UPDATE_ACTION -> dropDownLink.invokeAction("Github.PullRequest.Branch.Update")
-              State.MULTIPLE_ACTIONS -> {}
-            }
-          })
-            .apply { border = JBUI.Borders.emptyLeft(8) }
-          return dropDownLink
-        }
-      }
-    }
-
-    override fun prepare(state: State): StateUi =
-      when (state) {
-        State.CHECKOUT_ACTION -> StateUi.CheckoutActionUi
-        State.UPDATE_ACTION -> StateUi.UpdateActionUi
-        State.MULTIPLE_ACTIONS -> StateUi.MultipleActionUi
-      }
-
-    override fun create(ui: StateUi): JComponent = ui.createUi()
   }
 
   private class GHPRBranchesTooltipFactory(var isOnCurrentBranch: Boolean = false,
                                            var prBranchName: String = "",
                                            var localBranchName: String? = null,
                                            var remoteBranchName: String? = null) {
-    fun installTooltip(label: JBLabel) {
+    fun installTooltip(label: JLabel) {
       label.addMouseMotionListener(object : MouseAdapter() {
         override fun mouseMoved(e: MouseEvent) {
           showTooltip(e)

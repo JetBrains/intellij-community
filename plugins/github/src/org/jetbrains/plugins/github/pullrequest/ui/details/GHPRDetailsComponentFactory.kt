@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
@@ -10,6 +11,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.*
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
@@ -19,8 +21,10 @@ import javax.swing.JPanel
 
 internal object GHPRDetailsComponentFactory {
 
-  fun create(scope: CoroutineScope,
+  fun create(project: Project,
+             scope: CoroutineScope,
              reviewDetailsVm: GHPRDetailsViewModel,
+             repositoryDataService: GHPRRepositoryDataService,
              securityService: GHPRSecurityService,
              avatarIconsProvider: GHAvatarIconsProvider,
              branchesModel: GHPRBranchesModel,
@@ -29,8 +33,7 @@ internal object GHPRDetailsComponentFactory {
              stateModel: GHPRStateModel): JComponent {
     val title = GHPRTitleComponent.create(scope, reviewDetailsVm)
     val description = GHPRDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm)
-
-    val branches = GHPRDetailsBranchesComponentFactory.create(branchesModel)
+    val branches = GHPRDetailsBranchesComponentFactory.create(project, repositoryDataService, branchesModel)
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, securityService)
     val state = GHPRStatePanel(securityService, stateModel).also {
       detailsModel.addAndInvokeDetailsChangedListener {

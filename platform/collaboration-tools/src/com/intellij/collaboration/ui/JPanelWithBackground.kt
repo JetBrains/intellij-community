@@ -10,7 +10,7 @@ import javax.swing.JPanel
  *
  * WARN: do not set background with alpha when [isOpaque] is true
  */
-class JPanelWithBackground : JPanel {
+open class JPanelWithBackground : JPanel {
   @Suppress("unused")
   constructor() : super()
 

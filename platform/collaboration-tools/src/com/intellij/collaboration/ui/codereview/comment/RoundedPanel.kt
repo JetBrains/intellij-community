@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.comment
 
+import com.intellij.collaboration.ui.JPanelWithBackground
 import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.GraphicsUtil
@@ -8,15 +9,17 @@ import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
-import javax.swing.JPanel
 
 @ApiStatus.Internal
-class RoundedPanel(layout: LayoutManager?, private val arc: Int = 8) : JPanel(layout) {
+class RoundedPanel(layout: LayoutManager?, private val arc: Int = 8) : JPanelWithBackground(layout) {
 
   init {
+    isOpaque = false
     cursor = Cursor.getDefaultCursor()
     border = RoundedLineBorder(DEFAULT_BORDER_COLOR, arc + 2)
   }
+
+  override fun setOpaque(isOpaque: Boolean) {} // Disable opaque
 
   override fun paintChildren(g: Graphics) {
     val g2 = g.create() as Graphics2D
