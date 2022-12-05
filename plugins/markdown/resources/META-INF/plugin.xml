@@ -202,6 +202,9 @@
     <applicationConfigurable parentId="Settings.Markdown"
                              provider="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurableProvider"/>
 
+    <editorSmartKeysConfigurable instance="org.intellij.plugins.markdown.settings.MarkdownSmartKeysConfigurable"
+                                 id="editor.preferences.markdownOptions"/>
+
     <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache"/>
