@@ -1,3 +1,7 @@
+## 40
+
+* add `gc` extra data with metrics from GC
+
 ## 39
 
 * add `memory` extra data with `usedMb`, `maxMb` and `metaspaceMb` numbers
