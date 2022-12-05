@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -429,6 +430,10 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
     if (PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent()) instanceof PsiAssignmentExpression assignment &&
         PsiTreeUtil.isAncestor(assignment.getLExpression(), psiAnchor, false)) {
+      IElementType tokenType = assignment.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.ANDEQ) || tokenType.equals(JavaTokenType.OREQ)) {
+        if (isFlagSetChain(assignment.getLExpression(), tokenType.equals(JavaTokenType.ANDEQ))) return;
+      }
       reporter.registerProblem(
         psiAnchor,
         JavaAnalysisBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
@@ -454,6 +459,18 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
                                                 "dataflow.message.constant.condition.when.reached" :
                                                 "dataflow.message.constant.condition", evaluatesToTrue ? 1 : 0);
     reporter.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+  }
+
+  private static boolean isFlagSetChain(@NotNull PsiExpression expression, boolean isAnd) {
+    PsiLocalVariable local = ExpressionUtils.resolveLocalVariable(expression);
+    if (local == null) return false;
+    PsiExpression initializer = local.getInitializer();
+    if (!ExpressionUtils.isLiteral(initializer, isAnd)) return false;
+    if (!(PsiUtil.getVariableCodeBlock(local, null) instanceof PsiCodeBlock block)) return false;
+    PsiElement[] defs = DefUseUtil.getDefs(block, local, expression.getParent());
+    // boolean x = false; x|=something;
+    return defs.length == 1 && defs[0] == local && 
+           VariableAccessUtils.getVariableReferences(local, block).stream().filter(PsiUtil::isAccessedForWriting).limit(2).count() > 1;
   }
 
   private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
