@@ -303,10 +303,6 @@ public abstract class SingleRowLayout extends TabLayout {
     return result;
   }
 
-  public boolean isWithScrollBar() {
-    return false;
-  }
-
   @Override
   @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
   public int getDropSideFor(@NotNull Point point) {
