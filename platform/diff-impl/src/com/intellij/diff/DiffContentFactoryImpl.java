@@ -646,7 +646,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @Override
     @NotNull
     public DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators) {
-      FileType fileType = constructFileType();
+      FileType fileType = guessFileType();
       String lightFilePath = constructLightFilePath();
 
       TextContent textContent = TextContent.fromText(text, respectLineSeparators);
@@ -658,7 +658,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @Override
     @NotNull
     public DocumentContent buildFromBytes(byte @NotNull [] content) {
-      FileType fileType = constructFileType();
+      FileType fileType = guessFileType();
       String lightFilePath = constructLightFilePath();
       VirtualFile highlightFile = constructHighlightFile();
       Charset charset = guessCharset(project, content, fileType, lightFilePath, highlightFile, defaultCharset);
@@ -691,8 +691,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     @Nullable
-    private FileType constructFileType() {
-      return context != null ? context.getContentType() : null;
+    private FileType guessFileType() {
+      return context != null ? context.guessContentType() : null;
     }
 
     @NotNull
@@ -703,7 +703,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
       String name = fileName;
       if (name == null) {
-        FileType fileType = constructFileType();
+        FileType fileType = guessFileType();
         name = "diff." + StringUtil.defaultIfEmpty(fileType != null ? fileType.getDefaultExtension() : null, "txt");
       }
       return name;
@@ -812,7 +812,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     @Override
     public @Nullable FileType getContentType() {
-      return myReferent != null ? myReferent.getContentType() : null;
+      return myReferent != null ? myReferent.guessContentType() : null;
     }
 
     @Override
@@ -888,7 +888,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   private interface Context {
     @Nullable VirtualFile getHighlightFile();
 
-    @Nullable FileType getContentType();
+    @Nullable FileType guessContentType();
 
     class ByHighlightFile implements Context {
       private final VirtualFile myHighlightFile;
@@ -903,7 +903,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       }
 
       @Override
-      public @Nullable FileType getContentType() {
+      public @Nullable FileType guessContentType() {
         return myHighlightFile.getFileType();
       }
     }
@@ -921,7 +921,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       }
 
       @Override
-      public @Nullable FileType getContentType() {
+      public @Nullable FileType guessContentType() {
         return myReferent.getContentType();
       }
     }
@@ -939,7 +939,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       }
 
       @Override
-      public @Nullable FileType getContentType() {
+      public @Nullable FileType guessContentType() {
         return myFilePath.getFileType();
       }
     }
@@ -957,7 +957,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       }
 
       @Override
-      public @Nullable FileType getContentType() {
+      public @Nullable FileType guessContentType() {
         return myFileType;
       }
     }
