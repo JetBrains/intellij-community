@@ -47,11 +47,11 @@ public class NavigationGutterIconBuilder<T> {
   private final NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> myConverter;
 
   protected NotNullLazyValue<Collection<? extends T>> myTargets;
-  protected boolean myLazy;
+  private boolean myLazy;
   protected @Tooltip String myTooltipText;
   protected @PopupTitle String myPopupTitle;
   protected @PopupContent String myEmptyText;
-  protected @PopupTitle String myTooltipTitle;
+  @PopupTitle private String myTooltipTitle;
   protected GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
   private Computable<PsiElementListCellRenderer<?>> myCellRenderer;
   private @NotNull NullableFunction<? super T, String> myNamer = ElementPresentationManager.namer();
@@ -166,7 +166,7 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   /**
-   * This method may lead to a deadlock when used from pooled thread, e.g. from
+   * This method may lead to a deadlock when used from pooled thread, e.g., from
    * {@link com.intellij.codeInsight.daemon.LineMarkerProvider#collectSlowLineMarkers(List, Collection)}.
    * {@link PsiElementListCellRenderer} is a UI component that acquires Swing tree lock on init.
    *
@@ -174,7 +174,7 @@ public class NavigationGutterIconBuilder<T> {
    */
   @Deprecated
   @NotNull
-  public NavigationGutterIconBuilder<T> setCellRenderer(@NotNull final PsiElementListCellRenderer cellRenderer) {
+  public NavigationGutterIconBuilder<T> setCellRenderer(@NotNull final PsiElementListCellRenderer<?> cellRenderer) {
     myCellRenderer = new Computable.PredefinedValueComputable<>(cellRenderer);
     return this;
   }
@@ -297,8 +297,8 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   @NotNull
-  protected NavigationGutterIconRenderer createGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
-                                                                  @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
+  protected NavigationGutterIconRenderer createGutterIconRenderer(@NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers,
+                                                                  @NotNull Computable<? extends PsiElementListCellRenderer<?>> renderer,
                                                                   boolean empty,
                                                                   @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
     if (myLazy) {
@@ -308,10 +308,10 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   @NotNull
-  protected NavigationGutterIconRenderer createLazyGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
-                                                                      @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
-                                                                      boolean empty,
-                                                                      @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
+  private NavigationGutterIconRenderer createLazyGutterIconRenderer(@NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers,
+                                                                    @NotNull Computable<? extends PsiElementListCellRenderer<?>> renderer,
+                                                                    boolean empty,
+                                                                    @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty, true, navigationHandler);
   }
 
@@ -366,8 +366,8 @@ public class NavigationGutterIconBuilder<T> {
                                    @NotNull Alignment alignment,
                                    final Icon icon,
                                    @Nullable final @Tooltip String tooltipText,
-                                   @NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
-                                   @NotNull Computable<PsiElementListCellRenderer<?>> cellRenderer,
+                                   @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers,
+                                   @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
                                    boolean empty,
                                    @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
       super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers, false, navigationHandler);
@@ -381,8 +381,8 @@ public class NavigationGutterIconBuilder<T> {
                                    @NotNull Alignment alignment,
                                    Icon icon,
                                    @Nullable @Tooltip String tooltipText,
-                                   @NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
-                                   @NotNull Computable<PsiElementListCellRenderer<?>> cellRenderer,
+                                   @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers,
+                                   @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
                                    boolean empty,
                                    boolean computeTargetsInBackground,
                                    @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
@@ -424,10 +424,8 @@ public class NavigationGutterIconBuilder<T> {
       final MyNavigationGutterIconRenderer that = (MyNavigationGutterIconRenderer)o;
 
       if (myAlignment != that.myAlignment) return false;
-      if (myIcon != null ? !myIcon.equals(that.myIcon) : that.myIcon != null) return false;
-      if (myTooltipText != null ? !myTooltipText.equals(that.myTooltipText) : that.myTooltipText != null) return false;
-
-      return true;
+      if (!Objects.equals(myIcon, that.myIcon)) return false;
+      return Objects.equals(myTooltipText, that.myTooltipText);
     }
 
     @Override
