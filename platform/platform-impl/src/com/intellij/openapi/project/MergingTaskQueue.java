@@ -81,6 +81,16 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
           disposeQueue.add(oldTask);
           continue;
         }
+
+        // note that parent may know nothing about children, so the following may happen (just like in case with `equals` with inheritance):
+        //     class Parent; class Child extends Parent
+        //     parent.tryMergeWith(child) != child.tryMergeWith(parent)
+        // At the moment we prevent accidental errors by forcing tasks' class equality.
+        // More permissive strategy (that we don't apply) would be to check "isAssignableFrom" and always use `child.tryMergeWith`
+        if (task.getClass() != oldTask.getClass()) {
+          continue;
+        }
+
         T mergedTask = task.tryMergeWith(oldTask);
         if (mergedTask == oldTask) {
           // new task completely absorbed by the old task which means that we don't need to modify the queue
