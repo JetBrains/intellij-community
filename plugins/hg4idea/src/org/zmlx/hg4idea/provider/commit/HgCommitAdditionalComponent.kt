@@ -5,19 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.JBUI
-import com.intellij.vcs.commit.AmendCommitHandler
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.commit.AmendCommitModeListener
 import com.intellij.vcs.commit.ToggleAmendCommitOption
 import com.intellij.xml.util.XmlStringUtil
 import org.zmlx.hg4idea.HgBundle
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import java.awt.event.ActionEvent
 import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * Commit options for hg
@@ -26,34 +21,44 @@ open class HgCommitAdditionalComponent(private val myCommitPanel: CheckinProject
                                        private val myCommitContext: CommitContext,
                                        hasSubrepos: Boolean,
                                        showAmendOption: Boolean) : RefreshableOnComponent, AmendCommitModeListener, Disposable {
-  private val myPanel: JPanel
-  private val myCommitSubrepos: JCheckBox
-  private val myAmendOption: ToggleAmendCommitOption?
+  private val amendHandler = myCommitPanel.commitWorkflowHandler.amendCommitHandler
+
+  private val commitSubrepos: JCheckBox?
+  private val amendOption: ToggleAmendCommitOption?
 
   init {
-    myAmendOption = if (showAmendOption) ToggleAmendCommitOption(myCommitPanel, this) else null
+    commitSubrepos = when {
+      hasSubrepos -> {
+        JCheckBox(HgBundle.message("repositories.commit.subs"), false).also {
+          it.toolTipText = XmlStringUtil.wrapInHtml(HgBundle.message("repositories.commit.subs.tooltip"))
+          it.addActionListener { e -> updateAmendState(!it.isSelected) }
+        }
+      }
+      else -> null
+    }
 
-    myCommitSubrepos = JCheckBox(HgBundle.message("repositories.commit.subs"), false)
-    myCommitSubrepos.isVisible = hasSubrepos
-    myCommitSubrepos.toolTipText = XmlStringUtil.wrapInHtml(HgBundle.message("repositories.commit.subs.tooltip"))
-    myCommitSubrepos.addActionListener { e: ActionEvent? -> updateAmendState(!myCommitSubrepos.isSelected) }
-
-    val gb = GridBag()
-      .setDefaultInsets(JBUI.insets(2))
-      .setDefaultAnchor(GridBagConstraints.WEST)
-      .setDefaultWeightX(1.0)
-      .setDefaultFill(GridBagConstraints.HORIZONTAL)
-    myPanel = JPanel(GridBagLayout())
-    if (myAmendOption != null) myPanel.add(myAmendOption, gb.nextLine().next())
-    myPanel.add(myCommitSubrepos, gb.nextLine().next())
+    amendOption = when {
+      showAmendOption -> ToggleAmendCommitOption(myCommitPanel, this)
+      else -> null
+    }
 
     amendHandler.addAmendCommitModeListener(this, this)
   }
 
-  private val amendHandler: AmendCommitHandler
-    get() {
-      return myCommitPanel.commitWorkflowHandler.amendCommitHandler;
+  override fun getComponent(): JComponent {
+    return panel {
+      if (amendOption != null) {
+        row {
+          cell(amendOption)
+        }
+      }
+      if (commitSubrepos != null) {
+        row {
+          cell(commitSubrepos)
+        }
+      }
     }
+  }
 
   override fun dispose() {}
 
@@ -62,31 +67,29 @@ open class HgCommitAdditionalComponent(private val myCommitPanel: CheckinProject
   }
 
   override fun saveState() {
-    myCommitContext.isCommitSubrepositories = myCommitSubrepos.isSelected
+    if (commitSubrepos != null) {
+      myCommitContext.isCommitSubrepositories = commitSubrepos.isSelected
+    }
   }
 
   override fun restoreState() {
     updateCommitSubreposState()
   }
 
-  override fun getComponent(): JComponent {
-    return myPanel
-  }
-
-  fun isAmend(): Boolean {
-    return amendHandler.isAmendCommitMode
-  }
+  fun isAmend(): Boolean = amendHandler.isAmendCommitMode
 
   private fun updateCommitSubreposState() {
-    val isAmendMode = isAmend()
+    if (commitSubrepos != null) {
+      val isAmendMode = isAmend()
 
-    myCommitSubrepos.isEnabled = !isAmendMode
-    if (isAmendMode) myCommitSubrepos.isSelected = false
+      commitSubrepos.isEnabled = !isAmendMode
+      if (isAmendMode) commitSubrepos.isSelected = false
+    }
   }
 
   private fun updateAmendState(enable: Boolean) {
     amendHandler.isAmendCommitModeTogglingEnabled = enable
-    if (myAmendOption != null) myAmendOption.isEnabled = enable
+    if (amendOption != null) amendOption.isEnabled = enable
     if (!enable) amendHandler.isAmendCommitMode = false
   }
 }

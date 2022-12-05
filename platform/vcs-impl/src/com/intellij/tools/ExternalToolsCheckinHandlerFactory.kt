@@ -8,12 +8,11 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
-import java.awt.BorderLayout
-import javax.swing.BorderFactory
 import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
 
 /**
  * @author lene
@@ -23,24 +22,19 @@ class ExternalToolsCheckinHandlerFactory : CheckinHandlerFactory() {
     val config = ToolsProjectConfig.getInstance(panel.project)
     return object : CheckinHandler() {
       override fun getAfterCheckinConfigurationPanel(parentDisposable: Disposable): RefreshableOnComponent? {
-        val label = JLabel(ToolsBundle.message("tools.after.commit.description"))
-
         val toolComboBox = ToolSelectComboBox(panel.project)
-
-        val layout = BorderLayout()
-        layout.vgap = 3
-        val panel = JPanel(layout)
-        panel.add(label, BorderLayout.NORTH)
-        panel.add(toolComboBox, BorderLayout.CENTER)
-        toolComboBox.border = BorderFactory.createEmptyBorder(0, 0, 3, 0)
-
         if (toolComboBox.valuableItemCount == 0) {
           return null
         }
 
         return object : RefreshableOnComponent {
           override fun getComponent(): JComponent {
-            return panel
+            return panel {
+              row(ToolsBundle.message("tools.after.commit.description")) {
+                cell(toolComboBox)
+                  .align(AlignX.FILL)
+              }
+            }
           }
 
           override fun saveState() {

@@ -2,39 +2,36 @@
 package org.jetbrains.idea.svn.checkin
 
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.idea.svn.SvnBundle
 import org.jetbrains.idea.svn.SvnVcs
-import java.awt.BorderLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JPanel
 
-internal class KeepLocksComponent(private val mySvnVcs: SvnVcs) : RefreshableOnComponent {
-  private val myKeepLocksBox: JCheckBox
-  private val myPanel: JPanel
-  private val myAutoUpdate: JCheckBox
-
-  init {
-    myPanel = JPanel(BorderLayout())
-    myKeepLocksBox = JCheckBox(SvnBundle.message("checkbox.checkin.keep.files.locked"))
-    myAutoUpdate = JCheckBox(SvnBundle.message("checkbox.checkin.auto.update.after.commit"))
-    myPanel.add(myAutoUpdate, BorderLayout.NORTH)
-    myPanel.add(myKeepLocksBox, BorderLayout.CENTER)
-  }
+internal class KeepLocksComponent(private val svnVcs: SvnVcs) : RefreshableOnComponent {
+  private val keepLocksCheckbox = JCheckBox(SvnBundle.message("checkbox.checkin.keep.files.locked"))
+  private val autoUpdateCheckbox = JCheckBox(SvnBundle.message("checkbox.checkin.auto.update.after.commit"))
 
   override fun getComponent(): JComponent {
-    return myPanel
+    return panel {
+      row {
+        cell(autoUpdateCheckbox)
+      }
+      row {
+        cell(keepLocksCheckbox)
+      }
+    }
   }
 
   override fun saveState() {
-    val configuration = mySvnVcs.svnConfiguration
-    configuration.isKeepLocks = myKeepLocksBox.isSelected
-    configuration.isAutoUpdateAfterCommit = myAutoUpdate.isSelected
+    val configuration = svnVcs.svnConfiguration
+    configuration.isKeepLocks = keepLocksCheckbox.isSelected
+    configuration.isAutoUpdateAfterCommit = autoUpdateCheckbox.isSelected
   }
 
   override fun restoreState() {
-    val configuration = mySvnVcs.svnConfiguration
-    myKeepLocksBox.isSelected = configuration.isKeepLocks
-    myAutoUpdate.isSelected = configuration.isAutoUpdateAfterCommit
+    val configuration = svnVcs.svnConfiguration
+    keepLocksCheckbox.isSelected = configuration.isKeepLocks
+    autoUpdateCheckbox.isSelected = configuration.isAutoUpdateAfterCommit
   }
 }

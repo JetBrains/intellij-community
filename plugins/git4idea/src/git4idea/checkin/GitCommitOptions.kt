@@ -15,8 +15,8 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.GridBag
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
@@ -31,8 +31,6 @@ import git4idea.GitUtil.getRepositoryManager
 import git4idea.checkin.GitCheckinEnvironment.collectActiveMovementProviders
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
 import java.awt.Point
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -41,7 +39,6 @@ import java.awt.event.HierarchyListener
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JPanel
 import javax.swing.UIManager
 
 private val COMMIT_AUTHOR_KEY = Key.create<VcsUser>("Git.Commit.Author")
@@ -76,7 +73,7 @@ class GitCommitOptionsUi(
 
   private var authorDate: Date? = null
 
-  private val panel = JPanel(GridBagLayout())
+  private val panel: JComponent
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
   private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"),
                                          settings.shouldSignOffCommit()).apply {
@@ -95,6 +92,8 @@ class GitCommitOptionsUi(
   private var authorWarning: Balloon? = null
 
   init {
+    panel = buildLayout()
+
     authorField.addFocusListener(object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
         updateCurrentCommitAuthor()
@@ -117,23 +116,26 @@ class GitCommitOptionsUi(
       }
     }
 
-    buildLayout()
-
     amendHandler.addAmendCommitModeListener(this, this)
   }
 
-  private fun buildLayout() = panel.apply {
-    val gb = GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultInsets(JBUI.insets(2))
-
-    val authorLabel = JBLabel(GitBundle.message("commit.author")).apply { labelFor = authorField }
-    add(authorLabel, gb.nextLine().next())
-    add(authorField, gb.next().fillCellHorizontally().weightx(1.0))
-
-    val amendOption = if (showAmendOption) ToggleAmendCommitOption(commitPanel, this@GitCommitOptionsUi) else null
-    amendOption?.let { add(it, gb.nextLine().next().coverLine()) }
-
-    add(signOffCommit, gb.nextLine().next().coverLine())
-    add(commitRenamesSeparately, gb.nextLine().next().coverLine())
+  private fun buildLayout() = panel {
+    val disposable = this@GitCommitOptionsUi
+    row(GitBundle.message("commit.author")) {
+      cell(authorField)
+        .align(AlignX.FILL)
+    }
+    if (showAmendOption) {
+      row {
+        cell(ToggleAmendCommitOption(commitPanel, disposable))
+      }
+    }
+    row {
+      cell(signOffCommit)
+    }
+    row {
+      cell(commitRenamesSeparately)
+    }
   }
 
   // called before popup size calculation => changing preferred size here will be correctly reflected by popup
