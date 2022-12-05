@@ -222,16 +222,14 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     Project project = hostFile.getProject();
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
-    if (pair == null) return false;
-
-    CommandProcessor.getInstance().executeCommand(project, () ->
-      invokeIntention(action, pair.second, pair.first), commandName, null);
-
-    checkPsiTextConsistency(hostFile);
-
+    try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
+      if (pair == null) return false;
+      CommandProcessor.getInstance().executeCommand(project, () ->
+        invokeIntention(action, pair.second, pair.first), commandName, null);
+      checkPsiTextConsistency(hostFile);
+    }
     return true;
   }
 
@@ -255,9 +253,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       WriteAction.run(() -> action.invoke(file.getProject(), editor, file));
     }
     else {
-      try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-        action.invoke(file.getProject(), editor, file);
-      }
+      action.invoke(file.getProject(), editor, file);
     }
   }
 
@@ -273,7 +269,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
     return chooseBetweenHostAndInjected(
       hostFile, hostEditor, injectedFile,
-      (psiFile, editor) -> SlowOperations.allowSlowOperations(() -> availableFor(psiFile, editor, action))
+      (psiFile, editor) -> availableFor(psiFile, editor, action)
     );
   }
 }
