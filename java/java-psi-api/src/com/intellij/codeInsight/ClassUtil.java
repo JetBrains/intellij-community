@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
@@ -16,16 +16,10 @@ public final class ClassUtil {
 
   @Nullable
   public static PsiMethod getAnyAbstractMethod(@NotNull PsiClass aClass) {
-    PsiMethod methodToImplement = getAnyMethodToImplement(aClass);
-    if (methodToImplement != null) {
-      return methodToImplement;
-    }
-    PsiMethod[] methods = aClass.getMethods();
-    for (PsiMethod method : methods) {
+    for (PsiMethod method : aClass.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return method;
     }
-
-    return null;
+    return getAnyMethodToImplement(aClass);
   }
 
   @Nullable

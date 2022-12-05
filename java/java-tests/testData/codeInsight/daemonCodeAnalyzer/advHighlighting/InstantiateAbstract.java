@@ -5,15 +5,15 @@ public class a {
 
     <error descr="'c1' is abstract; cannot be instantiated">new c1()</error>;
 
-    new <error descr="Class 'Anonymous class derived from c1' must either be declared abstract or implement abstract method 'f1(int)' in 'c1'">c1</error>() {
+    new <error descr="Class 'Anonymous class derived from c1' must implement abstract method 'f1(int)' in 'c1'">c1</error>() {
       public void f2() {}
     };
 
-    new <error descr="Class 'Anonymous class derived from c1' must either be declared abstract or implement abstract method 'f1(int)' in 'c1'">c1</error>() {
+    new <error descr="Class 'Anonymous class derived from c1' must implement abstract method 'f1(int)' in 'c1'">c1</error>() {
       public void f1() {}
     };
 
-    new <error descr="Class 'Anonymous class derived from c1' must either be declared abstract or implement abstract method 'f2()' in 'Anonymous class derived from c1'">c1</error>() {
+    new c1() {
       public void f1(int i) {}
       public <error descr="Abstract method in non-abstract class">abstract</error> void f2();
     };

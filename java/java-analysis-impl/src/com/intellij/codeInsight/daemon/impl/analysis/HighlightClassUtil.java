@@ -1,9 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-/*
- * Checks and Highlights problems with classes
- * User: cdr
- */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ClassUtil;
@@ -50,7 +45,10 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 
-// generates HighlightInfoType.ERROR-only HighlightInfos at PsiClass level
+/**
+ * Checks and highlights problems with classes.
+ * Generates HighlightInfoType.ERROR-only HighlightInfos at PsiClass level.
+ */
 public final class HighlightClassUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
@@ -75,43 +73,40 @@ public final class HighlightClassUtil {
 
   static HighlightInfo.Builder checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull PsiElement implementsFixElement, @NotNull TextRange range) {
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
-
     if (abstractMethod == null) {
       return null;
     }
 
-    PsiClass superClass = abstractMethod.getContainingClass();
-    if (superClass == null) {
+    PsiClass containingClass = abstractMethod.getContainingClass();
+    if (containingClass == null ||
+        containingClass == aClass ||
+        implementsFixElement instanceof PsiEnumConstant && !hasEnumConstantsWithInitializer(aClass)) {
       return null;
     }
 
-    String messageKey;
-    String referenceName;
+    final String messageKey;
+    final String referenceName;
     if (aClass instanceof PsiEnumConstantInitializer) {
       messageKey = "enum.constant.must.implement.method";
-
       PsiEnumConstantInitializer enumConstant = (PsiEnumConstantInitializer)aClass;
       referenceName = enumConstant.getEnumConstant().getName();
     }
-    else if (aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant) {
-      messageKey = "class.must.implement.method";
-      referenceName = HighlightUtil.formatClass(aClass, false);
-    }
     else {
-      messageKey = "class.must.be.abstract";
+      messageKey = aClass.isEnum() || aClass.isRecord() || aClass instanceof PsiAnonymousClass
+                   ? "class.must.implement.method"
+                   : "class.must.be.abstract";
       referenceName = HighlightUtil.formatClass(aClass, false);
     }
 
     String message = JavaErrorBundle.message(messageKey,
                                              referenceName,
                                              JavaHighlightUtil.formatMethod(abstractMethod),
-                                             HighlightUtil.formatClass(superClass, false));
-
+                                             HighlightUtil.formatClass(containingClass, false));
     HighlightInfo.Builder errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
     PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
     if (anyMethodToImplement != null) {
       if (!anyMethodToImplement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
-          JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass)) {
+          JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, containingClass)) {
         IntentionAction action = QUICK_FIX_FACTORY.createImplementMethodsFix(implementsFixElement);
         errorResult.registerFix(action, null, null, null, null);
       }
@@ -145,9 +140,17 @@ public final class HighlightClassUtil {
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
         (!(highlightElement instanceof PsiNewExpression) || !(((PsiNewExpression)highlightElement).getType() instanceof PsiArrayType))) {
       String baseClassName = aClass.getName();
-      String message = JavaErrorBundle.message("abstract.cannot.be.instantiated", baseClassName);
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(highlightElement).descriptionAndTooltip(message);
       PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
+      String message;
+      if (aClass.isEnum()) {
+        if (anyAbstractMethod == null || anyAbstractMethod.getContainingClass() != aClass) return null;
+        message = JavaErrorBundle.message("enum.constant.must.implement.method", highlightElement.getText(),
+                                          JavaHighlightUtil.formatMethod(anyAbstractMethod), baseClassName);
+      }
+      else {
+        message = JavaErrorBundle.message("abstract.cannot.be.instantiated", baseClassName);
+      }
+      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(highlightElement).descriptionAndTooltip(message);
       if (!aClass.isInterface() && anyAbstractMethod == null) {
         // suggest to make not abstract only if possible
         QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, false)));
@@ -170,7 +173,6 @@ public final class HighlightClassUtil {
       }
       return new CachedValueProvider.Result<>(false, PsiModificationTracker.MODIFICATION_COUNT);
     });
-
   }
 
   static HighlightInfo.Builder checkDuplicateTopLevelClass(@NotNull PsiClass aClass) {
@@ -179,7 +181,7 @@ public final class HighlightClassUtil {
     if (qualifiedName == null) return null;
     int numOfClassesToFind = 2;
     if (qualifiedName.contains("$")) {
-      qualifiedName = qualifiedName.replaceAll("\\$", ".");
+      qualifiedName = qualifiedName.replace('$', '.');
       numOfClassesToFind = 1;
     }
     PsiManager manager = aClass.getManager();
@@ -244,10 +246,9 @@ public final class HighlightClassUtil {
     if (!(parent instanceof PsiDeclarationStatement)) {
       parent = aClass;
     }
-    PsiElement element;
     while (parent != null) {
       if (parent instanceof PsiFile) break;
-      element = checkSiblings ? parent.getPrevSibling() : null;
+      PsiElement element = checkSiblings ? parent.getPrevSibling() : null;
       if (element == null) {
         element = parent.getParent();
         // JLS 14.3:

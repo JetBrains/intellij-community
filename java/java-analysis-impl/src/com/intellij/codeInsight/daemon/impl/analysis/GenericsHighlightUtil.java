@@ -509,7 +509,7 @@ public final class GenericsHighlightUtil {
                                                defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
           return null;
         }
-        String key = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() ?
+        String key = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() || aClass.isEnum() ?
                            "class.must.implement.method" : "class.must.be.abstract";
         return JavaErrorBundle.message(key,
                                        HighlightUtil.formatClass(aClass, false),
@@ -1190,7 +1190,7 @@ public final class GenericsHighlightUtil {
                                                       @NotNull JavaSdkVersion javaSdkVersion) {
     PsiClass containingClass = enumConstant.getContainingClass();
     LOG.assertTrue(containingClass != null);
-    if (enumConstant.getInitializingClass() == null && HighlightClassUtil.hasEnumConstantsWithInitializer(containingClass)) {
+    if (enumConstant.getInitializingClass() == null) {
       HighlightInfo.Builder highlightInfo = HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, enumConstant.getNameIdentifier());
       if (highlightInfo != null) {
         IntentionAction action = QUICK_FIX_FACTORY.createImplementMethodsFix(enumConstant);

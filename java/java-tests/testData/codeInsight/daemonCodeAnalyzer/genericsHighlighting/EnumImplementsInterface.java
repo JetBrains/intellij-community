@@ -2,7 +2,7 @@ interface MyInterface {
   void method1();
 }
 
-<error descr="Class 'SampleEnum1' must either be declared abstract or implement abstract method 'method1()' in 'MyInterface'">enum SampleEnum1 implements MyInterface</error> {
+<error descr="Class 'SampleEnum1' must implement abstract method 'method1()' in 'MyInterface'">enum SampleEnum1 implements MyInterface</error> {
   ONE;
 }
 
