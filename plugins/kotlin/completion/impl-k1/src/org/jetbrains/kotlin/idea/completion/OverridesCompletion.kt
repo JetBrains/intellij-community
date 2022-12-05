@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 class OverridesCompletion(
@@ -33,6 +34,7 @@ class OverridesCompletion(
         val classOrObject = position.getNonStrictParentOfType<KtClassOrObject>() ?: return
 
         val members = OverrideMembersHandler(isConstructorParameter).collectMembersToGenerate(classOrObject)
+        val classOrObjectPointer = classOrObject.createSmartPointer()
 
         for (memberObject in members) {
             val descriptor = memberObject.descriptor
@@ -70,7 +72,7 @@ class OverridesCompletion(
                 baseClassIcon,
                 isConstructorParameter,
                 memberObject.descriptor.isSuspend,
-                generateMember = { memberObject.generateMember(classOrObject, copyDoc = false) },
+                generateMember = { memberObject.generateMember(classOrObjectPointer.element!!, copyDoc = false) },
                 shortenReferences = ShortenReferences.DEFAULT::process,
             )
 

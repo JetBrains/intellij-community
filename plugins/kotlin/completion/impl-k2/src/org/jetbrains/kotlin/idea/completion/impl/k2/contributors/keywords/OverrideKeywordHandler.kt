@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext
@@ -92,6 +93,7 @@ internal class OverrideKeywordHandler(
             createLookupElement(memberSymbol, basicContext.importStrategyDetector)
         }
 
+        val classOrObjectPointer = classOrObject.createSmartPointer()
         return OverridesCompletionLookupElementDecorator(
             baseLookupElement,
             declaration = null,
@@ -103,11 +105,11 @@ internal class OverrideKeywordHandler(
             isConstructorParameter,
             isSuspendFunction,
             generateMember = {
-                generateMemberInNewAnalysisSession(classOrObject, member, project)
+                generateMemberInNewAnalysisSession(classOrObjectPointer.element!!, member, project)
             },
             shortenReferences = { element ->
                 val shortenings = allowAnalysisOnEdt {
-                    analyze(classOrObject) {
+                    analyze(element) {
                         collectPossibleReferenceShortenings(element.containingKtFile, element.textRange)
                     }
                 }
