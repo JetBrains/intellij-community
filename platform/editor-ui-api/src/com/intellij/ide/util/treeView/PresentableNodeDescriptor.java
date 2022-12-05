@@ -10,6 +10,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,13 +223,23 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   public @NlsSafe String getName() {
-    if (!getPresentation().getColoredText().isEmpty()) {
+    String result = getColoredTextAsPlainText(getPresentation());
+    if (result != null) {
+      return result;
+    }
+    return myName;
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  protected static String getColoredTextAsPlainText(PresentationData presentation) {
+    if (!presentation.getColoredText().isEmpty()) {
       StringBuilder result = new StringBuilder();
-      for (ColoredFragment each : getPresentation().getColoredText()) {
+      for (ColoredFragment each : presentation.getColoredText()) {
         result.append(each.getText());
       }
       return result.toString();
     }
-    return myName;
+    return null;
   }
 }

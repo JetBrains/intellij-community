@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public abstract class SimpleNode extends PresentableNodeDescriptor<Object> implements ComparableObject, LeafState.Supplier {
 
@@ -79,23 +76,38 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
     }
     if (newElement == null) return;
 
-    Color oldColor = myColor;
-    String oldName = myName;
-    Icon oldIcon = getIcon();
-    List<ColoredFragment> oldFragments = new ArrayList<>(presentation.getColoredText());
-
-    myColor = UIUtil.getTreeForeground();
-
     doUpdate(presentation);
 
-    myName = getName();
-    presentation.setPresentableText(myName);
+    fillFallbackProperties(presentation);
+  }
 
-    presentation.setChanged(!Arrays.equals(new Object[]{getIcon(), myName, oldFragments, myColor},
-                                           new Object[]{oldIcon, oldName, oldFragments, oldColor}));
+  private void fillFallbackProperties(PresentationData presentation) {
+    fillFallbackText(presentation);
+    fillFallbackIcon(presentation);
+    fillFallbackColor(presentation);
+  }
 
-    presentation.setForcedTextForeground(myColor);
-    presentation.setIcon(getIcon());
+  private void fillFallbackText(PresentationData presentation) {
+    var text = getColoredTextAsPlainText(presentation);
+    if (text == null) {
+      text = presentation.getPresentableText();
+    }
+    if (text == null) {
+      text = myName;
+    }
+    presentation.setPresentableText(text);
+  }
+
+  private void fillFallbackIcon(PresentationData presentation) {
+    if (presentation.getIcon(false) == null) {
+      presentation.setIcon(myClosedIcon);
+    }
+  }
+
+  private void fillFallbackColor(PresentationData presentation) {
+    if (presentation.getForcedTextForeground() == null) {
+      presentation.setForcedTextForeground(myColor == null ? UIUtil.getTreeForeground() : myColor);
+    }
   }
 
   /**
