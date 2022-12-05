@@ -3837,6 +3837,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleInheritedEqualsIsConsideredAsIncompatible.kt");
         }
 
+        @TestMetadata("compatibleToString_javaClass_simpleName.kt")
+        public void testCompatibleToString_javaClass_simpleName() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleToString_javaClass_simpleName.kt");
+        }
+
+        @TestMetadata("compatibleToString_this_javaClass_simpleName.kt")
+        public void testCompatibleToString_this_javaClass_simpleName() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleToString_this_javaClass_simpleName.kt");
+        }
+
         @TestMetadata("constHashCode.kt")
         public void testConstHashCode() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/constHashCode.kt");
@@ -3940,11 +3950,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("sealedSubObjectWithCompatibleToString.kt")
         public void testSealedSubObjectWithCompatibleToString() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/sealedSubObjectWithCompatibleToString.kt");
-        }
-
-        @TestMetadata("thisJavaClassSimpleNameReflectToString.kt")
-        public void testThisJavaClassSimpleNameReflectToString() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/thisJavaClassSimpleNameReflectToString.kt");
         }
 
         @TestMetadata("thisReflectToString.kt")
