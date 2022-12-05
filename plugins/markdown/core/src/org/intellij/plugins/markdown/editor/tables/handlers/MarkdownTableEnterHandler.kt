@@ -13,7 +13,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
 internal class MarkdownTableEnterHandler: EnterHandlerDelegateAdapter() {
   private var firstEnterPosition: Int? = null
@@ -26,7 +26,7 @@ internal class MarkdownTableEnterHandler: EnterHandlerDelegateAdapter() {
     dataContext: DataContext,
     originalHandler: EditorActionHandler?
   ): EnterHandlerDelegate.Result {
-    if (!TableUtils.isTableSupportEnabled() || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
+    if (!isEnabled()) {
       return super.preprocessEnter(file, editor, caretOffset, caretAdvance, dataContext, originalHandler)
     }
     val enterPosition = firstEnterPosition
@@ -60,6 +60,10 @@ internal class MarkdownTableEnterHandler: EnterHandlerDelegateAdapter() {
     }
     firstEnterPosition = actualCaretOffset + insertTag.length
     return EnterHandlerDelegate.Result.Stop
+  }
+
+  private fun isEnabled(): Boolean {
+    return TableUtils.isTableSupportEnabled() && MarkdownCodeInsightSettings.getInstance().state.insertLineBreakInsideTables
   }
 
   companion object {
