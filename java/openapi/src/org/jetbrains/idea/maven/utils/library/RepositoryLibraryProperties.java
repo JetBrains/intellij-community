@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils.library;
 
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
+import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
@@ -21,7 +23,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLibraryProperties> {
+public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLibraryProperties> implements LibraryWithMavenCoordinatesProperties {
   private JpsMavenRepositoryLibraryDescriptor myDescriptor;
 
   public RepositoryLibraryProperties() {
@@ -49,6 +51,17 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
                                      boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
     this(new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies,
                                                            excludedDependencies));
+  }
+
+  @Override
+  public @Nullable MavenCoordinates getMavenCoordinates() {
+    String groupId = getGroupId();
+    String artifactId = getArtifactId();
+    String version = getVersion();
+    if (groupId != null && artifactId != null && version != null) {
+      return new MavenCoordinates(groupId, artifactId, version, getPackaging());
+    }
+    return null;
   }
 
   @Override

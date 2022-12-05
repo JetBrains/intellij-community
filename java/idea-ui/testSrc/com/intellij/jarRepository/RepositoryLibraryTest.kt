@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
+import com.intellij.java.library.getMavenCoordinates
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -82,6 +83,13 @@ class RepositoryLibraryTest {
 
     val library = createLibrary()
     assertEquals(0, getLibraryRoots(library).size)
+    val mavenCoordinates = library.getMavenCoordinates()
+    assertNotNull(mavenCoordinates)
+    assertEquals(GROUP_NAME, mavenCoordinates!!.groupId)
+    assertEquals(ARTIFACT_NAME, mavenCoordinates.artifactId)
+    assertEquals("1.0", mavenCoordinates.version)
+    assertEquals("jar", mavenCoordinates.packaging)
+    assertNull(mavenCoordinates.classifier)
 
     val modelVersionBefore = workspaceVersion()
     val roots = RepositoryUtils.loadDependenciesToLibrary(projectRule.project, library as LibraryEx, false, false, null)
