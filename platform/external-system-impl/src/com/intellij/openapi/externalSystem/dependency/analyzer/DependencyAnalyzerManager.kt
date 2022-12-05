@@ -15,9 +15,12 @@ class DependencyAnalyzerManager(private val project: Project) {
     val fileEditorManager = FileEditorManager.getInstance(project)
     val file = files.getOrPut(systemId) {
       DependencyAnalyzerVirtualFile(project, systemId).also { file ->
-        DependencyAnalyzerExtension.createExtensionDisposable(systemId, project)
-          .whenDisposed { fileEditorManager.closeFile(file) }
-          .whenDisposed { files.remove(systemId) }
+        DependencyAnalyzerExtension.createExtensionDisposable(systemId, project).also { extensionDisposable ->
+          extensionDisposable.whenDisposed {
+            fileEditorManager.closeFile(file)
+            files.remove(systemId)
+          }
+        }
       }
     }
     if (file.getViews().isEmpty()) {

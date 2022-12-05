@@ -21,7 +21,6 @@ import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
-import com.intellij.util.alsoIfNull
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
@@ -99,8 +98,7 @@ abstract class DistributedTestHostBase() {
     logger.info("Creating protocol...")
 
     val lifetime = LifetimeDefinition()
-    projectOrNull?.whenDisposed { lifetime.terminate() }
-      .alsoIfNull { application.whenDisposed { lifetime.terminate() } }
+    (projectOrNull ?: application).whenDisposed { lifetime.terminate() }
 
     val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, AgentConstants.protocolName, hostAddress)
     val protocol =

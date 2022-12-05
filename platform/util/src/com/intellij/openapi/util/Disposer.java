@@ -122,11 +122,32 @@ public final class Disposer {
     }
   }
 
+  @Contract(pure = true, value = "_->new")
+  public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable) {
+    Disposable disposable = newDisposable();
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+
   @Contract(pure = true, value = "_,_->new")
   public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
     Disposable result = newDisposable(debugName);
     register(parentDisposable, result);
     return result;
+  }
+
+  @Contract(pure = true, value = "_->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull Disposable parentDisposable) {
+    CheckedDisposable disposable = newCheckedDisposable();
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+
+  @Contract(pure = true, value = "_,_->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
+    CheckedDisposable disposable = newCheckedDisposable(debugName);
+    register(parentDisposable, disposable);
+    return disposable;
   }
 
   private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();

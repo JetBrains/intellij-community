@@ -3,11 +3,9 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.ExtensionPointUtil
+import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 
 interface DependencyAnalyzerExtension {
 
@@ -23,8 +21,7 @@ interface DependencyAnalyzerExtension {
       EP_NAME.findFirstSafe { it.isApplicable(systemId) }!!
 
     fun createExtensionDisposable(systemId: ProjectSystemId, parentDisposable: Disposable): Disposable {
-      return ExtensionPointUtil.createExtensionDisposable(getExtension(systemId), EP_NAME)
-        .also { parentDisposable.whenDisposed { Disposer.dispose(it) } }
+      return EP_NAME.createExtensionDisposable(getExtension(systemId), parentDisposable)
     }
   }
 }

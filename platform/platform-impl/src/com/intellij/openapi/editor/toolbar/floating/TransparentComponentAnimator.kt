@@ -3,10 +3,10 @@ package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 @Suppress("SameParameterValue")
@@ -16,13 +16,13 @@ class TransparentComponentAnimator(
   parentDisposable: Disposable
 ) {
 
-  private val isDisposed = AtomicBoolean()
+  private val disposable = Disposer.newCheckedDisposable(parentDisposable)
   private val executor = ExecutorWithThrottling(THROTTLING_DELAY)
   private val clk = TimerUtil.createNamedTimer("CLK", CLK_DELAY)
   private val state = AtomicReference<State>(State.Invisible)
 
   private fun startTimerIfNeeded() {
-    if (!isDisposed.get() && !clk.isRunning) {
+    if (!disposable.isDisposed && !clk.isRunning) {
       clk.start()
     }
   }
@@ -134,8 +134,7 @@ class TransparentComponentAnimator(
   init {
     clk.isRepeats = true
     clk.addActionListener { updateState() }
-    parentDisposable.whenDisposed { isDisposed.set(true) }
-    parentDisposable.whenDisposed { stopTimerIfNeeded() }
+    disposable.whenDisposed { stopTimerIfNeeded() }
   }
 
   private sealed interface State {
