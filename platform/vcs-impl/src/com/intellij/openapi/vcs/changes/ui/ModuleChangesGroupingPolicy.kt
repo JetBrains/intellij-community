@@ -25,7 +25,10 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
 
       MODULE_CACHE.getValue(cachingRoot)[module]?.let { return it }
 
-      ChangesBrowserModuleNode(module).let {
+      val moduleNode = ChangesBrowserModuleNode.create(module)
+      if (moduleNode == null) return nextPolicyParent
+
+      moduleNode.let {
         it.markAsHelperNode()
 
         model.insertNodeInto(it, grandParent, grandParent.childCount)
