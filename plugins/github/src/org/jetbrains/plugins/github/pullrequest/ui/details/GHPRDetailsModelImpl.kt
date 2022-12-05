@@ -17,6 +17,8 @@ class GHPRDetailsModelImpl(private val valueModel: SingleValueModel<GHPullReques
     get() = valueModel.value.state
   override val isDraft: Boolean
     get() = valueModel.value.isDraft
+  override val url: String
+    get() = valueModel.value.url
 
   override fun addAndInvokeDetailsChangedListener(listener: () -> Unit) =
     valueModel.addAndInvokeListener { listener() }

@@ -113,8 +113,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       if (PlatformDataKeys.UI_DISPOSABLE.`is`(it)) uiDisposable else null
     })
 
-    val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData).apply {
-      border = JBUI.Borders.empty(30, H_SIDE_BORDER)
+    val header = GHPRTitleComponent.create(detailsModel).apply {
+      border = JBUI.Borders.empty(20, H_SIDE_BORDER)
     }
 
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
@@ -155,6 +155,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val timelinePanel = ScrollablePanel().apply {
       isOpaque = false
+      border = JBUI.Borders.empty(6, 0)
 
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
