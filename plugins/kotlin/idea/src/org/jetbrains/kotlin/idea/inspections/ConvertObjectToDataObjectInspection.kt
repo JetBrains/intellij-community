@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.base.psi.singleExpressionBody
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
@@ -32,15 +31,12 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperClassifiers
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
-import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
 /**
@@ -56,26 +52,17 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
         override fun visitObjectDeclaration(ktObject: KtObjectDeclaration) {
             if (ktObject.isData() || ktObject.isCompanion() || ktObject.isObjectLiteral()) return
             val fqName = lazy { ktObject.descriptor?.fqNameSafe ?: FqName.ROOT }
-            val isSerializable = isSerializable(ktObject)
             val toString = ktObject.findToString()
-            val isSerializableCase = toString == TrivialSuper && isSerializable
             val isSealedSubClassCase by lazy { toString == TrivialSuper && ktObject.isSubclassOfSealed() }
             val isToStringCase by lazy { toString is Function && isCompatibleToString(ktObject, fqName, toString.function) }
-            if ((isSerializableCase || isSealedSubClassCase || isToStringCase) &&
-                isCompatibleHashCode(ktObject) &&
-                isCompatibleEquals(ktObject, fqName) &&
-                isCompatibleReadResolve(ktObject, fqName, isSerializable)
-            ) {
+            if ((isSealedSubClassCase || isToStringCase) && isCompatibleHashCode(ktObject) && isCompatibleEquals(ktObject, fqName)) {
                 holder.registerProblem(
                     ktObject.getObjectKeyword() ?: return,
                     KotlinBundle.message(
-                        when {
-                            isSerializableCase -> "serializable.object.must.be.marked.with.data"
-                            isSealedSubClassCase -> "inspection.message.sealed.object.can.be.converted.to.data.object"
-                            else -> "inspection.message.object.with.manual.tostring.can.be.converted.to.data.object"
-                        }
+                        if (isSealedSubClassCase) "inspection.message.sealed.object.can.be.converted.to.data.object"
+                        else "inspection.message.object.with.manual.tostring.can.be.converted.to.data.object"
                     ),
-                    ConvertToDataObjectQuickFix(isSerializable),
+                    ConvertToDataObjectQuickFix(),
                 )
             }
         }
@@ -84,21 +71,6 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
 
 private fun KtObjectDeclaration.isSubclassOfSealed(): Boolean =
     superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any { it.isSealed() }
-
-private fun isSerializable(ktObject: KtObjectDeclaration): Boolean =
-    ktObject.resolveToDescriptorIfAny()
-        ?.getAllSuperClassifiers()
-        ?.any { it.fqNameSafe == FqName("java.io.Serializable") } == true
-
-private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>, isSerializable: Boolean): Boolean =
-    !isSerializable || when (val readResolve = ktObject.findReadResolve()) {
-        is Function -> ktObjectFqn.value == readResolve.function.takeIf(KtNamedFunction::isPrivate)?.singleExpressionBody()
-            ?.asSafely<KtNameReferenceExpression>()
-            ?.resolveType()
-            ?.fqName
-        NonTrivialSuper -> false
-        TrivialSuper -> true
-    }
 
 private fun isCompatibleToString(
     ktObject: KtObjectDeclaration,
@@ -140,7 +112,7 @@ private fun isCompatibleHashCode(ktObject: KtObjectDeclaration): Boolean =
         TrivialSuper -> true
     }
 
-private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) : LocalQuickFix {
+private class ConvertToDataObjectQuickFix : LocalQuickFix {
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.data.object")
 
     override fun startInWriteAction(): Boolean = false
@@ -152,7 +124,6 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
                 ktObject.findToString().function,
                 ktObject.findEquals().function,
                 ktObject.findHashCode().function,
-                if (isSerializable) ktObject.findReadResolve().function else null,
             )
         })
         runWriteAction {
@@ -173,9 +144,6 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
 private fun KtObjectDeclaration.findToString() = findMemberFunction(TO_STRING, KOTLIN_TO_STRING_FQN, FunctionDescriptor::isAnyToString)
 private fun KtObjectDeclaration.findEquals() = findMemberFunction(EQUALS, KOTLIN_ANY_EQUALS_FQN, FunctionDescriptor::isAnyEquals)
 private fun KtObjectDeclaration.findHashCode() = findMemberFunction(HASH_CODE, KOTLIN_ANY_HASH_CODE_FQN, FunctionDescriptor::isAnyHashCode)
-private fun KtObjectDeclaration.findReadResolve(): VirtualFunction = findMemberFunction("readResolve", trivialSuperFqn = null) {
-    it.valueParameters.isEmpty() && it.returnType?.isAnyOrNullableAny() == true
-}
 
 private fun KtObjectDeclaration.findMemberFunction(
     name: String,
