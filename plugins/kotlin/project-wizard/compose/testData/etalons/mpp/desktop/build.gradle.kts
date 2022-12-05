@@ -12,7 +12,9 @@ version = "1.0-SNAPSHOT"
 
 kotlin {
     jvm {
-        jvmToolchain(11)
+        compilations.all {
+            kotlinOptions.jvmTarget = "11"
+        }
         withJava()
     }
     sourceSets {
