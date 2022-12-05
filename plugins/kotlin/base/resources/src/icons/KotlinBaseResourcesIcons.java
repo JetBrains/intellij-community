@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -56,7 +57,7 @@ public final class KotlinBaseResourcesIcons {
     /** 16x16 */ public static final @NotNull Icon MultiplatformMobile = load("org/jetbrains/kotlin/idea/icons/wizard/multiplatformMobile.svg", 2075554531, 0);
     /** 16x16 */ public static final @NotNull Icon MultiplatformMobileLibrary = load("org/jetbrains/kotlin/idea/icons/wizard/multiplatformMobileLibrary.svg", 128298291, 0);
     /** 16x16 */ public static final @NotNull Icon Native = load("org/jetbrains/kotlin/idea/icons/wizard/native.svg", -1080004400, 0);
-    /** 16x16 */ public static final @NotNull Icon Nodejs = load("org/jetbrains/kotlin/idea/icons/wizard/nodejs.svg", -2032083773, 0);
+    /** 16x16 */ public static final @NotNull Icon Nodejs = load("org/jetbrains/kotlin/idea/icons/wizard/nodejs.svg", 1614019234, 2);
     /** 16x16 */ public static final @NotNull Icon PpWeb = load("org/jetbrains/kotlin/idea/icons/wizard/ppWeb.svg", 373593605, 0);
     /** 16x16 */ public static final @NotNull Icon React = load("org/jetbrains/kotlin/idea/icons/wizard/react.svg", 1134035467, 0);
     /** 16x16 */ public static final @NotNull Icon Windows = load("org/jetbrains/kotlin/idea/icons/wizard/windows.svg", -1856351655, 0);
