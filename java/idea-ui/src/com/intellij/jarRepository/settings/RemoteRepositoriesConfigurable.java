@@ -342,7 +342,9 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   /**
-   * Created to wrap mutable builder and pass it into action listener via closure
+   * Created to wrap non-final builder and pass final wrapper to remove button action listener lambda.
+   * <p/>
+   * See {@link RemoteRepositoriesConfigurable#setupRepoRemoveButton(Project, MutableEntityStorageWrapper, JBList, CollectionListModel, JButton)}
    */
   private static class MutableEntityStorageWrapper {
     private final WorkspaceModel workspaceModel;
