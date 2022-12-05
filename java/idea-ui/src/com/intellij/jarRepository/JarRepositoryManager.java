@@ -508,6 +508,10 @@ public final class JarRepositoryManager {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     DOWNLOADER_EXECUTOR.execute(() -> {
+      if (promise.isCancelled()) {
+        return;
+      }
+
       try {
         ourTasksInProgress.incrementAndGet();
         final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
