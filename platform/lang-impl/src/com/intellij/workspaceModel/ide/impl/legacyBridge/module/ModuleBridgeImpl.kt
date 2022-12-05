@@ -128,16 +128,6 @@ internal class ModuleBridgeImpl(
       return
     }
     unregisterComponent(DeprecatedModuleOptionManager::class.java)
-
-    try {
-      //todo improve
-      val classLoader = javaClass.classLoader
-      val apiClass = classLoader.loadClass("com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager")
-      val implClass = classLoader.loadClass("com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge")
-      registerService(serviceInterface = apiClass, implementation = implClass, pluginDescriptor = corePlugin, override = true)
-    }
-    catch (ignored: Throwable) {
-    }
   }
 
   override fun getOptionValue(key: String): String? {
