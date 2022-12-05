@@ -6,6 +6,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -15,6 +16,8 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -90,6 +93,13 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
           projectRootManager.setupTrackedLibrariesAndJdks()
+        }
+      }
+    }
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      runActivity("workspace file index initialization") {
+        readAction {
+          (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).ensureInitialized()
         }
       }
     }

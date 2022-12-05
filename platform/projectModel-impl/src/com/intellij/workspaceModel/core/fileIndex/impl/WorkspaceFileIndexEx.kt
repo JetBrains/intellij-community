@@ -63,6 +63,11 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile>
 
   /**
+   * Initialize the index data if it isn't done yet.
+   */
+  fun ensureInitialized()
+
+  /**
    * This is a temporary method introduced to support unloading of modules until IDEA-298694 is implemented.
    */
   fun unloadModules(entities: List<ModuleEntity>)
