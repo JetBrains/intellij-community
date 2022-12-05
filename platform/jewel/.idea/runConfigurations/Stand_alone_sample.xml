@@ -2,7 +2,7 @@
   <configuration default="false" name="Stand-alone sample" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$/sample" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/samples/standalone" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="" />
       <option name="taskDescriptions">

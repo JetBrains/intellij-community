@@ -7,6 +7,7 @@ pluginManagement {
         gradlePluginPortal()
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        maven("https://oss.sonatype.org/content/repositories/snapshots/")
         mavenCentral()
     }
 }
@@ -22,9 +23,12 @@ dependencyResolutionManagement {
 }
 
 include(
-    ":library",
-    ":sample",
-    ":themes:intellij",
-    ":themes:intellij:standalone",
-    ":themes:intellij:idea"
+    ":core",
+    ":compose-utils",
+    ":samples:ide-plugin",
+    ":samples:standalone",
+    ":themes:darcula:standalone",
+    ":themes:darcula:ide-bridge",
+    ":themes:new-ui:standalone",
+    ":themes:new-ui:ide-bridge"
 )

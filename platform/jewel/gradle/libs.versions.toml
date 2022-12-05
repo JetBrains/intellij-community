@@ -1,7 +1,8 @@
 [versions]
 composeDesktop = "1.2.1"
 coroutines = "1.6.0"
-ideaGradlePlugin = "1.10.0"
+idea = "223.7571.203"
+ideaGradlePlugin = "1.11.0-SNAPSHOT"
 jna = "5.10.0"
 kotlin = "1.7.10"
 kotlinxSerialization = "1.3.1"
@@ -11,6 +12,12 @@ compose-components-splitpane = { module = "org.jetbrains.compose.components:comp
 jna = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+ij-platform-ide-core = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea" }
+ij-platform-ide-impl = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea" }
+ij-platform-core-ui = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea" }
+
+[bundles]
+idea = ["ij-platform-ide-core", "ij-platform-ide-impl", "ij-platform-core-ui"]
 
 [plugins]
 composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }

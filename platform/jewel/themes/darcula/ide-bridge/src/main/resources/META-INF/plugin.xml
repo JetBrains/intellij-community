@@ -1,0 +1,17 @@
+<idea-plugin implementation-detail="false">
+    <id>org.jetbrains.compose.desktop.ide.theme</id>
+    <name>Jewel</name>
+    <vendor>JetBrains</vendor>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="org.jetbrains.jewel.themes.darcula.idebridge.ProjectLifecycle"/>
+
+        <toolWindow id="JewelDemo" anchor="bottom" secondary="false"
+                    canCloseContents="true"
+                    factoryClass="org.jetbrains.jewel.samples.ideplugin.JewelDemoToolWindow"/>
+
+        <toolWindow id="PKGS Demo" anchor="bottom" secondary="false"
+                    canCloseContents="true"
+                    factoryClass="org.jetbrains.jewel.samples.ideplugin.PKGSDemo"/>
+    </extensions>
+</idea-plugin>
