@@ -85,9 +85,7 @@ private fun isCompatibleToString(
     val callChain = body.tryUnwrapElvisOrDoubleBang(context).getCallChain().mapToCallChainElements(context, ktObjectFqn) ?: return false
     return callChain in
             kotlinOrJavaSelfClassLiteral(CallChainElement.NameReference("simpleName")) +
-            listOf(
-                listOf(CallChainElement.This, CallChainElement.NameReference("javaClass"), CallChainElement.NameReference("simpleName"))
-            )
+            optionalThis(CallChainElement.NameReference("javaClass"), CallChainElement.NameReference("simpleName"))
 }
 
 private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext>): KtExpression = when {
@@ -211,3 +209,5 @@ private fun kotlinOrJavaSelfClassLiteral(vararg suffix: CallChainElement): List<
         listOf(CallChainElement.SelfClassLiteral, CallChainElement.NameReference("java")) + suffix,
         listOf(CallChainElement.SelfClassLiteral) + suffix,
     )
+
+private fun optionalThis(vararg suffix: CallChainElement): List<CallChain> = listOf(suffix.toList(), listOf(CallChainElement.This) + suffix)
