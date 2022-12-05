@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
@@ -67,7 +66,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final List<@Nullable UsageCodeSnippetComponent> myAlreadyRenderedSnippets;
   private final AtomicBoolean isRefreshing;
   private final AtomicBoolean isShowingSimilarUsagesComponent;
-  private final AtomicInteger lastUsagesNumber;
+  private int previousUsagesCount;
   private boolean isDisposed;
 
   public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView, @NotNull ClusteringSearchSession session) {
@@ -75,7 +74,6 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     myAlreadyRenderedSnippets = new ArrayList<>();
     isRefreshing = new AtomicBoolean(false);
     isShowingSimilarUsagesComponent = new AtomicBoolean(false);
-    lastUsagesNumber = new AtomicInteger(0);
     if (Registry.is("similarity.find.usages.view.auto.update")) {
       ScheduledFuture<?> fireEventsFuture =
         EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::refreshIfNeeded, 1000, 1000, TimeUnit.MILLISECONDS);
@@ -122,8 +120,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   private boolean refreshNeeded() {
     return !isScrolled() &&
-           !isRefreshing.get() && !isShowingSimilarUsagesComponent.get() &&
-           (myUsageView.isSearchInProgress() || mySelectedUsages.size() != myUsageView.getSelectedUsages().size());
+           !isRefreshing.get() &&
+           !isShowingSimilarUsagesComponent.get() &&
+           (previousUsagesCount != myUsageView.getUsagesCount());
   }
 
   private boolean isScrolled() {
@@ -286,6 +285,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private void addMostCommonUsagesForSelectedGroups() {
+    previousUsagesCount = myUsageView.getUsagesCount();
     ReadAction.nonBlocking(() -> {
       mySortedClusters.set(mySession.getClustersForSelectedUsages(mySelectedUsages));
       return true;
@@ -299,7 +299,6 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           loadMoreSnippets(false);
           myMainPanel.revalidate();
           isRefreshing.set(false);
-          lastUsagesNumber.set(mySelectedUsages.size());
         }
       }
     ).submit(AppExecutorUtil.getAppExecutorService());
