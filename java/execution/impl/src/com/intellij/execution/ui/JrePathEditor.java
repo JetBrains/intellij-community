@@ -23,7 +23,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -43,6 +42,8 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -89,7 +90,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       }
     };
     myDefaultJreItem = new DefaultJreItem();
-    myComboBoxModel.setAll(buildModel(editable));
+    myComboBoxModel.add(myDefaultJreItem);
     myComboBoxModel.setSelectedItem(myDefaultJreItem);
 
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, JBUI.scale(300));
@@ -144,6 +145,14 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     setText(ExecutionBundle.message("run.configuration.jre.label"));
 
     updateUI();
+
+    updateModel(items -> myComboBoxModel.setAll(items));
+  }
+
+  private void updateModel(Consumer<List<JreComboBoxItem>> consumer) {
+    ReadAction.nonBlocking(() -> buildModel(getComponent().isEditable())).
+      expireWhen(() -> !getComponent().isVisible()).
+      finishOnUiThread(ModalityState.current(), consumer).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   /**
@@ -164,8 +173,10 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       }
       return false;
     }
-    items.addAll(buildModel(getComponent().isEditable()));
-    myComboBoxModel.setAll(items);
+    updateModel(items1 -> {
+      items.addAll(items1);
+      myComboBoxModel.setAll(items);
+    });
     return true;
   }
 
@@ -191,13 +202,10 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     for (Sdk jdk : allJDKs) {
       String homePath = jdk.getHomePath();
 
-      if (!SystemInfo.isMac) {
-        VirtualFile homeDirectory = jdk.getHomeDirectory();
-        if (homeDirectory != null) {
-          VirtualFile jre = homeDirectory.findChild("jre");
-          if (jre != null && jre.isDirectory()) {
-            homePath = jre.getPath();
-          }
+      if (!SystemInfo.isMac && jdk.getHomePath() != null) {
+        Path path = Path.of(jdk.getHomePath(), "jre");
+        if (Files.isDirectory(path)) {
+          homePath = path.toString();
         }
       }
       if (jrePaths.add(homePath)) {
