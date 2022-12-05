@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.util.DoNotShowAgainNotificationAction
 import java.util.concurrent.Callable
 
 const val IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION = "notification.kotlin.js.compiler.ignored"
@@ -53,19 +54,5 @@ class KotlinJsCompilerNotificationImportListener(private val project: Project) :
                 .addAction(DoNotShowAgainNotificationAction(project, IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION))
                 .notify(project)
         }
-    }
-}
-
-/**
- * Needed as a hack until ^IDEA-306920 is fixed, after the fix should be moved to KotlinJsCompilerNotificationImportListener
- */
-@ApiStatus.Internal
-class DoNotShowAgainNotificationAction(
-    private val project: Project,
-    private val notificationId: String,
-) : NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
-    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        PropertiesComponent.getInstance(project).setValue(notificationId, true)
-        notification.expire()
     }
 }
