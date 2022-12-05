@@ -15,14 +15,10 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.withBackgroundProgressIndicator
-import com.intellij.openapi.progress.withModalProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.LibraryKindRegistry
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
@@ -50,7 +46,6 @@ import org.jetbrains.jps.util.JpsChecksumUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.io.IOException
-import java.io.StringReader
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -112,6 +107,8 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
         ArtifactVerification(artifactFileUrl, sha256sum)
       }
     }
+
+    private val CoroutineScope.progressSinkOrError: ProgressSink get() = requireNotNull(progressSink)
   }
 
   private val myCoroutineScope: CoroutineScope = CoroutineScope(context)
@@ -223,20 +220,19 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
   private inner class GuessAndBindRemoteRepositoriesJob : LibrariesModificationJob() {
     private val availableRepositories = RemoteRepositoriesConfiguration.getInstance(project).repositories
     private val progressCounter = AtomicInteger(0)
-    override suspend fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) =
-      properties.jarRepositoryId == null
+    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) = properties.jarRepositoryId == null
 
     override suspend fun transform(): Unit = coroutineScope {
-      progressSink!!.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
-                                                           0, filteredProperties.size),
-                            fraction = 0.0)
+      progressSinkOrError.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
+                                                     0, filteredProperties.size),
+                                 fraction = 0.0)
       filteredProperties.map { (entity, properties) ->
         async(Dispatchers.IO) {
           properties.jarRepositoryId = tryGuessRemoteRepositoryId(project, properties, availableRepositories)
           val currentCounter = progressCounter.incrementAndGet()
-          progressSink!!.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
-                                                               currentCounter, filteredProperties.size),
-                                fraction = currentCounter.toDouble() / filteredProperties.size)
+          progressSinkOrError.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
+                                                         currentCounter, filteredProperties.size),
+                                     fraction = currentCounter.toDouble() / filteredProperties.size)
           entity to properties
         }
       }.awaitAll().forEach { (entity, properties) ->
@@ -244,7 +240,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
       }
     }
 
-    override suspend fun onFinish() {
+    override fun onFinish() {
       val notification = NOTIFICATIONS_GROUP.createNotification(
         JavaUiBundle.message("repository.library.utils.notification.title"),
         JavaUiBundle.message("repository.library.utils.notification.content.repositories.guessed", filteredProperties.size),
@@ -269,12 +265,12 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
   }
 
   private inner class UnbindRemoteRepositoriesJob : LibrariesModificationJob() {
-    override suspend fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) =
+    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) =
       properties.jarRepositoryId != null
 
     override suspend fun afterFilter(): Unit = coroutineScope {
       super.afterFilter()
-      progressSink!!.details(details = JavaUiBundle.message("repository.library.utils.progress.details.updating.libraries"))
+      progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.details.updating.libraries"))
     }
 
     override suspend fun transform() = filteredProperties.forEach { (propertiesEntity, properties) ->
@@ -287,7 +283,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
                                         private val enableIfChecksumDisabled: Boolean) : LibrariesModificationJob() {
     private val unresolvedLibrariesIds = mutableListOf<@NlsSafe String>()
 
-    override suspend fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties): Boolean {
+    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties): Boolean {
       if (properties.isEnableSha256Checksum && rebuildExistingChecksums ||
           !properties.isEnableSha256Checksum && enableIfChecksumDisabled) {
         if (!entity.library.isCompiledArtifactsResolved()) {
@@ -303,7 +299,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
       if (unresolvedLibrariesIds.isNotEmpty()) {
         showLibraryArtifactsNotResolvedAndCancel()
       }
-      progressSink!!.details(details = JavaUiBundle.message("repository.library.utils.progress.details.building.checksums"))
+      progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.details.building.checksums"))
     }
 
     override suspend fun transform() = coroutineScope {
@@ -347,12 +343,11 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
   }
 
   private inner class RemoveSha256ChecksumsJob : LibrariesModificationJob() {
-    override suspend fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) =
-      properties.isEnableSha256Checksum
+    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) = properties.isEnableSha256Checksum
 
     override suspend fun afterFilter(): Unit = coroutineScope {
       super.afterFilter()
-      progressSink!!.details(details = JavaUiBundle.message("repository.library.utils.progress.details.updating.libraries"))
+      progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.details.updating.libraries"))
     }
 
     override suspend fun transform() {
@@ -368,7 +363,6 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
     protected val filteredProperties: MutableList<Pair<LibraryPropertiesEntity, RepositoryLibraryProperties>> = mutableListOf()
 
     private val workspaceModel = WorkspaceModel.getInstance(project)
-    private val libraryKindRegistry = LibraryKindRegistry.getInstance()
     private lateinit var stateSnapshot: EntityStorage
     private lateinit var builder: MutableEntityStorage
 
@@ -376,7 +370,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
      * Should return `true` if [entity] with [properties] are suitable for further [transform].
      * Filtered properties are stored in [filteredProperties].
      */
-    protected abstract suspend fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties): Boolean
+    protected abstract fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties): Boolean
 
     /**
      * Invoked after [filter] and before [transform]. Can be used to cancel running process on some errors found while [filter].
@@ -402,16 +396,13 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
      * Invoked after all the modifications from [transform] made by [modifyProperties] are committed into project [WorkspaceModel].
      * Can be used to show some messages to user.
      */
-    protected open suspend fun onFinish() {
+    protected open fun onFinish() {
       Notifications.Bus.notify(NOTIFICATIONS_GROUP.createNotification(
         JavaUiBundle.message("repository.library.utils.notification.title"),
         JavaUiBundle.message("repository.library.utils.notification.content.libraries.updated", filteredProperties.size),
         NotificationType.INFORMATION), project)
     }
 
-    /**
-     *
-     */
     protected fun LibraryPropertiesEntity.modifyProperties(newProperties: RepositoryLibraryProperties) {
       val propertiesElement = serialize(newProperties)!!
       propertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
@@ -428,7 +419,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
      */
     suspend fun apply() = coroutineScope {
       val job = launch {
-        progressSink!!.text(JavaUiBundle.message("repository.library.utils.progress.text.collecting.libraries"))
+        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.collecting.libraries"))
         stateSnapshot = workspaceModel.entityStorage.current
 
         for (libraryPropertiesEntity in stateSnapshot.entities(LibraryPropertiesEntity::class.java)) {
@@ -442,13 +433,13 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
           }
         }
 
-        progressSink!!.text(JavaUiBundle.message("repository.library.utils.progress.text.updating.libraries"))
+        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.updating.libraries"))
         afterFilter()
 
         builder = stateSnapshot.toBuilder()
         transform()
 
-        progressSink!!.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
+        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
         withContext(Dispatchers.EDT) {
           WriteAction.run<RuntimeException> {
             workspaceModel.updateProjectModel("Build SHA256SUM for each library") {
@@ -475,8 +466,8 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
 
     private fun LibraryPropertiesEntity.getPropertiesIfRepositoryLibrary(): RepositoryLibraryProperties? {
       val propertiesXmlTag = this.propertiesXmlTag ?: return null
-      if (REPOSITORY_LIBRARY_KIND.equals(libraryKindRegistry.findKindById(this.libraryType))) {
-        return deserialize<RepositoryLibraryProperties>(JDOMUtil.load(StringReader(propertiesXmlTag)))
+      if (REPOSITORY_LIBRARY_KIND.kindId == libraryType) {
+        return deserialize(JDOMUtil.load(propertiesXmlTag))
       }
       return null
     }
