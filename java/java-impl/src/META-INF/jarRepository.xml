@@ -1,5 +1,5 @@
 <idea-plugin>
-  <actions>
+  <actions resource-bundle="messages/JavaUiBundle">
     <group id="JarRepositoryLibraries" internal="true" popup="true" searchable="false">
       <action internal="true" id="EnableAllRepositoryLibrariesSha256Checksum" class="com.intellij.ide.actions.EnableAllRepositoryLibrariesSha256ChecksumAction"/>
       <action internal="true" id="DisableRepositoryLibrariesSha256Checksum" class="com.intellij.ide.actions.DisableRepositoryLibrariesSha256ChecksumAction"/>
