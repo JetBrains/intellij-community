@@ -32,9 +32,7 @@ public class RepositoryLibraryPropertiesModel {
   private boolean includeTransitiveDependencies;
   private boolean mySha256ChecksumEnabled;
   private List<String> myExcludedDependencies;
-
   private final List<RemoteRepositoryDescription> myAvailableRemoteRepositories;
-
   private final CollectionComboBoxModel<RemoteRepositoryDescription> myRemoteRepositoryModel;
 
 
