@@ -3837,24 +3837,9 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleInheritedEqualsIsConsideredAsIncompatible.kt");
         }
 
-        @TestMetadata("compatibleInheritedReadResolveIsConsideredAsIncompatible.kt")
-        public void testCompatibleInheritedReadResolveIsConsideredAsIncompatible() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleInheritedReadResolveIsConsideredAsIncompatible.kt");
-        }
-
-        @TestMetadata("compatibleReadResolve.kt")
-        public void testCompatibleReadResolve() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleReadResolve.kt");
-        }
-
         @TestMetadata("constHashCode.kt")
         public void testConstHashCode() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/constHashCode.kt");
-        }
-
-        @TestMetadata("customSerializable.kt")
-        public void testCustomSerializable() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/customSerializable.kt");
         }
 
         @TestMetadata("doubleBangReflectToString.kt")
@@ -3937,26 +3922,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedPropertyMember.kt");
         }
 
-        @TestMetadata("preserveUnrelatedReadResolve.kt")
-        public void testPreserveUnrelatedReadResolve() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedReadResolve.kt");
-        }
-
-        @TestMetadata("preserveUnrelatedReadResolve2.kt")
-        public void testPreserveUnrelatedReadResolve2() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedReadResolve2.kt");
-        }
-
-        @TestMetadata("preserveUnrelatedReadResolve3.kt")
-        public void testPreserveUnrelatedReadResolve3() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedReadResolve3.kt");
-        }
-
-        @TestMetadata("publicReadResolve.kt")
-        public void testPublicReadResolve() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/publicReadResolve.kt");
-        }
-
         @TestMetadata("sealedNotStatelessSubObject.kt")
         public void testSealedNotStatelessSubObject() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/sealedNotStatelessSubObject.kt");
@@ -3975,21 +3940,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("sealedSubObjectWithCompatibleToString.kt")
         public void testSealedSubObjectWithCompatibleToString() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/sealedSubObjectWithCompatibleToString.kt");
-        }
-
-        @TestMetadata("serializableButIncompatibleToString.kt")
-        public void testSerializableButIncompatibleToString() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/serializableButIncompatibleToString.kt");
-        }
-
-        @TestMetadata("serializableDirect.kt")
-        public void testSerializableDirect() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/serializableDirect.kt");
-        }
-
-        @TestMetadata("serializableTransitive.kt")
-        public void testSerializableTransitive() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/serializableTransitive.kt");
         }
 
         @TestMetadata("thisJavaClassSimpleNameReflectToString.kt")
