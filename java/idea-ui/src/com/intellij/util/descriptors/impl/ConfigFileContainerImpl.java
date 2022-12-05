@@ -21,11 +21,11 @@ public final class ConfigFileContainerImpl extends SimpleModificationTracker imp
   private final MultiMap<ConfigFileMetaData, ConfigFile> configFiles = new MultiMap<>();
   private List<ConfigFile> myCachedConfigFiles;
   private final ConfigFileMetaDataProvider metaDataProvider;
-  private final ConfigFileInfoSetImpl configuration;
+  private final ConfigFileInfoSet configuration;
 
   public ConfigFileContainerImpl(@NotNull Project project,
                                  @NotNull ConfigFileMetaDataProvider descriptorMetaDataProvider,
-                                 @NotNull ConfigFileInfoSetImpl configuration) {
+                                 @NotNull ConfigFileInfoSet configuration) {
     this.configuration = configuration;
     metaDataProvider = descriptorMetaDataProvider;
     this.project = project;
