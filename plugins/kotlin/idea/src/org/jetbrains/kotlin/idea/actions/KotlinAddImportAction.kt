@@ -8,18 +8,21 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.WeighingService
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.ProximityLocation
 import com.intellij.psi.util.proximity.PsiProximityComparator
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -65,11 +68,11 @@ internal fun createSingleImportAction(
     val prioritizer = Prioritizer(file)
     val variants = fqNames.asSequence().mapNotNull {fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
-        val priority = sameFqNameDescriptors.minOfOrNull {
-            prioritizer.priority(it, file.languageVersionSettings)
-        } ?: return@mapNotNull null
+        val descriptorsWithPriority =
+            sameFqNameDescriptors.map { it to prioritizer.priority(it, file.languageVersionSettings) }.sortedBy { it.second }
+        val priority = descriptorsWithPriority.firstOrNull()?.second ?: return@mapNotNull null
 
-        VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
+        VariantWithPriority(SingleImportVariant(fqName, descriptorsWithPriority.map { it.first }, project), priority)
     }.sortedWith(compareBy({ it.priority }, { it.variant.hint }))
 
     return KotlinAddImportAction(project, editor, element, variants)
@@ -87,12 +90,11 @@ internal fun createSingleImportActionForConstructor(
         val sameFqNameDescriptors = file.resolveImportReference(fqName.parent())
             .filterIsInstance<ClassDescriptor>()
             .flatMap { it.constructors }
+        val descriptorsWithPriority =
+            sameFqNameDescriptors.map { it to prioritizer.priority(it, file.languageVersionSettings) }.sortedBy { it.second }
+        val priority = descriptorsWithPriority.firstOrNull()?.second ?: return@mapNotNull null
 
-        val priority = sameFqNameDescriptors.minOfOrNull {
-            prioritizer.priority(it, file.languageVersionSettings)
-        } ?: return@mapNotNull null
-
-        VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
+        VariantWithPriority(SingleImportVariant(fqName, descriptorsWithPriority.map { it.first }, project), priority)
     }
 
     return KotlinAddImportAction(project, editor, element, variants)
@@ -175,6 +177,8 @@ class KotlinAddImportAction internal constructor(
         if (!element.isValid) return false
 
         val variantsList = variantsList()
+        KotlinAddImportActionInfo.executeListener?.onExecute(variantsList.map { it.descriptorsToImport.toList() })
+
         if (variantsList.isEmpty()) return false
 
         if (variantsList.size == 1 || isUnitTestMode()) {
@@ -397,4 +401,21 @@ private class SingleImportVariant(
     project = project,
 ) {
     override val hint: String get() = excludeFqNameCheck.asString()
+}
+
+/** Test hooks allowing inspection of data used for KotlinAddImportAction. **/
+object KotlinAddImportActionInfo {
+    interface ExecuteListener {
+        fun onExecute(variants: List<List<DeclarationDescriptor>>)
+    }
+
+    @Volatile
+    internal var executeListener: ExecuteListener? = null
+
+    @TestOnly
+    fun setExecuteListener(disposable: Disposable, listener: ExecuteListener) {
+        assert(executeListener == null)
+        executeListener = listener
+        Disposer.register(disposable) { executeListener = null }
+    }
 }
