@@ -14,7 +14,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -174,7 +173,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
       RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2"),
     )
 
-    val descriptor = createDescriptorWithJarRepoId(JAR_REPOSITORY_ID_NOT_SET)
+    val descriptor = createDescriptorWithJarRepoId(null)
     val expected = RemoteRepositoriesConfiguration.getInstance(myProject).repositories
     val actualWhenNullPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
     assertEquals(expected, actualWhenNullPassed)

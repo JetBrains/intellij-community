@@ -36,8 +36,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET;
-
 public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
   private static final Logger LOG = Logger.getInstance(JpsJavaModelSerializerExtension.class);
 
@@ -342,7 +340,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
 
       boolean includeTransitiveDependencies = Boolean.parseBoolean(elem.getAttributeValue(INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE, "true"));
       boolean verifySha256Checksum = Boolean.parseBoolean(elem.getAttributeValue(VERIFY_SHA25_CHECKSUM_ATTRIBUTE, "false"));
-      String jarRepositoryId = elem.getAttributeValue(JAR_REPOSITORY_ID_ATTRIBUTE, JAR_REPOSITORY_ID_NOT_SET);
+      String jarRepositoryId = elem.getAttributeValue(JAR_REPOSITORY_ID_ATTRIBUTE);
 
 
       Element excludeTag = elem.getChild(EXCLUDE_TAG);

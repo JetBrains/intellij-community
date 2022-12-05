@@ -108,7 +108,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Attribute("jar-repository-id")
   public String getJarRepositoryId() {
-    return call(JpsMavenRepositoryLibraryDescriptor::getJarRepositoryId, JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET);
+    return call(JpsMavenRepositoryLibraryDescriptor::getJarRepositoryId, null);
   }
 
   public void setJarRepositoryId(String jarRepositoryId) {
@@ -220,7 +220,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void unbindRemoteRepository() {
-    setJarRepositoryId(JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET);
+    setJarRepositoryId(null);
   }
 
   @Tag("artifact")

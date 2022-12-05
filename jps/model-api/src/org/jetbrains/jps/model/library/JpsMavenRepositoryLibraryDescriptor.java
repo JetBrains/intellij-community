@@ -30,8 +30,6 @@ public class JpsMavenRepositoryLibraryDescriptor {
 
   public static final boolean VERIFY_SHA256_CHECKSUM_DEFAULT = false;
 
-  public static final String JAR_REPOSITORY_ID_NOT_SET = null;
-
   private final String myMavenId;
   private final String myGroupId;
   private final String myArtifactId;
@@ -68,7 +66,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
                                              boolean verifySha256Checksum,
                                              @NotNull List<ArtifactVerification> metadata) {
     this(groupId, artifactId, version, packaging, includeTransitiveDependencies, excludedDependencies,
-         verifySha256Checksum, metadata, JAR_REPOSITORY_ID_NOT_SET);
+         verifySha256Checksum, metadata, null);
   }
 
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
@@ -104,7 +102,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
 
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, @NotNull String packaging, boolean includeTransitiveDependencies, List<String> excludedDependencies) {
     this(mavenId, packaging, includeTransitiveDependencies, excludedDependencies, VERIFY_SHA256_CHECKSUM_DEFAULT, Collections.emptyList(),
-         JAR_REPOSITORY_ID_NOT_SET);
+         null);
   }
 
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, boolean includeTransitiveDependencies, List<String> excludedDependencies,

@@ -24,7 +24,6 @@ import org.jetbrains.idea.maven.aether.ArtifactKind;
 import javax.swing.*;
 import java.util.*;
 
-import static org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET;
 import static org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.VERIFY_SHA256_CHECKSUM_DEFAULT;
 
 public class RepositoryLibraryPropertiesModel {
@@ -51,7 +50,7 @@ public class RepositoryLibraryPropertiesModel {
   public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,
                                           boolean includeTransitiveDependencies, List<String> excludedDependencies) {
     this(version, artifactKinds, includeTransitiveDependencies, excludedDependencies, VERIFY_SHA256_CHECKSUM_DEFAULT,
-         Collections.emptyList(), JAR_REPOSITORY_ID_NOT_SET);
+         Collections.emptyList(), null);
   }
 
   public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,

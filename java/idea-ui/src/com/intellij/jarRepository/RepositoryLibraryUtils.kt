@@ -45,7 +45,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.ArtifactVerification
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.jetbrains.jps.util.JpsChecksumUtil
 import org.jetbrains.jps.util.JpsPathUtil
@@ -225,7 +224,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
     private val availableRepositories = RemoteRepositoriesConfiguration.getInstance(project).repositories
     private val progressCounter = AtomicInteger(0)
     override suspend fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) =
-      properties.jarRepositoryId == JAR_REPOSITORY_ID_NOT_SET
+      properties.jarRepositoryId == null
 
     override suspend fun transform(): Unit = coroutineScope {
       progressSink!!.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
@@ -265,13 +264,13 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
       return remoteRepositories.firstOrNull {
         val versions = JarRepositoryManager.getAvailableVersions(project, description, Collections.singletonList(it)).await()
         versions.isNotEmpty() && versions.contains(properties.version)
-      }?.id ?: JAR_REPOSITORY_ID_NOT_SET
+      }?.id
     }
   }
 
   private inner class UnbindRemoteRepositoriesJob : LibrariesModificationJob() {
     override suspend fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) =
-      properties.jarRepositoryId != JAR_REPOSITORY_ID_NOT_SET
+      properties.jarRepositoryId != null
 
     override suspend fun afterFilter(): Unit = coroutineScope {
       super.afterFilter()

@@ -328,7 +328,7 @@ public final class JarRepositoryManager {
     }
 
     String repositoryId = desc.getJarRepositoryId();
-    if (Objects.equals(repositoryId, JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET)) {
+    if (repositoryId == null) {
       return null;
     }
 

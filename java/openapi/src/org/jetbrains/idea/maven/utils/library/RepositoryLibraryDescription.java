@@ -32,9 +32,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-
-import static org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.JAR_REPOSITORY_ID_NOT_SET;
 
 public class RepositoryLibraryDescription {
   @NotNull @NonNls
@@ -71,12 +68,12 @@ public class RepositoryLibraryDescription {
   }
 
   protected RepositoryLibraryDescription(String groupId, String artifactId, @NlsContexts.DialogTitle String libraryName) {
-      this(groupId, artifactId, libraryName, JAR_REPOSITORY_ID_NOT_SET, false);
+      this(groupId, artifactId, libraryName, null, false);
   }
 
   @NotNull
   public static RepositoryLibraryDescription findDescription(@Nullable final String groupId, @Nullable final String artifactId) {
-    return findDescription(groupId, artifactId, JAR_REPOSITORY_ID_NOT_SET, false);
+    return findDescription(groupId, artifactId, null, false);
   }
 
   @NotNull
@@ -132,7 +129,7 @@ public class RepositoryLibraryDescription {
     if (sha256sumCheckEnabled) {
       icon.setIcon(OpenapiIcons.TransparentStub, 1);
     }
-    if (!Objects.equals(jarRemoteRepositoryId, JAR_REPOSITORY_ID_NOT_SET)) {
+    if (jarRemoteRepositoryId != null) {
       icon.setIcon(OpenapiIcons.TransparentStub, 3);
     }
     return icon;
