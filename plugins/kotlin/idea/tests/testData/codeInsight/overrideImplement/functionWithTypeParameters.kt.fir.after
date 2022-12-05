@@ -1,8 +1,8 @@
-interface Trait {
+interface Interface {
     fun <A, B : Runnable, E : Map.Entry<A, B>> foo() where B : Cloneable, B : Comparable<B>
 }
 
-class TraitImpl : Trait {
+class InterfaceImpl : Interface {
     override fun <A, B, E : Map.Entry<A, B>> foo() where B : Runnable, B : Cloneable, B : Comparable<B> {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
