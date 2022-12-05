@@ -9,36 +9,39 @@ import org.ec4j.core.ResourcePath
 import org.ec4j.core.model.Ec4jPath
 import java.io.Reader
 
+class PurposefullyNotImplementedError
+  : Error("Called a method that was purposefully left unimplemented and should never be called")
+
 object NonExistentVirtualFileResource : Resource {
   override fun exists(): Boolean = false
 
   override fun getParent(): ResourcePath =
-    throw NotImplementedError("should never be called")
+    throw PurposefullyNotImplementedError()
 
   override fun getPath(): Ec4jPath =
-    throw NotImplementedError("should never be called")
+    throw PurposefullyNotImplementedError()
 
   override fun openRandomReader(): Resource.RandomReader =
-    throw NotImplementedError("should never be called")
+    throw PurposefullyNotImplementedError()
 
   override fun openReader(): Reader =
-    throw NotImplementedError("should never be called")
+    throw PurposefullyNotImplementedError()
 }
 
 class PathHolderResource(val path: String) : Resource {
   override fun exists(): Boolean =
-    throw NotImplementedError("should never be called")
+    throw PurposefullyNotImplementedError()
 
   override fun getParent(): ResourcePath =
-    throw NotImplementedError("should never be called")
+    throw PurposefullyNotImplementedError()
 
   override fun getPath(): Ec4jPath = Ec4jPath.Ec4jPaths.of(path)
 
   override fun openRandomReader(): Resource.RandomReader =
-    throw NotImplementedError("should never be called")
+    throw PurposefullyNotImplementedError()
 
   override fun openReader(): Reader =
-    throw NotImplementedError("should never be called")
+    throw PurposefullyNotImplementedError()
 }
 
 class VirtualFileResource(val file: VirtualFile) : Resource, ResourcePath {
