@@ -41,7 +41,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class PointlessBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
-  private enum BooleanExpressionKind {
+  public enum BooleanExpressionKind {
     USELESS, USELESS_WITH_SIDE_EFFECTS, UNKNOWN
   }
 
@@ -441,9 +441,6 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
       if (parent instanceof PsiExpression && getExpressionKind((PsiExpression)parent) != BooleanExpressionKind.UNKNOWN) {
         return;
       }
-      if (containsEscapingPatternVariable(expression)) {
-        return;
-      }
 
       final String replacement = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
       final Supplier<PsiElement> newBodySupplier =
@@ -457,52 +454,62 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
   }
 
   @NotNull
-  private BooleanExpressionKind getExpressionKind(PsiExpression expression) {
+  public BooleanExpressionKind getExpressionKind(PsiExpression expression) {
+    if ((expression instanceof PsiPrefixExpression || expression instanceof PsiPolyadicExpression) 
+        && containsEscapingPatternVariable(expression)) {
+      return BooleanExpressionKind.UNKNOWN;
+    }
     if (expression instanceof PsiPrefixExpression || expression instanceof PsiAssignmentExpression) {
       return evaluate(expression) != null ? BooleanExpressionKind.USELESS : BooleanExpressionKind.UNKNOWN;
     }
     if (expression instanceof PsiPolyadicExpression polyadicExpression) {
-      final IElementType sign = polyadicExpression.getOperationTokenType();
-      if (!booleanTokens.contains(sign)) {
+      return getPolyadicKind(polyadicExpression);
+    }
+    return BooleanExpressionKind.UNKNOWN;
+  }
+
+  @NotNull
+  private BooleanExpressionKind getPolyadicKind(PsiPolyadicExpression expression) {
+    final IElementType sign = expression.getOperationTokenType();
+    if (!booleanTokens.contains(sign)) {
+      return BooleanExpressionKind.UNKNOWN;
+    }
+    final PsiExpression[] operands = expression.getOperands();
+    boolean containsConstant = false;
+    boolean stopCheckingSideEffects = false;
+    boolean sideEffectMayBeRemoved = false;
+    boolean reducedToConstant = false;
+    for (PsiExpression operand : operands) {
+      if (operand == null) {
         return BooleanExpressionKind.UNKNOWN;
       }
-      final PsiExpression[] operands = polyadicExpression.getOperands();
-      boolean containsConstant = false;
-      boolean stopCheckingSideEffects = false;
-      boolean sideEffectMayBeRemoved = false;
-      boolean reducedToConstant = false;
-      for (PsiExpression operand : operands) {
-        if (operand == null) {
-          return BooleanExpressionKind.UNKNOWN;
+      final PsiType type = operand.getType();
+      if (type == null || !type.equals(PsiType.BOOLEAN) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+        return BooleanExpressionKind.UNKNOWN;
+      }
+      if (!stopCheckingSideEffects && SideEffectChecker.mayHaveSideEffects(operand)) {
+        sideEffectMayBeRemoved = true;
+        continue;
+      }
+      Boolean value = evaluate(operand);
+      if (value != null) {
+        containsConstant = true;
+        if ((JavaTokenType.ANDAND.equals(sign) && !value) || (JavaTokenType.OROR.equals(sign) && value)) {
+          stopCheckingSideEffects = true;
+          reducedToConstant = true;
         }
-        final PsiType type = operand.getType();
-        if (type == null || !type.equals(PsiType.BOOLEAN) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
-          return BooleanExpressionKind.UNKNOWN;
-        }
-        if (!stopCheckingSideEffects && SideEffectChecker.mayHaveSideEffects(operand)) {
-          sideEffectMayBeRemoved = true;
-          continue;
-        }
-        Boolean value = evaluate(operand);
-        if (value != null) {
-          containsConstant = true;
-          if ((JavaTokenType.ANDAND.equals(sign) && !value) || (JavaTokenType.OROR.equals(sign) && value)) {
-            stopCheckingSideEffects = true;
-            reducedToConstant = true;
-          }
-          if ((JavaTokenType.AND.equals(sign) && !value) || (JavaTokenType.OR.equals(sign) && value)) {
-            reducedToConstant = true;
-          }
+        if ((JavaTokenType.AND.equals(sign) && !value) || (JavaTokenType.OR.equals(sign) && value)) {
+          reducedToConstant = true;
         }
       }
-      if (containsConstant) {
-        if (sideEffectMayBeRemoved && reducedToConstant) {
-          return CodeBlockSurrounder.canSurround(expression)
-                 ? BooleanExpressionKind.USELESS_WITH_SIDE_EFFECTS
-                 : BooleanExpressionKind.UNKNOWN;
-        }
-        return BooleanExpressionKind.USELESS;
+    }
+    if (containsConstant) {
+      if (sideEffectMayBeRemoved && reducedToConstant) {
+        return CodeBlockSurrounder.canSurround(expression)
+               ? BooleanExpressionKind.USELESS_WITH_SIDE_EFFECTS
+               : BooleanExpressionKind.UNKNOWN;
       }
+      return BooleanExpressionKind.USELESS;
     }
     return BooleanExpressionKind.UNKNOWN;
   }

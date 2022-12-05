@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.EqualsWithItselfInspection;
+import com.siyeh.ig.controlflow.PointlessBooleanExpressionInspection;
 import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.numeric.ComparisonToNaNInspection;
 import com.siyeh.ig.psiutils.*;
@@ -324,6 +325,11 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
         PsiMethod method = call.resolveMethod();
         if (method == null || !JavaMethodContractUtil.isPure(method)) return true;
       }
+    }
+    if (new PointlessBooleanExpressionInspection().getExpressionKind(expression) !=
+        PointlessBooleanExpressionInspection.BooleanExpressionKind.UNKNOWN) {
+      // avoid double reporting
+      return true;
     }
     while (expression != null && BoolUtils.isNegation(expression)) {
       expression = BoolUtils.getNegated(expression);

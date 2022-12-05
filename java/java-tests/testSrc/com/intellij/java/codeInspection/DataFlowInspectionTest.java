@@ -723,4 +723,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testRewiringSubclassMethod() { doTest(); }
   public void testTryWithResourcesCloseThrows() { doTest(); }
   public void testBooleanOrEquals() { doTest(); }
+  public void testDuplicatedByPointlessBooleanInspection() { doTest(); }
 }
