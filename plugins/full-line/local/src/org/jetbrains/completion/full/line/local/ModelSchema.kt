@@ -28,7 +28,7 @@ data class LocalModelsSchema(
     }
   }
 
-  fun targetLanguage(language: Language): ModelSchema? = targetLanguage(language.id.toLowerCase())
+  fun targetLanguage(language: Language): ModelSchema? = targetLanguage(language.id.lowercase())
 }
 
 @Tag("model")
@@ -76,7 +76,7 @@ data class ModelSchema(
     fun generateFromLocal(language: Language, file: File): ModelSchema {
       val content = file.listFiles() ?: throw LocalModelIsNotDirectory()
       val size = content.sumOf { it.length() }
-      val lang = language.id.toLowerCase()
+      val lang = language.id.lowercase()
 
       val model = content.find { it.extension == "model" || it.extension == "onnx" || it.extension == "bin" }
                   ?: throw MissingPartOfLocalModel()

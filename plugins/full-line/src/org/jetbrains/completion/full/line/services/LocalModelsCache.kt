@@ -36,7 +36,7 @@ class LocalModelsCache {
   private fun scheduleModelLoad(languageId: String) {
     val startTimestamp = System.currentTimeMillis()
     val modelsManager = service<ConfigurableModelsManager>()
-    val suitableModel = modelsManager.modelsSchema.targetLanguage(languageId.toLowerCase())
+    val suitableModel = modelsManager.modelsSchema.targetLanguage(languageId.lowercase())
 
     if (suitableModel != null) {
       MODELS_LOADER.submit {
