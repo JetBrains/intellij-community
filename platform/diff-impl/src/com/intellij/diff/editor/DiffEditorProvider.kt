@@ -5,9 +5,11 @@ import com.intellij.diff.tools.combined.CombinedDiffComponentFactoryProvider
 import com.intellij.diff.tools.combined.CombinedDiffEditor
 import com.intellij.diff.tools.combined.CombinedDiffModelRepository
 import com.intellij.diff.tools.combined.CombinedDiffVirtualFile
+import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -15,7 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 
-class DiffEditorProvider : DefaultPlatformFileEditorProvider, DumbAware {
+class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   companion object {
     @NonNls
     const val DIFF_EDITOR_PROVIDER_ID = "DiffEditor"
@@ -43,4 +45,5 @@ class DiffEditorProvider : DefaultPlatformFileEditorProvider, DumbAware {
 
   override fun getEditorTypeId(): String = DIFF_EDITOR_PROVIDER_ID
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
+  override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? = null
 }
