@@ -20,14 +20,8 @@ public abstract class AccessibleContextDelegateWithContextMenu extends Accessibl
         @Override
         public int getAccessibleActionCount() {
           AccessibleContext ac = getDelegate();
-          if (ac != null) {
-            AccessibleAction aa = ac.getAccessibleAction();
-            if (aa != null) {
-              return aa.getAccessibleActionCount() + 1;
-            }
-          }
-
-          return 1;
+          AccessibleAction aa = ac.getAccessibleAction();
+          return aa != null ? aa.getAccessibleActionCount() + 1 : 1;
         }
 
         @Override

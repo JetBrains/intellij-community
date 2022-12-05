@@ -245,7 +245,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   static String toShortString(@NotNull Object o) {
     String name = o.getClass().getName();
     int idx = name.lastIndexOf('$');
-    if (idx > 0 && idx < name.length() && StringUtil.isJavaIdentifierStart(name.charAt(idx + 1))) {
+    if (idx > 0 && idx + 1 < name.length() && StringUtil.isJavaIdentifierStart(name.charAt(idx + 1))) {
       return name.substring(idx + 1);
     }
     return name.substring(name.lastIndexOf('.') + 1);
@@ -285,7 +285,9 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
     @Override
     public boolean value(A a) {
-      return cur > 0 && cur-- != 0;
+      if (cur <= 0) return false;
+      cur--;
+      return true;
     }
   }
 

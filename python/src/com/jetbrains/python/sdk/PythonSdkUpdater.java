@@ -182,9 +182,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         indicator.setText2("");
         PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
         PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
-        if (manager != null) {
-          PythonPackageManagerExt.launchReload(manager);
-        }
+        PythonPackageManagerExt.launchReload(manager);
       }
       catch (ExecutionException e) {
         if (LOG.isDebugEnabled()) {
@@ -285,7 +283,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * The only exception is made for EDT, in which case a modal progress indicator will be displayed during this first synchronous step.
    * <p>
    * This method emulates the legacy behavior of {@link #update(Sdk, Project, Component)} and is likely to be removed
-   * or changed in future. Unless you're sure that a synchronous update is necessary you should rather use
+   * or changed in the future. Unless you're sure that a synchronous update is necessary you should rather use
    * {@link #scheduleUpdate(Sdk, Project)} directly.
    *
    * @return false if there was an immediate problem updating the SDK. Other problems are reported as log entries and balloons.
@@ -634,7 +632,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   /**
-   * Evaluates sys.path by running the Python interpreter from  SDK.
+   * Evaluates {@code sys.path} by running the Python interpreter from  SDK.
    * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */

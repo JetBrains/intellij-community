@@ -266,7 +266,7 @@ public final class MVStoreTool {
                             printer.printf("    %d children >= %s @ chunk %x +%0" +
                                             len + "x%n",
                                            counts[keyCount],
-                                    keys.length >= keyCount ? null : keys[keyCount],
+                                           null,
                                            DataUtil.getPageChunkId(cp),
                                            DataUtil.getPageOffset(cp));
                         } else {

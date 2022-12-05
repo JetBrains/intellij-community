@@ -24,8 +24,7 @@ public final class PyQuickFixUtil {
 
   public static @Nullable PsiElement dereference(PsiElement element) {
     if (element instanceof PyReferenceExpression) {
-      PsiReference reference = element.getReference();
-      return reference != null ? reference.resolve() : null;
+      return element.getReference().resolve();
     }
     return element;
   }

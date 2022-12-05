@@ -271,7 +271,7 @@ public final class NewMappings implements Disposable {
     if (!(SystemInfoRt.isMac && ExperimentalUI.isNewUI())) {
       ApplicationManager.getApplication().invokeLater(() -> {
         ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
-        if (frame != null && frame.getRootPane() != null) {
+        if (frame != null) {
           frame.updateView();
         }
       }, myProject.getDisposed());

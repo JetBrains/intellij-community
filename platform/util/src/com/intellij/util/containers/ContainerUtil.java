@@ -793,21 +793,21 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
+  public static <T> @Nullable T find(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
     return find(iterable.iterator(), condition);
   }
 
   @Contract(pure=true)
-  public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull T equalTo) {
+  public static <T> @Nullable T find(@NotNull Iterable<? extends T> iterable, @NotNull T equalTo) {
     return find(iterable, (Condition<T>)object -> equalTo == object || equalTo.equals(object));
   }
 
   @Contract(pure=true)
-  public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull T equalTo) {
+  public static <T> @Nullable T find(@NotNull Iterator<? extends T> iterator, @NotNull T equalTo) {
     return find(iterator, (Condition<T>)object -> equalTo == object || equalTo.equals(object));
   }
 
-  public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull Condition<? super T> condition) {
+  public static <T> @Nullable T find(@NotNull Iterator<? extends T> iterator, @NotNull Condition<? super T> condition) {
     while (iterator.hasNext()) {
       T value = iterator.next();
       if (condition.value(value)) return value;
@@ -816,7 +816,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static <T> T findLast(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
+  public static <T> @Nullable T findLast(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
     int index = lastIndexOf(list, condition);
     if (index < 0) return null;
     return list.get(index);

@@ -29,6 +29,7 @@ public class MarkupModelStressTest extends AbstractEditorTest {
                                                                     new RemoveCharacters(),
                                                                     new MoveCharacters());
   private final Random myRandom = new Random() {{
+    //noinspection ConstantValue
     setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
   }};
   private long mySeed;

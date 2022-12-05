@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk;
 import com.jetbrains.python.psi.*;
@@ -214,7 +215,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
           if (subsequenceElementIndex < subSequenceElements.length) {
             return Ref.create(subSequenceElements[subsequenceElementIndex]);
           }
-          if (noElementsForSure) noElementsForSure = Arrays.stream(subSequenceElements).noneMatch(it -> it instanceof PyStarExpression);
+          if (noElementsForSure) noElementsForSure = !ContainerUtil.exists(subSequenceElements, it -> it instanceof PyStarExpression);
           seenElementsNumber += subSequenceElements.length;
         }
         else {
@@ -233,22 +234,20 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   public static PyExpression[] getElementsFromListOrTuple(@NotNull final PyExpression expression) {
-    if (expression instanceof PyListLiteralExpression) {
-      return ((PyListLiteralExpression)expression).getElements();
+    if (expression instanceof PyListLiteralExpression list) {
+      return list.getElements();
     }
-    else if (expression instanceof PyTupleExpression) {
-      return ((PyTupleExpression)expression).getElements();
+    else if (expression instanceof PyTupleExpression tuple) {
+      return tuple.getElements();
     }
-    else if (expression instanceof PyStringLiteralExpression) {
-      String value = ((PyStringLiteralExpression)expression).getStringValue();
-      if (value != null) {
-        // Strings might be packed as well as dicts, so we need to resolve somehow to string element.
-        // But string element isn't PyExpression so I decided to resolve to PyStringLiteralExpression for
-        // every string element
-        PyExpression[] result = new PyExpression[value.length()];
-        Arrays.fill(result, expression);
-        return result;
-      }
+    else if (expression instanceof PyStringLiteralExpression string) {
+      String value = string.getStringValue();
+      // Strings might be packed as well as dicts, so we need to resolve somehow to string element.
+      // But string element isn't PyExpression so I decided to resolve to PyStringLiteralExpression for
+      // every string element
+      PyExpression[] result = new PyExpression[value.length()];
+      Arrays.fill(result, expression);
+      return result;
     }
 
     return PyExpression.EMPTY_ARRAY;

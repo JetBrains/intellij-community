@@ -114,17 +114,13 @@ public class HighlightableComponent extends JComponent implements Accessible {
             myHighlightedRegions.add(i, new HighlightedRegion(startOffset, hRegion.startOffset, attributes));
             myHighlightedRegions.add(i + 1, new HighlightedRegion(hRegion.startOffset, endOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
             hRegion.startOffset = endOffset;
-            break;
           }
-
-          if (endOffset == hRegion.endOffset){
+          else if (endOffset == hRegion.endOffset){
             myHighlightedRegions.remove(hRegion);
             myHighlightedRegions.add(i, new HighlightedRegion(startOffset, hRegion.startOffset, attributes));
             myHighlightedRegions.add(i + 1, new HighlightedRegion(hRegion.startOffset, endOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
-            break;
           }
-
-          if (endOffset > hRegion.endOffset){
+          else { // endOffset > hRegion.endOffset
             myHighlightedRegions.remove(hRegion);
             myHighlightedRegions.add(i, new HighlightedRegion(startOffset, hRegion.startOffset, attributes));
             myHighlightedRegions.add(i + 1, new HighlightedRegion(hRegion.startOffset, hRegion.endOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
@@ -135,12 +131,12 @@ public class HighlightableComponent extends JComponent implements Accessible {
             else{
               myHighlightedRegions.add(i + 2, new HighlightedRegion(hRegion.endOffset, endOffset, attributes));
             }
-            break;
           }
+          break;
         }
 
         // must be after and overlap or full overlap
-        if (startOffset >= hRegion.startOffset && startOffset < hRegion.endOffset){
+        if (startOffset < hRegion.endOffset){
 
           int oldEndOffset = hRegion.endOffset;
 

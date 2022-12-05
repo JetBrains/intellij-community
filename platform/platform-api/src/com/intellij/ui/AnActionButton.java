@@ -231,10 +231,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       RelativePoint relativePoint = getPreferredPopupPoint();
-      if (relativePoint != null) {
-        JBPopupMenu.showAt(relativePoint, ActionManager.getInstance().createActionPopupMenu(
-          e.getPlace(), (ActionGroup)getDelegate()).getComponent());
-      }
+      JBPopupMenu.showAt(relativePoint, ActionManager.getInstance().createActionPopupMenu(
+        e.getPlace(), (ActionGroup)getDelegate()).getComponent());
     }
   }
 

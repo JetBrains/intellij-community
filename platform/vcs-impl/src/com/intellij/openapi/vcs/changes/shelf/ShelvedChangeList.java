@@ -123,10 +123,10 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
     element.setAttribute(ATTRIBUTE_DATE, Long.toString(shelvedChangeList.DATE.getTime()));
     element.setAttribute(ATTRIBUTE_RECYCLED_CHANGELIST, Boolean.toString(shelvedChangeList.isRecycled()));
     if (shelvedChangeList.isMarkedToDelete()) {
-      element.setAttribute(ATTRIBUTE_TOBE_DELETED_CHANGELIST, Boolean.toString(shelvedChangeList.isMarkedToDelete()));
+      element.setAttribute(ATTRIBUTE_TOBE_DELETED_CHANGELIST, "true");
     }
     if (shelvedChangeList.isDeleted()) {
-      element.setAttribute(ATTRIBUTE_DELETED_CHANGELIST, Boolean.toString(shelvedChangeList.isDeleted()));
+      element.setAttribute(ATTRIBUTE_DELETED_CHANGELIST, "true");
     }
     for (ShelvedBinaryFile file : shelvedChangeList.getBinaryFiles()) {
       Element child = new Element(ELEMENT_BINARY);

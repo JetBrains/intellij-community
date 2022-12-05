@@ -165,9 +165,6 @@ public class PyMethodParametersInspection extends PyInspection {
               }
             }
             else if (!flags.isStaticMethod() && !first_param.isPositionalContainer() && !PyNames.CANONICAL_SELF.equals(pname)) {
-              if (flags.isMetaclassMethod() && CLS.equals(pname)) {
-                return;   // accept either 'self' or 'cls' for all methods in metaclass
-              }
               registerProblem(
                 PyUtil.sure(params[0].getNode()).getPsi(),
                 PyPsiBundle.message("INSP.usually.named.self"),

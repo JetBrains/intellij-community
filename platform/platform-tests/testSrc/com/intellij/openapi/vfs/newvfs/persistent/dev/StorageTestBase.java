@@ -335,7 +335,7 @@ public abstract class StorageTestBase<S> {
     @Override
     public int hashCode() {
       int result = recordId;
-      result = 31 * result + (payload != null ? payload.hashCode() : 0);
+      result = 31 * result + payload.hashCode();
       return result;
     }
 

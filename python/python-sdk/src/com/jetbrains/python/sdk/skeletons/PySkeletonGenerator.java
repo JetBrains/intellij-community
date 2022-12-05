@@ -354,16 +354,11 @@ public abstract class PySkeletonGenerator {
 
   protected static void sendLineToProcessInput(@NotNull BaseProcessHandler<?> handler, @NotNull String line) throws ExecutionException {
     final OutputStream input = handler.getProcessInput();
-    if (input != null) {
-      try {
-        sendLineToStream(input, line);
-      }
-      catch (IOException e) {
-        throw new ExecutionException(e);
-      }
+    try {
+      sendLineToStream(input, line);
     }
-    else {
-      LOG.warn("Process " + handler.getCommandLine() + " can't accept any input");
+    catch (IOException e) {
+      throw new ExecutionException(e);
     }
   }
 

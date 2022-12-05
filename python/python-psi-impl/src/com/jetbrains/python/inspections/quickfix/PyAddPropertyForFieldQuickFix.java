@@ -32,7 +32,6 @@ public class PyAddPropertyForFieldQuickFix implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     if (element instanceof PyReferenceExpression) {
       final PsiReference reference = element.getReference();
-      if (reference == null) return;
       final PsiElement resolved = reference.resolve();
       if (resolved instanceof PyTargetExpression) {
         PyTargetExpression target = (PyTargetExpression)resolved;

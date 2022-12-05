@@ -51,7 +51,7 @@ public final class VcsShelveUtils {
     List<ShelvedBinaryFile> binaryFiles = shelvedChangeList.getBinaryFiles();
 
     LOG.info("refreshing files ");
-    // The changes are temporary copied to the first local change list, the next operation will restore them back
+    // The changes are temporarily copied to the first local change list, the next operation will restore them back
     // Refresh files that might be affected by unshelve
     refreshFilesBeforeUnshelve(projectPath, changes, binaryFiles);
 
@@ -65,7 +65,7 @@ public final class VcsShelveUtils {
 
   @RequiresEdt
   private static void markUnshelvedFilesNonUndoable(@NotNull final Project project,
-                                                    @NotNull List<? extends ShelvedChange> changes) {
+                                                    @NotNull List<ShelvedChange> changes) {
     final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
     if (undoManager != null && !changes.isEmpty()) {
       ContainerUtil.process(changes, change -> {
@@ -81,16 +81,12 @@ public final class VcsShelveUtils {
   }
 
   private static void refreshFilesBeforeUnshelve(String projectPath,
-                                                 @NotNull List<? extends ShelvedChange> shelvedChanges,
-                                                 @NotNull List<? extends ShelvedBinaryFile> binaryFiles) {
+                                                 @NotNull List<ShelvedChange> shelvedChanges,
+                                                 @NotNull List<ShelvedBinaryFile> binaryFiles) {
     HashSet<File> filesToRefresh = new HashSet<>();
     shelvedChanges.forEach(c -> {
-      if (c.getBeforePath() != null) {
-        filesToRefresh.add(new File(projectPath + c.getBeforePath()));
-      }
-      if (c.getAfterPath() != null) {
-        filesToRefresh.add(new File(projectPath + c.getAfterPath()));
-      }
+      filesToRefresh.add(new File(projectPath + c.getBeforePath()));
+      filesToRefresh.add(new File(projectPath + c.getAfterPath()));
     });
     binaryFiles.forEach(f -> {
       if (f.BEFORE_PATH != null) {
