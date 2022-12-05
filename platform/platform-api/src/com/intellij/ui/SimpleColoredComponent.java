@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
@@ -727,6 +728,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   protected void paintComponent(final Graphics g) {
     try {
       doPaint((Graphics2D)g);
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch (RuntimeException e) {
       LOG.error(logSwingPath(), e);
