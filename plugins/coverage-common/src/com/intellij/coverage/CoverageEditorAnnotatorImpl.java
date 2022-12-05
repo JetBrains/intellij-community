@@ -482,7 +482,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
     final int startOffset = document.getLineStartOffset(lineNumberInCurrent);
     final int endOffset = document.getLineEndOffset(lineNumberInCurrent);
     final RangeHighlighter highlighter =
-      markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+      markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.ADDITIONAL_SYNTAX - 1, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
     final Function<Integer, Integer> newToOldConverter = newLine -> {
       if (editor == null) return -1;
       final Int2IntMap oldLineMapping = getNewToOldLineMapping(date, editorBean);
