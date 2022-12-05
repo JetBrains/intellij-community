@@ -4,9 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -54,10 +52,7 @@ internal object GHPRDetailsComponentFactory {
       add(description, CC().growX().gapBottom("$gapBetweenDescriptionAndCommits"))
       add(branches, CC().growY().push())
       add(statusChecks, CC().growX().gapBottom("$gapBetweenCheckAndActions"))
-      add(Wrapper(state).apply {
-        isOpaque = true
-        background = UIUtil.getPanelBackground()
-      }, CC().growX().pushX().minHeight("pref"))
+      add(state, CC().growX().pushX().minHeight("pref"))
     }
   }
 

@@ -71,7 +71,9 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
       override fun createButtons(): List<JComponent> {
         return if (canReopen) {
           val action = GHPRReopenAction(stateModel)
-          listOf(JButton(action))
+          listOf(JButton(action).apply {
+            isOpaque = false
+          })
         }
         else emptyList()
       }
@@ -122,7 +124,10 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         if (canClose) {
           list.add(JButton(GHPRCloseAction(stateModel)))
         }
-        return list
+
+        return list.onEach { component ->
+          component.isOpaque = false
+        }
       }
     }
   }
