@@ -135,6 +135,10 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       });
     }
 
+    if (ExperimentalUI.isNewUI()) {
+      return;
+    }
+
     glassPane.addMousePreprocessor(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
