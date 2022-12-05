@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -35,8 +36,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class TextEditorProvider
-  implements DefaultPlatformFileEditorProvider, TextBasedFileEditorProvider, QuickDefinitionProvider, DumbAware {
+public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
+                                           TextBasedFileEditorProvider,
+                                           StructureViewFileEditorProvider,
+                                           QuickDefinitionProvider,
+                                           DumbAware {
   protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
@@ -277,6 +281,11 @@ public class TextEditorProvider
     });
   }
 
+  @Override
+  public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull Project project, @NotNull VirtualFile file) {
+    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
+  }
+
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
     private final Editor myEditor;
 
@@ -312,7 +321,7 @@ public class TextEditorProvider
 
       final Project project = myEditor.getProject();
       if (project == null) return null;
-      return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
+      return TextEditorProvider.this.getStructureViewBuilder(project, file);
     }
 
     @Override

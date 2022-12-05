@@ -20,9 +20,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -470,8 +470,8 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(myProject, file);
     FileEditorProvider provider = providers.size() == 0 ? null : providers.get(0);
     if (provider == null) return null;
-    if (provider instanceof TextEditorProvider) {
-      return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, myProject);
+    if (provider instanceof StructureViewFileEditorProvider) {
+      return ((StructureViewFileEditorProvider)provider).getStructureViewBuilder(myProject, file);
     }
 
     FileEditor editor = provider.createEditor(myProject, file);
