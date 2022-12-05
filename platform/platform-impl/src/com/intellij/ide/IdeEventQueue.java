@@ -23,10 +23,7 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -118,6 +115,8 @@ public final class IdeEventQueue extends EventQueue {
 
   private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new HashMap<>();
 
+  private final boolean myDispatchingOnMainThread;
+
   /**
    * Executes given {@code runnable} after all focus activities are finished.
    *
@@ -189,6 +188,7 @@ public final class IdeEventQueue extends EventQueue {
     assert EventQueue.isDispatchThread() : Thread.currentThread();
     EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
+    myDispatchingOnMainThread = Thread.currentThread().getName().contains("AppKit");
     systemEventQueue.push(this);
 
     EDT.updateEdt();
@@ -208,6 +208,10 @@ public final class IdeEventQueue extends EventQueue {
     if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
       myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
     }
+  }
+
+  public boolean isDispatchingOnMainThread() {
+    return myDispatchingOnMainThread;
   }
 
   private static boolean skipMoveResizeEvents(AWTEvent event) {
@@ -350,6 +354,10 @@ public final class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
+    if (isDispatchingOnMainThread() && !EventQueue.isDispatchThread()) {
+      super.dispatchEvent(e);
+      return;
+    }
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstanceOrNull();
@@ -594,7 +602,8 @@ public final class IdeEventQueue extends EventQueue {
     AWTEvent event = appIsLoaded() ?
                      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> super.getNextEvent()) :
                      super.getNextEvent();
-    if (isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
+    if (!(isDispatchingOnMainThread() && EventQueue.isDispatchThread()) &&
+        isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
       throw new RuntimeException(event + "; posted: " + myKeyboardEventsPosted + "; dispatched: " + myKeyboardEventsDispatched);
     }
     return event;
