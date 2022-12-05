@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal class RemoveArgumentNameIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, RemoveArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
+internal class RemoveSingleArgumentNameIntention :
+    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, RemoveSingleArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
     /**
      * @property anchorArgument an argument after which the unnamed argument should be placed once the argument name is removed;
      * when the argument should be placed in the beginning of argument list, [anchorArgument] is null

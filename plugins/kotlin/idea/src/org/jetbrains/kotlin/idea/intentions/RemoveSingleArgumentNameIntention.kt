@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class RemoveArgumentNameIntention : SelfTargetingRangeIntention<KtValueArgument>(
+class RemoveSingleArgumentNameIntention : SelfTargetingRangeIntention<KtValueArgument>(
     KtValueArgument::class.java,
     KotlinBundle.lazyMessage("remove.argument.name")
 ) {

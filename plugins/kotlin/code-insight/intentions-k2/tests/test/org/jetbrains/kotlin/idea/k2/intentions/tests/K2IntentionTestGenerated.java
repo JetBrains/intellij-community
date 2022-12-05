@@ -2742,10 +2742,10 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/intentions/removeArgumentName")
-    public abstract static class RemoveArgumentName extends AbstractK2IntentionTest {
+    @TestMetadata("../../../idea/tests/testData/intentions/removeSingleArgumentName")
+    public abstract static class RemoveSingleArgumentName extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../idea/tests/testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition")
+        @TestMetadata("../../../idea/tests/testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition")
         public static class MixedNamedArgumentsInTheirOwnPosition extends AbstractK2IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -2753,27 +2753,27 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
             @TestMetadata("namedArgumentBefore.kt")
             public void testNamedArgumentBefore() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition/namedArgumentBefore.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition/namedArgumentBefore.kt");
             }
 
             @TestMetadata("namedArgumentBefore2.kt")
             public void testNamedArgumentBefore2() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition/namedArgumentBefore2.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition/namedArgumentBefore2.kt");
             }
 
             @TestMetadata("notInPosition.kt")
             public void testNotInPosition() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition/notInPosition.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition/notInPosition.kt");
             }
 
             @TestMetadata("notInPosition2.kt")
             public void testNotInPosition2() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition/notInPosition2.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition/notInPosition2.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../idea/tests/testData/intentions/removeArgumentName")
+        @TestMetadata("../../../idea/tests/testData/intentions/removeSingleArgumentName")
         public static class Uncategorized extends AbstractK2IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -2781,87 +2781,87 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
             @TestMetadata("arrayForVararg.kt")
             public void testArrayForVararg() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/arrayForVararg.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/arrayForVararg.kt");
             }
 
             @TestMetadata("arrayForVararg2.kt")
             public void testArrayForVararg2() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/arrayForVararg2.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/arrayForVararg2.kt");
             }
 
             @TestMetadata("arrayForVararg3.kt")
             public void testArrayForVararg3() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/arrayForVararg3.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/arrayForVararg3.kt");
             }
 
             @TestMetadata("arrayLiteral.kt")
             public void testArrayLiteral() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/arrayLiteral.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/arrayLiteral.kt");
             }
 
             @TestMetadata("arrayLiteralForVararg.kt")
             public void testArrayLiteralForVararg() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/arrayLiteralForVararg.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/arrayLiteralForVararg.kt");
             }
 
             @TestMetadata("arrayLiteralForVararg2.kt")
             public void testArrayLiteralForVararg2() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/arrayLiteralForVararg2.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/arrayLiteralForVararg2.kt");
             }
 
             @TestMetadata("namedArgumentBefore.kt")
             public void testNamedArgumentBefore() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/namedArgumentBefore.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/namedArgumentBefore.kt");
             }
 
             @TestMetadata("noExpression.kt")
             public void testNoExpression() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/noExpression.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/noExpression.kt");
             }
 
             @TestMetadata("notInPosition.kt")
             public void testNotInPosition() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/notInPosition.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/notInPosition.kt");
             }
 
             @TestMetadata("notInPositionWithDefaultArgument.kt")
             public void testNotInPositionWithDefaultArgument() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/notInPositionWithDefaultArgument.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/notInPositionWithDefaultArgument.kt");
             }
 
             @TestMetadata("notInRange.kt")
             public void testNotInRange() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/notInRange.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/notInRange.kt");
             }
 
             @TestMetadata("notNamed.kt")
             public void testNotNamed() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/notNamed.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/notNamed.kt");
             }
 
             @TestMetadata("notResolved.kt")
             public void testNotResolved() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/notResolved.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/notResolved.kt");
             }
 
             @TestMetadata("range.kt")
             public void testRange() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/range.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/range.kt");
             }
 
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/simple.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/simple.kt");
             }
 
             @TestMetadata("star.kt")
             public void testStar() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/star.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/star.kt");
             }
 
             @TestMetadata("superClassConstructor.kt")
             public void testSuperClassConstructor() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/removeArgumentName/superClassConstructor.kt");
+                runTest("../../../idea/tests/testData/intentions/removeSingleArgumentName/superClassConstructor.kt");
             }
         }
     }

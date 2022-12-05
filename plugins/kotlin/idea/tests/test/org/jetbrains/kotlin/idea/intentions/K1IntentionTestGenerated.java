@@ -15052,131 +15052,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/removeArgumentName")
-    public abstract static class RemoveArgumentName extends AbstractK1IntentionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition")
-        public static class MixedNamedArgumentsInTheirOwnPosition extends AbstractK1IntentionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("namedArgumentBefore.kt")
-            public void testNamedArgumentBefore() throws Exception {
-                runTest("testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition/namedArgumentBefore.kt");
-            }
-
-            @TestMetadata("namedArgumentBefore2.kt")
-            public void testNamedArgumentBefore2() throws Exception {
-                runTest("testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition/namedArgumentBefore2.kt");
-            }
-
-            @TestMetadata("notInPosition.kt")
-            public void testNotInPosition() throws Exception {
-                runTest("testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition/notInPosition.kt");
-            }
-
-            @TestMetadata("notInPosition2.kt")
-            public void testNotInPosition2() throws Exception {
-                runTest("testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition/notInPosition2.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/intentions/removeArgumentName")
-        public static class Uncategorized extends AbstractK1IntentionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("arrayForVararg.kt")
-            public void testArrayForVararg() throws Exception {
-                runTest("testData/intentions/removeArgumentName/arrayForVararg.kt");
-            }
-
-            @TestMetadata("arrayForVararg2.kt")
-            public void testArrayForVararg2() throws Exception {
-                runTest("testData/intentions/removeArgumentName/arrayForVararg2.kt");
-            }
-
-            @TestMetadata("arrayForVararg3.kt")
-            public void testArrayForVararg3() throws Exception {
-                runTest("testData/intentions/removeArgumentName/arrayForVararg3.kt");
-            }
-
-            @TestMetadata("arrayLiteral.kt")
-            public void testArrayLiteral() throws Exception {
-                runTest("testData/intentions/removeArgumentName/arrayLiteral.kt");
-            }
-
-            @TestMetadata("arrayLiteralForVararg.kt")
-            public void testArrayLiteralForVararg() throws Exception {
-                runTest("testData/intentions/removeArgumentName/arrayLiteralForVararg.kt");
-            }
-
-            @TestMetadata("arrayLiteralForVararg2.kt")
-            public void testArrayLiteralForVararg2() throws Exception {
-                runTest("testData/intentions/removeArgumentName/arrayLiteralForVararg2.kt");
-            }
-
-            @TestMetadata("namedArgumentBefore.kt")
-            public void testNamedArgumentBefore() throws Exception {
-                runTest("testData/intentions/removeArgumentName/namedArgumentBefore.kt");
-            }
-
-            @TestMetadata("noExpression.kt")
-            public void testNoExpression() throws Exception {
-                runTest("testData/intentions/removeArgumentName/noExpression.kt");
-            }
-
-            @TestMetadata("notInPosition.kt")
-            public void testNotInPosition() throws Exception {
-                runTest("testData/intentions/removeArgumentName/notInPosition.kt");
-            }
-
-            @TestMetadata("notInPositionWithDefaultArgument.kt")
-            public void testNotInPositionWithDefaultArgument() throws Exception {
-                runTest("testData/intentions/removeArgumentName/notInPositionWithDefaultArgument.kt");
-            }
-
-            @TestMetadata("notInRange.kt")
-            public void testNotInRange() throws Exception {
-                runTest("testData/intentions/removeArgumentName/notInRange.kt");
-            }
-
-            @TestMetadata("notNamed.kt")
-            public void testNotNamed() throws Exception {
-                runTest("testData/intentions/removeArgumentName/notNamed.kt");
-            }
-
-            @TestMetadata("notResolved.kt")
-            public void testNotResolved() throws Exception {
-                runTest("testData/intentions/removeArgumentName/notResolved.kt");
-            }
-
-            @TestMetadata("range.kt")
-            public void testRange() throws Exception {
-                runTest("testData/intentions/removeArgumentName/range.kt");
-            }
-
-            @TestMetadata("simple.kt")
-            public void testSimple() throws Exception {
-                runTest("testData/intentions/removeArgumentName/simple.kt");
-            }
-
-            @TestMetadata("star.kt")
-            public void testStar() throws Exception {
-                runTest("testData/intentions/removeArgumentName/star.kt");
-            }
-
-            @TestMetadata("superClassConstructor.kt")
-            public void testSuperClassConstructor() throws Exception {
-                runTest("testData/intentions/removeArgumentName/superClassConstructor.kt");
-            }
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeEmptyPrimaryConstructor")
     public static class RemoveEmptyPrimaryConstructor extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -16005,6 +15880,131 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("variable.kt")
         public void testVariable() throws Exception {
             runTest("testData/intentions/removeRedundantCallsOfConversionMethods/variable.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/removeSingleArgumentName")
+    public abstract static class RemoveSingleArgumentName extends AbstractK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition")
+        public static class MixedNamedArgumentsInTheirOwnPosition extends AbstractK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("namedArgumentBefore.kt")
+            public void testNamedArgumentBefore() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition/namedArgumentBefore.kt");
+            }
+
+            @TestMetadata("namedArgumentBefore2.kt")
+            public void testNamedArgumentBefore2() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition/namedArgumentBefore2.kt");
+            }
+
+            @TestMetadata("notInPosition.kt")
+            public void testNotInPosition() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition/notInPosition.kt");
+            }
+
+            @TestMetadata("notInPosition2.kt")
+            public void testNotInPosition2() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/MixedNamedArgumentsInTheirOwnPosition/notInPosition2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/removeSingleArgumentName")
+        public static class Uncategorized extends AbstractK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("arrayForVararg.kt")
+            public void testArrayForVararg() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/arrayForVararg.kt");
+            }
+
+            @TestMetadata("arrayForVararg2.kt")
+            public void testArrayForVararg2() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/arrayForVararg2.kt");
+            }
+
+            @TestMetadata("arrayForVararg3.kt")
+            public void testArrayForVararg3() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/arrayForVararg3.kt");
+            }
+
+            @TestMetadata("arrayLiteral.kt")
+            public void testArrayLiteral() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/arrayLiteral.kt");
+            }
+
+            @TestMetadata("arrayLiteralForVararg.kt")
+            public void testArrayLiteralForVararg() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/arrayLiteralForVararg.kt");
+            }
+
+            @TestMetadata("arrayLiteralForVararg2.kt")
+            public void testArrayLiteralForVararg2() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/arrayLiteralForVararg2.kt");
+            }
+
+            @TestMetadata("namedArgumentBefore.kt")
+            public void testNamedArgumentBefore() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/namedArgumentBefore.kt");
+            }
+
+            @TestMetadata("noExpression.kt")
+            public void testNoExpression() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/noExpression.kt");
+            }
+
+            @TestMetadata("notInPosition.kt")
+            public void testNotInPosition() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/notInPosition.kt");
+            }
+
+            @TestMetadata("notInPositionWithDefaultArgument.kt")
+            public void testNotInPositionWithDefaultArgument() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/notInPositionWithDefaultArgument.kt");
+            }
+
+            @TestMetadata("notInRange.kt")
+            public void testNotInRange() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/notInRange.kt");
+            }
+
+            @TestMetadata("notNamed.kt")
+            public void testNotNamed() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/notNamed.kt");
+            }
+
+            @TestMetadata("notResolved.kt")
+            public void testNotResolved() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/notResolved.kt");
+            }
+
+            @TestMetadata("range.kt")
+            public void testRange() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/range.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/simple.kt");
+            }
+
+            @TestMetadata("star.kt")
+            public void testStar() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/star.kt");
+            }
+
+            @TestMetadata("superClassConstructor.kt")
+            public void testSuperClassConstructor() throws Exception {
+                runTest("testData/intentions/removeSingleArgumentName/superClassConstructor.kt");
+            }
         }
     }
 
