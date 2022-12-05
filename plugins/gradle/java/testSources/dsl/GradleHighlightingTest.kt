@@ -11,6 +11,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.EMPTY_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
@@ -58,6 +59,19 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
         fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
         fixture.testHighlighting(true, false, true, file)
       }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testGeneratedSetter(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        jar {
+          archiveClassifier = "a"
+        }
+      """.trimIndent())
     }
   }
 

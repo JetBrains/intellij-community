@@ -5,6 +5,7 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.ide.presentation.Presentation
 import com.intellij.openapi.util.Key
 import com.intellij.psi.OriginInfoAwareElement
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.util.lazyPub
 import icons.ExternalSystemIcons
@@ -33,6 +34,10 @@ class GradleTaskProperty(
     result.append("</PRE>")
     description?.let(result::append)
     result.toString()
+  }
+
+  override fun decorateType(type: PsiClassType): PsiClassType {
+    return decorateTaskType(type)
   }
 
   override fun <T : Any?> getUserData(key: Key<T>): T? {
