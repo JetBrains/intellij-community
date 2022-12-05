@@ -2,12 +2,40 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.beans.PropertyKind;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PropertyAccessorDetector {
+  ExtensionPointName<PropertyAccessorDetector> EP_NAME = ExtensionPointName.create("com.intellij.propertyAccessorDetector");
+
+  static @Nullable PropertyAccessorInfo detectFrom(@NotNull PsiMethod method) {
+    for (PropertyAccessorDetector detector : EP_NAME.getExtensions()) {
+      PropertyAccessorInfo accessorInfo = detector.detectPropertyAccessor(method);
+      if (accessorInfo != null) {
+        return accessorInfo;
+      }
+    }
+    return getDefaultAccessorInfo(method);
+  }
+
+  @Nullable
+  static PropertyAccessorInfo getDefaultAccessorInfo(@NotNull PsiMethod method) {
+    if (PropertyUtilBase.isSimplePropertyGetter(method)) {
+      return new PropertyAccessorInfo(PropertyUtilBase.getPropertyNameByGetter(method),
+                                      method.getReturnType(),
+                                      PropertyKind.GETTER);
+    }
+    else if (PropertyUtilBase.isSimplePropertySetter(method)) {
+      return new PropertyAccessorInfo(PropertyUtilBase.getPropertyNameBySetter(method),
+                                      method.getParameterList().getParameters()[0].getType(),
+                                      PropertyKind.SETTER);
+    }
+    return null;
+  }
+
   /**
    * Detects property access information if any, or results to null
    */

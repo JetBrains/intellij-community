@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.DefaultPropertyAccessorDetector;
 import com.intellij.psi.util.PropertyAccessorDetector;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
@@ -59,7 +58,7 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
       return group;
     }
     else if (object instanceof PsiMethod method) {
-      final PropertyAccessorDetector.PropertyAccessorInfo accessorInfo = DefaultPropertyAccessorDetector.detectFrom(method);
+      final PropertyAccessorDetector.PropertyAccessorInfo accessorInfo = PropertyAccessorDetector.detectFrom(method);
       if (null != accessorInfo &&
           (accessorInfo.isKindOf(PropertyKind.GETTER) || accessorInfo.isKindOf(PropertyKind.SETTER))) {
 
