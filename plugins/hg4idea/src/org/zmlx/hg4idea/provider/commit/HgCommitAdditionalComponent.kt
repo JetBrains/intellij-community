@@ -1,103 +1,92 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.zmlx.hg4idea.provider.commit;
+package org.zmlx.hg4idea.provider.commit
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
-import com.intellij.vcs.commit.AmendCommitHandler;
-import com.intellij.vcs.commit.AmendCommitModeListener;
-import com.intellij.vcs.commit.ToggleAmendCommitOption;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgBundle;
-
-import javax.swing.*;
-import java.awt.*;
-
-import static org.zmlx.hg4idea.provider.commit.HgCommitOptionsKt.setCommitSubrepositories;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
+import com.intellij.vcs.commit.AmendCommitHandler
+import com.intellij.vcs.commit.AmendCommitModeListener
+import com.intellij.vcs.commit.ToggleAmendCommitOption
+import com.intellij.xml.util.XmlStringUtil
+import org.zmlx.hg4idea.HgBundle
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.event.ActionEvent
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 /**
  * Commit options for hg
  */
-public class HgCommitAdditionalComponent implements RefreshableOnComponent, AmendCommitModeListener, Disposable {
-  @NotNull private final JPanel myPanel;
-  @NotNull private final JCheckBox myCommitSubrepos;
-  @NotNull private final CheckinProjectPanel myCommitPanel;
-  @NotNull private final CommitContext myCommitContext;
-  @Nullable private final ToggleAmendCommitOption myAmendOption;
+open class HgCommitAdditionalComponent(private val myCommitPanel: CheckinProjectPanel,
+                                       private val myCommitContext: CommitContext,
+                                       hasSubrepos: Boolean,
+                                       showAmendOption: Boolean) : RefreshableOnComponent, AmendCommitModeListener, Disposable {
+  private val myPanel: JPanel
+  private val myCommitSubrepos: JCheckBox
+  private val myAmendOption: ToggleAmendCommitOption?
 
-  HgCommitAdditionalComponent(@NotNull CheckinProjectPanel panel,
-                              @NotNull CommitContext commitContext,
-                              boolean hasSubrepos,
-                              boolean showAmendOption) {
-    myCommitPanel = panel;
-    myCommitContext = commitContext;
-    myAmendOption = showAmendOption ? new ToggleAmendCommitOption(myCommitPanel, this) : null;
+  init {
+    myAmendOption = if (showAmendOption) ToggleAmendCommitOption(myCommitPanel, this) else null
 
-    myCommitSubrepos = new JCheckBox(HgBundle.message("repositories.commit.subs"), false);
-    myCommitSubrepos.setVisible(hasSubrepos);
-    myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(HgBundle.message("repositories.commit.subs.tooltip")));
-    myCommitSubrepos.addActionListener(e -> updateAmendState(!myCommitSubrepos.isSelected()));
+    myCommitSubrepos = JCheckBox(HgBundle.message("repositories.commit.subs"), false)
+    myCommitSubrepos.isVisible = hasSubrepos
+    myCommitSubrepos.toolTipText = XmlStringUtil.wrapInHtml(HgBundle.message("repositories.commit.subs.tooltip"))
+    myCommitSubrepos.addActionListener { e: ActionEvent? -> updateAmendState(!myCommitSubrepos.isSelected) }
 
-    GridBag gb = new GridBag().
-      setDefaultInsets(JBUI.insets(2)).
-      setDefaultAnchor(GridBagConstraints.WEST).
-      setDefaultWeightX(1).
-      setDefaultFill(GridBagConstraints.HORIZONTAL);
-    myPanel = new JPanel(new GridBagLayout());
-    if (myAmendOption != null) myPanel.add(myAmendOption, gb.nextLine().next());
-    myPanel.add(myCommitSubrepos, gb.nextLine().next());
+    val gb = GridBag()
+      .setDefaultInsets(JBUI.insets(2))
+      .setDefaultAnchor(GridBagConstraints.WEST)
+      .setDefaultWeightX(1.0)
+      .setDefaultFill(GridBagConstraints.HORIZONTAL)
+    myPanel = JPanel(GridBagLayout())
+    if (myAmendOption != null) myPanel.add(myAmendOption, gb.nextLine().next())
+    myPanel.add(myCommitSubrepos, gb.nextLine().next())
 
-    getAmendHandler().addAmendCommitModeListener(this, this);
+    amendHandler.addAmendCommitModeListener(this, this)
   }
 
-  @NotNull
-  private AmendCommitHandler getAmendHandler() {
-    return myCommitPanel.getCommitWorkflowHandler().getAmendCommitHandler();
+  private val amendHandler: AmendCommitHandler
+    get() {
+      return myCommitPanel.commitWorkflowHandler.amendCommitHandler;
+    }
+
+  override fun dispose() {}
+
+  override fun amendCommitModeToggled() {
+    updateCommitSubreposState()
   }
 
-  @Override
-  public void dispose() {
+  override fun saveState() {
+    myCommitContext.isCommitSubrepositories = myCommitSubrepos.isSelected
   }
 
-  @Override
-  public void amendCommitModeToggled() {
-    updateCommitSubreposState();
+  override fun restoreState() {
+    updateCommitSubreposState()
   }
 
-  @Override
-  public void saveState() {
-    setCommitSubrepositories(myCommitContext, myCommitSubrepos.isSelected());
+  override fun getComponent(): JComponent {
+    return myPanel
   }
 
-  @Override
-  public void restoreState() {
-    updateCommitSubreposState();
+  fun isAmend(): Boolean {
+    return amendHandler.isAmendCommitMode
   }
 
-  @Override
-  public JComponent getComponent() {
-    return myPanel;
+  private fun updateCommitSubreposState() {
+    val isAmendMode = isAmend()
+
+    myCommitSubrepos.isEnabled = !isAmendMode
+    if (isAmendMode) myCommitSubrepos.isSelected = false
   }
 
-  public boolean isAmend() {
-    return getAmendHandler().isAmendCommitMode();
-  }
-
-  private void updateCommitSubreposState() {
-    boolean isAmendMode = isAmend();
-
-    myCommitSubrepos.setEnabled(!isAmendMode);
-    if (isAmendMode) myCommitSubrepos.setSelected(false);
-  }
-
-  private void updateAmendState(boolean enable) {
-    getAmendHandler().setAmendCommitModeTogglingEnabled(enable);
-    if (myAmendOption != null) myAmendOption.setEnabled(enable);
-    if (!enable) getAmendHandler().setAmendCommitMode(false);
+  private fun updateAmendState(enable: Boolean) {
+    amendHandler.isAmendCommitModeTogglingEnabled = enable
+    if (myAmendOption != null) myAmendOption.isEnabled = enable
+    if (!enable) amendHandler.isAmendCommitMode = false
   }
 }
