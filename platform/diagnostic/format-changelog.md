@@ -1,3 +1,7 @@
+## 41
+
+* add `additionalMetrics` property where `memory` and `gc` are stored for unified reporting
+
 ## 40
 
 * add `gc` extra data with metrics from GC
