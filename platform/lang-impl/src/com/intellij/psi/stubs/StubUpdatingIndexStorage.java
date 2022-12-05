@@ -32,7 +32,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   StubUpdatingIndexStorage(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
                            @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout,
                            @NotNull SerializationManagerEx serializationManager) throws IOException {
-    super(extension, layout, null);
+    super(extension, layout);
     mySerializationManager = serializationManager;
   }
 

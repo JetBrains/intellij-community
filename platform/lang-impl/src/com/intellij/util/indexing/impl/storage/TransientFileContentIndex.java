@@ -33,8 +33,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
 
   public TransientFileContentIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                   @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
-                                   @Nullable ReadWriteLock lock)
+                                   @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout)
     throws IOException {
     super(extension,
           new VfsAwareIndexStorageLayout<>() {
@@ -62,8 +61,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
             public @Nullable ForwardIndexAccessor<Key, Value> getForwardIndexAccessor() throws IOException {
               return indexStorageLayout.getForwardIndexAccessor();
             }
-          },
-          lock);
+          });
     installMemoryModeListener();
   }
 
@@ -183,9 +181,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   }
 
   public static <Key, Value> TransientFileContentIndex<Key, Value, VfsAwareMapReduceIndex.IndexerIdHolder> createIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                                                                                                       @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
-                                                                                                                       @Nullable ReadWriteLock lock)
+                                                                                                                       @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout)
     throws IOException {
-    return new TransientFileContentIndex<>(extension, indexStorageLayout, lock);
+    return new TransientFileContentIndex<>(extension, indexStorageLayout);
   }
 }

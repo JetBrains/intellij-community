@@ -26,7 +26,7 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, V
 
   FileTypeMapReduceIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension,
                          @NotNull VfsAwareIndexStorageLayout<FileType, Void> layout) throws IOException {
-    super(extension, layout, null);
+    super(extension, layout);
     myFileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 

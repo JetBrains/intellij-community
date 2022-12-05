@@ -42,6 +42,9 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
     @OptIn(ExperimentalCoroutinesApi::class)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
+    private val context = Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads()) +
+                          CoroutineName("Index Storage Lifecycle")
+
     @JvmStatic
     fun <T> submitGenesisTask(action: Callable<T>): Future<T> {
       return scope.async { action.call() }.asCompletableFuture()
@@ -53,7 +56,7 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
         return
       }
 
-      runBlocking(Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads()) + CoroutineName("Index Storage Lifecycle")) {
+      runBlocking(context) {
         for (task in tasks) {
           launch {
             executeTask(task, checkAppDisposed)

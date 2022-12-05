@@ -37,9 +37,8 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   protected MapReduceIndexBase(@NotNull IndexExtension<Key, Value, FileContent> extension,
                                @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
                                @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
-                               @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                               @Nullable ReadWriteLock lock) throws IOException {
-    super(extension, storage, forwardIndex, forwardIndexAccessor, lock);
+                               @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
+    super(extension, storage, forwardIndex, forwardIndexAccessor);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }

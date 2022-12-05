@@ -600,7 +600,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return index;
     }
     else {
-      return TransientFileContentIndex.createIndex(extension, layout, null);
+      return TransientFileContentIndex.createIndex(extension, layout);
     }
   }
 

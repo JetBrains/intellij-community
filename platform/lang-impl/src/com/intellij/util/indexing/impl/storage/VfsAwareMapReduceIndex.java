@@ -62,23 +62,20 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   private final boolean myUpdateMappings;
 
   public VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
-                                @Nullable ReadWriteLock lock) throws IOException {
+                                @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout) throws IOException {
     this(extension,
          () -> indexStorageLayout.openIndexStorage(),
          () -> indexStorageLayout.openForwardIndex(),
          indexStorageLayout.getForwardIndexAccessor(),
-         () -> indexStorageLayout.createOrClearSnapshotInputMappings(),
-         lock);
+         () -> indexStorageLayout.createOrClearSnapshotInputMappings());
   }
 
   protected VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
                                    @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
                                    @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexMap,
                                    @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                   @Nullable ThrowableComputable<? extends SnapshotInputMappingIndex<Key, Value, FileContent>, ? extends IOException> snapshotInputMappings,
-                                   @Nullable ReadWriteLock lock) throws IOException {
-    super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
+                                   @Nullable ThrowableComputable<? extends SnapshotInputMappingIndex<Key, Value, FileContent>, ? extends IOException> snapshotInputMappings) throws IOException {
+    super(extension, storage, forwardIndexMap, forwardIndexAccessor);
     SnapshotInputMappingIndex<Key, Value, FileContent> inputMappings;
     try {
       inputMappings = snapshotInputMappings == null ? null : snapshotInputMappings.compute();

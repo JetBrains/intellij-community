@@ -43,35 +43,24 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final LowMemoryWatcher myLowMemoryFlusher;
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                           @NotNull IndexStorageLayout<Key, Value> indexStorageLayout,
-                           @Nullable ReadWriteLock lock) throws IOException {
+                           @NotNull IndexStorageLayout<Key, Value> indexStorageLayout) throws IOException {
     this(extension,
          indexStorageLayout.openIndexStorage(),
          indexStorageLayout.openForwardIndex(),
-         indexStorageLayout.getForwardIndexAccessor(),
-         lock);
+         indexStorageLayout.getForwardIndexAccessor());
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable ForwardIndex forwardIndex,
                            @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
-    this(extension, storage, forwardIndex, forwardIndexAccessor,  null);
-  }
-
-  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                           @NotNull IndexStorage<Key, Value> storage,
-                           @Nullable ForwardIndex forwardIndex,
-                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                           @Nullable ReadWriteLock lock) throws IOException {
-    this(extension, () -> storage, () -> forwardIndex, forwardIndexAccessor, lock);
+    this(extension, () -> storage, () -> forwardIndex, forwardIndexAccessor);
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
                            @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
-                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                           @Nullable ReadWriteLock lock) throws IOException {
+                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
@@ -87,7 +76,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myUseIntForwardIndex = myForwardIndex instanceof IntForwardIndex && myForwardIndexAccessor instanceof IntForwardIndexAccessor;
     LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
                    "Invalid index configuration for " + myIndexId);
-    myLock = lock == null ? new ReentrantReadWriteLock() : lock;
+    myLock = new ReentrantReadWriteLock();
     myValueSerializationChecker = new ValueSerializationChecker<>(extension, getSerializationProblemReporter());
     myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
