@@ -39,6 +39,8 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
+private typealias CallChain = List<CallChainElement>
+
 /**
  * Tests:
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ConvertObjectToDataObject]
@@ -80,13 +82,12 @@ private fun isCompatibleToString(
     val body = toStringFunction.singleExpressionBody() ?: return false
     if ((body as? KtStringTemplateExpression)?.entries?.singleOrNull()?.text == ktObject.name) return true
     val context = lazy { body.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL) }
-    val callChain = body.tryUnwrapElvisOrDoubleBang(context).getCallChain().takeIf { it.size in 2..3 } ?: return false
-    val classLiteralReceiver = callChain.firstOrNull()?.asSafely<KtClassLiteralExpression>()?.receiverExpression
-    val fqn = classLiteralReceiver?.asSafely<KtNameReferenceExpression>()?.resolveType(context.value)?.fqName
-    val methods = callChain.drop(1).map { it.asSafely<KtNameReferenceExpression>()?.text ?: return false }
-    return (classLiteralReceiver is KtThisExpression || fqn == ktObjectFqn.value) &&
-            (methods == listOf("java", "simpleName") || methods == listOf("simpleName")) ||
-            callChain.firstOrNull() is KtThisExpression && methods == listOf("javaClass", "simpleName")
+    val callChain = body.tryUnwrapElvisOrDoubleBang(context).getCallChain().mapToCallChainElements(context, ktObjectFqn) ?: return false
+    return callChain in
+            kotlinOrJavaSelfClassLiteral(CallChainElement.NameReference("simpleName")) +
+            listOf(
+                listOf(CallChainElement.This, CallChainElement.NameReference("javaClass"), CallChainElement.NameReference("simpleName"))
+            )
 }
 
 private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext>): KtExpression = when {
@@ -174,3 +175,39 @@ private sealed interface VirtualFunction {
     object NonTrivialSuper : VirtualFunction
     object TrivialSuper : VirtualFunction
 }
+
+private sealed interface CallChainElement {
+    data class NameReference(val callReferenceName: String) : CallChainElement
+    data class CallWithZeroArgs(val callReferenceName: String) : CallChainElement
+    /**
+     * Either `this::class` or `Foo::class` but checks that `this` is `Foo`
+     */
+    object SelfClassLiteral : CallChainElement
+    object This : CallChainElement
+}
+
+private fun List<KtExpression>.mapToCallChainElements(
+    context: Lazy<BindingContext>,
+    thisObjectFqn: Lazy<FqName>,
+): CallChain? =
+    map {
+        when {
+            it is KtThisExpression -> CallChainElement.This
+            it is KtCallExpression && it.valueArguments.isEmpty() && it.lambdaArguments.isEmpty() ->
+                CallChainElement.CallWithZeroArgs(it.calleeExpression?.text ?: return null)
+            it is KtNameReferenceExpression -> CallChainElement.NameReference(it.text ?: return null)
+            it is KtClassLiteralExpression -> {
+                val classLiteralReceiver = it.receiverExpression
+                if (classLiteralReceiver is KtThisExpression ||
+                    thisObjectFqn.value == classLiteralReceiver?.asSafely<KtNameReferenceExpression>()?.resolveType(context.value)?.fqName
+                ) CallChainElement.SelfClassLiteral else return null
+            }
+            else -> return null
+        }
+    }
+
+private fun kotlinOrJavaSelfClassLiteral(vararg suffix: CallChainElement): List<CallChain> =
+    listOf(
+        listOf(CallChainElement.SelfClassLiteral, CallChainElement.NameReference("java")) + suffix,
+        listOf(CallChainElement.SelfClassLiteral) + suffix,
+    )
