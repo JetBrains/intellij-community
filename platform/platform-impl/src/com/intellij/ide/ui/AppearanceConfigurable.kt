@@ -84,8 +84,10 @@ private val cdLeftToolWindowLayout
   get() = CheckboxDescriptor(message("checkbox.left.toolwindow.layout"), settings::leftHorizontalSplit, groupName = windowOptionGroupName)
 private val cdRightToolWindowLayout
   get() = CheckboxDescriptor(message("checkbox.right.toolwindow.layout"), settings::rightHorizontalSplit, groupName = windowOptionGroupName)
-private val cdRememberSizeForEachToolWindow
-  get() = CheckboxDescriptor(message("checkbox.remember.size.for.each.tool.window"), settings::rememberSizeForEachToolWindow, groupName = windowOptionGroupName)
+private val cdRememberSizeForEachToolWindowOldUI
+  get() = CheckboxDescriptor(message("checkbox.remember.size.for.each.tool.window"), settings::rememberSizeForEachToolWindowOldUI, groupName = windowOptionGroupName)
+private val cdRememberSizeForEachToolWindowNewUI
+  get() = CheckboxDescriptor(message("checkbox.remember.size.for.each.tool.window"), settings::rememberSizeForEachToolWindowNewUI, groupName = windowOptionGroupName)
 private val cdUseCompactTreeIndents
   get() = CheckboxDescriptor(message("checkbox.compact.tree.indents"), settings::compactTreeIndents, groupName = uiOptionGroupName)
 private val cdShowTreeIndents
@@ -391,17 +393,27 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         )
         twoColumnsRow(
           { checkBox(cdLeftToolWindowLayout) },
-          { checkBox(cdRightToolWindowLayout) }
-        )
-        twoColumnsRow(
           {
             if (ExperimentalUI.isNewUI()) {
-              checkBox(cdRememberSizeForEachToolWindow)
+              checkBox(cdRememberSizeForEachToolWindowNewUI)
             }
             else {
-              checkBox(cdShowToolWindowNumbers)
+              checkBox(cdRememberSizeForEachToolWindowOldUI)
             }
-          })
+          },
+        )
+        if (ExperimentalUI.isNewUI()) {
+          twoColumnsRow(
+            { checkBox(cdRightToolWindowLayout) },
+            null,
+          )
+        }
+        else {
+          twoColumnsRow(
+            { checkBox(cdRightToolWindowLayout) },
+            { checkBox(cdShowToolWindowNumbers) },
+          )
+        }
       }
 
       group(message("group.presentation.mode")) {

@@ -642,9 +642,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   private fun isIndependentToolWindowResizeEnabled(): Boolean =
     if (isNewUi)
-      UISettings.getInstance().rememberSizeForEachToolWindow
+      UISettings.getInstance().rememberSizeForEachToolWindowNewUI
     else
-      Registry.`is`("toolwindow.independent.sizes")
+      UISettings.getInstance().rememberSizeForEachToolWindowOldUI
 
   private fun visibleToolWindow(anchor: ToolWindowAnchor): ToolWindowEntry? =
     idToEntry.values.firstOrNull { it.isVisibleAndDockedTo(anchor) }
