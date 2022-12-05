@@ -29,7 +29,7 @@ interface XAttachDialogItemPresentationProvider {
   }
 
   fun getIndexedString(item: AttachDialogProcessItem): String {
-    return "${item.processInfo.pid} ${getProcessExecutableText(item)}"
+    return "${item.processInfo.pid} ${getProcessExecutableText(item)} ${item.processInfo.user}"
   }
 
   fun getPriority(): Int
