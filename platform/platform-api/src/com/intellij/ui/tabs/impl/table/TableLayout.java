@@ -29,10 +29,15 @@ public class TableLayout extends TabLayout {
 
   public TablePassInfo myLastTableLayout;
 
-  private boolean myWithScrollBar = false;
+  private boolean myWithScrollBar;
 
   public TableLayout(final JBTabsImpl tabs) {
+    this(tabs, false);
+  }
+
+  public TableLayout(final JBTabsImpl tabs, boolean isWithScrollBar) {
     myTabs = tabs;
+    myWithScrollBar = isWithScrollBar;
   }
 
   private TablePassInfo computeLayoutTable(List<TabInfo> visibleInfos) {
@@ -169,10 +174,6 @@ public class TableLayout extends TabLayout {
         calculateRawLengths(data.myVisibleInfos, data);
       }
     }
-  }
-
-  public void setWithScrollBar(boolean withScrollBar) {
-    myWithScrollBar = withScrollBar;
   }
 
   private int getMoreRectAxisSize() {
@@ -402,6 +403,11 @@ public class TableLayout extends TabLayout {
       myScrollOffset = Math.max(0, Math.min(myScrollOffset,
                                             data.requiredLength - data.toFitRec.width + data.moreRect.width + entryPointsWidth /*+ (1 + myTabs.getIndexOf(myTabs.getSelectedInfo())) * myTabs.getBorderThickness()*/+ data.titleRect.width));
     }
+  }
+
+  @Override
+  public boolean isWithScrollBar() {
+    return myWithScrollBar;
   }
 
   public int getScrollUnitIncrement() {
