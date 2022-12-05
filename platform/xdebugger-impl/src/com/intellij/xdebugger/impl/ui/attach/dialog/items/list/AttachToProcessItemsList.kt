@@ -5,13 +5,11 @@ import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.speedSearch.FilteringTableModel
 import com.intellij.ui.table.JBTable
-import com.intellij.util.application
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.applyColumnsLayout
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElementNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogGroupNode
@@ -116,11 +114,9 @@ internal class AttachToProcessTableModel(private val itemNodes: List<AttachDialo
   }
 }
 
-internal suspend fun buildList(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState): AttachToProcessItemsList {
+internal suspend fun buildList(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState, columnsLayout: AttachDialogColumnsLayout): AttachToProcessItemsList {
 
   val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
-
-  val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
 
   val itemNodes = mutableListOf<AttachDialogElementNode>()
   val recentItems = itemsInfo.recentItems

@@ -22,6 +22,7 @@ import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemAction
 import com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemException
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.buildTree
 import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
@@ -40,6 +41,7 @@ import javax.swing.ScrollPaneConstants
 internal abstract class AttachToProcessView(
   private val project: Project,
   protected val state: AttachDialogState,
+  private val columnsLayout: AttachDialogColumnsLayout,
   private val attachDebuggerProviders: List<XAttachDebuggerProvider>) {
 
   companion object {
@@ -178,7 +180,7 @@ internal abstract class AttachToProcessView(
   }
 
   private suspend fun processPlainListItems(items: AttachItemsInfo) {
-    val list = com.intellij.xdebugger.impl.ui.attach.dialog.items.list.buildList(items, state)
+    val list = com.intellij.xdebugger.impl.ui.attach.dialog.items.list.buildList(items, state, columnsLayout)
 
     withUiContextAnyModality {
       showList(list, true)
@@ -186,7 +188,7 @@ internal abstract class AttachToProcessView(
   }
 
   private suspend fun processTreeItems(attachItemsInfo: AttachItemsInfo) {
-    val tree = buildTree(attachItemsInfo, state)
+    val tree = buildTree(attachItemsInfo, state, columnsLayout)
 
     withUiContextAnyModality {
       showList(tree, false)

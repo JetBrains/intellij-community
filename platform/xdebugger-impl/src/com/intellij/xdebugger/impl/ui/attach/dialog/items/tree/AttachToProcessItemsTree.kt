@@ -14,9 +14,9 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.*
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCell
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCellRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.applyColumnsLayout
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElementNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogGroupNode
@@ -236,9 +236,9 @@ private suspend fun prepareTreeElements(
 
 internal suspend fun buildTree(
   attachItemsInfo: AttachItemsInfo,
-  dialogState: AttachDialogState): AttachToProcessItemsListBase {
+  dialogState: AttachDialogState,
+  columnsLayout: AttachDialogColumnsLayout): AttachToProcessItemsListBase {
   val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
-  val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
   val topLevelElements = prepareTreeElements(attachItemsInfo, columnsLayout, filters)
   val rootNode = AttachTreeNodeWrapper(AttachTreeRootNode(), filters, columnsLayout, -1)
   topLevelElements.forEach { rootNode.addChild(it) }
