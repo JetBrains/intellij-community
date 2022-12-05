@@ -1,0 +1,36 @@
+{
+  "language": "Python",
+  "projectPath": "../../ml-eval/fl-pipeline",
+  "outputDir": "ml-eval-output",
+  "actions": {
+    "evaluationRoots": [
+      "scripts/vocabulary_watcher.py"
+    ],
+    "strategy": {
+      "completeAllTokens": true,
+      "completionGolf": true,
+      "context": "ALL",
+      "prefix": {
+        "name": "NoPrefix"
+      }
+    }
+  },
+  "interpret": {
+    "completionGolfSettings": {
+      "topN": 5,
+      "checkToken": true,
+      "checkLine": true,
+      "source": "INTELLIJ"
+    },
+    "completionType": "FULL_LINE",
+    "saveLogs": true,
+    "completeTokenProbability": 1.0,
+    "completeTokenSeed": null,
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "Full Line Completion Golf",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}
