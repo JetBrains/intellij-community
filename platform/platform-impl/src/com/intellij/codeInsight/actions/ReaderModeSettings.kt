@@ -41,7 +41,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
                         file: VirtualFile?,
                         fileIsOpenAlready: Boolean = false,
                         forceUpdate: Boolean = false) {
-      if (editor == null || file == null || PsiManager.getInstance(project).findFile(file) == null) {
+      if (editor == null || file == null || !file.isValid || PsiManager.getInstance(project).findFile(file) == null) {
         return
       }
 
