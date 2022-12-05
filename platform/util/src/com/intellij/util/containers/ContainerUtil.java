@@ -24,7 +24,6 @@ import java.util.stream.Stream;
  * @see CollectionFactory
  * @see com.intellij.concurrency.ConcurrentCollectionFactory
  */
-@ApiStatus.NonExtendable
 public final class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -93,10 +92,12 @@ public final class ContainerUtil {
 
   /**
    * @deprecated Use {@link LinkedList#LinkedList()}
+
+   * DO NOT REMOVE this method until {@link ContainerUtil#newLinkedList(Object[])} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
    */
   @Contract(pure = true)
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
   public static @NotNull <T> LinkedList<T> newLinkedList() {
     return new LinkedList<>();
   }
@@ -111,6 +112,9 @@ public final class ContainerUtil {
 
   /**
    * @deprecated Use {@link ArrayList#ArrayList()}
+
+   * DO NOT REMOVE this method until {@link ContainerUtil#newArrayList(Object[])} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
    */
   @Deprecated
   @Contract(pure = true)
@@ -118,6 +122,9 @@ public final class ContainerUtil {
     return new ArrayList<>();
   }
 
+  /**
+   * Please use {@link List#of(Object[])} or {@link Arrays#asList(Object[])} instead as more immutable
+   */
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <E> ArrayList<E> newArrayList(E @NotNull ... array) {
@@ -230,6 +237,9 @@ public final class ContainerUtil {
 
   /**
    * @deprecated Use {@link HashSet#HashSet()}
+
+   * DO NOT REMOVE this method until {@link ContainerUtil#newHashSet(Object[])} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
    */
   @Contract(pure = true)
   @Deprecated
@@ -285,6 +295,9 @@ public final class ContainerUtil {
 
   /**
    * @deprecated Use {@link LinkedHashSet#LinkedHashSet()}
+
+   * DO NOT REMOVE this method until {@link ContainerUtil#newLinkedHashSet(Object[])} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
    */
   @Contract(pure = true)
   @Deprecated
@@ -413,6 +426,32 @@ public final class ContainerUtil {
   @Unmodifiable
   public static @NotNull <E> ImmutableList<E> immutableList(E @NotNull ... array) {
     return new ImmutableListBackedByArray<>(array);
+  }
+
+  /**
+   * @deprecated use {@link Collections#emptyList()}
+
+   * DO NOT REMOVE this method until {@link ContainerUtil#immutableList(Object[])} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Contract(pure = true)
+  @Deprecated
+  @Unmodifiable
+  public static @NotNull <E> List<E> immutableList() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @deprecated use {@link List#of(Object)} or {@link Collections#singletonList(Object)} as more memory-consious alternatives
+
+   * DO NOT REMOVE this method until {@link ContainerUtil#immutableList(Object[])} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Contract(pure = true)
+  @Deprecated
+  @Unmodifiable
+  public static @NotNull <E> List<E> immutableList(E element) {
+    return Collections.singletonList(element);
   }
 
   /**
@@ -1979,8 +2018,36 @@ public final class ContainerUtil {
     return result;
   }
 
-  @SafeVarargs
+  /**
+   * @deprecated use {@link Collections#emptySet()}
+
+   * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
   @Contract(pure = true)
+  @Unmodifiable
+  public static @NotNull <T> Set<T> set() {
+    return Collections.emptySet();
+  }
+
+  /**
+   * @deprecated use {@link Collections#singleton(Object)}
+
+   * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
+   * The former method is here to highlight incorrect usages of the latter.
+   */
+  @Deprecated
+  @Contract(pure = true)
+  @Unmodifiable
+  public static @NotNull <T> Set<T> set(T t) {
+    return Collections.singleton(t);
+  }
+
+  /**
+   * please use {@link Set#of(Object[])} instead
+   */
+  @SafeVarargs
   public static @NotNull <T> Set<T> set(T @NotNull ... items) {
     //noinspection SSBasedInspection
     return new HashSet<>(Arrays.asList(items));

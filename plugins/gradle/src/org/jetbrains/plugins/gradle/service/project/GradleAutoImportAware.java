@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +137,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     // add gradle scripts
     Set<String> subProjectPaths = projectSettings != null && /*!projectSettings.getModules().isEmpty() &&*/
                                   FileUtil.pathsEqual(projectSettings.getExternalProjectPath(), projectPath)
-                                  ? projectSettings.getModules() : ContainerUtil.set(projectPath);
+                                  ? projectSettings.getModules() : Set.of(projectPath);
     for (String path : subProjectPaths) {
       ProgressManager.checkCanceled();
 

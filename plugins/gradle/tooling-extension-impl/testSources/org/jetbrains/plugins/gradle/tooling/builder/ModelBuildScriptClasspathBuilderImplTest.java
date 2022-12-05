@@ -26,6 +26,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -91,6 +92,6 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
 
   @Override
   protected Set<Class<?>> getModels() {
-    return ContainerUtil.<Class<?>>set(BuildScriptClasspathModel.class);
+    return Collections.<Class<?>>singleton(BuildScriptClasspathModel.class);
   }
 }

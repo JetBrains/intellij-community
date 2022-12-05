@@ -12,7 +12,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.LazyKt;
-import com.intellij.util.containers.ContainerUtil;
 import kotlin.Lazy;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -37,7 +36,7 @@ public class OriginalElementPostfixTemplateTest extends PostfixTemplateTestCase 
     // This emulates conditions in some languages e.g. in go where resolve involves getOriginalElement() calls.
     PostfixTemplate template = new JavaEditablePostfixTemplate(
       "myId", "foo", "System.out.println();$END$", "",
-      ContainerUtil.set(new OriginalElementCondition()),
+      Set.of(new OriginalElementCondition()),
       LanguageLevel.JDK_1_8, true, provider);
     PostfixTemplateStorage.getInstance().setTemplates(provider, asList(template));
   }

@@ -82,24 +82,24 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     assertEquals("AAA_VALUE", myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
-    assertEquals(ContainerUtil.set("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(Set.of("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
     assertEquals(1, getMapSize());
 
     myMap.put("BBB", "BBB_VALUE");
     assertEquals("BBB_VALUE", myMap.get("BBB"));
-    assertEquals(ContainerUtil.set("AAA", "BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(Set.of("AAA", "BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
     assertEquals(2, getMapSize());
 
     myMap.put("AAA", "ANOTHER_AAA_VALUE");
     assertEquals("ANOTHER_AAA_VALUE", myMap.get("AAA"));
-    assertEquals(ContainerUtil.set("AAA", "BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(Set.of("AAA", "BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
     assertEquals(2, getMapSize());
 
     myMap.remove("AAA");
     assertEquals(1, getMapSize());
     assertNull(myMap.get("AAA"));
     assertEquals("BBB_VALUE", myMap.get("BBB"));
-    assertEquals(ContainerUtil.set("BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(Set.of("BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
 
     myMap.remove("BBB");
     assertNull(myMap.get("AAA"));
@@ -110,7 +110,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
     myMap.put("AAA", "FINAL_AAA_VALUE");
     assertEquals("FINAL_AAA_VALUE", myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
-    assertEquals(ContainerUtil.set("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(Set.of("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
     assertEquals(1, getMapSize());
   }
 
@@ -417,7 +417,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     assertEquals("AAA_VALUE", myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
-    assertEquals(ContainerUtil.set("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+    assertEquals(Set.of("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
 
     try {
       myMap.remove("AAA");

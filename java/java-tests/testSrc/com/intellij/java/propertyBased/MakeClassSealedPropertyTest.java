@@ -25,10 +25,7 @@ import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
 
@@ -75,7 +72,8 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
       }
 
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      Set<PsiFile> relatedFiles = ContainerUtil.set(psiFile);
+      Set<PsiFile> relatedFiles = new HashSet<>();
+      relatedFiles.add(psiFile);
       DirectClassInheritorsSearch.search(psiClass).mapping(PsiElement::getContainingFile).forEach(e -> {
         relatedFiles.add(e);
         return true;

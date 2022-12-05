@@ -89,7 +89,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GR
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
-import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.Arrays.asList;
 import static org.jetbrains.concurrency.Promises.cancelledPromise;
@@ -830,7 +829,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void setGrouping(@NotNull String groupingKey) {
-      myView.getGroupingSupport().setGroupingKeysOrSkip(set(groupingKey));
+      myView.getGroupingSupport().setGroupingKeysOrSkip(Set.of(groupingKey));
     }
 
     public void selectFile(@Nullable VirtualFile vFile) {

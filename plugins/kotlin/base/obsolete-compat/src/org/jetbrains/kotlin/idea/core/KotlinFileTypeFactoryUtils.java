@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.core;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 
 import java.util.Set;
@@ -13,5 +12,5 @@ import java.util.Set;
 @Deprecated
 public class KotlinFileTypeFactoryUtils {
     public final static String[] KOTLIN_EXTENSIONS = new String[] { "kt", "kts" };
-    public final static Set<FileType> KOTLIN_FILE_TYPES_SET = ContainerUtil.set(KotlinFileType.INSTANCE);
+    public final static Set<FileType> KOTLIN_FILE_TYPES_SET = Set.of(KotlinFileType.INSTANCE);
 }

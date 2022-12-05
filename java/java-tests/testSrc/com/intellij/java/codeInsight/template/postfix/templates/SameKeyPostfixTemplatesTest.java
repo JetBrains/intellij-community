@@ -8,9 +8,10 @@ import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditable
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.LazyKt;
-import com.intellij.util.containers.ContainerUtil;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 import static java.util.Arrays.asList;
 
@@ -24,11 +25,11 @@ public class SameKeyPostfixTemplatesTest extends PostfixTemplateTestCase {
     JavaPostfixTemplateProvider provider = PROVIDER.getValue();
     PostfixTemplate template1 = new JavaEditablePostfixTemplate(
       "myId1", "sameKey", "Boolean.toString($EXPR$);$END$", "",
-      ContainerUtil.set(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition()),
+      Set.of(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition()),
       LanguageLevel.JDK_1_8, true, provider);
     PostfixTemplate template2 = new JavaEditablePostfixTemplate(
       "myId2", "sameKey", "Integer.toString($EXPR$);$END$", "",
-      ContainerUtil.set(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition()),
+      Set.of(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition()),
       LanguageLevel.JDK_1_8, true, provider);
     PostfixTemplateStorage.getInstance().setTemplates(provider, asList(template1, template2));
   }
