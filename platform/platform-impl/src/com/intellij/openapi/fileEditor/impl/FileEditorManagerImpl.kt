@@ -100,6 +100,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
@@ -206,7 +207,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     })
     closeFilesOnFileEditorRemoval()
 
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode || forceUseUiInHeadlessMode()) {
       isInitialized.set(true)
       mainSplitters = EditorsSplitters(this)
     }
@@ -2111,6 +2112,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       }
     }
   }
+
+  @Internal
+  open fun forceUseUiInHeadlessMode() = false
 }
 
 private class SimpleBusyObject : BusyObject.Impl() {
