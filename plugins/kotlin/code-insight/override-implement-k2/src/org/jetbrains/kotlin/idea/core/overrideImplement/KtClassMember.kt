@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
@@ -36,15 +37,31 @@ import org.jetbrains.kotlin.types.Variance
 import javax.swing.Icon
 
 @ApiStatus.Internal
-data class KtClassMemberInfo(
-    // TODO: use a `KtSymbolPointer` instead to avoid storing `KtSymbol` in an object after KT-46249 is fixed.
-    val symbol: KtCallableSymbol,
+data class KtClassMemberInfo internal constructor(
+    val symbolPointer: KtSymbolPointer<KtCallableSymbol>,
     @NlsSafe val memberText: String,
     val memberIcon: Icon?,
     val containingSymbolText: String?,
-    val containingSymbolIcon: Icon?
+    val containingSymbolIcon: Icon?,
+    val isProperty: Boolean,
 ) {
-    val isProperty: Boolean get() = symbol is KtPropertySymbol
+    companion object {
+        context(KtAnalysisSession)
+        fun create(
+            symbol: KtCallableSymbol,
+            memberText: @NlsSafe String,
+            memberIcon: Icon?,
+            containingSymbolText: String?,
+            containingSymbolIcon: Icon?,
+        ): KtClassMemberInfo = KtClassMemberInfo(
+            symbolPointer = symbol.createPointer(),
+            memberText = memberText,
+            memberIcon = memberIcon,
+            containingSymbolText = containingSymbolText,
+            containingSymbolIcon = containingSymbolIcon,
+            isProperty = symbol is KtPropertySymbol,
+        )
+    }
 }
 
 @ApiStatus.Internal
@@ -56,14 +73,12 @@ data class KtClassMember(
     memberInfo.memberText,
     memberInfo.memberIcon,
 ), ClassMember {
-    val symbol = memberInfo.symbol
-    override fun getParentNodeDelegate(): MemberChooserObject? =
-        memberInfo.containingSymbolText?.let {
-            KtClassOrObjectSymbolChooserObject(
-                memberInfo.containingSymbolText,
-                memberInfo.containingSymbolIcon
-            )
-        }
+    override fun getParentNodeDelegate(): MemberChooserObject? = memberInfo.containingSymbolText?.let {
+        KtClassOrObjectSymbolChooserObject(
+            memberInfo.containingSymbolText,
+            memberInfo.containingSymbolIcon
+        )
+    }
 }
 
 private data class KtClassOrObjectSymbolChooserObject(
@@ -76,14 +91,13 @@ internal fun createKtClassMember(
     memberInfo: KtClassMemberInfo,
     bodyType: BodyType,
     preferConstructorParameter: Boolean
-): KtClassMember {
-    return KtClassMember(memberInfo, bodyType, preferConstructorParameter)
-}
+): KtClassMember = KtClassMember(memberInfo, bodyType, preferConstructorParameter)
 
 @ApiStatus.Internal
 fun KtAnalysisSession.generateMember(
     project: Project,
     ktClassMember: KtClassMember,
+    symbol: KtCallableSymbol,
     targetClass: KtClassOrObject?,
     copyDoc: Boolean,
     mode: MemberGenerateMode = MemberGenerateMode.OVERRIDE
@@ -102,13 +116,13 @@ fun KtAnalysisSession.generateMember(
 
             otherModifiersProvider = otherModifiersProvider and object : KtRendererOtherModifiersProvider {
                 context(KtAnalysisSession)
-                override fun getOtherModifiers(symbol: KtDeclarationSymbol): List<KtModifierKeywordToken> = listOf(KtTokens.OVERRIDE_KEYWORD)
+                override fun getOtherModifiers(symbol: KtDeclarationSymbol): List<KtModifierKeywordToken> =
+                    listOf(KtTokens.OVERRIDE_KEYWORD)
             }.onlyIf { s -> mode == MemberGenerateMode.OVERRIDE && s == symbol }
         }
-
     }
 
-    if (preferConstructorParameter && symbol is KtPropertySymbol) {
+    if (preferConstructorParameter && ktClassMember.memberInfo.isProperty) {
         return generateConstructorParameter(project, symbol, renderer)
     }
 
@@ -263,7 +277,7 @@ private object RenderOptions {
             modifierFilter = modifierFilter or
                     KtRendererModifierFilter.onlyWith(KtTokens.INNER_KEYWORD) or
                     KtRendererModifierFilter.onlyWith(KtTokens.VISIBILITY_MODIFIERS)
-                    KtRendererModifierFilter.onlyWith(KtTokens.MODALITY_MODIFIERS)
+            KtRendererModifierFilter.onlyWith(KtTokens.MODALITY_MODIFIERS)
         }
     }
     val expectRenderOptions = actualRenderOptions.with {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors.keywords
 
@@ -15,14 +15,12 @@ import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.*
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
-import org.jetbrains.kotlin.idea.core.overrideImplement.KtGenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModalityModifierProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -33,14 +31,11 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 
 internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext
 ) : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.OVERRIDE_KEYWORD) {
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun KtAnalysisSession.createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -59,7 +54,7 @@ internal class OverrideKeywordHandler(
         return result
     }
 
-    private fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject, isConstructorParameter: Boolean): List<KtClassMember> {
+    private fun collectMembers(classOrObject: KtClassOrObject, isConstructorParameter: Boolean): List<KtClassMember> {
         val allMembers = KtOverrideMembersHandler().collectMembersToGenerate(classOrObject)
         return if (isConstructorParameter) {
             allMembers.mapNotNull { member ->
@@ -77,7 +72,9 @@ internal class OverrideKeywordHandler(
         isConstructorParameter: Boolean,
         project: Project
     ): OverridesCompletionLookupElementDecorator {
-        val memberSymbol = member.symbol
+        val symbolPointer = member.memberInfo.symbolPointer
+        val memberSymbol = symbolPointer.restoreSymbol()
+        requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored"}
         check(memberSymbol is KtNamedSymbol)
         check(classOrObject !is KtEnumEntry)
 
@@ -91,10 +88,10 @@ internal class OverrideKeywordHandler(
         val isSuspendFunction = (memberSymbol as? KtFunctionSymbol)?.isSuspend == true
         val baseClassName = baseClass.nameOrAnonymous.asString()
 
-        val memberPointer = memberSymbol.createPointer()
+        val baseLookupElement = with(basicContext.lookupElementFactory) {
+            createLookupElement(memberSymbol, basicContext.importStrategyDetector)
+        }
 
-        val baseLookupElement = with(basicContext.lookupElementFactory) { createLookupElement(memberSymbol, basicContext.importStrategyDetector) }
-            ?: error("Lookup element should be available for override completion")
         return OverridesCompletionLookupElementDecorator(
             baseLookupElement,
             declaration = null,
@@ -106,7 +103,7 @@ internal class OverrideKeywordHandler(
             isConstructorParameter,
             isSuspendFunction,
             generateMember = {
-                generateMemberInNewAnalysisSession(classOrObject, memberPointer, member, project)
+                generateMemberInNewAnalysisSession(classOrObject, member, project)
             },
             shortenReferences = { element ->
                 val shortenings = allowAnalysisOnEdt {
@@ -133,38 +130,23 @@ internal class OverrideKeywordHandler(
     @OptIn(KtAllowAnalysisOnEdt::class)
     private fun generateMemberInNewAnalysisSession(
         classOrObject: KtClassOrObject,
-        memberPointer: KtSymbolPointer<KtCallableSymbol>,
         member: KtClassMember,
         project: Project
     ) = allowAnalysisOnEdt {
         analyze(classOrObject) {
-            val memberInCorrectAnalysisSession = createCopyInCurrentAnalysisSession(memberPointer, member)
+            val symbolPointer = member.memberInfo.symbolPointer
+            val symbol = symbolPointer.restoreSymbol()
+            requireNotNull(symbol) { "${symbolPointer::class} can't be restored"}
             generateMember(
                 project,
-                memberInCorrectAnalysisSession,
+                member,
+                symbol,
                 classOrObject,
                 copyDoc = false,
-                mode = MemberGenerateMode.OVERRIDE
+                mode = MemberGenerateMode.OVERRIDE,
             )
         }
     }
-
-    //todo temporary hack until KtSymbolPointer is properly implemented
-    private fun KtAnalysisSession.createCopyInCurrentAnalysisSession(
-        memberPointer: KtSymbolPointer<KtCallableSymbol>,
-        member: KtClassMember
-    ) = KtClassMember(
-        KtClassMemberInfo(
-            memberPointer.restoreSymbol()
-                ?: error("Cannot restore symbol from $memberPointer"),
-            member.memberInfo.memberText,
-            member.memberInfo.memberIcon,
-            member.memberInfo.containingSymbolText,
-            member.memberInfo.containingSymbolIcon,
-        ),
-        member.bodyType,
-        member.preferConstructorParameter,
-    )
 
     companion object {
         private val renderingOptionsForLookupElementRendering =

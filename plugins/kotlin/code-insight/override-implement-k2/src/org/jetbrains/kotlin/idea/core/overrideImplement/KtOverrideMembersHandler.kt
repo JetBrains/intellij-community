@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @ApiStatus.Internal
 open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
@@ -32,7 +31,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
     private fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> =
         classOrObject.getClassOrObjectSymbol()?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
             KtClassMember(
-                KtClassMemberInfo(
+                KtClassMemberInfo.create(
                     symbol,
                     symbol.render(renderer),
                     getIcon(symbol),
@@ -44,7 +43,6 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
             )
         }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.getOverridableMembers(classOrObjectSymbol: KtClassOrObjectSymbol): List<OverrideMember> {
         return buildList {
             classOrObjectSymbol.getMemberScope().getCallableSymbols().forEach { symbol ->

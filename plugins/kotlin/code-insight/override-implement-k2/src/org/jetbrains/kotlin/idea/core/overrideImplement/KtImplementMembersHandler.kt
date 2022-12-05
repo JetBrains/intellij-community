@@ -45,7 +45,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
             classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
                 .map { unimplementedMemberSymbol ->
                     val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
-                    KtClassMemberInfo(
+                    KtClassMemberInfo.create(
                         symbol = unimplementedMemberSymbol,
                         memberText = unimplementedMemberSymbol.render(renderer),
                         memberIcon = getIcon(unimplementedMemberSymbol),
@@ -55,7 +55,6 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                     )
                 }
 
-        @OptIn(ExperimentalStdlibApi::class)
         private fun KtAnalysisSession.getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
