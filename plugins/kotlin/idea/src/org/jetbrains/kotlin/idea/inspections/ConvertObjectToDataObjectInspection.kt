@@ -57,7 +57,7 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
             val toString = ktObject.findToString()
             val isSealedSubClassCase by lazy { toString == TrivialSuper && ktObject.isSubclassOfSealed() }
             val isToStringCase by lazy { toString is Function && isCompatibleToString(ktObject, fqName, toString.function) }
-            if ((isSealedSubClassCase || isToStringCase) && isCompatibleHashCode(ktObject) && isCompatibleEquals(ktObject, fqName)) {
+            if ((isSealedSubClassCase || isToStringCase) && isCompatibleHashCode(ktObject, fqName) && isCompatibleEquals(ktObject, fqName)) {
                 holder.registerProblem(
                     ktObject.getObjectKeyword() ?: return,
                     KotlinBundle.message(
@@ -104,9 +104,17 @@ private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<
         TrivialSuper -> true
     }
 
-private fun isCompatibleHashCode(ktObject: KtObjectDeclaration): Boolean =
+private fun isCompatibleHashCode(ktObject: KtObjectDeclaration, thisObjectFqn: Lazy<FqName>): Boolean =
     when (val hashCode = ktObject.findHashCode()) {
-        is Function -> hashCode.function.singleExpressionBody() is KtConstantExpression
+        is Function -> {
+            val body = hashCode.function.singleExpressionBody()
+            body is KtConstantExpression || body
+                ?.getCallChain()
+                ?.mapToCallChainElements(lazy { body.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL) }, thisObjectFqn) in
+                    kotlinOrJavaSelfClassLiteral(CallChainElement.CallWithZeroArgs("hashCode")) +
+                    optionalThis(CallChainElement.NameReference("javaClass"), CallChainElement.CallWithZeroArgs("hashCode")) +
+                    optionalThis(CallChainElement.CallWithZeroArgs("toString"), CallChainElement.CallWithZeroArgs("hashCode"))
+        }
         NonTrivialSuper -> false
         TrivialSuper -> true
     }

@@ -3832,6 +3832,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleEquals.kt");
         }
 
+        @TestMetadata("compatibleHashCode_Foo_class_hashCode.kt")
+        public void testCompatibleHashCode_Foo_class_hashCode() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleHashCode_Foo_class_hashCode.kt");
+        }
+
+        @TestMetadata("compatibleHashCode_javaClass_hashCode.kt")
+        public void testCompatibleHashCode_javaClass_hashCode() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleHashCode_javaClass_hashCode.kt");
+        }
+
+        @TestMetadata("compatibleHashCode_this_class_hashCode.kt")
+        public void testCompatibleHashCode_this_class_hashCode() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleHashCode_this_class_hashCode.kt");
+        }
+
+        @TestMetadata("compatibleHashCode_toString_hashCode.kt")
+        public void testCompatibleHashCode_toString_hashCode() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleHashCode_toString_hashCode.kt");
+        }
+
         @TestMetadata("compatibleInheritedEqualsIsConsideredAsIncompatible.kt")
         public void testCompatibleInheritedEqualsIsConsideredAsIncompatible() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleInheritedEqualsIsConsideredAsIncompatible.kt");
