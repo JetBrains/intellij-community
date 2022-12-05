@@ -11,16 +11,22 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ToolbarUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
+import com.sun.jna.Native;
+import com.sun.jna.platform.mac.CoreFoundation;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.concurrent.CompletableFuture;
@@ -41,6 +47,13 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     catch (Exception e) {
       LOG.warn(e);
     }
+  }
+
+  interface MyCoreFoundation extends CoreFoundation {
+    MyCoreFoundation INSTANCE = Native.load("CoreFoundation", MyCoreFoundation.class);
+
+    CoreFoundation.CFStringRef CFPreferencesCopyAppValue(
+      CoreFoundation.CFStringRef key, CoreFoundation.CFStringRef applicationID);
   }
 
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
@@ -120,6 +133,46 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         }
       });
     }
+
+    if (ExperimentalUI.isNewUI()) {
+      return;
+    }
+
+    IdeGlassPane glassPane = (IdeGlassPane)myFrame.getRootPane().getGlassPane();
+    glassPane.addMousePreprocessor(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2 && e.getY() <= UIUtil.getTransparentTitleBarHeight(frame.getRootPane())) {
+          CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
+          CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
+          CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
+            appleActionOnDoubleClick,
+            apple_global_domain);
+          if (res != null && !res.stringValue().equals("Maximize")) {
+            if (frame.getExtendedState() == Frame.ICONIFIED) {
+              frame.setExtendedState(Frame.NORMAL);
+            }
+            else {
+              frame.setExtendedState(Frame.ICONIFIED);
+            }
+          }
+          else {
+            if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
+              frame.setExtendedState(Frame.NORMAL);
+            }
+            else {
+              frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            }
+          }
+          apple_global_domain.release();
+          appleActionOnDoubleClick.release();
+          if(res != null) {
+            res.release();
+          }
+        }
+        super.mouseClicked(e);
+      }
+    }, parentDisposable);
   }
 
   private void enterFullScreen() {
