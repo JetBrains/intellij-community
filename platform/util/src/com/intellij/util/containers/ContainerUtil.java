@@ -2845,6 +2845,11 @@ public final class ContainerUtil {
     return result;
   }
 
+  /**
+   * Split the {@param list} into several lists containing exactly {@code chunkSize} elements,
+   * (except for the last list with maybe fewer elements) and return the stream of these lists
+   * @return stream of lists {@code chunkSize} maximum elements each
+   */
   public static <T> Stream<List<? extends T>> splitListToChunks(@NotNull List<? extends T> list, int chunkSize) {
     if (chunkSize <= 0) {
       throw new IllegalArgumentException("invalid chunkSize: " + chunkSize);
