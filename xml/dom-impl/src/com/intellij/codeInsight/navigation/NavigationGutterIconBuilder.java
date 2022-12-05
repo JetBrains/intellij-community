@@ -352,17 +352,8 @@ public class NavigationGutterIconBuilder<T> {
     if (myLazy) {
       return false;
     }
-
-    Set<PsiElement> elements = new HashSet<>();
     Collection<? extends T> targets = myTargets.getValue();
-    for (final T target : targets) {
-      for (final PsiElement psiElement : myConverter.fun(target)) {
-        if (elements.add(psiElement)) {
-          return false;
-        }
-      }
-    }
-    return true;
+    return ContainerUtil.all(targets, target -> myConverter.fun(target).isEmpty());
   }
 
   private static class MyNavigationGutterIconRenderer extends NavigationGutterIconRenderer {
