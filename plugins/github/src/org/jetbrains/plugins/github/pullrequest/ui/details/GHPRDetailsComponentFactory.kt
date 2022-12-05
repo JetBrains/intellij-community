@@ -3,9 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -18,7 +16,6 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.*
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -36,22 +33,13 @@ internal object GHPRDetailsComponentFactory {
     val description = GHPRDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm)
 
     val branches = GHPRDetailsBranchesComponentFactory.create(branchesModel)
-    val metadata = GHPRMetadataPanelFactory(metadataModel, avatarIconsProvider).create()
+    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, securityService)
     val state = GHPRStatePanel(securityService, stateModel).also {
       detailsModel.addAndInvokeDetailsChangedListener {
         it.select(detailsModel.state, true)
       }
       PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadStateAction()), "GHPRStatePanelPopup")
     }
-
-    metadata.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
-                                                         JBUI.Borders.empty(8))
-
-    state.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
-                                                      JBUI.Borders.empty(8))
-
-    val groupId = "Github.PullRequest.Details.Popup"
-    PopupHandler.installPopupMenu(metadata, groupId, groupId)
 
     return JPanel(MigLayout(
       LC()
@@ -65,7 +53,7 @@ internal object GHPRDetailsComponentFactory {
       add(title, CC().growX().gapBottom("$gapBetweenTitleAndDescription"))
       add(description, CC().growX().gapBottom("$gapBetweenDescriptionAndCommits"))
       add(branches, CC().growY().push())
-      add(metadata, CC().growX().gapTop("push"))
+      add(statusChecks, CC().growX().gapBottom("$gapBetweenCheckAndActions"))
       add(Wrapper(state).apply {
         isOpaque = true
         background = UIUtil.getPanelBackground()
@@ -80,4 +68,5 @@ internal object GHPRDetailsComponentFactory {
 
   private val gapBetweenTitleAndDescription get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 8 else 8)
   private val gapBetweenDescriptionAndCommits get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 22 else 18)
+  private val gapBetweenCheckAndActions get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 10 else 10)
 }

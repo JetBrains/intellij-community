@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Action
 import javax.swing.ComboBoxModel
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
@@ -95,6 +97,23 @@ fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) 
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
+    }
+  }
+}
+
+fun JLabel.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+    }
+  }
+}
+
+fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    contentFlow.collect {
+      setContent(it)
+      repaint()
     }
   }
 }

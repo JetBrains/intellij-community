@@ -245,7 +245,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       val stateModel = GHPRStateModelImpl(project, dataProvider.stateData, dataProvider.changesData, model, disposable)
 
       val scope = DisposingScope(disposable)
-      val reviewDetailsVm = GHPRDetailsViewModelImpl(detailsModel)
+      val reviewDetailsVm = GHPRDetailsViewModelImpl(scope, detailsModel, stateModel)
 
       GHPRDetailsComponentFactory.create(scope,
                                          reviewDetailsVm,
