@@ -40,6 +40,7 @@ class LocalModelsCache {
 
     if (suitableModel != null) {
       MODELS_LOADER.submit {
+        if (languageId in models) return@submit
         try {
           val tracer = DiagnosticsService.getInstance().logger(FullLinePart.BEAM_SEARCH, log = LOG)
           models[languageId] = modelsManager.loadModel(suitableModel) { msg -> tracer.debug(msg) }
