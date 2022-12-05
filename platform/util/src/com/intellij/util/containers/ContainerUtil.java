@@ -437,7 +437,8 @@ public final class ContainerUtil {
   @Contract(pure = true)
   @Unmodifiable
   public static @NotNull <E> ImmutableList<E> immutableList(@NotNull List<? extends E> list) {
-    return new ImmutableListBackedByList<>(list);
+    //noinspection unchecked
+    return list instanceof ImmutableList ? (ImmutableList<E>)list : new ImmutableListBackedByList<>(list);
   }
 
   @Contract(pure = true)
