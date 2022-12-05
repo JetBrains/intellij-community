@@ -46,6 +46,7 @@ import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val detailsDataProvider: GHPRDetailsDataProvider,
@@ -129,7 +130,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
     val commitsCount = commits.size
 
-    val contentPanel = JPanel(VerticalLayout(4)).apply {
+    val contentPanel = JPanel(VerticalLayout(4, SwingConstants.LEFT)).apply {
       isOpaque = false
 
       val titleText = if (commitsCount == 1) {
