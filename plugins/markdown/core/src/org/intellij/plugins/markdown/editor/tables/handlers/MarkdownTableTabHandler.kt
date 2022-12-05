@@ -15,7 +15,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.firstNonWhitespace
 import org.intellij.plugins.markdown.editor.tables.TableUtils.lastNonWhitespaceOffset
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
 internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorActionHandler?, private val forward: Boolean = true): EditorWriteActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
@@ -30,7 +30,7 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
 
   private fun actuallyExecute(editor: Editor, caret: Caret?, dataContext: DataContext?): Boolean {
     val project = editor.project ?: return false
-    if (!TableUtils.isTableSupportEnabled() || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+    if (!isEnabled()) {
       return false
     }
     val document = editor.document
@@ -55,6 +55,10 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
       return true
     }
     return false
+  }
+
+  private fun isEnabled(): Boolean {
+    return TableUtils.isTableSupportEnabled() && MarkdownCodeInsightSettings.getInstance().state.useTableCellNavigation
   }
 
   private fun findNextCell(currentCell: MarkdownTableCell, forward: Boolean): MarkdownTableCell? {
