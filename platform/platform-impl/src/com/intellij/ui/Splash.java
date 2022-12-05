@@ -45,7 +45,9 @@ public final class Splash extends Dialog {
     setUndecorated(true);
     setBackground(Gray.TRANSPARENT);
     setResizable(false); // makes tiling window managers on Linux show window as floating
-    WindowRoundedCornersManager.setRoundedCorners(this);
+    if (WindowRoundedCornersManager.isAvailable()) {
+      WindowRoundedCornersManager.setRoundedCorners(this);
+    }
 
     progressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info);
 
