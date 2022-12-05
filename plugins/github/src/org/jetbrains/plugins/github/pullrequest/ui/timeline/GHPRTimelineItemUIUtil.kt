@@ -28,9 +28,12 @@ internal object GHPRTimelineItemUIUtil {
   const val AVATAR_CONTENT_GAP = 14
   const val TIMELINE_ICON_AND_GAP_WIDTH = MAIN_AVATAR_SIZE + AVATAR_CONTENT_GAP
 
+  const val V_SIDE_BORDER: Int = 10
+  const val H_SIDE_BORDER: Int = 16
+
   // 42em
   val TIMELINE_CONTENT_WIDTH = GHUIUtil.TEXT_CONTENT_WIDTH
-  val TIMELINE_ITEM_WIDTH = TIMELINE_CONTENT_WIDTH + TIMELINE_ICON_AND_GAP_WIDTH
+  val TIMELINE_ITEM_WIDTH = TIMELINE_CONTENT_WIDTH + TIMELINE_ICON_AND_GAP_WIDTH + (H_SIDE_BORDER * 2)
 
   fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
                  actor: GHActor,
@@ -73,8 +76,7 @@ internal object GHPRTimelineItemUIUtil {
                  content: JComponent,
                  maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
                  additionalTitle: JComponent? = null,
-                 actionsPanel: JComponent? = null,
-                 additionalContent: JComponent? = null): JComponent {
+                 actionsPanel: JComponent? = null): JComponent {
     val icon = avatarIconsProvider.getIcon(actor.avatarUrl, MAIN_AVATAR_SIZE)
     val titleTextPane = createTitleTextPane(actor, date)
     val titlePanel = Panels.simplePanel(10, 0).addToCenter(titleTextPane).andTransparent().apply {
@@ -83,22 +85,19 @@ internal object GHPRTimelineItemUIUtil {
       }
     }
 
-    return createItem(icon, titlePanel, content, maxContentWidth,
-                      actionsPanel = actionsPanel,
-                      additionalContent = additionalContent)
+    return createItem(icon, titlePanel, content, maxContentWidth, actionsPanel)
   }
 
   private fun createItem(mainIcon: Icon,
                          title: JComponent,
                          content: JComponent,
                          maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
-                         actionsPanel: JComponent? = null,
-                         additionalContent: JComponent? = null): JComponent {
+                         actionsPanel: JComponent? = null): JComponent {
     val iconLabel = JLabel(mainIcon)
 
     return JPanel(null).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(10, 16)
+      border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
 
       layout = MigLayout(LC()
                            .fillX()
@@ -118,12 +117,6 @@ internal object GHPRTimelineItemUIUtil {
       add(content, CC().push().grow().newline()
         .gapTop("4")
         .minWidth("0").maxWidth("$maxContentWidth"))
-
-      if (additionalContent != null) {
-        add(additionalContent, CC().grow().spanX(2).newline()
-          .gapTop("4")
-          .minWidth("0"))
-      }
     }
   }
 

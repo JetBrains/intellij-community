@@ -21,7 +21,6 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,7 +45,9 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.V_SIDE_BORDER
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
@@ -112,7 +113,9 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       if (PlatformDataKeys.UI_DISPOSABLE.`is`(it)) uiDisposable else null
     })
 
-    val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData)
+    val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData).apply {
+      border = JBUI.Borders.empty(30, H_SIDE_BORDER)
+    }
 
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
                                                            uiDisposable,
@@ -130,21 +133,20 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     )
     val descriptionWrapper = Wrapper().apply {
       isOpaque = false
-      border = JBUI.Borders.empty(16, 0, 20, 0)
     }
     detailsModel.addListener {
       descriptionWrapper.setContent(itemComponentFactory.createComponent(detailsModel.value))
     }
 
-    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, JBUIScale.scale(8)).apply {
-      border = JBUI.Borders.emptyBottom(16)
-    }
+    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, 0)
 
-    val errorPanel = GHHtmlErrorPanel.create(errorModel)
+    val errorPanel = GHHtmlErrorPanel.create(errorModel).apply {
+      border = JBUI.Borders.empty(8, H_SIDE_BORDER)
+    }
 
     val timelineLoader = editor.timelineLoader
     val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
-      border = JBUI.Borders.empty(8, 0)
+      border = JBUI.Borders.empty(8, H_SIDE_BORDER)
       isVisible = timelineLoader.loading
     }
     timelineLoader.addLoadingStateChangeListener(uiDisposable) {
@@ -153,7 +155,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val timelinePanel = ScrollablePanel().apply {
       isOpaque = false
-      border = JBUI.Borders.empty(24, 20)
 
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
@@ -171,8 +172,11 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       if (editor.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
         val commentField = createCommentField(editor.commentsData,
                                               editor.avatarIconsProvider,
-                                              editor.securityService.currentUser)
-        add(commentField, CC().growX().pushX().maxWidth("$TIMELINE_ITEM_WIDTH"))
+                                              editor.securityService.currentUser).apply {
+          border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
+        }
+        add(commentField, CC().growX().pushX()
+          .maxWidth("$TIMELINE_ITEM_WIDTH"))
       }
     }
 

@@ -50,8 +50,10 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_CONTENT_WIDTH
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ICON_AND_GAP_WIDTH
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.*
@@ -248,7 +250,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val collapsedThreadActionsComponent = GHPRReviewThreadComponent
-      .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, repliesCollapsedState, ghostUser)
+      .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, repliesCollapsedState, ghostUser).apply {
+        border = JBUI.Borders.empty(3, 0, 7, 0)
+      }
 
     val content = JPanel(MigLayout(LC()
                                      .flowY()
@@ -260,11 +264,15 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       add(diff, CC().grow())
       add(panelHandle.panel, CC().grow().maxWidth("$TIMELINE_CONTENT_WIDTH"))
       add(collapsedThreadActionsComponent, CC()
-        .maxWidth("$TIMELINE_CONTENT_WIDTH")
-        .gapLeft("2"))
+        .maxWidth("$TIMELINE_CONTENT_WIDTH"))
     }.also {
       coroutineScopeProvider.activateWith(it)
     }
+
+    val mainItem = GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, firstComment.author ?: ghostUser, firstComment.dateCreated,
+                                                     content, Int.MAX_VALUE,
+                                                     additionalTitle = tagsPanel,
+                                                     actionsPanel = actionsPanel)
 
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider, avatarIconsProvider,
@@ -272,10 +280,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                                      false,
                                                                      TIMELINE_CONTENT_WIDTH)
 
-    val leftGap = TIMELINE_ICON_AND_GAP_WIDTH + 2
+    val leftGap = H_SIDE_BORDER + TIMELINE_ICON_AND_GAP_WIDTH + 2
     val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, {
       commentComponentFactory.invoke(it).apply {
-        border = JBUI.Borders.emptyLeft(leftGap)
+        border = JBUI.Borders.empty(0, leftGap, 0, H_SIDE_BORDER)
       }
     }, 8)
 
@@ -283,11 +291,13 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       val layout = MigLayout(LC()
                                .flowY()
                                .fill()
-                               .gridGap("0", "12")
-                               .insets("0", "0", "0", "0"))
+                               .gridGap("0", "0")
+                               .insets("0"))
 
       val actionsComponent = GHPRReviewThreadComponent
-        .createUncollapsedThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser) {}
+        .createUncollapsedThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser) {}.apply {
+          border = JBUI.Borders.empty(6, leftGap, 6, H_SIDE_BORDER)
+        }
 
       JPanel(layout).apply {
         isOpaque = false
@@ -296,8 +306,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
               .minWidth("0"))
         add(actionsComponent,
             CC().grow().push()
-              .minWidth("0").maxWidth("$TIMELINE_CONTENT_WIDTH")
-              .gapLeft("$leftGap"))
+              .minWidth("0").maxWidth("$TIMELINE_ITEM_WIDTH"))
       }
     }
     else {
@@ -311,11 +320,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     }
 
-    return GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, firstComment.author ?: ghostUser, firstComment.dateCreated,
-                                             content, Int.MAX_VALUE,
-                                             additionalTitle = tagsPanel,
-                                             actionsPanel = actionsPanel,
-                                             additionalContent = commentsPanel)
+    return JPanel(VerticalLayout(0)).apply {
+      isOpaque = false
+      add(mainItem)
+      add(commentsPanel)
+    }
   }
 
   private fun createThreadTagsPanel(thread: GHPRReviewThreadModel): JPanel {
