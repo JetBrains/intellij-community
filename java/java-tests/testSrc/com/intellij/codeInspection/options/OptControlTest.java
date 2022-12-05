@@ -26,9 +26,9 @@ public class OptControlTest {
   public void readWrite() {
     MyInspection inspection = new MyInspection();
     OptPane pane = inspection.getOptionsPane();
-    assertEquals(2, pane.findControl("x").readValue(inspection));
-    assertEquals(true, pane.findControl("y").readValue(inspection));
-    pane.findControl("x").writeValue(inspection, 5);
+    assertEquals(2, pane.findControl("x").getValue(inspection));
+    assertEquals(true, pane.findControl("y").getValue(inspection));
+    pane.findControl("x").setValue(inspection, 5);
     assertEquals(5, inspection.x);
   }
 }

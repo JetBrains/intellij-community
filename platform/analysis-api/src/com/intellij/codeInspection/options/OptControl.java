@@ -21,7 +21,7 @@ public sealed interface OptControl extends OptComponent permits OptCheckbox, Opt
    * @param tool inspection tool to read the field from
    * @return value of the field bound to this; null if field not found, or its value is null
    */
-  default Object readValue(@NotNull InspectionProfileEntry tool) {
+  default Object getValue(@NotNull InspectionProfileEntry tool) {
     return ReflectionUtil.getField(tool.getClass(), tool, null, bindId());
   }
 
@@ -29,7 +29,7 @@ public sealed interface OptControl extends OptComponent permits OptCheckbox, Opt
    * @param tool inspection tool to write the field to
    * @param value value to write to the field. It's the caller responsibility to provide the value of compatible type. 
    */
-  default void writeValue(@NotNull InspectionProfileEntry tool, @Nullable Object value) {
+  default void setValue(@NotNull InspectionProfileEntry tool, @Nullable Object value) {
     ReflectionUtil.setField(tool.getClass(), tool, null, bindId(), value);
   }
 }

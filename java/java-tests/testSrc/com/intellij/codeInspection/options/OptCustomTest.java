@@ -29,8 +29,8 @@ public class OptCustomTest {
     @Override
     public @NotNull JComponent getCustomOptionComponent(@NotNull OptCustom control, @NotNull JComponent parent) {
       return switch (control.bindId()) {
-        case "x" -> new JLabel(control.readValue(this).toString());
-        case "y" -> new JButton(control.readValue(this).toString());
+        case "x" -> new JLabel(control.getValue(this).toString());
+        case "y" -> new JButton(control.getValue(this).toString());
         default -> throw new IllegalStateException("Unexpected value: " + control.bindId());
       };
     }
