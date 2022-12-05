@@ -51,6 +51,7 @@ import javax.swing.KeyStroke
 class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
   private val myScreen: WelcomeScreen
   private val myBalloonLayout: BalloonLayout
+  private val listenerDisposable = Disposer.newDisposable()
 
   init {
     SplashManager.hideBeforeShow(this)
@@ -62,12 +63,10 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     contentPane = screen.welcomePanel
     title = ApplicationNamesInfo.getInstance().fullProductName
     AppUIUtil.updateWindowIcon(this)
-    val listenerDisposable = Disposer.newDisposable()
     ApplicationManager.getApplication().messageBus.connect(listenerDisposable).subscribe(ProjectManager.TOPIC,
                                                                                          object : ProjectManagerListener {
                                                                                            @Suppress("removal", "OVERRIDE_DEPRECATION")
                                                                                            override fun projectOpened(project: Project) {
-                                                                                             Disposer.dispose(listenerDisposable)
                                                                                              dispose()
                                                                                            }
                                                                                          })
@@ -213,6 +212,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     saveLocation(bounds)
     super.dispose()
     Disposer.dispose(myScreen)
+    Disposer.dispose(listenerDisposable)
     resetInstance()
   }
 
