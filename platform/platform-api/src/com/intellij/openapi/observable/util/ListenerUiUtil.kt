@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.PopupMenuListenerAdapter
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.table.TableView
@@ -24,6 +25,8 @@ import javax.swing.event.*
 import javax.swing.text.Document
 import javax.swing.text.JTextComponent
 import javax.swing.tree.TreeModel
+import com.intellij.openapi.editor.event.DocumentEvent as EditorDocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener as EditorDocumentListener
 
 fun <T> JComboBox<T>.whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
   (this as ItemSelectable).whenItemSelected(parentDisposable, listener)
@@ -109,6 +112,14 @@ fun Document.whenTextChanged(parentDisposable: Disposable? = null, listener: (Do
   })
 }
 
+fun EditorTextComponent.whenDocumentChanged(parentDisposable: Disposable? = null, listener: (EditorDocumentEvent) -> Unit) {
+  addDocumentListener(parentDisposable, object : EditorDocumentListener {
+    override fun documentChanged(event: EditorDocumentEvent) {
+      listener(event)
+    }
+  })
+}
+
 fun JTextComponent.whenCaretMoved(parentDisposable: Disposable? = null, listener: (CaretEvent) -> Unit) {
   addCaretListener(parentDisposable, CaretListener { event ->
     listener(event)
@@ -170,83 +181,6 @@ fun JComponent.whenSizeChanged(parentDisposable: Disposable? = null, listener: (
   addComponentListener(parentDisposable, object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent) = listener(size)
   })
-}
-
-fun ItemSelectable.addItemListener(parentDisposable: Disposable? = null, listener: ItemListener) {
-  addItemListener(listener)
-  parentDisposable?.whenDisposed {
-    removeItemListener(listener)
-  }
-}
-
-fun JComboBox<*>.addPopupMenuListener(parentDisposable: Disposable? = null, listener: PopupMenuListener) {
-  addPopupMenuListener(listener)
-  parentDisposable?.whenDisposed {
-    removePopupMenuListener(listener)
-  }
-}
-
-fun ListModel<*>.addListDataListener(parentDisposable: Disposable? = null, listener: ListDataListener) {
-  addListDataListener(listener)
-  parentDisposable?.whenDisposed {
-    removeListDataListener(listener)
-  }
-}
-
-fun TreeModel.addTreeModelListener(parentDisposable: Disposable? = null, listener: TreeModelListener) {
-  addTreeModelListener(listener)
-  parentDisposable?.whenDisposed {
-    removeTreeModelListener(listener)
-  }
-}
-
-fun TableViewModel<*>.addTableModelListener(parentDisposable: Disposable? = null, listener: TableModelListener) {
-  addTableModelListener(listener)
-  parentDisposable?.whenDisposed {
-    removeTableModelListener(listener)
-  }
-}
-
-fun Document.addDocumentListener(parentDisposable: Disposable? = null, listener: DocumentListener) {
-  addDocumentListener(listener)
-  parentDisposable?.whenDisposed {
-    removeDocumentListener(listener)
-  }
-}
-
-fun JTextComponent.addCaretListener(parentDisposable: Disposable? = null, listener: CaretListener) {
-  addCaretListener(listener)
-  parentDisposable?.whenDisposed {
-    removeCaretListener(listener)
-  }
-}
-
-fun Component.addFocusListener(parentDisposable: Disposable? = null, listener: FocusListener) {
-  addFocusListener(listener)
-  parentDisposable?.whenDisposed {
-    removeFocusListener(listener)
-  }
-}
-
-fun Component.addMouseListener(parentDisposable: Disposable? = null, listener: MouseListener) {
-  addMouseListener(listener)
-  parentDisposable?.whenDisposed {
-    removeMouseListener(listener)
-  }
-}
-
-fun Component.addKeyListener(parentDisposable: Disposable? = null, listener: KeyListener) {
-  addKeyListener(listener)
-  parentDisposable?.whenDisposed {
-    removeKeyListener(listener)
-  }
-}
-
-fun Component.addComponentListener(parentDisposable: Disposable? = null, listener: ComponentListener) {
-  addComponentListener(listener)
-  parentDisposable?.whenDisposed {
-    removeComponentListener(listener)
-  }
 }
 
 @Experimental

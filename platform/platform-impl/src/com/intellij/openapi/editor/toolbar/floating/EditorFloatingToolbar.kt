@@ -1,12 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.toolbar.floating
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.observable.util.whenDisposed
-import java.awt.Component
+import com.intellij.openapi.observable.util.addComponent
 import java.awt.FlowLayout
 import javax.swing.BorderFactory
 import javax.swing.JPanel
@@ -31,14 +29,7 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     if (provider.isApplicable(editor.dataContext)) {
       val disposable = FloatingToolbarProvider.createExtensionDisposable(provider, editor.disposable)
       val component = FloatingToolbarComponentImpl(editor, provider, disposable)
-      add(component, disposable)
-    }
-  }
-
-  private fun add(component: Component, parentDisposable: Disposable) {
-    add(component)
-    parentDisposable.whenDisposed {
-      remove(component)
+      addComponent(component, disposable)
     }
   }
 }
