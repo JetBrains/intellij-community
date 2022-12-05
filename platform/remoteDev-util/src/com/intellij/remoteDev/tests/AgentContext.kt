@@ -1,8 +1,8 @@
-package com.intellij.remoteDev.util.tests
+package com.intellij.remoteDev.tests
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.project.Project
-import com.intellij.remoteDev.util.tests.modelGenerated.RdAgentId
+import com.intellij.remoteDev.tests.modelGenerated.RdAgentId
 import com.jetbrains.rd.framework.IProtocol
 import org.jetbrains.annotations.ApiStatus
 

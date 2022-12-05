@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.util.tests.impl
+package com.intellij.remoteDev.tests.impl
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.util.application

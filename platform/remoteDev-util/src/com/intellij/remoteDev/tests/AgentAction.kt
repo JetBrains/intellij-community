@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.util.tests
+package com.intellij.remoteDev.tests
 
 import com.jetbrains.rd.framework.impl.RdTask
 import org.jetbrains.annotations.ApiStatus

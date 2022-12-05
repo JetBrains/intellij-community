@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.util.tests
+package com.intellij.remoteDev.tests
 
 import com.intellij.openapi.application.Application
 

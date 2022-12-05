@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.util.tests.sm
+package com.intellij.remoteDev.tests.sm
 
 import com.intellij.openapi.util.text.StringUtil
 

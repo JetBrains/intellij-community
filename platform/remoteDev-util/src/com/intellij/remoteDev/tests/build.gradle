@@ -6,23 +6,23 @@ buildscript {
 apply from: "$rdModelBaseDir/model-base.gradle"
 
 String clientModelHome = buildscript.sourceFile.parent
-String clientModelGeneratedHome = clientModelHome + "/tests/modelGenerated"
-String ideModelHome = clientModelHome + "/tests/modelSources"
+String clientModelGeneratedHome = clientModelHome + "/modelGenerated"
+String ideModelHome = clientModelHome + "/modelSources"
 String outputHome = "$clientModelGeneratedHome"
 
 rdgen {
   sources "$ideModelHome"
   verbose = true
   clearOutput = true
-  packages = "com.intellij.remoteDev.util.tests.modelSources"
+  packages = "com.intellij.remoteDev.tests.modelSources"
   hashFolder = outputHome
   lineNumbersInComments = false
 
   generator {
     language = "kotlin"
     transform = "symmetric"
-    root = "com.intellij.remoteDev.util.tests.modelSources.TestRoot"
-    namespace = "com.intellij.remoteDev.util.tests.modelGenerated"
+    root = "com.intellij.remoteDev.tests.modelSources.TestRoot"
+    namespace = "com.intellij.remoteDev.tests.modelGenerated"
     directory = outputHome
   }
 }

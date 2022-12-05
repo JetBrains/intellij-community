@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.util.tests.modelSources
+package com.intellij.remoteDev.tests.modelSources
 
 import com.jetbrains.rd.generator.nova.*
 import com.jetbrains.rd.generator.nova.PredefinedType.*

@@ -1,11 +1,11 @@
-package com.intellij.remoteDev.util.tests.impl
+package com.intellij.remoteDev.tests.impl
 
 import com.intellij.openapi.diagnostic.DelegatingLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.remoteDev.util.tests.modelGenerated.RdTestSession
-import com.intellij.remoteDev.util.tests.modelGenerated.RdTestSessionException
-import com.intellij.remoteDev.util.tests.modelGenerated.RdTestSessionExceptionCause
-import com.intellij.remoteDev.util.tests.modelGenerated.RdTestSessionStackTraceElement
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
 import com.intellij.util.ui.UIUtil
 
 internal class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerFactory) : DelegatingLogger<Logger>(logger) {
