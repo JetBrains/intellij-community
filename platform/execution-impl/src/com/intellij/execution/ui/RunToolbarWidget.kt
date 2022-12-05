@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -892,10 +891,7 @@ private class ExecutionReasonableHistoryManager : ProjectPostStartupActivity {
         getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
           RunStatusHistory.getInstance(env.project).changeState(conf, executorId, reason)
           ActivityTracker.getInstance().inc() // Not sure is it needed at all
-        } ?: thisLogger().warn(
-          "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
-          "It won't be saved in the run history."
-        )
+        }
       }
     })
   }
