@@ -208,7 +208,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
     private final String url;
     private final String sha256sum;
 
-    public ArtifactVerification(@NotNull String url, @Nullable String sha256sum) {
+    public ArtifactVerification(@NotNull String url, @NotNull String sha256sum) {
       this.url = url;
       this.sha256sum = sha256sum;
     }

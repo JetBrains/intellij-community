@@ -230,7 +230,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
     @SuppressWarnings("unused") //used by XmlSerializer
     private ArtifactVerificationProperties() {
-      this(new ArtifactVerification("", null));
+      this(new ArtifactVerification("", ""));
     }
 
     public ArtifactVerificationProperties(@NotNull ArtifactVerification descriptor) {
