@@ -73,14 +73,14 @@ interface SingleEventDispatcher<Listener> {
 
     @JvmStatic
     fun create(): Multicaster =
-      SingleEventDispatcherImpl.Multicaster()
+      SingleEventDispatcherImpl.create()
 
     @JvmStatic
     fun <A1> create(): Multicaster1<A1> =
-      SingleEventDispatcherImpl.Multicaster1()
+      SingleEventDispatcherImpl.create<A1>()
 
     @JvmStatic
     fun <A1, A2> create2(): Multicaster2<A1, A2> =
-      SingleEventDispatcherImpl.Multicaster2()
+      SingleEventDispatcherImpl.create2()
   }
 }
