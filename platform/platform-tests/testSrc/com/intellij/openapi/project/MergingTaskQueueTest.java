@@ -115,7 +115,20 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 100, disposeLog.size());
   }
 
-  public void testTasksWithOverwrittenTryMergeAreMerged() {
+  public void testCanReturnThatAsResultOfTryMerge() {
+    List<Integer> disposeLog = new ArrayList<>();
+    List<Integer> childLog = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      myQueue.addTask(new LoggingTask(i, childLog, disposeLog, (thiz, other) -> other /* always merges */));
+    }
+
+    runAllTasks();
+
+    Assert.assertEquals("Only one child task should run, but were: " + childLog, 1, childLog.size());
+    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 100, disposeLog.size());
+  }
+
+  public void testCanReturnThisAsResultOfTryMerge() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
     for (int i = 0; i < 100; i++) {

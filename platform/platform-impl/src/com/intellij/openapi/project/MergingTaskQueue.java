@@ -69,6 +69,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
   public void addTask(@NotNull T task) {
     List<T> disposeQueue = new ArrayList<>(1);
+    T newTask = task;
 
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
@@ -81,9 +82,16 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
           continue;
         }
         T mergedTask = task.tryMergeWith(oldTask);
+        if (mergedTask == oldTask) {
+          // new task completely absorbed by the old task which means that we don't need to modify the queue
+          newTask = null;
+          disposeQueue.add(task);
+          break;
+        }
+
         if (mergedTask != null) {
           LOG.debug("Merged " + task + " with " + oldTask);
-          task = mergedTask;
+          newTask = mergedTask;
           myTasksQueue.remove(i);
           disposeQueue.add(oldTask);
           break;
@@ -91,17 +99,19 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       }
 
       //register the new task last, preserving FIFO order
-      T taskToAdd = task;
-      myTasksQueue.add(taskToAdd);
-      ProgressIndicatorBase progress = new ProgressIndicatorBase();
-      myProgresses.put(taskToAdd, progress);
-      Disposer.register(taskToAdd, () -> {
-        //a removed progress means the task would be ignored on queue processing
-        synchronized (myLock) {
-          myProgresses.remove(taskToAdd);
-        }
-        progress.cancel();
-      });
+      T taskToAdd = newTask;
+      if (taskToAdd != null) {
+        myTasksQueue.add(taskToAdd);
+        ProgressIndicatorBase progress = new ProgressIndicatorBase();
+        myProgresses.put(taskToAdd, progress);
+        Disposer.register(taskToAdd, () -> {
+          //a removed progress means the task would be ignored on queue processing
+          synchronized (myLock) {
+            myProgresses.remove(taskToAdd);
+          }
+          progress.cancel();
+        });
+      }
     }
 
     disposeSafe(disposeQueue);
