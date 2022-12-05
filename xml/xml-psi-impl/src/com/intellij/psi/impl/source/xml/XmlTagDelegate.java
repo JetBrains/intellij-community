@@ -308,11 +308,11 @@ public abstract class XmlTagDelegate {
 
   @NotNull
   private static Map<String, NullableLazyValue<XmlNSDescriptor>> initializeSchema(@NotNull final XmlTag tag,
-                                                                            @Nullable final String namespace,
-                                                                            @Nullable final String version,
-                                                                            @NotNull final Set<String> fileLocations,
-                                                                            @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
-                                                                            final boolean nsDecl) {
+                                                                                  @Nullable final String namespace,
+                                                                                  @Nullable final String version,
+                                                                                  @NotNull final Set<String> fileLocations,
+                                                                                  @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
+                                                                                  final boolean nsDecl) {
     if (map == null) {
       map = new HashMap<>();
     }
@@ -320,7 +320,7 @@ public abstract class XmlTagDelegate {
     // We put cached value in any case to cause its value update on e.g. mapping change
     map.put(namespace, lazyNullable(() -> {
       List<XmlNSDescriptor> descriptors =
-      ContainerUtil.mapNotNull(fileLocations, s->getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
+        ContainerUtil.mapNotNull(fileLocations, s -> getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
 
       XmlNSDescriptor descriptor = null;
       if (descriptors.size() == 1) {
@@ -989,13 +989,13 @@ public abstract class XmlTagDelegate {
     ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(myTag.getNode());
     if (endTagStart == null) {
       final XmlTag tagFromText = createTagFromText("<" + myTag.getName() + "></" + myTag.getName() + ">");
-      final ASTNode startTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(tagFromText.getNode());
+      final ASTNode startTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tagFromText.getNode());
       endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tagFromText.getNode());
-      assert startTagStart != null : tagFromText.getText();
+      assert startTagEnd != null : tagFromText.getText();
       assert endTagStart != null : tagFromText.getText();
       final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(myTag.getNode());
       if (emptyTagEnd != null) myTag.getNode().removeChild(emptyTagEnd);
-      myTag.getNode().addChildren(startTagStart, null, null);
+      myTag.getNode().addChildren(startTagEnd, null, null);
     }
     return endTagStart;
   }

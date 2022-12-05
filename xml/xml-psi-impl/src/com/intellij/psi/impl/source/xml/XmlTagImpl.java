@@ -241,7 +241,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Override
   public XmlTag createChildTag(String localName, String namespace, String bodyText, boolean enforceNamespacesDeep) {
-    return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep);
+    return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep, getImpl()::createTagFromText);
   }
 
   protected XmlTagValue createXmlTagValue() {
