@@ -2,7 +2,6 @@ package com.intellij.xdebugger.impl.ui.attach.dialog.items
 
 import com.intellij.ui.table.JBTable
 import java.awt.Rectangle
-import javax.swing.DefaultListSelectionModel
 import javax.swing.ListSelectionModel
 import javax.swing.table.TableModel
 
@@ -12,7 +11,11 @@ internal interface AttachNodeContainer<TNodeType> {
   fun getAttachNode(): TNodeType
 }
 
-class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultListSelectionModel() {
+class AttachToProcessTableSelectionModel private constructor(
+  private val table: JBTable,
+  private val initialSelectionModel: ListSelectionModel) : ListSelectionModel by initialSelectionModel {
+
+  constructor(table: JBTable): this(table, table.selectionModel)
 
   init {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -43,7 +46,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
       setSelectionInterval(-1, -1)
       return
     }
-    super.setSelectionInterval(index0, index1)
+    initialSelectionModel.setSelectionInterval(index0, index1)
     scrollIfNeeded(index0)
   }
 
@@ -51,7 +54,7 @@ class AttachToProcessTableSelectionModel(private val table: JBTable) : DefaultLi
     if (index0 >= 0 && index0 < table.rowCount && table.model.getValueAt<Any>(index0) is AttachSelectionIgnoredNode) {
       return
     }
-    super.addSelectionInterval(index0, index1)
+    initialSelectionModel.addSelectionInterval(index0, index1)
     scrollIfNeeded(index0)
   }
 
