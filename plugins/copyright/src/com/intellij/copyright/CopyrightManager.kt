@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.copyright
 
 import com.intellij.configurationStore.*
@@ -262,21 +262,24 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
 
   private fun handleEvent(virtualFile: VirtualFile, project: Project) {
     val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
-    if (!FileTypeUtil.isSupportedFile(virtualFile) || PsiManager.getInstance(project).findFile(virtualFile) == null) {
+    if (!FileTypeUtil.isSupportedFile(virtualFile)) {
       return
     }
 
+    val file = PsiManager.getInstance(project).findFile(virtualFile) ?: return
+
+    if (!file.isWritable) {
+      return
+    }
+
+    CopyrightManager.getInstance(project).getCopyrightOptions(file) ?: return
+
     AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
-      if (project.isDisposed || !virtualFile.isValid) {
+      if (project.isDisposed || !file.isValid) {
         return@execute
       }
 
-      val file = PsiManager.getInstance(project).findFile(virtualFile)
-      if (file != null && file.isWritable) {
-        CopyrightManager.getInstance(project).getCopyrightOptions(file)?.let {
-          UpdateCopyrightProcessor(project, module, file).run()
-        }
-      }
+      UpdateCopyrightProcessor(project, module, file).run()
     }
   }
 }
