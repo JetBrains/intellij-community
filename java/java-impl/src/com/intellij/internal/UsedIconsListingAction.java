@@ -6,7 +6,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
@@ -105,18 +104,14 @@ final class UsedIconsListingAction extends AnAction {
 
     PsiMethod getIconMethod = iconLoader.findMethodsByName("getIcon", false)[0];
     PsiMethod findIconMethod = iconLoader.findMethodsByName("findIcon", false)[0];
-    if (true) {
-      MethodReferencesSearch.search(getIconMethod, false).forEach(consumer);
-      MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
-    }
+    MethodReferencesSearch.search(getIconMethod, false).forEach(consumer);
+    MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    if (true) {
-      PsiClass javaeeIcons = psiFacade.findClass("com.intellij.javaee.JavaeeIcons", allScope);
-      MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
+    PsiClass javaeeIcons = psiFacade.findClass("com.intellij.javaee.JavaeeIcons", allScope);
+    MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
 
-      MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
-    }
+    MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
 
     final List<XmlAttribute> xmlAttributes = new ArrayList<>();
 
@@ -182,7 +177,6 @@ final class UsedIconsListingAction extends AnAction {
                                      PsiClass iconClass) {
     final HashMap<String, String> mappings = new HashMap<>();
     collectFields(iconClass, "", mappings);
-    System.out.println("Found " + mappings.size() + " icons in " + iconClass.getQualifiedName());
 
     GlobalSearchScope useScope = (GlobalSearchScope)iconClass.getUseScope();
 

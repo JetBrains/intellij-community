@@ -322,10 +322,6 @@ public final class DomHelper {
 
         if (reducibility > 0) {
 
-          //					try {
-          //						DotExporter.toDotFile(general, new File("c:\\Temp\\stat1.dot"));
-          //					} catch(Exception ex) {ex.printStackTrace();}
-
           // take care of irreducible control flow graphs
           if (IrreducibleCFGDeobfuscator.isStatementIrreducible(general)) {
             if (!IrreducibleCFGDeobfuscator.splitIrreducibleNode(general)) {
@@ -334,16 +330,11 @@ public final class DomHelper {
             }
           }
           else {
-            if (mapstage == 2 || mapRefreshed) { // last chance lost
+            if (mapRefreshed) { // last chance lost
               DecompilerContext.getLogger().writeMessage("Statement cannot be decomposed although reducible!", IFernflowerLogger.Severity.ERROR);
             }
             break;
           }
-
-          //					try {
-          //						DotExporter.toDotFile(general, new File("c:\\Temp\\stat1.dot"));
-          //					} catch(Exception ex) {ex.printStackTrace();}
-
           mapExtPost = new HashMap<>();
           mapRefreshed = true;
         }
@@ -384,12 +375,6 @@ public final class DomHelper {
             }
           }
         }
-
-        //				try {
-        //					DotExporter.toDotFile(general, new File("c:\\Temp\\stat1.dot"));
-        //				} catch (Exception ex) {
-        //					ex.printStackTrace();
-        //				}
       }
 
       if (mapRefreshed) {
