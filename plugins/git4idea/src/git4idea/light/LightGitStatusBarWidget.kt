@@ -64,6 +64,4 @@ private class LightGitStatusBarWidgetFactory : StatusBarWidgetFactory, LightEdit
     LOG.assertTrue(LightEdit.owns(project))
     return LightGitStatusBarWidget(LightGitTracker.getInstance())
   }
-
-  override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 }

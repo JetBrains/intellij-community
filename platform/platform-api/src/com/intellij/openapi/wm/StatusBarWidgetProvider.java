@@ -7,8 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Extension point to assist with adding new status bar widgets
- *
  * @deprecated Use {@link StatusBarWidgetFactory} instead.
  * It provides configurable widgets that can be disabled or reordered.
  */
@@ -28,15 +26,8 @@ public interface StatusBarWidgetProvider {
   @Nullable
   StatusBarWidget getWidget(@NotNull Project project);
 
-  /**
-   * Determines position of the added widget in relation to other widgets on the status bar.
-   * <p>
-   * Utility methods from StatusBar.Anchors can be used to create an anchor with 'before' or 'after' rules.
-   * Take a look at StatusBar.StandardWidgets if you need to position your widget relatively to one of the standard widgets.
-   */
-  @NotNull
-  default String getAnchor() {
-    return StatusBar.Anchors.DEFAULT_ANCHOR;
+  default @NotNull String getAnchor() {
+    return "";
   }
 
   /**

@@ -45,18 +45,8 @@ final class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project) {
-    return true;
-  }
-
-  @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new PowerWidget();
-  }
-
-  @Override
-  public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-    return true;
   }
 
   @Override

@@ -191,11 +191,6 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     }
 
     @Override
-    public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-      return true;
-    }
-
-    @Override
     public @NotNull String getId() {
       return myIsIncoming ? INCOMING_WIDGET_ID : OUTGOING_WIDGET_ID;
     }

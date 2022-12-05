@@ -26,8 +26,7 @@ public interface StatusBarWidgetFactory {
 
   /**
    * @return Widget's display name. Used to refer a widget in UI,
-   * e.g. for "Enable/disable &lt;display name>" action names
-   * or for checkbox texts in settings.
+   * e.g. for "Enable/disable &lt;display name>" action names or for checkbox texts in settings.
    */
   @NotNull @NlsContexts.ConfigurableName String getDisplayName();
 
@@ -47,7 +46,9 @@ public interface StatusBarWidgetFactory {
    * you need to call {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
    * explicitly to get the status bar updated.
    */
-  boolean isAvailable(@NotNull Project project);
+  default boolean isAvailable(@NotNull Project project) {
+    return true;
+  }
 
   /**
    * Creates a widget to be added to the status bar.

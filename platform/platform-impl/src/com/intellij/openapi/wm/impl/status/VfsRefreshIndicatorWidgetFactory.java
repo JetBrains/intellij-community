@@ -56,11 +56,6 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
   }
 
   @Override
-  public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-    return true;
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return false;
   }

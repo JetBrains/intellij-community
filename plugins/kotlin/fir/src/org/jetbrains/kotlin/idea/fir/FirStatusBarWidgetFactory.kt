@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -14,11 +13,7 @@ private class FirStatusBarWidgetFactory: StatusBarWidgetFactory {
 
     override fun getDisplayName(): String = "FIR IDE"
 
-    override fun isAvailable(project: Project): Boolean = true
-
     override fun createWidget(project: Project): StatusBarWidget = Widget()
-
-    override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 
     companion object {
         const val ID = "kotlin.fir.ide"

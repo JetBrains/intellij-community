@@ -7,7 +7,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
@@ -110,11 +109,6 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     @Override
     public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
       return new HgStatusWidget(Objects.requireNonNull(HgVcs.getInstance(project)), project, HgProjectSettings.getInstance(project));
-    }
-
-    @Override
-    public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-      return true;
     }
   }
 }

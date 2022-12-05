@@ -61,11 +61,6 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   }
 
   @Override
-  public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-    return true;
-  }
-
-  @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return Objects.requireNonNull(getWidget());
   }
