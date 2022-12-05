@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a localized message to be displayed in options UI. Can be either simple message or split-string (see {@link #splitLabel()}).
  */
-public sealed interface LocMessage permits BundleMessage, PlainMessage {
+public sealed interface LocMessage permits PlainMessage {
   /**
    * @return a localized message
    */
