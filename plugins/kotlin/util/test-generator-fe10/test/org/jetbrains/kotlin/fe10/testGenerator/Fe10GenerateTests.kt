@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
+import org.jetbrains.kotlin.idea.actions.AbstractKotlinAddImportActionTest
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.*
@@ -759,6 +760,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractAddImportAliasTest53> {
             model("addImportAlias", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractKotlinAddImportActionTest> {
+            model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractSmartSelectionTest> {
