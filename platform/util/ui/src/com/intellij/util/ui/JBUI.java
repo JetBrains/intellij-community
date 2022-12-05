@@ -613,6 +613,16 @@ public final class JBUI {
         Color BACKGROUND = JBColor.namedColor("Editor.ToolTip.background", UIUtil.getToolTipBackground());
         Color FOREGROUND = JBColor.namedColor("Editor.ToolTip.foreground", UIUtil.getToolTipForeground());
       }
+
+      interface Notification {
+        static @NotNull JBInsets borderInsets(@NotNull JBInsets defaultValue) {
+          return insets("Editor.Notification.borderInsets", defaultValue);
+        }
+
+        static @NotNull JBInsets borderInsets() {
+          return borderInsets(insets(10, 12));
+        }
+      }
     }
 
     public interface DragAndDrop {
