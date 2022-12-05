@@ -68,7 +68,8 @@ import java.util.Optional;
  * @author Eugene Belyaev
  */
 public final class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
-  public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class,
+                                                                      Topic.BroadcastDirection.NONE);
 
   @ApiStatus.Experimental
   public static final DataKey<Optional<VirtualFile>> STRUCTURE_VIEW_TARGET_FILE_KEY = DataKey.create("STRUCTURE_VIEW_TARGET_FILE_KEY");
@@ -300,10 +301,12 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     if (isStructureViewShowing()) {
       if (myUpdateQueue.isEmpty()) {
         runnable.run();
-      } else {
+      }
+      else {
         myPendingSelection = runnable;
       }
-    } else {
+    }
+    else {
       myPendingSelection = runnable;
     }
 
