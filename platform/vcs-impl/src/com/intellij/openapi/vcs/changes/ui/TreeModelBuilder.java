@@ -72,10 +72,12 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   /**
    * Order in which nodes should be added into the tree while using {@link #insertChangeNode(Object, ChangesBrowserNode, ChangesBrowserNode)}.
-   * This ensures that helper {@link #createPathNode} node will not be created if there is already a 'data' node with the same path.
+   * This ensures that helper {@link #createPathNode} node will not be created if there is already a 'data' node with the same path,
+   * as all 'parents' are processed before their 'children'.
    */
   public final static Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
   public final static Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
+  public final static Comparator<VirtualFile> FILE_COMPARATOR = VirtualFileHierarchicalComparator.getInstance();
 
   /**
    * Requires non-null Project for local changes.
@@ -291,7 +293,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @Override
   public void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode<?> subtreeRoot) {
-    List<VirtualFile> sortedFiles = sorted(files, VirtualFileHierarchicalComparator.getInstance());
+    List<VirtualFile> sortedFiles = sorted(files, FILE_COMPARATOR);
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
     }
@@ -338,7 +340,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                                         SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES,
                                                         true);
 
-    List<VirtualFile> files = sorted(switchedRoots.keySet(), VirtualFileHierarchicalComparator.getInstance());
+    List<VirtualFile> files = sorted(switchedRoots.keySet(), FILE_COMPARATOR);
 
     for (VirtualFile vf : files) {
       final ContentRevision cr = new CurrentContentRevision(VcsUtil.getFilePath(vf));
@@ -363,7 +365,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     if (switchedFiles.isEmpty()) return this;
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.SWITCHED_FILES_TAG);
     for (@Nls String branchName : switchedFiles.keySet()) {
-      List<VirtualFile> switchedFileList = sorted(switchedFiles.get(branchName), VirtualFileHierarchicalComparator.getInstance());
+      List<VirtualFile> switchedFileList = sorted(switchedFiles.get(branchName), FILE_COMPARATOR);
       if (switchedFileList.size() > 0) {
         ChangesBrowserNode<?> branchNode = new ChangesBrowserStringNode(branchName);
         branchNode.markAsHelperNode();
@@ -383,7 +385,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     if (ContainerUtil.isEmpty(logicallyLockedFiles)) return this;
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
-    List<VirtualFile> keys = sorted(logicallyLockedFiles.keySet(), VirtualFileHierarchicalComparator.getInstance());
+    List<VirtualFile> keys = sorted(logicallyLockedFiles.keySet(), FILE_COMPARATOR);
 
     for (VirtualFile file : keys) {
       final LogicalLock lock = logicallyLockedFiles.get(file);
