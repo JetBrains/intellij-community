@@ -10,6 +10,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 public class MergingTaskQueueTest extends BasePlatformTestCase {
   private final MergingTaskQueue myQueue = new MergingTaskQueue<>();
@@ -50,6 +52,45 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     }
   }
 
+  static class LoggingTask implements MergeableQueueTask<LoggingTask> {
+    private final @Nullable List<@NotNull Integer> performLog;
+    private final @Nullable List<@NotNull Integer> disposeLog;
+    private final BiFunction<@NotNull LoggingTask, @NotNull LoggingTask, @Nullable LoggingTask> tryMergeWithFn;
+    private final int taskId;
+
+    LoggingTask(int taskId, @Nullable List<Integer> performLog, @Nullable List<Integer> disposeLog) {
+      this(taskId, performLog, disposeLog, (thiz, other) -> null);
+    }
+
+    LoggingTask(int taskId, @NotNull BiFunction<@NotNull LoggingTask, @NotNull LoggingTask, @Nullable LoggingTask> tryMergeWithFn) {
+      this(taskId, null, null, tryMergeWithFn);
+    }
+
+    LoggingTask(int taskId, @Nullable List<Integer> performLog, @Nullable List<Integer> disposeLog,
+                @NotNull BiFunction<@NotNull LoggingTask, @NotNull LoggingTask, @Nullable LoggingTask> tryMergeWithFn) {
+      this.performLog = performLog;
+      this.disposeLog = disposeLog;
+      this.taskId = taskId;
+      this.tryMergeWithFn = tryMergeWithFn;
+    }
+
+
+    @Override
+    public @Nullable LoggingTask tryMergeWith(@NotNull LoggingTask taskFromQueue) {
+      return tryMergeWithFn.apply(this, taskFromQueue);
+    }
+
+    @Override
+    public void perform(@NotNull ProgressIndicator indicator) {
+      if (performLog != null) performLog.add(taskId);
+    }
+
+    @Override
+    public void dispose() {
+      if (disposeLog != null) disposeLog.add(taskId);
+    }
+  }
+
   public void testEquivalentTasksAreMerged() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
@@ -78,24 +119,7 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
-      int taskId = i;
-      myQueue.addTask(new MergeableQueueTask() {
-
-        @Override
-        public void perform(@NotNull ProgressIndicator indicator) {
-          childLog.add(taskId);
-        }
-
-        @Override
-        public MergeableQueueTask<?> tryMergeWith(@NotNull MergeableQueueTask taskFromQueue) {
-          return this;//always merges
-        }
-
-        @Override
-        public void dispose() {
-          disposeLog.add(taskId);
-        }
-      });
+      myQueue.addTask(new LoggingTask(i, childLog, disposeLog, (thiz, other) -> thiz /* always merges */));
     }
 
     runAllTasks();
@@ -208,23 +232,7 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
 
-    MergeableQueueTask<?> task = new MergeableQueueTask() {
-      @Nullable
-      @Override
-      public MergeableQueueTask<?> tryMergeWith(@NotNull MergeableQueueTask taskFromQueue) {
-        return null;
-      }
-
-      @Override
-      public void perform(@NotNull ProgressIndicator indicator) {
-        childLog.add(1);
-      }
-
-      @Override
-      public void dispose() {
-        disposeLog.add(1);
-      }
-    };
+    MergeableQueueTask<?> task = new LoggingTask(1, childLog, disposeLog);
 
     myQueue.addTask(task);
     myQueue.cancelTask(task);
