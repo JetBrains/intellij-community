@@ -29,7 +29,7 @@
     "trainTestSplit": 70
   },
   "reports": {
-    "evaluationTitle": "Full Line Completion Golf",
+    "evaluationTitle": "Default",
     "sessionsFilters": [],
     "comparisonFilters": []
   }
