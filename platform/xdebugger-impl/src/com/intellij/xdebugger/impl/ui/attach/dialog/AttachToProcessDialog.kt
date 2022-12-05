@@ -296,6 +296,7 @@ open class AttachToProcessDialog(
     actions.add(RefreshActionButton())
     actions.add(SelectedViewAction())
     actions.add(DebuggerFilterComboBox())
+    actions.add(ActionManager.getInstance().getAction("XDebugger.Attach.Dialog.Settings"))
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.ATTACH_DIALOG_TOOLBAR, DefaultActionGroup(actions), true)
   }
