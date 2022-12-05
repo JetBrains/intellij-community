@@ -43,9 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public final class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiImplUtil.class);
@@ -424,27 +422,28 @@ public final class PsiImplUtil {
       // constructors and members of final classes cannot be accessed via a subclass so their use scope can't be wider than their class's
       return (PsiUtil.getAccessLevel(classModifierList) < accessLevel) ? aClass.getUseScope() : null;
     }
-    else if (classModifierList.hasModifierProperty(PsiModifier.PRIVATE) && !hasSubclassInContainingContext(aClass)) {
+    else if (!hasSubclassInContainingContext(aClass, new HashSet<>())) {
       return aClass.getUseScope();
     }
     // class use scope doesn't matter, since another very visible class can inherit from aClass
     return null;
   }
 
-  private static boolean hasSubclassInContainingContext(PsiClass aClass) {
+  private static boolean hasSubclassInContainingContext(PsiClass aClass, Set<PsiClass> visited) {
+    if (!aClass.hasModifierProperty(PsiModifier.PRIVATE)) return true;
     if (aClass instanceof PsiCompiledElement) return true; // don't check library code
+    if (!visited.add(aClass)) return true; // prevent infinite recursion on broken code
     class LocalInheritorVisitor extends JavaRecursiveElementWalkingVisitor {
-      private boolean extended = false;
+      private final Set<PsiClass> subclasses = new HashSet<>();
+
       @Override
       public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
-        if (extended) return;
         final PsiElement parent = reference.getParent();
         if (!(parent instanceof PsiReferenceList)) return;
         final PsiElement grandParent = parent.getParent();
         if (!(grandParent instanceof PsiClass)) return;
         if (reference.isReferenceTo(aClass)) {
-          extended = true;
-          stopWalking();
+          subclasses.add((PsiClass)grandParent);
         }
       }
 
@@ -452,7 +451,7 @@ public final class PsiImplUtil {
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {}
 
       public boolean isExtended() {
-        return extended;
+        return !subclasses.isEmpty();
       }
     }
     PsiClass containingClass = aClass.getContainingClass();
@@ -463,7 +462,14 @@ public final class PsiImplUtil {
     }
     final LocalInheritorVisitor visitor = new LocalInheritorVisitor();
     context.accept(visitor);
-    return visitor.isExtended();
+    if (visitor.isExtended()) {
+      for (PsiClass subclass : visitor.subclasses) {
+        if (hasSubclassInContainingContext(subclass, visited)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static boolean isInServerPage(@Nullable PsiElement element) {
