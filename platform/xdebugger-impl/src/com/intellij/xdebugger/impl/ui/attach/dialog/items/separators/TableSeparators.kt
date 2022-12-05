@@ -18,9 +18,12 @@ import kotlin.math.max
 abstract class TableGroupHeaderSeparator(private val hideLine: Boolean) : SeparatorWithText() {
 
   companion object {
-    private val LINE_HEIGHT = JBUI.scale(1)
-    private val LABEL_TOP_BOTTOM_INSETS = JBUI.scale(3)
-    private val LINE_TOP_BOTTOM_INSETS = JBUI.scale(6)
+    private val LINE_HEIGHT: Int
+      get() = JBUI.scale(1)
+    private val LABEL_TOP_BOTTOM_INSETS: Int
+      get() = JBUI.scale(3)
+    private val LINE_TOP_BOTTOM_INSETS: Int
+      get() = JBUI.scale(6)
 
     fun getExpectedHeight(hideLine: Boolean, hasMessage: Boolean): Int {
       return if (hasMessage)

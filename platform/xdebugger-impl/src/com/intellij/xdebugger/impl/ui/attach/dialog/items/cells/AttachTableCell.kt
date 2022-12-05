@@ -21,7 +21,8 @@ abstract class AttachTableCell(
   val columnsLayout: AttachDialogColumnsLayout) {
 
   companion object {
-    val IGNORE_EXPAND_HANDLER_GAP = JBUI.scale(10)
+    val IGNORE_EXPAND_HANDLER_GAP: Int
+      get() = JBUI.scale(10)
   }
 
   private var myLastKnownWidth = -1
