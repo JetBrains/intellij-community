@@ -1,10 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.ui.JPanelWithBackground
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
+import com.intellij.ui.hover.HoverStateListener
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels
@@ -17,6 +21,8 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import java.awt.BorderLayout
+import java.awt.Component
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -117,7 +123,33 @@ internal object GHPRTimelineItemUIUtil {
       add(content, CC().push().grow().newline()
         .gapTop("4")
         .minWidth("0").maxWidth("$maxContentWidth"))
+    }.let {
+      withHover(it, actionsPanel)
     }
+  }
+
+  private fun withHover(comp: JComponent, actionsPanel: JComponent?): JComponent {
+    val highlighterPanel = JPanelWithBackground(BorderLayout()).apply {
+      isOpaque = false
+      add(comp, BorderLayout.CENTER)
+    }.also {
+      object : HoverStateListener() {
+        override fun hoverChanged(component: Component, hovered: Boolean) {
+          actionsPanel?.isVisible = hovered
+          // TODO: extract to theme colors
+          component.background = if (hovered) {
+            JBColor(ColorUtil.fromHex("#D8D8D833"), ColorUtil.fromHex("#4B4B4B33"))
+          }
+          else {
+            null
+          }
+        }
+      }.apply {
+        // reset hover to false
+        mouseExited(it)
+      }.addTo(it)
+    }
+    return highlighterPanel
   }
 
   //language=HTML
