@@ -42,20 +42,19 @@ class EditorTabPainterAdapter : TabPainterAdapter {
   }
 
   private fun paintBorders(g: Graphics2D, label: TabLabel, tabs: JBTabsImpl) {
-    val paintStandardBorder = !tabs.isSingleRow
+    val paintStandardBorder = !ExperimentalUI.isNewUI() && !tabs.isSingleRow
                               || (!tabs.position.isSide && Registry.`is`("ide.new.editor.tabs.vertical.borders"))
     val lastPinned = label.isLastPinned
     val nextToLastPinned = label.isNextToLastPinned
     val rect = Rectangle(0, 0, label.width, label.height)
     if (paintStandardBorder || lastPinned || nextToLastPinned) {
-
-
       val bounds = label.bounds
       if (bounds.x > magicOffset && (paintStandardBorder || nextToLastPinned)) {
         painter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
       }
 
-      if (bounds.x + bounds.width < tabs.width - magicOffset && (paintStandardBorder || lastPinned)) {
+      val paintBorderAfterPinnedTab = !ExperimentalUI.isNewUI() || !TabLayout.showPinnedTabsSeparately() // do not paint border between last tab and toolbars
+      if (bounds.x + bounds.width < tabs.width - magicOffset && (paintStandardBorder || (lastPinned && paintBorderAfterPinnedTab))) {
         painter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
       }
     }

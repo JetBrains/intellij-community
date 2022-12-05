@@ -347,9 +347,11 @@ public class TabLabel extends JPanel implements Accessible {
     if (myInfo.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
       @NotNull List<TabInfo> tabs = myTabs.getTabs();
       for (int i = 0; i < tabs.size(); i++) {
-        TabInfo info = tabs.get(i);
-        if (info == myInfo && i < tabs.size() - 1) {
-          return !tabs.get(i + 1).isPinned();
+        TabInfo cur = tabs.get(i);
+        if (cur == myInfo && i < tabs.size() - 1) {
+          TabInfo next = tabs.get(i + 1);
+          return !next.isPinned()
+                 && myTabs.getTabLabel(next).getY() == this.getY(); // check that cur and next are in the same row
         }
       }
     }
