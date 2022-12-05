@@ -4,6 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import com.intellij.codeInsight.generation.ClassMember
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
@@ -291,6 +295,20 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         withCustomLanguageAndApiVersion(project, module, LanguageVersion.KOTLIN_1_3, ApiVersion.KOTLIN_1_3) {
             doOverrideFileTest("targetFun")
         }
+    }
+
+   open fun testDropAnnotations() {
+        doOverrideFileTest()
+    }
+
+   open fun testCopyAnnotationsAllowedByExtension() {
+       val filterExtension = object : OverrideImplementsAnnotationsFilter {
+           override fun getAnnotations(file: PsiFile) = arrayOf("AllowedAnnotation")
+       }
+
+       OverrideImplementsAnnotationsFilter.EP_NAME.point.registerExtension(filterExtension, testRootDisposable)
+
+       doOverrideFileTest()
     }
 
    open fun testUnresolvedType() {

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.core.overrideImplement
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter.keepAnnotationOnOverrideMember
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiElement
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.config.AnalysisFlag
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -126,9 +128,9 @@ fun OverrideMemberChooserObject.generateMember(
     }
 
     val baseRenderer = when (mode) {
-        MemberGenerateMode.OVERRIDE -> OVERRIDE_RENDERER
-        MemberGenerateMode.ACTUAL -> ACTUAL_RENDERER
-        MemberGenerateMode.EXPECT -> EXPECT_RENDERER
+        MemberGenerateMode.OVERRIDE -> createOverrideRenderer(targetClass?.containingKtFile)
+        MemberGenerateMode.ACTUAL -> createActualRenderer(targetClass?.containingKtFile)
+        MemberGenerateMode.EXPECT -> createExpectRenderer(targetClass?.containingKtFile)
     }
     val renderer = baseRenderer.withOptions {
         if (descriptor is ClassConstructorDescriptor && descriptor.isPrimary) {
@@ -194,7 +196,7 @@ fun OverrideMemberChooserObject.generateMember(
     return newMember
 }
 
-private val OVERRIDE_RENDERER = withOptions {
+private fun createOverrideRenderer(file: KtFile?) = withOptions {
     defaultParameterValueRenderer = null
     modifiers = setOf(OVERRIDE, ANNOTATIONS)
     withDefinedIn = false
@@ -204,17 +206,27 @@ private val OVERRIDE_RENDERER = withOptions {
     enhancedTypes = true
     typeNormalizer = IdeDescriptorRenderers.APPROXIMATE_FLEXIBLE_TYPES
     renderUnabbreviatedType = false
-    annotationFilter = {
-        val annotations = it.type.constructor.declarationDescriptor?.annotations
-        annotations != null && (annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ||
-                annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME))
+    annotationFilter = fun(annotation: AnnotationDescriptor): Boolean {
+        // Keep an annotation if the annotation itself is marked with @RequiresOptIn (or the old @Experimental), or otherwise if an
+        // extension wants to keep it.
+        val annotations = annotation.type.constructor.declarationDescriptor?.annotations
+        if (annotations?.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == true ||
+            annotations?.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME) == true) {
+            return true
+        }
+
+        val fqn = annotation.fqName
+        if (fqn != null && file != null) {
+            return keepAnnotationOnOverrideMember(fqn.asString(), file)
+        }
+
+        return false
     }
     presentableUnresolvedTypes = true
     informativeErrorType = false
 }
 
-
-private val EXPECT_RENDERER = OVERRIDE_RENDERER.withOptions {
+private fun createExpectRenderer(file: KtFile?) = createOverrideRenderer(file).withOptions {
     modifiers = setOf(VISIBILITY, MODALITY, OVERRIDE, INNER, MEMBER_KIND)
     renderConstructorKeyword = false
     secondaryConstructorsAsPrimary = false
@@ -222,7 +234,7 @@ private val EXPECT_RENDERER = OVERRIDE_RENDERER.withOptions {
     renderDefaultModality = false
 }
 
-private val ACTUAL_RENDERER = EXPECT_RENDERER.withOptions {
+private fun createActualRenderer(file: KtFile?) = createExpectRenderer(file).withOptions {
     modifiers = modifiers + ACTUAL
     actualPropertiesInPrimaryConstructor = true
     renderConstructorDelegation = true
