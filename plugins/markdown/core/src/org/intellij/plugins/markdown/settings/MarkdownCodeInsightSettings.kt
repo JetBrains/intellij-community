@@ -12,7 +12,7 @@ internal class MarkdownCodeInsightSettings: PersistentStateComponent<MarkdownCod
     @Property
     val reformatTablesOnType: Boolean = true,
     @Property
-    val insertLineBreakInsideTables: Boolean = true,
+    val insertHtmlLineBreakInsideTables: Boolean = true,
     @Property
     val insertNewTableRowOnShiftTab: Boolean = true,
     @Property

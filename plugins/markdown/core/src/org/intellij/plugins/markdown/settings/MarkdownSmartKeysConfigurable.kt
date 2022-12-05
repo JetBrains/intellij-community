@@ -25,10 +25,10 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
           )
       }
       row {
-        checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.insert.line.break"))
+        checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.insert.html.line.break"))
           .bindSelected(
-            getter = { settings.state.insertLineBreakInsideTables },
-            setter = { settings.update { state -> state.copy(insertLineBreakInsideTables = it) } }
+            getter = { settings.state.insertHtmlLineBreakInsideTables },
+            setter = { settings.update { state -> state.copy(insertHtmlLineBreakInsideTables = it) } }
           )
       }
       row {
