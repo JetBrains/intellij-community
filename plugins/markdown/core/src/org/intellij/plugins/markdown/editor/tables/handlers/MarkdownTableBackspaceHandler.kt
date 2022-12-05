@@ -19,7 +19,7 @@ internal class MarkdownTableBackspaceHandler: BackspaceHandlerDelegate() {
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) = Unit
 
   override fun charDeleted(char: Char, file: PsiFile, editor: Editor): Boolean {
-    if (!TableUtils.isFormattingEnabledForTables(file) || !file.fileType.isMarkdownType()) {
+    if (!TableUtils.isFormattingOnTypeEnabledForTables(file) || !file.fileType.isMarkdownType()) {
       return false
     }
     val caretOffset = editor.caretModel.currentCaret.offset

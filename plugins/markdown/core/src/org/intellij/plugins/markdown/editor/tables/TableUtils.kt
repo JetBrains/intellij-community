@@ -19,7 +19,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -171,9 +171,11 @@ object TableUtils {
   }
 
   internal fun isFormattingEnabledForTables(file: PsiFile): Boolean {
-    return isTableSupportEnabled() &&
-           MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled &&
-           file !in CodeStyle.getSettings(file).excludedFiles
+    return isFormattingOnTypeEnabledForTables(file) && file !in CodeStyle.getSettings(file).excludedFiles
+  }
+
+  internal fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
+    return isTableSupportEnabled() && MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType
   }
 
   /**
