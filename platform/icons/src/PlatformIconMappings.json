@@ -676,6 +676,10 @@
         "vcs/shelveSilent.svg",
         "vcs/Stash.svg"
       ],
+      "unshelve.svg": [
+        "vcs/Unshelve.svg",
+        "vcs/unshelveSilent.svg"
+      ],
       "update.svg": "actions/checkOut.svg"
     }
   }
