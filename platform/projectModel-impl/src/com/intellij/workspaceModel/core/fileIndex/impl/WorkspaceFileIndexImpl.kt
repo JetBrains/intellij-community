@@ -61,6 +61,10 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     }
   }
 
+  override fun ensureInitialized() {
+    getOrCreateMainIndexData()
+  }
+
   override fun unloadModules(entities: List<ModuleEntity>) {
     indexData?.unloadModules(entities)
   }
