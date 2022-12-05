@@ -16,6 +16,8 @@ import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -108,9 +110,8 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                         @OptIn(KtAllowAnalysisOnEdt::class)
                         allowAnalysisOnEdt {
                             analyze(elt) {
-                                val annotationSymbol =
-                                    elt.calleeExpression?.constructorReferenceExpression?.mainReference?.resolveToSymbol() as? KtConstructorSymbol
-                                        ?: return false
+                                val annotationSymbol = elt.resolveCall().singleConstructorCallOrNull()?.symbol
+                                    ?: return false
                                 val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
                                 val fqName = annotationType.classId.asFqNameString()
                                 if (fqName != annotationFQN) return true
