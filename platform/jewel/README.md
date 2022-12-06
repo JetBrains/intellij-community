@@ -2,33 +2,39 @@
 
 <img alt="Jewel logo" src="art/jewel-logo.svg" width="20%"/>
 
-Jewel aims at recreating the _Darcula_ Swing Look and Feel used on the IntelliJ Platform into Compose for Desktop. A bunch of shared code is extracted
-to a separate module, `library`.
+Jewel aims at recreating the _Darcula_ and _New UI_ Swing Look and Feels used on the IntelliJ Platform into Compose for Desktop.
 
 ## Project structure
 
 The project is split in modules:
 
-1. `library` is the base Jewel library code (utils, interfaces, etc.)
-2. `sample` is a stand-alone sample app of the Jewel themes
+1. `core` is the base Jewel library code (composables, interface definitions, etc.)
+2. `compose-utils` is a collection of utilities for dealing with Compose, and Swing interop
 3. `themes` are the two themes implemented by Jewel:
-    1. `intellij` is the Darcula theme, which has two implementations:
-        1. `standalone` is the base theme and can be used in any Compose for Desktop project
-        2. `idea` is a version of the theme that can be used in an IDEA plugin, and integrates with the IDE's Swing LaF and themes via a bridge (more
-           on that later).
+    1. `darcula` is the old school Intellij LaF, called Darcula, which has two implementations:
+        1. `darcula-standalone` is the base theme and can be used in any Compose for Desktop project
+        2. `darcula-ide` is a version of the theme that can be used in an IDEA plugin, and integrates with the IDE's Swing LaF and themes via a
+           bridge (more
+           on that later)
+    2. `new-ui` implements the new IntelliJ LaF, known as "new UI". This also has the same two implementations
+4. `samples` contains the example apps, which showcase the available components:
+    1. `standalone` is a regular CfD app, using the predefined "base" theme definitions
+    2. `ide-plugin` is an IntelliJ plugin, adding some UI to the IDE, and showcasing the use of the bridge (see later)
 
 ### Running the samples
 
-To run the stand-alone sample app, you can run the `:sample:run` Gradle task.
+To run the stand-alone sample app, you can run the `:samples:standalone:run` Gradle task.
 
-To run the IntelliJ IDEA plugin sample, you can run the `:themes:intellij:idea:runIde` Gradle task. This will download and run a copy of IJ Community
-with the plugin installed; you can check the JewelDemo panel in the IDE once it starts up (it's at the bottom, by default).
+To run the IntelliJ IDEA plugin sample, you can run the `:samples:ide-plugin:runIde` Gradle task. This will download and run a copy of IJ Community
+with the plugin installed; you can check the additional panels in the IDE once it starts up (at the bottom, by default, in old UI; in the overflow
+in the new UI).
 
-If you're in an IDE, you can use the "Stand-alone sample" and "IDE sample" run configurations.
+If you're using IntelliJ IDEA, you can use the "Stand-alone sample" and "IDE sample" run configurations.
 
 ### The Swing Bridge
 
-In the `idea` module, there is a crucial element for proper integration with the IDE: a bridge between the Swing theme and LaF, and the Compose world.
+In the `*-ide` modules, there is a crucial element for proper integration with the IDE: a bridge between the Swing theme and LaF, and the Compose
+world.
 This bridge ensures that we pick up the colours, typography, metrics, and images as defined in the current IntelliJ theme, and apply them to the
 Compose theme as well.
 
