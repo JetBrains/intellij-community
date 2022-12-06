@@ -300,7 +300,7 @@
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
                  description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
 
-    <registryKey key="maven.dedicated.indexer" defaultValue="true"
+    <registryKey key="maven.dedicated.indexer" defaultValue="false"
                  description="Dedicated maven indexer" restartRequired="true"/>
 
     <registryKey key="maven.linear.import" defaultValue="false"
