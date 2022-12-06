@@ -56,7 +56,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     final K collectedInfo;
     volatile V annotationResult;
 
-    MyData(ExternalAnnotator<K,V> annotator, PsiFile psiRoot, K collectedInfo) {
+    MyData(@NotNull ExternalAnnotator<K,V> annotator, @NotNull PsiFile psiRoot, @NotNull K collectedInfo) {
       this.annotator = annotator;
       this.psiRoot = psiRoot;
       this.collectedInfo = collectedInfo;
@@ -231,7 +231,8 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
   }
 
-  private @NotNull List<HighlightInfo> getHighlights() {
+  @NotNull
+  private List<HighlightInfo> getHighlights() {
     List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
     for (Annotation annotation : myAnnotationHolder) {
       infos.add(HighlightInfo.fromAnnotation(annotation));
@@ -239,7 +240,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     return infos;
   }
 
-  private void doFinish(List<? extends HighlightInfo> highlights, long modificationStampBefore) {
+  private void doFinish(@NotNull List<? extends HighlightInfo> highlights, long modificationStampBefore) {
     Editor editor = getEditor();
     ModalityState modalityState =
       editor != null ? ModalityState.stateForComponent(editor.getComponent()) : ModalityState.defaultModalityState();
@@ -253,7 +254,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }, modalityState, x -> !myFile.isValid());
   }
 
-  private static void processError(Throwable t, ExternalAnnotator<?,?> annotator, PsiFile root) {
+  private static void processError(@NotNull Throwable t, @NotNull ExternalAnnotator<?,?> annotator, @NotNull PsiFile root) {
     if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
 
     VirtualFile file = root.getVirtualFile();
