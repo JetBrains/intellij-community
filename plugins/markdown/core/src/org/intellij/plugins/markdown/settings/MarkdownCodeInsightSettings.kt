@@ -2,10 +2,12 @@ package org.intellij.plugins.markdown.settings
 
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 @Service
 @State(name = "MarkdownCodeInsightSettings", storages = [(Storage("markdown.xml"))])
-internal class MarkdownCodeInsightSettings: PersistentStateComponent<MarkdownCodeInsightSettings.State> {
+class MarkdownCodeInsightSettings: PersistentStateComponent<MarkdownCodeInsightSettings.State> {
   private var state = State()
 
   data class State(
@@ -37,6 +39,10 @@ internal class MarkdownCodeInsightSettings: PersistentStateComponent<MarkdownCod
 
   override fun loadState(state: State) {
     this.state = state
+  }
+
+  fun reset() {
+    loadState(State())
   }
 
   companion object {
