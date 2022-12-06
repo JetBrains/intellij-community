@@ -38,7 +38,7 @@ public interface JavaLanguageLevelPusherCustomizer {
                                                                                           @NotNull PsiFile file) {
     for (JavaLanguageLevelPusherCustomizer customizer : EP_NAME.getExtensionList()) {
       String customizedMsg = customizer.getInconsistencyLanguageLevelMessage(message, level, file);
-      if (customizedMsg != null) return null;
+      if (customizedMsg != null) return customizedMsg;
     }
     return null;
   }
