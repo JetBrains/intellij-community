@@ -113,16 +113,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     sink?.text(message("progress.text.analyzing.code"))
 
     val isPostCommit = commitInfo.isPostCommitCheck
-    val changesByFile = mutableMapOf<VirtualFile, Change>()
-    for (change in commitInfo.committedChanges) {
-      val changeFile = change.afterRevision?.file?.virtualFile ?: continue
-      if (isGeneratedOrExcluded(project, changeFile)) continue
-
-      val oldChange = changesByFile.put(changeFile, change)
-      if (oldChange != null) {
-        logger<CodeAnalysisCheckinHandlerFactory>().warn("Multiple changes for the same file: $oldChange, $change")
-      }
-    }
+    val changesByFile = groupChangesByFile(commitInfo)
     if (changesByFile.isEmpty()) return null
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -154,6 +145,20 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
                    "before.checkin.standard.options.check.smells",
                    "before.checkin.options.check.smells.profile")
       .withCheckinHandler(this)
+
+  private fun groupChangesByFile(commitInfo: CommitInfo): MutableMap<VirtualFile, Change> {
+    val changesByFile = mutableMapOf<VirtualFile, Change>()
+    for (change in commitInfo.committedChanges) {
+      val changeFile = change.afterRevision?.file?.virtualFile ?: continue
+      if (isGeneratedOrExcluded(project, changeFile)) continue
+
+      val oldChange = changesByFile.put(changeFile, change)
+      if (oldChange != null) {
+        logger<CodeAnalysisCheckinHandlerFactory>().warn("Multiple changes for the same file: $oldChange, $change")
+      }
+    }
+    return changesByFile
+  }
 
   /**
    * Puts a closure in PsiFile user data that extracts PsiElement elements that are being committed.
