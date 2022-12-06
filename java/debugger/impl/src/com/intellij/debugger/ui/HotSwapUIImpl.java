@@ -163,28 +163,12 @@ public final class HotSwapUIImpl extends HotSwapUI {
           }
           modifiedClasses.keySet().retainAll(toReload);
         }
-        else {
-          if (shouldDisplayHangWarning) {
-            final int answer = Messages.showCheckboxMessageDialog(
-              JavaDebuggerBundle.message("hotswap.dialog.hang.warning"),
-              JavaDebuggerBundle.message("hotswap.dialog.title"),
-              new String[]{JavaDebuggerBundle.message("button.perform.reload.classes"),
-                JavaDebuggerBundle.message("button.skip.reload.classes")},
-              UIBundle.message("dialog.options.do.not.show"),
-              false, 1, 1, Messages.getWarningIcon(),
-              (exitCode, cb) -> {
-                settings.HOTSWAP_HANG_WARNING_ENABLED = !cb.isSelected();
-                return exitCode == DialogWrapper.OK_EXIT_CODE ? exitCode : DialogWrapper.CANCEL_EXIT_CODE;
-              }
-            );
-            if (answer == DialogWrapper.CANCEL_EXIT_CODE) {
-              for (DebuggerSession session : modifiedClasses.keySet()) {
-                session.setModifiedClassesScanRequired(true);
-              }
-              callbackWrapper.onCancel(sessions);
-              return;
-            }
+        else if (shouldDisplayHangWarning && !confirmPossibleHang(settings)) {
+          for (DebuggerSession session : modifiedClasses.keySet()) {
+            session.setModifiedClassesScanRequired(true);
           }
+          callbackWrapper.onCancel(sessions);
+          return;
         }
 
         if (!modifiedClasses.isEmpty()) {
@@ -212,6 +196,24 @@ public final class HotSwapUIImpl extends HotSwapUI {
         }
       }, ModalityState.NON_MODAL);
     });
+  }
+
+  private static boolean confirmPossibleHang(@NotNull DebuggerSettings settings) {
+    int answer = Messages.showCheckboxMessageDialog(
+      JavaDebuggerBundle.message("hotswap.dialog.hang.warning"),
+      JavaDebuggerBundle.message("hotswap.dialog.title"),
+      new String[]{
+        JavaDebuggerBundle.message("button.perform.reload.classes"),
+        JavaDebuggerBundle.message("button.skip.reload.classes"),
+      },
+      UIBundle.message("dialog.options.do.not.show"),
+      false, 1, 1, Messages.getWarningIcon(),
+      (exitCode, cb) -> {
+        settings.HOTSWAP_HANG_WARNING_ENABLED = !cb.isSelected();
+        return exitCode == DialogWrapper.OK_EXIT_CODE ? exitCode : DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    );
+    return answer != DialogWrapper.CANCEL_EXIT_CODE;
   }
 
   @NotNull
