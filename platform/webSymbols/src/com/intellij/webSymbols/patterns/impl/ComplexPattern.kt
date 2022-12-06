@@ -242,7 +242,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                 if (StringUtil.equals(prev, cur)) {
                   matchResult = MatchResult(
                     matchResult.segments.map { segment ->
-                      if (segment.problem == null || segment.problem == WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM)
+                      if (segment.problem == null || segment.problem == WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL)
                         segment.copy(problem = WebSymbolNameSegment.MatchProblem.DUPLICATE)
                       else segment
                     }

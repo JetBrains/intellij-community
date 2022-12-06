@@ -120,7 +120,7 @@
    {
     name-part: "bar",
     display-name: "modifier",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
   ],
  },

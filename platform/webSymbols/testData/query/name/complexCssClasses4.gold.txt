@@ -24,7 +24,7 @@
    },
    {
     name-part: "foo",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
   ],
  },

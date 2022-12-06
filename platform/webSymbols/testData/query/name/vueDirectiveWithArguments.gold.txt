@@ -139,7 +139,7 @@
    {
     name-part: "foo",
     display-name: "modifier",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
    {
     name-part: ".",

@@ -24,7 +24,7 @@
    },
    {
     name-part: "foo-bar",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
   ],
  },

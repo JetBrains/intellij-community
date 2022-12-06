@@ -42,7 +42,7 @@
    {
     name-part: ".stop",
     display-name: "event name",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
   ],
  },
