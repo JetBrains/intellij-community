@@ -179,6 +179,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
       layout.withoutProjectLibrary("layoutlib")
 
       layout.withoutProjectLibrary("qodana-sarif")
+      layout.withoutProjectLibrary("jetbrains.qodana.publisher")
       // todo it is a quick fix - fix the root cause
       layout.withoutProjectLibrary("assertJ")
       layout.withoutProjectLibrary("hamcrest")
