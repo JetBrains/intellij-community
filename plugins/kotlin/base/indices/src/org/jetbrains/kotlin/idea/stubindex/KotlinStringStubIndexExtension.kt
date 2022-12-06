@@ -10,13 +10,21 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Processors
+import com.intellij.util.indexing.IdFilter
 
 abstract class KotlinStringStubIndexExtension<Psi : PsiElement>(private val valueClass: Class<Psi>) : StringStubIndexExtension<Psi>() {
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
     fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in Psi>) {
-        StubIndex.getInstance().processElements(key, s, project, scope, valueClass, processor)
+        processElements(s, project, scope, null, processor)
+    }
+
+    /**
+     * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
+     */
+    fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in Psi>) {
+        StubIndex.getInstance().processElements(key, s, project, scope, idFilter, valueClass, processor)
     }
 
     fun processAllElements(

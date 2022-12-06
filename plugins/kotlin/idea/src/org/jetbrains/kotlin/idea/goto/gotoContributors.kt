@@ -3,11 +3,14 @@
 package org.jetbrains.kotlin.idea.goto
 
 import com.intellij.ide.util.gotoByName.AbstractPrimeSymbolNavigationContributor
+import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.GotoClassContributor
 import com.intellij.navigation.NavigationItem
-import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.util.Processor
+import com.intellij.util.indexing.FindSymbolParameters
+import com.intellij.util.indexing.IdFilter
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
@@ -16,7 +19,7 @@ import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
-class KotlinGotoClassContributor : GotoClassContributor {
+class KotlinGotoClassContributor : ChooseByNameContributorEx, GotoClassContributor {
     override fun getQualifiedName(item: NavigationItem): String? {
         val declaration = item as? KtNamedDeclaration ?: return null
         return declaration.fqName?.asString()
@@ -24,22 +27,28 @@ class KotlinGotoClassContributor : GotoClassContributor {
 
     override fun getQualifiedNameSeparator() = "."
 
-    override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> {
-        val classes = KotlinClassShortNameIndex.getAllKeys(project)
-        val typeAliases = KotlinTypeAliasShortNameIndex.getAllKeys(project)
-        return (classes + typeAliases).toTypedArray()
+    override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
+        for (index in indices) {
+            StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)
+        }
     }
 
-    override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> {
-        val globalScope = if (includeNonProjectItems) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
-        val scope = KotlinSourceFilterScope.projectFiles(globalScope, project)
-        val classesOrObjects = KotlinClassShortNameIndex.get(name, project, scope)
-        val typeAliases = KotlinTypeAliasShortNameIndex.get(name, project, scope)
+    override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
+        val project = parameters.project
+        val scope = KotlinSourceFilterScope.projectFiles(parameters.searchScope, project)
 
-        if (classesOrObjects.isEmpty() && typeAliases.isEmpty()) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY
-
-        return (classesOrObjects + typeAliases).filter { it != null && it !is KtEnumEntry }.toTypedArray()
+        val processor2: (t: NavigationItem) -> Boolean = {
+            if (it !is KtEnumEntry) {
+                processor.process(it)
+            } else {
+                true
+            }
+        }
+        KotlinClassShortNameIndex.processElements(name, project, scope, processor2)
+        KotlinTypeAliasShortNameIndex.processElements(name, project, scope, processor2)
     }
+
+    private val indices = listOf(KotlinClassShortNameIndex, KotlinTypeAliasShortNameIndex)
 }
 
 /*
@@ -47,37 +56,44 @@ class KotlinGotoClassContributor : GotoClassContributor {
 * For Kotlin classes it works using light class generation.
 * We have to process Kotlin builtIn classes separately since no light classes are built for them.
 * */
-class KotlinGotoSymbolContributor : GotoClassContributor {
-    override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> = listOf(
-        KotlinFunctionShortNameIndex,
-        KotlinPropertyShortNameIndex,
-        KotlinClassShortNameIndex,
-        KotlinTypeAliasShortNameIndex,
-        KotlinJvmNameAnnotationIndex
-    ).flatMap {
-        StubIndex.getInstance().getAllKeys(it.key, project)
-    }.toTypedArray()
+class KotlinGotoSymbolContributor : ChooseByNameContributorEx, GotoClassContributor {
+    override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
+        for (index in indices) {
+            StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)
+        }
+    }
 
-    override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> {
-        val baseScope = if (includeNonProjectItems) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
-        val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(baseScope, project)
+    override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
+        val project = parameters.project
+        val scope = KotlinSourceFilterScope.projectFiles(parameters.searchScope, project)
 
-        val result = ArrayList<NavigationItem>()
-        result += KotlinFunctionShortNameIndex.get(name, project, noLibrarySourceScope).filter {
+        val filter = parameters.idFilter
+        KotlinFunctionShortNameIndex.processElements(name, project, scope, filter) {
             val method = LightClassUtil.getLightClassMethod(it)
-            method == null || it.name != method.name
+            if (method == null || it.name != method.name) {
+                processor.process(it)
+            } else {
+                true
+            }
         }
-        result += KotlinPropertyShortNameIndex.get(name, project, noLibrarySourceScope).filter {
-            LightClassUtil.getLightClassBackingField(it) == null ||
-                    it.containingClass()?.isInterface() ?: false
-        }
-        result += KotlinClassShortNameIndex.get(name, project, noLibrarySourceScope).filter {
-            it is KtEnumEntry || it.containingFile.virtualFile?.fileType == KotlinBuiltInFileType
-        }
-        result += KotlinTypeAliasShortNameIndex.get(name, project, noLibrarySourceScope)
-        result += KotlinJvmNameAnnotationIndex.get(name, project, noLibrarySourceScope)
 
-        return result.toTypedArray()
+        KotlinPropertyShortNameIndex.processElements(name, project, scope, filter) {
+            if (LightClassUtil.getLightClassBackingField(it) == null || it.containingClass()?.isInterface() == true) {
+                processor.process(it)
+            } else {
+                true
+            }
+        }
+
+        KotlinClassShortNameIndex.processElements(name, project, scope, filter) {
+            if (it is KtEnumEntry || it.containingFile.virtualFile?.fileType == KotlinBuiltInFileType) {
+                processor.process(it)
+            } else {
+                true
+            }
+        }
+        KotlinTypeAliasShortNameIndex.processElements(name, project, scope, filter, processor)
+        KotlinJvmNameAnnotationIndex.processElements(name, project, scope, filter, processor)
     }
 
     override fun getQualifiedName(item: NavigationItem): String? {
@@ -95,6 +111,15 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
     }
 
     override fun getQualifiedNameSeparator(): String = "."
+
+    private val indices = listOf(
+        KotlinFunctionShortNameIndex,
+        KotlinPropertyShortNameIndex,
+        KotlinClassShortNameIndex,
+        KotlinTypeAliasShortNameIndex,
+        KotlinJvmNameAnnotationIndex
+    )
+
 }
 
 class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.key)
