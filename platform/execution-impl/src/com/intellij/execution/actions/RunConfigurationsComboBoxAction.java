@@ -250,7 +250,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     addRunConfigurations(allActionsGroup, project,
                          settings -> createFinalAction(settings, project),
                          folderName -> DefaultActionGroup.createPopupGroup(() -> folderName));
-    allActionsGroup.addSeparator();
     return allActionsGroup;
   }
 
@@ -274,6 +273,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
 
       allActionsGroup.add(actionGroup);
+      allActionsGroup.addSeparator();
     }
   }
 
