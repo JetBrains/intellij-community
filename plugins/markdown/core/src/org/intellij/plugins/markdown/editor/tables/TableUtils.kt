@@ -171,11 +171,7 @@ object TableUtils {
   }
 
   internal fun isFormattingEnabledForTables(file: PsiFile): Boolean {
-    return isFormattingOnTypeEnabledForTables(file) && file !in CodeStyle.getSettings(file).excludedFiles
-  }
-
-  internal fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
-    return MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType
+    return MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType && file !in CodeStyle.getSettings(file).excludedFiles
   }
 
   /**

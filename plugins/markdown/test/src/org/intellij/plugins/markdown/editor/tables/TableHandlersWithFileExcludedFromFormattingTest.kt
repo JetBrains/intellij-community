@@ -5,8 +5,6 @@ import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescr
 import com.intellij.idea.TestFor
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -14,10 +12,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @TestFor(issues = ["IDEA-300286"])
 @Suppress("MarkdownIncorrectTableFormatting")
-class TableHandlersWithDisabledFormattingTest : LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
-
+class TableHandlersWithFileExcludedFromFormattingTest: LightPlatformCodeInsightTestCase() {
   @Test
   fun `test no column expand`() {
     // language=Markdown

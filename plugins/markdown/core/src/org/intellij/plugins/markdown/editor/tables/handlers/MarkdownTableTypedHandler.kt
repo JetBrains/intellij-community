@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
 
 internal class MarkdownTableTypedHandler: TypedHandlerDelegate() {
   override fun charTyped(char: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (!TableUtils.isFormattingOnTypeEnabledForTables(file) || !file.fileType.isMarkdownType()) {
+    if (!TableUtils.isFormattingEnabledForTables(file) || !file.fileType.isMarkdownType()) {
       return super.charTyped(char, project, editor, file)
     }
     val caretOffset = editor.caretModel.currentCaret.offset

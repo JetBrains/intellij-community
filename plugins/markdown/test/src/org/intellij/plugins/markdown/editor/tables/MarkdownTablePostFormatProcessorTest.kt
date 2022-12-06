@@ -2,12 +2,10 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.idea.TestFor
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.performReformatting
 import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.runWithTemporaryStyleSettings
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -15,9 +13,6 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @TestFor(issues = ["IDEA-298828"])
 class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
-
   @Test
   fun `single table`() = doTest()
 

@@ -2,9 +2,7 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
 import org.intellij.plugins.markdown.editor.tables.TableTestUtils.runWithChangedSettings
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -12,9 +10,6 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
 class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
-
   @Test
   fun `test single enter inside cell`() {
     // language=Markdown
