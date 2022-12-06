@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -117,9 +118,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
     else {
       if (isDecoratedMenu) {
         JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
-        if (SystemInfoRt.isMac) {
-          ToolbarUtil.removeMacSystemTitleBar(this)
-        }
 
         val selectedEditorFilePath: SelectedEditorFilePath?
         val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
@@ -195,9 +193,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
       val rootPane = JRootPane()
       if (isDecoratedMenu && !isFloatingMenuBarSupported) {
         JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
-        if (SystemInfoRt.isMac) {
-          ToolbarUtil.removeMacSystemTitleBar(rootPane)
-        }
       }
       frame.doSetRootPane(rootPane)
       if (SystemInfoRt.isMac) {
@@ -257,7 +252,11 @@ open class IdeRootPane internal constructor(frame: JFrame,
       if (bar != null) {
         bar.isVisible = fullScreen
       }
-      helper.customFrameTitlePane.getComponent().isVisible = !fullScreen
+      val isCustomFrameHeaderVisible = !fullScreen || SystemInfo.isMac && !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()
+      helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
+      if (SystemInfo.isMac) {
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, isCustomFrameHeaderVisible)
+      }
     }
     else if (SystemInfoRt.isXWindow) {
       if (bar != null) {
@@ -470,10 +469,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
     updateToolbarVisibility()
     updateStatusBarVisibility()
     updateMainMenuVisibility()
-    val frame = ComponentUtil.getParentOfType(IdeFrameImpl::class.java, this) ?: return
+    val frame = frame ?: return
     frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
+
+    updateScreenState { fullScreen }
   }
+
+  private val frame: IdeFrameImpl?
+    get() = ComponentUtil.getParentOfType(IdeFrameImpl::class.java, this)
 
   private inner class MyRootLayout : RootLayout() {
     // do not cache it - MyRootLayout is created before IdeRootPane constructor

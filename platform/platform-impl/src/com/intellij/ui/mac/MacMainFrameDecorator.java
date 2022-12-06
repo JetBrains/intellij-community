@@ -117,10 +117,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
-          if (ExperimentalUI.isNewUI() && MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
-            ToolbarUtil.removeMacSystemTitleBar(rootPane);
-          }
-          else {
+          if (!ExperimentalUI.isNewUI() || !MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
             ToolbarUtil.setCustomTitleBar(frame, rootPane, runnable -> {
               if (!Disposer.isDisposed(parentDisposable)) {
                 Disposer.register(parentDisposable, runnable::run);
@@ -256,6 +253,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             if (LOG.isDebugEnabled()) {
               LOG.debug("exited full screen: " + frame);
             }
+            notifyFrameComponents(false);
             promise.complete(false);
           }
 
@@ -264,6 +262,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             if (LOG.isDebugEnabled()) {
               LOG.debug("entered full screen: " + frame);
             }
+            notifyFrameComponents(true);
             promise.complete(true);
           }
         };
@@ -291,6 +290,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("pre-transitioning event not received for: " + frame);
               }
+              notifyFrameComponents(myInFullScreen);
               promise.complete(myInFullScreen);
             }
           });
