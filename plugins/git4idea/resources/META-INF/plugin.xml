@@ -437,7 +437,6 @@
       <reference ref="CheckinProject"/>
       <reference ref="Git.Commit.Stage"/>
       <reference ref="Vcs.Push"/>
-      <reference ref="Vcs.QuickListPopupAction"/>
     </group>
 
     <group id="Vcs.ToolbarWidget.CreateRepository" searchable="false">
