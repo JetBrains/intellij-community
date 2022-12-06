@@ -18,10 +18,10 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import java.util.*
 import javax.swing.Icon
 import kotlin.contracts.ExperimentalContracts
@@ -121,7 +121,7 @@ fun WebSymbol.match(nameToMatch: String,
   val queryExecutor = params.queryExecutor
   val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,
                                                         nameToMatch, WebSymbolNamesProvider.Target.NAMES_QUERY)
-  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.matchedName,
+  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.name,
                                                          WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return if (queryNames.any { symbolNames.contains(it) }) {
     listOf(this.withMatchedName(nameToMatch))
@@ -142,6 +142,14 @@ fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
     WebSymbolNameSegment.MatchProblem.DUPLICATE -> ProblemKind.DuplicatedPart
     null -> null
   }
+
+val WebSymbol.completeMatch: Boolean
+  get() = this !is WebSymbolMatch
+          || (nameSegments.all { segment -> segment.problem == null && segment.symbols.all { it.completeMatch } }
+              && (nameSegments.lastOrNull()?.end ?: 0) == matchedNameOrName.length)
+
+internal val WebSymbol.matchedNameOrName: String
+  get() = (this as? WebSymbolMatch)?.matchedName ?: name
 
 val WebSymbol.hideFromCompletion
   get() =

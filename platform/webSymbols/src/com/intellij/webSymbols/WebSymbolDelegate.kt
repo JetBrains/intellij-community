@@ -27,16 +27,8 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.namespace
   override val kind: SymbolKind
     get() = delegate.kind
-  override val matchedName: String
-    get() = delegate.matchedName
-
   override fun getModificationCount(): Long =
     delegate.modificationCount
-
-  override val completeMatch: Boolean
-    get() = delegate.completeMatch
-  override val nameSegments: List<WebSymbolNameSegment>
-    get() = delegate.nameSegments
   override val queryScope: Sequence<WebSymbolsScope>
     get() = delegate.queryScope
   override val name: String

@@ -2,7 +2,7 @@
  {
   name: ".alt",
   priority: NORMAL,
-  proximity: 1,
+  proximity: 2,
   offset: 23,
   completeAfterChars: [.],
   source: {
@@ -71,7 +71,7 @@
  {
   name: ".ctrl",
   priority: NORMAL,
-  proximity: 1,
+  proximity: 2,
   offset: 23,
   completeAfterChars: [.],
   source: {
@@ -107,7 +107,7 @@
  {
   name: ".exact",
   priority: NORMAL,
-  proximity: 1,
+  proximity: 2,
   offset: 23,
   completeAfterChars: [.],
   source: {
@@ -175,7 +175,7 @@
  {
   name: ".meta",
   priority: NORMAL,
-  proximity: 1,
+  proximity: 2,
   offset: 23,
   completeAfterChars: [.],
   source: {
@@ -378,7 +378,7 @@
  {
   name: ".shift",
   priority: NORMAL,
-  proximity: 1,
+  proximity: 2,
   offset: 23,
   completeAfterChars: [.],
   source: {

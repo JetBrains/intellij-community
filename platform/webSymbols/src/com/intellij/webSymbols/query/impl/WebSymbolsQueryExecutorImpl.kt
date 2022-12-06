@@ -92,7 +92,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
           it.getSymbols(namespace, kind, pathSection.name, params, Stack(finalContext))
         }
         .filterIsInstance<WebSymbol>()
-        .filter { it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null) }
+        .filter { it !is WebSymbolMatch ||  it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null) }
         .distinct()
         .toList()
         .let {
@@ -121,8 +121,8 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
         .takeLastUntilExclusiveScopeFor(pathSection.namespace, pathSection.kind)
         .asSequence()
         .flatMap { scope ->
-          if (scope !is WebSymbol || !scope.extension || scope.matchedName != previousName) {
-            previousName = (scope as? WebSymbol)?.matchedName
+          if (scope !is WebSymbol || !scope.extension || scope.name != previousName) {
+            previousName = (scope as? WebSymbol)?.name
             proximityBase = nextProximityBase
           }
           scope.getCodeCompletions(pathSection.namespace, pathSection.kind, pathSection.name, params, Stack(finalContext))
