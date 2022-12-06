@@ -431,9 +431,9 @@ final class FilePageCache {
 
   @NotNull
   FilePageCacheStatistics getStatistics() {
-    pagesAccessLock.lock();
+    pagesAllocationLock.lock();
     try {
-      pagesAllocationLock.lock();
+      pagesAccessLock.lock();
       try {
         return new FilePageCacheStatistics(PagedFileStorage.CHANNELS_CACHE.getStatistics(),
                                            myUncachedFileAccess,
@@ -448,11 +448,11 @@ final class FilePageCache {
                                            cachedSizeLimit);
       }
       finally {
-        pagesAllocationLock.unlock();
+        pagesAccessLock.unlock();
       }
     }
     finally {
-      pagesAccessLock.unlock();
+      pagesAllocationLock.unlock();
     }
   }
 
