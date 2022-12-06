@@ -28,10 +28,6 @@ public class JrtHandler extends ArchiveHandler {
   @Override
   public void clearCaches() {
     super.clearCaches();
-    clearJrtFs();
-  }
-
-  private void clearJrtFs() {
     synchronized (this) {
       FileSystem fs = SoftReference.dereference(myFileSystem);
       if (fs != null) {
@@ -61,9 +57,8 @@ public class JrtHandler extends ArchiveHandler {
     return fs;
   }
 
-  @NotNull
   @Override
-  protected Map<String, EntryInfo> createEntriesMap() throws IOException {
+  protected @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException {
     Map<String, EntryInfo> map = new HashMap<>();
     map.put("", createRootEntry());
 
