@@ -39,7 +39,7 @@ jobs:
         run: ./gradlew check
       - uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: ${{ github.workspace }}/detekt.sarif.json
+          sarif_file: ${{ github.workspace }}/build/
           checkout_path: ${{ github.workspace }}
 
   qodana:
