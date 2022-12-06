@@ -30,7 +30,6 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
   EDITOR_TABS_OPTIONS_ID
 ), EditorOptionsProvider, WithEpDependencies {
   private lateinit var myEditorTabPlacement: JComboBox<Int>
-  private lateinit var myOneRowCheckbox: JCheckBox
 
   override fun createConfigurables(): List<SearchableConfigurable> =
     ConfigurableWrapper.createConfigurables(EditorTabsConfigurableEP.EP_NAME)
@@ -52,7 +51,7 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
             lateinit var singleRowButton: JBRadioButton
             row {
               singleRowButton = radioButton(message("radio.one.row"), value = true)
-                .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM })
+                .enabledIf(tabsPlacedHorizontally)
                 .component
             }
 
@@ -60,12 +59,9 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
               row { radioButton(message("radio.scroll.tabs.panel"), value = true) }
               row { radioButton(message("radio.squeeze.tabs"), value = false) }
             }.bind(ui::hideTabsIfNeeded)
-              .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM } and singleRowButton.selected)
+              .enabledIf(tabsPlacedHorizontally and singleRowButton.selected)
 
-            row {
-              radioButton(message("radio.multiple.rows"), value = false)
-                .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP))
-            }
+            row { radioButton(message("radio.multiple.rows"), value = false).enabledIf(tabsPlacedOnTop) }
 
             myEditorTabPlacement.addActionListener {
               // move selection to single row, because it is the only one option in the bottom placement
@@ -76,20 +72,14 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
           }.bind(ui::scrollTabLayoutInEditor)
         }
         else {
-          row {
-            myOneRowCheckbox = checkBox(showTabsInOneRow)
-              .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
-          }
+          lateinit var myOneRowCheckbox: JCheckBox
+          row { myOneRowCheckbox = checkBox(showTabsInOneRow).enabledIf(tabsPlacedOnTop).component }
           indent {
-            row {
-              checkBox(hideTabsIfNeeded).enabledIf(
-                myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
-                  and myOneRowCheckbox.selected).component
-            }
+            row { checkBox(hideTabsIfNeeded).enabledIf(tabsPlacedHorizontally and myOneRowCheckbox.selected) }
           }
         }
 
-        row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
+        row { checkBox(showPinnedTabsInASeparateRow).enabledIf(tabsPlacedOnTop
                                                                  and AdvancedSettingsPredicate("editor.keep.pinned.tabs.on.left", disposable!!)) }
         row { checkBox(useSmallFont).enableIfTabsVisible() }.visible(!ExperimentalUI.isNewUI())
         row { checkBox(showFileIcon).enableIfTabsVisible() }
@@ -136,9 +126,16 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
     }
   }
 
+  private val tabsPlacedHorizontally: ComponentPredicate
+    get() = myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
+
+  private val tabsPlacedOnTop: ComponentPredicate
+    get() = myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
+
   private fun <T : JComponent> Cell<T>.enableIfTabsVisible() {
     enabledIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })
   }
+
   override fun apply() {
     val uiSettingsChanged = isModified
     super.apply()
