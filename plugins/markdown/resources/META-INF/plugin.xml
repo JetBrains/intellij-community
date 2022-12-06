@@ -397,10 +397,6 @@
                  defaultValue="false"
                  description="Temporarily disabling the use of Google accounts, as the functionality is available only for internal users"/>
 
-    <registryKey key="markdown.tables.editing.support.enable"
-                 defaultValue="true"
-                 description="Enables Markdown tables editing support"/>
-
     <registryKey key="markdown.lists.renumber.on.type.enable"
                  defaultValue="false"
                  description="Enables auto renumbering of list items on type"/>

@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.editor.tables
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
@@ -188,9 +187,5 @@ object TableUtils {
       else -> last + 1
     }
     return TextRange(first.coerceAtLeast(0), end).shiftRight(startOffset)
-  }
-
-  internal fun isTableSupportEnabled(): Boolean {
-    return Registry.`is`("markdown.tables.editing.support.enable", true)
   }
 }
