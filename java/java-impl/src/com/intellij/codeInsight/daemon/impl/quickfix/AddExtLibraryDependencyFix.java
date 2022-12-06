@@ -23,10 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class AddExtLibraryDependencyFix extends OrderEntryFix {
-  private final Module myCurrentModule;
-  private final ExternalLibraryDescriptor myLibraryDescriptor;
-  private final DependencyScope myScope;
-  private final String myQualifiedClassName;
+  private final @NotNull Module myCurrentModule;
+  private final @NotNull ExternalLibraryDescriptor myLibraryDescriptor;
+  private final @NotNull DependencyScope myScope;
+  private final @Nullable String myQualifiedClassName;
 
   AddExtLibraryDependencyFix(@NotNull PsiReference reference,
                              @NotNull Module currentModule,
@@ -76,7 +76,16 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return new IntentionPreviewInfo.Html(
-      HtmlChunk.text(JavaBundle.message("adds.ext.library.preview", myLibraryDescriptor.getPresentableName(), myCurrentModule.getName(), myQualifiedClassName)));
+    if (myQualifiedClassName == null) {
+      return new IntentionPreviewInfo.Html(
+        HtmlChunk.text(
+          JavaBundle.message("adds.ext.library.preview", myLibraryDescriptor.getPresentableName(), myCurrentModule.getName())));
+    }
+    else {
+      return new IntentionPreviewInfo.Html(
+        HtmlChunk.text(
+          JavaBundle.message("adds.ext.library.preview.import", myLibraryDescriptor.getPresentableName(), myCurrentModule.getName(),
+                             myQualifiedClassName)));
+    }
   }
 }
