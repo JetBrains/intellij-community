@@ -49,14 +49,14 @@ abstract class AbstractKotlinAddImportActionTest : KotlinLightCodeInsightFixture
 
             for (i in expectedVariantNames.indices) {
                 assertTrue(
-                    "'${actualVariantNames[0]}' should start with '${expectedVariantNames[0]}'",
-                    actualVariantNames[0].startsWith(expectedVariantNames[0])
+                    "mismatch at #$i: '${actualVariantNames[i]}' should start with '${expectedVariantNames[i]}'\nactual:\n${actualVariantNames.joinToString("\n")}",
+                    actualVariantNames[i].contains(expectedVariantNames[i])
                 )
             }
 
             for (expectedAbsentVariant in expectedAbsentVariantNames) {
                 assertTrue("$expectedAbsentVariant should not be present",
-                           actualVariantNames.none { it.startsWith(expectedAbsentVariant) })
+                           actualVariantNames.none { it.contains(expectedAbsentVariant) })
             }
         }
 
