@@ -3,15 +3,13 @@ package com.intellij.webSymbols
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.matchedNameOrName
 
 class WebSymbolNameSegment(val start: Int,
                            val end: Int,
                            val symbols: List<WebSymbol> = emptyList(),
                            val problem: MatchProblem? = null,
-                           @NlsSafe
-                           val displayName: String? = null,
+                           val displayName: @NlsSafe String? = null,
                            val matchScore: Int = end - start,
                            symbolKinds: Set<WebSymbolQualifiedKind>? = null,
                            private val explicitDeprecated: Boolean? = null,
@@ -42,7 +40,7 @@ class WebSymbolNameSegment(val start: Int,
       forcedSymbolTypes
       ?: symbols.asSequence().map { WebSymbolQualifiedKind(it.namespace, it.kind) }.toSet()
 
-  fun getName(symbol: WebSymbol): String =
+  fun getName(symbol: WebSymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
 
   internal fun withOffset(offset: Int): WebSymbolNameSegment =
