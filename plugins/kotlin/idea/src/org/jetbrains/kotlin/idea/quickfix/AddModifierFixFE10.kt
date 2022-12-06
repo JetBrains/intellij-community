@@ -76,7 +76,7 @@ open class AddModifierFixFE10(
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val typeReference = diagnostic.psiElement as KtTypeReference
             val declaration = typeReference.classForRefactor() ?: return null
-            if (declaration.isEnum() || declaration.isData()) return null
+            if (declaration.isAnnotation() || declaration.isEnum() || declaration.isData() || declaration.isValue()) return null
             return AddModifierFixFE10(declaration, OPEN_KEYWORD)
         }
     }

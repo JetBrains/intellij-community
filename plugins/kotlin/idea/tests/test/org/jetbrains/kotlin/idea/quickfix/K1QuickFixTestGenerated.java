@@ -10021,6 +10021,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("annotationSuperType.kt")
+            public void testAnnotationSuperType() throws Exception {
+                runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/annotationSuperType.kt");
+            }
+
             @TestMetadata("dataSuperType.kt")
             public void testDataSuperType() throws Exception {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/dataSuperType.kt");
@@ -10089,6 +10094,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("secondaryCtrDelegationInSecondary.kt")
             public void testSecondaryCtrDelegationInSecondary() throws Exception {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/secondaryCtrDelegationInSecondary.kt");
+            }
+
+            @TestMetadata("valueSuperType.kt")
+            public void testValueSuperType() throws Exception {
+                runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/valueSuperType.kt");
             }
 
             @TestMetadata("withConstructor.kt")
