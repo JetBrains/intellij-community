@@ -12,11 +12,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.xdebugger.frame.XValueChildrenList
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
+import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
@@ -35,6 +36,18 @@ data class PandasDataFrameCandidate(val psiName: String, val needValidatorCheck:
 
 // Priority value to control order in CompletionResultSet
 private const val DATAFRAME_COLUMN_PRIORITY = 100.0
+
+fun selectDataFrameDebugValue(valuesEnv: XValueChildrenList): Map<String, DataFrameDebugValue>? {
+  val dataFrameObjects = mutableMapOf<String, DataFrameDebugValue>()
+  for (elem in 0 until valuesEnv.size()) {
+    val currentValue = valuesEnv.getValue(elem)
+    if (currentValue is DataFrameDebugValue) {
+      dataFrameObjects[currentValue.name] = currentValue
+    }
+  }
+  if (dataFrameObjects.isEmpty()) return null
+  return dataFrameObjects
+}
 
 fun collectParentReferences(parentDebug: PyDebugValue?, value: DataFrameDebugValue): String {
   val referencesCollection = mutableListOf<String>()

@@ -93,10 +93,10 @@
 
     <completion.contributor language="Python"
                             order="first"
-                            implementationClass="com.jetbrains.python.console.completion.ConsolePandasColumnNameCompletionContributor"/>
+                            implementationClass="com.jetbrains.python.console.completion.PythonPandasColumnNameCompletionContributor"/>
 
-    <projectService serviceInterface="com.jetbrains.python.console.completion.ConsolePandasColumnNameRetrievalService"
-                    serviceImplementation="com.jetbrains.python.console.completion.ConsolePandasColumnNameRetrievalServiceImpl"
+    <projectService serviceInterface="com.jetbrains.python.console.completion.PandasColumnNameRetrievalService"
+                    serviceImplementation="com.jetbrains.python.console.completion.PyPandasColumnNameRetrievalService"
                     testServiceImplementation="com.jetbrains.python.console.completion.DummyConsolePandasColumnNameRetrievalService"/>
 
     <projectService serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
