@@ -4,8 +4,12 @@ package com.intellij.ide.impl
 import com.intellij.openapi.components.*
 import com.intellij.util.io.isAncestor
 import com.intellij.util.xmlb.annotations.OptionTag
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
+
+@ApiStatus.Internal
+fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isPathTrusted(path)
 
 @State(name = "Trusted.Paths.Settings", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
