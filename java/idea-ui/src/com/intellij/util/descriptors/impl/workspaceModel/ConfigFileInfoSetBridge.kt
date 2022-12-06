@@ -7,7 +7,6 @@ import com.intellij.util.descriptors.*
 import com.intellij.util.descriptors.impl.ConfigFileContainerImpl
 import com.intellij.util.descriptors.impl.ConfigFileImpl
 import org.jdom.Element
-import org.jetbrains.annotations.NonNls
 import java.util.*
 
 class ConfigFileInfoSetBridge(private val myMetaDataProvider: ConfigFileMetaDataProvider) : ConfigFileInfoSet {
@@ -88,14 +87,5 @@ class ConfigFileInfoSetBridge(private val myMetaDataProvider: ConfigFileMetaData
 
   companion object {
     private val LOG = Logger.getInstance(ConfigFileInfoSetBridge::class.java)
-
-    @NonNls
-    val ELEMENT_NAME = "deploymentDescriptor"
-
-    @NonNls
-    val ID_ATTRIBUTE = "name"
-
-    @NonNls
-    val URL_ATTRIBUTE = "url"
   }
 }
