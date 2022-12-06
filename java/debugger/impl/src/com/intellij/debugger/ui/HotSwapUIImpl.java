@@ -9,7 +9,6 @@ import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompilerPaths;
@@ -137,7 +136,6 @@ public final class HotSwapUIImpl extends HotSwapUI {
         modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, null, findClassesProgress));
       }
 
-      final Application application = ApplicationManager.getApplication();
       if (modifiedClasses.isEmpty()) {
         final String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
         HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
@@ -145,7 +143,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         return;
       }
 
-      application.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (shouldAskBeforeHotswap && !DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
           final RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
           if (!dialog.showAndGet()) {
@@ -192,7 +190,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
               }
             }
           });
-          application.executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
+          ApplicationManager.getApplication().executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
         }
       }, ModalityState.NON_MODAL);
     });
