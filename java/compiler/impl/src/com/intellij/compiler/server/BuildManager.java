@@ -1190,7 +1190,8 @@ public final class BuildManager implements Disposable {
     final Pair<Sdk, JavaSdkVersion> pair = getBuildProcessRuntimeSdk(project);
     final Sdk projectJdk = pair.first;
     final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
-    return WslPath.getDistributionByWindowsUncPath(projectJdkType.getVMExecutablePath(projectJdk));
+    String windowsUncPath = projectJdkType.getVMExecutablePath(projectJdk);
+    return windowsUncPath != null ? WslPath.getDistributionByWindowsUncPath(windowsUncPath) : null;
   }
 
   private OSProcessHandler launchBuildProcess(@NotNull Project project, @NotNull UUID sessionId, boolean requestProjectPreload, @Nullable ProgressIndicator progressIndicator) throws ExecutionException {
