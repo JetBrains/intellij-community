@@ -6,11 +6,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.singleWindowApplication
-import org.jetbrains.jewel.themes.darcula.IntelliJThemeDark
-import org.jetbrains.jewel.themes.darcula.components.Surface
-import org.jetbrains.jewel.themes.darcula.components.Table
-import org.jetbrains.jewel.themes.darcula.components.TableView
-import org.jetbrains.jewel.themes.darcula.components.Text
+import org.jetbrains.jewel.components.Surface
+import org.jetbrains.jewel.components.Table
+import org.jetbrains.jewel.components.TableView
+import org.jetbrains.jewel.components.Text
+import org.jetbrains.jewel.themes.darcula.standalone.IntelliJThemeDark
 
 fun main() {
     singleWindowApplication {

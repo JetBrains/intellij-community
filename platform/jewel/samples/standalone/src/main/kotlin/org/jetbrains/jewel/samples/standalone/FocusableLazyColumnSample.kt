@@ -15,13 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.launch
-import org.jetbrains.jewel.themes.darcula.IntelliJThemeLight
-import org.jetbrains.jewel.themes.darcula.LocalPalette
-import org.jetbrains.jewel.themes.darcula.components.Button
-import org.jetbrains.jewel.themes.darcula.components.FocusableLazyColumn
-import org.jetbrains.jewel.themes.darcula.components.Text
-import org.jetbrains.jewel.themes.darcula.components.rememberFocusableLazyListState
-import java.awt.TextField
+import org.jetbrains.jewel.LocalPalette
+import org.jetbrains.jewel.components.Button
+import org.jetbrains.jewel.components.FocusableLazyColumn
+import org.jetbrains.jewel.components.Text
+import org.jetbrains.jewel.components.TextField
+import org.jetbrains.jewel.components.rememberFocusableLazyListState
+import org.jetbrains.jewel.themes.darcula.standalone.IntelliJThemeLight
 
 fun main() = singleWindowApplication {
     IntelliJThemeLight {

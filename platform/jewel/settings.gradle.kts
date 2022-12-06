@@ -27,8 +27,8 @@ include(
     ":compose-utils",
     ":samples:ide-plugin",
     ":samples:standalone",
-    ":themes:darcula:standalone",
-    ":themes:darcula:ide-bridge",
-    ":themes:new-ui:standalone",
-    ":themes:new-ui:ide-bridge"
+    ":themes:darcula:darcula-standalone",
+    ":themes:darcula:darcula-ide",
+    ":themes:new-ui:new-ui:standalone",
+    ":themes:new-ui:new-ui:ide"
 )

@@ -25,14 +25,14 @@ import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
 import org.jetbrains.jewel.Orientation
-import org.jetbrains.jewel.themes.darcula.IntelliJTheme
-import org.jetbrains.jewel.themes.darcula.components.Checkbox
-import org.jetbrains.jewel.themes.darcula.components.Separator
-import org.jetbrains.jewel.themes.darcula.components.Surface
-import org.jetbrains.jewel.themes.darcula.components.Text
-import org.jetbrains.jewel.themes.darcula.components.Tree
-import org.jetbrains.jewel.themes.darcula.components.TreeLayout
-import org.jetbrains.jewel.themes.darcula.components.asTree
+import org.jetbrains.jewel.components.Checkbox
+import org.jetbrains.jewel.components.Separator
+import org.jetbrains.jewel.components.Surface
+import org.jetbrains.jewel.components.Text
+import org.jetbrains.jewel.components.Tree
+import org.jetbrains.jewel.components.TreeLayout
+import org.jetbrains.jewel.components.asTree
+import org.jetbrains.jewel.themes.darcula.standalone.IntelliJTheme
 import org.jetbrains.skiko.Cursor
 import java.nio.file.Paths
 

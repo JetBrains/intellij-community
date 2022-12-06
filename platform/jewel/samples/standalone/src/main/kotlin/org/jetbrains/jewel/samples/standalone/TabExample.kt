@@ -15,14 +15,14 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
-import org.jetbrains.jewel.themes.darcula.IntelliJTheme
-import org.jetbrains.jewel.themes.darcula.components.Checkbox
-import org.jetbrains.jewel.themes.darcula.components.Surface
-import org.jetbrains.jewel.themes.darcula.components.Tab
-import org.jetbrains.jewel.themes.darcula.components.TabRow
-import org.jetbrains.jewel.themes.darcula.components.TabScope
-import org.jetbrains.jewel.themes.darcula.components.Text
-import org.jetbrains.jewel.themes.darcula.components.rememberTabContainerState
+import org.jetbrains.jewel.components.Checkbox
+import org.jetbrains.jewel.components.Surface
+import org.jetbrains.jewel.components.Tab
+import org.jetbrains.jewel.components.TabRow
+import org.jetbrains.jewel.components.TabScope
+import org.jetbrains.jewel.components.Text
+import org.jetbrains.jewel.components.rememberTabContainerState
+import org.jetbrains.jewel.themes.darcula.standalone.IntelliJTheme
 import kotlin.time.ExperimentalTime
 
 @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")

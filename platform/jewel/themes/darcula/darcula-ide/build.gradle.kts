@@ -30,6 +30,6 @@ repositories {
 }
 
 dependencies {
-    api(projects.themes.darcula.standalone)
+    api(projects.themes.darcula.darculaStandalone)
     compileOnly(libs.bundles.idea)
 }

@@ -24,7 +24,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(projects.themes.darcula.standalone)
+    implementation(projects.themes.darcula.darculaStandalone)
     implementation(libs.compose.components.splitpane)
 }
 

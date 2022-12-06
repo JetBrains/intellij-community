@@ -37,5 +37,5 @@ repositories {
 }
 
 dependencies {
-    implementation(projects.themes.darcula.ideBridge)
+    implementation(projects.themes.darcula.darculaIde)
 }

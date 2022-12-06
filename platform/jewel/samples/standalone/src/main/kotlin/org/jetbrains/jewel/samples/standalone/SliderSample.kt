@@ -24,12 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.singleWindowApplication
-import org.jetbrains.jewel.themes.darcula.IntelliJMetrics
-import org.jetbrains.jewel.themes.darcula.IntelliJTheme
-import org.jetbrains.jewel.themes.darcula.components.Checkbox
-import org.jetbrains.jewel.themes.darcula.components.Slider
-import org.jetbrains.jewel.themes.darcula.default
-import org.jetbrains.jewel.themes.darcula.styles.SliderStyle
+import org.jetbrains.jewel.IntelliJMetrics
+import org.jetbrains.jewel.themes.darcula.standalone.IntelliJTheme
+import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.components.Checkbox
+import org.jetbrains.jewel.components.Slider
+import org.jetbrains.jewel.styles.SliderStyle
+import org.jetbrains.jewel.themes.darcula.standalone.default
 
 fun main() = singleWindowApplication(
     title = "JSlider sample"
