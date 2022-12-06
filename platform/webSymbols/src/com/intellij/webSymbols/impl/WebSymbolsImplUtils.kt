@@ -85,5 +85,5 @@ internal fun WebSymbol.toCodeCompletionItems(name: String?,
     }
   }
   ?: params.queryExecutor.namesProvider
-    .getNames(namespace, kind, matchedName, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+    .getNames(namespace, kind, this.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }

@@ -5,16 +5,19 @@ import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.model.Pointer
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Priority
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.utils.completeMatch
 import com.intellij.webSymbols.utils.merge
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-open class WebSymbolMatch private constructor(override val matchedName: String,
+open class WebSymbolMatch private constructor(@NlsSafe val matchedName: String,
                                               override val nameSegments: List<WebSymbolNameSegment>,
                                               override val namespace: SymbolNamespace,
                                               override val kind: SymbolKind,
@@ -63,10 +66,6 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
 
   override val proximity: Int?
     get() = explicitProximity ?: reversedSegments().mapNotNull { it.proximity }.firstOrNull()
-
-  override val completeMatch: Boolean
-    get() = (nameSegments.all { segment -> segment.problem == null && segment.symbols.all { it.completeMatch } }
-             && (nameSegments.lastOrNull()?.end ?: 0) == matchedName.length)
 
   override val queryScope: Sequence<WebSymbolsScope>
     get() = nameSegments.asSequence()

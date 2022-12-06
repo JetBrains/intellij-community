@@ -20,6 +20,7 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
+import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.getProblemKind
 import com.intellij.webSymbols.utils.hasOnlyExtensions
@@ -58,6 +59,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   private fun getReferences(element: T, symbolNameOffset: Int, symbol: WebSymbol, showProblems: Boolean): List<PsiSymbolReference> {
     fun WebSymbol.removeZeroLengthSegmentsRecursively(): List<WebSymbol> {
+      if (this !is WebSymbolMatch ) return listOf(this)
       val nameLength = matchedName.length
       return nameSegments
                .takeIf { it.size > 1 && it.none { segment -> segment.problem != null } }
