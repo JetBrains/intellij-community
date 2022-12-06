@@ -81,11 +81,6 @@ public final class HotSwapUIImpl extends HotSwapUI {
     return ContainerUtil.exists(sessions, DebuggerSession::isPaused);
   }
 
-  private void hotSwapSessions(@NotNull List<DebuggerSession> sessions,
-                               @Nullable HotSwapStatusListener callback) {
-    hotSwapSessions(sessions, null, null, callback);
-  }
-
   private void hotSwapSessions(@NotNull final List<DebuggerSession> sessions,
                                @Nullable final Map<String, Collection<String>> generatedPaths,
                                @Nullable final NotNullLazyValue<? extends List<String>> outputPaths,
@@ -304,7 +299,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
     }
     else {
       if (session.isAttached()) {
-        hotSwapSessions(Collections.singletonList(session), callback);
+        hotSwapSessions(Collections.singletonList(session), null, null, callback);
       }
       else if (callback != null) {
         callback.onFailure(new SmartList<>(session));
