@@ -19,6 +19,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.images.ImageUtils
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import java.awt.datatransfer.Transferable
 import java.net.URLEncoder
 import java.nio.charset.Charset
@@ -30,6 +31,9 @@ import kotlin.io.path.relativeTo
 internal class EditorFileDropHandler: CustomFileDropHandler() {
   override fun canHandle(transferable: Transferable, editor: Editor?): Boolean {
     if (editor == null || !editor.document.isWritable) {
+      return false
+    }
+    if (!MarkdownCodeInsightSettings.getInstance().state.enableFilesDrop) {
       return false
     }
     val file = PsiEditorUtil.getPsiFile(editor)
