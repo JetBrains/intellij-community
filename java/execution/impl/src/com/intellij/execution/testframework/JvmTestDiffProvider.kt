@@ -26,6 +26,7 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
       val virtualFile = file.virtualFile ?: return@forEach
       val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return@forEach
       val lineNumber = lineParser.info.lineNumber
+      if (lineNumber < 1) return@forEach
       val startOffset = document.getLineStartOffset(lineNumber - 1)
       val endOffset = document.getLineEndOffset(lineNumber - 1)
       val failedCall = failedCall(file, startOffset, endOffset, enclosingMethod) ?: return@forEach
