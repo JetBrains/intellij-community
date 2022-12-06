@@ -17,20 +17,16 @@
   </content>
 
   <description><![CDATA[
-<p>Allows editing Markdown files within the IDE and seeing the rendered HTML in a live preview.
+<p>Provides editing assistance for Markdown files within the IDE.</p>
 </br>
-</br>
-Includes the following features:</p>
 <ul>
-<li>Highlighting, Completion, Links navigation, Drag and drop image to markup, and Insert actions (for images, tables, and links).</li>
-<li>Live HTML preview (except Android Studio, see <a href="https://issuetracker.google.com/issues/159933628?pli=1#comment7">issue and workaround</a>).</li>
-<li>Live Table editing.</li>
-<li>Document structure view.</li>
-<li>Full HTML syntax support out of the box.</li>
-<li>Embedded language support inside code blocks.</li>
-<li>Visualizing diagrams for the Mermaid and PlantUML languages.</li>
+<li>Full support for vanilla Markdown syntax: highlighting, completion, navigation, inspection, intentions, and much more.</li>
+<li>Live HTML preview, customizable with CSS (except Android Studio, see <a href="https://issuetracker.google.com/issues/159933628?pli=1#comment7">issue and workaround</a>).</li>
+<li>Assistance for editing tables and lists: automatic alignment and numbering.</li>
+<li>Drag and drop to insert images.</li>
+<li>Language injection in code blocks.</li>
 <li>Pandoc Converter for HTML, Microsoft Word, and PDF formats.</li>
-<li>Ability to customize stylesheets (CSS) for a live preview.</li>
+<li>Support for PlantUML diagram rendering (you can add support for Mermaid diagrams with a <a href="https://plugins.jetbrains.com/plugin/20146-mermaid">separate plugin</a>).</li>
 </ul>
 ]]></description>
 
