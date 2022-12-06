@@ -16,7 +16,7 @@ class MarkdownCodeInsightSettings: PersistentStateComponent<MarkdownCodeInsightS
     @Property
     val insertHtmlLineBreakInsideTables: Boolean = true,
     @Property
-    val insertNewTableRowOnShiftTab: Boolean = true,
+    val insertNewTableRowOnShiftEnter: Boolean = true,
     @Property
     val useTableCellNavigation: Boolean = true,
     @Property

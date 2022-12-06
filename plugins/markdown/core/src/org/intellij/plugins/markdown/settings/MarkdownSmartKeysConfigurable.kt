@@ -34,8 +34,8 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.insert.new.row"))
           .bindSelected(
-            getter = { settings.state.insertNewTableRowOnShiftTab },
-            setter = { settings.update { state -> state.copy(insertNewTableRowOnShiftTab = it) } }
+            getter = { settings.state.insertNewTableRowOnShiftEnter },
+            setter = { settings.update { state -> state.copy(insertNewTableRowOnShiftEnter = it) } }
           )
       }
       row {

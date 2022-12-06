@@ -19,7 +19,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
 internal class MarkdownTableShiftEnterHandler(private val baseHandler: EditorActionHandler?): EditorWriteActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
@@ -34,7 +34,7 @@ internal class MarkdownTableShiftEnterHandler(private val baseHandler: EditorAct
 
   private fun actuallyExecute(editor: Editor, caret: Caret?, dataContext: DataContext?): Boolean {
     val project = editor.project ?: return false
-    if (!MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+    if (!MarkdownCodeInsightSettings.getInstance().state.insertNewTableRowOnShiftEnter) {
       return false
     }
     val document = editor.document
