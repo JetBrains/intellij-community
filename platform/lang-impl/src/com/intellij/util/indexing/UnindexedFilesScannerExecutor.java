@@ -76,20 +76,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   @NotNull
   @VisibleForTesting
   DumbModeTask wrapAsDumbTask(@NotNull UnindexedFilesScanner task) {
-    return new UnindexedFilesScannerAsDumbModeTaskWrapper(task) {
-      @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        ProgressIndicator old = runningTask.getAndSet(indicator);
-        try {
-          LOG.assertTrue(old == null, "Old = " + old);
-          super.performInDumbMode(indicator);
-        }
-        finally {
-          old = runningTask.getAndSet(null);
-          LOG.assertTrue(old == indicator, "Old = " + old);
-        }
-      }
-    };
+    return new UnindexedFilesScannerAsDumbModeTaskWrapper(task, runningTask);
   }
 
   @Override

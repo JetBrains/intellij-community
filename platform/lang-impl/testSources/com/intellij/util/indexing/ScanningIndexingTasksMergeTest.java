@@ -104,6 +104,13 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     DumbModeTask dumb1 = executor.wrapAsDumbTask(t1);
     DumbModeTask dumb2 = executor.wrapAsDumbTask(t2);
     DumbModeTask mergedDumb = dumb1.tryMergeWith(dumb2);
+
+    assertEquals("Should be of the same class to merge successfully", dumb1.getClass(), dumb2.getClass());
+    assertEquals(
+      "Should be of the same class, otherwise mergedDumb will not be able to merge with new tasks produced by executor.wrapAsDumbTask",
+      mergedDumb.getClass(), dumb1.getClass()
+    );
+
     return ((UnindexedFilesScannerAsDumbModeTaskWrapper)mergedDumb).getTask();
   }
 
