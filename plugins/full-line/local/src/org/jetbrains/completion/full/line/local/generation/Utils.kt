@@ -58,15 +58,45 @@ private data class IndexToValue(val index: Int, val value: Double) : Comparable<
   override fun compareTo(other: IndexToValue): Int = -compareValues(this.value, other.value)
 }
 
+/**
+ * Please run a benchmark (from benchmark module) if you are going to change this method.
+ * The current implementation is optimized for a small [size]
+ */
 fun topk1d(data: DoubleArray, size: Int): IntArray {
-  val newData = mutableListOf<IndexToValue>()
+  if (size == 0) {
+    return IntArray(0)
+  }
+  val queue = PriorityQueue<IndexToValue>(size)
+  var worstValue = 0.0
+  var worstIndex = -1
   for ((index, value) in data.withIndex()) {
     if (value != Double.NEGATIVE_INFINITY) {
-      newData.add(IndexToValue(index, value))
+      if (queue.size < size) {
+        queue.add(IndexToValue(index, value))
+        if (worstIndex == -1 || value < worstValue) {
+          worstIndex = index
+          worstValue = value
+        }
+      } else if (worstValue < value) {
+        val iter = queue.iterator()
+        var nextWorstIndex = index
+        var nextWorstValue = value
+        while (iter.hasNext()) {
+          val next = iter.next()
+          if (next.index == worstIndex) {
+            iter.remove()
+          } else if (next.value < nextWorstValue) {
+            nextWorstValue = next.value
+            nextWorstIndex = next.index
+          }
+        }
+        worstIndex = nextWorstIndex
+        worstValue = nextWorstValue
+        queue.add(IndexToValue(index, value))
+      }
     }
   }
-  val queue = PriorityQueue(newData)
-  return IntArray(min(size, queue.size)) { queue.poll().index }
+  return IntArray(queue.size) { queue.poll().index }
 }
 
 internal fun topk2d(data: Array<DoubleArray>, size: Int, dim: Int = 0): Array<IntArray> {
