@@ -61,6 +61,16 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
             KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
         }
 
+        @TestMetadata("hierarchyWithMissedLevel.kt")
+        public void testHierarchyWithMissedLevel() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/hierarchyWithMissedLevel.kt");
+        }
+
+        @TestMetadata("objectLiteralInheritor.kt")
+        public void testObjectLiteralInheritor() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/objectLiteralInheritor.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinFunction/simple.kt");

@@ -57,12 +57,10 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
     override fun collectSearchRequest(parameters: SearchParameters): Query<out PsiElement>? {
         val klass = parameters.ktCallableDeclaration.containingClassOrObject
         if (klass !is KtClass) return null
-        
-        return DirectKotlinClassInheritorsSearch.search(klass, parameters.searchScope)
-            .flatMapping { psiInheritor ->
-                val ktClassOrObject = psiInheritor.unwrapped
-                if (ktClassOrObject !is KtClassOrObject) EmptyQuery.getEmptyQuery()
-                else object : AbstractQuery<PsiElement>() {
+
+        return CollectionQuery(klass.findAllInheritors(parameters.searchScope).mapNotNull { it.unwrapped as? KtClassOrObject }.toList())
+            .flatMapping { ktClassOrObject ->
+                object : AbstractQuery<PsiElement>() {
                     override fun processResults(consumer: Processor<in PsiElement>): Boolean {
                         val superFunction = runReadAction {
                             analyze(parameters.ktCallableDeclaration) {
@@ -79,7 +77,7 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
                                     .forEach { overridingSymbol ->
                                         val function = overridingSymbol.psi
                                         if (function != null &&
-                                            overridingSymbol.getAllOverriddenSymbols().any { it == superFunction } &&
+                                            overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction?.psi } &&
                                             !consumer.process(function)
                                         ) {
                                             return@runReadAction false
