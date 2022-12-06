@@ -189,30 +189,35 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     if (editor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
       if (scrollType == ScrollType.CENTER ||
           scrollType == ScrollType.CENTER_DOWN ||
-          scrollType == ScrollType.CENTER_UP) {
+          scrollType == ScrollType.CENTER_UP ||
+          scrollType == ScrollType.CENTER_CENTER) {
         scrollType = ScrollType.RELATIVE;
       }
     }
 
-    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
-    int xInsets = editor.getSettings().getAdditionalColumnsCount() * spaceWidth;
-
-    int hOffset = scrollType == ScrollType.CENTER ||
-                  scrollType == ScrollType.CENTER_DOWN ||
-                  scrollType == ScrollType.CENTER_UP ? 0 : viewRect.x;
-    if (targetLocation.x < hOffset) {
-      int inset = 4 * spaceWidth;
-      if (scrollType == ScrollType.MAKE_VISIBLE && targetLocation.x < viewRect.width - inset) {
-        // if we need to scroll to the left to make target position visible,
-        // let's scroll to the leftmost position (if that will make caret visible)
-        hOffset = 0;
+    int hOffset;
+    if (scrollType == ScrollType.CENTER_CENTER) {
+      hOffset = Math.max(0, targetLocation.x - viewRect.width / 2);
+    } else {
+      hOffset = scrollType == ScrollType.CENTER ||
+                scrollType == ScrollType.CENTER_DOWN ||
+                scrollType == ScrollType.CENTER_UP ? 0 : viewRect.x;
+      int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
+      int xInsets = editor.getSettings().getAdditionalColumnsCount() * spaceWidth;
+      if (targetLocation.x < hOffset) {
+        int inset = 4 * spaceWidth;
+        if (scrollType == ScrollType.MAKE_VISIBLE && targetLocation.x < viewRect.width - inset) {
+          // if we need to scroll to the left to make target position visible,
+          // let's scroll to the leftmost position (if that will make caret visible)
+          hOffset = 0;
+        }
+        else {
+          hOffset = Math.max(0, targetLocation.x - inset);
+        }
       }
-      else {
-        hOffset = Math.max(0, targetLocation.x - inset);
+      else if (viewRect.width > 0 && targetLocation.x >= hOffset + viewRect.width) {
+        hOffset = targetLocation.x - Math.max(0, viewRect.width - xInsets);
       }
-    }
-    else if (viewRect.width > 0 && targetLocation.x >= hOffset + viewRect.width) {
-      hOffset = targetLocation.x - Math.max(0, viewRect.width - xInsets);
     }
 
     // the following code tries to keeps 1 line above and 1 line below if available in viewRect
@@ -226,7 +231,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     int centerPosition = targetLocation.y - viewRect.height / 3;
 
     int vOffset = viewRect.y;
-    if (scrollType == ScrollType.CENTER) {
+    if (scrollType == ScrollType.CENTER || scrollType == ScrollType.CENTER_CENTER) {
       vOffset = centerPosition;
     }
     else if (scrollType == ScrollType.CENTER_UP) {
@@ -305,13 +310,6 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     JScrollBar scrollbar = mySupplier.getScrollPane().getVerticalScrollBar();
 
     scrollbar.setValue(scrollOffset);
-  }
-
-  @Override
-  public void centerHorizontally(@NotNull LogicalPosition pos) {
-    Point point = mySupplier.getScrollingHelper().calculateScrollingLocation(mySupplier.getEditor(), pos);
-    int editorWidth = mySupplier.getScrollPane().getHorizontalScrollBar().getWidth();
-    scrollHorizontally(Math.max(0, point.x - editorWidth / 2));
   }
 
   @Override

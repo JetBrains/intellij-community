@@ -73,14 +73,12 @@ public class SelectionManager {
         FindUtil.selectSearchResultInEditor(editor, cursor, -1);
       }
       if (adjustScrollPosition) {
-        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-        LogicalPosition logicalPosition = editor.offsetToLogicalPosition(cursor.getEndOffset());
-        editor.getScrollingModel().centerHorizontally(logicalPosition);
+        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_CENTER);
       }
     } else {
       if (!SearchResults.insideVisibleArea(editor, cursor) && adjustScrollPosition) {
         LogicalPosition pos = editor.offsetToLogicalPosition(cursor.getStartOffset());
-        editor.getScrollingModel().scrollTo(pos, ScrollType.CENTER);
+        editor.getScrollingModel().scrollTo(pos, ScrollType.CENTER_CENTER);
       }
     }
   }
