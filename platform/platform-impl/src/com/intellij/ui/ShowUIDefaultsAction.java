@@ -77,6 +77,12 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       public JBTextField mySearchField;
       public JBCheckBox myColorsOnly;
 
+      @Override
+      protected void doOKAction() {
+        super.doOKAction();
+        LafManager.getInstance().updateUI();
+      }
+
       @Nullable
       @Override
       public JComponent getPreferredFocusedComponent() {
