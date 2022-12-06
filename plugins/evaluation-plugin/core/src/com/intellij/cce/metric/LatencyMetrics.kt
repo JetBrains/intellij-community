@@ -1,5 +1,6 @@
 package com.intellij.cce.metric
 
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
@@ -13,6 +14,7 @@ abstract class LatencyMetric(override val name: String) : Metric {
     val fileSample = Sample()
     sessions.stream()
       .flatMap { session -> session.lookups.stream() }
+      .filter(::filter)
       .forEach {
         this.sample.add(it.latency.toDouble())
         fileSample.add(it.latency.toDouble())
@@ -21,6 +23,8 @@ abstract class LatencyMetric(override val name: String) : Metric {
   }
 
   abstract fun compute(sample: Sample): Double
+
+  open fun filter(lookup: Lookup): Boolean = true
 }
 
 class MaxLatencyMetric : LatencyMetric("Max Latency") {
@@ -29,8 +33,12 @@ class MaxLatencyMetric : LatencyMetric("Max Latency") {
   override val valueType = MetricValueType.INT
 }
 
-class MeanLatencyMetric : LatencyMetric("Mean Latency") {
+class MeanLatencyMetric(private val filterZeroes: Boolean = false) : LatencyMetric("Mean Latency") {
   override fun compute(sample: Sample): Double = sample.mean()
 
   override val valueType = MetricValueType.DOUBLE
+
+  override fun filter(lookup: Lookup): Boolean {
+    return if (filterZeroes) lookup.latency > 0 else true
+  }
 }

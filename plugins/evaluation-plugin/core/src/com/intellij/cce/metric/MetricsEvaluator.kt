@@ -34,7 +34,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     registerMetric(CompletionGolfMovesSumMetric())
     registerMetric(CompletionGolfMovesCountNormalised())
     registerMetric(CompletionGolfPerfectLine())
-    registerMetric(MeanLatencyMetric())
+    registerMetric(MeanLatencyMetric(true))
     registerMetric(MaxLatencyMetric())
     registerMetric(SessionsCountMetric())
   }
