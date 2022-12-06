@@ -25,7 +25,7 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
       // TODO should be "missing required part", but needs improvements in sequence pattern code completion
       return listOf(MatchResult(listOf(WebSymbolNameSegment(
         start, end, emptyList(),
-        problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM,
+        problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
         displayName = displayName,
         symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastOrNull() as? WebSymbol) ?: emptySet()
       ))))
@@ -48,7 +48,7 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
         else -> listOf(WebSymbolNameSegment(
           start, end,
           emptyList(),
-          problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM,
+          problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
           displayName = displayName,
           symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastOrNull() as? WebSymbol) ?: emptySet(),
         ))

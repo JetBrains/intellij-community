@@ -42,7 +42,7 @@
    },
    {
     name-part: "clicked",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
    {
     name-part: ".",

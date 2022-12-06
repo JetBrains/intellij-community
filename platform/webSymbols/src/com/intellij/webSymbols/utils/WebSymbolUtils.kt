@@ -135,7 +135,7 @@ fun WebSymbol.match(nameToMatch: String,
 fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
   when (problem) {
     WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART -> ProblemKind.MissingRequiredPart
-    WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM ->
+    WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL ->
       if (start == end)
         ProblemKind.MissingRequiredPart
       else
@@ -161,7 +161,7 @@ val WebSymbol.hideFromCompletion
     properties[WebSymbol.PROP_HIDE_FROM_COMPLETION] == true
 
 val (WebSymbolNameSegment.MatchProblem?).isCritical
-  get() = this == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM
+  get() = this == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL
 
 fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegment> =
   if (offset != 0) map { it.withOffset(offset) }

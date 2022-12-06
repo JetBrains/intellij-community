@@ -68,7 +68,7 @@
    {
     name-part: "bar",
     display-name: "argument",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
   ],
  },

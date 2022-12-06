@@ -24,7 +24,7 @@
    },
    {
     name-part: "oh-c",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
   ],
  },
