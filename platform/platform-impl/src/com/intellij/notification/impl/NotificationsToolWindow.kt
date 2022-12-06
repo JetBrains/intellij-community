@@ -34,10 +34,7 @@ import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
@@ -99,6 +96,7 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun isApplicable(project: Project) = ActionCenter.isEnabled()
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    toolWindow.setContentUiType(ToolWindowContentUiType.TABBED, null)
     NotificationContent(project, toolWindow)
   }
 }
