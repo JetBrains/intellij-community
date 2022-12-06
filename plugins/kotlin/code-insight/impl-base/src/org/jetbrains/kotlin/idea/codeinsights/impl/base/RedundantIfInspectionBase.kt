@@ -10,6 +10,7 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
+import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -159,6 +160,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 else -> condition
             }
 
+            val commentSaver = CommentSaver(element)
             runWriteAction {
                 /**
                  * This is the case that we used the next expression of the if expression as the else expression.
@@ -170,7 +172,8 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     it.delete()
                 }
 
-                element.replace(newExpressionOnlyWithCondition)
+                val replaced = element.replace(newExpressionOnlyWithCondition)
+                commentSaver.restore(replaced)
             }
         }
 
