@@ -37,7 +37,7 @@ class GradleTaskProperty(
   }
 
   override fun decorateType(type: PsiClassType): PsiClassType {
-    return decorateTaskType(type)
+    return org.jetbrains.plugins.gradle.service.resolve.decoratePsiClassType(type)
   }
 
   override fun <T : Any?> getUserData(key: Key<T>): T? {

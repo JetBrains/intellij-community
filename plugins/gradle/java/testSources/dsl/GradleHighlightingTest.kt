@@ -6,14 +6,12 @@ import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.textContent
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
-import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.EMPTY_PROJECT
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -46,18 +44,6 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
         val reference = psiFile.findReferenceAt(offset)!!
         val method = assertInstanceOf<PsiMethod>(reference.resolve())
         assertEquals("setTransitive", method.name)
-      }
-    }
-  }
-
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun testAndroid(gradleVersion: GradleVersion) {
-    test(gradleVersion, ANDROID_FIXTURE) {
-      val file = getFile("build.gradle")
-      runInEdtAndWait {
-        fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
-        fixture.testHighlighting(true, false, true, file)
       }
     }
   }
@@ -116,6 +102,19 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
         |    }
         |}
       """.trimMargin())
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test runtime decoration of Action to Closure`(gradleVersion: GradleVersion) {
+    test(gradleVersion, BUILD_SRC_FIXTURE_2) {
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        task grr(type: GrTask) {
+            foo {}
+        }
+      """.trimIndent())
     }
   }
 
@@ -230,30 +229,22 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       withDirectory("buildSrc/src/main/java")
     }
 
-    private val ANDROID_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-android") {
+    private val BUILD_SRC_FIXTURE_2 = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc2") {
       withSettingsFile {
-        pluginManagement {
-          call("repositories") {
-            call("google")
-            call("mavenCentral")
-            call("gradlePluginPortal")
-          }
-        }
-        setProjectName("GradleHighlightingTest-android")
+        setProjectName("GradleHighlightingTest-buildSrc2")
       }
-      withBuildFile(it) {
-        withPrefix {
-          call("plugins") {
-            code("id 'com.android.application' version '7.3.0'")
-          }
-          call("android") {
-            call("compileSdk", int(32))
-            call("defaultConfig") {
-              call("applicationId", string("com.example.myApplication"))
-            }
-          }
+      withFile("buildSrc/src/main/groovy/GrTask.groovy", """
+        import org.gradle.api.Action
+        import org.gradle.api.DefaultTask;
+        
+        class GrTask extends DefaultTask {
+            @FunctionalInterface
+            static interface FunInterface1 { void foo(String s) }
+        
+            void foo(FunInterface1 _) {}
+            void foo(Action<? super String> _) {}
         }
-      }
+      """.trimIndent())
     }
   }
 }

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.asSafely
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
@@ -73,20 +72,13 @@ class GradleMiscContributor : GradleMethodContextContributor {
       val methodResult = parent.advancedResolve().asSafely<GroovyMethodResult>() ?: return null
       val closureParameter = methodResult.candidate?.argumentMapping?.expectedType(ExpressionArgument(closure))
       if (closureParameter?.equalsToText(GROOVY_LANG_CLOSURE) == true) {
-        val returnType = methodResult.substitutor.substitute(methodResult.element.returnType).maybeDecorate()
+        val returnType = methodResult.substitutor.substitute(methodResult.element.returnType).let(::decoratePsiType)
         if (returnType !is PsiPrimitiveType) {
           return DelegatesToInfo(returnType, Closure.DELEGATE_FIRST)
         }
       }
     }
     return null
-  }
-
-  private fun PsiType.maybeDecorate() : PsiType {
-    if (this is PsiClassType && InheritanceUtil.isInheritor(this, GRADLE_API_TASK)) {
-      return decorateTaskType(this)
-    }
-    return this
   }
 
   override fun process(methodCallInfo: MutableList<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {

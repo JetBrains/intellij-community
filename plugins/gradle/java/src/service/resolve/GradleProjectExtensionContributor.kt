@@ -56,7 +56,7 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
       if (delegateType !is PsiClassType) {
         continue
       }
-      val type = GradleExtensionType(delegateType)
+      val type = GradleExtensionType(decoratePsiClassType(delegateType))
       if (processProperties) {
         val extensionProperty = GradleExtensionProperty(extension.name, type, containingFile)
         if (!processor.execute(extensionProperty, state)) {
