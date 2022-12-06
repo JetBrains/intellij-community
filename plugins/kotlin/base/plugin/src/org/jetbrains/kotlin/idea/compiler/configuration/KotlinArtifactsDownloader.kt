@@ -66,7 +66,7 @@ object KotlinArtifactsDownloader {
         project: Project,
         jpsVersion: String,
         indicator: ProgressIndicator,
-        onError: (String) -> Unit,
+        onError: (@Nls(capitalization = Nls.Capitalization.Sentence) String) -> Unit,
     ): Boolean {
         val context = LazyKotlinJpsPluginClasspathDownloader.Context(project, indicator)
         val jpsPluginClasspath = LazyKotlinJpsPluginClasspathDownloader(jpsVersion).lazyDownload(context)
@@ -231,8 +231,11 @@ object KotlinArtifactsDownloader {
     private fun getMavenRepos(project: Project): List<RemoteRepositoryDescription> =
         RemoteRepositoriesConfiguration.getInstance(project).repositories
 
-    @Nls
-    fun failedToDownloadUnbundledJpsMavenArtifact(project: Project, artifactId: String, version: String): String {
+    fun failedToDownloadUnbundledJpsMavenArtifact(
+        project: Project,
+        artifactId: String,
+        version: String,
+    ): @Nls(capitalization = Nls.Capitalization.Sentence) String {
         require(artifactId == KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID || artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) {
             "$artifactId should be either $KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID or $KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID"
         }
