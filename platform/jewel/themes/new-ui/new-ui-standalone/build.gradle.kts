@@ -8,7 +8,15 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 jvmTarget = "17"
-                freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
+            }
+        }
+    }
+    sourceSets {
+        all {
+            languageSettings {
+                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                optIn("kotlin.experimental.ExperimentalTypeInference")
+                optIn("androidx.compose.ui.ExperimentalComposeUiApi")
             }
         }
     }
