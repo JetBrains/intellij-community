@@ -11,21 +11,21 @@ class UtilsTest {
   fun testTopk1d() {
     val list = doubleArrayOf(0.1, 0.2, 0.9, 0.3, 0.4, 0.0, 0.1, 0.5)
     val expected = intArrayOf(2, 7, 4)
-    assertArrayEquals(topk1d(list, 3), expected)
+    assertArrayEquals(expected, topk1d(list, 3))
   }
 
   @Test
   fun testTopk1dSameSize() {
     val list = doubleArrayOf(0.1, 0.9, 0.3)
     val expected = intArrayOf(1, 2, 0)
-    assertArrayEquals(topk1d(list, 3), expected)
+    assertArrayEquals(expected, topk1d(list, 3))
   }
 
   @Test
   fun testTopk1dLessSize() {
     val list = doubleArrayOf(0.1, 0.9)
     val expected = intArrayOf(1, 0)
-    assertArrayEquals(topk1d(list, 3), expected)
+    assertArrayEquals(expected, topk1d(list, 3))
   }
 
   @Test
@@ -38,7 +38,7 @@ class UtilsTest {
       .take(k)
       .map { it.first }
       .toIntArray()
-    assertArrayEquals(topk1d(list, k), expected)
+    assertArrayEquals(expected, topk1d(list, k))
   }
 
   @Test
@@ -47,7 +47,7 @@ class UtilsTest {
     val list2 = doubleArrayOf(0.6, 0.8, 0.2, 0.1, 0.4, 0.7, 0.3, 0.0)
     val list = arrayOf(list1, list2)
     val expected = arrayOf(intArrayOf(2, 7, 4), intArrayOf(1, 5, 0))
-    assertArrayEquals(topk2d(list, 3, dim = 1), expected)
+    assertArrayEquals(expected, topk2d(list, 3, dim = 1))
 
     val column = arrayOf(
       doubleArrayOf(0.9, 0.3),
@@ -60,7 +60,7 @@ class UtilsTest {
       intArrayOf(3, 3),
       intArrayOf(1, 0)
     )
-    assertArrayEquals(topk2d(column, 3, dim = 0), target)
+    assertArrayEquals(target, topk2d(column, 3, dim = 0))
   }
 
   @Test
