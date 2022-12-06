@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.SendFeedbackAction
-import com.intellij.ide.feedback.FeedbackForm
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -55,7 +55,7 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
   private fun sendFeedback() {
     val feedbackForm = (ApplicationInfo.getInstance() as ApplicationInfoImpl).feedbackForm
     if (Registry.`is`("ide.in.product.feedback") && feedbackForm != null) {
-      FeedbackForm(null, feedbackForm, false).show()
+      NewUIFeedbackDialog(null, false).show()
     }
     else {
       SendFeedbackAction.submit(null)
