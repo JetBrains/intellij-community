@@ -27,6 +27,10 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
     return Lookup(lookup.prefix, suggestions, lookup.latency, selectedPosition = new.second, isNew = lookup.isNew)
   }
 
+  fun isSkippable(str: String): Boolean {
+    return str.isBlank()
+  }
+
   private fun checkForPerfectLine(expectedLine: String, suggestions: List<Suggestion>, prefix: String): Pair<String, Int>? {
     var res: Pair<String, Int>? = null
     suggestions.forEachIndexed { index, suggestion ->

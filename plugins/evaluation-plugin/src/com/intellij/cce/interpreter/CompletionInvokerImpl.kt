@@ -195,9 +195,16 @@ class CompletionInvokerImpl(private val project: Project,
 
     while (currentString != expectedLine) {
       val lookup = callCompletion(expectedLine, null)
+      val nextChar = expectedLine[currentString.length].toString()
+
+      if (emulator.isSkippable(nextChar)) {
+        printText(nextChar)
+        currentString += nextChar
+        continue
+      }
 
       emulator.pickBestSuggestion(currentString, lookup, session).also {
-        printText(it.selectedWithoutPrefix() ?: expectedLine[currentString.length].toString())
+        printText(it.selectedWithoutPrefix() ?: nextChar)
         currentString = document.getText(TextRange(offset, document.getLineEndOffset(line) - tail))
 
         if (currentString.isNotEmpty()) {
