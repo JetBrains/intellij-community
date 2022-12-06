@@ -85,7 +85,7 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         )
     }
 
-    fun `_test parameter reference diff multiple methods on same line`() {
+    fun `test parameter reference diff multiple methods on same line`() {
         checkAcceptDiff(
             """
             import org.junit.Assert

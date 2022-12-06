@@ -7,10 +7,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.asSafely
 import com.siyeh.ig.testFrameworks.UAssertHint
+import org.jetbrains.kotlin.backend.jvm.ir.psiElement
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.toUElementOfType
 
 class KotlinTestDiffProvider : JvmTestDiffProvider<KtCallExpression>() {
@@ -27,9 +29,13 @@ class KotlinTestDiffProvider : JvmTestDiffProvider<KtCallExpression>() {
         return null
     }
 
-    override fun getFailedCall(file: PsiFile, startOffset: Int, endOffset: Int): KtCallExpression? {
-        val failedCallExpression = findElementsOfClassInRange(file, startOffset, endOffset, KtCallExpression::class.java).firstOrNull()
-        return failedCallExpression.safeAs<KtCallExpression>()
+    override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): KtCallExpression? {
+        val failedCalls = findElementsOfClassInRange(file, startOffset, endOffset, KtCallExpression::class.java)
+            .map { it as KtCallExpression }
+        if (failedCalls.isEmpty()) return null
+        if (failedCalls.size == 1) return failedCalls.first()
+        if (method == null) return null
+        return failedCalls.firstOrNull { it.resolveToCall()?.resultingDescriptor?.psiElement == method.sourcePsi }
     }
 
     override fun getExpected(call: KtCallExpression, argIndex: Int?): PsiElement? {

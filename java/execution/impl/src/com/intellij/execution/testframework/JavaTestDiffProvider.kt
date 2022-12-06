@@ -7,6 +7,7 @@ import com.intellij.psi.*
 import com.intellij.util.asSafely
 import com.intellij.util.containers.ContainerUtil
 import com.siyeh.ig.testFrameworks.AssertHint.Companion.createAssertEqualsHint
+import org.jetbrains.uast.UMethod
 
 class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
   override fun createActual(project: Project, element: PsiElement, actual: String): PsiElement {
@@ -20,12 +21,15 @@ class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
     return null
   }
 
-  override fun getFailedCall(file: PsiFile, startOffset: Int, endOffset: Int): PsiMethodCallExpression? {
-    val statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)
-    if (statements.isEmpty()) return null
-    if (statements.size > 1 && statements.firstOrNull() !is PsiExpressionStatement) return null
-    val expression = (statements.firstOrNull() as? PsiExpressionStatement)?.expression
-    return if (expression !is PsiMethodCallExpression) null else expression
+  override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiMethodCallExpression? {
+    val failedCalls = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)
+      .filterIsInstance(PsiExpressionStatement::class.java)
+      .map { it.expression }
+      .filterIsInstance(PsiMethodCallExpression::class.java)
+    if (failedCalls.isEmpty()) return null
+    if (failedCalls.size == 1) return failedCalls.first()
+    if (method == null) return null
+    return failedCalls.firstOrNull { it.resolveMethod() == method.sourcePsi }
   }
 
   override fun getExpected(call: PsiMethodCallExpression, argIndex: Int?): PsiElement? {
