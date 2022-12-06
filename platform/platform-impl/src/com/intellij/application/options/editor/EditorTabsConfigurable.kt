@@ -13,6 +13,7 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
@@ -44,17 +45,50 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         row(TAB_PLACEMENT + ":") {
           myEditorTabPlacement = tabPlacementComboBox().component
         }
-        row {
-          myOneRowCheckbox = checkBox(showTabsInOneRow)
-            .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+
+        if (ExperimentalUI.isNewUI()) {
+          @Suppress("DialogTitleCapitalization")
+          buttonsGroup(message("button.group.title.show.tabs.in")) {
+            lateinit var singleRowButton: JBRadioButton
+            row {
+              singleRowButton = radioButton(message("radio.one.row"), value = true)
+                .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM })
+                .component
+            }
+
+            buttonsGroup(indent = true) {
+              row { radioButton(message("radio.scroll.tabs.panel"), value = true) }
+              row { radioButton(message("radio.squeeze.tabs"), value = false) }
+            }.bind(ui::hideTabsIfNeeded)
+              .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM } and singleRowButton.selected)
+
+            row {
+              radioButton(message("radio.multiple.rows"), value = false)
+                .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP))
+            }
+
+            myEditorTabPlacement.addActionListener {
+              // move selection to single row, because it is the only one option in the bottom placement
+              if (myEditorTabPlacement.selectedItem == SwingConstants.BOTTOM) {
+                singleRowButton.isSelected = true
+              }
+            }
+          }.bind(ui::scrollTabLayoutInEditor)
         }
-        indent {
+        else {
           row {
-            checkBox(hideTabsIfNeeded).enabledIf(
-              myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
-                and myOneRowCheckbox.selected).component
+            myOneRowCheckbox = checkBox(showTabsInOneRow)
+              .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+          }
+          indent {
+            row {
+              checkBox(hideTabsIfNeeded).enabledIf(
+                myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
+                  and myOneRowCheckbox.selected).component
+            }
           }
         }
+
         row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
                                                                  and AdvancedSettingsPredicate("editor.keep.pinned.tabs.on.left", disposable!!)) }
         row { checkBox(useSmallFont).enableIfTabsVisible() }.visible(!ExperimentalUI.isNewUI())
