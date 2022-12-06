@@ -2,6 +2,7 @@
 package com.intellij.openapi.observable.dispatcher
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
@@ -9,42 +10,57 @@ import java.util.concurrent.atomic.AtomicInteger
 @ApiStatus.Internal
 internal class SingleEventDispatcherImpl<T> : SingleEventDispatcher.Multicaster1<T> {
 
-  private val listeners = DisposableWrapperList<(T) -> Unit>()
+  private val listeners = DisposableWrapperList<ListenerWrapper<T>>()
 
   override fun fireEvent(argument1: T) {
     listeners.forEach { it(argument1) }
   }
 
   override fun whenEventHappened(parentDisposable: Disposable?, listener: (T) -> Unit) {
-    addListener(parentDisposable, listener)
+    val wrapper = ListenerWrapper(parentDisposable) {
+      listener(it)
+    }
+    addListener(parentDisposable, wrapper)
   }
 
   override fun whenEventHappened(ttl: Int, parentDisposable: Disposable?, listener: (T) -> Unit) {
     require(ttl > 0)
     val ttlCounter = AtomicInteger(ttl)
-    addListener(parentDisposable, object : (T) -> Unit {
-      override fun invoke(arguement1: T) {
-        if (ttlCounter.decrementAndGet() == 0) {
-          removeListener(this)
-        }
-        listener(arguement1)
+    val wrapper = ListenerWrapper(parentDisposable) { argument ->
+      if (ttlCounter.decrementAndGet() == 0) {
+        removeListener(this)
       }
-    })
+      listener(argument)
+    }
+    addListener(parentDisposable, wrapper)
   }
 
   override fun onceWhenEventHappened(parentDisposable: Disposable?, listener: (T) -> Unit) {
     whenEventHappened(ttl = 1, parentDisposable, listener)
   }
 
-  private fun addListener(parentDisposable: Disposable?, listener: (T) -> Unit) {
+  private fun addListener(parentDisposable: Disposable?, listener: ListenerWrapper<T>) {
     when (parentDisposable) {
       null -> listeners.add(listener)
       else -> listeners.add(listener, parentDisposable)
     }
   }
 
-  private fun removeListener(listener: (T) -> Unit) {
+  private fun removeListener(listener: ListenerWrapper<T>) {
     listeners.remove(listener)
+  }
+
+  private class ListenerWrapper<T>(
+    private val parentDisposable: Disposable?,
+    private val listener: ListenerWrapper<T>.(T) -> Unit
+  ) {
+
+    operator fun invoke(argument: T) {
+      @Suppress("DEPRECATION")
+      if (parentDisposable == null || !Disposer.isDisposed(parentDisposable)) {
+        listener(argument)
+      }
+    }
   }
 
   companion object {
