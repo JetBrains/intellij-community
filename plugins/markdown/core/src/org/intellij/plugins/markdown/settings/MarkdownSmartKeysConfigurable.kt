@@ -69,5 +69,14 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
           )
       }
     }
+    group(title = MarkdownBundle.message("markdown.smart.keys.configurable.other.group.name")) {
+      row {
+        checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.other.file.drop"))
+          .bindSelected(
+            getter = { settings.state.enableFilesDrop },
+            setter = { settings.update { state -> state.copy(enableFilesDrop = it) } }
+          )
+      }
+    }
   }
 }

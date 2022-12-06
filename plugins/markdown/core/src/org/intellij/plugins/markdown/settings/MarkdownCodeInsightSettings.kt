@@ -22,7 +22,9 @@ internal class MarkdownCodeInsightSettings: PersistentStateComponent<MarkdownCod
     @Property
     val indentListsOnTab: Boolean = true,
     @Property
-    val renumberListsOnType: Boolean = true
+    val renumberListsOnType: Boolean = true,
+    @Property
+    val enableFilesDrop: Boolean = true
   )
 
   fun update(transform: (State) -> State) {
