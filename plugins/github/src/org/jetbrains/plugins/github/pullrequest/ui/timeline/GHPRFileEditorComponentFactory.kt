@@ -176,8 +176,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                               editor.securityService.currentUser).apply {
           border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
         }
-        add(commentField, CC().growX().pushX()
-          .maxWidth("$TIMELINE_ITEM_WIDTH"))
+        add(commentField, CC().growX().pushX())
       }
     }
 
