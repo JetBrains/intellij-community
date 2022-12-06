@@ -982,13 +982,15 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       int offset = myEditor.getCaretModel().getOffset() + baseOffset;
       String progressDialogTitle = DevPsiViewerBundle.message("psi.viewer.progress.dialog.get.element.at.offset");
-      Callable<PsiElement> finder = () -> InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), offset);
+      Callable<@Nullable PsiElement> finder = () -> InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), offset);
 
       PsiElement element = computeSlowOperationsSafeInBgThread(myProject, progressDialogTitle, finder);
 
-      myBlockTree.selectNodeFromEditor(element);
-      myStubTree.selectNodeFromEditor(element);
-      selectElement(element);
+      if (element != null) {
+        myBlockTree.selectNodeFromEditor(element);
+        myStubTree.selectNodeFromEditor(element);
+        selectElement(element);
+      }
     }
 
     @Override
