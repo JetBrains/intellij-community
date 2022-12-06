@@ -21,6 +21,7 @@ And IDEA does not offer you to enable Annotation Processing you can do it manual
 ```
 - Go back to this module and open any source file
 - `Build` -> `Build module ...`
+- Sometimes you need to rebuild the entire project, not just this module
 
 ### Why is this module not in the test directory?
 
