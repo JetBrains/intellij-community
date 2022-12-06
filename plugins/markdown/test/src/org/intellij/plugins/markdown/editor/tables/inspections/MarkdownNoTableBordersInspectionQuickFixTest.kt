@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,14 +67,12 @@ class MarkdownNoTableBordersInspectionQuickFixTest: LightPlatformCodeInsightFixt
   }
 
   private fun doTest(content: String, after: String) {
-    TableTestUtils.runWithChangedSettings(myFixture.project) {
-      myFixture.configureByText("some.md", content)
-      myFixture.enableInspections(MarkdownNoTableBordersInspection())
-      val targetText = MarkdownBundle.message("markdown.fix.table.borders.intention.text")
-      val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
-      assertNotNull(fix)
-      myFixture.launchAction(fix!!)
-      myFixture.checkResult(after)
-    }
+    myFixture.configureByText("some.md", content)
+    myFixture.enableInspections(MarkdownNoTableBordersInspection())
+    val targetText = MarkdownBundle.message("markdown.fix.table.borders.intention.text")
+    val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
+    assertNotNull(fix)
+    myFixture.launchAction(fix!!)
+    myFixture.checkResult(after)
   }
 }

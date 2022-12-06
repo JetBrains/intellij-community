@@ -7,7 +7,6 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -101,17 +100,15 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     |--------|-------|
     | some   | some  |
     """.trimIndent()
-    TableTestUtils.runWithChangedSettings(myFixture.project) {
-      myFixture.configureByText("some.md", before)
-      val inspection = InspectionTestUtil.instantiateTool(MarkdownIncorrectTableFormattingInspection::class.java)
-      myFixture.enableInspections(inspection)
-      val targetText = InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName);
-      val intentions = myFixture.availableIntentions
-      val intention = intentions.find { it.text == targetText }
-      checkNotNull(intention) { "Failed to find fix with text '$targetText'" }
-      myFixture.launchAction(intention)
-      myFixture.checkResult(after)
-    }
+    myFixture.configureByText("some.md", before)
+    val inspection = InspectionTestUtil.instantiateTool(MarkdownIncorrectTableFormattingInspection::class.java)
+    myFixture.enableInspections(inspection)
+    val targetText = InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName);
+    val intentions = myFixture.availableIntentions
+    val intention = intentions.find { it.text == targetText }
+    checkNotNull(intention) { "Failed to find fix with text '$targetText'" }
+    myFixture.launchAction(intention)
+    myFixture.checkResult(after)
   }
 
   @Test
@@ -122,23 +119,19 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     |------|---|
     | some<caret> | some |
     """.trimIndent()
-    TableTestUtils.runWithChangedSettings(myFixture.project) {
-      myFixture.configureByText("some.md", before)
-      myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
-      val fix = myFixture.getAllQuickFixes().find { it.text == reformatIntentionFixText }
-      checkNotNull(fix) { "Failed to find fix" }
-      myFixture.checkPreviewAndLaunchAction(fix)
-    }
+    myFixture.configureByText("some.md", before)
+    myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
+    val fix = myFixture.getAllQuickFixes().find { it.text == reformatIntentionFixText }
+    checkNotNull(fix) { "Failed to find fix" }
+    myFixture.checkPreviewAndLaunchAction(fix)
   }
 
   private fun doTest(content: String, after: String) {
-    TableTestUtils.runWithChangedSettings(myFixture.project) {
-      myFixture.configureByText("some.md", content)
-      myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
-      val fix = myFixture.getAllQuickFixes().find { it.text == reformatIntentionFixText }
-      assertNotNull(fix)
-      myFixture.launchAction(fix!!)
-      myFixture.checkResult(after)
-    }
+    myFixture.configureByText("some.md", content)
+    myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
+    val fix = myFixture.getAllQuickFixes().find { it.text == reformatIntentionFixText }
+    assertNotNull(fix)
+    myFixture.launchAction(fix!!)
+    myFixture.checkResult(after)
   }
 }

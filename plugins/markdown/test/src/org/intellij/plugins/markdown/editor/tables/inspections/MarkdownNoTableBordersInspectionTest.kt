@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -91,10 +90,8 @@ class MarkdownNoTableBordersInspectionTest: LightPlatformCodeInsightFixture4Test
   }
 
   private fun doTest(expected: String) {
-    TableTestUtils.runWithChangedSettings(myFixture.project) {
-      myFixture.configureByText("some.md", expected)
-      myFixture.enableInspections(MarkdownNoTableBordersInspection())
-      myFixture.checkHighlighting()
-    }
+    myFixture.configureByText("some.md", expected)
+    myFixture.enableInspections(MarkdownNoTableBordersInspection())
+    myFixture.checkHighlighting()
   }
 }
