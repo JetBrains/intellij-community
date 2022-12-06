@@ -47,20 +47,20 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
       }
     }
     group(title = MarkdownBundle.message("markdown.smart.keys.configurable.lists.group.name")) {
-      row {
-        checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.adjust.indentation.on.enter.backspace"))
-          .bindSelected(
-            getter = { settings.state.adjustListIndentation },
-            setter = { settings.update { state -> state.copy(adjustListIndentation = it) } }
-          )
-      }
-      row {
-        checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.indent.on.tab"))
-          .bindSelected(
-            getter = { settings.state.indentListsOnTab },
-            setter = { settings.update { state -> state.copy(indentListsOnTab = it) } }
-          )
-      }
+      //row {
+      //  checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.adjust.indentation.on.enter.backspace"))
+      //    .bindSelected(
+      //      getter = { settings.state.adjustListIndentation },
+      //      setter = { settings.update { state -> state.copy(adjustListIndentation = it) } }
+      //    )
+      //}
+      //row {
+      //  checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.indent.on.tab"))
+      //    .bindSelected(
+      //      getter = { settings.state.indentListsOnTab },
+      //      setter = { settings.update { state -> state.copy(indentListsOnTab = it) } }
+      //    )
+      //}
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.renumber.lists"))
           .bindSelected(
