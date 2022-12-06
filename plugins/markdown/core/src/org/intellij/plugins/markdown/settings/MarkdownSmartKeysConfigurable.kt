@@ -62,6 +62,13 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
       //    )
       //}
       row {
+        checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.smart.enter.backspace"))
+          .bindSelected(
+            getter = { settings.state.smartEnterAndBackspace },
+            setter = { settings.update { state -> state.copy(smartEnterAndBackspace = it) } }
+          )
+      }
+      row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.renumber.lists"))
           .bindSelected(
             getter = { settings.state.renumberListsOnType },

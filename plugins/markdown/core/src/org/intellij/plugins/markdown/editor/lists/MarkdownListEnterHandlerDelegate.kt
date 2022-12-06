@@ -14,7 +14,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
@@ -27,7 +26,6 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
 import org.intellij.plugins.markdown.lang.psi.impl.*
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
 /**
@@ -35,27 +33,38 @@ import org.intellij.plugins.markdown.util.MarkdownPsiUtil
  *   - if it has no contents and is in a top-level list, it is removed
  *   - if it has no contents and is in a nested list, it's nesting level is decreased (as if it was unindented)
  *   - otherwise, a new list item is created next to the current one
+ *
+ * This handler will also adjust list item numbers based on the [MarkdownCodeInsightSettings.State.renumberListsOnType] setting.
  */
 @ExperimentalStdlibApi
-internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
-
+internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
   private var emptyItem: String? = null
+
+  private val codeInsightSettings
+    get() = MarkdownCodeInsightSettings.getInstance().state
 
   override fun invokeInsideIndent(newLineCharOffset: Int, editor: Editor, dataContext: DataContext): Boolean {
     val project = editor.project ?: return false
-    return MarkdownSettings.getInstance(project).isEnhancedEditingEnabled &&
-           PsiDocumentManager.getInstance(project).getPsiFile(editor.document) is MarkdownFile
+    if (!codeInsightSettings.smartEnterAndBackspace) {
+      return false
+    }
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    return file is MarkdownFile
   }
 
-  override fun preprocessEnter(file: PsiFile,
-                               editor: Editor,
-                               caretOffset: Ref<Int>,
-                               caretAdvance: Ref<Int>,
-                               dataContext: DataContext,
-                               originalHandler: EditorActionHandler?): EnterHandlerDelegate.Result {
+  override fun preprocessEnter(
+    file: PsiFile,
+    editor: Editor,
+    caretOffset: Ref<Int>,
+    caretAdvance: Ref<Int>,
+    dataContext: DataContext,
+    originalHandler: EditorActionHandler?
+  ): EnterHandlerDelegate.Result {
     emptyItem = null // if last post-processing ended with an exception, clear the state
-    if (file !is MarkdownFile || isInCodeFence(caretOffset.get(), file)
-        || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
+    if (!codeInsightSettings.smartEnterAndBackspace) {
+      return EnterHandlerDelegate.Result.Continue
+    }
+    if (file !is MarkdownFile || isInCodeFence(caretOffset.get(), file)) {
       return EnterHandlerDelegate.Result.Continue
     }
 
@@ -105,10 +114,12 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
   }
 
   private fun isInCodeFence(caretOffset: Int, file: PsiFile): Boolean {
-    if (caretOffset == 0) return false
-
-    return file.findElementAt(caretOffset - 1)
-      ?.parentOfTypes(MarkdownCodeFence::class) != null
+    if (caretOffset == 0) {
+      return false
+    }
+    val element = file.findElementAt(caretOffset - 1) ?: return false
+    val fence = element.parentOfType<MarkdownCodeFence>(withSelf = true)
+    return fence != null
   }
 
   private fun handleEmptyItem(item: MarkdownListItem, editor: Editor, file: PsiFile, originalHandler: EditorActionHandler?, dataContext: DataContext) {
@@ -144,7 +155,7 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
     EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
     val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
-    if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
+    if (codeInsightSettings.renumberListsOnType) {
       // Will fix numbering in a whole list
       item.list.renumberInBulk(document, recursive = false, restart = false)
     } else {

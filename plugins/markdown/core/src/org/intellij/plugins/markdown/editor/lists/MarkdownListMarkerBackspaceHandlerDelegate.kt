@@ -24,21 +24,23 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
  * This handler removes the whole marker of the current list item.
  */
-internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
-
+internal class MarkdownListMarkerBackspaceHandlerDelegate: BackspaceHandlerDelegate() {
   private var item: MarkdownListItem? = null
+
+  private val codeInsightSettings
+    get() = MarkdownCodeInsightSettings.getInstance().state
 
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {
     item = null
-
+    if (!codeInsightSettings.smartEnterAndBackspace) {
+      return
+    }
     val deletedOffset = editor.caretModel.offset - 1
-    if (file !is MarkdownFile || deletedOffset < 0
-        || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
+    if (file !is MarkdownFile || deletedOffset < 0) {
       return
     }
 
@@ -71,7 +73,7 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDele
     }
 
     if (nextItemFirstLine != null && !createsNewList) {
-      if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
+      if (codeInsightSettings.renumberListsOnType) {
         PsiDocumentManager.getInstance(file.project).commitDocument(document)
         val updatedItem = (file as MarkdownFile).getListItemAtLine(nextItemFirstLine, document)
         updatedItem?.list?.renumberInBulk(document, recursive = false, restart = false)

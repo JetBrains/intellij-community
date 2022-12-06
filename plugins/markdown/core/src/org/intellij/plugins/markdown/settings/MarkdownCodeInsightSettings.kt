@@ -24,6 +24,8 @@ class MarkdownCodeInsightSettings: PersistentStateComponent<MarkdownCodeInsightS
     @Property
     val indentListsOnTab: Boolean = true,
     @Property
+    val smartEnterAndBackspace: Boolean = true,
+    @Property
     val renumberListsOnType: Boolean = false,
     @Property
     val enableFilesDrop: Boolean = true
