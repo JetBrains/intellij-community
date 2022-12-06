@@ -92,28 +92,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
     final String runHotswap = settings.RUN_HOTSWAP_AFTER_COMPILE;
     final boolean shouldDisplayHangWarning = shouldDisplayHangWarning(settings, sessions);
 
-    HotSwapStatusListener callbackWrapper = new HotSwapStatusListener() {
-      @Override
-      public void onCancel(List<DebuggerSession> sessions) {
-        if (callback != null) {
-          callback.onCancel(sessions);
-        }
-      }
-
-      @Override
-      public void onSuccess(List<DebuggerSession> sessions) {
-        if (callback != null) {
-          callback.onSuccess(sessions);
-        }
-      }
-
-      @Override
-      public void onFailure(List<DebuggerSession> sessions) {
-        if (callback != null) {
-          callback.onFailure(sessions);
-        }
-      }
-    };
+    HotSwapStatusListener callbackWrapper = makeNullSafe(callback);
 
     if (shouldAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_NEVER.equals(runHotswap)) {
       callbackWrapper.onCancel(sessions);
@@ -392,6 +371,25 @@ public final class HotSwapUIImpl extends HotSwapUI {
     return DebuggerManagerEx.getInstanceEx(project).getSessions().stream()
       .filter(HotSwapUIImpl::canHotSwap)
       .collect(Collectors.toCollection(SmartList::new));
+  }
+
+  private static HotSwapStatusListener makeNullSafe(HotSwapStatusListener listener) {
+    return new HotSwapStatusListener() {
+      @Override
+      public void onCancel(List<DebuggerSession> sessions) {
+        if (listener != null) listener.onCancel(sessions);
+      }
+
+      @Override
+      public void onSuccess(List<DebuggerSession> sessions) {
+        if (listener != null) listener.onSuccess(sessions);
+      }
+
+      @Override
+      public void onFailure(List<DebuggerSession> sessions) {
+        if (listener != null) listener.onFailure(sessions);
+      }
+    };
   }
 
   public static class HotSwapDebuggerManagerListener implements DebuggerManagerListener {
