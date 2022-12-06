@@ -32,6 +32,7 @@ public interface ScrollingModel {
 
   void scrollVertically(int scrollOffset);
   void scrollHorizontally(int scrollOffset);
+  default void centerHorizontally(@NotNull LogicalPosition pos) {}
   void scroll(int horizontalOffset, int verticalOffset);
 
   void addVisibleAreaListener(@NotNull VisibleAreaListener listener);

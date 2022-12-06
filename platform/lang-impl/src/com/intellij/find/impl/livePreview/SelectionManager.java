@@ -72,7 +72,11 @@ public class SelectionManager {
       else {
         FindUtil.selectSearchResultInEditor(editor, cursor, -1);
       }
-      if (adjustScrollPosition) editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      if (adjustScrollPosition) {
+        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+        LogicalPosition logicalPosition = editor.offsetToLogicalPosition(cursor.getEndOffset());
+        editor.getScrollingModel().centerHorizontally(logicalPosition);
+      }
     } else {
       if (!SearchResults.insideVisibleArea(editor, cursor) && adjustScrollPosition) {
         LogicalPosition pos = editor.offsetToLogicalPosition(cursor.getStartOffset());
