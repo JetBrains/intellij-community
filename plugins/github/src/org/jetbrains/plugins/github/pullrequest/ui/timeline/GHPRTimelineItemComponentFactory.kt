@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -66,6 +67,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val detailsDataProvider: GHPRDetailsDataProvider,
@@ -224,15 +227,44 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   private fun createComponent(review: GHPullRequestReview): JComponent {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
 
+    val loadingLabel = JLabel(ApplicationBundle.message("label.loading.page.please.wait")).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      isVisible = !reviewThreadsModel.loaded
+    }
+
+    reviewThreadsModel.addListDataListener(object : ListDataListener {
+      override fun intervalAdded(e: ListDataEvent?) {
+        loadingLabel.isVisible = !reviewThreadsModel.loaded
+      }
+
+      override fun intervalRemoved(e: ListDataEvent?) {
+        loadingLabel.isVisible = !reviewThreadsModel.loaded
+      }
+
+      override fun contentsChanged(e: ListDataEvent?) {
+        loadingLabel.isVisible = !reviewThreadsModel.loaded
+      }
+    })
+
     val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) { thread ->
       createThreadItem(thread)
     }
 
     val reviewItem = createReviewContentItem(review)
-    return JPanel(VerticalLayout(0, VerticalLayout.FILL)).apply {
+    return JPanel(MigLayout(LC().hideMode(3)
+                              .gridGap("0", "0")
+                              .insets("0")
+                              .flowY()
+                              .fill())).apply {
       isOpaque = false
-      add(threadsPanel)
-      add(reviewItem)
+
+      add(loadingLabel, CC().grow().push()
+        .alignX("center")
+        .maxWidth("$TIMELINE_CONTENT_WIDTH")
+        .gapLeft("$H_SIDE_BORDER")
+        .gapRight("$H_SIDE_BORDER"))
+      add(threadsPanel, CC().grow().push())
+      add(reviewItem, CC().grow().push())
     }
   }
 
