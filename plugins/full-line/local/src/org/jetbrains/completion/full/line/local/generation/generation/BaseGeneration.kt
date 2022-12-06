@@ -63,11 +63,14 @@ abstract class BaseGeneration<GenerationConfig : BaseGenerationConfig>(
   }
 
   protected fun initLogProbs(context: IntArray, execContext: ExecutionContext) {
-    val logProbs = model.initLastLogProbs(arrayOf(context), execContext)
-    mems = logProbs.pastStates
-    maskPrefixes(logProbs.logProbs)
-    logSoftmax(logProbs.logProbs)
-    nextLogProbs = logProbs.logProbs
+    val modelOut = model.initLastLogProbs(arrayOf(context), execContext)
+    mems = modelOut.pastStates
+    val logits = Array(modelOut.logits.size) {
+      i -> modelOut.logits[i].clone()
+    }
+    maskPrefixes(logits)
+    logSoftmax(logits)
+    nextLogProbs = logits
   }
 
   protected fun initState(prefix: String, config: GenerationConfig) {
@@ -102,11 +105,14 @@ abstract class BaseGeneration<GenerationConfig : BaseGenerationConfig>(
   }
 
   protected fun updateLogProbs(data: IntArray, execContext: ExecutionContext) {
-    val logProbs = model.getLastLogProbs(data, mems ?: initFail(), execContext)
-    mems = logProbs.pastStates
-    maskPrefixes(logProbs.logProbs)
-    logSoftmax(logProbs.logProbs)
-    nextLogProbs = logProbs.logProbs
+    val modelOut = model.getLastLogProbs(data, mems ?: initFail(), execContext)
+    mems = modelOut.pastStates
+    val logits = Array(modelOut.logits.size) {
+      i -> modelOut.logits[i].clone()
+    }
+    maskPrefixes(logits)
+    logSoftmax(logits)
+    nextLogProbs = logits
   }
 
   private fun updatePrefix(newTokensIds: IntArray) {

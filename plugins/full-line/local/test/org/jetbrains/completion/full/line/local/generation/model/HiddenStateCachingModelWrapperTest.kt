@@ -41,8 +41,8 @@ internal class HiddenStateCachingModelWrapperTest {
     inputIds: Array<IntArray>, cacheWarmupInputIds: Array<IntArray>
   ): Pair<DoubleArray, DoubleArray> {
     cachingGpt2.initLastLogProbs(cacheWarmupInputIds, TestExecutionContext.default.toInference())
-    val originalOutput = gpt2.initLastLogProbs(inputIds, TestExecutionContext.default.toInference()).logProbs
-    val cachingModelOutput = cachingGpt2.initLastLogProbs(inputIds, TestExecutionContext.default.toInference()).logProbs
+    val originalOutput = gpt2.initLastLogProbs(inputIds, TestExecutionContext.default.toInference()).logits
+    val cachingModelOutput = cachingGpt2.initLastLogProbs(inputIds, TestExecutionContext.default.toInference()).logits
     return Pair(originalOutput[0], cachingModelOutput[0])
   }
 
