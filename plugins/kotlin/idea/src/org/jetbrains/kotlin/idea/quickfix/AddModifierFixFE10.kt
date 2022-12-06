@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -76,7 +77,7 @@ open class AddModifierFixFE10(
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val typeReference = diagnostic.psiElement as KtTypeReference
             val declaration = typeReference.classForRefactor() ?: return null
-            if (declaration.isEnum() || declaration.isData()) return null
+            if (declaration.isAnnotation() || declaration.isEnum() || declaration.isData() || declaration.isInlineOrValue()) return null
             return AddModifierFixFE10(declaration, OPEN_KEYWORD)
         }
     }
