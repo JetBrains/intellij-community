@@ -1,16 +1,11 @@
 # Mermaid
 
 <!-- Plugin description -->
-Provides support for diagramming and charting tool [Mermaid](https://mermaid-js.github.io/).
+Provides support for creating diagrams with [Mermaid](https://mermaid-js.github.io/).
 
-Following features are available:
-
-* Error and syntax highlighting
-* Code completion
-* Intention actions and quick fixes
-* Code formatting
-* Identifiers navigation and renaming
-* Can be used both as a companion plugin for [Markdown](https://plugins.jetbrains.com/plugin/7793-markdown) or as a standalone plugin
+* Full support for Mermaid syntax: highlighting, completion, navigation, inspections, intentions, and much more
+* Dedicated file type: `.mermaid`
+* Can be used with the [Markdown plugin](https://plugins.jetbrains.com/plugin/7793-markdown) to add assistance and rendering of Mermaid code blocks in Markdown files
 
 <!-- Plugin description end -->
 
