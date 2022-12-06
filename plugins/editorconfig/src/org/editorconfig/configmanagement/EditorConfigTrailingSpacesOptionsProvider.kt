@@ -12,7 +12,7 @@ import org.editorconfig.plugincomponents.SettingsProviderComponent
 
 class EditorConfigTrailingSpacesOptionsProvider : TrailingSpacesOptionsProvider, StandardEditorConfigProperties {
   override fun getOptions(project: Project, file: VirtualFile): TrailingSpacesOptionsProvider.Options? {
-    if (isEnabled(CodeStyle.getSettings(project)) && file.isInLocalFileSystem) {
+    if (isEnabled(CodeStyle.getSettings(project))) {
       val properties = SettingsProviderComponent.getInstance(project).getProperties(file)
       val trimTrailingWhitespace = getBooleanValue(properties, StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE)
       val insertFinalNewline = getBooleanValue(properties, StandardEditorConfigProperties.INSERT_FINAL_NEWLINE)
