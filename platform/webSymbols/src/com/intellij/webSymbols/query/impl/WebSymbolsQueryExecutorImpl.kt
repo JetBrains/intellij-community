@@ -16,6 +16,7 @@ import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.hideFromCompletion
+import com.intellij.webSymbols.utils.nameSegments
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -46,7 +47,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     return Pointer<WebSymbolsQueryExecutor> {
       @Suppress("UNCHECKED_CAST")
       val rootScope = rootScopePointers.map { it.dereference() }
-                          .takeIf { it.all { c -> c != null } } as? List<WebSymbolsScope>
+                        .takeIf { it.all { c -> c != null } } as? List<WebSymbolsScope>
                       ?: return@Pointer null
 
       val namesProvider = namesProviderPtr.dereference()
@@ -92,7 +93,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
           it.getSymbols(namespace, kind, pathSection.name, params, Stack(finalContext))
         }
         .filterIsInstance<WebSymbol>()
-        .filter { it !is WebSymbolMatch ||  it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null) }
+        .filter { it !is WebSymbolMatch || it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null) }
         .distinct()
         .toList()
         .let {

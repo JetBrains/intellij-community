@@ -18,6 +18,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
+import com.intellij.webSymbols.CompositeWebSymbol
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -147,6 +148,10 @@ val WebSymbol.completeMatch: Boolean
   get() = this !is WebSymbolMatch
           || (nameSegments.all { segment -> segment.problem == null && segment.symbols.all { it.completeMatch } }
               && (nameSegments.lastOrNull()?.end ?: 0) == matchedNameOrName.length)
+
+val WebSymbol.nameSegments: List<WebSymbolNameSegment>
+  get() = (this as? CompositeWebSymbol)?.nameSegments
+          ?: listOf(WebSymbolNameSegment(this))
 
 internal val WebSymbol.matchedNameOrName: String
   get() = (this as? WebSymbolMatch)?.matchedName ?: name

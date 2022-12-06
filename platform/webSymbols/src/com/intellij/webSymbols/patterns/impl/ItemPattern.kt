@@ -38,7 +38,7 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
     return listOf(MatchResult(
       when {
         hits.size == 1 && hits[0] is WebSymbolMatch ->
-          hits[0].nameSegments.map { it.withOffset(start) }
+          (hits[0] as WebSymbolMatch).nameSegments.map { it.withOffset(start) }
 
         hits.isNotEmpty() ->
           listOf(WebSymbolNameSegment(
