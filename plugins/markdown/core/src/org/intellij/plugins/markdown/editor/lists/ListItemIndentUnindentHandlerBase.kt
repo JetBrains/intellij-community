@@ -7,12 +7,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.endOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
@@ -49,7 +49,7 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
         continue
       }
       indentPerformed = true
-      if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+      if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
         psiDocumentManager.commitDocument(document)
         @Suppress("name_shadowing") // item is not valid anymore, but line didn't change
         val item = file.getListItemAtLine(line, document)!!

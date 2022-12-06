@@ -5,7 +5,6 @@ import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.descendantsOfType
@@ -24,6 +23,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
@@ -71,7 +71,7 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDele
     }
 
     if (nextItemFirstLine != null && !createsNewList) {
-      if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+      if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
         PsiDocumentManager.getInstance(file.project).commitDocument(document)
         val updatedItem = (file as MarkdownFile).getListItemAtLine(nextItemFirstLine, document)
         updatedItem?.list?.renumberInBulk(document, recursive = false, restart = false)

@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.isAncestor
@@ -27,6 +26,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
 import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
@@ -144,7 +144,7 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
     EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
     val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
-    if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+    if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
       // Will fix numbering in a whole list
       item.list.renumberInBulk(document, recursive = false, restart = false)
     } else {

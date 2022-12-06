@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.editor.lists
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
@@ -15,6 +14,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
@@ -48,7 +48,7 @@ internal class MarkdownListItemCreatingTypedHandlerDelegate : TypedHandlerDelega
       // so that entering a space after a marker won't turn children-items into siblings
       return Result.CONTINUE
     }
-    if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+    if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
       element.parentOfType<MarkdownList>()!!.renumberInBulk(document, recursive = false, restart = false)
     }
     PsiDocumentManager.getInstance(project).commitDocument(document)
