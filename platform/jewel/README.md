@@ -1,3 +1,4 @@
+[![CI checks](https://github.com/JetBrains/jewel/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/JetBrains/jewel/actions/workflows/build.yml)
 # Jewel: a Compose for Desktop theme
 
 <img alt="Jewel logo" src="art/jewel-logo.svg" width="20%"/>
