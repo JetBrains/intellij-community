@@ -11,6 +11,7 @@ import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.webSymbols.utils.withOffset
 
 internal class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern>) : WebSymbolsPattern() {

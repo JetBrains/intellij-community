@@ -16,6 +16,7 @@ import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.xml.*
 import com.intellij.xml.impl.XmlElementDescriptorEx
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
