@@ -285,6 +285,9 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
       spec.withProjectLibrary("okhttp")
     },
+    plugin("intellij.editorconfig") { spec ->
+      spec.withProjectLibrary("ec4j-core")
+    }
   )
 
   @Suppress("SpellCheckingInspection")
