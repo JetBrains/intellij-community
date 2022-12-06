@@ -58,7 +58,7 @@ private data class IndexToValue(val index: Int, val value: Double) : Comparable<
   override fun compareTo(other: IndexToValue): Int = -compareValues(this.value, other.value)
 }
 
-internal fun topk1d(data: DoubleArray, size: Int): IntArray {
+fun topk1d(data: DoubleArray, size: Int): IntArray {
   val newData = mutableListOf<IndexToValue>()
   for ((index, value) in data.withIndex()) {
     if (value != Double.NEGATIVE_INFINITY) {
