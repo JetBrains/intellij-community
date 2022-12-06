@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -183,9 +183,9 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
-      (Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE)) &&
+      Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE) &&
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
-      myCapturePoints.equals(((DebuggerSettings)obj).myCapturePoints);
+      myCapturePoints.equals(secondSettings.myCapturePoints);
   }
 
   @Override
