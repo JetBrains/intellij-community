@@ -69,9 +69,6 @@ class GitBranchesTreeSingleRepoModel(
         branchesTreeCache
           .getOrPut(parent) { getBranchTreeNodes(parent.type, parent.prefix).sortedWith(getSubTreeComparator(listOf(repository))) }
       }
-      is BranchTypeUnderRepository -> {
-        branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent.type, emptyList()) }
-      }
       else -> emptyList()
     }
   }
@@ -88,7 +85,7 @@ class GitBranchesTreeSingleRepoModel(
       else -> emptyMap()
     }
 
-    return buildBranchTreeNodes(branchType, branchesMap, path, repository)
+    return buildBranchTreeNodes(branchType, branchesMap, path)
   }
 
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
