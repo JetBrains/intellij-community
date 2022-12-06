@@ -796,10 +796,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public FileStatus getFileStatus() {
-      StructureViewModel model = ((TreeModelWrapper)myTreeModel).getModel();
-      StructureViewTreeElement value = (StructureViewTreeElement)getValue();
-      if (value == null) return FileStatus.NOT_CHANGED;
-      return model.getElementStatus(value.getValue());
+      if (myTreeModel instanceof StructureViewModel model &&
+          getValue() instanceof StructureViewTreeElement value) {
+        return model.getElementStatus(value.getValue());
+      }
+      return FileStatus.NOT_CHANGED;
     }
 
     @Override
