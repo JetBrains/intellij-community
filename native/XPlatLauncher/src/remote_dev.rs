@@ -37,7 +37,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
 
     fn get_properties_file(&self) -> Result<Option<PathBuf>> {
         let remote_dev_properties = self.get_remote_dev_properties();
-        let remote_dev_properties_file = self.write_merged_properties_file(&remote_dev_properties[..])
+        let remote_dev_properties_file = self.write_merged_properties_file(&remote_dev_properties?[..])
             .context("Failed to write remote dev IDE properties file")?;
 
         Ok(Some(remote_dev_properties_file))
@@ -269,7 +269,7 @@ impl RemoteDevLaunchConfiguration {
         Ok(config)
     }
 
-    fn get_remote_dev_properties(&self) -> Vec<IdeProperty> {
+    fn get_remote_dev_properties(&self) -> Result<Vec<IdeProperty>> {
         let config_path = self.config_dir.to_string_lossy();
         let plugins_path = self.config_dir.join("plugins").to_string_lossy().to_string();
         let system_path = self.system_dir.to_string_lossy();
@@ -279,7 +279,7 @@ impl RemoteDevLaunchConfiguration {
             Some(x) => x.to_string_lossy().to_string()
         };
 
-        let remote_dev_properties = vec![
+        let mut remote_dev_properties = vec![
             ("idea.config.path", config_path.as_ref()),
             ("idea.plugins.path", plugins_path.as_ref()),
             ("idea.system.path", system_path.as_ref()),
@@ -306,17 +306,39 @@ impl RemoteDevLaunchConfiguration {
 
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
             // ("jdk.lang.Process.launchMechanism", "vfork"),
-
-            ("jdk.configure.existing", "true"),
         ];
 
-        remote_dev_properties
+        match std::env::var("REMOTE_DEV_JDK_DETECTION") {
+            Ok(remote_dev_jdk_detection_value) => {
+                match remote_dev_jdk_detection_value.as_str() {
+                    "1" | "true" => {
+                        info!("Enable JDK auto-detection and project SDK setup");
+                        remote_dev_properties.push(("jdk.configure.existing", "true"));
+                    },
+                    "0" | "false" => {
+                        info!("Disable JDK auto-detection and project SDK setup");
+                        remote_dev_properties.push(("jdk.configure.existing", "false"));
+                    },
+                    _ => {
+                        bail!("Unsupported value for REMOTE_DEV_JDK_DETECTION variable: '{}'", remote_dev_jdk_detection_value);
+                    },
+                }
+            }
+            Err(_) => {
+                info!("Enable JDK auto-detection and project SDK setup by default. Set REMOTE_DEV_JDK_DETECTION=false to disable.");
+                remote_dev_properties.push(("jdk.configure.existing", "true"));
+            }
+        }
+
+        let result = remote_dev_properties
             .into_iter()
             .map(|x| IdeProperty {
                 key: x.0.to_string(),
                 value: x.1.to_string(),
             })
-            .collect()
+            .collect();
+
+        Ok(result)
     }
 
     fn write_merged_properties_file(&self, remote_dev_properties: &[IdeProperty]) -> Result<PathBuf> {
