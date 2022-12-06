@@ -134,7 +134,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         }
       }
       if (findClassesProgress != null) {
-        modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress));
+        modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, null, findClassesProgress));
       }
 
       final Application application = ApplicationManager.getApplication();
@@ -227,12 +227,6 @@ public final class HotSwapUIImpl extends HotSwapUI {
       }
     });
     return progress;
-  }
-
-  @NotNull
-  private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(@NotNull List<DebuggerSession> sessions,
-                                                                                                   @NotNull HotSwapProgressImpl progress) {
-    return scanForModifiedClassesWithProgress(sessions, null, progress);
   }
 
   @NotNull
