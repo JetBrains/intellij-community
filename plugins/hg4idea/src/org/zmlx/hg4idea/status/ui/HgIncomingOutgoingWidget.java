@@ -154,20 +154,20 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
 
     @Override
     public void updateVisibility() {
-      StatusBarWidgetsManager widgetsManager = myProject.getService(StatusBarWidgetsManager.class);
-      widgetsManager.updateWidget(HgIncomingOutgoingWidget.IncomingFactory.class);
-      widgetsManager.updateWidget(HgIncomingOutgoingWidget.OutgoingFactory.class);
+      StatusBarWidgetsManager widgetManager = myProject.getService(StatusBarWidgetsManager.class);
+      widgetManager.updateWidget(HgIncomingOutgoingWidget.IncomingFactory.class);
+      widgetManager.updateWidget(HgIncomingOutgoingWidget.OutgoingFactory.class);
     }
   }
 
-  public static class IncomingFactory extends MyWidgetFactory {
-    public IncomingFactory() {
+  static final class IncomingFactory extends MyWidgetFactory {
+    IncomingFactory() {
       super(true);
     }
   }
 
-  public static class OutgoingFactory extends MyWidgetFactory {
-    public OutgoingFactory() {
+  static final class OutgoingFactory extends MyWidgetFactory {
+    OutgoingFactory() {
       super(false);
     }
   }

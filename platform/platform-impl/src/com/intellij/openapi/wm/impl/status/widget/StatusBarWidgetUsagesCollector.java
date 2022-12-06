@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
+final class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("status.bar.widgets", 2);
   private static final EventId3<PluginInfo, String, Boolean> WIDGET =
     GROUP.registerEvent("widget",
@@ -45,7 +45,7 @@ public class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
     return result;
   }
 
-  public static class StatusBarWidgetFactoryValidationRule extends CustomValidationRule {
+  final static class StatusBarWidgetFactoryValidationRule extends CustomValidationRule {
     public static final String RULE_ID = "status_bar_widget_factory";
 
     @NotNull

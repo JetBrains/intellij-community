@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.FocusUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +55,8 @@ final class ColumnSelectionModePanel extends EditorBasedWidget implements Status
   }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) {
-    super.install(statusBar);
-
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateStatus();
@@ -79,6 +78,7 @@ final class ColumnSelectionModePanel extends EditorBasedWidget implements Status
     if (multicaster instanceof EditorEventMulticasterEx) {
       ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(this, this);
     }
+
     updateStatus();
   }
 
