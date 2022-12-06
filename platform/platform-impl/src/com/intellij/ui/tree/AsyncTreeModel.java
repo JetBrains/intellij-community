@@ -250,7 +250,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).onError(walker::setError)));
     }
     else {
-      onValidThread(() -> walker.start(tree.root));
+      background.invoke(() -> walker.start(tree.root));
     }
     return walker.promise();
   }
