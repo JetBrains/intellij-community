@@ -39,9 +39,8 @@ internal constructor(private val project: Project,
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
     GHPRReviewThreadComponent.create(project, thread, reviewDataProvider,
                                      avatarIconsProvider, suggestedChangeHelper,
-                                     ghostUser, currentUser).apply {
-      border = JBUI.Borders.empty(8, 8)
-    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
+                                     ghostUser, currentUser)
+      .let { ReviewUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHCommentTextFieldModel(project) {

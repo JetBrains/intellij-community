@@ -124,18 +124,31 @@ internal object GHPRTimelineItemUIUtil {
         .gapTop("4")
         .minWidth("0").maxWidth("$maxContentWidth"))
     }.let {
-      withHover(it, actionsPanel)
+      actionsVisibleOnHover(it, actionsPanel)
+      withHoverHighlight(it)
     }
   }
 
-  private fun withHover(comp: JComponent, actionsPanel: JComponent?): JComponent {
+  fun actionsVisibleOnHover(comp: JComponent, actionsPanel: JComponent?) {
+    if (actionsPanel != null) {
+      object : HoverStateListener() {
+        override fun hoverChanged(component: Component, hovered: Boolean) {
+          actionsPanel.isVisible = hovered
+        }
+      }.apply {
+        // reset hover to false
+        mouseExited(comp)
+      }.addTo(comp)
+    }
+  }
+
+  fun withHoverHighlight(comp: JComponent): JComponent {
     val highlighterPanel = JPanelWithBackground(BorderLayout()).apply {
       isOpaque = false
       add(comp, BorderLayout.CENTER)
     }.also {
       object : HoverStateListener() {
         override fun hoverChanged(component: Component, hovered: Boolean) {
-          actionsPanel?.isVisible = hovered
           // TODO: extract to theme colors
           component.background = if (hovered) {
             JBColor(ColorUtil.fromHex("#D8D8D833"), ColorUtil.fromHex("#4B4B4B33"))

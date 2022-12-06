@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
@@ -16,6 +17,7 @@ import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -26,7 +28,6 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.nullize
@@ -47,6 +48,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -60,6 +62,8 @@ import javax.swing.event.ListDataListener
 
 object GHPRReviewThreadComponent {
 
+  const val SIDE_GAP = 10
+
   fun create(project: Project,
              thread: GHPRReviewThreadModel,
              reviewDataProvider: GHPRReviewDataProvider,
@@ -67,18 +71,25 @@ object GHPRReviewThreadComponent {
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
              ghostUser: GHUser,
              currentUser: GHUser): JComponent {
-    val panel = JPanel(VerticalLayout(12)).apply {
+    val panel = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
+      border = JBUI.Borders.empty(SIDE_GAP - GHPRReviewCommentComponent.GAP_TOP, 0, SIDE_GAP, 0)
     }
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider,
                                                                      avatarIconsProvider,
-                                                                     suggestedChangeHelper)
-    val commentsPanel = TimelineThreadCommentsPanel(thread, commentComponentFactory)
+                                                                     suggestedChangeHelper) {
+      it.border = JBUI.Borders.empty(GHPRReviewCommentComponent.GAP_TOP, SIDE_GAP, GHPRReviewCommentComponent.GAP_BOTTOM, SIDE_GAP)
+      GHPRTimelineItemUIUtil.withHoverHighlight(it)
+    }
+    val commentsPanel = TimelineThreadCommentsPanel(thread, commentComponentFactory, 0,
+                                                    GHPRReviewCommentComponent.AVATAR_SIZE + GHPRReviewCommentComponent.AVATAR_GAP + SIDE_GAP)
     panel.add(commentsPanel)
 
     if (reviewDataProvider.canComment()) {
-      panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
+      panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser).apply {
+        border = JBUI.Borders.empty(0, SIDE_GAP)
+      })
     }
     return panel
   }
@@ -159,8 +170,11 @@ object GHPRReviewThreadComponent {
         }
       }.installOn(this)
     }
-    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
+    return JPanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
       border = JBUI.Borders.empty(10)
+      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      }
 
       add(nameLabel)
 

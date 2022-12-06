@@ -8,7 +8,6 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -32,6 +31,9 @@ object GHPRReviewCommentComponent {
 
   const val AVATAR_SIZE = GHUIUtil.AVATAR_SIZE
   const val AVATAR_GAP = 10
+
+  const val GAP_TOP = 4
+  const val GAP_BOTTOM = 10
 
   fun create(project: Project,
              thread: GHPRReviewThreadModel,
@@ -90,22 +92,34 @@ object GHPRReviewCommentComponent {
       add(deleteButton)
     }
 
+    val title = JPanel(HorizontalLayout(10)).apply {
+      isOpaque = false
+      add(titlePane)
+      add(pendingLabel)
+      add(resolvedLabel)
+    }
+
     val maxTextWidth = maxContentWidth.let { it - AVATAR_SIZE - AVATAR_GAP }
     return JPanel(null).apply {
       isOpaque = false
-      layout = MigLayout(LC().gridGap("0", "0")
+      layout = MigLayout(LC()
+                           .fillX()
+                           .gridGap("0", "0")
                            .insets("0", "0", "0", "0")
-                           .fill().hideMode(3),
-                         AC().gap("$AVATAR_GAP"))
+                           .hideMode(3))
 
-      add(avatarLabel, CC().pushY())
-      add(titlePane, CC().minWidth("0").split(4).alignX("left").pushX())
-      add(pendingLabel, CC().alignX("left"))
-      add(resolvedLabel, CC().alignX("left"))
-      add(actionsPanel, CC().gapBefore("12:push"))
-      add(editablePaneHandle.panel, CC().newline().skip()
-        .push()
+      add(avatarLabel, CC().spanY(2).alignY("top")
+        .gapRight("$AVATAR_GAP"))
+
+      add(title, CC().push().split(2)
         .minWidth("0").maxWidth("$maxTextWidth"))
+
+      add(actionsPanel, CC().gapLeft("10:push"))
+      add(editablePaneHandle.panel, CC().push().grow().newline()
+        .gapTop("4")
+        .minWidth("0").maxWidth("$maxTextWidth"))
+    }.also {
+      GHPRTimelineItemUIUtil.actionsVisibleOnHover(it, actionsPanel)
     }
   }
 
@@ -160,7 +174,8 @@ object GHPRReviewCommentComponent {
               avatarIconsProvider: GHAvatarIconsProvider,
               suggestedChangeHelper: GHPRSuggestedChangeHelper,
               showResolvedMarkerOnFirstComment: Boolean = true,
-              maxContentWidth: Int = GHUIUtil.TEXT_CONTENT_WIDTH)
+              maxContentWidth: Int = GHUIUtil.TEXT_CONTENT_WIDTH,
+              postProcessor: (JComponent) -> JComponent = { it })
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
       create(
@@ -169,7 +184,7 @@ object GHPRReviewCommentComponent {
         reviewDataProvider, avatarIconsProvider,
         suggestedChangeHelper,
         showResolvedMarkerOnFirstComment,
-        maxContentWidth)
+        maxContentWidth).let(postProcessor)
     }
   }
 }

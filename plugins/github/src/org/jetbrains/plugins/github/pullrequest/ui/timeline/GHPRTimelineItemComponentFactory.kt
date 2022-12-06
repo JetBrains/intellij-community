@@ -295,18 +295,18 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                      additionalTitle = tagsPanel,
                                                      actionsPanel = actionsPanel)
 
+    val leftGap = H_SIDE_BORDER + TIMELINE_ICON_AND_GAP_WIDTH + 2
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider, avatarIconsProvider,
                                                                      suggestedChangeHelper,
                                                                      false,
-                                                                     TIMELINE_CONTENT_WIDTH)
+                                                                     TIMELINE_CONTENT_WIDTH) {
+      it.border = JBUI.Borders.empty(GHPRReviewCommentComponent.GAP_TOP, leftGap, GHPRReviewCommentComponent.GAP_TOP, H_SIDE_BORDER)
+      GHPRTimelineItemUIUtil.withHoverHighlight(it)
+    }
 
-    val leftGap = H_SIDE_BORDER + TIMELINE_ICON_AND_GAP_WIDTH + 2
-    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, {
-      commentComponentFactory.invoke(it).apply {
-        border = JBUI.Borders.empty(0, leftGap, 0, H_SIDE_BORDER)
-      }
-    }, 8)
+
+    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, commentComponentFactory, 0)
 
     val commentsPanel = if (reviewDataProvider.canComment()) {
       val layout = MigLayout(LC()
