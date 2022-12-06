@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestModeFlags
 import java.io.File
 
-@Suppress("TestOnlyProblems")
 class CompletionInvokerImpl(private val project: Project,
                             private val language: Language,
                             completionType: com.intellij.cce.actions.CompletionType,
@@ -66,7 +65,7 @@ class CompletionInvokerImpl(private val project: Project,
 
   override fun callCompletion(expectedText: String, prefix: String?): com.intellij.cce.core.Lookup {
     LOG.info("Call completion. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
-    //        assert(!dumbService.isDumb) { "Calling completion during indexing." }
+//        assert(!dumbService.isDumb) { "Calling completion during indexing." }
 
     val start = System.currentTimeMillis()
     val isNew = LookupManager.getActiveLookup(editor) == null
@@ -108,8 +107,7 @@ class CompletionInvokerImpl(private val project: Project,
       val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
       if (lookup != null) {
         lookup.replacePrefix(lookup.additionalPrefix, lookup.additionalPrefix + text)
-      }
-      else {
+      } else {
         runnable.run()
       }
     }
@@ -146,7 +144,8 @@ class CompletionInvokerImpl(private val project: Project,
   }
 
   override fun isOpen(file: String): Boolean {
-    return FileEditorManager.getInstance(project).openFiles.any { it.path == file }
+    val isOpen = FileEditorManager.getInstance(project).openFiles.any { it.path == file }
+    return isOpen
   }
 
   override fun save() {
@@ -195,19 +194,6 @@ class CompletionInvokerImpl(private val project: Project,
     var currentString = ""
 
     while (currentString != expectedLine) {
-      require(expectedLine.startsWith(currentString)) {
-        "Current string `$currentString` must start with expected line `$expectedLine`"
-      }
-
-      val skippable = emulator.skippableLookup(currentString)
-      if (skippable != null) {
-        printText(skippable.stubText)
-        currentString += skippable.stubText
-        LookupManager.hideActiveLookup(project)
-        session.addLookup(skippable)
-        continue
-      }
-
       val lookup = callCompletion(expectedLine, null)
 
       emulator.pickBestSuggestion(currentString, lookup, session).also {

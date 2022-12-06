@@ -13,7 +13,6 @@ abstract class LatencyMetric(override val name: String) : Metric {
     val fileSample = Sample()
     sessions.stream()
       .flatMap { session -> session.lookups.stream() }
-      .filter { it.stubText.isEmpty() }
       .forEach {
         this.sample.add(it.latency.toDouble())
         fileSample.add(it.latency.toDouble())

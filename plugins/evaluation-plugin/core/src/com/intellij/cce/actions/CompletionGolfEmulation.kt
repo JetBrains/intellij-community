@@ -64,27 +64,8 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
 
     return if (res != null) {
       possibleResult.takeIf { res.first.length < suggestion.length }
-    }
-    else {
+    } else {
       possibleResult
-    }
-  }
-
-  fun skippableLookup(current: String): Lookup? {
-    val nextChar = expectedLine[current.length]
-    return if (nextChar.isWhitespace()) {
-      Lookup(
-        prefix = "",
-        suggestions = emptyList(),
-        latency = 0,
-        features = null,
-        selectedPosition = 1,
-        isNew = false,
-        stubText = nextChar.toString()
-      )
-    }
-    else {
-      null
     }
   }
 

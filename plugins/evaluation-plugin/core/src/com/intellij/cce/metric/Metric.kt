@@ -1,6 +1,5 @@
 package com.intellij.cce.metric
 
-import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 
 interface Metric {
@@ -8,7 +7,4 @@ interface Metric {
   val value: Double
   val name: String
   val valueType: MetricValueType
-
-  val Session.filteredLookups: List<Lookup>
-    get() = lookups.filter { it.stubText.isEmpty() }
 }
