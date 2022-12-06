@@ -175,6 +175,7 @@ class MoveRefactoringAction : AnAction() {
         val fileSystemChangesTracker = FileSystemChangesTracker()
         val cancelledChecker = { indicator.isCanceled }
         val setIndicator = { text: String, fraction: Double ->
+            @Suppress("HardCodedStringLiteral")
             indicator.text2 = text
             indicator.fraction = fraction
         }

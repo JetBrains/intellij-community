@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
@@ -40,7 +41,7 @@ object SmartCastImpossibleInIfThenFactory : KotlinIntentionActionsFactory() {
 
     private fun createQuickFix(
         ifExpression: KtIfExpression,
-        @Nls fixText: (KtIfExpression) -> String,
+        fixText: (KtIfExpression) -> @IntentionName String,
         isApplicable: (KtIfExpression) -> Boolean,
         applyTo: (KtIfExpression, project: Project, editor: Editor?) -> Unit
     ): KotlinQuickFixAction<KtIfExpression> {

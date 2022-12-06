@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pass
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -63,7 +62,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
+import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -97,8 +98,6 @@ import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
-import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
-import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 
 @JvmOverloads
 fun getOrCreateKotlinFile(
@@ -237,7 +236,7 @@ fun <T : PsiElement> getPsiElementPopup(
     editor: Editor,
     elements: List<T>,
     renderer: PsiElementListCellRenderer<T>,
-    title: String?,
+    @NlsContexts.PopupTitle title: String?,
     highlightSelection: Boolean,
     processor: (T) -> Boolean
 ): JBPopup = with(JBPopupFactory.getInstance().createPopupChooserBuilder(elements)) {
@@ -250,7 +249,9 @@ fun <T : PsiElement> getPsiElementPopup(
         }
     }
 
-    title?.let { setTitle(it) }
+    if (title != null) {
+        setTitle(title)
+    }
     renderer.installSpeedSearch(this, true)
     setItemChosenCallback { it?.let(processor) }
 
@@ -327,7 +328,7 @@ fun PsiFile.getLineEndOffset(line: Int): Int? {
     return document?.getLineEndOffset(line)
 }
 
-@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead",)
+@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead")
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
    return _getLineNumber(start)
 }

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -13,7 +14,6 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.*
 
 interface KotlinMoveTarget {
     val targetContainerFqName: FqName?
@@ -22,8 +22,12 @@ interface KotlinMoveTarget {
     fun getOrCreateTargetPsi(originalPsi: PsiElement): KtElement
     fun getTargetPsiIfExists(originalPsi: PsiElement): KtElement?
 
-    // Check possible errors and return corresponding message, or null if no errors are detected
-    fun verify(file: PsiFile): String?
+    /**
+     * Check possible errors and return corresponding message, or null if no errors are detected.
+     * <code>null</code> means no additional verification is needed.
+     */
+    @NlsContexts.DialogMessage
+    fun verify(file: PsiFile): String? = null
 
 }
 
@@ -33,7 +37,6 @@ object EmptyKotlinMoveTarget : KotlinMoveTarget {
 
     override fun getOrCreateTargetPsi(originalPsi: PsiElement): KtElement = throw UnsupportedOperationException()
     override fun getTargetPsiIfExists(originalPsi: PsiElement): KtElement? = null
-    override fun verify(file: PsiFile): String? = null
 }
 
 class KotlinMoveTargetForExistingElement(val targetElement: KtElement) : KotlinMoveTarget {
@@ -44,9 +47,6 @@ class KotlinMoveTargetForExistingElement(val targetElement: KtElement) : KotlinM
     override fun getOrCreateTargetPsi(originalPsi: PsiElement) = targetElement
 
     override fun getTargetPsiIfExists(originalPsi: PsiElement) = targetElement
-
-    // No additional verification is needed
-    override fun verify(file: PsiFile): String? = null
 }
 
 class KotlinMoveTargetForCompanion(val targetClass: KtClass) : KotlinMoveTarget {
@@ -58,9 +58,6 @@ class KotlinMoveTargetForCompanion(val targetClass: KtClass) : KotlinMoveTarget 
     override fun getOrCreateTargetPsi(originalPsi: PsiElement) = targetClass.getOrCreateCompanionObject()
 
     override fun getTargetPsiIfExists(originalPsi: PsiElement) = targetClass.companionObjects.firstOrNull()
-
-    // No additional verification is needed
-    override fun verify(file: PsiFile): String? = null
 }
 
 /**
@@ -86,9 +83,6 @@ class KotlinMoveTargetForDeferredFile(
     }
 
     override fun getTargetPsiIfExists(originalPsi: PsiElement): KtElement? = null
-
-    // No additional verification is needed
-    override fun verify(file: PsiFile): String? = null
 }
 
 class KotlinDirectoryMoveTarget(
@@ -104,8 +98,6 @@ class KotlinDirectoryMoveTarget(
     }
 
     override fun getTargetPsiIfExists(originalPsi: PsiElement): KtElement? = null
-
-    override fun verify(file: PsiFile): String? = null
 }
 
 fun KotlinMoveTarget.getTargetModule(project: Project) = targetFileOrDir?.getModule(project)

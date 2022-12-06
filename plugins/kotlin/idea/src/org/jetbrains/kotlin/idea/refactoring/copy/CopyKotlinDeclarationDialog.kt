@@ -6,6 +6,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pass
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -124,6 +125,7 @@ class CopyKotlinDeclarationDialog(
         get() = openInEditorCheckBox.isSelected
 
     @Nls
+    @NlsContexts.DialogMessage
     private fun checkForErrors(): String? {
         val packageName = packageNameField.text
         val newName = newName
@@ -157,9 +159,10 @@ class CopyKotlinDeclarationDialog(
     override fun doOKAction() {
         val packageName = packageNameField.text
 
-        checkForErrors()?.let { errorString ->
-            if (errorString.isNotEmpty()) {
-                Messages.showMessageDialog(project, errorString, RefactoringBundle.message("error.title"), Messages.getErrorIcon())
+        @NlsContexts.DialogMessage val checkForErrors = checkForErrors()
+        if (checkForErrors != null) {
+            if (checkForErrors.isNotEmpty()) {
+                Messages.showMessageDialog(project, checkForErrors, RefactoringBundle.message("error.title"), Messages.getErrorIcon())
             }
             classNameField.requestFocusInWindow()
             return

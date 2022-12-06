@@ -24,6 +24,7 @@ import com.intellij.testIntegration.TestFramework
 import com.intellij.testIntegration.TestIntegrationUtils.MethodKind
 import com.intellij.ui.components.JBList
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -59,10 +60,10 @@ abstract class KotlinGenerateTestSupportActionBase(
 
             if (isUnitTestMode()) return consumer(frameworks.first())
 
-            val list = JBList<TestFramework>(*frameworks.toTypedArray())
+            val list = JBList(*frameworks.toTypedArray())
             list.cellRenderer = TestFrameworkListCellRenderer()
 
-            PopupChooserBuilder<TestFramework>(list).setFilteringEnabled { (it as TestFramework).name }
+            PopupChooserBuilder(list).setFilteringEnabled { (it as TestFramework).name }
                 .setTitle(KotlinBundle.message("action.generate.test.support.choose.framework"))
                 .setItemChoosenCallback { consumer(list.selectedValue as TestFramework) }
                 .setMovable(true)
@@ -70,8 +71,8 @@ abstract class KotlinGenerateTestSupportActionBase(
                 .showInBestPositionFor(editor)
         }
 
-        private val BODY_VAR = "\${BODY}"
-        private val NAME_VAR = "\${NAME}"
+        private const val BODY_VAR = "\${BODY}"
+        private const val NAME_VAR = "\${NAME}"
 
         private val NAME_VALIDATOR = object : InputValidator {
             override fun checkInput(inputString: String) = inputString.quoteIfNeeded().isIdentifier()
@@ -152,7 +153,7 @@ abstract class KotlinGenerateTestSupportActionBase(
         }
 
         try {
-            var errorHint: String? = null
+            @Nls var errorHint: String? = null
             project.executeWriteCommand(commandName) {
                 PsiDocumentManager.getInstance(project).commitAllDocuments()
 
@@ -184,7 +185,10 @@ abstract class KotlinGenerateTestSupportActionBase(
 
                 setupEditorSelection(editor, functionInPlace)
             }
-            errorHint?.let { HintManager.getInstance().showErrorHint(editor, it) }
+            errorHint?.let {
+                @Suppress("HardCodedStringLiteral")
+                HintManager.getInstance().showErrorHint(editor, it)
+            }
         } catch (e: IncorrectOperationException) {
             val message = KotlinBundle.message("action.generate.test.support.error.cant.generate.method", e.message.toString())
             HintManager.getInstance().showErrorHint(editor, message)
