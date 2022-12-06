@@ -152,6 +152,11 @@ fun KtPropertyAccessor.deleteBody() {
     deleteChildRange(leftParenthesis, lastChild)
 }
 
+/**
+ * Does one of two conversions:
+ * * `fun foo() = value` -> `value`
+ * * `fun foo() { return value }` -> `value`
+ */
 fun KtDeclarationWithBody.singleExpressionBody(): KtExpression? =
     when (val body = bodyExpression) {
         is KtBlockExpression -> body.statements.singleOrNull()?.asSafely<KtReturnExpression>()?.returnedExpression
