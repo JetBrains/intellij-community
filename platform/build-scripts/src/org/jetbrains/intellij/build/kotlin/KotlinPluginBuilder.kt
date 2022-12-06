@@ -131,6 +131,7 @@ object KotlinPluginBuilder {
     "kotlin.project-wizard.core",
     "kotlin.project-wizard.idea",
     "kotlin.project-wizard.idea-k1",
+    "kotlin.project-wizard.idea-k2",
     "kotlin.project-wizard.maven",
     "kotlin.project-wizard.gradle",
     "kotlin.project-wizard.compose",

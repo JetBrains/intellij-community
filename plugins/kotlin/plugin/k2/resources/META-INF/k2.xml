@@ -219,6 +219,7 @@
     <module name="kotlin.gradle.gradle-java"/>
 
     <module name="kotlin.project-wizard.idea"/>
+    <module name="kotlin.project-wizard.idea-k2"/>
     <module name="kotlin.project-wizard.gradle"/>
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.project-wizard.compose"/>
