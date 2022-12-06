@@ -9,6 +9,7 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -18,6 +19,7 @@ import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.matchedNameOrName
+import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
 
@@ -29,28 +31,28 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
 
   val origin: WebSymbolOrigin
 
-  val namespace: SymbolNamespace
+  val namespace: @NlsSafe SymbolNamespace
 
-  val kind: SymbolKind
+  val kind: @NlsSafe SymbolKind
 
-  val name: String
+  val name: @NlsSafe String
 
   val nameSegments: List<WebSymbolNameSegment>
     get() = listOf(WebSymbolNameSegment(0, name.length, this))
 
-  val description: String?
+  val description: @Nls String?
     get() = null
 
-  val descriptionSections: Map<String, String>
+  val descriptionSections: Map<@Nls String, @Nls String>
     get() = emptyMap()
 
-  val docUrl: String?
+  val docUrl: @NlsSafe String?
     get() = null
 
   val icon: Icon?
     get() = null
 
-  val defaultValue: String?
+  val defaultValue: @NlsSafe String?
     get() = null
 
   val type: Any?
