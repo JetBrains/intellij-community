@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -16,7 +17,7 @@ class SwitchSEListener extends BufferingListenerWrapper {
   SwitchSEListener(SearchListener delegateListener, SearchListModel model) {
     super(delegateListener);
     throttlingListener = new ThrottlingListenerWrapper(delegateListener);
-    wfcListener = new WaitForContributorsListenerWrapper(delegateListener, model);
+    wfcListener = new WaitForContributorsListenerWrapper(delegateListener, model, AdvancedSettings.getInt("search.everywhere.contributors.wait.timeout"));
   }
 
   @Override
