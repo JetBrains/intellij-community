@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -36,6 +37,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
     fun getInstance(project: Project): ReaderModeSettings = project.getService(ReaderModeSettings::class.java)
 
+    @RequiresEdt
     fun applyReaderMode(project: Project,
                         editor: Editor?,
                         file: VirtualFile?,
@@ -88,6 +90,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       this.putUserData(MATCHES_READER_MODE_KEY, value)
     }
 
+    @RequiresEdt
     private fun applyModeChanged(project: Project, editor: Editor, matchMode: Boolean, fileIsOpenAlready: Boolean) {
       if (editor.isDisposed) return
 

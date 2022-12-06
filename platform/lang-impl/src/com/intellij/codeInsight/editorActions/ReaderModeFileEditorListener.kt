@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions
 
 import com.intellij.codeInsight.actions.ReaderModeSettings
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,7 +22,11 @@ private class ReaderModeFileEditorListener : FileOpenedSyncListener {
     file.fileSystem.addVirtualFileListener(object : VirtualFileListener {
       override fun propertyChanged(event: VirtualFilePropertyEvent) {
         if (event.propertyName == VirtualFile.PROP_WRITABLE && event.file == file) {
-          ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, forceUpdate = true)
+          ApplicationManager.getApplication().invokeLater(Runnable {
+            if (fileEditor.editor.isDisposed) return@Runnable
+
+            ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, forceUpdate = true)
+          }, ModalityState.any(), project.disposed)
         }
       }
     }, fileEditor)

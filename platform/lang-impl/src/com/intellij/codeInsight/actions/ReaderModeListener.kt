@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -29,6 +30,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
     @JvmField
     internal val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
 
+    @RequiresEdt
     fun applyToAllEditors(project: Project) {
       for (editor in FileEditorManager.getInstance(project).allEditors) {
         if (editor is TextEditor) {
@@ -36,10 +38,11 @@ class ReaderModeSettingsListener : ReaderModeListener {
         }
       }
 
-      EditorFactory.getInstance().allEditors.forEach {
-        if (it !is EditorImpl) return@forEach
-        if (it.getProject() != project) return@forEach
-        ReaderModeSettings.applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document), fileIsOpenAlready = true)
+      for (editor in EditorFactory.getInstance().allEditors) {
+        if (editor !is EditorImpl) continue
+        if (editor.getProject() != project) continue
+
+        ReaderModeSettings.applyReaderMode(project, editor, FileDocumentManager.getInstance().getFile(editor.document), fileIsOpenAlready = true)
       }
     }
 
