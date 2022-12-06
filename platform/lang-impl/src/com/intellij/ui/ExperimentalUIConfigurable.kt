@@ -3,10 +3,7 @@ package com.intellij.ui
 
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.util.SystemInfo
@@ -35,7 +32,7 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
     }
 
     row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
-    row { link(IdeBundle.message("new.ui.submit.feedback")) { sendFeedback() } }
+    row { link(IdeBundle.message("new.ui.submit.feedback")) { NewUIFeedbackDialog(null, false).show() } }
 
     if (SystemInfo.isWindows || SystemInfo.isXWindow) {
       group(IdeBundle.message("new.ui.settings.group.name")) {
@@ -49,16 +46,6 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
             }.enabledIf(newUiCheckBox.selected)
         }
       }
-    }
-  }
-
-  private fun sendFeedback() {
-    val feedbackForm = (ApplicationInfo.getInstance() as ApplicationInfoImpl).feedbackForm
-    if (Registry.`is`("ide.in.product.feedback") && feedbackForm != null) {
-      NewUIFeedbackDialog(null, false).show()
-    }
-    else {
-      SendFeedbackAction.submit(null)
     }
   }
 
