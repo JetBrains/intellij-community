@@ -127,12 +127,10 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
   }
 
   private fun doTest(content: String, expected: String, count: Int = 1) {
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      repeat(count) {
-        backspace()
-      }
-      checkResultByText(expected)
+    configureFromFileText("some.md", content)
+    repeat(count) {
+      backspace()
     }
+    checkResultByText(expected)
   }
 }

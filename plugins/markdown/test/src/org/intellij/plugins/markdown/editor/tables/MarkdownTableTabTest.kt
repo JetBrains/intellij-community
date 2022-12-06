@@ -116,15 +116,13 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
   }
 
   private fun doTest(content: String, expected: String, count: Int = 1, forward: Boolean = true) {
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      repeat(count) {
-        when {
-          forward -> executeAction("EditorTab")
-          else -> executeAction("EditorUnindentSelection")
-        }
+    configureFromFileText("some.md", content)
+    repeat(count) {
+      when {
+        forward -> executeAction("EditorTab")
+        else -> executeAction("EditorUnindentSelection")
       }
-      checkResultByText(expected)
     }
+    checkResultByText(expected)
   }
 }

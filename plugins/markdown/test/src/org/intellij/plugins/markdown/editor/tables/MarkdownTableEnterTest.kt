@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils.runWithChangedSettings
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -118,15 +117,13 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
   }
 
   private fun doTest(content: String, expected: String, count: Int = 1, shift: Boolean = false) {
-    runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      repeat(count) {
-        when {
-          shift -> executeAction("EditorStartNewLine")
-          else -> type("\n")
-        }
+    configureFromFileText("some.md", content)
+    repeat(count) {
+      when {
+        shift -> executeAction("EditorStartNewLine")
+        else -> type("\n")
       }
-      checkResultByText(expected)
     }
+    checkResultByText(expected)
   }
 }

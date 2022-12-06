@@ -214,10 +214,8 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
   }
 
   private fun doTest(content: String, expected: String, count: Int = 1, string: String = " ") {
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      type(string.repeat(count))
-      checkResultByText(expected)
-    }
+    configureFromFileText("some.md", content)
+    type(string.repeat(count))
+    checkResultByText(expected)
   }
 }

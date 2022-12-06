@@ -27,12 +27,10 @@ class TableHandlersWithFileExcludedFromFormattingTest: LightPlatformCodeInsightT
     |------|
     | some<caret>     |
     """.trimIndent()
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      runWithDisabledFormatting(file) {
-        type("some")
-        checkResultByText(expected)
-      }
+    configureFromFileText("some.md", content)
+    runWithDisabledFormatting(file) {
+      type("some")
+      checkResultByText(expected)
     }
   }
 
@@ -50,12 +48,10 @@ class TableHandlersWithFileExcludedFromFormattingTest: LightPlatformCodeInsightT
     |--------------|
     | some tex<caret>    |
     """.trimIndent()
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      runWithDisabledFormatting(file) {
-        backspace()
-        checkResultByText(expected)
-      }
+    configureFromFileText("some.md", content)
+    runWithDisabledFormatting(file) {
+      backspace()
+      checkResultByText(expected)
     }
   }
 
@@ -73,12 +69,10 @@ class TableHandlersWithFileExcludedFromFormattingTest: LightPlatformCodeInsightT
     |:------------:|
     | some<caret>             |
     """.trimIndent()
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      runWithDisabledFormatting(file) {
-        type("some")
-        checkResultByText(expected)
-      }
+    configureFromFileText("some.md", content)
+    runWithDisabledFormatting(file) {
+      type("some")
+      checkResultByText(expected)
     }
   }
 
