@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -191,7 +192,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @NotNull
   private BufferingListenerWrapper createListener() {
     SearchListener wrapped = SearchListener.combine(mySearchListener, new SearchProcessLogger());
-    if (Registry.is("search.everywhere.wait.for.contributors")) {
+    if (Registry.is("search.everywhere.wait.for.contributors") && AdvancedSettings.getBoolean("search.everywhere.wait.for.all.contributors")) {
       return new SwitchSEListener(wrapped, myListModel);
     }
 
