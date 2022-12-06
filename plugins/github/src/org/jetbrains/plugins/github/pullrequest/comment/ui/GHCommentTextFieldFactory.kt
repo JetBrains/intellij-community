@@ -67,7 +67,7 @@ class GHCommentTextFieldFactory(private val model: CommentTextFieldModel) {
 
       add(authorLabel, CC().alignY("top")
         .gapRight("${avatarRightGap}").gapTop("${avatarTopGap}"))
-      add(component, CC().growX().pushX()
+      add(component, CC().grow().push()
         .gapTop("${editorTopGap}")
         .minWidth("0"))
     }

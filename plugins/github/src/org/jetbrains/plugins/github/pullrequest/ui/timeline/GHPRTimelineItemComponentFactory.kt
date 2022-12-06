@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
 import com.intellij.collaboration.ui.codereview.setHtmlBody
@@ -243,11 +244,16 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
     val tagsPanel = createThreadTagsPanel(thread)
 
-    val textPane = HtmlEditorPane(firstComment.body.convertToHtml(project))
+    val textPane = HtmlEditorPane()
+    val textFlow = MutableStateFlow<@Nls String>(firstComment.body)
+
     val panelHandle = GHEditableHtmlPaneHandle(project, textPane, firstComment::body) { newText ->
       reviewDataProvider.updateComment(EmptyProgressIndicator(), firstComment.id, newText)
-        .successOnEdt { textPane.setHtmlBody(it.body.convertToHtml(project)) }
+        .successOnEdt { textFlow.value = it.body }
+    }.apply {
+      maxPaneHeight = UIUtil.getUnscaledLineHeight(textPane) * 2
     }
+
     val actionsPanel = NonOpaquePanel(HorizontalLayout(8)).apply {
       if (firstComment.canBeUpdated) add(GHTextActions.createEditButton(panelHandle))
       if (firstComment.canBeDeleted) add(GHTextActions.createDeleteButton {
@@ -276,16 +282,38 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
 
     val content = JPanel(MigLayout(LC()
-                                     .flowY()
+                                     .fill().flowY()
                                      .hideMode(3)
                                      .gridGap("0", "4")
-                                     .insets("0", "0", "0", "0")
-                                     .fill())).apply {
+                                     .insets("0", "0", "0", "0"))).apply {
       isOpaque = false
-      add(diff, CC().grow())
-      add(panelHandle.panel, CC().grow().maxWidth("$TIMELINE_CONTENT_WIDTH"))
-      add(collapsedThreadActionsComponent, CC()
-        .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+    }.apply {
+      coroutineScopeProvider.launchInScope {
+        combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
+          textPane.foreground = if (collapsed) UIUtil.getContextHelpForeground() else UIUtil.getLabelForeground()
+          removeAll()
+          if (collapsed) {
+            textPane.setBody(text)
+            add(panelHandle.panel, CC()
+              .grow()
+              .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+            add(diff, CC().grow())
+            add(collapsedThreadActionsComponent, CC()
+              .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+          }
+          else {
+            textPane.setBody(text.convertToHtml(project))
+            add(diff, CC().grow())
+            add(panelHandle.panel, CC()
+              .grow()
+              .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+            add(collapsedThreadActionsComponent, CC()
+              .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+          }
+          revalidate()
+          repaint()
+        }
+      }
     }.also {
       coroutineScopeProvider.activateWith(it)
     }

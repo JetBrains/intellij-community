@@ -2876,6 +2876,11 @@ public final class UIUtil {
     return textComponent.getFontMetrics(textComponent.getFont()).getHeight();
   }
 
+  public static int getUnscaledLineHeight(@NotNull JComponent component) {
+    Font baseFont = component.getFont().deriveFont(JBUIScale.DEF_SYSTEM_FONT_SIZE);
+    return component.getFontMetrics(baseFont).getHeight();
+  }
+
   /**
    * Returns the first focusable component in the specified container.
    * This method returns {@code null} if container is {@code null},
