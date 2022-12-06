@@ -6,7 +6,6 @@ import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.application.options.schemes.SchemesCombo
-import com.intellij.formatting.visualLayer.VisualFormattingLayerService
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.lang.LangBundle
@@ -112,8 +111,8 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
                     }
                   }
                 }
-            }
-          }.enabledIf(visualFormattingLayer.selected)
+            }.enabledIf(visualFormattingLayer.selected)
+          }
         }
       }.enabledIf(enabled.selected)
     }
