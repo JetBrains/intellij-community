@@ -164,7 +164,11 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                  * This is the case that we used the next expression of the if expression as the else expression.
                  * See the code and comment in [RedundancyType.of].
                  */
-                returnExpressionAfterIf?.element?.delete()
+                returnExpressionAfterIf?.element?.let {
+                    val prev = it.prevSibling
+                    if (prev is PsiWhiteSpace && prev.prevSibling == element) prev.delete()
+                    it.delete()
+                }
 
                 element.replace(newExpressionOnlyWithCondition)
             }
