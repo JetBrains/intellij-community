@@ -311,13 +311,18 @@ public class SearchResults implements DocumentListener, CaretListener {
       if (result == null || !result.isStringFound()) break;
       final int newOffset = result.getEndOffset();
       if (result.getEndOffset() > maxOffset) break;
-      offset = newOffset;
-      if (offset < maxOffset - 1) {
-        offset++; // skip zero width result
+      if (offset == newOffset || newOffset == result.getStartOffset()) {
+        offset = newOffset;
+        if (offset < maxOffset - 1) {
+          offset++; // skip zero-width result
+        }
+        else {
+          results.add(result);
+          break;
+        }
       }
       else {
-        results.add(result);
-        break;
+        offset = newOffset;
       }
       results.add(result);
     }
