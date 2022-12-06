@@ -738,7 +738,7 @@
     <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
     <projectOriginInfoProvider implementation="git4idea.repo.GitProjectOriginInfoProvider"/>
 
-    <vcsStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
+    <backgroundPostStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
 
     <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
     <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
