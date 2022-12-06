@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.notification.Notification;
@@ -13,7 +12,6 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -55,12 +53,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   public HotSwapProgressImpl(Project project) {
     super(project);
     assert EventQueue.isDispatchThread();
-    myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, new PerformInBackgroundOption() {
-      @Override
-      public boolean shouldStartInBackground() {
-        return DebuggerSettings.getInstance().HOTSWAP_IN_BACKGROUND;
-      }
-    }, null, null, true);
+    myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, null, null, true);
     myProgressWindow.setIndeterminate(false);
     myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase(){
       @Override
