@@ -138,9 +138,6 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val namespace: SymbolNamespace
       get() = base.namespace
 
-    override val nameSegments: List<WebSymbolNameSegment>
-      get() = listOf(WebSymbolNameSegment(0, if (base is Pattern) 0 else base.name.length, this))
-
     override val name: String
       get() = if (base is Pattern) base.contributionName else base.name
 

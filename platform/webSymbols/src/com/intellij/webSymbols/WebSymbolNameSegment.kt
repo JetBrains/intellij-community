@@ -16,6 +16,8 @@ class WebSymbolNameSegment(val start: Int,
                            private val explicitPriority: WebSymbol.Priority? = null,
                            private val explicitProximity: Int? = null) {
 
+  constructor(symbol: WebSymbol): this(0, symbol.name.length, listOf(symbol))
+
   constructor(start: Int, end: Int, symbol: WebSymbol) : this(start, end, listOf(symbol))
   constructor(start: Int, end: Int, vararg symbols: WebSymbol) : this(start, end, symbols.toList())
 

@@ -8,6 +8,7 @@ import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.utils.completeMatch
+import com.intellij.webSymbols.utils.nameSegments
 import java.util.*
 
 open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
@@ -52,7 +53,8 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       if (source.pattern != null) {
         printProperty(level, "matchedName", source.namespace.lowercase(Locale.US) + "/" + source.kind + "/<pattern>")
         printProperty(level, "name", source.name)
-      } else {
+      }
+      else {
         printProperty(level, "matchedName", source.namespace.lowercase(Locale.US) + "/" + source.kind + "/" + source.name)
       }
       printProperty(level, "origin", "${source.origin.library}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
@@ -82,7 +84,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
   private fun StringBuilder.printSegment(topLevel: Int,
                                          segment: WebSymbolNameSegment): StringBuilder =
     printObject(topLevel) { level ->
-      printProperty(level, "name-part", segment.getName(parents.peek()))
+      printProperty(level, "name-part", parents.peek().let { if (it.pattern == null) segment.getName(parents.peek()) else "" })
       printProperty(level, "display-name", segment.displayName)
       printProperty(level, "deprecated", segment.deprecated.takeIf { it })
       printProperty(level, "priority", segment.priority?.takeIf { it != WebSymbol.Priority.NORMAL })

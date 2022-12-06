@@ -37,9 +37,6 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
 
   val name: @NlsSafe String
 
-  val nameSegments: List<WebSymbolNameSegment>
-    get() = listOf(WebSymbolNameSegment(0, name.length, this))
-
   val description: @Nls String?
     get() = null
 

@@ -24,6 +24,7 @@ import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.getProblemKind
 import com.intellij.webSymbols.utils.hasOnlyExtensions
+import com.intellij.webSymbols.utils.nameSegments
 import java.util.*
 
 private const val IJ_IGNORE_REFS = "ij-no-psi-refs"
