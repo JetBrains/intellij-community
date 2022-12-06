@@ -58,7 +58,7 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
   }
 
   private fun isEnabled(): Boolean {
-    return TableUtils.isTableSupportEnabled() && MarkdownCodeInsightSettings.getInstance().state.useTableCellNavigation
+    return MarkdownCodeInsightSettings.getInstance().state.useTableCellNavigation
   }
 
   private fun findNextCell(currentCell: MarkdownTableCell, forward: Boolean): MarkdownTableCell? {

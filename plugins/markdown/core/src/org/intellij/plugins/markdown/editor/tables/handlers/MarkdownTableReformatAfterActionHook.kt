@@ -24,7 +24,7 @@ internal class MarkdownTableReformatAfterActionHook(private val baseHandler: Edi
 
   private fun actuallyExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     val project = editor.project ?: return
-    if (!TableUtils.isTableSupportEnabled() || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+    if (!MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
       return
     }
     val document = editor.document

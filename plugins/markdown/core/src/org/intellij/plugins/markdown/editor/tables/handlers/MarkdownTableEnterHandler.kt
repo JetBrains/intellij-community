@@ -63,7 +63,7 @@ internal class MarkdownTableEnterHandler: EnterHandlerDelegateAdapter() {
   }
 
   private fun isEnabled(): Boolean {
-    return TableUtils.isTableSupportEnabled() && MarkdownCodeInsightSettings.getInstance().state.insertHtmlLineBreakInsideTables
+    return MarkdownCodeInsightSettings.getInstance().state.insertHtmlLineBreakInsideTables
   }
 
   companion object {

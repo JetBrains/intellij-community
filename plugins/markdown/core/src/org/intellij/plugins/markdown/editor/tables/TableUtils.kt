@@ -175,7 +175,7 @@ object TableUtils {
   }
 
   internal fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
-    return isTableSupportEnabled() && MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType
+    return MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType
   }
 
   /**

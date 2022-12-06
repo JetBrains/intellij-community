@@ -34,7 +34,7 @@ internal class MarkdownTableShiftEnterHandler(private val baseHandler: EditorAct
 
   private fun actuallyExecute(editor: Editor, caret: Caret?, dataContext: DataContext?): Boolean {
     val project = editor.project ?: return false
-    if (!TableUtils.isTableSupportEnabled() || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+    if (!MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
       return false
     }
     val document = editor.document
