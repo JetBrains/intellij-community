@@ -19,10 +19,11 @@ public class UtilsBenchmark {
     @Param("16384")
     public int dataSize;
 
+    private final static Random random = new Random(42);
 
-    @Setup
+
+    @Setup(Level.Iteration)
     public void setup() {
-      Random random = new Random(42);
       data = new double[dataSize];
       for (int i = 0; i < data.length; i++) {
         data[i] = random.nextDouble();
