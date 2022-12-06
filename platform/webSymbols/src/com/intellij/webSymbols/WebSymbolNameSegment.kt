@@ -3,6 +3,8 @@ package com.intellij.webSymbols
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.utils.matchedNameOrName
 
 class WebSymbolNameSegment(val start: Int,
                            val end: Int,
@@ -41,7 +43,7 @@ class WebSymbolNameSegment(val start: Int,
       ?: symbols.asSequence().map { WebSymbolQualifiedKind(it.namespace, it.kind) }.toSet()
 
   fun getName(symbol: WebSymbol): String =
-    symbol.matchedName.substring(start, end)
+    symbol.matchedNameOrName.substring(start, end)
 
   internal fun withOffset(offset: Int): WebSymbolNameSegment =
     WebSymbolNameSegment(start + offset, end + offset, symbols, problem, displayName,

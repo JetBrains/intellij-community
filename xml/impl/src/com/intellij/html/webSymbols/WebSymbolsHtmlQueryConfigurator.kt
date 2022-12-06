@@ -215,13 +215,13 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     : WebSymbol, StandardHtmlSymbol() {
 
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
-      getHtmlMdnTagDocumentation(getHtmlApiNamespace(descriptor.nsDescriptor?.name, tag, matchedName),
-                                 matchedName)
+      getHtmlMdnTagDocumentation(getHtmlApiNamespace(descriptor.nsDescriptor?.name, tag, name),
+                                 name)
 
     override val kind: SymbolKind
       get() = WebSymbol.KIND_HTML_ELEMENTS
 
-    override val matchedName: String = descriptor.name
+    override val name: String = descriptor.name
 
     override val origin: WebSymbolOrigin
       get() = WebSymbolOrigin.empty()
@@ -268,12 +268,12 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
       getHtmlMdnAttributeDocumentation(getHtmlApiNamespace(tag?.namespace, tag, tagName),
-                                       tagName, matchedName)
+                                       tagName, name)
 
     override val kind: SymbolKind
       get() = WebSymbol.KIND_HTML_ATTRIBUTES
 
-    override val matchedName: String = descriptor.name
+    override val name: String = descriptor.name
 
     override val origin: WebSymbolOrigin
       get() = WebSymbolOrigin.empty()
@@ -332,12 +332,12 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
   private class HtmlEventDescriptorBasedSymbol(descriptor: XmlAttributeDescriptor) : WebSymbol, StandardHtmlSymbol() {
 
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
-      getDomEventDocumentation(matchedName)
+      getDomEventDocumentation(name)
 
     override val kind: SymbolKind
       get() = WebSymbol.KIND_JS_EVENTS
 
-    override val matchedName: String = descriptor.name.substring(2)
+    override val name: String = descriptor.name.substring(2)
 
     override val origin: WebSymbolOrigin
       get() = WebSymbolOrigin.empty()

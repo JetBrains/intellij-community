@@ -7,6 +7,7 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.utils.completeMatch
 import java.util.*
 
 open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
@@ -48,8 +49,12 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       return this
     }
     printObject(topLevel) { level ->
-      printProperty(level, "matchedName", source.namespace.lowercase(Locale.US) + "/" + source.kind + "/" + source.matchedName)
-      printProperty(level, "name", source.name.takeIf { it != source.matchedName })
+      if (source.pattern != null) {
+        printProperty(level, "matchedName", source.namespace.lowercase(Locale.US) + "/" + source.kind + "/<pattern>")
+        printProperty(level, "name", source.name)
+      } else {
+        printProperty(level, "matchedName", source.namespace.lowercase(Locale.US) + "/" + source.kind + "/" + source.name)
+      }
       printProperty(level, "origin", "${source.origin.library}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
       printProperty(level, "source", (source as? PsiSourcedWebSymbol)?.source)
       printProperty(level, "type", source.type)
@@ -77,7 +82,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
   private fun StringBuilder.printSegment(topLevel: Int,
                                          segment: WebSymbolNameSegment): StringBuilder =
     printObject(topLevel) { level ->
-      printProperty(level, "name-part", parents.peek().matchedName.substring(segment.start, segment.end))
+      printProperty(level, "name-part", segment.getName(parents.peek()))
       printProperty(level, "display-name", segment.displayName)
       printProperty(level, "deprecated", segment.deprecated.takeIf { it })
       printProperty(level, "priority", segment.priority?.takeIf { it != WebSymbol.Priority.NORMAL })

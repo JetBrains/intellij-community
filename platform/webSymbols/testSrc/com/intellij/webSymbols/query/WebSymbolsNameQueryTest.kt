@@ -413,7 +413,7 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
                 get() = WebSymbol.NAMESPACE_HTML
               override val kind: SymbolKind
                 get() = WebSymbol.KIND_HTML_ATTRIBUTES
-              override val matchedName: String
+              override val name: String
                 get() = "bar"
 
               override fun createPointer(): Pointer<out WebSymbol> = Pointer.hardPointer(this)

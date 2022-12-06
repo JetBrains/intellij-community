@@ -139,10 +139,10 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       get() = base.namespace
 
     override val nameSegments: List<WebSymbolNameSegment>
-      get() = listOf(WebSymbolNameSegment(0, if (base is Pattern) 0 else matchedName.length, this))
+      get() = listOf(WebSymbolNameSegment(0, if (base is Pattern) 0 else base.name.length, this))
 
     override val name: String
-      get() = base.contributionName
+      get() = if (base is Pattern) base.contributionName else base.name
 
     override val description: String?
       get() = base.contribution.description
@@ -223,9 +223,6 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
 
     override val pattern: WebSymbolsPattern?
       get() = base.jsonPattern?.wrap(base.contribution.name)
-
-    override val matchedName: String
-      get() = base.name
 
     override fun createPointer(): Pointer<WebTypesSymbolImpl> {
       val queryExecutorPtr = this.queryExecutor.createPointer()
