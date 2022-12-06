@@ -450,18 +450,25 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       final int collapseIntoIndex = duplicatesIndices[sectionIndex].myCollapseIntoIndex;
       if (collapseIntoIndex < 0) return;
 
-      final CatchSectionWrapper collapseIntoSection = sections[collapseIntoIndex];
+      CatchSectionWrapper collapseIntoSection = sections[collapseIntoIndex];
       if (collapseIntoSection == null) return;
 
       final PsiTypeElement collapseIntoTypeElement = collapseIntoSection.myParameter.getTypeElement();
       if (collapseIntoTypeElement == null) return;
 
-      final Set<String> survivingCommentTexts = new HashSet<>(collectCommentTexts(collapseIntoSection.myCatchSection));
       final List<PsiType> parameterTypes = new ArrayList<>(collapseIntoSection.myTypes);
       parameterTypes.addAll(duplicateSection.myTypes);
 
       final List<PsiType> filteredTypes = PsiDisjunctionType.flattenAndRemoveDuplicates(parameterTypes);
       final PsiType disjunction = PsiDisjunctionType.createDisjunction(filteredTypes, tryStatement.getManager());
+      List<PsiClassType> targetTypes = CatchSectionWrapper.getClassTypes(disjunction);
+      if (targetTypes != null && targetTypes.equals(duplicateSection.myTypes)) {
+        CatchSectionWrapper temp = collapseIntoSection;
+        collapseIntoSection = duplicateSection;
+        duplicateSection = temp;
+      }
+      final Set<String> survivingCommentTexts = new HashSet<>(collectCommentTexts(collapseIntoSection.myCatchSection));
+
       final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(disjunction);
 
       final CommentTracker tracker = new CommentTracker();

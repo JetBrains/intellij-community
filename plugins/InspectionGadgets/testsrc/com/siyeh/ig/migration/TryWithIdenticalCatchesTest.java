@@ -18,6 +18,9 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   public void testTryIdenticalCatches() {
     doTest();
   }
+  public void testChooseExtendedCatch() {
+    doTest();
+  }
 
   public void testNonDisjunctTypes() {
     doTest();
