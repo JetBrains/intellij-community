@@ -7,15 +7,15 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Query
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtFunction
 
 abstract class AbstractDirectKotlinInheritorsSearcherTest : AbstractKotlinSearchersTest() {
     override fun searchClass(ktClass: KtClass): Query<PsiElement> {
         return DirectKotlinClassInheritorsSearch.search(ktClass)
     }
 
-    override fun searchFunction(ktFunction: KtFunction): Query<PsiElement> {
+    override fun searchCallable(ktFunction: KtCallableDeclaration): Query<PsiElement> {
         return DirectKotlinOverridingCallableSearch.search(ktFunction)
     }
 

@@ -12,6 +12,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -65,7 +66,9 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
                     override fun processResults(consumer: Processor<in PsiElement>): Boolean {
                         val superFunction = runReadAction {
                             analyze(parameters.ktCallableDeclaration) {
-                                parameters.ktCallableDeclaration.getSymbol()
+                                val symbol = parameters.ktCallableDeclaration.getSymbol()
+                                if (symbol is KtValueParameterSymbol) symbol.generatedPrimaryConstructorProperty
+                                else symbol
                             }
                         }
 

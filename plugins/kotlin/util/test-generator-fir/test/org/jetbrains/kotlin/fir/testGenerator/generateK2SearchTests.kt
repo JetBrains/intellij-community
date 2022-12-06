@@ -11,12 +11,12 @@ internal fun MutableTWorkspace.generateK2SearchTests() {
         testClass<AbstractDirectKotlinInheritorsSearcherTest> {
             model("inheritorsSearch/kotlinClass", testMethodName = "doTestKotlinClass", pattern = Patterns.KT_WITHOUT_DOTS)
             model("inheritorsSearch/javaClass", testMethodName = "doTestJavaClass", pattern = Patterns.JAVA)
-            model("inheritorsSearch/kotlinFunction", testMethodName = "doTestKotlinFunction", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("inheritorsSearch/kotlinFunction", testMethodName = "doTestCallable", pattern = Patterns.KT_WITHOUT_DOTS)
         }
         testClass<AbstractKotlinDefinitionsSearchTest> {
             model("definitionsSearch/kotlinClass", testMethodName = "doTestKotlinClass", pattern = Patterns.KT_WITHOUT_DOTS)
             model("definitionsSearch/javaClass", testMethodName = "doTestJavaClass", pattern = Patterns.JAVA)
-            model("definitionsSearch/kotlinFunction", testMethodName = "doTestKotlinFunction", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("definitionsSearch/kotlinFunction", testMethodName = "doTestCallable", pattern = Patterns.KT_WITHOUT_DOTS)
         }
         testClass<AbstractFirAnnotatedMembersSearchTest> {
             model("../../idea/tests/testData/search/annotations")

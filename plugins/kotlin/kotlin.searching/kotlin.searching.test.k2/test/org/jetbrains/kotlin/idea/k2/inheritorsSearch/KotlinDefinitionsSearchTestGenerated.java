@@ -53,7 +53,7 @@ public abstract class KotlinDefinitionsSearchTestGenerated extends AbstractKotli
     @TestMetadata("../testData/definitionsSearch/kotlinFunction")
     public static class KotlinFunction extends AbstractKotlinDefinitionsSearchTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestKotlinFunction, this, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
         }
 
         @TestMetadata("simple.kt")

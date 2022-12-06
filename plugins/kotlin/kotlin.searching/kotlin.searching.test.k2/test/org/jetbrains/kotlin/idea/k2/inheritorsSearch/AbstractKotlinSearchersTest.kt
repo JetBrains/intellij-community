@@ -12,15 +12,15 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import com.intellij.util.Query
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtFunction
 import java.nio.file.Paths
 
 abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin(): Boolean = true
 
     abstract fun searchClass(ktClass: KtClass): Query<PsiElement>
-    abstract fun searchFunction(ktFunction: KtFunction): Query<PsiElement>
+    abstract fun searchCallable(ktFunction: KtCallableDeclaration): Query<PsiElement>
     abstract fun searchJavaClass(psiClass: PsiClass): Query<PsiElement>
 
     fun doTestKotlinClass(testFilePath: String) {
@@ -43,10 +43,10 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
     }
 
 
-    fun doTestKotlinFunction(testFilePath: String) {
+    fun doTestCallable(testFilePath: String) {
         myFixture.configureByFile(testFilePath)
 
-        val ktFunction = myFixture.elementAtCaret.parentOfType<KtFunction>(withSelf = true) 
+        val ktFunction = myFixture.elementAtCaret.parentOfType<KtCallableDeclaration>(withSelf = true)
             ?: error("No declaration found at caret")
 
         if (testFilePath.contains("withJava")) {
@@ -55,7 +55,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchFunction(ktFunction).toList()
+                return searchCallable(ktFunction).toList()
             }
         })
         val actual = render(result)

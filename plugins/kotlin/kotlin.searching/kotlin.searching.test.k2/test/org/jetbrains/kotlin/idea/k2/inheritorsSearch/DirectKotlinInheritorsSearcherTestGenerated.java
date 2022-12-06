@@ -58,12 +58,17 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
     @TestMetadata("../testData/inheritorsSearch/kotlinFunction")
     public static class KotlinFunction extends AbstractDirectKotlinInheritorsSearcherTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestKotlinFunction, this, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
         }
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinFunction/simple.kt");
+        }
+
+        @TestMetadata("withGeneratedProperty.kt")
+        public void testWithGeneratedProperty() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/withGeneratedProperty.kt");
         }
 
         @TestMetadata("withJavaInheritor.kt")
