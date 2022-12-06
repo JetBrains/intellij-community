@@ -3,12 +3,15 @@ plugins {
     alias(libs.plugins.composeDesktop) apply false
     alias(libs.plugins.ideaGradlePlugin) apply false
     alias(libs.plugins.kotlinSerialization) apply false
+    alias(libs.plugins.detekt)
 }
+
 
 allprojects {
     group = "org.jetbrains.jewel"
     version = "0.1-SNAPSHOT"
 
+    // TODO do we still need this? See issue #24
     configurations.all {
         resolutionStrategy.dependencySubstitution {
             substitute(module("org.jetbrains.compose.compiler:compiler")).apply {

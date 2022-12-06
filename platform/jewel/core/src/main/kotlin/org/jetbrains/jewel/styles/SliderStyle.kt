@@ -6,8 +6,8 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.IntelliJPalette
-import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.IntelliJTypography
+import org.jetbrains.jewel.Orientation
 
 typealias SliderStyle = ControlStyle<SliderAppearance, SliderState>
 

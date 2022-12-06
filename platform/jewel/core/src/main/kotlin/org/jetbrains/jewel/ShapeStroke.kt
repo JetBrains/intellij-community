@@ -37,9 +37,7 @@ sealed class ShapeStroke<T : Brush> {
         override val insets: Insets = Insets(width / 2)
     ) : ShapeStroke<androidx.compose.ui.graphics.Brush>()
 
-    companion object {
-
-    }
+    companion object
 }
 
 @Composable

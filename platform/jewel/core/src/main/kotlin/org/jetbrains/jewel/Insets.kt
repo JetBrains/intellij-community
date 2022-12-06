@@ -45,6 +45,5 @@ inline fun <S> Transition<S>.animateInsets(
     @Composable Transition.Segment<S>.() -> FiniteAnimationSpec<Insets> = { spring() },
     label: String = "InsetsAnimation",
     targetValueByState: @Composable() (state: S) -> Insets
-): State<Insets> {
-    return animateValue(InsetsVectorConverter, transitionSpec, label, targetValueByState)
-}
+): State<Insets> =
+    animateValue(InsetsVectorConverter, transitionSpec, label, targetValueByState)

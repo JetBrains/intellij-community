@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 /**
  * Place-holder CircularProgressIndicator.
  */
+@Suppress("MagicNumber") // TODO replace with a real one
 @Composable
 fun CircularProgressIndicator(
     modifier: Modifier = Modifier,

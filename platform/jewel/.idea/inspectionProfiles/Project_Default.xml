@@ -7,73 +7,42 @@
     <inspection_tool class="AddVarianceModifier" enabled="false" level="INFORMATION" enabled_by_default="false" />
     <inspection_tool class="AndroidLintAccidentalOctal" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintAssertionSideEffect" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintAvoidByLazy" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintBadHostnameVerifier" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintBidiSpoofing" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintCheckResult" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintCommonForkJoinPool" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintDefaultEncoding" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintDefaultLocale" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintDiscouragedApi" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintEmptySuperCall" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintExternalAnnotations" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintFileComparisons" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintFileEndsWithExt" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintGradleDependency" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintGradleDeprecatedConfiguration" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintGradleDynamicVersion" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintGradleIdeError" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintGradlePath" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintHtmlPaneColors" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintIgnoreWithoutReason" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintImplicitExecutor" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintJavaPluginLanguageLevel" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintJbUiStored" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintJcenterRepositoryObsolete" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintDocExample" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplBadUrl" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplDollarEscapes" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplIdFormat" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplPsiEquals" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplTextFormat" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplTrimIndent" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplUnexpectedDomain" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplUseKotlin" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintLintImplUseUast" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintLocalSuppress" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintMergeMarker" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintMissingSuperCall" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintMockitoWhen" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintNewForkJoinPool" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintNoInterning" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintNoNioFilesCopy" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintNoOp" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintNotConstructor" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintNotInterpolated" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintOpenForTesting" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintPathAsIterable" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintProjectExecOperations" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintPropertyEscape" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintProxyPassword" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintRange" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintRegexPath" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintRestrictedApi" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintReturnThis" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintSQLiteString" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintSecureRandom" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintShiftFlags" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintShortNamesCache" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintSimpleDateFormat" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintSupportAnnotationUsage" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintSuspiciousIndentation" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintSwingWorker" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidLintUastImplementation" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintUseValueOf" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintUsingHttp" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintVisibleForTests" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintWeekBasedYear" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintWrongTerminology" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="AndroidLintWrongThread" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="Annotator" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="Anonymous2MethodRef" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AnonymousHasLambdaAlternative" enabled="false" level="WARNING" enabled_by_default="false" />

@@ -71,11 +71,12 @@ private const val WINDOWS_FONTS_KEY_PATH = "SOFTWARE\\Microsoft\\Windows NT\\Cur
 // Current limitations:
 //  * If a font has a different "real" family name (as reported by AWT) from the name it appears with
 //    in the registry, that font will not be matched, and thus won't be listed
-//  * Font substitutions and "system" fonts (like Monospaced, SansSerif, etc) aren't listed — but the
-//    former are available as FontFamily.Monospaced, FontFamily.SansSerif, etc at least
+//  * Font substitutions and "system" fonts (like Monospaced, SansSerif, etc.) aren't listed — but the
+//    former are available as FontFamily.Monospaced, FontFamily.SansSerif, etc. at least
 private fun getWindowsFontsUsingRegistry(): Flow<FileProvider> {
     @Suppress("UNCHECKED_CAST")
-    val registryMap = (Advapi32Util.registryGetValues(WinReg.HKEY_LOCAL_MACHINE, WINDOWS_FONTS_KEY_PATH) as TreeMap<String, String>)
+    val registryMap =
+        Advapi32Util.registryGetValues(WinReg.HKEY_LOCAL_MACHINE, WINDOWS_FONTS_KEY_PATH) as TreeMap<String, String>
 
     val fontsDir = File("${System.getenv("WINDIR")}\\Fonts")
 

@@ -202,7 +202,7 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
     }
 }
 
-data class ImageSlicePainter(
+class ImageSlicePainter(
     private val imageSlice: ImageSlice,
     private val scale: Float
 ) : Painter() {

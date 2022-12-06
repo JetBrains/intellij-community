@@ -1,6 +1,7 @@
 [versions]
 composeDesktop = "1.2.1"
 coroutines = "1.6.0"
+detekt = "1.22.0"
 idea = "223.7571.203"
 ideaGradlePlugin = "1.11.0-SNAPSHOT"
 jna = "5.10.0"
@@ -21,8 +22,8 @@ idea = ["ij-platform-ide-core", "ij-platform-ide-impl", "ij-platform-core-ui"]
 
 [plugins]
 composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ideaGradlePlugin = { id = "org.jetbrains.intellij", version.ref = "ideaGradlePlugin" }
-kotlinJs = { id = "org.jetbrains.kotlin.js", version.ref = "kotlin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

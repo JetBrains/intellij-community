@@ -16,7 +16,7 @@ fun main() {
     singleWindowApplication {
         IntelliJThemeDark {
             Surface(modifier = Modifier.fillMaxSize()) {
-                val modelContents = Table(30, 10) { i, j -> "Hello ${((i + 1) * (j + 1) - 1)}" }
+                val modelContents = Table(30, 10) { i, j -> "Hello ${(i + 1) * (j + 1) - 1}" }
                 TableView(modelContents, Modifier.matchParentSize(), 3.dp) { model, i, j ->
                     Text(
                         model,

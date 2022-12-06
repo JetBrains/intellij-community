@@ -114,6 +114,7 @@ data class Tree<T>(val heads: List<Element<T>>) {
         Tree(heads.map { replaceAndApplyOnAllRecursive(it) { if (it in elements) it.withSelection(true) else it.withSelection(false) } })
     else this
 
+    @Suppress("DataClassShouldBeImmutable") // TODO Lamberto don't use mutable data classes if possible
     private data class ItemFound(var value: Boolean)
 
     private fun replaceAndApplyOnAllRecursive(
@@ -231,6 +232,7 @@ fun <T> BaseTreeLayout(
                     }
 
                     is Tree.Element.Node -> {
+                        @Suppress("MagicNumber")
                         Box(
                             modifier = Modifier.rotate(if (treeElement.isOpen) 90f else 0f)
                                 .alpha(if (treeElement.children.isEmpty()) 0f else 1f)

@@ -101,20 +101,48 @@ object FontsLoader {
 
     private fun inferWeightFromName(nameTokens: List<String>): FontWeight =
         when {
-            nameTokens.any { it.startsWith("thin") || it == "100" } -> FontWeight.Thin
-            nameTokens.any {
-                it.startsWith("extralight") || it.startsWith("semilight") || it.startsWith("extra light")
-                    || it.startsWith("semi light") || it.startsWith("extra-light") || it.startsWith("semi-light") || it == "200"
-            } -> FontWeight.ExtraLight
-            nameTokens.any { it.startsWith("light") || it == "300" } -> FontWeight.Light
-            nameTokens.any { it.startsWith("medium") || it == "500" } -> FontWeight.Medium
-            nameTokens.any { it.startsWith("semibold") || it.startsWith("semi bold") || it.startsWith("semi-bold") || it == "600" } -> FontWeight.SemiBold
-            nameTokens.any { it.startsWith("bold") || it == "700" } -> FontWeight.Bold
-            nameTokens.any {
-                it.startsWith("extrabold") || it.startsWith("extra bold") || it.startsWith("extra-bold")
-                    || it.startsWith("heavy") || it == "800"
-            } -> FontWeight.ExtraBold
-            nameTokens.any { it.startsWith("black") || it == "900" } -> FontWeight.Black
+            nameTokens.looksLikeThin() -> FontWeight.Thin
+            nameTokens.looksLikeExtraLight() -> FontWeight.ExtraLight
+            nameTokens.looksLikeLight() -> FontWeight.Light
+            nameTokens.looksLikeMedium() -> FontWeight.Medium
+            nameTokens.looksLikeSemiBold() -> FontWeight.SemiBold
+            nameTokens.looksLikeBold() -> FontWeight.Bold
+            nameTokens.looksLikeExtraBold() -> FontWeight.ExtraBold
+            nameTokens.looksLikeBlack() -> FontWeight.Black
             else -> FontWeight.Normal
         }
+
+    private fun Iterable<String>.looksLikeThin(): Boolean =
+        any { it.startsWith("thin") || it == "100" }
+
+    private fun Iterable<String>.looksLikeExtraLight(): Boolean =
+        any {
+            it.startsWith("extralight") || it.startsWith("semilight") || it.startsWith("extra light") ||
+                it.startsWith("semi light") || it.startsWith("extra-light") || it.startsWith("semi-light") ||
+                it == "200"
+        }
+
+    private fun Iterable<String>.looksLikeLight(): Boolean =
+        any { it.startsWith("light") || it == "300" }
+
+    private fun Iterable<String>.looksLikeMedium(): Boolean =
+        any { it.startsWith("medium") || it == "500" }
+
+    private fun Iterable<String>.looksLikeSemiBold(): Boolean =
+        any {
+            it.startsWith("semibold") || it.startsWith("semi bold") || it.startsWith("semi-bold") ||
+                it == "600"
+        }
+
+    private fun Iterable<String>.looksLikeBold(): Boolean =
+        any { it.startsWith("bold") || it == "700" }
+
+    private fun Iterable<String>.looksLikeExtraBold(): Boolean =
+        any {
+            it.startsWith("extrabold") || it.startsWith("extra bold") || it.startsWith("extra-bold") ||
+                it.startsWith("heavy") || it == "800"
+        }
+
+    private fun Iterable<String>.looksLikeBlack(): Boolean =
+        any { it.startsWith("black") || it == "900" }
 }

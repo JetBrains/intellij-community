@@ -411,7 +411,5 @@ private class AnimateItemPlacementModifier(
         return animationSpec != other.animationSpec
     }
 
-    override fun hashCode(): Int {
-        return animationSpec.hashCode()
-    }
+    override fun hashCode(): Int = animationSpec.hashCode()
 }

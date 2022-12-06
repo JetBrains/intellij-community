@@ -116,7 +116,7 @@ class TableState(
                 TableState(
                     initialFirstVisibleRowIndex = mutableMap.remove("initialFirstVisibleRowIndex") as Int,
                     initialFirstVisibleRowScrollOffset = mutableMap.remove("initialFirstVisibleRowScrollOffset") as Int,
-                    initialColumnsSizeInPx = mutableMap.entries.associate { (k, v) -> k.toInt() to (v as Float) }
+                    initialColumnsSizeInPx = mutableMap.entries.associate { (k, v) -> k.toInt() to v as Float }
                 )
             }
         )
@@ -311,11 +311,18 @@ private fun <T> Row(
                 val layoutId = measurable.layoutId
 
                 val rawElementWidth = when (layoutId) {
-                    is TableLayoutId.Cell -> when (layoutId.cellIndex) {
-                        0 -> dividersState.getDividerOffset(0)
-                        columnsCount - 1 -> tableWidthPx - dividersState.getDividerOffset(layoutId.cellIndex - 1) - dividerWidthPx
-                        else -> dividersState.getDividerOffset(layoutId.cellIndex) - dividersState.getDividerOffset(layoutId.cellIndex - 1) - dividerWidthPx
+                    is TableLayoutId.Cell -> {
+                        val previusCellDividerOffset = dividersState.getDividerOffset(layoutId.cellIndex - 1)
+                        when (layoutId.cellIndex) {
+                            0 -> dividersState.getDividerOffset(0)
+                            columnsCount - 1 -> tableWidthPx - previusCellDividerOffset - dividerWidthPx
+                            else -> {
+                                val thisCellDividerOffset = dividersState.getDividerOffset(layoutId.cellIndex)
+                                thisCellDividerOffset - previusCellDividerOffset - dividerWidthPx
+                            }
+                        }
                     }
+
                     is TableLayoutId.Divider -> dividerWidthPx
                     else -> error("Unknown layoutId $layoutId")
                 }
@@ -330,11 +337,14 @@ private fun <T> Row(
                             sparePixels -= 1f
                             roundedElementWidth + 1
                         }
+
                         layoutId.isLast -> {
                             roundedElementWidth + sparePixels.roundToInt()
                         }
+
                         else -> roundedElementWidth
                     }
+
                     else -> roundedElementWidth
                 }
 

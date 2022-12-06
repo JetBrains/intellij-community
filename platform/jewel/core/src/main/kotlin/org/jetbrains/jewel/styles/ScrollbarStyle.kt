@@ -20,7 +20,10 @@ fun ScrollbarStyle(palette: IntelliJPalette, metrics: IntelliJMetrics) = Scrollb
     minimalHeight = metrics.scrollbar.minSize,
     thickness = metrics.scrollbar.thickness,
     shape = RoundedCornerShape(metrics.scrollbar.thumbCornerSize),
-    hoverDurationMillis = 11 * 16, // See com.intellij.ui.components.ScrollBarPainter.ScrollBarPainter: 11 frames, assuming 60fps (16 ms/f)
+    hoverDurationMillis = DEFAULT_HOVER_DURATION_MILLIS,
     unhoverColor = palette.scrollbar.thumbIdleColor,
     hoverColor = palette.scrollbar.thumbHoverColor
 )
+
+// See com.intellij.ui.components.ScrollBarPainter.ScrollBarPainter: 11 frames, assuming 60fps (16 ms/f)
+const val DEFAULT_HOVER_DURATION_MILLIS = 11 * 16

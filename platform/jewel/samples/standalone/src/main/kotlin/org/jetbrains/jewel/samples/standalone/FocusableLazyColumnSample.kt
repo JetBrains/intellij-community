@@ -23,6 +23,8 @@ import org.jetbrains.jewel.components.TextField
 import org.jetbrains.jewel.components.rememberFocusableLazyListState
 import org.jetbrains.jewel.themes.darcula.standalone.IntelliJThemeLight
 
+private const val ITEMS_COUNT = 100
+
 fun main() = singleWindowApplication {
     IntelliJThemeLight {
         val state = rememberFocusableLazyListState()
@@ -39,7 +41,7 @@ fun main() = singleWindowApplication {
                         Text("Go to $goto")
                     }
                 }
-                repeat(100) {
+                repeat(ITEMS_COUNT) {
                     item {
                         Text("Hello $it", color = Color.Black)
                     }

@@ -124,7 +124,7 @@ fun <T : Any> TabScope<T>.Tab(
 
     val tabState = when {
         !enabled -> TabState.Disabled
-        (isHovered and selected) -> TabState.SelectedAndHovered
+        isHovered and selected -> TabState.SelectedAndHovered
         selected -> TabState.Selected
         else -> if (isHovered) TabState.Hovered else TabState.Normal
     }
@@ -197,9 +197,8 @@ interface TabContainerState<T : Any> {
 }
 
 @Composable
-fun <T : Any> rememberTabContainerState(initialKey: T? = null): TabContainerState<T> {
-    return rememberSaveable(saver = DefaultTabContainerState.saver()) { DefaultTabContainerState(initialKey = initialKey) }
-}
+fun <T : Any> rememberTabContainerState(initialKey: T? = null): TabContainerState<T> =
+    rememberSaveable(saver = DefaultTabContainerState.saver()) { DefaultTabContainerState(initialKey = initialKey) }
 
 @Stable
 class DefaultTabContainerState<T : Any>(initialKey: T?) : TabContainerState<T> {

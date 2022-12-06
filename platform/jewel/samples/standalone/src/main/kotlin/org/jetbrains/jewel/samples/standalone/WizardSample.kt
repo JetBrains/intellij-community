@@ -80,6 +80,9 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.Optional
 
+private const val WINDOW_MIN_WIDTH = 814
+private const val WINDOW_MIN_HEIGHT = 814
+
 fun main() = application {
     val state = rememberWindowState(size = DpSize(1020.dp, 680.dp))
     Window(
@@ -92,7 +95,7 @@ fun main() = application {
             window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
         })
 
-        window.minimumSize = Dimension(814, 607)
+        window.minimumSize = Dimension(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
     }
 }
 
@@ -133,11 +136,15 @@ fun Wizard(onFinish: () -> Unit) {
     }
 }
 
+private const val WIZARD_HEADER_BG_COLOR_LIGHT = 0xFF616161
+private const val WIZARD_HEADER_BG_COLOR_DARK = 0xFF4B4B4B
+
 @Composable
 private fun WizardHeader(currentPage: WizardPage, modifier: Modifier = Modifier) {
+    val headerBgColor = Color(if (IntelliJTheme.palette.isLight) WIZARD_HEADER_BG_COLOR_LIGHT else WIZARD_HEADER_BG_COLOR_DARK)
     Row(
         modifier = modifier
-            .background(Color(if (IntelliJTheme.palette.isLight) 0xFF616161 else 0xFF4B4B4B))
+            .background(headerBgColor)
             .height(112.dp)
             .padding(horizontal = 16.pxToDp(), vertical = 20.pxToDp()),
         verticalAlignment = Alignment.CenterVertically,
@@ -164,6 +171,9 @@ private fun WizardMainContent(currentPage: WizardPage, modifier: Modifier = Modi
     }
 }
 
+private const val WIZARD_FOOTER_DIVIDER_COLOR_LIGHT = 0xFFC0C0C0
+private const val WIZARD_FOOTER_DIVIDER_COLOR_DARK = 0xFF323232
+
 @Composable
 private fun WizardFooter(
     currentPage: WizardPage,
@@ -174,7 +184,7 @@ private fun WizardFooter(
     Box(
         modifier = modifier.height(47.pxToDp())
     ) {
-        Divider(color = Color(if (IntelliJTheme.palette.isLight) 0xFFC0C0C0 else 0xFF323232))
+        Divider(color = Color(if (IntelliJTheme.palette.isLight) WIZARD_FOOTER_DIVIDER_COLOR_LIGHT else WIZARD_FOOTER_DIVIDER_COLOR_DARK))
 
         Row(
             modifier = Modifier.fillMaxSize().padding(horizontal = 14.pxToDp(), vertical = 12.pxToDp()),
