@@ -43,7 +43,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
                         file: VirtualFile?,
                         fileIsOpenAlready: Boolean = false,
                         forceUpdate: Boolean = false) {
-      if (editor == null || file == null || !file.isValid || PsiManager.getInstance(project).findFile(file) == null) {
+      if (editor == null || file == null || !file.isValid) {
         return
       }
 
@@ -110,6 +110,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
     fun matchMode(project: Project?, file: VirtualFile?, editor: Editor? = null): Boolean {
       if (project == null || file == null) return false
+      if (PsiManager.getInstance(project).findFile(file) == null) return false
       if (editor != null && editor.isDisposed) return false
 
       return matchMode(project, file, editor, getInstance(project).mode)

@@ -19,6 +19,8 @@ private class ReaderModeFileEditorListener : FileOpenedSyncListener {
     val project = source.project
     val fileEditor = editorsWithProviders.firstNotNullOfOrNull { it.fileEditor as? PsiAwareTextEditorImpl } ?: return
 
+    val modalityState = ModalityState.stateForComponent(fileEditor.component)
+
     file.fileSystem.addVirtualFileListener(object : VirtualFileListener {
       override fun propertyChanged(event: VirtualFilePropertyEvent) {
         if (event.propertyName == VirtualFile.PROP_WRITABLE && event.file == file) {
@@ -26,7 +28,7 @@ private class ReaderModeFileEditorListener : FileOpenedSyncListener {
             if (fileEditor.editor.isDisposed) return@Runnable
 
             ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, forceUpdate = true)
-          }, ModalityState.any(), project.disposed)
+          }, modalityState, project.disposed)
         }
       }
     }, fileEditor)
