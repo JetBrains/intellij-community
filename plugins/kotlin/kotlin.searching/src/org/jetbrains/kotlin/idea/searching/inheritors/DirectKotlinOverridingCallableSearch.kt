@@ -12,8 +12,9 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.search.ideaExtensions.JavaOverridingMethodsSearcherFromKotlinParameters
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch.SearchParameters
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -57,7 +58,8 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
         if (klass !is KtClass) return null
         
         return DirectKotlinClassInheritorsSearch.search(klass, parameters.searchScope)
-            .flatMapping { ktClassOrObject ->
+            .flatMapping { psiInheritor ->
+                val ktClassOrObject = psiInheritor.unwrapped
                 if (ktClassOrObject !is KtClassOrObject) EmptyQuery.getEmptyQuery()
                 else object : AbstractQuery<PsiElement>() {
                     override fun processResults(consumer: Processor<in PsiElement>): Boolean {
@@ -69,7 +71,7 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
 
                         return runReadAction {
                             analyze(ktClassOrObject) {
-                                (ktClassOrObject.getSymbol() as KtClassOrObjectSymbol).getDeclaredMemberScope()
+                                (ktClassOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
                                     .getCallableSymbols { it == parameters.ktCallableDeclaration.nameAsName }
                                     .forEach { overridingSymbol ->
                                         val function = overridingSymbol.psi

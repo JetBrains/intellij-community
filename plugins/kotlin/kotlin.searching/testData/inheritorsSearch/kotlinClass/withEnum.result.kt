@@ -1,0 +1,1 @@
+SymbolLightClassForEnumEntry: V1

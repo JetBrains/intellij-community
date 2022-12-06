@@ -30,6 +30,11 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
             runTest("../testData/inheritorsSearch/kotlinClass/simple.kt");
         }
 
+        @TestMetadata("withEnum.kt")
+        public void testWithEnum() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinClass/withEnum.kt");
+        }
+
         @TestMetadata("withJavaInheritor.kt")
         public void testWithJavaInheritor() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinClass/withJavaInheritor.kt");
