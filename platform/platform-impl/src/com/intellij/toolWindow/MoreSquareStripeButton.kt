@@ -4,10 +4,7 @@ package com.intellij.toolWindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ToolwindowSwitcher
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
@@ -17,13 +14,12 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
-import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.function.Predicate
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) :
-  ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
+  ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, ActionToolbar.experimentalToolbarMinimumButtonSize()) {
 
   init {
     setLook(SquareStripeButtonLook(this))

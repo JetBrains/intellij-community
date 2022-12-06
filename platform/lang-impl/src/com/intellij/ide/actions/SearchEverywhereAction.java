@@ -75,7 +75,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
 
   @NotNull
   private static Dimension getMinimumSize(@NotNull String place) {
-    return isExperimentalToolbar(place) ? ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
+    return isExperimentalToolbar(place) ? ActionToolbar.experimentalToolbarMinimumButtonSize()
                                         : ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
   }
 

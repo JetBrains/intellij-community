@@ -426,6 +426,8 @@
                         serviceImplementation="com.intellij.openapi.util.WindowStateApplicationService"/>
     <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
                     serviceImplementation="com.intellij.openapi.util.WindowStateProjectService"/>
+    <applicationService serviceInterface="com.intellij.ide.ui.GeometryService"
+                    serviceImplementation="com.intellij.ide.ui.laf.GeometryServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.script.IdeScriptEngineManager"
                         serviceImplementation="com.intellij.ide.script.IdeScriptEngineManagerImpl"/>

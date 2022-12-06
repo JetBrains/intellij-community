@@ -20,13 +20,12 @@ import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
-  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
+  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, ActionToolbar.experimentalToolbarMinimumButtonSize()) {
   companion object {
     fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveToAction.Group(toolWindow)
   }

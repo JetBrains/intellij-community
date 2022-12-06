@@ -98,7 +98,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
-    toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
+    toolbar.setMinimumButtonSize(ActionToolbar.experimentalToolbarMinimumButtonSize())
     toolbar.targetComponent = null
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     val component = toolbar.component
@@ -119,7 +119,7 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
   }
 
   private fun fitRectangle(rect: Rectangle, cmp: Component) {
-    val minSize = EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
+    val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     if (!isSeparator(cmp)) rect.width = Integer.max(rect.width, minSize.width)
     rect.height = Integer.max(rect.height, minSize.height)
     rect.y = 0

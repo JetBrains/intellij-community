@@ -687,6 +687,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
    * as it's configured in `UISettings`.
    */
   override fun updateUI() {
+    (ApplicationManager.getApplication().getService(GeometryService::class.java) as GeometryServiceImpl).ensureInitialized()
     val uiDefaults = UIManager.getLookAndFeelDefaults()
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
     fixPopupWeight()
