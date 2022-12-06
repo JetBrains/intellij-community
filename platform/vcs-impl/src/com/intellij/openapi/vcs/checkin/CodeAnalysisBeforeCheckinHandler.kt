@@ -11,10 +11,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
@@ -113,14 +110,15 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     sink?.text(message("progress.text.analyzing.code"))
 
     val isPostCommit = commitInfo.isPostCommitCheck
-    val changesByFile = groupChangesByFile(commitInfo)
-    if (changesByFile.isEmpty()) return null
+    val changes = commitInfo.committedChanges
+    if (changes.isEmpty()) return null
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
     lateinit var codeSmells: List<CodeSmellInfo>
     val text2DetailsSink = sink?.let(::TextToDetailsProgressSink)
     withContext(Dispatchers.Default) {
+      val changesByFile = groupChangesByFile(changes)
       // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
       val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
       jobToIndicator(coroutineContext.job, progressIndicatorEx) {
@@ -146,11 +144,14 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
                    "before.checkin.options.check.smells.profile")
       .withCheckinHandler(this)
 
-  private fun groupChangesByFile(commitInfo: CommitInfo): MutableMap<VirtualFile, Change> {
+  private suspend fun groupChangesByFile(changes: List<Change>): Map<VirtualFile, Change> {
     val changesByFile = mutableMapOf<VirtualFile, Change>()
-    for (change in commitInfo.committedChanges) {
-      val changeFile = change.afterRevision?.file?.virtualFile ?: continue
-      if (isGeneratedOrExcluded(project, changeFile)) continue
+    for (change in changes) {
+      val changeFile = readAction {
+        change.afterRevision?.file?.virtualFile
+          ?.takeUnless { isGeneratedOrExcluded(project, it) }
+      }
+      if (changeFile == null) continue
 
       val oldChange = changesByFile.put(changeFile, change)
       if (oldChange != null) {

@@ -11,6 +11,7 @@ import com.intellij.codeInspection.actions.PerformFixesTask
 import com.intellij.codeInspection.ex.CleanupProblems
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
@@ -71,11 +72,11 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
   }
 
   private suspend fun findProblems(committedFiles: List<VirtualFile>): CleanupProblems {
-    val files = filterOutGeneratedAndExcludedFiles(committedFiles, project)
     val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextImpl
     val profile = getProfile()
-    val scope = AnalysisScope(project, files)
     return withContext(Dispatchers.Default + textToDetailsSinkContext(coroutineContext.progressSink)) {
+      val files = readAction { filterOutGeneratedAndExcludedFiles(committedFiles, project) }
+      val scope = AnalysisScope(project, files)
       coroutineToIndicator {
         val indicator = ProgressManager.getGlobalProgressIndicator()
         globalContext.findProblems(scope, profile, indicator) { true }
