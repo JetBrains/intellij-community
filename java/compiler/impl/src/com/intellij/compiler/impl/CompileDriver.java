@@ -416,7 +416,7 @@ public final class CompileDriver {
     span.complete();
     final Runnable compileWork = () -> {
       final ProgressIndicator indicator = compileContext.getProgressIndicator();
-      if (indicator.isCanceled() || myProject.isDisposed() || !validateCompilerConfiguration(scope)) {
+      if (indicator.isCanceled() || myProject.isDisposed() || !validateCompilerConfiguration(scope, indicator)) {
         if (callback != null) {
           callback.finished(true, 0, 0, compileContext);
         }
@@ -676,10 +676,10 @@ public final class CompileDriver {
     return true;
   }
 
-  private boolean validateCompilerConfiguration(@NotNull final CompileScope scope) {
+  private boolean validateCompilerConfiguration(@NotNull final CompileScope scope, @NotNull final ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
-      final Pair<List<Module>, List<Module>> scopeModules = runWithReadAccess(() -> {
+      final Pair<List<Module>, List<Module>> scopeModules = runWithReadAccess(progress, () -> {
         final Module[] affectedModules = scope.getAffectedModules();
         final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         return Pair.create(Arrays.asList(affectedModules), ContainerUtil.filter(affectedModules, module -> {
@@ -701,7 +701,7 @@ public final class CompileDriver {
       if (!validateJdks(modulesWithSources, true)) {
         return false;
       }
-      return runWithReadAccess(() -> validateOutputs(modulesWithSources) && validateCyclicDependencies(scopeModules.first));
+      return runWithReadAccess(progress, () -> validateOutputs(modulesWithSources) && validateCyclicDependencies(scopeModules.first));
     }
     catch (ProcessCanceledException e) {
       return false;
@@ -712,8 +712,8 @@ public final class CompileDriver {
     }
   }
 
-  private <T> T runWithReadAccess(Callable<? extends T> task) {
-    return ReadAction.nonBlocking(task).expireWhen(myProject::isDisposed).executeSynchronously();
+  private <T> T runWithReadAccess(@NotNull final ProgressIndicator progress, Callable<? extends T> task) {
+    return ReadAction.nonBlocking(task).expireWhen(() -> myProject.isDisposed() || progress.isCanceled()).executeSynchronously();
   }
 
   private boolean validateJdks(@NotNull List<Module> scopeModules, boolean runUnknownSdkCheck) {
