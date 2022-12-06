@@ -45,7 +45,7 @@
    },
    {
     name-part: "attr-class",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
   ],
  },

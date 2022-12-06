@@ -44,7 +44,7 @@
     name-part: "bad-event",
     display-name: "event",
     priority: HIGH,
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
    {
     name-part: ")",

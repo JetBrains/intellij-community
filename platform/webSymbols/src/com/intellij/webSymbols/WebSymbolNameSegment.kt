@@ -76,7 +76,7 @@ class WebSymbolNameSegment(val start: Int,
 
   enum class MatchProblem {
     MISSING_REQUIRED_PART,
-    UNKNOWN_ITEM,
+    UNKNOWN_SYMBOL,
     DUPLICATE
   }
 

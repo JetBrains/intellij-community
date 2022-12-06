@@ -77,7 +77,7 @@
    {
     name-part: "foo",
     display-name: "key name",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
    {
     name-part: ")",
