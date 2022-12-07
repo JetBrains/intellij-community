@@ -30,16 +30,12 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.wm.ToolWindowId.TODO_VIEW
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.search.TodoItem
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.text.DateFormatUtil.formatDateTime
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import javax.swing.JComponent
+import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -96,38 +92,25 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
     return TodoCommitProblem(worker, isPostCommit)
   }
 
-  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent = TodoCommitOption().withCheckinHandler(this)
-
-  private inner class TodoCommitOption : BooleanCommitOption(project, "", false, settings::CHECK_NEW_TODO) {
-    override fun Panel.createOptionContent() {
-      val filter = TodoConfiguration.getInstance().getTodoFilter(todoSettings.todoFilterName)
-      setFilterText(filter?.name)
-
-      val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
-        val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings, true) { setFilter(it) }
-        JBPopupMenu.showBelow(sourceLink, ActionPlaces.TODO_VIEW_TOOLBAR, group)
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
+    val initialText = getFilterText(todoSettings.todoFilterName)
+    return BooleanCommitOption.createLink(project, this, false, initialText, settings::CHECK_NEW_TODO,
+                                          message("settings.filter.configure.link")) { sourceLink, linkData ->
+      val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings, true) { filter ->
+        todoSettings.todoFilterName = filter?.name
+        linkData.setCheckboxText(getFilterText(filter?.name))
       }
-      val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
-
-      row {
-        cell(checkBox)
-        cell(configureFilterLink)
-      }
+      JBPopupMenu.showBelow(sourceLink, ActionPlaces.TODO_VIEW_TOOLBAR, group)
     }
+  }
 
-    private fun setFilter(filter: TodoFilter?) {
-      todoSettings.todoFilterName = filter?.name
-      setFilterText(filter?.name)
+  private fun getFilterText(filterName: String?): @Nls String {
+    if (filterName != null) {
+      val text = message("checkin.filter.filter.name", filterName)
+      return message("before.checkin.new.todo.check", text)
     }
-
-    private fun setFilterText(filterName: String?) {
-      if (filterName != null) {
-        val text = message("checkin.filter.filter.name", filterName)
-        checkBox.text = message("before.checkin.new.todo.check", text)
-      }
-      else {
-        checkBox.text = message("before.checkin.new.todo.check.no.filter")
-      }
+    else {
+      return message("before.checkin.new.todo.check.no.filter")
     }
   }
 

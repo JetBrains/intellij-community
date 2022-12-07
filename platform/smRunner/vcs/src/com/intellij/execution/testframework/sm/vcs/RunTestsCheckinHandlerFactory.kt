@@ -46,9 +46,6 @@ import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
@@ -272,82 +269,69 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
     }
   }
 
-  @NlsContexts.DialogTitle
-  private fun getInitialText(): String {
-    val configurationBean = settings.myState.configuration
-    return if (configurationBean != null) getOptionTitle(configurationBean.name)
-    else SmRunnerBundle.message("checkbox.run.tests.before.commit.no.configuration")
-  }
-
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
-    return RunTestCommitOption().withCheckinHandler(this)
+    val configurationBean = settings.myState.configuration
+    val initialText = when {
+      configurationBean != null -> getOptionTitle(configurationBean.name)
+      else -> SmRunnerBundle.message("checkbox.run.tests.before.commit.no.configuration")
+    }
+
+    return BooleanCommitOption.createLink(project, this, disableWhenDumb = true, initialText, settings.myState::enabled,
+                                          SmRunnerBundle.message("link.label.choose.configuration.before.commit")) { sourceLink, linkData ->
+      JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser(linkData))
+    }
   }
 
-  private inner class RunTestCommitOption : BooleanCommitOption(project, getInitialText(), true, settings.myState::enabled) {
-    override fun Panel.createOptionContent() {
-      val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
-        JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser())
-      }
-      val configureFilterLink = LinkLabel(SmRunnerBundle.message("link.label.choose.configuration.before.commit"), null, showFiltersPopup)
+  private fun createConfigurationChooser(linkContext: BooleanCommitOption.LinkContext): ActionGroup {
+    fun testConfiguration(it: RunConfiguration) =
+      it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
 
-      checkBox.text = getInitialText()
-
-      row {
-        cell(checkBox)
-        cell(configureFilterLink)
-      }
-    }
-
-    private fun createConfigurationChooser(): ActionGroup {
-      fun testConfiguration(it: RunConfiguration) =
-        it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
-
-      val result = DefaultActionGroup()
-      val runManager = RunManagerImpl.getInstanceImpl(project)
-      for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(false)) {
-        var addedSeparator = false
-        for ((folder, list) in folderMap.entries) {
-          val localConfigurations: List<RunConfiguration> = list.map { it.configuration }
-            .filter {
-              testConfiguration(it) ||
-              it is CompoundRunConfiguration && it.getConfigurationsWithTargets(runManager).keys.all { one -> testConfiguration(one) }
-            }
-
-          if (localConfigurations.isEmpty()) continue
-
-          if (!addedSeparator && result.childrenCount > 0) {
-            result.addSeparator()
-            addedSeparator = true
+    val result = DefaultActionGroup()
+    val runManager = RunManagerImpl.getInstanceImpl(project)
+    for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(false)) {
+      var addedSeparator = false
+      for ((folder, list) in folderMap.entries) {
+        val localConfigurations: List<RunConfiguration> = list.map { it.configuration }
+          .filter {
+            testConfiguration(it) ||
+            it is CompoundRunConfiguration && it.getConfigurationsWithTargets(runManager).keys.all { one -> testConfiguration(one) }
           }
 
-          var target = result
-          if (folder != null) {
-            target = DefaultActionGroup(folder, true)
-            result.add(target)
-          }
+        if (localConfigurations.isEmpty()) continue
 
-
-          localConfigurations
-            .forEach { configuration: RunConfiguration ->
-              target.add(object : AnAction(configuration.icon) {
-                init {
-                  templatePresentation.setText(configuration.name, false)
-                }
-
-                override fun actionPerformed(e: AnActionEvent) {
-                  val bean = ConfigurationBean()
-                  bean.configurationId = type.id
-                  bean.name = configuration.name
-                  settings.myState.configuration = bean
-
-                  checkBox.text = getOptionTitle(configuration.name)
-                }
-              })
-            }
+        if (!addedSeparator && result.childrenCount > 0) {
+          result.addSeparator()
+          addedSeparator = true
         }
+
+        var target = result
+        if (folder != null) {
+          target = DefaultActionGroup(folder, true)
+          result.add(target)
+        }
+
+
+        localConfigurations
+          .forEach { configuration: RunConfiguration ->
+            target.add(object : AnAction(configuration.icon) {
+              init {
+                templatePresentation.setText(configuration.name, false)
+              }
+
+              override fun actionPerformed(e: AnActionEvent) {
+                val bean = ConfigurationBean()
+                bean.configurationId = type.id
+                bean.name = configuration.name
+                settings.myState.configuration = bean
+
+                val optionTitle = getOptionTitle(configuration.name)
+                linkContext.setCheckboxText(optionTitle)
+              }
+            })
+          }
       }
-      return result
     }
+    return result
   }
 
   @NlsContexts.DialogTitle

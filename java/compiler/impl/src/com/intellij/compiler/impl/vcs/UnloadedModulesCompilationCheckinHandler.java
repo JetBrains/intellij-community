@@ -53,10 +53,10 @@ public class UnloadedModulesCompilationCheckinHandler extends CheckinHandler {
       return null;
     }
 
-    return new BooleanCommitOption(myCheckinPanel, JavaCompilerBundle.message("checkbox.text.compile.affected.unloaded.modules"), false,
-                                   () -> getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT,
-                                   value -> getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = value)
-      .withCheckinHandler(this);
+    return BooleanCommitOption.create(myCheckinPanel.getProject(), this, false,
+                                      JavaCompilerBundle.message("checkbox.text.compile.affected.unloaded.modules"),
+                                      () -> getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT,
+                                      value -> getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = value);
   }
 
   @Override

@@ -9,6 +9,8 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.commit.CommitSessionCollector
@@ -113,4 +115,78 @@ open class BooleanCommitOption(
     this.checkinHandler = checkinHandler
     return this
   }
+
+  companion object {
+    @JvmStatic
+    fun create(project: Project,
+               checkinHandler: CheckinHandler?,
+               disableWhenDumb: Boolean,
+               @Nls text: String,
+               getter: () -> Boolean,
+               setter: Consumer<Boolean>): RefreshableOnComponent {
+      val commitOption = BooleanCommitOption(project, text, disableWhenDumb, getter, setter)
+      if (checkinHandler != null) commitOption.withCheckinHandler(checkinHandler)
+      return commitOption
+    }
+
+    @JvmStatic
+    fun create(project: Project,
+               checkinHandler: CheckinHandler?,
+               disableWhenDumb: Boolean,
+               @Nls text: String,
+               property: KMutableProperty0<Boolean>): RefreshableOnComponent {
+      return create(project, checkinHandler, disableWhenDumb, text, { property.get() }, { property.set(it) })
+    }
+
+    @JvmStatic
+    fun createLink(project: Project,
+                   checkinHandler: CheckinHandler?,
+                   disableWhenDumb: Boolean,
+                   @Nls text: String,
+                   property: KMutableProperty0<Boolean>,
+                   linkText: @Nls String,
+                   linkCallback: LinkListener<LinkContext>): RefreshableOnComponent {
+      return createLink(project, checkinHandler, disableWhenDumb, text, { property.get() }, { property.set(it) }, linkText, linkCallback)
+    }
+
+    @JvmStatic
+    fun createLink(project: Project,
+                   checkinHandler: CheckinHandler?,
+                   disableWhenDumb: Boolean,
+                   @Nls text: String,
+                   getter: () -> Boolean,
+                   setter: Consumer<Boolean>,
+                   linkText: @Nls String,
+                   linkCallback: LinkListener<LinkContext>): RefreshableOnComponent {
+      val commitOption = BooleanCommitOptionWithLink(project, text, disableWhenDumb, getter, setter, linkText, linkCallback)
+      if (checkinHandler != null) commitOption.withCheckinHandler(checkinHandler)
+      return commitOption
+    }
+  }
+
+  interface LinkContext {
+    fun setCheckboxText(text: @Nls String)
+  }
 }
+
+private class BooleanCommitOptionWithLink(project: Project,
+                                          text: @Nls String,
+                                          disableWhenDumb: Boolean,
+                                          getter: () -> Boolean,
+                                          setter: Consumer<Boolean>,
+                                          val linkText: @Nls String,
+                                          val linkCallback: LinkListener<LinkContext>)
+  : BooleanCommitOption(project, text, disableWhenDumb, getter, setter), BooleanCommitOption.LinkContext {
+  override fun Panel.createOptionContent() {
+    val configureFilterLink = LinkLabel(linkText, null, linkCallback, this@BooleanCommitOptionWithLink)
+    row {
+      cell(checkBox)
+      cell(configureFilterLink)
+    }
+  }
+
+  override fun setCheckboxText(text: @Nls String) {
+    checkBox.text = text
+  }
+}
+

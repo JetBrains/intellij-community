@@ -53,7 +53,7 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE,
                    "before.checkin.cleanup.code",
                    "before.checkin.cleanup.code.profile")
-      .withCheckinHandler(this)
+      .build(this)
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 

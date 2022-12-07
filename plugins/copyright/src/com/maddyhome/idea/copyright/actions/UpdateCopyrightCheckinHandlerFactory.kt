@@ -27,9 +27,9 @@ class UpdateCopyrightCheckinHandlerFactory : CheckinHandlerFactory() {
 private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck {
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
-    return BooleanCommitOption(project, CopyrightBundle.message("before.checkin.update.copyright"), false,
-                               settings::UPDATE_COPYRIGHT)
-      .withCheckinHandler(this)
+    return BooleanCommitOption.create(project, this, disableWhenDumb = false,
+                                      CopyrightBundle.message("before.checkin.update.copyright"),
+                                      settings::UPDATE_COPYRIGHT)
   }
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION

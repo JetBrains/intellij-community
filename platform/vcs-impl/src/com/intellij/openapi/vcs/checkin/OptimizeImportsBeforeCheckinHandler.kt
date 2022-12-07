@@ -22,9 +22,9 @@ class OptimizeOptionsCheckinHandlerFactory : CheckinHandlerFactory() {
 
 class OptimizeImportsBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandler(project) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(project, VcsBundle.message("checkbox.checkin.options.optimize.imports"), true,
-                        settings::OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT)
-      .withCheckinHandler(this)
+    BooleanCommitOption.create(project, this, disableWhenDumb = true,
+                               VcsBundle.message("checkbox.checkin.options.optimize.imports"),
+                               settings::OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT)
 
   override fun isEnabled(): Boolean = settings.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT
 
