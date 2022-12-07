@@ -10,7 +10,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.isOverridable
@@ -20,11 +19,11 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.findAnnotation
+import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 
@@ -94,13 +93,14 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                 else null
             }
             val kotlinType = lambda.resolveType()?.getValueParameterTypesFromFunctionType()?.singleOrNull()?.type ?: return null
-            return factory.varFactory.createVariableValue(KtItVariableDescriptor(lambda.functionLiteral, kotlinType))
+            val descriptor = KtLambdaSpecialVariableDescriptor(lambda.functionLiteral, LambdaVariableKind.IT, kotlinType)
+            return factory.varFactory.createVariableValue(descriptor)
         }
         
         fun getLambdaReceiver(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
             val receiverType = lambda.resolveType()?.getReceiverTypeFromFunctionType() ?: return null
-            val descriptor = lambda.functionLiteral.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return null
-            return factory.varFactory.createVariableValue(KtThisDescriptor(descriptor, receiverType.toDfType()))
+            val descriptor = KtLambdaSpecialVariableDescriptor(lambda.functionLiteral, LambdaVariableKind.THIS, receiverType)
+            return factory.varFactory.createVariableValue(descriptor)
         }
 
         fun createFromQualified(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
@@ -151,10 +151,10 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                 if (expr.textMatches("it")) {
                     val descriptor = expr.resolveMainReferenceToDescriptors().singleOrNull()
                     if (descriptor is ValueParameterDescriptor) {
-                        val fn = ((descriptor.containingDeclaration as? DeclarationDescriptorWithSource)?.source as? KotlinSourceElement)?.psi
-                        if (fn != null) {
+                        val fn = (descriptor.containingDeclaration.toSourceElement as? KotlinSourceElement)?.psi
+                        if (fn is KtFunctionLiteral) {
                             val type = descriptor.type
-                            return varFactory.createVariableValue(KtItVariableDescriptor(fn, type))
+                            return varFactory.createVariableValue(KtLambdaSpecialVariableDescriptor(fn, LambdaVariableKind.IT, type))
                         }
                     }
                 }
@@ -169,10 +169,12 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                     target.findAnnotation(VOLATILE_ANNOTATION_FQ_NAME) == null
     }
 }
-class KtItVariableDescriptor(val lambda: KtElement, val type: KotlinType): JvmVariableDescriptor() {
+enum class LambdaVariableKind { IT, THIS }
+
+class KtLambdaSpecialVariableDescriptor(val lambda: KtFunctionLiteral, val kind: LambdaVariableKind, val type: KotlinType): JvmVariableDescriptor() {
     override fun getDfType(qualifier: DfaVariableValue?): DfType = type.toDfType()
     override fun isStable(): Boolean = true
-    override fun equals(other: Any?): Boolean = other is KtItVariableDescriptor && other.lambda == lambda
-    override fun hashCode(): Int = lambda.hashCode()
-    override fun toString(): String = "it"
+    override fun equals(other: Any?): Boolean = other is KtLambdaSpecialVariableDescriptor && other.lambda == lambda && other.kind == kind
+    override fun hashCode(): Int = lambda.hashCode() * 31 + kind.hashCode()
+    override fun toString(): String = kind.toString().lowercase()
 }

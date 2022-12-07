@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -64,6 +65,7 @@ import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.constants.TypedCompileTimeConstant
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -255,8 +257,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val thisType = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, expr.instanceReference]?.type
         val dfType = thisType.toDfType()
         val descriptor = bindingContext[BindingContext.REFERENCE_TARGET, expr.instanceReference]
-        if (descriptor != null) {
-            val varDesc = KtThisDescriptor(descriptor, dfType)
+        if (descriptor != null && thisType != null) {
+            val function = (descriptor.toSourceElement as? KotlinSourceElement)?.psi as? KtFunctionLiteral
+            val varDesc = if (function != null) {
+                KtLambdaSpecialVariableDescriptor(function, LambdaVariableKind.THIS, thisType)
+            } else {
+                KtThisDescriptor(descriptor, dfType)
+            }
             addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
             addImplicitConversion(expr, thisType, exprType)
         } else {
@@ -1209,7 +1216,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val exprType = realExpr.getKotlinType()
             val declaredType = when (val desc = dfVar.descriptor) {
                 is KtVariableDescriptor -> desc.variable.type()
-                is KtItVariableDescriptor -> desc.type
+                is KtLambdaSpecialVariableDescriptor -> desc.type
                 else -> null
             }
             addImplicitConversion(expr, declaredType, exprType)
