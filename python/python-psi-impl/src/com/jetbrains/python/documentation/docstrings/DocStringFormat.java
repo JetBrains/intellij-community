@@ -21,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 
@@ -39,14 +38,14 @@ public enum DocStringFormat {
 
   @NotNull
   private static List<String> getAllNames() {
-    return Collections.unmodifiableList(ContainerUtil.map(values(), format -> format.getName()));
+    return ContainerUtil.map(values(), format -> format.getName());
   }
 
   public static final List<String> ALL_NAMES_BUT_PLAIN = getAllNamesButPlain();
 
   @NotNull
   private static List<String> getAllNamesButPlain() {
-    return Collections.unmodifiableList(ContainerUtil.mapNotNull(values(), format -> format == PLAIN ? null : format.getName()));
+    return ContainerUtil.mapNotNull(values(), format -> format == PLAIN ? null : format.getName());
   }
 
   @Nullable

@@ -51,7 +51,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -199,9 +198,8 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   public List<UserDefinedJsonSchemaConfiguration.Item> getData() {
-    return Collections.unmodifiableList(
-      ContainerUtil
-        .filter(myTableView.getListTableModel().getItems(), i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path)));
+    return ContainerUtil
+      .filter(myTableView.getListTableModel().getItems(), i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path));
   }
 
   public void setItems(String schemaFilePath,

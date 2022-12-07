@@ -1251,8 +1251,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   public static @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    return Collections.unmodifiableSet(ContainerUtil.map2Set(descriptors,
-                                                             IdeaPluginDescriptor::getName));
+    return ContainerUtil.map2Set(descriptors,
+                                 IdeaPluginDescriptor::getName);
   }
 
   public static @NotNull String joinPluginNamesOrIds(@NotNull Set<String> pluginNames) {

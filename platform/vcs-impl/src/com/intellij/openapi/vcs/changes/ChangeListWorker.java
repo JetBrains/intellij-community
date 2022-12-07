@@ -238,8 +238,7 @@ public final class ChangeListWorker {
   @NotNull
   public List<LocalChangeListImpl> getChangeLists() {
     List<LocalChangeListImpl> lists = ContainerUtil.map(myLists, this::toChangeList);
-    ContainerUtil.sort(lists, ChangesUtil.CHANGELIST_COMPARATOR);
-    return lists;
+    return ContainerUtil.sorted(lists, ChangesUtil.CHANGELIST_COMPARATOR);
   }
 
   public int getChangeListsNumber() {

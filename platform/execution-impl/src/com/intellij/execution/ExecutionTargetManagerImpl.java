@@ -257,7 +257,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
         result.add(MULTIPLE_TARGETS);
       }
     }
-    return Collections.unmodifiableList(ContainerUtil.filter(result, it -> doCanRun(configuration, it)));
+    return ContainerUtil.filter(result, it -> doCanRun(configuration, it));
   }
 
   private boolean doWithEachNonCompoundWithSpecifiedTarget(@NotNull RunConfiguration configuration, @NotNull BiPredicate<? super RunConfiguration, ? super ExecutionTarget> action) {
