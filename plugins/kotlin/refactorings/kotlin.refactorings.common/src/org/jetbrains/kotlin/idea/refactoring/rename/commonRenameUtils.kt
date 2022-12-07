@@ -39,9 +39,13 @@ val KtParameter.useScopeForRename: SearchScope
 
 /**
  * A utility function to call [ProgressManager.runProcessWithProgressSynchronously] more conveniently.
+ *
+ * [progressTitle] is marked as [NlsContexts.DialogMessage] since it's more appropriate in most cases
+ * than [NlsContexts.DialogTitle].
  */
+@Suppress("DialogTitleCapitalization")
 inline fun <T> runProcessWithProgressSynchronously(
-    @NlsSafe @NlsContexts.DialogTitle progressTitle: String,
+    @NlsContexts.DialogMessage progressTitle: String,
     canBeCancelled: Boolean,
     project: Project,
     crossinline action: () -> T
