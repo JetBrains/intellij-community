@@ -182,7 +182,7 @@ public class UsageViewImpl implements UsageViewEx {
           PsiElement psiElement = ((PsiElementUsage)n).getElement();
           if (psiElement != null) {
             UsageViewStatisticsCollector.logItemChosen(getProject(), this, CodeNavigateSource.FindToolWindow, psiElement.getLanguage(),
-                                                       n.getClass());
+                                                       n instanceof SimilarUsage);
           }
       });
     }
