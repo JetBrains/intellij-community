@@ -255,7 +255,7 @@ fun getProjectDataPathRoot(project: Project): Path = projectsDataDir.resolve(pro
 fun getProjectDataPathRoot(projectPath: Path): Path = projectsDataDir.resolve(getProjectCacheFileName(projectPath))
 
 fun Project.getExternalConfigurationDir(): Path {
-  return getProjectCachePath("external_build_system")
+  return getProjectDataPath("external_build_system")
 }
 
 /**

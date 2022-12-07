@@ -26,10 +26,7 @@ import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
-import com.intellij.openapi.project.ExternalStorageConfigurationManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
-import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
@@ -881,7 +878,7 @@ class ExternalSystemStorageTest {
       }
       val testCacheFilesDir = testDataRoot.resolve(testDataDirName).resolve("cache").toFile()
       if (testCacheFilesDir.exists()) {
-        val cachePath = appSystemDir.resolve("external_build_system").resolve(getProjectCacheFileName(dir.toNioPath()))
+        val cachePath = getProjectDataPathRoot(dir.toNioPath()).resolve("external_build_system")
         FileUtil.copyDir(testCacheFilesDir, cachePath.toFile())
       }
       VfsUtil.markDirtyAndRefresh(false, true, true, dir)
