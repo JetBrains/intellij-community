@@ -5,11 +5,13 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.internal.statistic.local.ActionsLocalSummary
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -48,6 +50,12 @@ private var Project.onboardingTipsDebugPath: String?
 
 private val RESET_TOOLTIP_SAMPLE_TEXT = Key.create<String>("reset.tooltip.sample.text")
 
+internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
+                                      IdeActions.ACTION_SHOW_INTENTION_ACTIONS,
+                                      IdeActions.ACTION_DEFAULT_RUNNER,
+                                      IdeActions.ACTION_DEFAULT_DEBUGGER,
+                                      IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
+
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   @RequiresEdt
   override fun installTips(project: Project, simpleSampleText: String) {
@@ -67,6 +75,7 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
     val pathToRunningFile = file.path
     project.onboardingTipsDebugPath = pathToRunningFile
     installDebugListener(project, pathToRunningFile)
+    installActionsListener(project, pathToRunningFile)
 
     val number = onboardingGenerationNumber
     if (number != 0 && onboardingGenerationShowDisableMessage) {
@@ -85,8 +94,28 @@ private class InstallOnboardingTooltip : StartupActivity {
   }
 }
 
+private fun installActionsListener(project: Project, pathToRunningFile: @NonNls String) {
+  val connection = project.messageBus.connect()
+  val actionsMapReported = promotedActions.associateWith { false }.toMutableMap()
+  connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
+    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+      val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+      if (editor.virtualFile.path != pathToRunningFile) return
+      val actionId = ActionManager.getInstance().getId(action)
+      val reported = actionsMapReported[actionId] ?: return
+      if (!reported) {
+        actionsMapReported[actionId] = true
+        // usage count increased in the beforeActionPerformed listener,
+        // so here we use afterActionPerformed event to avoid question about listeners order
+        val usageCount = service<ActionsLocalSummary>().getActionStatsById(actionId)?.usageCount ?: return
+        OnboardingTipsStatistics.logPromotedActionUsedEvent(project, actionId, onboardingGenerationNumber, usageCount == 1)
+      }
+    }
+  })
+}
+
 private fun installDebugListener(project: Project, pathToRunningFile: @NonNls String) {
-  val connection = project.messageBus.connect(project)
+  val connection = project.messageBus.connect()
   connection.subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
     override fun processStarted(debugProcess: XDebugProcess) {
       val xDebugSessionImpl = debugProcess.session as? XDebugSessionImpl
