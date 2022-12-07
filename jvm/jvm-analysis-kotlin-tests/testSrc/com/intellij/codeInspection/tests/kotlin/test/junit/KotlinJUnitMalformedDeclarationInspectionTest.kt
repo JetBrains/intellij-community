@@ -1178,4 +1178,21 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }    
     """.trimIndent())
   }
+
+  fun `test extends with no highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MockitoExtension : org.junit.jupiter.api.extension.BeforeEachCallback, org.junit.jupiter.api.extension.AfterEachCallback, org.junit.jupiter.api.extension.ParameterResolver {
+        override fun beforeEach(context: org.junit.jupiter.api.extension.ExtensionContext?) { } 
+        override fun afterEach(context: org.junit.jupiter.api.extension.ExtensionContext?) { }
+        override fun supportsParameter(parameterContext: org.junit.jupiter.api.extension.ParameterContext?, extensionContext: org.junit.jupiter.api.extension.ExtensionContext?): Boolean { TODO() }
+        override fun resolveParameter(parameterContext: org.junit.jupiter.api.extension.ParameterContext?, extensionContext: org.junit.jupiter.api.extension.ExtensionContext?): Any { TODO() }
+      }
+      
+      class MyTest {
+        @org.junit.jupiter.api.Test
+        @org.junit.jupiter.api.extension.ExtendWith(MockitoExtension::class)
+        fun testFoo(x: String) { }
+      }
+    """.trimIndent())
+  }
 }

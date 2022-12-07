@@ -190,8 +190,7 @@ private class JUnitMalformedSignatureVisitor(
     validVisibility = ::notPrivate,
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
-      else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(
-          ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
+      else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
       else if (method.hasParameterResolver()) method.uastParameters
       else method.uastParameters.filter { param ->
         param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
@@ -214,10 +213,10 @@ private class JUnitMalformedSignatureVisitor(
   private fun UMethod.hasParameterResolver(): Boolean {
     val sourcePsi = this.sourcePsi ?: return false
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
-    return alternatives.any { it.javaPsi.containingClass?.hasParameterResolver() == true }
+    return alternatives.any { it.javaPsi.containingClass?.hasParameterResolver() == true || it.javaPsi.hasParameterResolver() }
   }
 
-  private fun PsiClass.hasParameterResolver(): Boolean {
+  private fun PsiModifierListOwner.hasParameterResolver(): Boolean {
     val annotation = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
       .asSequence()
       .firstOrNull()
