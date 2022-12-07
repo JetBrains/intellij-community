@@ -489,13 +489,32 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType? {
         analyzeForUast(ktDeclaration) {
-            return toPsiType(ktDeclaration.getReturnKtType(), source, ktDeclaration, ktDeclaration.typeOwnerKind)
+            val ktType = ktDeclaration.getReturnKtType()
+            return toPsiType(
+                ktType,
+                source,
+                ktDeclaration,
+                ktDeclaration.typeOwnerKind,
+                ktType.isMarkedNullable,
+            )
         }
     }
 
-    override fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
+    override fun getType(
+        ktDeclaration: KtDeclaration,
+        containingLightDeclaration: PsiModifierListOwner?,
+        isForFake: Boolean,
+    ): PsiType? {
         analyzeForUast(ktDeclaration) {
-            return toPsiType(ktDeclaration.getReturnKtType(), containingLightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind)
+            val ktType = ktDeclaration.getReturnKtType()
+            return toPsiType(
+                ktType,
+                containingLightDeclaration,
+                ktDeclaration,
+                ktDeclaration.typeOwnerKind,
+                ktType.isMarkedNullable,
+                if (isForFake) ktDeclaration.ktTypeMappingMode(ktType.isMarkedNullable) else KtTypeMappingMode.DEFAULT_UAST
+            )
         }
     }
 
