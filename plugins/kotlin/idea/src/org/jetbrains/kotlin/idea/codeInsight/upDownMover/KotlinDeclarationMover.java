@@ -86,7 +86,7 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
 
     @NotNull
     private static List<PsiElement> getDeclarationAnchors(@NotNull KtDeclaration declaration) {
-        final List<PsiElement> memberSuspects = new ArrayList<PsiElement>();
+        final List<PsiElement> memberSuspects = new ArrayList<>();
 
         KtModifierList modifierList = declaration.getModifierList();
         if (modifierList != null) memberSuspects.add(modifierList);
@@ -237,7 +237,7 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
         PsiElement start = sibling;
         PsiElement end = sibling;
 
-        PsiElement nextParent = null;
+        PsiElement nextParent;
 
         // moving out of code block
         if (isMovingOutOfBlock(sibling, down)) {
@@ -260,8 +260,8 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
         else {
             KtClassBody classBody = getClassBody(sibling);
             // confined elements can't leave their block
+            nextParent = classBody;
             if (classBody != null) {
-                nextParent = classBody;
                 if (!down) {
                     start = classBody.getRBrace();
                 }
@@ -273,8 +273,6 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
             if (target instanceof KtAnonymousInitializer && !(nextParent instanceof KtClassBody)) return null;
 
             if (target instanceof KtEnumEntry) {
-                if (!(nextParent instanceof KtClassBody)) return null;
-
                 KtClassOrObject nextClassOrObject = (KtClassOrObject) nextParent.getParent();
                 assert nextClassOrObject != null;
 
