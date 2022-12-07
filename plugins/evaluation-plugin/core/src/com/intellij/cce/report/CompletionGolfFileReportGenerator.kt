@@ -103,16 +103,12 @@ class CompletionGolfFileReportGenerator(
   private fun FlowContent.prepareLine(expectedText: String, lookups: List<Lookup>, tab: String, id: String) {
     consumer.onTagContentUnsafe { +StringEscapeUtils.escapeHtml(tab) }
     var offset = 0
-    var stubAdded = false
 
     lookups.dropLast(1).forEachIndexed { index, lookup ->
-      expectedText[offset].takeIf { it.isWhitespace() }?.let {
-        stubAdded = true
-        consumer.onTagContentUnsafe { +it.toString() }
+      val currentChar = expectedText[offset]
+      val delimiter = if (currentChar.isWhitespace()) {
+        consumer.onTagContentUnsafe { +currentChar.toString() }
         offset++
-      }
-      val delimiter = if (stubAdded) {
-        stubAdded = false
         "delimiter delimiter-pre"
       }
       else "delimiter"

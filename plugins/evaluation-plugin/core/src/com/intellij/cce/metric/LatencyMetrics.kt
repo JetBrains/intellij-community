@@ -14,7 +14,7 @@ abstract class LatencyMetric(override val name: String) : Metric {
     val fileSample = Sample()
     sessions.stream()
       .flatMap { session -> session.lookups.stream() }
-      .filter(::filter)
+      .filter(::shouldInclude)
       .forEach {
         this.sample.add(it.latency.toDouble())
         fileSample.add(it.latency.toDouble())
@@ -24,7 +24,7 @@ abstract class LatencyMetric(override val name: String) : Metric {
 
   abstract fun compute(sample: Sample): Double
 
-  open fun filter(lookup: Lookup): Boolean = true
+  open fun shouldInclude(lookup: Lookup): Boolean = true
 }
 
 class MaxLatencyMetric : LatencyMetric("Max Latency") {
@@ -38,7 +38,7 @@ class MeanLatencyMetric(private val filterZeroes: Boolean = false) : LatencyMetr
 
   override val valueType = MetricValueType.DOUBLE
 
-  override fun filter(lookup: Lookup): Boolean {
+  override fun shouldInclude(lookup: Lookup): Boolean {
     return if (filterZeroes) lookup.latency > 0 else true
   }
 }
