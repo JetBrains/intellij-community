@@ -253,12 +253,12 @@ public final class VfsImplUtil {
           for (VFileEvent event : events) {
             if (!(event.getFileSystem() instanceof LocalFileSystem)) continue;
 
-            if (!(event instanceof VFileContentChangeEvent)) continue;
+            if (!(event instanceof VFileContentChangeEvent contentChangeEvent)) continue;
 
             String path = event.getPath();
 
-            VirtualFile file = event.getFile();
-            if (file == null || !file.isDirectory()) {
+            VirtualFile file = contentChangeEvent.getFile();
+            if (!file.isDirectory()) {
               state = invalidate(state, path);
             }
             else {
@@ -351,25 +351,22 @@ public final class VfsImplUtil {
   public static @NotNull List<VFileEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||
-          event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {
+          event instanceof VFilePropertyChangeEvent propertyChangeEvent && VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName()))) {
       return Collections.emptyList();
     }
 
     String path;
-    if (event instanceof VFilePropertyChangeEvent) {
-      path = ((VFilePropertyChangeEvent)event).getOldPath();
+    if (event instanceof VFilePropertyChangeEvent propertyChangeEvent) {
+      path = propertyChangeEvent.getOldPath();
     }
-    else if (event instanceof VFileMoveEvent) {
-      path = ((VFileMoveEvent)event).getOldPath();
+    else if (event instanceof VFileMoveEvent moveEvent) {
+      path = moveEvent.getOldPath();
     }
     else {
       path = event.getPath();
     }
 
     VirtualFile file = event.getFile();
-    if (file == null) {
-      return Collections.emptyList();
-    }
     VirtualFileSystem entryFileSystem = file.getFileSystem();
     VirtualFile local = null;
     if (entryFileSystem instanceof ArchiveFileSystem) {

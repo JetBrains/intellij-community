@@ -57,10 +57,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
@@ -1662,8 +1659,12 @@ public final class HighlightUtil {
       if (ExceptionUtil.isGeneralExceptionType(catchType)) continue;
 
       // collect exceptions caught by this type
-      Collection<PsiClassType> caught =
-        ContainerUtil.findAll(thrownTypes, type -> catchType.isAssignableFrom(type) || type.isAssignableFrom(catchType));
+      List<PsiClassType> caught = new ArrayList<>();
+      for (PsiClassType t : thrownTypes) {
+        if (catchType.isAssignableFrom(t) || t.isAssignableFrom(catchType)) {
+          caught.add(t);
+        }
+      }
       if (caught.isEmpty()) continue;
       Collection<PsiClassType> caughtCopy = new HashSet<>(caught);
 
@@ -1683,14 +1684,10 @@ public final class HighlightUtil {
         String message = JavaErrorBundle.message("exception.already.caught.warn", formatTypes(caughtCopy), caughtCopy.size());
         HighlightInfo.Builder builder =
           HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(catchSection).descriptionAndTooltip(message);
-        if (isMultiCatch) {
-          IntentionAction action = getFixFactory().createDeleteMultiCatchFix(catchTypeElement);
-          builder.registerFix(action, null, null, null, null);
-        }
-        else {
-          IntentionAction action = getFixFactory().createDeleteCatchFix(parameter);
-          builder.registerFix(action, null, null, null, null);
-        }
+        IntentionAction action = isMultiCatch ? 
+                                 getFixFactory().createDeleteMultiCatchFix(catchTypeElement) : 
+                                 getFixFactory().createDeleteCatchFix(parameter);
+        builder.registerFix(action, null, null, null, null);
         holder.add(builder.create());
       }
     }

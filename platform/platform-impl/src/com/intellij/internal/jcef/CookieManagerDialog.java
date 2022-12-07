@@ -45,9 +45,7 @@ class CookieManagerDialog extends JDialog {
       public void actionPerformed(ActionEvent e) {
         if (myJBCefCookieManager.deleteCookies(true)) {
           List<JBCefCookie> cookies = myJBCefCookieManager.getCookies();
-          if (cookies != null) {
-            update(cookies);
-          }
+          update(cookies);
         }
       }
     });

@@ -202,9 +202,9 @@ abstract class UndoRedo {
       if (refs == null) continue;
 
       for (DocumentReference ref : refs) {
-        if (ref instanceof DocumentReferenceByDocument) {
-          Document doc = ref.getDocument();
-          if (doc != null && !doc.isWritable()) readOnlyDocs.add(doc);
+        if (ref instanceof DocumentReferenceByDocument docRef) {
+          Document doc = docRef.getDocument();
+          if (!doc.isWritable()) readOnlyDocs.add(doc);
         }
       }
     }

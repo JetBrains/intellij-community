@@ -235,7 +235,7 @@ public final class ActionMenu extends JBMenu {
           setDisabledIcon(myPresentation.getDisabledIcon());
         }
         else {
-          setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+          setDisabledIcon(IconLoader.getDisabledIcon(icon));
         }
         if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }

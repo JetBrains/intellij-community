@@ -2,8 +2,6 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
@@ -397,16 +395,6 @@ final class TouchBarsManager {
         ourActions2Touchbar.put(actions, tb);
       }
       return tb;
-    }
-
-    private static boolean isEmptyGroup(@NotNull ActionGroup actions) {
-      AnAction[] kids = actions.getChildren(null);
-      if (kids == null || kids.length < 1)
-        return true;
-      for (AnAction kid: kids)
-        if (!(kid instanceof Separator))
-          return false;
-      return true;
     }
 
     void clearCachedTouchbars() {

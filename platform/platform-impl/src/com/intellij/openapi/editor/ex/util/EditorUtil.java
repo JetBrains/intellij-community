@@ -957,10 +957,6 @@ public final class EditorUtil {
 
   @NotNull
   public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
-    if (!Character.isValidCodePoint(c)) {
-      return fallback;
-    }
-
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
     int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;

@@ -651,6 +651,7 @@ public final class CustomizationUtil {
 
     @Override
     protected void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
+      //noinspection ConstantValue -- can be called from superclass constructor
       if (myGroupID == null) return;
       fillTreeFromActions(root, (ActionGroup)ActionManager.getInstance().getAction(myGroupID));
     }

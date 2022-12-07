@@ -119,9 +119,7 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
       public void actionPerformed(ActionEvent e) {
         myCookieManagerDialog.setVisible(true);
         List<JBCefCookie> cookies = myJBCefBrowser.getJBCefCookieManager().getCookies();
-        if (cookies != null) {
-          myCookieManagerDialog.update(cookies);
-        }
+        myCookieManagerDialog.update(cookies);
       }
     });
     controlPanel.add(myShowCookieManagerButton);
