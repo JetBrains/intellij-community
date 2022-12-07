@@ -600,6 +600,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/java/intellij.fullLine.java.iml" filepath="$PROJECT_DIR$/plugins/full-line/java/intellij.fullLine.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/kotlin/intellij.fullLine.kotlin.iml" filepath="$PROJECT_DIR$/plugins/full-line/kotlin/intellij.fullLine.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/local/intellij.fullLine.local.iml" filepath="$PROJECT_DIR$/plugins/full-line/local/intellij.fullLine.local.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/local/benchmark/intellij.fullLine.local.benchmark.iml" filepath="$PROJECT_DIR$/plugins/full-line/local/benchmark/intellij.fullLine.local.benchmark.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/python/intellij.fullLine.python.iml" filepath="$PROJECT_DIR$/plugins/full-line/python/intellij.fullLine.python.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.analysis/intellij.gradle.analysis.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.analysis/intellij.gradle.analysis.iml" />
