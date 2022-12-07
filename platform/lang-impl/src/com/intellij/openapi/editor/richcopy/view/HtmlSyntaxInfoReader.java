@@ -174,7 +174,7 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
         case ' ' -> myResultBuffer.append("&#32;");
         case '\n' -> {
           myResultBuffer.append("<br>");
-          myCurrentColumn = 0;
+          myCurrentColumn = -1; // -1 is because we increment myCurrentColumn right after the switch
         }
         case '\t' -> {
           int newColumn = (myCurrentColumn / myTabSize + 1) * myTabSize;
