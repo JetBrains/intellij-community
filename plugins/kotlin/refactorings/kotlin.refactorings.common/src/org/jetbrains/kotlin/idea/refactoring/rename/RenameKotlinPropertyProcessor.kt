@@ -334,7 +334,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     }
 
     //TODO: a very long and complicated method, even recursive. mb refactor it somehow? at least split by PsiElement types?
-    override tailrec fun renameElement(
+    override fun renameElement(
         element: PsiElement,
         newName: String,
         usages: Array<UsageInfo>,
@@ -344,16 +344,6 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         if (element is KtLightMethod) {
             if (element.modifierList.hasAnnotation(JvmNames.JVM_NAME.asString())) {
                 return super.renameElement(element, newName, usages, listener)
-            }
-
-            val origin = element.kotlinOrigin
-            val newPropertyName = propertyNameByAccessor(newNameUnquoted, element)
-            // Kotlin references to Kotlin property should not use accessor name
-            if (newPropertyName != null && (origin is KtProperty || origin is KtParameter)) {
-                val (ktUsages, otherUsages) = usages.partition { it.reference is KtSimpleNameReference }
-                super.renameElement(element, newName, otherUsages.toTypedArray(), listener)
-                renameElement(origin, newPropertyName.quoteIfNeeded(), ktUsages.toTypedArray(), listener)
-                return
             }
         }
 
