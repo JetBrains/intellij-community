@@ -95,7 +95,16 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         val wrappedMethod = wrapPsiMethod(element) ?: return element
 
-        val deepestSuperMethods = findDeepestSuperMethodsKotlinAware(wrappedMethod)
+        val deepestSuperMethods = runProcessWithProgressSynchronously(
+            KotlinBundle.message("rename.searching.for.super.declaration"),
+            canBeCancelled = true,
+            element.project
+        ) {
+            runReadAction {
+                findDeepestSuperMethodsKotlinAware(wrappedMethod)
+            }
+        }
+
         val substitutedJavaElement = when {
             deepestSuperMethods.isEmpty() -> return element
             wrappedMethod.isConstructor || deepestSuperMethods.size == 1 || element !is KtNamedFunction -> {
@@ -133,11 +142,20 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         substituteForExpectOrActual(element)?.let { return preprocessAndPass(it) }
 
         val wrappedMethod = wrapPsiMethod(element)
-        val deepestSuperMethods = if (wrappedMethod != null) {
-            findDeepestSuperMethodsKotlinAware(wrappedMethod)
-        } else {
-            KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(element)
+        val deepestSuperMethods = runProcessWithProgressSynchronously(
+            KotlinBundle.message("rename.searching.for.super.declaration"),
+            canBeCancelled = true,
+            element.project
+        ) {
+            runReadAction {
+                if (wrappedMethod != null) {
+                    findDeepestSuperMethodsKotlinAware(wrappedMethod)
+                } else {
+                    KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(element)
+                }
+            }
         }
+
         when {
             deepestSuperMethods.isEmpty() -> preprocessAndPass(element)
             wrappedMethod != null && (wrappedMethod.isConstructor || element !is KtNamedFunction) -> {

@@ -300,7 +300,15 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
     private fun findDeepestOverriddenDeclaration(declaration: KtCallableDeclaration): KtCallableDeclaration? {
         if (declaration.modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
-            val deepestSuperDeclarations = KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(declaration)
+            val deepestSuperDeclarations = runProcessWithProgressSynchronously(
+                KotlinBundle.message("rename.searching.for.super.declaration"),
+                canBeCancelled = true,
+                declaration.project
+            ) {
+                runReadAction {
+                    KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(declaration)
+                }
+            }
 
             // Take one of supers for now - API doesn't support substitute to several elements (IDEA-48796)
             return deepestSuperDeclarations
