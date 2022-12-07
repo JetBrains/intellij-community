@@ -634,7 +634,7 @@ public final class ActionsTree {
 
     @NlsActions.ActionText
     private String getActionText(@Nullable AnAction action, @NlsSafe String actionId) {
-      String text = action == null ? null : action.getTemplatePresentation().getText();
+      String text = action == null ? null : action.getTemplateText();
       if (text == null || text.length() == 0) { //fill dynamic presentation gaps
         if (myBrokenActions.add(actionId)) {
           LOG.warn("Template presentation is not defined for '" + actionId + "' - showing internal ID in UI");
