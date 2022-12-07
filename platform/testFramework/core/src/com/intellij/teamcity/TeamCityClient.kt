@@ -13,16 +13,21 @@ import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.auth.BasicScheme
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.InputStreamReader
 import java.net.URI
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.Path
+import kotlin.io.path.bufferedReader
 
 
-object TeamCityClient {
-  private fun loadProperties(file: String?) =
+class TeamCityClient(
+  val baseUri: URI = URI("https://buildserver.labs.intellij.net").normalize(),
+  private val systemPropertiesFilePath: Path = Path(System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE"))
+) {
+  private fun loadProperties(propertiesPath: Path) =
     try {
-      File(file ?: throw Error("No file!")).bufferedReader().use {
+      propertiesPath.bufferedReader().use {
         val map = mutableMapOf<String, String>()
         val ps = Properties()
         ps.load(it)
@@ -40,20 +45,23 @@ object TeamCityClient {
     }
 
   private val systemProperties by lazy {
-    loadProperties(System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE"))
+    loadProperties(systemPropertiesFilePath)
       .plus(System.getProperties().map { it.key.toString() to it.value.toString() })
   }
 
-  private val baseUri = URI("https://buildserver.labs.intellij.net").normalize()
-
-  private val restUri = baseUri.resolve("/app/rest/")
-  private val guestAuthUri = baseUri.resolve("/guestAuth/app/rest/")
+  val restUri = baseUri.resolve("/app/rest/")
+  val guestAuthUri = baseUri.resolve("/guestAuth/app/rest/")
 
   val buildNumber by lazy { System.getenv("BUILD_NUMBER") ?: "" }
 
   val configurationName by lazy { systemProperties["teamcity.buildConfName"] }
 
-  val buildParams by lazy { loadProperties(systemProperties["teamcity.configuration.properties.file"]) }
+  val buildParams by lazy {
+    val configurationPropertiesFile = systemProperties["teamcity.configuration.properties.file"]
+
+    if (configurationPropertiesFile.isNullOrBlank()) return@lazy emptyMap()
+    loadProperties(Path(configurationPropertiesFile))
+  }
 
   fun getExistingParameter(name: String, impreciseNameMatch: Boolean = false): String {
     val totalParams = systemProperties.plus(buildParams)
@@ -70,6 +78,7 @@ object TeamCityClient {
 
   val buildId: String by lazy { getExistingParameter("teamcity.build.id") }
   val buildTypeId: String by lazy { getExistingParameter("teamcity.buildType.id") }
+  val os: String by lazy { getExistingParameter("teamcity.agent.jvm.os.name") }
 
   private val userName: String by lazy { getExistingParameter("teamcity.auth.userId") }
   private val password: String by lazy { getExistingParameter("teamcity.auth.password") }
@@ -153,8 +162,8 @@ object TeamCityClient {
         ChangeEntity(
           filePath = fileField.findValue("file").asText(),
           relativeFile = fileField.findValue("relative-file").asText(),
-          beforeRevision = fileField.findValue("before-revision").asText(),
-          afterRevision = fileField.findValue("after-revision").asText(),
+          beforeRevision = fileField.findValue("before-revision")?.asText("") ?: "",
+          afterRevision = fileField.findValue("after-revision")?.asText("") ?: "",
           changeType = fileField.findValue("changeType").asText(),
           comment = comment,
           userName = userName,
@@ -209,5 +218,9 @@ object TeamCityClient {
   }
 
   fun getBuildInfo(): JsonNode = getBuildInfo(buildId)
+
+  fun getTriggeredByInfo(buildId: String): JsonNode = getBuildInfo(buildId).findValue("triggered")
+
+  fun getTriggeredByInfo(): JsonNode = getTriggeredByInfo(buildId)
 }
 

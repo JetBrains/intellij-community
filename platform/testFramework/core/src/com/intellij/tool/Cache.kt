@@ -36,6 +36,11 @@ object Cache {
     }
   }
 
+  fun eraseCache() {
+    responsesCache.clear()
+    cacheDir.listDirectoryEntries().forEach { it.toFile().deleteRecursively() }
+  }
+
   private fun <T> getHashedKey(key: T) = key.toString().hashCode().toString()
 
   fun <T> put(key: T, value: String): Unit {

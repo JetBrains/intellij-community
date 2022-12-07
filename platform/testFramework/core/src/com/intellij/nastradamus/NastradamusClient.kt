@@ -18,7 +18,8 @@ import java.net.URI
 
 class NastradamusClient(
   val baseUrl: URI = URI(System.getProperty("idea.nastradamus.url")).normalize(),
-  val unsortedClasses: List<Class<*>>
+  val unsortedClasses: List<Class<*>>,
+  private val teamCityClient: TeamCityClient = TeamCityClient()
 ) {
   companion object {
     private val jacksonMapper: ObjectMapper = jacksonObjectMapper()
@@ -27,7 +28,7 @@ class NastradamusClient(
   private lateinit var sortedClassesCachedResult: Map<Class<*>, Int>
 
   fun collectTestRunResults(): TestResultRequestEntity {
-    val tests = TeamCityClient.getTestRunInfo()
+    val tests = teamCityClient.getTestRunInfo()
 
     val testResultEntities = tests.map { json ->
       TestResultEntity(
@@ -35,8 +36,8 @@ class NastradamusClient(
         status = TestStatus.fromString(json.findValue("status").asText()),
         runOrder = json.findValue("runOrder").asInt(),
         duration = json.findValue("duration")?.asLong() ?: 0,
-        buildType = TeamCityClient.buildTypeId,
-        buildStatusMessage = TeamCityClient.getBuildInfo().findValue("statusText").asText()
+        buildType = teamCityClient.buildTypeId,
+        buildStatusMessage = teamCityClient.getBuildInfo().findValue("statusText").asText()
       )
     }
 
@@ -45,7 +46,7 @@ class NastradamusClient(
 
   fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity) {
     val uri = URIBuilder(baseUrl.resolve("/result/").normalize())
-      .addParameter("build_id", TeamCityClient.buildId)
+      .addParameter("build_id", teamCityClient.buildId)
       .build()
 
     val stringJson = jacksonMapper.writeValueAsString(testResultRequestEntity.testRunResults)
@@ -83,7 +84,6 @@ class NastradamusClient(
    */
   fun sendSortingRequest(sortRequestEntity: SortRequestEntity): List<TestCaseEntity> {
     val uri = URIBuilder(baseUrl.resolve("/sort/").normalize())
-      .addParameter("build_id", TeamCityClient.buildId)
       .addParameter("buckets", TestCaseLoader.TEST_RUNNERS_COUNT.toString())
       .build()
 
@@ -129,10 +129,10 @@ class NastradamusClient(
     println("Fetching changesets patches from TeamCity ...")
 
     val changesets = runBlocking {
-      TeamCityClient.getChanges().mapConcurrently(maxConcurrency = 5) { change ->
+      teamCityClient.getChanges().mapConcurrently(maxConcurrency = 5) { change ->
         val modificationId = change.findValue("id").asText()
-        val isPersonal = change.findValue("personal")?.asBoolean() ?: false
-        TeamCityClient.downloadChangesPatch(modificationId = modificationId, isPersonal = isPersonal)
+        val isPersonal = change.findValue("personal")?.asBoolean(false) ?: false
+        teamCityClient.downloadChangesPatch(modificationId = modificationId, isPersonal = isPersonal)
       }
     }
 
@@ -141,13 +141,14 @@ class NastradamusClient(
     return changesets
   }
 
-  private fun getTeamCityChangesDetails(): List<ChangeEntity> {
+  fun getTeamCityChangesDetails(): List<ChangeEntity> {
     println("Getting changes details from TeamCity ...")
 
     // across all changes - get their details
     val changeDetails = runBlocking {
-      TeamCityClient.getChanges().mapConcurrently(maxConcurrency = 5) { change ->
-        TeamCityClient.getChangeDetails(change.findValue("id").asText())
+      val changes = teamCityClient.getChanges()
+      changes.mapConcurrently(maxConcurrency = 5) { change ->
+        teamCityClient.getChangeDetails(change.findValue("id").asText())
       }.flatten()
     }
 
@@ -156,13 +157,28 @@ class NastradamusClient(
     return changeDetails
   }
 
+  fun getBuildInfo(): BuildInfo {
+    val triggeredByInfo = teamCityClient.getTriggeredByInfo()
+
+    val triggeredByBuild = triggeredByInfo.findValue("build")
+    val aggregatorBuildId: String = if (triggeredByBuild == null) teamCityClient.buildId
+    else triggeredByBuild.findValue("id").asText(teamCityClient.buildId)
+
+    val branchName = teamCityClient.getBuildInfo().findValue("branchName")?.asText("") ?: ""
+
+    return BuildInfo(buildId = teamCityClient.buildId,
+                     aggregatorBuildId = aggregatorBuildId,
+                     branchName = branchName,
+                     os = teamCityClient.os)
+  }
+
   fun getRankedClasses(): Map<Class<*>, Int> {
     println("Getting sorted (& bucketed) test classes from Nastradamus ...")
 
     return try {
       val changesets = getTeamCityChangesDetails()
       val cases = unsortedClasses.map { TestCaseEntity(it.name) }
-      val sortedCases = sendSortingRequest(SortRequestEntity(changes = changesets, tests = cases))
+      val sortedCases = sendSortingRequest(SortRequestEntity(buildInfo = getBuildInfo(), changes = changesets, tests = cases))
 
       var rank = 1
       val ranked = sortedCases.associate { case -> case.name to rank++ }

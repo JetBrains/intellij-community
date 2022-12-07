@@ -7,6 +7,7 @@ import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.teamcity.TeamCityClient;
 import com.intellij.testFramework.*;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
@@ -288,7 +289,11 @@ public class TestCaseLoader {
     NastradamusClient nastradamus = null;
     try {
       System.out.println("Caching data from Nastradamus and TeamCity ...");
-      nastradamus = new NastradamusClient(new URI(System.getProperty("idea.nastradamus.url")).normalize(), testCaseClasses);
+      nastradamus = new NastradamusClient(
+        new URI(System.getProperty("idea.nastradamus.url")).normalize(),
+        testCaseClasses,
+        new TeamCityClient()
+      );
       nastradamus.getRankedClasses();
       System.out.println("Caching data from Nastradamus and TeamCity finished");
     }
