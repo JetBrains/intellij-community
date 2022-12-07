@@ -11,7 +11,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiFileProcessor
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -21,9 +21,9 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
     class FileRenamingPsiClassWrapper(
-        private val psiClass: KtLightClass,
+        private val psiClass: KtLightClassForFacade,
         private val file: KtFile
-    ) : KtLightClass by psiClass {
+    ) : KtLightClassForFacade by psiClass {
         override fun isValid() = file.isValid
         override fun equals(other: Any?): Boolean = other === this ||
                 other is FileRenamingPsiClassWrapper &&
@@ -56,7 +56,7 @@ class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
             val facadeFqName = fileInfo.facadeClassFqName
             val project = ktFile.project
             val facadeClass = JavaPsiFacade.getInstance(project)
-                .findClass(facadeFqName.asString(), GlobalSearchScope.moduleScope(module)) as? KtLightClass
+                .findClass(facadeFqName.asString(), GlobalSearchScope.moduleScope(module)) as? KtLightClassForFacade
             if (facadeClass != null) {
                 allRenames[FileRenamingPsiClassWrapper(facadeClass, ktFile)] = PackagePartClassUtils.getFilePartShortName(newName)
             }
