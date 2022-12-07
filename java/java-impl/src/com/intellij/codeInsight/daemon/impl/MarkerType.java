@@ -101,7 +101,7 @@ public class MarkerType {
     PsiMethod[] superMethods = composeSuperMethods(method, acceptSelf);
     if (superMethods.length == 0) return null;
 
-    String divider = GutterTooltipHelper.getElementDivider(false, false, superMethods.length);
+    String divider = GutterTooltipBuilder.getElementDivider(false, false, superMethods.length);
     AtomicReference<String> reference = new AtomicReference<>(""); // optimization: calculate next divider only once
     return GutterTooltipHelper.getTooltipText(
       Arrays.asList(superMethods),
