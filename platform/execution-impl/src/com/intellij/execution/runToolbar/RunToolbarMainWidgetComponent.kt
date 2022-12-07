@@ -28,20 +28,6 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
   override fun logNeeded(): Boolean = RunToolbarProcess.logNeeded
 
-  private var project: Project? = null
-    set(value) {
-      if(field == value) return
-      field?.let {
-        remove(it)
-      }
-
-      field = value
-
-      field?.let {
-        add(it)
-      }
-    }
-
   private var popupController: RunToolbarPopupController? = null
 
   private val componentListener = object : ContainerListener {
@@ -115,14 +101,20 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
   override fun addNotify() {
     super.addNotify()
-
-    CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
-      project = it
-
+    project?.let {
       RunWidgetWidthHelper.getInstance(it).runConfig = RunToolbarSettings.getInstance(it).getRunConfigWidth()
       checkGotIt(it)
     }
   }
+
+  override fun updateProject(value: Project) {
+    super.updateProject(value)
+
+    project?.let {
+      add(it)
+    }
+  }
+
 
   private var rwActiveListener: RWActiveListener? = null
 
@@ -182,13 +174,12 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     }
   }
 
-  override fun removeNotify() {
+  override fun removeProject() {
     project?.let {
       clearListeners(it)
-      project = null
+      remove(it)
     }
-
-    super.removeNotify()
+    super.removeProject()
   }
 
   private fun add(project: Project) {
@@ -197,6 +188,10 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     val value = counter.getOrDefault(project, 0) + 1
     counter[project] = value
     val slotManager = RunToolbarSlotManager.getInstance(project)
+    if (!RunToolbarProcess.logNeeded) {
+      LOG.info("add value $value RunToolbar")
+    }
+
     DataManager.registerDataProvider(component, DataProvider { key ->
       when {
         RunToolbarProcessData.RW_SLOT.`is`(key) -> {

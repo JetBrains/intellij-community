@@ -195,6 +195,7 @@ private class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
         border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
 
         uiSettingsChanged(UISettings.shadowInstance)
+        Disposer.register(project, this)
 
         RunWidgetAvailabilityManager.getInstance(project).addListener(this) {
           LOG.info("New toolbar: run widget availability changed $it")

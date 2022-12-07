@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.ui.JBValue
 import java.awt.Component
@@ -16,7 +17,7 @@ import javax.swing.JComponent
 
 open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionGroup) : SegmentedActionToolbarComponent(place, group) {
 
-  private var project: Project? = null
+  protected var project: Project? = null
   private var runWidgetWidthHelper: RunWidgetWidthHelper? = null
 
   private val listener = object : UpdateWidth {
@@ -29,9 +30,8 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
   override fun addNotify() {
     super.addNotify()
 
-
     CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
-      project = it
+      updateProject(it)
 
       runWidgetWidthHelper = RunWidgetWidthHelper.getInstance(it).apply {
         addListener(listener)
@@ -42,7 +42,7 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
 
   override fun removeNotify() {
     runWidgetWidthHelper?.removeListener(listener)
-    project = null
+    removeProject()
     super.removeNotify()
   }
 
@@ -51,6 +51,17 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     preferredSize
     revalidate()
     repaint()
+  }
+
+  protected open fun updateProject(value: Project) {
+    project = value
+    Disposer.register(value) {
+      removeProject()
+    }
+  }
+
+  protected open fun removeProject() {
+    project = null
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
