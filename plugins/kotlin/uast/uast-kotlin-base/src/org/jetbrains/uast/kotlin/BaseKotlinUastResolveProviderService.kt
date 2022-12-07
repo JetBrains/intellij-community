@@ -94,7 +94,11 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType?
 
-    fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType?
+    fun getType(
+        ktDeclaration: KtDeclaration,
+        containingLightDeclaration: PsiModifierListOwner?,
+        isForFake: Boolean = false,
+    ): PsiType?
 
     fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType?
 

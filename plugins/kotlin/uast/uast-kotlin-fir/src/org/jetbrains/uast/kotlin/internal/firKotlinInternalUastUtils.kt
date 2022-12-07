@@ -171,6 +171,15 @@ private fun KtAnalysisSession.desc(
     )
 }
 
+internal fun KtDeclaration.ktTypeMappingMode(boxed: Boolean): KtTypeMappingMode {
+    return when {
+        this is KtParameter -> KtTypeMappingMode.VALUE_PARAMETER
+        this is KtCallableDeclaration -> KtTypeMappingMode.RETURN_TYPE
+        boxed -> KtTypeMappingMode.GENERIC_ARGUMENT
+        else -> KtTypeMappingMode.DEFAULT_UAST
+    }
+}
+
 internal fun KtAnalysisSession.toPsiType(
     ktType: KtType,
     source: UElement?,

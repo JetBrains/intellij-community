@@ -322,16 +322,32 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     }
 
     override fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType? {
-        return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
+        val returnType = (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
             ?.returnType
-            ?.takeIf { !it.isError }
-            ?.toPsiType(source, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
+            ?: return null
+        return returnType.toPsiType(
+            source,
+            ktDeclaration,
+            ktDeclaration.typeOwnerKind,
+            boxed = returnType.isMarkedNullable
+        )
     }
 
-    override fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
-        return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
+    override fun getType(
+        ktDeclaration: KtDeclaration,
+        containingLightDeclaration: PsiModifierListOwner?,
+        isForFake: Boolean,
+    ): PsiType? {
+        val returnType = (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
             ?.returnType
-            ?.toPsiType(containingLightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
+            ?: return null
+        return returnType.toPsiType(
+            containingLightDeclaration,
+            ktDeclaration,
+            ktDeclaration.typeOwnerKind,
+            boxed = returnType.isMarkedNullable,
+            isForFake
+        )
     }
 
     override fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType? {
