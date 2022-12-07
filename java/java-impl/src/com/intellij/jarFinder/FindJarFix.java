@@ -26,8 +26,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiQualifiedReferenceElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
@@ -37,6 +37,7 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,18 +50,19 @@ import java.util.regex.Matcher;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class FindJarFix<T extends PsiElement> implements IntentionAction, Iconable, LowPriorityAction {
+public abstract class FindJarFix implements IntentionAction, Iconable, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(FindJarFix.class);
 
   private static final String CLASS_ROOT_URL = "http://findjar.com/class/";
   private static final String CLASS_PAGE_EXT = ".html";
   private static final String SERVICE_URL = "http://findjar.com";
+  private static final @NonNls String FIND_JAR_LAST_USED_DIR_PROPERTY = "findjar.last.used.dir";
 
-  protected final T myRef;
+  protected final PsiQualifiedReferenceElement myRef;
   protected final Module myModule;
   protected JComponent myEditorComponent;
 
-  public FindJarFix(T ref) {
+  public FindJarFix(@NotNull PsiQualifiedReferenceElement ref) {
     myRef = ref;
     myModule = ModuleUtilCore.findModuleForPsiElement(ref);
   }
@@ -85,10 +87,10 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
            && isFqnsOk(project, getPossibleFqns(myRef));
   }
 
-  private static boolean isFqnsOk(Project project, List<String> fqns) {
+  private static boolean isFqnsOk(@NotNull Project project, @NotNull List<String> fqns) {
     if (fqns.isEmpty()) return false;
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     for (String fqn : fqns) {
       if (facade.findClass(fqn, scope) != null) return false;
     }
@@ -96,14 +98,14 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   }
 
   @Override
-  public void invoke(@NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final List<String> fqns = getPossibleFqns(myRef);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, PsiFile file) throws IncorrectOperationException {
+    List<String> fqns = getPossibleFqns(myRef);
     myEditorComponent = editor.getComponent();
     if (fqns.size() > 1) {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(fqns)
         .setTitle(JavaBundle.message("popup.title.select.qualified.name"))
-        .setItemChosenCallback((value) -> findJarsForFqn(value, editor))
+        .setItemChosenCallback(value -> findJarsForFqn(value, editor))
         .createPopup()
         .showInBestPositionFor(editor);
     }
@@ -112,7 +114,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     }
   }
 
-  private void findJarsForFqn(@NlsSafe final String fqn, @NotNull Editor editor) {
+  private void findJarsForFqn(@NlsSafe String fqn, @NotNull Editor editor) {
     ProgressManager.getInstance().run(new Task.Modal(editor.getProject(), JavaBundle.message("progress.title.looking.for.libraries"), true) {
       final Map<String, String> libs = new HashMap<>();
 
@@ -150,8 +152,8 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
           JBList<@NlsSafe String> libNames = new JBList<>(ContainerUtil.sorted(libs.keySet()));
           libNames.installCellRenderer(o -> new JLabel(o, PlatformIcons.JAR_ICON, SwingConstants.LEFT));
           if (libs.size() == 1) {
-            final String jarName = libs.keySet().iterator().next();
-            final String url = libs.get(jarName);
+            String jarName = libs.keySet().iterator().next();
+            String url = libs.get(jarName);
             initiateDownload(url, jarName, editor.getProject());
           }
           else {
@@ -212,18 +214,18 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   }
 
   private void downloadJar(@NotNull String jarUrl, @NotNull String jarName) {
-    final Project project = myModule.getProject();
-    final String dirPath = PropertiesComponent.getInstance(project).getValue("findjar.last.used.dir");
+    Project project = myModule.getProject();
+    String dirPath = PropertiesComponent.getInstance(project).getValue(FIND_JAR_LAST_USED_DIR_PROPERTY);
     VirtualFile toSelect = dirPath == null ? null : LocalFileSystem.getInstance().findFileByIoFile(new File(dirPath));
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(
       JavaBundle.message("chooser.title.select.path.to.save.jar"))
       .withDescription(JavaBundle.message("chooser.text.choose.where.to.save.0", jarName));
-    final VirtualFile file = FileChooser.chooseFile(descriptor, project, toSelect);
+    VirtualFile file = FileChooser.chooseFile(descriptor, project, toSelect);
     if (file != null) {
-      PropertiesComponent.getInstance(project).setValue("findjar.last.used.dir", file.getPath());
-      final DownloadableFileService downloader = DownloadableFileService.getInstance();
-      final DownloadableFileDescription description = downloader.createFileDescription(jarUrl, jarName);
-      final List<VirtualFile> jars =
+      PropertiesComponent.getInstance(project).setValue(FIND_JAR_LAST_USED_DIR_PROPERTY, file.getPath());
+      DownloadableFileService downloader = DownloadableFileService.getInstance();
+      DownloadableFileDescription description = downloader.createFileDescription(jarUrl, jarName);
+      List<VirtualFile> jars =
         downloader.createDownloader(Collections.singletonList(description), jarName)
                   .downloadFilesWithProgress(file.getPath(), project, myEditorComponent);
       if (jars != null && jars.size() == 1) {
@@ -232,9 +234,9 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     }
   }
 
-  protected abstract Collection<String> getFqns(@NotNull T ref);
+  protected abstract Collection<String> getFqns(@NotNull PsiQualifiedReferenceElement ref);
 
-  protected List<String> getPossibleFqns(T ref) {
+  private @NotNull List<String> getPossibleFqns(@NotNull PsiQualifiedReferenceElement ref) {
     Collection<String> fqns = getFqns(ref);
 
     List<String> res = new ArrayList<>(fqns.size());
@@ -243,12 +245,12 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
       if (fqn.startsWith("java.") || fqn.startsWith("javax.swing.")) {
         continue;
       }
-      final int index = fqn.lastIndexOf('.');
+      int index = fqn.lastIndexOf('.');
       if (index == -1) {
         continue;
       }
-      final String className = fqn.substring(index + 1);
-      if (className.length() == 0 || Character.isLowerCase(className.charAt(0))) {
+      String className = fqn.substring(index + 1);
+      if (className.isEmpty() || Character.isLowerCase(className.charAt(0))) {
         continue;
       }
 
