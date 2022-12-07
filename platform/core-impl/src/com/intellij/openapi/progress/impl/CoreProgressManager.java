@@ -370,13 +370,17 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
     else {
       Task.Backgroundable backgroundable = task.asBackgroundable();
-      if (backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground()) {
+      if (isSynchronous(backgroundable)) {
         runProcessWithProgressSynchronously(backgroundable);
       }
       else {
         runAsynchronously(backgroundable);
       }
     }
+  }
+
+  private static boolean isSynchronous(Task.Backgroundable backgroundable) {
+    return backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground();
   }
 
   // from any: bg
