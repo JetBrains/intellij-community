@@ -37,7 +37,7 @@ internal class LinuxIdeMenuBar : IdeMenuBar() {
   }
 
   override fun doInstallAppMenuIfNeeded(frame: JFrame) {
-    if (!GlobalMenuLinux.isAvailable()) {
+    if (!GlobalMenuLinux.isAvailable() || IdeRootPane.isMenuButtonInToolbar) {
       return
     }
 
