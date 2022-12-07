@@ -49,9 +49,9 @@ import org.jetbrains.kotlin.console.gutter.ReplIcons
 import org.jetbrains.kotlin.descriptors.ScriptDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.trackers.KOTLIN_CONSOLE_KEY
@@ -308,7 +308,7 @@ class KotlinConsoleRunner(
         }
 
     private fun configureFileDependencies(psiFile: KtFile) {
-        psiFile.forcedModuleInfo = module.testSourceInfo ?: module.productionSourceInfo ?: NotUnderContentRootModuleInfo
+        psiFile.forcedModuleInfo = module.testSourceInfo ?: module.productionSourceInfo ?: NotUnderContentRootModuleInfo(project)
     }
 }
 
