@@ -192,7 +192,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @NotNull
   private BufferingListenerWrapper createListener() {
     SearchListener wrapped = SearchListener.combine(mySearchListener, new SearchProcessLogger());
-    if (Registry.is("search.everywhere.wait.for.contributors") && AdvancedSettings.getBoolean("search.everywhere.wait.for.all.contributors")) {
+    if (AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors")) {
       return new SwitchSEListener(wrapped, myListModel);
     }
 
