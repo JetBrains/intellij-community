@@ -474,6 +474,7 @@ public class LongRangeSetTest {
     assertEquals("{-9223372036854775746..Long.MAX_VALUE-1}: <62> mod 64", all().mul(point(64), INT64).minus(point(2), INT64).bitwiseOr(point(4), INT64).toString());
     assertEquals("{-9223372036854775802..9223372036854775750}: <6> mod 64", all().mul(point(64), INT64).plus(point(2), INT64).bitwiseOr(point(4), INT64).toString());
 
+    checkBitwiseOr(point(0).join(point(2)), point(1), INT32, "{1, 3}");
     checkBitwiseOr(point(1), point(2), INT32, "{3}");
     checkBitwiseOr(range(0, 100), point(1), INT32, "{1..127}: odd");
     checkBitwiseOr(range(0, 100), point(2), INT32, "{2..127}: <2, 3> mod 4");

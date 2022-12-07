@@ -90,4 +90,5 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testFloatingPointMaxLoop() { doTest(); }
   public void testStringIndexOfRelation() { doTest(); }
   public void testIncompleteLoop() { doTest(); }
+  public void testTwoFlagsMixed() { doTest(); }
 }

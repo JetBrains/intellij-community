@@ -585,7 +585,8 @@ public abstract class LongRangeSet {
       j++;
     }
     if(i == j) {
-      return point(from).join(point(to));
+      // exactly one 'unsure' bit = exactly two points (with unsure bit = 0 and unsure bit = 1)
+      return point(bits.myBits & bits.myMask).join(point((bits.myBits | (~bits.myMask))));
     }
     long modBits = -1;
     for (int rem = 0; rem < Long.SIZE; rem++) {
