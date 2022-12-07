@@ -1,6 +1,7 @@
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
@@ -21,4 +22,6 @@ class AttachDialogSettings : DefaultActionGroup(
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = getChildren(e).any()
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
