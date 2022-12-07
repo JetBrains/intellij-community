@@ -357,7 +357,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
 
     private void removeRoots(@NotNull List<Root> roots, int[] indicesToRemove) {
       if (indicesToRemove.length > 0) {
-        List<Root> rootsToRemove = Arrays.stream(indicesToRemove).mapToObj(ind -> roots.get(ind)).collect(Collectors.toList());
+        List<Root> rootsToRemove = Arrays.stream(indicesToRemove).mapToObj(ind -> roots.get(ind)).toList();
         if (LOG.isDebugEnabled()) {
           LOG.debug("Removing " + toRootFiles(rootsToRemove));
         }
