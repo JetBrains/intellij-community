@@ -171,6 +171,14 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   setValueAt(newValue, row, column);
                   changed.set(true);
                 }
+              } else if (value instanceof Dimension) {
+                Dimension d = (Dimension)value;
+                String oldDimension = String.format("%d,%d", d.width, d.height);
+                Dimension newDimension = editDimension(key.toString(), oldDimension);
+                if (newDimension != null) {
+                  updateValue(pair, newDimension, row, column);
+                  changed.set(true);
+                }
               }
 
               if (changed.get()) {
@@ -428,6 +436,41 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
 
       @Nullable
+      private Dimension editDimension(String key, String value) {
+        String newValue = Messages.showInputDialog(getRootPane(),
+                                                   IdeBundle.message("dialog.message.enter.new.value.for.0.in.form.width.height", key),
+                                                   IdeBundle.message("dialog.title.dimension.editor"), null, value,
+                                                   new InputValidator() {
+             @Override
+             public boolean checkInput(String inputString) {
+               return parseDimension(inputString) != null;
+             }
+
+             @Override
+             public boolean canClose(String inputString) {
+               return checkInput(inputString);
+             }
+           });
+
+        return newValue != null ? parseDimension(newValue) : null;
+      }
+
+      @Nullable
+      private static Dimension parseDimension(String value) {
+        String[] parts = value.split(",");
+        if(parts.length != 2) {
+          return null;
+        }
+
+        try {
+          List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
+          return JBUI.size(v.get(0), v.get(1));
+        } catch (NumberFormatException nex) {
+          return null;
+        }
+      }
+
+      @Nullable
       private UIUtil.GrayFilter editGrayFilter(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
                                                    IdeBundle.message(
@@ -527,7 +570,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 value instanceof EmptyBorder ||
                 value instanceof Insets ||
                 value instanceof UIUtil.GrayFilter ||
-                value instanceof Font);
+                value instanceof Font ||
+                value instanceof Dimension);
       }
     };
     FilteringTableModel<Object> filteringTableModel = new FilteringTableModel<>(model, Object.class);
