@@ -1,8 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="org.intellij.markdown">
-    <fenceLanguageProvider implementation="com.intellij.mermaid.markdown.MermaidCodeFenceLanguageProvider"
-                           order="first"/>
-
     <browserPreviewExtensionProvider implementation="com.intellij.mermaid.markdown.jcef.MermaidBrowserExtension$Provider"
                                      order="first"/>
 
