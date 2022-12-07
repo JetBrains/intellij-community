@@ -13,20 +13,16 @@ import kotlin.io.path.name
 class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
 
   fun getSystemDir(): Path {
-    checkMode()
     @Suppress("TestOnlyProblems")
     return getSystemDir(PathManager.getSystemDir(), ProjectManagerEx.IS_CHILD_PROCESS, ::currentProjectStoreBaseDir, projectStoreBaseDir)
   }
 
   fun getConfigDir(): Path {
-    checkMode()
     @Suppress("TestOnlyProblems")
     return getConfigDir(PathManager.getConfigDir(), ProjectManagerEx.IS_CHILD_PROCESS, ::currentProjectStoreBaseDir, projectStoreBaseDir)
   }
 
   fun getPluginsDir(): Path {
-    checkMode()
-
     @Suppress("TestOnlyProblems")
     return getPluginsDir(
       PathManager.getPluginsDir(),
@@ -38,8 +34,6 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
   }
 
   fun getLogDir(): Path {
-    checkMode()
-
     @Suppress("TestOnlyProblems")
     return getLogDir(
       PathManager.getLogDir(),
@@ -97,15 +91,7 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
       }
     }
 
-    private fun checkMode() {
-      require(ProjectManagerEx.IS_PER_PROJECT_INSTANCE_READY || ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
-        "This function can only be used with allowed `process per project` mode"
-      }
-    }
-
     private fun currentProjectStoreBaseDir(): Path? {
-      require(ProjectManagerEx.IS_CHILD_PROCESS) { "This function can only be used with enabled `process per project` mode" }
-
       val currentProject = ProjectManagerEx.getOpenProjects().singleOrNull()
       return currentProject?.basePath?.let { Paths.get(it) }
     }
