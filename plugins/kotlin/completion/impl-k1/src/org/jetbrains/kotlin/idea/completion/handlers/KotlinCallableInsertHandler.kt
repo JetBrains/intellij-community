@@ -30,7 +30,7 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
             val o = item.`object`
             if (file is KtFile && o is DescriptorBasedDeclarationLookupObject) {
                 val descriptor = o.descriptor as? CallableDescriptor ?: return
-                if (descriptor.extensionReceiverParameter != null || callType == CallType.CALLABLE_REFERENCE) {
+                if (descriptor.extensionReceiverParameter != null || callType is CallType.CallableReference) {
                     if (DescriptorUtils.isTopLevelDeclaration(descriptor) && !descriptor.isArtificialImportAliasedDescriptor) {
                         ImportInsertHelper.getInstance(context.project).importDescriptor(file, descriptor)
                     }

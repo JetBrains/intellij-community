@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.ExpectedInfos
@@ -65,6 +66,7 @@ class SmartCompletionSession(
         }
 
         if (expression == null) return
+        val settings = expression.languageVersionSettings
 
         addFunctionLiteralArgumentCompletions()
 
@@ -81,8 +83,8 @@ class SmartCompletionSession(
                 if (referenceVariantsCollector != null) {
                     val (imported, notImported) = referenceVariantsCollector.collectReferenceVariants(descriptorKindFilter)
                         .excludeNonInitializedVariable()
-                    imported.forEach { collector.addElements(filter(it, lookupElementFactory)) }
-                    notImported.forEach { collector.addElements(filter(it, lookupElementFactory), notImported = true) }
+                    imported.forEach { collector.addElements(filter(it, lookupElementFactory, settings)) }
+                    notImported.forEach { collector.addElements(filter(it, lookupElementFactory, settings), notImported = true) }
                     referenceVariantsCollector.collectingFinished()
                 }
             }
@@ -99,7 +101,7 @@ class SmartCompletionSession(
                     lookupElementFactory
                 ).processVariables(contextVariablesProvider)
                 for ((invokeDescriptor, factory) in results) {
-                    collector.addElements(filter(invokeDescriptor, factory))
+                    collector.addElements(filter(invokeDescriptor, factory, settings))
                 }
             }
 
@@ -112,8 +114,8 @@ class SmartCompletionSession(
                 contextVariableTypesForReferenceVariants!!.any { contextVariablesProvider.functionTypeVariables(it).isNotEmpty() }
             ) {
                 val (imported, notImported) = referenceVariantsWithSingleFunctionTypeParameter()!!
-                imported.forEach { collector.addElements(filter(it, lookupElementFactory)) }
-                notImported.forEach { collector.addElements(filter(it, lookupElementFactory), notImported = true) }
+                imported.forEach { collector.addElements(filter(it, lookupElementFactory, settings)) }
+                notImported.forEach { collector.addElements(filter(it, lookupElementFactory, settings), notImported = true) }
             }
 
             flushToResultSet()
@@ -125,7 +127,7 @@ class SmartCompletionSession(
                     staticMembersCompletion =
                         StaticMembersCompletion(prefixMatcher, resolutionFacade, lookupElementFactory, alreadyCollected, isJvmModule)
                     val decoratedFactory = staticMembersCompletion.decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER_FROM_IMPORTS)
-                    staticMembersCompletion.membersFromImports(file).flatMap { filter(it, decoratedFactory) }
+                    staticMembersCompletion.membersFromImports(file).flatMap { filter(it, decoratedFactory, settings) }
                         .forEach { collector.addElement(it) }
                 } else {
                     staticMembersCompletion = null
@@ -133,7 +135,7 @@ class SmartCompletionSession(
 
                 if (shouldCompleteTopLevelCallablesFromIndex()) {
                     processTopLevelCallables {
-                        collector.addElements(filter(it, lookupElementFactory), notImported = true)
+                        collector.addElements(filter(it, lookupElementFactory, settings), notImported = true)
                         flushToResultSet()
                     }
                 }
@@ -143,10 +145,10 @@ class SmartCompletionSession(
                     if (variantsAndFactory != null) {
                         val variants = variantsAndFactory.first
                         @Suppress("NAME_SHADOWING") val lookupElementFactory = variantsAndFactory.second
-                        variants.imported.forEach { collector.addElements(filter(it, lookupElementFactory).map { it.withReceiverCast() }) }
+                        variants.imported.forEach { collector.addElements(filter(it, lookupElementFactory, settings).map { it.withReceiverCast() }) }
                         variants.notImportedExtensions.forEach {
                             collector.addElements(
-                                filter(it, lookupElementFactory).map { element -> element.withReceiverCast() },
+                                filter(it, lookupElementFactory, settings).map { element -> element.withReceiverCast() },
                                 notImported = true
                             )
                         }
@@ -157,7 +159,7 @@ class SmartCompletionSession(
                 if (staticMembersCompletion != null && configuration.staticMembers) {
                     val decoratedFactory = staticMembersCompletion.decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER)
                     staticMembersCompletion.processMembersFromIndices(indicesHelper(false)) {
-                        filter(it, decoratedFactory).forEach { element ->
+                        filter(it, decoratedFactory, settings).forEach { element ->
                             collector.addElement(element)
                             flushToResultSet()
                         }
