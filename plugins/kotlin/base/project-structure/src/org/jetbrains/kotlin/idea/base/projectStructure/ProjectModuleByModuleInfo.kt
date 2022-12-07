@@ -180,8 +180,7 @@ internal class NotUnderContentRootModuleByModuleInfo(
     private val moduleInfo: IdeaModuleInfo,
     provider: ProjectStructureProviderIdeImpl
 ) : KtModuleByModuleInfoBase(moduleInfo, provider), KtNotUnderContentRootModule {
-    override val moduleDescription: String
-        get() = "Non under content root module"
-
+    override val moduleDescription: String get() = "Non under content root module"
     override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
+    override val project: Project get() = moduleInfo.project
 }

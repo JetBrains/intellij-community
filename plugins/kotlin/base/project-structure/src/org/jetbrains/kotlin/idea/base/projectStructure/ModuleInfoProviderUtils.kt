@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider.Config
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 
 val PsiElement.moduleInfo: IdeaModuleInfo
-    get() = ModuleInfoProvider.getInstance(project).firstOrNull(this) ?: NotUnderContentRootModuleInfo
+    get() = ModuleInfoProvider.getInstance(project).firstOrNull(this) ?: NotUnderContentRootModuleInfo(project)
 
 val PsiElement.moduleInfoOrNull: IdeaModuleInfo?
     get() = ModuleInfoProvider.getInstance(project).firstOrNull(this)

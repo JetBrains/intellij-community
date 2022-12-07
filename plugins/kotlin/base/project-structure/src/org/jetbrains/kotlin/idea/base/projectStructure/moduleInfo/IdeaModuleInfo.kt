@@ -27,7 +27,7 @@ interface IdeaModuleInfo : ModuleInfo {
 
     val moduleOrigin: ModuleOrigin
 
-    val project: Project?
+    val project: Project
 
     override val capabilities: Map<ModuleCapability<*>, Any?>
         get() = super.capabilities + mapOf(OriginCapability to moduleOrigin)
