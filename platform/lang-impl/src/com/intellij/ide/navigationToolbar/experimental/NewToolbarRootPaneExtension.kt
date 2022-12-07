@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.ToolbarActionsUpdatedListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -20,12 +21,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.concurrent.CompletableFuture
@@ -49,8 +55,6 @@ fun interface ExperimentalToolbarStateListener {
    */
   fun refreshVisibility()
 }
-
-private val LOG = logger<NewToolbarRootPaneManager>()
 
 @Service
 private class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker() {
@@ -83,7 +87,7 @@ private class NewToolbarRootPaneManager(private val project: Project) : SimpleMo
         }
       )
       .exceptionally {
-        LOG.error(it)
+        logger<NewToolbarRootPaneManager>().error(it)
         null
       }
     getToolbarGroup()?.let {
@@ -120,11 +124,13 @@ private class NewToolbarRootPaneManager(private val project: Project) : SimpleMo
     return CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
   }
 
-  private fun mainGroupName() = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
-    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
-  }
-  else {
-    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN
+  private fun mainGroupName(): String {
+    return if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
+      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
+    }
+    else {
+      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN
+    }
   }
 
   private class MyActionToolbarImpl(place: String,
@@ -141,12 +147,7 @@ private class NewToolbarRootPaneManager(private val project: Project) : SimpleMo
   }
 
   @RequiresEdt
-  private fun applyTo(
-    actions: Map<String, ActionGroup?>,
-    component: JComponent,
-    layout: BorderLayout
-  ) {
-
+  private fun applyTo(actions: Map<String, ActionGroup?>, component: JComponent, layout: BorderLayout) {
     actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
         val toolbar = MyActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
@@ -161,7 +162,6 @@ private class NewToolbarRootPaneManager(private val project: Project) : SimpleMo
     }.forEach { (layoutConstraints, toolbar) ->
       // We need to replace old component having the same constraints with the new one.
       if (toolbar != null) {
-
         layout.getLayoutComponent(component, layoutConstraints)?.let {
           component.remove(it)
         }
@@ -177,67 +177,94 @@ private class NewToolbarRootPaneManager(private val project: Project) : SimpleMo
 
 private class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
   companion object {
-    private const val NEW_TOOLBAR_KEY = "NEW_TOOLBAR_KEY"
-
     private val LOG = logger<NewToolbarRootPaneExtension>()
   }
 
-  override fun getKey() = NEW_TOOLBAR_KEY
+  override val key: String
+    get() = "NEW_TOOLBAR_KEY"
 
   override fun createComponent(project: Project, isDocked: Boolean): JPanel? {
     if (isDocked) {
       return null
     }
 
-    val panel = object : JPanel(NewToolbarBorderLayout()), UISettingsListener, Disposable {
-      init {
-        isOpaque = true
-        border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
-
-        uiSettingsChanged(UISettings.shadowInstance)
-        Disposer.register(project, this)
-
-        RunWidgetAvailabilityManager.getInstance(project).addListener(this) {
-          LOG.info("New toolbar: run widget availability changed $it")
-          NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
-        }
-
-        ApplicationManager.getApplication().messageBus.connect(this)
-          .subscribe(ToolbarActionsUpdatedListener.TOPIC, ToolbarActionsUpdatedListener {
-            ApplicationManager.getApplication().invokeLater {
-              revalidate()
-              doLayout()
-            }
-          })
-      }
-
-      override fun removeNotify() {
-        Disposer.dispose(this)
-      }
-
-      override fun getComponentGraphics(graphics: Graphics?): Graphics {
-        return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
-      }
-
-      override fun uiSettingsChanged(uiSettings: UISettings) {
-        LOG.info("Show old main toolbar: ${uiSettings.showMainToolbar}; show old navigation bar: ${uiSettings.showNavigationBar}")
-        LOG.info("Show new main toolbar: ${ToolbarSettings.getInstance().isVisible}")
-
-        val toolbarSettings = ToolbarSettings.getInstance()
-        isEnabled = toolbarSettings.isAvailable
-        isVisible = toolbarSettings.isVisible && !uiSettings.presentationMode
-        project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
-
-        revalidate()
-        repaint()
-
-        NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
-      }
-
-      override fun dispose() {
-      }
-    }
+    val panel = MyPanel(project)
     NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(panel)
     return panel
+  }
+
+  private class MyPanel(private val project: Project) : JPanel(NewToolbarBorderLayout()), UISettingsListener {
+    private var disposable: Disposable? = null
+
+    init {
+      isOpaque = true
+      border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
+
+      val toolbarSettings = ToolbarSettings.getInstance()
+      isEnabled = toolbarSettings.isAvailable
+      isVisible = toolbarSettings.isVisible && !UISettings.getInstance().presentationMode
+
+      if (isEnabled) {
+        listenIfNeeded()
+      }
+    }
+
+    private fun listenIfNeeded() {
+      val disposable = Disposer.newDisposable()
+      this.disposable = disposable
+
+      @Suppress("DEPRECATION")
+      project.coroutineScope.launch {
+        RunWidgetAvailabilityManager.getInstance(project).availabilityChanged.collectLatest {
+          withContext(Dispatchers.EDT) {
+            LOG.info("New toolbar: run widget availability changed $it")
+            NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this@MyPanel)
+          }
+        }
+      }.cancelOnDispose(disposable)
+
+      ApplicationManager.getApplication().messageBus.connect(disposable)
+        .subscribe(ToolbarActionsUpdatedListener.TOPIC, ToolbarActionsUpdatedListener {
+          @Suppress("DEPRECATION")
+          project.coroutineScope.launch(Dispatchers.EDT) {
+            revalidate()
+            doLayout()
+          }
+        })
+    }
+
+    override fun removeNotify() {
+      disposable?.let {
+        disposable = null
+        Disposer.dispose(it)
+      }
+      super.removeNotify()
+    }
+
+    override fun getComponentGraphics(graphics: Graphics?): Graphics {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
+    }
+
+    override fun uiSettingsChanged(uiSettings: UISettings) {
+      val toolbarSettings = ToolbarSettings.getInstance()
+      val isAvailable = toolbarSettings.isAvailable
+      val isVisible = toolbarSettings.isVisible && !uiSettings.presentationMode
+
+      if (isEnabled == isAvailable && this.isVisible == isVisible) {
+        return
+      }
+
+      LOG.info("Show old main toolbar: ${uiSettings.showMainToolbar}; show old navigation bar: ${uiSettings.showNavigationBar}")
+      LOG.info("Show new main toolbar: ${ToolbarSettings.getInstance().isVisible}")
+
+      isEnabled = isAvailable
+      this.isVisible = isVisible
+      project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
+
+      revalidate()
+      repaint()
+
+      NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
+    }
   }
 }
