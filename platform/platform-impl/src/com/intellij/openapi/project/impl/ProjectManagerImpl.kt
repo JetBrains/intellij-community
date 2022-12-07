@@ -20,7 +20,6 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
-import com.intellij.idea.canonicalPath
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -45,8 +44,6 @@ import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.ex.ProjectManagerEx.Companion.IS_CHILD_PROCESS
-import com.intellij.openapi.project.ex.ProjectManagerEx.Companion.PER_PROJECT_SUFFIX
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServicesAndCreateComponents
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -84,7 +81,6 @@ import java.nio.file.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
-import kotlin.io.path.div
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal
@@ -169,12 +165,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (IS_PER_PROJECT_INSTANCE_READY) {
       connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosed(project: Project) {
-          if (IS_CHILD_PROCESS) {
-            clearPerProjectDirsForProject(PathManager.getSystemDir())
-          }
-          else {
-            clearPerProjectDirsForProject(toPerProjectDir(PathManager.getSystemDir(), Path.of(project.basePath!!)))
-          }
+          clearPerProjectDirsForProject(PerProjectInstancePaths.getSystemDir(Path.of(project.basePath!!)))
         }
       })
     }
@@ -558,12 +549,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     // if we are opening project in current process (not yet PER_PROJECT), lock per-project directory
     if (IS_PER_PROJECT_INSTANCE_READY) {
-      if (IS_CHILD_PROCESS) {
-        lockPerProjectDirForProject(PathManager.getSystemDir())
-      }
-      else {
-        lockPerProjectDirForProject(toPerProjectDir(PathManager.getSystemDir(), projectStoreBaseDir))
-      }
+      lockPerProjectDirForProject(PerProjectInstancePaths.getSystemDir(projectStoreBaseDir))
     }
 
     if (!options.forceOpenInNewFrame) {
@@ -1414,29 +1400,15 @@ private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
   }
 }
 
-private fun toPerProjectDir(path: Path, projectStoreBaseDir: Path): Path {
-  val projectStoreBaseDirRelative = Paths.get("/").relativize(projectStoreBaseDir)
-  return path / PER_PROJECT_SUFFIX / projectStoreBaseDirRelative
-}
-
-private fun removePerProjectSuffix(path: Path, currentProjectBaseDir: Path): Path {
-  val projectStoreBaseDirRelative = Paths.get("/").relativize(currentProjectBaseDir)
-  val suffix = PER_PROJECT_SUFFIX + File.separator + projectStoreBaseDirRelative
-  return canonicalPath(path.toString().removeSuffix(suffix))
-}
-
 private fun openProjectInstanceArgs(projectStoreBaseDir: Path): Array<String> {
   return mapOf(
-    PathManager.PROPERTY_SYSTEM_PATH to PathManager.getSystemDir(),
-    PathManager.PROPERTY_CONFIG_PATH to PathManager.getConfigDir(),
-    PathManager.PROPERTY_LOG_PATH to PathManager.getLogDir(),
-    PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
-  ).mapValuesTo(mutableMapOf()) { (key, value) ->
-    val currentProjectBaseDir = Paths.get(ProjectManagerEx.getOpenProjects().first().basePath ?: "")
-    val baseDir = if (IS_CHILD_PROCESS) removePerProjectSuffix(value, currentProjectBaseDir) else value
-
-    "-D$key=${toPerProjectDir(baseDir, projectStoreBaseDir)}"
-  }.values.toTypedArray()
+    PathManager.PROPERTY_SYSTEM_PATH to PerProjectInstancePaths.getSystemDir(projectStoreBaseDir),
+    PathManager.PROPERTY_CONFIG_PATH to PerProjectInstancePaths.getConfigDir(projectStoreBaseDir),
+    PathManager.PROPERTY_LOG_PATH to PerProjectInstancePaths.getLogDir(projectStoreBaseDir),
+    PathManager.PROPERTY_PLUGINS_PATH to PerProjectInstancePaths.getPluginsDir(projectStoreBaseDir),
+  ).map { (key, value) ->
+    "-D$key=$value"
+  }.toTypedArray()
   // TODO add vm options
   // for (vmOption in VMOptions.readOptions("", true)) {
   //  command += vmOption.asPatchedAgentLibOption()
