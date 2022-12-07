@@ -28,7 +28,7 @@ import git4idea.i18n.GitBundle
 import javax.swing.JComponent
 
 internal class GitUserNameNotDefinedDialog(
-  private val project: Project,
+  project: Project,
   private val rootsWithUndefinedProps: Collection<VirtualFile>,
   private val allRootsAffectedByCommit: Collection<VirtualFile>,
   private val rootsWithDefinedProps: Map<VirtualFile, VcsUser>
