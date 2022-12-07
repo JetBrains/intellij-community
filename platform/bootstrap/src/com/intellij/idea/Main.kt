@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
+
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
@@ -14,6 +15,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import sun.font.FontManager
+import sun.font.FontManagerFactory
 import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandles
@@ -50,8 +53,9 @@ fun main(rawArgs: Array<String>) {
         val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
         MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
       }
-
       initProjectorIfNeeded(args)
+      // Must be called after projector init
+      initLuxIfNeeded(args)
 
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
@@ -67,6 +71,26 @@ fun main(rawArgs: Array<String>) {
   catch (e: Throwable) {
     StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
+  }
+}
+
+private fun initLuxIfNeeded(args: List<String>) {
+  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0])) {
+    return
+  }
+  if (System.getProperty("lux.enabled").toBoolean()) {
+    System.setProperty("awt.nativeDoubleBuffering", false.toString())
+    System.setProperty("swing.bufferPerWindow", true.toString())
+
+    System.clearProperty("sun.font.fontmanager")
+    FontManagerFactory::class.java.getDeclaredField("instance").apply {
+      isAccessible = true
+      set(null, null)
+      val luxClass = AppStarter::class.java.classLoader.loadClass("com.jetbrains.rdserver.lux.LuxFontManager")
+      val inst = luxClass.getDeclaredMethod("getInstance").invoke(null) as FontManager
+      set(null, inst)
+    }
+    System.setProperty("sun.font.fontmanager", "com.jetbrains.rdserver.lux.LuxFontManager")
   }
 }
 
