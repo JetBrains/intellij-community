@@ -52,7 +52,7 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
 
     object OPERATOR : CallType<KtExpression>(DescriptorKindFilter.FUNCTIONS exclude NonOperatorExclude)
 
-    object CALLABLE_REFERENCE : CallType<KtExpression?>(DescriptorKindFilter.CALLABLES exclude CallableReferenceExclude)
+    object CALLABLE_REFERENCE : CallType<KtExpression?>(DescriptorKindFilter.CALLABLES exclude LocalsAndSyntheticExclude)
 
     object IMPORT_DIRECTIVE : CallType<KtExpression?>(DescriptorKindFilter.ALL)
 
@@ -86,7 +86,7 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
             get() = 0
     }
 
-    private object CallableReferenceExclude : DescriptorKindExclude() {
+    private object LocalsAndSyntheticExclude : DescriptorKindExclude() {
         override fun excludes(descriptor: DeclarationDescriptor) /* currently not supported for locals and synthetic */ =
             descriptor !is CallableMemberDescriptor || descriptor.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
 
