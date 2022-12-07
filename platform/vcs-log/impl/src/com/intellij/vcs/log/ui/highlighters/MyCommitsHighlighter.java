@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui.highlighters;
 
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.table.column.Author;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
@@ -40,6 +41,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, int column, boolean isSelected) {
+    if (details instanceof LoadingDetails) return VcsCommitStyle.DEFAULT;
     if (myShouldHighlightUser) {
       VcsUser currentUser = myLogData.getCurrentUser().get(details.getRoot());
       if (currentUser != null && VcsUserUtil.isSamePerson(currentUser, details.getAuthor())) {
