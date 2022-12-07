@@ -96,9 +96,7 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
 
   private fun Panel.notAvailable(cause: String?) = row {
     logger.info("Settings are not available" + (cause?.let { ", cause: $cause." } ?: ""))
-    comment(
-      "Currently, Full Line is available only for Python, JavaScript and TypeScript languages, " +
-      "please install one of their plugins and restart or use PyCharm or WebStorm")
+    comment("Currently, Full Line is available only for Python language, please install its plugin and restart or use PyCharm")
   }
 
   private fun Panel.community() {
