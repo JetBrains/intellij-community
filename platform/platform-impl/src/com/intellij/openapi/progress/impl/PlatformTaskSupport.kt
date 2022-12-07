@@ -13,9 +13,7 @@ import com.intellij.openapi.application.impl.onEdtInNonAnyModality
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.*
-import com.intellij.openapi.progress.util.ProgressDialogUI
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
-import com.intellij.openapi.progress.util.createDialogWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
@@ -29,16 +27,32 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.awaitCancellation
 import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Container
 import java.awt.EventQueue
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
+import kotlin.coroutines.coroutineContext
 
-internal class PlatformTaskSupport : TaskSupport {
+@Internal
+class PlatformTaskSupport : TaskSupport {
+
+  data class ProgressStartedEvent(
+    val title: @ProgressTitle String,
+    val updates: Flow<ProgressState>, // finite
+  )
+
+  private val _progressStarted: MutableSharedFlow<ProgressStartedEvent> = MutableSharedFlow()
+
+  val progressStarted: SharedFlow<ProgressStartedEvent> = _progressStarted.asSharedFlow()
+
+  private suspend fun progressStarted(title: @ProgressTitle String, updates: Flow<ProgressState>) {
+    val job = coroutineContext.job
+    _progressStarted.emit(ProgressStartedEvent(title, updates.takeWhile { job.isActive }))
+  }
 
   override fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable = NonCancellableTaskCancellation
 
@@ -55,6 +69,7 @@ internal class PlatformTaskSupport : TaskSupport {
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
     val sink = FlowProgressSink()
+    progressStarted(title, sink.stateFlow)
     val showIndicatorJob = showIndicator(project, taskInfo(title, cancellation), sink.stateFlow)
     try {
       withContext(sink.asContextElement(), action)
@@ -93,7 +108,15 @@ internal class PlatformTaskSupport : TaskSupport {
     inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
       val deferredDialog = CompletableDeferred<DialogWrapper>()
       val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
-        withModalIndicator(descriptor, deferredDialog, action)
+        val sink = FlowProgressSink()
+        progressStarted(descriptor.title, sink.stateFlow)
+        val showIndicatorJob = showModalIndicator(descriptor, sink.stateFlow, deferredDialog)
+        try {
+          withContext(sink.asContextElement(), action)
+        }
+        finally {
+          showIndicatorJob.cancel()
+        }
       }
       mainJob.invokeOnCompletion {
         // Unblock `getNextEvent()` in case it's blocked.
@@ -188,21 +211,6 @@ private fun taskInfo(title: @ProgressTitle String, cancellation: TaskCancellatio
   override fun isCancellable(): Boolean = cancellation is CancellableTaskCancellation
   override fun getCancelText(): String? = (cancellation as? CancellableTaskCancellation)?.buttonText
   override fun getCancelTooltipText(): String? = (cancellation as? CancellableTaskCancellation)?.tooltipText
-}
-
-private suspend fun <T> withModalIndicator(
-  descriptor: ModalIndicatorDescriptor,
-  deferredDialog: CompletableDeferred<DialogWrapper>?,
-  action: suspend CoroutineScope.() -> T,
-): T = coroutineScope {
-  val sink = FlowProgressSink()
-  val showIndicatorJob = showModalIndicator(descriptor, sink.stateFlow, deferredDialog)
-  try {
-    withContext(sink.asContextElement(), action)
-  }
-  finally {
-    showIndicatorJob.cancel()
-  }
 }
 
 private class ModalIndicatorDescriptor(
