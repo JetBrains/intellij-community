@@ -166,7 +166,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (IS_PER_PROJECT_INSTANCE_READY) {
       connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosed(project: Project) {
-          clearPerProjectDirsForProject(PerProjectInstancePaths.getSystemDir(Path.of(project.basePath!!)))
+          clearPerProjectDirsForProject(PerProjectInstancePaths(Path.of(project.basePath!!)).getSystemDir())
         }
       })
     }
@@ -550,7 +550,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     // if we are opening project in current process (not yet PER_PROJECT), lock per-project directory
     if (IS_PER_PROJECT_INSTANCE_READY) {
-      lockPerProjectDirForProject(PerProjectInstancePaths.getSystemDir(projectStoreBaseDir))
+      lockPerProjectDirForProject(PerProjectInstancePaths(projectStoreBaseDir).getSystemDir())
     }
 
     if (!options.forceOpenInNewFrame) {
@@ -1397,11 +1397,13 @@ private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
 }
 
 private fun openProjectInstanceArgs(projectStoreBaseDir: Path): Array<String> {
+  val instancePaths = PerProjectInstancePaths(projectStoreBaseDir)
+
   return mapOf(
-    PathManager.PROPERTY_SYSTEM_PATH to PerProjectInstancePaths.getSystemDir(projectStoreBaseDir),
-    PathManager.PROPERTY_CONFIG_PATH to PerProjectInstancePaths.getConfigDir(projectStoreBaseDir),
-    PathManager.PROPERTY_LOG_PATH to PerProjectInstancePaths.getLogDir(projectStoreBaseDir),
-    PathManager.PROPERTY_PLUGINS_PATH to PerProjectInstancePaths.getPluginsDir(projectStoreBaseDir),
+    PathManager.PROPERTY_SYSTEM_PATH to instancePaths.getSystemDir(),
+    PathManager.PROPERTY_CONFIG_PATH to instancePaths.getConfigDir(),
+    PathManager.PROPERTY_LOG_PATH to instancePaths.getLogDir(),
+    PathManager.PROPERTY_PLUGINS_PATH to instancePaths.getPluginsDir(),
   ).map { (key, value) ->
     "-D$key=$value"
   }.toTypedArray()
