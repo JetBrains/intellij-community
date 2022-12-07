@@ -203,12 +203,12 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
       }
 
-      override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+      override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
           .includeAll()
-          .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win/x64"))
+          .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/win/x64"))
 
-        GameTools(context, OsFamily.WINDOWS, JvmArchitecture.x64).copyAdditionalFiles(Path.of(targetDirectory).resolve("bin"))
+        GameTools(context, OsFamily.WINDOWS, JvmArchitecture.x64).copyAdditionalFiles(targetDirectory.resolve("bin"))
       }
     }
   }
