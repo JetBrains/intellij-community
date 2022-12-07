@@ -31,13 +31,11 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -390,6 +388,16 @@ public final class PsiImplUtil {
       return new LocalSearchScope(scope != null ? scope : aClass);
     }
 
+    if (aClass != null) {
+      PsiElement parent = aClass.getParent();
+      while (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
+        parent = parent.getParent();
+      }
+      // members of local classes or of classes contained in anonymous or local classes have a small scope
+      if (parent instanceof PsiAnonymousClass) return new LocalSearchScope(parent);
+      if (parent instanceof PsiDeclarationStatement) return new LocalSearchScope(parent.getParent());
+    }
+
     PsiModifierList modifierList = member.getModifierList();
     int accessLevel = modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC ||
@@ -422,14 +430,20 @@ public final class PsiImplUtil {
       // constructors and members of final classes cannot be accessed via a subclass so their use scope can't be wider than their class's
       return (PsiUtil.getAccessLevel(classModifierList) < accessLevel) ? aClass.getUseScope() : null;
     }
-    else if (!hasSubclassInContainingContext(aClass, new HashSet<>())) {
+    else if (!mayHaveScopeWideningSubclass(aClass)) {
       return aClass.getUseScope();
     }
     // class use scope doesn't matter, since another very visible class can inherit from aClass
     return null;
   }
 
-  private static boolean hasSubclassInContainingContext(PsiClass aClass, Set<PsiClass> visited) {
+  private static boolean mayHaveScopeWideningSubclass(PsiClass aClass) {
+    return CachedValuesManager.getCachedValue(aClass, () ->
+      CachedValueProvider.Result.create(mayHaveScopeWideningSubclass(aClass, new HashSet<>()),
+                                        PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static boolean mayHaveScopeWideningSubclass(PsiClass aClass, Set<PsiClass> visited) {
     if (!aClass.hasModifierProperty(PsiModifier.PRIVATE)) return true;
     if (aClass instanceof PsiCompiledElement) return true; // don't check library code
     if (!visited.add(aClass)) return true; // prevent infinite recursion on broken code
@@ -454,22 +468,11 @@ public final class PsiImplUtil {
         return !subclasses.isEmpty();
       }
     }
-    PsiClass containingClass = aClass.getContainingClass();
-    PsiClass context = aClass;
-    while (containingClass != null) {
-      context = containingClass;
-      containingClass = containingClass.getContainingClass();
-    }
+    PsiClass context = PsiUtil.getTopLevelClass(aClass);
+    if (context == null) return false;
     final LocalInheritorVisitor visitor = new LocalInheritorVisitor();
     context.accept(visitor);
-    if (visitor.isExtended()) {
-      for (PsiClass subclass : visitor.subclasses) {
-        if (hasSubclassInContainingContext(subclass, visited)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return visitor.isExtended() && ContainerUtil.exists(visitor.subclasses, subclass -> mayHaveScopeWideningSubclass(subclass, visited));
   }
 
   public static boolean isInServerPage(@Nullable PsiElement element) {
