@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterS
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, PsiElement> {
     @RequiresReadLock
@@ -53,8 +55,14 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
         val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
         return object : AbstractQuery<PsiElement>() {
             override fun processResults(consumer: Processor<in PsiElement>): Boolean {
+                if (runReadAction { baseClass.isEnum() && !collectEnumConstants(consumer) }) return false
                 return names.all { name -> runReadAction { processBaseName(name, consumer) } }
             }
+
+            private fun collectEnumConstants(consumer: Processor<in PsiElement>) =
+                baseClass.collectDescendantsOfType<KtEnumEntry>().all { enumEntry ->
+                    enumEntry.body == null || consumer.process(enumEntry)
+                }
 
             private fun processBaseName(name: String, consumer: Processor<in PsiElement>): Boolean {
                 ProgressManager.checkCanceled()
