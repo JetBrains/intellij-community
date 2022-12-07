@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.*
@@ -305,7 +306,7 @@ class ReferenceVariantsHelper(
             descriptors.addScopeAndSyntheticExtensions(
                 resolutionScope,
                 explicitReceiverTypes,
-                CallType.CALLABLE_REFERENCE,
+                CallType.CallableReference(contextElement.languageVersionSettings),
                 kindFilter,
                 nameFilter
             )

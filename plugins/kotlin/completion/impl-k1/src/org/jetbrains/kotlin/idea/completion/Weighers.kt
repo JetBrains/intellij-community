@@ -417,7 +417,7 @@ object PreferLessParametersWeigher : LookupElementWeigher("kotlin.preferLessPara
 
 class CallableReferenceWeigher(private val callType: CallType<*>) : LookupElementWeigher("kotlin.callableReference") {
     override fun weigh(element: LookupElement): Int? {
-        if (callType == CallType.CALLABLE_REFERENCE || element.getUserData(SMART_COMPLETION_ITEM_PRIORITY_KEY) == SmartCompletionItemPriority.CALLABLE_REFERENCE) {
+        if (callType is CallType.CallableReference || element.getUserData(SMART_COMPLETION_ITEM_PRIORITY_KEY) == SmartCompletionItemPriority.CALLABLE_REFERENCE) {
             val descriptor = (element.`object` as? DescriptorBasedDeclarationLookupObject)?.descriptor as? CallableDescriptor
             return if (descriptor?.returnType?.isNothing() == true) 1 else 0
         }

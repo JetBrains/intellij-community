@@ -6,9 +6,10 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -52,7 +53,11 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
 
     object OPERATOR : CallType<KtExpression>(DescriptorKindFilter.FUNCTIONS exclude NonOperatorExclude)
 
-    object CALLABLE_REFERENCE : CallType<KtExpression?>(DescriptorKindFilter.CALLABLES exclude LocalsAndSyntheticExclude)
+    class CallableReference(settings: LanguageVersionSettings) :
+        CallType<KtExpression?>(DescriptorKindFilter.CALLABLES exclude LocalsAndSyntheticExclude(settings)) {
+        override fun equals(other: Any?): Boolean = other is CallableReference
+        override fun hashCode(): Int = javaClass.hashCode()
+    }
 
     object IMPORT_DIRECTIVE : CallType<KtExpression?>(DescriptorKindFilter.ALL)
 
@@ -86,7 +91,7 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
             get() = 0
     }
 
-    private object LocalsAndSyntheticExclude : DescriptorKindExclude() {
+    private class LocalsAndSyntheticExclude(private val settings: LanguageVersionSettings) : DescriptorKindExclude() {
         override fun excludes(descriptor: DeclarationDescriptor) /* currently not supported for locals and synthetic */ =
             descriptor !is CallableMemberDescriptor || descriptor.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
 
@@ -127,9 +132,10 @@ sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallTyp
 
     class INFIX(receiver: KtExpression) : CallTypeAndReceiver<KtExpression, CallType.INFIX>(CallType.INFIX, receiver)
     class OPERATOR(receiver: KtExpression) : CallTypeAndReceiver<KtExpression, CallType.OPERATOR>(CallType.OPERATOR, receiver)
-    class CALLABLE_REFERENCE(receiver: KtExpression?) : CallTypeAndReceiver<KtExpression?, CallType.CALLABLE_REFERENCE>(
-        CallType.CALLABLE_REFERENCE, receiver
-    )
+    class CALLABLE_REFERENCE(
+        receiver: KtExpression?,
+        val settings: LanguageVersionSettings
+    ) : CallTypeAndReceiver<KtExpression?, CallType.CallableReference>(CallType.CallableReference(settings), receiver)
 
     class IMPORT_DIRECTIVE(receiver: KtExpression?) : CallTypeAndReceiver<KtExpression?, CallType.IMPORT_DIRECTIVE>(
         CallType.IMPORT_DIRECTIVE, receiver
@@ -146,7 +152,7 @@ sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallTyp
         fun detect(expression: KtSimpleNameExpression): CallTypeAndReceiver<*, *> {
             val parent = expression.parent
             if (parent is KtCallableReferenceExpression && expression == parent.callableReference) {
-                return CALLABLE_REFERENCE(parent.receiverExpression)
+                return CALLABLE_REFERENCE(parent.receiverExpression, expression.languageVersionSettings)
             }
 
             val receiverExpression = expression.getReceiverExpression()
