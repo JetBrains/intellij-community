@@ -10,6 +10,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
@@ -250,17 +251,22 @@ object StorageDiagnosticData {
 
     otelMeter.batchCallback(
       {
-        val stats = getStorageDataStatistics()
-        uncachedFileAccess.record(stats.pageCacheStats.uncachedFileAccess.toLong())
-        maxRegisteredFiles.record(stats.pageCacheStats.maxRegisteredFiles.toLong())
-        maxCacheSizeInBytes.record(stats.pageCacheStats.maxCacheSizeInBytes)
-        pageHit.record(stats.pageCacheStats.pageHit.toLong())
-        pageFastCacheHit.record(stats.pageCacheStats.pageFastCacheHit.toLong())
-        pageMiss.record(stats.pageCacheStats.pageMiss.toLong())
-        pageLoad.record(stats.pageCacheStats.pageLoad.toLong())
-        disposedBuffers.record(stats.pageCacheStats.disposedBuffers.toLong())
-        capacityInBytes.record(stats.pageCacheStats.capacityInBytes)
-        totalCachedSizeInBytes.record(stats.pageCacheStats.totalCachedSizeInBytes)
+        try {
+          val stats = getStorageDataStatistics()
+          uncachedFileAccess.record(stats.pageCacheStats.uncachedFileAccess.toLong())
+          maxRegisteredFiles.record(stats.pageCacheStats.maxRegisteredFiles.toLong())
+          maxCacheSizeInBytes.record(stats.pageCacheStats.maxCacheSizeInBytes)
+          pageHit.record(stats.pageCacheStats.pageHit.toLong())
+          pageFastCacheHit.record(stats.pageCacheStats.pageFastCacheHit.toLong())
+          pageMiss.record(stats.pageCacheStats.pageMiss.toLong())
+          pageLoad.record(stats.pageCacheStats.pageLoad.toLong())
+          disposedBuffers.record(stats.pageCacheStats.disposedBuffers.toLong())
+          capacityInBytes.record(stats.pageCacheStats.capacityInBytes)
+          totalCachedSizeInBytes.record(stats.pageCacheStats.totalCachedSizeInBytes)
+        }
+        catch (_: AlreadyDisposedException) {
+
+        }
       },
       uncachedFileAccess, maxRegisteredFiles, maxCacheSizeInBytes,
       pageHit, pageFastCacheHit, pageMiss, pageLoad,
