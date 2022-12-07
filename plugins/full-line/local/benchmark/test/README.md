@@ -16,7 +16,10 @@ And IDEA does not offer you to enable Annotation Processing you can do it manual
 - Insert at the end of the `CompilerConfiguration` this code:
 ```xml
 <annotationProcessing>
-      <profile default="true" name="Default" enabled="true" />
+  <profile name="JMH" enabled="true">
+    <processor name="org.openjdk.jmh.generators.BenchmarkProcessor" />
+    <module name="intellij.fullLine.local.benchmark" />
+  </profile>
 </annotationProcessing>
 ```
 - Go back to this module and open any source file
