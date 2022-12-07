@@ -33,8 +33,6 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
@@ -617,15 +615,10 @@ open class IdeStatusBarImpl internal constructor(
   private fun registerCloneTasks() {
     CloneableProjectsService.getInstance()
       .collectCloneableProjects()
-      .asSequence()
-      .map { (_, _, _, cloneableProject): CloneableProjectItem -> cloneableProject }
-      .forEach { (_, cloneTaskInfo, progressIndicator): CloneableProject -> addProgress(progressIndicator, cloneTaskInfo) }
+      .map { it.cloneableProject }
+      .forEach { addProgress(indicator = it.progressIndicator, info = it.cloneTaskInfo) }
     ApplicationManager.getApplication().messageBus.connect(frameHelper)
       .subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
-        override fun onCloneCanceled() {}
-        override fun onCloneFailed() {}
-        override fun onCloneSuccess() {}
-        override fun onCloneRemoved() {}
         override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
           addProgress(progressIndicator, taskInfo)
         }
