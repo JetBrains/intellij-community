@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This handler is called via XML RPC from {@link GitRebaseEditorApp} when Git requests user input
+ * This handler is called by {@link GitRebaseEditorApp} when Git requests user input
  * via <code>GIT_EDITOR</code> or <code>GIT_REBASE_EDITOR</code>.
  */
 public interface GitRebaseEditorAppHandler extends ExternalAppHandler {
