@@ -53,7 +53,7 @@ fun TextArea(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = RectangleShape,
-    colors: TextFieldColors = LocalTextFieldColors.current,
+    colors: TextFieldColors = LocalTextFieldColors.current
 ) {
     val focused = interactionSource.collectIsFocusedAsState()
     colors.provideArea(enabled, focused.value, isError) {
@@ -78,7 +78,7 @@ fun TextArea(
             visualTransformation = visualTransformation,
             onTextLayout = onTextLayout,
             interactionSource = interactionSource,
-            cursorBrush = SolidColor(currentColors.text),
+            cursorBrush = SolidColor(currentColors.text)
         ) {
             TextAreaDecorationBox(
                 focused = focused.value,
@@ -97,7 +97,7 @@ private fun TextAreaDecorationBox(
     shape: Shape,
     innerTextField: @Composable () -> Unit,
     placeholder: @Composable (() -> Unit)? = null,
-    footer: @Composable (() -> Unit)? = null,
+    footer: @Composable (() -> Unit)? = null
 ) {
     Layout(
         modifier = Modifier.areaBackground(shape = shape).areaFocusBorder(focused, shape = shape)
@@ -125,7 +125,8 @@ private fun TextAreaDecorationBox(
         var occupiedSpaceVertically = 0
 
         val constraintsWithoutPadding = incomingConstraints.offset(
-            horizontal = -2 * TextAreaPadding.roundToPx(), vertical = -2 * TextAreaPadding.roundToPx()
+            horizontal = -2 * TextAreaPadding.roundToPx(),
+            vertical = -2 * TextAreaPadding.roundToPx()
         )
 
         val footerConstraints = constraintsWithoutPadding.copy(minWidth = 0, minHeight = 0)
@@ -142,15 +143,26 @@ private fun TextAreaDecorationBox(
         val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
         val width = calculateWidth(
-            footerPlaceable, textFieldPlaceable, placeholderPlaceable, incomingConstraints
+            footerPlaceable,
+            textFieldPlaceable,
+            placeholderPlaceable,
+            incomingConstraints
         ) + 2 * TextAreaPadding.roundToPx()
         val height = calculateHeight(
-            footerPlaceable, textFieldPlaceable, placeholderPlaceable, incomingConstraints
+            footerPlaceable,
+            textFieldPlaceable,
+            placeholderPlaceable,
+            incomingConstraints
         ) + 2 * TextAreaPadding.roundToPx()
 
         layout(width, height) {
             place(
-                height, width, footerPlaceable, textFieldPlaceable, placeholderPlaceable, this@Layout
+                height,
+                width,
+                footerPlaceable,
+                textFieldPlaceable,
+                placeholderPlaceable,
+                this@Layout
             )
         }
     }
@@ -160,10 +172,13 @@ private fun calculateWidth(
     footerPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    constraints: Constraints,
+    constraints: Constraints
 ): Int {
     return maxOf(
-        footerPlaceable?.width ?: 0, textFieldPlaceable.width, placeholderPlaceable?.width ?: 0, constraints.minWidth
+        footerPlaceable?.width ?: 0,
+        textFieldPlaceable.width,
+        placeholderPlaceable?.width ?: 0,
+        constraints.minWidth
     )
 }
 
@@ -171,10 +186,11 @@ private fun calculateHeight(
     footerPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    constraints: Constraints,
+    constraints: Constraints
 ): Int {
     val middleSection = maxOf(
-        textFieldPlaceable.height, placeholderPlaceable?.height ?: 0
+        textFieldPlaceable.height,
+        placeholderPlaceable?.height ?: 0
     )
     val wrappedHeight = (footerPlaceable?.height ?: 0) + middleSection
     return max(wrappedHeight, constraints.minHeight)
@@ -186,13 +202,14 @@ private fun Placeable.PlacementScope.place(
     footerPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    density: Density,
+    density: Density
 ) = with(density) {
     val padding = TextAreaPadding.roundToPx()
 
     // placed center vertically and to the start edge horizontally
     footerPlaceable?.placeRelative(
-        0, height - footerPlaceable.height
+        0,
+        height - footerPlaceable.height
     )
 
     // placed center vertically and after the leading icon horizontally if single line text field

@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -25,7 +26,7 @@ import org.jetbrains.jewel.themes.expui.standalone.theme.LocalIsDarkTheme
 
 class ToolTipColors(
     val isDark: Boolean,
-    override val normalAreaColors: AreaColors,
+    override val normalAreaColors: AreaColors
 ) : AreaProvider {
 
     @Composable
@@ -53,7 +54,7 @@ fun Tooltip(
         offset = DpOffset(0.dp, 32.dp)
     ),
     colors: ToolTipColors = LocalToolTipColors.current,
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     TooltipArea(
         {
@@ -64,13 +65,17 @@ fun Tooltip(
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(16.dp)
                     ) {
                         tooltip()
                     }
                 }
             }
-        }, modifier, delayMillis, tooltipPlacement, content
+        },
+        modifier,
+        delayMillis,
+        tooltipPlacement,
+        content
     )
 }
 
@@ -84,7 +89,7 @@ fun Tooltip(
         offset = DpOffset(0.dp, 32.dp)
     ),
     colors: ToolTipColors = LocalToolTipColors.current,
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     Tooltip({
         Label(tooltip)

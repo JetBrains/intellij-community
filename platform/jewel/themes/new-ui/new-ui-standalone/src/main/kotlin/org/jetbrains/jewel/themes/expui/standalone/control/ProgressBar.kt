@@ -24,7 +24,7 @@ import org.jetbrains.jewel.themes.expui.standalone.theme.LightTheme
 fun ProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
-    colors: ProgressBarColors = LocalProgressBarColors.current,
+    colors: ProgressBarColors = LocalProgressBarColors.current
 ) {
     val currentColors = colors.normalAreaColors
     Canvas(
@@ -53,11 +53,12 @@ fun ProgressBar(
 @Composable
 fun ProgressBar(
     modifier: Modifier = Modifier,
-    colors: ProgressBarColors = LocalProgressBarColors.current,
+    colors: ProgressBarColors = LocalProgressBarColors.current
 ) {
     val transition = rememberInfiniteTransition()
     val currentOffset by transition.animateFloat(
-        0f, 1f,
+        0f,
+        1f,
         infiniteRepeatable(
             animation = keyframes {
                 durationMillis = 1000
@@ -78,14 +79,18 @@ fun ProgressBar(
             tileMode = TileMode.Repeated
         )
         drawLine(
-            brush, Offset(0f, strokeWidth / 2f), Offset(length, strokeWidth / 2f), strokeWidth, cap = StrokeCap.Round
+            brush,
+            Offset(0f, strokeWidth / 2f),
+            Offset(length, strokeWidth / 2f),
+            strokeWidth,
+            cap = StrokeCap.Round
         )
     }
 }
 
 class ProgressBarColors(
     override val normalAreaColors: AreaColors,
-    val indeterminateAreaColors: AreaColors,
+    val indeterminateAreaColors: AreaColors
 ) : AreaProvider
 
 val LocalProgressBarColors = compositionLocalOf {

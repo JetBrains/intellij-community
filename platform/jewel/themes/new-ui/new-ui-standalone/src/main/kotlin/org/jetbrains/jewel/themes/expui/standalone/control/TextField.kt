@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -50,7 +51,7 @@ data class TextFieldColors(
     override val errorAreaColors: AreaColors,
     override val disabledAreaColors: AreaColors,
     override val errorFocusAreaColors: AreaColors,
-    override val focusAreaColors: AreaColors,
+    override val focusAreaColors: AreaColors
 ) : AreaProvider, DisabledAreaProvider, ErrorFocusAreaProvider {
 
     @Composable
@@ -96,7 +97,7 @@ fun TextField(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = RoundedCornerShape(3.dp),
-    colors: TextFieldColors = LocalTextFieldColors.current,
+    colors: TextFieldColors = LocalTextFieldColors.current
 ) {
     val focused = interactionSource.collectIsFocusedAsState()
     colors.provideArea(enabled, focused.value, isError) {
@@ -121,7 +122,7 @@ fun TextField(
             visualTransformation = visualTransformation,
             onTextLayout = onTextLayout,
             interactionSource = interactionSource,
-            cursorBrush = SolidColor(currentColors.text),
+            cursorBrush = SolidColor(currentColors.text)
         ) {
             TextFieldDecorationBox(
                 focused = focused.value,
@@ -129,7 +130,7 @@ fun TextField(
                 innerTextField = it,
                 placeholder = if (value.isEmpty()) placeholder else null,
                 leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
+                trailingIcon = trailingIcon
             )
         }
     }
@@ -153,7 +154,7 @@ fun TextField(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = RoundedCornerShape(3.dp),
-    colors: TextFieldColors = LocalTextFieldColors.current,
+    colors: TextFieldColors = LocalTextFieldColors.current
 ) {
     val focused = interactionSource.collectIsFocusedAsState()
     colors.provideArea(enabled, focused.value, isError) {
@@ -178,7 +179,7 @@ fun TextField(
             visualTransformation = visualTransformation,
             onTextLayout = onTextLayout,
             interactionSource = interactionSource,
-            cursorBrush = SolidColor(currentColors.text),
+            cursorBrush = SolidColor(currentColors.text)
         ) {
             TextFieldDecorationBox(
                 focused = focused.value,
@@ -186,7 +187,7 @@ fun TextField(
                 innerTextField = it,
                 placeholder = if (value.text.isEmpty()) placeholder else null,
                 leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
+                trailingIcon = trailingIcon
             )
         }
     }
@@ -199,7 +200,7 @@ private fun TextFieldDecorationBox(
     innerTextField: @Composable () -> Unit,
     placeholder: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     Layout(
         modifier = Modifier.areaBackground(shape = shape).areaFocusBorder(focused, shape = shape)
@@ -255,10 +256,18 @@ private fun TextFieldDecorationBox(
         val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
         val width = calculateWidth(
-            leadingPlaceable, trailingPlaceable, textFieldPlaceable, placeholderPlaceable, incomingConstraints
+            leadingPlaceable,
+            trailingPlaceable,
+            textFieldPlaceable,
+            placeholderPlaceable,
+            incomingConstraints
         ) + 2 * HorizontalTextFieldPadding.roundToPx()
         val height = calculateHeight(
-            leadingPlaceable, trailingPlaceable, textFieldPlaceable, placeholderPlaceable, incomingConstraints
+            leadingPlaceable,
+            trailingPlaceable,
+            textFieldPlaceable,
+            placeholderPlaceable,
+            incomingConstraints
         ) + 2 * VerticalTextFieldPadding.roundToPx()
 
         layout(width, height) {
@@ -280,10 +289,11 @@ private fun calculateWidth(
     trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    constraints: Constraints,
+    constraints: Constraints
 ): Int {
     val middleSection = maxOf(
-        textFieldPlaceable.width, placeholderPlaceable?.width ?: 0
+        textFieldPlaceable.width,
+        placeholderPlaceable?.width ?: 0
     )
     val wrappedWidth = (leadingPlaceable?.width ?: 0) + middleSection + (trailingPlaceable?.width ?: 0)
     return max(wrappedWidth, constraints.minWidth)
@@ -294,7 +304,7 @@ private fun calculateHeight(
     trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    constraints: Constraints,
+    constraints: Constraints
 ): Int {
     return maxOf(
         leadingPlaceable?.height ?: 0,
@@ -312,13 +322,14 @@ private fun Placeable.PlacementScope.place(
     trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    density: Density,
+    density: Density
 ) = with(density) {
     val horizontalPadding = HorizontalTextFieldPadding.roundToPx()
 
     // placed center vertically and to the start edge horizontally
     leadingPlaceable?.placeRelative(
-        horizontalPadding, Alignment.CenterVertically.align(leadingPlaceable.height, height)
+        horizontalPadding,
+        Alignment.CenterVertically.align(leadingPlaceable.height, height)
     )
 
     // placed center vertically and to the end edge horizontally
@@ -337,7 +348,8 @@ private fun Placeable.PlacementScope.place(
     // placed similar to the input text above
     placeholderPlaceable?.let {
         it.placeRelative(
-            horizontalPadding + (leadingPlaceable?.width ?: 0), Alignment.CenterVertically.align(it.height, height)
+            horizontalPadding + (leadingPlaceable?.width ?: 0),
+            Alignment.CenterVertically.align(it.height, height)
         )
     }
 }

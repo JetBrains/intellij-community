@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.Indication
@@ -39,7 +40,7 @@ class ToolBarActionButtonColors(
     override val disabledAreaColors: AreaColors,
     override val selectionAreaColors: AreaColors,
     override val inactiveAreaColors: AreaColors,
-    override val inactiveSelectionAreaColors: AreaColors,
+    override val inactiveSelectionAreaColors: AreaColors
 ) : AreaProvider, HoverAreaProvider, PressedAreaProvider, DisabledAreaProvider, InactiveSelectionAreaProvider {
 
     @Composable
@@ -79,7 +80,7 @@ fun ToolBarActionButton(
     indication: Indication? = HoverOrPressedIndication(shape),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: ToolBarActionButtonColors = LocalToolBarActionButtonColors.current,
-    content: @Composable BoxScope.() -> Unit,
+    content: @Composable BoxScope.() -> Unit
 ) {
     colors.provideArea(enabled, selected) {
         Box(

@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.Canvas
@@ -35,7 +36,7 @@ class RadioButtonColors(
     override val normalAreaColors: AreaColors,
     override val selectionAreaColors: AreaColors,
     override val focusAreaColors: AreaColors,
-    override val disabledAreaColors: AreaColors,
+    override val disabledAreaColors: AreaColors
 ) : AreaProvider, SelectionAreaProvider, FocusAreaProvider, DisabledAreaProvider {
 
     @Composable
@@ -69,12 +70,13 @@ fun RadioButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    colors: RadioButtonColors = LocalRadioButtonColors.current,
+    colors: RadioButtonColors = LocalRadioButtonColors.current
 ) {
     val isFocused = remember { mutableStateOf(false) }
     colors.provideArea(enabled, isFocused.value, selected) {
         RadioButtonImpl(
-            isFocused.value, selected,
+            isFocused.value,
+            selected,
             modifier = modifier.onFocusEvent {
                 isFocused.value = it.isFocused
             }.selectable(
@@ -97,7 +99,7 @@ fun RadioButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: RadioButtonColors = LocalRadioButtonColors.current,
-    content: @Composable RowScope.() -> Unit = {},
+    content: @Composable RowScope.() -> Unit = {}
 ) {
     val isFocused = remember { mutableStateOf(false) }
     colors.provideArea(enabled, isFocused.value, selected) {
@@ -112,7 +114,8 @@ fun RadioButton(
                 indication = null,
                 role = Role.RadioButton
             ),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             RadioButtonImpl(isFocused.value, selected)
             content()
@@ -124,28 +127,28 @@ fun RadioButton(
 private fun RadioButtonImpl(
     isFocused: Boolean,
     selected: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val colors = LocalAreaColors.current
     Canvas(modifier.wrapContentSize(Alignment.Center).requiredSize(15.dp)) {
         if (isFocused) {
             drawCircle(
                 colors.focusColor,
-                radius = 9.5.dp.toPx(),
+                radius = 9.5.dp.toPx()
             )
         }
         drawCircle(
             colors.startBorderColor,
-            radius = 7.5.dp.toPx(),
+            radius = 7.5.dp.toPx()
         )
         drawCircle(
             colors.startBackground,
-            radius = 6.5.dp.toPx(),
+            radius = 6.5.dp.toPx()
         )
         if (selected) {
             drawCircle(
                 colors.foreground,
-                radius = 2.5.dp.toPx(),
+                radius = 2.5.dp.toPx()
             )
         }
     }

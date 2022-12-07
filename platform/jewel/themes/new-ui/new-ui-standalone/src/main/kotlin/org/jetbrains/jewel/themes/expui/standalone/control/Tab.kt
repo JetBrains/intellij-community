@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.clickable
@@ -48,7 +49,7 @@ class TabColors(
     override val hoverAreaColors: AreaColors,
     override val pressedAreaColors: AreaColors,
     override val inactiveAreaColors: AreaColors,
-    override val inactiveSelectionAreaColors: AreaColors,
+    override val inactiveSelectionAreaColors: AreaColors
 ) : AreaProvider, HoverAreaProvider, PressedAreaProvider, InactiveSelectionAreaProvider {
 
     @Composable
@@ -87,7 +88,7 @@ fun Tab(
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: TabColors = LocalTabColors.current,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     colors.provideArea(selected) {
         val currentColors = LocalAreaColors.current
@@ -110,7 +111,7 @@ fun Tab(
                 onClick = onSelected,
                 role = Role.Tab,
                 interactionSource = interactionSource,
-                indication = HoverOrPressedIndication(RectangleShape),
+                indication = HoverOrPressedIndication(RectangleShape)
             ).padding(horizontal = 12.dp)
         ) {
             Row(modifier = Modifier.align(Alignment.Center), content = content)
@@ -126,7 +127,7 @@ fun CloseableTab(
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: TabColors = LocalCloseableTabColors.current,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     colors.provideArea(selected) {
         val currentColors = LocalAreaColors.current
@@ -150,7 +151,7 @@ fun CloseableTab(
                 onClick = onSelected,
                 role = Role.Tab,
                 interactionSource = interactionSource,
-                indication = HoverOrPressedIndication(RectangleShape),
+                indication = HoverOrPressedIndication(RectangleShape)
             ).onHover {
                 hover = it
             }.padding(horizontal = 12.dp)
@@ -171,7 +172,7 @@ fun CloseableTab(
 private fun CloseButton(
     shown: Boolean,
     onClosed: () -> Unit,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     var hover by remember { mutableStateOf(false) }
     Box(
@@ -182,14 +183,15 @@ private fun CloseButton(
             onClick = onClosed,
             role = Role.Button,
             interactionSource = interactionSource,
-            indication = null,
+            indication = null
         ).onHover {
             hover = it
         }
     ) {
         if (shown) {
             Icon(
-                if (hover) "icons/closeSmallHovered.svg" else "icons/closeSmall.svg", contentDescription = "Close"
+                if (hover) "icons/closeSmallHovered.svg" else "icons/closeSmall.svg",
+                contentDescription = "Close"
             )
         }
     }

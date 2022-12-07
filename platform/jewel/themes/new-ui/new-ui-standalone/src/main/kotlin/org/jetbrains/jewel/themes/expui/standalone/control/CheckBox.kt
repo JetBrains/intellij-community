@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.Canvas
@@ -47,7 +48,7 @@ class CheckBoxColors(
     override val normalAreaColors: AreaColors,
     override val selectionAreaColors: AreaColors,
     override val focusAreaColors: AreaColors,
-    override val disabledAreaColors: AreaColors,
+    override val disabledAreaColors: AreaColors
 ) : AreaProvider, DisabledAreaProvider, FocusAreaProvider, SelectionAreaProvider {
 
     @Composable
@@ -81,7 +82,7 @@ fun Checkbox(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    colors: CheckBoxColors = LocalCheckBoxColors.current,
+    colors: CheckBoxColors = LocalCheckBoxColors.current
 ) {
     TriStateCheckbox(
         state = ToggleableState(checked),
@@ -101,7 +102,7 @@ fun Checkbox(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: CheckBoxColors = LocalCheckBoxColors.current,
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     TriStateCheckbox(
         state = ToggleableState(checked),
@@ -121,12 +122,13 @@ fun TriStateCheckbox(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    colors: CheckBoxColors = LocalCheckBoxColors.current,
+    colors: CheckBoxColors = LocalCheckBoxColors.current
 ) {
     val isFocused = remember { mutableStateOf(false) }
     colors.provideArea(enabled, isFocused.value, state != ToggleableState.Off) {
         CheckboxImpl(
-            isFocused = isFocused.value, value = state,
+            isFocused = isFocused.value,
+            value = state,
             modifier = Modifier.onFocusEvent {
                 isFocused.value = it.isFocused
             }.triStateToggleable(
@@ -149,7 +151,7 @@ fun TriStateCheckbox(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: CheckBoxColors = LocalCheckBoxColors.current,
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     val isFocused = remember { mutableStateOf(false) }
     colors.provideArea(enabled, isFocused.value, state != ToggleableState.Off) {
@@ -164,7 +166,8 @@ fun TriStateCheckbox(
                 interactionSource = interactionSource,
                 indication = null
             ),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             CheckboxImpl(isFocused = isFocused.value, value = state)
             content()
@@ -174,7 +177,11 @@ fun TriStateCheckbox(
 
 @Suppress("MagicNumber")
 private fun Checkmark() = ImageVector.Builder(
-    name = "Checkmark", defaultWidth = 14.0.dp, defaultHeight = 14.0.dp, viewportWidth = 14.0f, viewportHeight = 14.0f
+    name = "Checkmark",
+    defaultWidth = 14.0.dp,
+    defaultHeight = 14.0.dp,
+    viewportWidth = 14.0f,
+    viewportHeight = 14.0f
 ).apply {
     path(
         fill = SolidColor(Color(0xFFffffff)),
@@ -234,7 +241,7 @@ private fun CheckmarkIndeterminate() = ImageVector.Builder(
 private fun CheckboxImpl(
     isFocused: Boolean,
     value: ToggleableState,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val icon = when (value) {
         ToggleableState.On -> rememberVectorPainter(Checkmark())

@@ -31,7 +31,7 @@ data class AreaColors(
     val endBackground: Color,
     val startBorderColor: Color,
     val endBorderColor: Color,
-    val focusColor: Color,
+    val focusColor: Color
 )
 
 @Composable
@@ -51,7 +51,7 @@ fun Modifier.background(areaColors: AreaColors, shape: Shape = RectangleShape): 
 fun Modifier.areaBorder(
     areaColors: AreaColors = LocalAreaColors.current,
     width: Dp = 1.dp,
-    shape: Shape = RectangleShape,
+    shape: Shape = RectangleShape
 ): Modifier = border(areaColors, width, shape)
 
 fun Modifier.border(areaColors: AreaColors, width: Dp = 1.dp, shape: Shape = RectangleShape): Modifier {
@@ -69,14 +69,14 @@ fun Modifier.areaFocusBorder(
     focused: Boolean,
     areaColors: AreaColors = LocalAreaColors.current,
     width: Dp = 2.dp,
-    shape: Shape = RectangleShape,
+    shape: Shape = RectangleShape
 ): Modifier = focusBorder(focused, areaColors, width, shape)
 
 fun Modifier.focusBorder(
     focused: Boolean,
     areaColors: AreaColors,
     width: Dp = 2.dp,
-    shape: Shape = RectangleShape,
+    shape: Shape = RectangleShape
 ): Modifier {
     if (!focused) return this
     if (areaColors.focusColor.isUnspecified) {

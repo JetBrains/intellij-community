@@ -55,17 +55,26 @@ fun Modifier.outerBorder(width: Dp, brush: Brush, shape: Shape): Modifier = comp
                     val halfStroke = strokeWidthPx / 2
                     val topLeft = Offset(-halfStroke, -halfStroke)
                     val borderSize = Size(
-                        size.width + strokeWidthPx, size.height + strokeWidthPx
+                        size.width + strokeWidthPx,
+                        size.height + strokeWidthPx
                     )
                     when (val outline = shape.createOutline(size, layoutDirection, this)) {
                         is Outline.Generic -> TODO("Not support for generic outline")
 
                         is Outline.Rounded -> drawRoundRectBorder(
-                            borderCacheRef, brush, outline, topLeft, borderSize, strokeWidthPx
+                            borderCacheRef,
+                            brush,
+                            outline,
+                            topLeft,
+                            borderSize,
+                            strokeWidthPx
                         )
 
                         is Outline.Rectangle -> drawRectBorder(
-                            brush, topLeft, borderSize, strokeWidthPx
+                            brush,
+                            topLeft,
+                            borderSize,
+                            strokeWidthPx
                         )
                     }
                 }
@@ -91,15 +100,14 @@ private class BorderCache(
     private var imageBitmap: ImageBitmap? = null,
     private var canvas: androidx.compose.ui.graphics.Canvas? = null,
     private var canvasDrawScope: CanvasDrawScope? = null,
-    private var borderPath: Path? = null,
+    private var borderPath: Path? = null
 ) {
 
     inline fun CacheDrawScope.drawBorderCache(
         borderSize: IntSize,
         config: ImageBitmapConfig,
-        block: DrawScope.() -> Unit,
+        block: DrawScope.() -> Unit
     ): ImageBitmap {
-
         var targetImageBitmap = imageBitmap
         var targetCanvas = canvas
         // If we previously had allocated a full Argb888 ImageBitmap but are only requiring
@@ -107,12 +115,15 @@ private class BorderCache(
         val compatibleConfig =
             targetImageBitmap?.config == ImageBitmapConfig.Argb8888 || config == targetImageBitmap?.config
         @Suppress("ComplexCondition")
-        if (targetImageBitmap == null || targetCanvas == null
-            || size.width > targetImageBitmap.width
-            || size.height > targetImageBitmap.height
-            || !compatibleConfig) {
+        if (targetImageBitmap == null || targetCanvas == null ||
+            size.width > targetImageBitmap.width ||
+            size.height > targetImageBitmap.height ||
+            !compatibleConfig
+        ) {
             targetImageBitmap = ImageBitmap(
-                borderSize.width, borderSize.height, config = config
+                borderSize.width,
+                borderSize.height,
+                config = config
             ).also {
                 imageBitmap = it
             }
@@ -124,12 +135,17 @@ private class BorderCache(
         val targetDrawScope = canvasDrawScope ?: CanvasDrawScope().also { canvasDrawScope = it }
         val drawSize = borderSize.toSize()
         targetDrawScope.draw(
-            this, layoutDirection, targetCanvas, drawSize
+            this,
+            layoutDirection,
+            targetCanvas,
+            drawSize
         ) {
             // Clear the previously rendered portion within this ImageBitmap as we could
             // be re-using it
             drawRect(
-                color = Color.Black, size = drawSize, blendMode = BlendMode.Clear
+                color = Color.Black,
+                size = drawSize,
+                blendMode = BlendMode.Clear
             )
             block()
         }
@@ -158,7 +174,7 @@ private fun CacheDrawScope.drawRoundRectBorder(
     outline: Outline.Rounded,
     topLeft: Offset,
     borderSize: Size,
-    strokeWidth: Float,
+    strokeWidth: Float
 ): DrawResult {
     return if (outline.roundRect.isSimple) {
         val cornerRadius = outline.roundRect.topLeftCornerRadius
@@ -195,7 +211,7 @@ private fun CacheDrawScope.drawRectBorder(
     brush: Brush,
     topLeft: Offset,
     borderSize: Size,
-    strokeWidthPx: Float,
+    strokeWidthPx: Float
 ): DrawResult {
     // If we are drawing a rectangular stroke, just offset it by half the stroke
     // width as strokes are always drawn centered on their geometry.
@@ -217,7 +233,7 @@ private fun CacheDrawScope.drawRectBorder(
 private fun createRoundRectPath(
     targetPath: Path,
     roundedRect: RoundRect,
-    strokeWidth: Float,
+    strokeWidth: Float
 ): Path = targetPath.apply {
     reset()
     addRoundRect(roundedRect)
@@ -229,7 +245,7 @@ private fun createRoundRectPath(
 
 private fun createInsetRoundedRect(
     widthPx: Float,
-    roundedRect: RoundRect,
+    roundedRect: RoundRect
 ) = RoundRect(
     left = -widthPx,
     top = -widthPx,

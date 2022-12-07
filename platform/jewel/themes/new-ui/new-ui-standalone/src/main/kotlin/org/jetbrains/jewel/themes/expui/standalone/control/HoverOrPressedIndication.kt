@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.Indication
@@ -22,7 +23,7 @@ class HoverOrPressedIndication(private val shape: Shape) : Indication {
         private val isHover: State<Boolean>,
         private val isPressed: State<Boolean>,
         private val hoverColor: Color,
-        private val pressedColor: Color,
+        private val pressedColor: Color
     ) : androidx.compose.foundation.IndicationInstance {
 
         override fun ContentDrawScope.drawIndication() {
@@ -54,7 +55,11 @@ class HoverOrPressedIndication(private val shape: Shape) : Indication {
 
         return remember(hoverColors, pressedColors, interactionSource) {
             IndicationInstance(
-                shape, isHover, isPressed, hoverColors.startBackground, pressedColors.startBackground
+                shape,
+                isHover,
+                isPressed,
+                hoverColors.startBackground,
+                pressedColors.startBackground
             )
         }
     }

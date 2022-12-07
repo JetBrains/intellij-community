@@ -45,7 +45,7 @@ fun Modifier.paintWithMarker(
     contentScale: ContentScale = ContentScale.Inside,
     alpha: Float = DefaultAlpha,
     colorFilter: ColorFilter? = null,
-    markerColor: Color = Color.Unspecified,
+    markerColor: Color = Color.Unspecified
 ): Modifier {
     return if (markerColor.isSpecified) {
         this.then(
@@ -82,7 +82,7 @@ private class PainterWithMarkerModifier(
     val alpha: Float = DefaultAlpha,
     val colorFilter: ColorFilter? = null,
     val markerColor: Color = Color.Unspecified,
-    inspectorInfo: InspectorInfo.() -> Unit,
+    inspectorInfo: InspectorInfo.() -> Unit
 ) : LayoutModifier, DrawModifier, InspectorValueInfo(inspectorInfo) {
 
     /**
@@ -95,7 +95,7 @@ private class PainterWithMarkerModifier(
 
     override fun MeasureScope.measure(
         measurable: Measurable,
-        constraints: Constraints,
+        constraints: Constraints
     ): MeasureResult {
         val placeable = measurable.measure(modifyConstraints(constraints))
         return layout(placeable.width, placeable.height) {
@@ -105,7 +105,7 @@ private class PainterWithMarkerModifier(
 
     override fun IntrinsicMeasureScope.minIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int,
+        height: Int
     ): Int {
         return if (useIntrinsicSize) {
             val constraints = modifyConstraints(Constraints(maxHeight = height))
@@ -118,7 +118,7 @@ private class PainterWithMarkerModifier(
 
     override fun IntrinsicMeasureScope.maxIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int,
+        height: Int
     ): Int {
         return if (useIntrinsicSize) {
             val constraints = modifyConstraints(Constraints(maxHeight = height))
@@ -131,7 +131,7 @@ private class PainterWithMarkerModifier(
 
     override fun IntrinsicMeasureScope.minIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int,
+        width: Int
     ): Int {
         return if (useIntrinsicSize) {
             val constraints = modifyConstraints(Constraints(maxWidth = width))
@@ -144,7 +144,7 @@ private class PainterWithMarkerModifier(
 
     override fun IntrinsicMeasureScope.maxIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int,
+        width: Int
     ): Int {
         return if (useIntrinsicSize) {
             val constraints = modifyConstraints(Constraints(maxWidth = width))
@@ -190,7 +190,8 @@ private class PainterWithMarkerModifier(
             // to determine how to position the drawing contents of the Painter within
             // the provided bounds
             return constraints.copy(
-                minWidth = constraints.maxWidth, minHeight = constraints.maxHeight
+                minWidth = constraints.maxWidth,
+                minHeight = constraints.maxHeight
             )
         }
 
@@ -285,12 +286,15 @@ private class PainterWithMarkerModifier(
                             draw(size = scaledSize, alpha = alpha, colorFilter = colorFilter)
                         }
                         drawCircle(
-                            Color.White, 4.5.dp.toPx(), markerOffset, blendMode = BlendMode.Clear
+                            Color.White,
+                            4.5.dp.toPx(),
+                            markerOffset,
+                            blendMode = BlendMode.Clear
                         )
                         drawCircle(
                             markerColor,
                             3.5.dp.toPx(),
-                            markerOffset,
+                            markerOffset
                         )
                     }
                 }
@@ -320,12 +324,12 @@ private class PainterWithMarkerModifier(
 
     override fun equals(other: Any?): Boolean {
         val otherModifier = other as? PainterWithMarkerModifier ?: return false
-        return painter == otherModifier.painter
-            && sizeToIntrinsics == otherModifier.sizeToIntrinsics
-            && alignment == otherModifier.alignment
-            && contentScale == otherModifier.contentScale
-            && alpha == otherModifier.alpha
-            && colorFilter == otherModifier.colorFilter
+        return painter == otherModifier.painter &&
+            sizeToIntrinsics == otherModifier.sizeToIntrinsics &&
+            alignment == otherModifier.alignment &&
+            contentScale == otherModifier.contentScale &&
+            alpha == otherModifier.alpha &&
+            colorFilter == otherModifier.colorFilter
     }
 
     override fun toString(): String =

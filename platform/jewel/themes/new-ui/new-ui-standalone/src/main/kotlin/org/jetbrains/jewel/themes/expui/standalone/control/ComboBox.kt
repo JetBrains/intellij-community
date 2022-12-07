@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.clickable
@@ -40,7 +41,7 @@ class ComboBoxColors(
     override val normalAreaColors: AreaColors,
     override val focusAreaColors: AreaColors,
     override val disabledAreaColors: AreaColors,
-    val dropdownMenuColors: DropdownMenuColors,
+    val dropdownMenuColors: DropdownMenuColors
 ) : AreaProvider, FocusAreaProvider, DisabledAreaProvider {
 
     @Composable
@@ -76,7 +77,7 @@ fun <T> ComboBox(
     enabled: Boolean = true,
     valueRender: @Composable (T) -> Unit = { Label("$it") },
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    colors: ComboBoxColors = LocalComboBoxColors.current,
+    colors: ComboBoxColors = LocalComboBoxColors.current
 ) {
     val isFocused = remember { mutableStateOf(false) }
     var menuOpened by remember { mutableStateOf(false) }
@@ -105,9 +106,13 @@ fun <T> ComboBox(
                 }.onFocusEvent {
                     isFocused.value = it.isFocused
                 }.clickable(
-                    interactionSource = interactionSource, indication = null, enabled = enabled, onClick = {
-                    menuOpened = true
-                }, role = Role.Button
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onClick = {
+                        menuOpened = true
+                    },
+                    role = Role.Button
                 ).padding(6.dp, 3.dp).then(modifier),
                 contentAlignment = Alignment.CenterStart
             ) {

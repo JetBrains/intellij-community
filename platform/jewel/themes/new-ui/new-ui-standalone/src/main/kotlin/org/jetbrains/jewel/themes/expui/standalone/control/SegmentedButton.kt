@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.focusable
@@ -52,7 +53,7 @@ class SegmentedButtonColors(
     val itemHoverAreaColors: AreaColors,
     val itemPressedAreaColors: AreaColors,
     val itemSelectionAreaColors: AreaColors,
-    val itemSelectedFocusAreaColors: AreaColors,
+    val itemSelectedFocusAreaColors: AreaColors
 ) : AreaProvider, FocusAreaProvider {
 
     @Composable
@@ -71,7 +72,7 @@ class SegmentedButtonColors(
         focused: Boolean,
         hover: Boolean,
         pressed: Boolean,
-        content: @Composable () -> Unit,
+        content: @Composable () -> Unit
     ) {
         val currentColors = when {
             selected -> if (focused) itemSelectedFocusAreaColors else itemSelectionAreaColors
@@ -104,7 +105,7 @@ fun SegmentedButton(
     onValueChange: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
     colors: SegmentedButtonColors = LocalSegmentedButtonColors.current,
-    valueRender: @Composable BoxScope.(Int) -> Unit,
+    valueRender: @Composable BoxScope.(Int) -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused = interactionSource.collectIsFocusedAsState()

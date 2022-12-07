@@ -64,12 +64,14 @@ fun Icon(
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     colorFilter: ColorFilter? = null,
-    markerColor: Color = Color.Unspecified,
+    markerColor: Color = Color.Unspecified
 ) {
     Icon(
-        themedSvgResource(resource), contentDescription, modifier,
+        themedSvgResource(resource),
+        contentDescription,
+        modifier,
         colorFilter = colorFilter,
-        markerColor = markerColor,
+        markerColor = markerColor
     )
 }
 
@@ -79,7 +81,7 @@ fun Icon(
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     colorFilter: ColorFilter? = null,
-    markerColor: Color = Color.Unspecified,
+    markerColor: Color = Color.Unspecified
 ) {
     val painter = remember(bitmap) { BitmapPainter(bitmap) }
     Icon(
@@ -87,7 +89,7 @@ fun Icon(
         contentDescription = contentDescription,
         modifier = modifier,
         colorFilter = colorFilter,
-        markerColor = markerColor,
+        markerColor = markerColor
     )
 }
 
@@ -97,14 +99,14 @@ fun Icon(
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     colorFilter: ColorFilter? = null,
-    markerColor: Color = Color.Unspecified,
+    markerColor: Color = Color.Unspecified
 ) {
     Icon(
         painter = rememberVectorPainter(imageVector),
         contentDescription = contentDescription,
         modifier = modifier,
         colorFilter = colorFilter,
-        markerColor = markerColor,
+        markerColor = markerColor
     )
 }
 
@@ -114,7 +116,7 @@ fun Icon(
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     colorFilter: ColorFilter? = null,
-    markerColor: Color = Color.Unspecified,
+    markerColor: Color = Color.Unspecified
 ) {
     val semantics = if (contentDescription != null) {
         Modifier.semantics {

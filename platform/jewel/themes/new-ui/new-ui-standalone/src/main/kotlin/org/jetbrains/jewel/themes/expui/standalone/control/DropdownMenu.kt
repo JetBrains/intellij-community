@@ -81,7 +81,7 @@ class DropdownMenuColors(
     override val normalAreaColors: AreaColors,
     override val hoverAreaColors: AreaColors,
     override val pressedAreaColors: AreaColors,
-    override val focusAreaColors: AreaColors,
+    override val focusAreaColors: AreaColors
 ) : AreaProvider, HoverAreaProvider, PressedAreaProvider, FocusAreaProvider {
 
     @Composable
@@ -109,7 +109,7 @@ fun DropdownMenu(
     modifier: Modifier = Modifier,
     offset: DpOffset = DpOffset(0.dp, 0.dp),
     colors: DropdownMenuColors = LocalDropdownMenuColors.current,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     val expandedStates = remember { MutableTransitionState(false) }
     expandedStates.targetState = expanded
@@ -122,7 +122,8 @@ fun DropdownMenu(
         // avoid content being cut off if the [DropdownMenu] contains too many items.
         // See: https://github.com/JetBrains/compose-jb/issues/1388
         val popupPositionProvider = DesktopDropdownMenuPositionProvider(
-            offset, density
+            offset,
+            density
         ) { parentBounds, menuBounds ->
             transformOriginState.value = calculateTransformOrigin(parentBounds, menuBounds)
         }
@@ -135,13 +136,15 @@ fun DropdownMenu(
             popupPositionProvider = popupPositionProvider,
             onKeyEvent = {
                 handlePopupOnKeyEvent(it, onDismissRequest, focusManager!!, inputModeManager!!)
-            },
+            }
         ) {
             focusManager = LocalFocusManager.current
             inputModeManager = LocalInputModeManager.current
 
             DropdownMenuContent(
-                modifier = modifier, colors = colors, content = content
+                modifier = modifier,
+                colors = colors,
+                content = content
             )
         }
     }
@@ -155,7 +158,7 @@ fun DropdownMenuItem(
     shape: Shape = RectangleShape,
     contentPadding: PaddingValues = PaddingValues(horizontal = 8.dp),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     DropdownMenuItemContent(
         onClick = onClick,
@@ -173,7 +176,7 @@ private fun handlePopupOnKeyEvent(
     keyEvent: androidx.compose.ui.input.key.KeyEvent,
     onDismissRequest: () -> Unit,
     focusManager: FocusManager,
-    inputModeManager: InputModeManager,
+    inputModeManager: InputModeManager
 ): Boolean {
     return if (keyEvent.type == KeyEventType.KeyDown && keyEvent.awtEventOrNull?.keyCode == KeyEvent.VK_ESCAPE) {
         onDismissRequest()
@@ -206,7 +209,7 @@ fun CursorDropdownMenu(
     focusable: Boolean = true,
     modifier: Modifier = Modifier,
     colors: DropdownMenuColors = LocalDropdownMenuColors.current,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     val expandedStates = remember { MutableTransitionState(false) }
     expandedStates.targetState = expanded
@@ -221,13 +224,15 @@ fun CursorDropdownMenu(
             popupPositionProvider = rememberCursorPositionProvider(),
             onKeyEvent = {
                 handlePopupOnKeyEvent(it, onDismissRequest, focusManager!!, inputModeManager!!)
-            },
+            }
         ) {
             focusManager = LocalFocusManager.current
             inputModeManager = LocalInputModeManager.current
 
             DropdownMenuContent(
-                modifier = modifier, colors = colors, content = content
+                modifier = modifier,
+                colors = colors,
+                content = content
             )
         }
     }
@@ -237,14 +242,14 @@ fun CursorDropdownMenu(
 internal data class DesktopDropdownMenuPositionProvider(
     val contentOffset: DpOffset,
     val density: Density,
-    val onPositionCalculated: (IntRect, IntRect) -> Unit = { _, _ -> },
+    val onPositionCalculated: (IntRect, IntRect) -> Unit = { _, _ -> }
 ) : PopupPositionProvider {
 
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
         layoutDirection: LayoutDirection,
-        popupContentSize: IntSize,
+        popupContentSize: IntSize
     ): IntOffset {
         // The min margin above and below the menu, relative to the screen.
         val verticalMargin = with(density) { MenuVerticalMargin.roundToPx() }
@@ -289,7 +294,8 @@ internal data class DesktopDropdownMenuPositionProvider(
         y = y.coerceAtLeast(0)
 
         onPositionCalculated(
-            anchorBounds, IntRect(x, y, x + popupContentSize.width, y + popupContentSize.height)
+            anchorBounds,
+            IntRect(x, y, x + popupContentSize.width, y + popupContentSize.height)
         )
         return IntOffset(x, y)
     }
@@ -299,7 +305,7 @@ internal data class DesktopDropdownMenuPositionProvider(
 internal fun DropdownMenuContent(
     modifier: Modifier = Modifier,
     colors: DropdownMenuColors = LocalDropdownMenuColors.current,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     colors.provideArea {
         val scrollState = rememberScrollState()
@@ -311,7 +317,8 @@ internal fun DropdownMenuContent(
                 .width(IntrinsicSize.Max)
         ) {
             Column(
-                modifier = Modifier.verticalScroll(scrollState), content = content
+                modifier = Modifier.verticalScroll(scrollState),
+                content = content
             )
             Box(modifier = Modifier.matchParentSize()) {
                 VerticalScrollbar(
@@ -331,7 +338,7 @@ internal fun DropdownMenuItemContent(
     shape: Shape = RectangleShape,
     contentPadding: PaddingValues = PaddingValues(horizontal = 8.dp),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     val focused = remember { mutableStateOf(false) }
     val focusedColors = LocalFocusAreaColors.current
@@ -359,7 +366,7 @@ internal fun DropdownMenuItemContent(
 
 internal fun calculateTransformOrigin(
     parentBounds: IntRect,
-    menuBounds: IntRect,
+    menuBounds: IntRect
 ): TransformOrigin {
     val pivotX = when {
         menuBounds.left >= parentBounds.right -> 0f

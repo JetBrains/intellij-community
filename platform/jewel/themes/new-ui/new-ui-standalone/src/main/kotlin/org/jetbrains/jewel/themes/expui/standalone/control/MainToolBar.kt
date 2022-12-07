@@ -44,7 +44,7 @@ data class MainToolBarColors(
     val isDark: Boolean,
     override val normalAreaColors: AreaColors,
     override val inactiveAreaColors: AreaColors,
-    val actionButtonColors: ActionButtonColors,
+    val actionButtonColors: ActionButtonColors
 ) : AreaProvider, InactiveAreaProvider {
 
     @Composable
@@ -68,7 +68,7 @@ interface MainToolBarScope {
     @Stable
     fun Modifier.mainToolBarItem(
         alignment: Alignment.Horizontal,
-        draggableArea: Boolean = false,
+        draggableArea: Boolean = false
     ): Modifier
 }
 
@@ -92,7 +92,7 @@ internal object MainToolBarScopeInstance : MainToolBarScope {
 internal class MainToolBarChildData(
     var horizontalAlignment: Alignment.Horizontal,
     var draggableArea: Boolean,
-    inspectorInfo: InspectorInfo.() -> Unit = NoInspectorInfo,
+    inspectorInfo: InspectorInfo.() -> Unit = NoInspectorInfo
 ) : ParentDataModifier, InspectorValueInfo(inspectorInfo) {
 
     override fun Density.modifyParentData(parentData: Any?): Any = this@MainToolBarChildData
@@ -108,7 +108,8 @@ class MainToolBarMeasurePolicy(
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
         if (measurables.isEmpty()) {
             return layout(
-                constraints.minWidth, constraints.minHeight
+                constraints.minWidth,
+                constraints.minHeight
             ) {
                 customWindowDecorationSupport.setCustomDecorationEnabled(window, true)
                 customWindowDecorationSupport.setCustomDecorationTitleBarHeight(
@@ -196,7 +197,10 @@ class MainToolBarMeasurePolicy(
 
 internal fun Density.PxToDpRectangle(x: Int, y: Int, width: Int, height: Int): Rectangle {
     return Rectangle(
-        x.toDp().value.toInt(), y.toDp().value.toInt(), width.toDp().value.toInt(), height.toDp().value.toInt()
+        x.toDp().value.toInt(),
+        y.toDp().value.toInt(),
+        width.toDp().value.toInt(),
+        height.toDp().value.toInt()
     )
 }
 
@@ -210,7 +214,7 @@ fun rememberMainToolBarMeasurePolicy(
 fun FrameWindowScope.BasicMainToolBar(
     colors: MainToolBarColors = LocalMainToolBarColors.current,
     customWindowDecorationSupport: CustomWindowDecorationSupport = CustomWindowDecorationSupport,
-    content: (@Composable MainToolBarScope.() -> Unit)?,
+    content: (@Composable MainToolBarScope.() -> Unit)?
 ) = colors.provideArea(LocalContentActivated.current) {
     Layout(
         content = {

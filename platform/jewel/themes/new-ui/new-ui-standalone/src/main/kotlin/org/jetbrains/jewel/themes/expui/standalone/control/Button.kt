@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.clickable
@@ -36,7 +37,7 @@ import org.jetbrains.jewel.themes.expui.standalone.theme.LightTheme
 class ButtonColors(
     override val normalAreaColors: AreaColors,
     override val focusAreaColors: AreaColors,
-    override val disabledAreaColors: AreaColors,
+    override val disabledAreaColors: AreaColors
 ) : AreaProvider, FocusAreaProvider, DisabledAreaProvider {
 
     @Composable
@@ -72,7 +73,7 @@ fun OutlineButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: ButtonColors = LocalOutlineButtonColors.current,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     ButtonImpl(onClick, modifier, enabled, interactionSource, colors, content)
 }
@@ -84,7 +85,7 @@ fun PrimaryButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: ButtonColors = LocalPrimaryButtonColors.current,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     ButtonImpl(onClick, modifier, enabled, interactionSource, colors, content)
 }
@@ -96,7 +97,7 @@ private fun ButtonImpl(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: ButtonColors,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     val isFocused = remember { mutableStateOf(false) }
     colors.provideArea(enabled, isFocused.value) {

@@ -70,7 +70,7 @@ class ContextMenuColors(
     override val normalAreaColors: AreaColors,
     override val hoverAreaColors: AreaColors,
     override val pressedAreaColors: AreaColors,
-    override val focusAreaColors: AreaColors,
+    override val focusAreaColors: AreaColors
 ) : AreaProvider, HoverAreaProvider, PressedAreaProvider, FocusAreaProvider {
 
     @Composable
@@ -99,7 +99,7 @@ class JbContextMenuRepresentation(private val colors: ContextMenuColors) : Conte
             isOpen = isOpen,
             items = items,
             onDismissRequest = { state.status = ContextMenuState.Status.Closed },
-            colors = colors,
+            colors = colors
         )
     }
 }
@@ -110,7 +110,7 @@ fun ContextMenu(
     isOpen: Boolean,
     items: () -> List<ContextMenuItem>,
     onDismissRequest: () -> Unit,
-    colors: ContextMenuColors = LocalContextMenuColors.current,
+    colors: ContextMenuColors = LocalContextMenuColors.current
 ) {
     if (isOpen) {
         var focusManager: FocusManager? by mutableStateOf(null)
@@ -144,7 +144,7 @@ fun ContextMenu(
                 } else {
                     false
                 }
-            },
+            }
         ) {
             focusManager = LocalFocusManager.current
             inputModeManager = LocalInputModeManager.current
@@ -185,7 +185,7 @@ private fun MenuItemContent(
     contentPadding: PaddingValues = PaddingValues(horizontal = 8.dp),
     shape: Shape = RoundedCornerShape(3.dp),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     val focused = remember { mutableStateOf(false) }
     val focusedColors = LocalFocusAreaColors.current

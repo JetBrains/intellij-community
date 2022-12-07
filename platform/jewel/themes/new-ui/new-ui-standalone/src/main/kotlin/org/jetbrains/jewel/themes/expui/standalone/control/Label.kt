@@ -36,7 +36,7 @@ fun Label(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalDefaultTextStyle.current,
+    style: TextStyle = LocalDefaultTextStyle.current
 ) {
     val textColor = color.takeOrElse {
         style.color
@@ -64,7 +64,7 @@ fun Label(
         onTextLayout = onTextLayout,
         overflow = overflow,
         softWrap = softWrap,
-        maxLines = maxLines,
+        maxLines = maxLines
     )
 }
 
@@ -86,7 +86,7 @@ fun Label(
     maxLines: Int = Int.MAX_VALUE,
     inlineContent: Map<String, InlineTextContent> = mapOf(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalDefaultTextStyle.current,
+    style: TextStyle = LocalDefaultTextStyle.current
 ) {
     val textColor = color.takeOrElse {
         style.color

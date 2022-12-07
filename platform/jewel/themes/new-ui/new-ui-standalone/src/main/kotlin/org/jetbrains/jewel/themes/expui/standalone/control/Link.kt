@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName")
+
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.Indication
@@ -69,7 +70,7 @@ class LinkColors(
     override val focusAreaColors: AreaColors,
     override val disabledAreaColors: AreaColors,
     override val hoverAreaColors: AreaColors,
-    override val pressedAreaColors: AreaColors,
+    override val pressedAreaColors: AreaColors
 ) : AreaProvider, HoverAreaProvider, PressedAreaProvider, DisabledAreaProvider, FocusAreaProvider {
 
     @Composable
@@ -78,7 +79,7 @@ class LinkColors(
         visited: Boolean,
         hover: Boolean,
         pressed: Boolean,
-        content: @Composable () -> Unit,
+        content: @Composable () -> Unit
     ) {
         val currentColors = when {
             !enabled -> disabledAreaColors
@@ -122,7 +123,7 @@ fun Link(
     colors: LinkColors = LocalLinkColors.current,
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextStyle = LocalDefaultTextStyle.current,
-    trailerIcon: @Composable (() -> Unit)? = null,
+    trailerIcon: @Composable (() -> Unit)? = null
 ) {
     val visited = remember { mutableStateOf(false) }
     val hovered = remember { mutableStateOf(false) }
@@ -196,7 +197,7 @@ fun Link(
                     enabled = enabled,
                     role = Role.Button,
                     indication = indication,
-                    interactionSource = rowInteractionSource,
+                    interactionSource = rowInteractionSource
                 ).pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
@@ -227,7 +228,7 @@ fun Link(
                     onTextLayout = onTextLayout,
                     overflow = TextOverflow.Clip,
                     softWrap = false,
-                    maxLines = 1,
+                    maxLines = 1
                 )
                 trailerIcon?.invoke()
             }
@@ -252,7 +253,7 @@ fun ExternalLink(
     indication: Indication? = null,
     colors: LinkColors = LocalLinkColors.current,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalDefaultTextStyle.current,
+    style: TextStyle = LocalDefaultTextStyle.current
 ) {
     Link(
         text = text,
@@ -270,7 +271,7 @@ fun ExternalLink(
         indication = indication,
         colors = colors,
         onTextLayout = onTextLayout,
-        style = style,
+        style = style
     ) {
         Icon("icons/external_link_arrow.svg")
     }
@@ -293,7 +294,7 @@ fun DropdownLink(
     indication: Indication? = null,
     colors: LinkColors = LocalLinkColors.current,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalDefaultTextStyle.current,
+    style: TextStyle = LocalDefaultTextStyle.current
 ) {
     Link(
         text = text,
@@ -311,7 +312,7 @@ fun DropdownLink(
         indication = indication,
         colors = colors,
         onTextLayout = onTextLayout,
-        style = style,
+        style = style
     ) {
         Icon("icons/linkDropTriangle.svg")
     }

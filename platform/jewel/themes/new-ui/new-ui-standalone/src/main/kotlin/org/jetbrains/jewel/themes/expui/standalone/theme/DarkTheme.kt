@@ -152,7 +152,7 @@ object DarkTheme : Theme {
         endBackground = Grey2,
         startBorderColor = Grey1,
         endBorderColor = Grey1,
-        focusColor = Blue6,
+        focusColor = Blue6
     )
 
     val InactiveAreaColors = NormalAreaColors.copy(
@@ -176,24 +176,24 @@ object DarkTheme : Theme {
 
     val HoverAreaColors = NormalAreaColors.copy(
         startBackground = Grey3,
-        endBackground = Grey3,
+        endBackground = Grey3
     )
 
     val PressedAreaColors = NormalAreaColors.copy(
         startBackground = Grey5,
-        endBackground = Grey5,
+        endBackground = Grey5
     )
 
     val FocusAreaColors = NormalAreaColors.copy()
 
     val SelectionAreaColors = NormalAreaColors.copy(
         startBackground = Blue2,
-        endBackground = Blue2,
+        endBackground = Blue2
     )
 
     val SelectionInactiveAreaColors = NormalAreaColors.copy(
         startBackground = Grey4,
-        endBackground = Grey4,
+        endBackground = Grey4
     )
 
     val MainToolBarColors = MainToolBarColors(
@@ -205,7 +205,7 @@ object DarkTheme : Theme {
             endBackground = Grey2,
             startBorderColor = Grey1,
             endBorderColor = Grey1,
-            focusColor = Blue6,
+            focusColor = Blue6
         ),
         inactiveAreaColors = AreaColors(
             text = Grey13,
@@ -214,7 +214,7 @@ object DarkTheme : Theme {
             endBackground = Grey3,
             startBorderColor = Grey1,
             endBorderColor = Grey1,
-            focusColor = Blue6,
+            focusColor = Blue6
         ),
         actionButtonColors = ActionButtonColors(
             normalAreaColors = AreaColors(
@@ -224,7 +224,7 @@ object DarkTheme : Theme {
                 endBackground = Color.Unspecified,
                 startBorderColor = Color.Unspecified,
                 endBorderColor = Color.Unspecified,
-                focusColor = Blue6,
+                focusColor = Blue6
             ),
             hoverAreaColors = AreaColors(
                 text = Grey13,
@@ -233,7 +233,7 @@ object DarkTheme : Theme {
                 endBackground = Grey3,
                 startBorderColor = Color.Unspecified,
                 endBorderColor = Color.Unspecified,
-                focusColor = Blue6,
+                focusColor = Blue6
             ),
             pressedAreaColors = AreaColors(
                 text = Grey13,
@@ -242,7 +242,7 @@ object DarkTheme : Theme {
                 endBackground = Grey3,
                 startBorderColor = Color.Unspecified,
                 endBorderColor = Color.Unspecified,
-                focusColor = Blue6,
+                focusColor = Blue6
             ),
             disabledAreaColors = AreaColors(
                 text = Grey13,
@@ -251,8 +251,8 @@ object DarkTheme : Theme {
                 endBackground = Color.Unspecified,
                 startBorderColor = Color.Unspecified,
                 endBorderColor = Color.Unspecified,
-                focusColor = Blue6,
-            ),
+                focusColor = Blue6
+            )
         )
     )
 
@@ -264,7 +264,7 @@ object DarkTheme : Theme {
             endBackground = Color.Unspecified,
             startBorderColor = Color.Unspecified,
             endBorderColor = Color.Unspecified,
-            focusColor = Blue6,
+            focusColor = Blue6
         ),
         hoverAreaColors = AreaColors(
             text = Grey13,
@@ -273,7 +273,7 @@ object DarkTheme : Theme {
             endBackground = Red6,
             startBorderColor = Color.Unspecified,
             endBorderColor = Color.Unspecified,
-            focusColor = Red6,
+            focusColor = Red6
         ),
         pressedAreaColors = AreaColors(
             text = Grey13,
@@ -282,7 +282,7 @@ object DarkTheme : Theme {
             endBackground = Red6,
             startBorderColor = Color.Unspecified,
             endBorderColor = Color.Unspecified,
-            focusColor = Red6,
+            focusColor = Red6
         ),
         disabledAreaColors = AreaColors(
             text = Grey13,
@@ -291,26 +291,26 @@ object DarkTheme : Theme {
             endBackground = Color.Unspecified,
             startBorderColor = Color.Unspecified,
             endBorderColor = Color.Unspecified,
-            focusColor = Blue6,
-        ),
+            focusColor = Blue6
+        )
     )
 
     val ActionButtonColors = ActionButtonColors(
         normalAreaColors = NormalAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         hoverAreaColors = HoverAreaColors.copy(
             startBackground = Grey3,
-            endBackground = Grey3,
+            endBackground = Grey3
         ),
         pressedAreaColors = PressedAreaColors.copy(
             startBackground = Grey5,
-            endBackground = Grey5,
+            endBackground = Grey5
         ),
         disabledAreaColors = DisabledAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         )
     )
 
@@ -320,28 +320,28 @@ object DarkTheme : Theme {
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         selectionAreaColors = SelectionAreaColors.copy(
             foreground = Grey14,
             startBackground = Blue6,
             endBackground = Blue6,
             startBorderColor = Blue6,
-            endBorderColor = Blue6,
+            endBorderColor = Blue6
         ),
         focusAreaColors = FocusAreaColors.copy(
             foreground = Grey14,
             startBackground = Blue6,
             endBackground = Blue6,
             startBorderColor = Color(0xFF101012),
-            endBorderColor = Color(0xFF101012),
+            endBorderColor = Color(0xFF101012)
         ),
         disabledAreaColors = DisabledAreaColors.copy(
             foreground = Grey5,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey3,
-            endBorderColor = Grey3,
+            endBorderColor = Grey3
         )
     )
 
@@ -351,28 +351,28 @@ object DarkTheme : Theme {
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         selectionAreaColors = SelectionAreaColors.copy(
             foreground = Grey14,
             startBackground = Blue6,
             endBackground = Blue6,
             startBorderColor = Blue6,
-            endBorderColor = Blue6,
+            endBorderColor = Blue6
         ),
         focusAreaColors = FocusAreaColors.copy(
             foreground = Grey14,
             startBackground = Blue6,
             endBackground = Blue6,
             startBorderColor = Color(0xFF101012),
-            endBorderColor = Color(0xFF101012),
+            endBorderColor = Color(0xFF101012)
         ),
         disabledAreaColors = DisabledAreaColors.copy(
             foreground = Grey5,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey3,
-            endBorderColor = Grey3,
+            endBorderColor = Grey3
         )
     )
 
@@ -382,21 +382,21 @@ object DarkTheme : Theme {
             startBackground = Blue6,
             endBackground = Blue6,
             startBorderColor = Blue6,
-            endBorderColor = Blue6,
+            endBorderColor = Blue6
         ),
         focusAreaColors = FocusAreaColors.copy(
             text = Grey14,
             startBackground = Blue6,
             endBackground = Blue6,
             startBorderColor = Grey1,
-            endBorderColor = Grey1,
+            endBorderColor = Grey1
         ),
         disabledAreaColors = DisabledAreaColors.copy(
             text = Grey5,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey3,
-            endBorderColor = Grey3,
+            endBorderColor = Grey3
         )
     )
 
@@ -406,42 +406,42 @@ object DarkTheme : Theme {
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         focusAreaColors = FocusAreaColors.copy(
             text = Grey13,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         disabledAreaColors = DisabledAreaColors.copy(
             text = Grey5,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey3,
-            endBorderColor = Grey3,
+            endBorderColor = Grey3
         )
     )
 
     val LinkColors = LinkColors(
         normalAreaColors = NormalAreaColors.copy(
-            text = Blue8,
+            text = Blue8
         ),
         hoverAreaColors = HoverAreaColors.copy(
-            text = Blue8,
+            text = Blue8
         ),
         pressedAreaColors = PressedAreaColors.copy(
-            text = Blue8,
+            text = Blue8
         ),
         focusAreaColors = FocusAreaColors.copy(
-            text = Blue8,
+            text = Blue8
         ),
         disabledAreaColors = NormalAreaColors.copy(
-            text = Grey5,
+            text = Grey5
         ),
         visitedAreaColors = NormalAreaColors.copy(
-            text = Blue4,
+            text = Blue4
         )
     )
 
@@ -452,49 +452,49 @@ object DarkTheme : Theme {
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         focusAreaColors = FocusAreaColors.copy(
             text = Grey13,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey3,
-            endBorderColor = Grey3,
+            endBorderColor = Grey3
         ),
         itemNormalAreaColors = NormalAreaColors.copy(
             text = Grey13,
             startBackground = Color.Unspecified,
             endBackground = Color.Unspecified,
             startBorderColor = Color.Unspecified,
-            endBorderColor = Color.Unspecified,
+            endBorderColor = Color.Unspecified
         ),
         itemHoverAreaColors = HoverAreaColors.copy(
             text = Grey13,
             startBackground = Grey3,
             endBackground = Grey3,
             startBorderColor = Color.Unspecified,
-            endBorderColor = Color.Unspecified,
+            endBorderColor = Color.Unspecified
         ),
         itemPressedAreaColors = PressedAreaColors.copy(
             text = Grey13,
             startBackground = Grey3,
             endBackground = Grey3,
             startBorderColor = Color.Unspecified,
-            endBorderColor = Color.Unspecified,
+            endBorderColor = Color.Unspecified
         ),
         itemSelectionAreaColors = SelectionAreaColors.copy(
             text = Grey13,
             startBackground = Grey3,
             endBackground = Grey3,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         itemSelectedFocusAreaColors = SelectionAreaColors.copy(
             text = Grey13,
             startBackground = Blue3,
             endBackground = Blue3,
             startBorderColor = Grey3,
-            endBorderColor = Grey3,
+            endBorderColor = Grey3
         )
     )
 
@@ -505,7 +505,7 @@ object DarkTheme : Theme {
             startBackground = Grey3,
             endBackground = Grey3,
             startBorderColor = Grey4,
-            endBorderColor = Grey4,
+            endBorderColor = Grey4
         )
     )
 
@@ -515,21 +515,21 @@ object DarkTheme : Theme {
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         focusAreaColors = FocusAreaColors.copy(
             text = Grey13,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey2,
-            endBorderColor = Grey2,
+            endBorderColor = Grey2
         ),
         disabledAreaColors = DisabledAreaColors.copy(
             text = Grey5,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey3,
-            endBorderColor = Grey3,
+            endBorderColor = Grey3
         ),
         errorAreaColors = ErrorAreaColors.copy(
             text = Red6,
@@ -537,7 +537,7 @@ object DarkTheme : Theme {
             endBackground = Grey2,
             startBorderColor = Red6,
             endBorderColor = Red6,
-            focusColor = Red6,
+            focusColor = Red6
         ),
         errorFocusAreaColors = ErrorAreaColors.copy(
             text = Red6,
@@ -545,7 +545,7 @@ object DarkTheme : Theme {
             endBackground = Grey2,
             startBorderColor = Grey2,
             endBorderColor = Grey2,
-            focusColor = Red6,
+            focusColor = Red6
         )
     )
 
@@ -555,29 +555,29 @@ object DarkTheme : Theme {
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey4,
-            endBorderColor = Grey4,
+            endBorderColor = Grey4
         ),
         hoverAreaColors = HoverAreaColors.copy(
             text = Grey13,
             startBackground = Blue2,
             endBackground = Blue2,
             startBorderColor = Blue2,
-            endBorderColor = Blue2,
+            endBorderColor = Blue2
         ),
         pressedAreaColors = PressedAreaColors.copy(
             text = Grey13,
             startBackground = Blue2,
             endBackground = Blue2,
             startBorderColor = Blue2,
-            endBorderColor = Blue2,
+            endBorderColor = Blue2
         ),
         focusAreaColors = FocusAreaColors.copy(
             text = Grey13,
             startBackground = Blue2,
             endBackground = Blue2,
             startBorderColor = Blue2,
-            endBorderColor = Blue2,
-        ),
+            endBorderColor = Blue2
+        )
     )
 
     val ComboBoxColors = ComboBoxColors(
@@ -586,21 +586,21 @@ object DarkTheme : Theme {
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         focusAreaColors = FocusAreaColors.copy(
             text = Grey13,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey5,
-            endBorderColor = Grey5,
+            endBorderColor = Grey5
         ),
         disabledAreaColors = DisabledAreaColors.copy(
             text = Grey5,
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey3,
-            endBorderColor = Grey3,
+            endBorderColor = Grey3
         ),
         dropdownMenuColors = DropdownMenuColors
     )
@@ -611,135 +611,138 @@ object DarkTheme : Theme {
             startBackground = Grey2,
             endBackground = Grey2,
             startBorderColor = Grey4,
-            endBorderColor = Grey4,
+            endBorderColor = Grey4
         ),
         hoverAreaColors = HoverAreaColors.copy(
             text = Grey13,
             startBackground = Blue2,
             endBackground = Blue2,
             startBorderColor = Blue2,
-            endBorderColor = Blue2,
+            endBorderColor = Blue2
         ),
         pressedAreaColors = PressedAreaColors.copy(
             text = Grey13,
             startBackground = Blue2,
             endBackground = Blue2,
             startBorderColor = Blue2,
-            endBorderColor = Blue2,
+            endBorderColor = Blue2
         ),
         focusAreaColors = FocusAreaColors.copy(
             text = Grey13,
             startBackground = Blue2,
             endBackground = Blue2,
             startBorderColor = Blue2,
-            endBorderColor = Blue2,
-        ),
+            endBorderColor = Blue2
+        )
     )
 
     val ToolBarActionButtonColors = ToolBarActionButtonColors(
         normalAreaColors = NormalAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         hoverAreaColors = HoverAreaColors.copy(
             startBackground = Grey4,
-            endBackground = Grey4,
+            endBackground = Grey4
         ),
         pressedAreaColors = PressedAreaColors.copy(
             startBackground = Grey4,
-            endBackground = Grey4,
+            endBackground = Grey4
         ),
         disabledAreaColors = DisabledAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         inactiveAreaColors = NormalAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         selectionAreaColors = SelectionAreaColors.copy(
             foreground = Grey13,
             startBackground = Blue6,
-            endBackground = Blue6,
+            endBackground = Blue6
         ),
         inactiveSelectionAreaColors = SelectionInactiveAreaColors.copy(
             startBackground = Grey4,
-            endBackground = Grey4,
+            endBackground = Grey4
         )
     )
     val ProgressBarColors = ProgressBarColors(
         normalAreaColors = NormalAreaColors.copy(
             foreground = Blue7,
             startBackground = Grey4,
-            endBackground = Grey4,
+            endBackground = Grey4
         ),
         indeterminateAreaColors = NormalAreaColors.copy(
             foreground = Blue9,
             startBackground = Blue9,
-            endBackground = Blue5,
-        ),
+            endBackground = Blue5
+        )
     )
 
     val TabColors = TabColors(
         normalAreaColors = NormalAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         hoverAreaColors = HoverAreaColors.copy(
             startBackground = Grey4,
-            endBackground = Grey4,
+            endBackground = Grey4
         ),
         pressedAreaColors = PressedAreaColors.copy(
             startBackground = Grey4,
-            endBackground = Grey4,
+            endBackground = Grey4
         ),
         inactiveAreaColors = NormalAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         selectionAreaColors = SelectionAreaColors.copy(
             focusColor = Blue7,
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         inactiveSelectionAreaColors = SelectionInactiveAreaColors.copy(
             focusColor = Grey6,
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         )
     )
 
     val CloseableTabColors = TabColors(
         normalAreaColors = NormalAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         hoverAreaColors = HoverAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         pressedAreaColors = PressedAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         inactiveAreaColors = NormalAreaColors.copy(
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         selectionAreaColors = SelectionAreaColors.copy(
             focusColor = Blue7,
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         ),
         inactiveSelectionAreaColors = SelectionInactiveAreaColors.copy(
             focusColor = Grey6,
             startBackground = Color.Unspecified,
-            endBackground = Color.Unspecified,
+            endBackground = Color.Unspecified
         )
     )
 
     val DefaultTextStyle = TextStyle(
-        fontFamily = Fonts.Inter, fontSize = 13.sp, fontWeight = FontWeight.Normal, color = Color.Unspecified
+        fontFamily = Fonts.Inter,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Normal,
+        color = Color.Unspecified
     )
 
     val DefaultBoldTextStyle = DefaultTextStyle.copy(fontWeight = FontWeight.Bold)
@@ -807,7 +810,7 @@ object DarkTheme : Theme {
             LocalH2TextStyle provides H2TextStyle,
             LocalH2BoldTextStyle provides H2BoldTextStyle,
             LocalH3TextStyle provides H3TextStyle,
-            LocalH3BoldTextStyle provides H3BoldTextStyle,
+            LocalH3BoldTextStyle provides H3BoldTextStyle
         )
     }
 }

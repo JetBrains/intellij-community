@@ -15,7 +15,7 @@ interface Theme {
     fun provide(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             *provideValues(),
-            content = content,
+            content = content
         )
     }
 
