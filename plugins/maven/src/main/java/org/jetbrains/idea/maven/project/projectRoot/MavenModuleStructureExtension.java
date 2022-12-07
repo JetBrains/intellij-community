@@ -7,18 +7,20 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureEx
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class MavenModuleStructureExtension extends ModuleStructureExtension {
-  private final List<Module> myModulesToRemove = new ArrayList<>();
-  private final Set<MavenProjectsManager> myMavenProjectsManagers = new HashSet<>();
+  private final Set<Module> myModulesToRemove = new HashSet<>();
+  private final Set<MavenProject> myMavenProjectsToIgnore = new HashSet<>();
+  private MavenProjectsManager myMavenProjectsManager = null;
 
   @Override
   public void moduleRemoved(final Module module) {
     myModulesToRemove.add(module);
+    if (null == myMavenProjectsManager) {
+      myMavenProjectsManager = MavenProjectsManager.getInstance(module.getProject());
+    }
   }
 
   @Override
@@ -29,18 +31,22 @@ public class MavenModuleStructureExtension extends ModuleStructureExtension {
   @Override
   public void apply() throws ConfigurationException {
     myModulesToRemove.forEach(moduleToRemove -> {
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(moduleToRemove.getProject());
-      MavenProject mavenProject = projectsManager.findProject(moduleToRemove);
-      projectsManager.scheduleMavenProjectToIgnore(mavenProject);
-      myMavenProjectsManagers.add(projectsManager);
+      var mavenProject = myMavenProjectsManager.findProject(moduleToRemove);
+      if (null != mavenProject) {
+        myMavenProjectsToIgnore.add(mavenProject);
+      }
     });
     myModulesToRemove.clear();
   }
 
   @Override
   public void disposeUIResources() {
-    myMavenProjectsManagers.forEach(mavenProjectsManager -> mavenProjectsManager.importProjects());
-    myMavenProjectsManagers.clear();
+    if (null != myMavenProjectsManager) {
+      myMavenProjectsManager.scheduleMavenProjectsToIgnore(myMavenProjectsToIgnore);
+    }
+
     myModulesToRemove.clear();
+    myMavenProjectsToIgnore.clear();
+    myMavenProjectsManager = null;
   }
 }

@@ -78,7 +78,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -112,7 +111,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private final Object myImportingDataLock = new Object();
   private final Map<MavenProject, MavenProjectChanges> myProjectsToImport = new LinkedHashMap<>();
 
-  private final Collection<MavenProject> myProjectsScheduledToIgnore = new CopyOnWriteArrayList<>();
+  private final Collection<MavenProject> myProjectsScheduledToIgnore = new HashSet<>();
   private final Set<MavenProject> myProjectsToResolve = new LinkedHashSet<>();
 
   private boolean myImportModuleGroupsRequired = false;
@@ -899,12 +898,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  public void scheduleMavenProjectToIgnore(@Nullable MavenProject mavenProject) {
-    if (null == mavenProject) return;
+  public void scheduleMavenProjectsToIgnore(@NotNull Set<MavenProject> mavenProjects) {
+    if (mavenProjects.isEmpty()) return;
 
-    if (myProjectsScheduledToIgnore.contains(mavenProject)) return;
-
-    myProjectsScheduledToIgnore.add(mavenProject);
+    myProjectsScheduledToIgnore.addAll(mavenProjects);
+    importProjects();
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {
