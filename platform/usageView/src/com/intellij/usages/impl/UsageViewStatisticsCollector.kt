@@ -35,7 +35,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 13)
+    val GROUP = EventLogGroup("usage.view", 14)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
@@ -58,6 +58,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val RESULTS_TOTAL = EventFields.Int("results_total")
     private val FIRST_RESULT_TS = EventFields.Long("duration_first_results_ms")
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
+    private val IS_SIMILAR_USAGE = EventFields.Boolean("is_similar_usage")
 
     private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, EventFields.Language)
 
@@ -82,7 +83,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                                                            UI_LOCATION,
                                                            USAGE_VIEW)
 
-    private val itemChosen = GROUP.registerVarargEvent("item.chosen", USAGE_VIEW, UI_LOCATION, REFERENCE_CLASS, EventFields.Language)
+    private val itemChosen = GROUP.registerVarargEvent("item.chosen", USAGE_VIEW, UI_LOCATION, IS_SIMILAR_USAGE, EventFields.Language)
     private val tabSwitched = GROUP.registerEvent("switch.tab", USAGE_VIEW)
 
     private val PREVIOUS_SCOPE = EventFields.StringValidatedByCustomRule("previous", ScopeRuleValidator::class.java)
@@ -138,11 +139,11 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                       usageView: UsageView,
                       source: CodeNavigateSource,
                       language: Language,
-                      usageClass: Class<out Any>?) = itemChosen.log(project,
-                                                                    USAGE_VIEW.with(usageView),
-                                                                    UI_LOCATION.with(source),
-                                                                    REFERENCE_CLASS.with(usageClass),
-                                                                    EventFields.Language.with(language))
+                      isSimilarUsage: Boolean) = itemChosen.log(project,
+                                                                USAGE_VIEW.with(usageView),
+                                                                UI_LOCATION.with(source),
+                                                                IS_SIMILAR_USAGE.with(isSimilarUsage),
+                                                                EventFields.Language.with(language))
 
     @JvmStatic
     fun logSearchCancelled(project: Project?,
