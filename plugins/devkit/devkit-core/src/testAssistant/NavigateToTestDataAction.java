@@ -128,13 +128,14 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     if (location != null) {
       UMethod method = UastContextKt.getUastParentOfType(location.getPsiElement(), UMethod.class, false);
       if (method != null) {
-        return method;
+        return method.getJavaPsi();
       }
     }
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file != null && editor != null) {
-      return UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+      UMethod method = UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+      return method != null ? method.getJavaPsi() : null;
     }
 
     return null;

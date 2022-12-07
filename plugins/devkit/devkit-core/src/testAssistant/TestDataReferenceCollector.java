@@ -105,7 +105,7 @@ public class TestDataReferenceCollector {
               }
             }
             if (expression.getReceiver() == null && !haveAnnotatedParameters) {
-              result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee), proceed));
+              result.addAll(collectTestDataReferences(callee.getJavaPsi(), buildArgumentMap(expression, callee.getJavaPsi()), proceed));
             }
           }
           return true;
