@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.detekt)
-    alias(libs.plugins.kotlinter)
 }
 
 detekt {
@@ -33,10 +32,7 @@ kotlin {
 }
 
 dependencies {
-    // We do not depend on the 'core' module now because the new-ui-standalone module
-    // currently only copies code from the compose-jetbrains-theme.
-    // api(projects.core)
-    api(projects.composeUtils)
+    api(projects.themes.newUi.newUiStandalone)
 }
 
 tasks.named<Detekt>("detekt").configure {

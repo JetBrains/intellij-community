@@ -1,11 +1,11 @@
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.archivesName
 
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.detekt)
-    alias(libs.plugins.kotlinter)
 }
 
 detekt {
@@ -24,19 +24,29 @@ kotlin {
     sourceSets {
         all {
             languageSettings {
-                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
-                optIn("kotlin.experimental.ExperimentalTypeInference")
-                optIn("androidx.compose.ui.ExperimentalComposeUiApi")
+                optIn("kotlin.time.ExperimentalTime")
+                optIn("androidx.compose.foundation.ExperimentalFoundationApi")
             }
         }
     }
 }
 
 dependencies {
-    // We do not depend on the 'core' module now because the new-ui-standalone module
-    // currently only copies code from the compose-jetbrains-theme.
-    // api(projects.core)
-    api(projects.composeUtils)
+    implementation(projects.themes.newUi.newUiDesktop)
+    implementation(libs.compose.components.splitpane)
+}
+
+compose.desktop {
+    application {
+        mainClass = "org.jetbrains.jewel.samples.standalone.expui.MainKt"
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg)
+            packageName = "Jewel New UI Sample"
+            packageVersion = "1.0"
+            description = "Jewel New UI Sample Application"
+            vendor = "JetBrains"
+        }
+    }
 }
 
 tasks.named<Detekt>("detekt").configure {

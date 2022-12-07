@@ -1,0 +1,11 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 14H2V2H14L8 8L14 14Z" fill="url(#paint0_linear_904_19149)"/>
+    <defs>
+        <linearGradient id="paint0_linear_904_19149" x1="14" y1="2" x2="2" y2="14" gradientUnits="userSpaceOnUse">
+            <stop offset="0.00343514" stop-color="#E44857"/>
+            <stop offset="0.4689" stop-color="#C711E1"/>
+            <stop offset="1" stop-color="#7F52FF"/>
+        </linearGradient>
+    </defs>
+</svg>
