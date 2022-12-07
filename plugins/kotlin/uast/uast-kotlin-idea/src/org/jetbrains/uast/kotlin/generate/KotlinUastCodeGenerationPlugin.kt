@@ -99,13 +99,13 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
         return ptr.element?.toUElementOfType()
     }
 
-    override fun initializeField(uField: UField, uParameter: UParameter) {
-        val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return
-        val sourcePsi = uMethod.sourcePsi ?: return
+    override fun initializeField(uField: UField, uParameter: UParameter): UExpression? {
+        val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return null
+        val sourcePsi = uMethod.sourcePsi ?: return null
         if (sourcePsi is KtPrimaryConstructor) {
             if (uField.name == uParameter.name) {
-                val psiElement = uParameter.sourcePsi ?: return
-                val ktParameter = KtPsiFactory(psiElement.project).createParameter(uField.sourcePsi?.text ?: return)
+                val psiElement = uParameter.sourcePsi ?: return null
+                val ktParameter = KtPsiFactory(psiElement.project).createParameter(uField.sourcePsi?.text ?: return null)
                 ktParameter.modifierList?.getModifier(KtTokens.FINAL_KEYWORD)?.delete()
                 ktParameter.defaultValue?.delete()
                 ktParameter.equalsToken?.delete()
@@ -118,16 +118,17 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
                     psiField.delete()
                 }
                 psiElement.replace(ktParameter)
+                return ktParameter.toUElementOfType()
             }
             else {
-                val property = uField.sourcePsi as? KtProperty ?: return
+                val property = uField.sourcePsi as? KtProperty ?: return null
                 property.initializer = KtPsiFactory(property.project).createExpression(uParameter.name)
+                return property.initializer.toUElementOfType()
             }
-            return
         }
 
-        val body = (sourcePsi as? KtDeclarationWithBody)?.bodyBlockExpression ?: return
-        val ktPsiFactory = KtPsiFactory(sourcePsi)
+        val body = (sourcePsi as? KtDeclarationWithBody)?.bodyBlockExpression ?: return null
+        val ktPsiFactory = KtPsiFactory(sourcePsi.project, true)
         val assigmentExpression = ktPsiFactory.buildExpression {
             if (uField.name == uParameter.name) {
                 appendFixedText("this.")
@@ -138,6 +139,7 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
         }
 
         body.addBefore(assigmentExpression, body.rBrace)
+        return assigmentExpression.toUElementOfType()
     }
 }
 
@@ -467,8 +469,8 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
         val newLambdaStatements = if (body is UBlockExpression) {
             body.expressions.flatMap { member ->
-                when {
-                    member is UReturnExpression -> member.returnExpression?.toSourcePsiFakeAware().orEmpty()
+                when (member) {
+                    is UReturnExpression -> member.returnExpression?.toSourcePsiFakeAware().orEmpty()
                     else -> member.toSourcePsiFakeAware()
                 }
             }

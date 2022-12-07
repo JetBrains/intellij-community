@@ -1103,7 +1103,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val uParameter = uClass.methods.find { it.isConstructor && it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull()
                          ?: kfail("Cannot find parameter")
 
-        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        initializeField(uField, uParameter)
         TestCase.assertEquals("""
             class MyClass() {
                 constructor(value: String): this() {
@@ -1127,7 +1127,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
         val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
 
-        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        initializeField(uField, uParameter)
         TestCase.assertEquals("""
             class MyClass(value: String) {
                 val field: String = value
@@ -1148,7 +1148,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
         val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
 
-        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        initializeField(uField, uParameter)
         TestCase.assertEquals("""
             class MyClass(private val field: String) {
             }
@@ -1172,7 +1172,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
         val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
 
-        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        initializeField(uField, uParameter)
         TestCase.assertEquals("""
             class MyClass(private val field: String) {
                 public fun test() {
@@ -1200,7 +1200,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
         val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
 
-        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        initializeField(uField, uParameter)
         TestCase.assertEquals("""
             class MyClass(private val field: String) {
 
@@ -1220,6 +1220,13 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val property = file.declarations.singleOrNull() as? KtProperty ?: error("Property 'x' is not found in $file")
         val initializer = property.initializer ?: error("Property initializer not found in $file")
         return initializer.toUElementOfType() ?: error("Initializer '$initializer' is not convertable to UAST")
+    }
+
+    private fun initializeField(uField: UField, uParameter: UParameter) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val expression = generatePlugin.initializeField(uField, uParameter)
+            assertNotNull(expression)
+        }
     }
 }
 

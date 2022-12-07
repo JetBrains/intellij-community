@@ -116,10 +116,10 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     return ptr.element?.parent.toUElementOfType()
   }
 
-  override fun initializeField(uField: UField, uParameter: UParameter) {
-    val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return
-    val psiMethod = uMethod.sourcePsi as? PsiMethod ?: return
-    val body = psiMethod.body ?: return
+  override fun initializeField(uField: UField, uParameter: UParameter): UExpression? {
+    val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return null
+    val psiMethod = uMethod.sourcePsi as? PsiMethod ?: return null
+    val body = psiMethod.body ?: return null
 
     val elementFactory = JavaPsiFacade.getInstance(psiMethod.project).elementFactory
     val prefix = if (uField.name == uParameter.name) "this." else ""
@@ -131,6 +131,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     else {
       body.add(statement)
     }
+    return statement.toUElementOfType()
   }
 }
 

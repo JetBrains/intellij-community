@@ -96,7 +96,7 @@ interface UastCodeGenerationPlugin {
    * If the parameter is from Kotlin primary constructor and the field and the parameter have different names,
    * Kotlin property is initialized with the parameter.
    */
-  fun initializeField(uField: UField, uParameter: UParameter)
+  fun initializeField(uField: UField, uParameter: UParameter): UExpression?
 }
 
 /**

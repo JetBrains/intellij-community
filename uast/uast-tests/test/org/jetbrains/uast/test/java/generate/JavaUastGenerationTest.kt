@@ -589,6 +589,9 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val uField = uClass.fields.firstOrNull() ?: fail("Cannot find field")
     val uParameter = uClass.methods.find { it.name == "method"}?.uastParameters?.firstOrNull() ?: fail("Cannot find parameter")
 
-    WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+    WriteCommandAction.runWriteCommandAction(project) {
+      val expression = generatePlugin.initializeField(uField, uParameter)
+      assertNotNull(expression)
+    }
   }
 }
