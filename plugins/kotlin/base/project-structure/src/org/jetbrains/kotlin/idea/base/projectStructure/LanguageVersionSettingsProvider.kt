@@ -216,6 +216,10 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
                     arguments.nullabilityAnnotations
                 )
 
+            if (arguments.useK2) {
+                analysisFlags[AnalysisFlags.allowUnstableDependencies] = true
+            }
+
             val supportDefinitelyNotNull = getSelf(module)
                 ?.supportsFeature(LanguageFeature.ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated)
                 ?: false
