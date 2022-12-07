@@ -462,9 +462,9 @@
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <reference ref="Debugger.PopFrame"/>
-      <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
+      <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
+      </group>
       <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>

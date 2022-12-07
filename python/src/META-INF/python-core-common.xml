@@ -776,9 +776,9 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
     </action>
 
-    <action id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
+    <group id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-    </action>
+    </group>
 
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
     >
