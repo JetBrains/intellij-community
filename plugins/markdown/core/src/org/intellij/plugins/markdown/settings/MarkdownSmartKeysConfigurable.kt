@@ -1,18 +1,22 @@
 package org.intellij.plugins.markdown.settings
 
 import com.intellij.application.options.CodeCompletionOptionsCustomSection
-import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import org.intellij.plugins.markdown.MarkdownBundle
 
-internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(), Configurable, CodeCompletionOptionsCustomSection {
+internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(), SearchableConfigurable, CodeCompletionOptionsCustomSection {
   private val settings
     get() = MarkdownCodeInsightSettings.getInstance()
 
   override fun getDisplayName(): String {
     return MarkdownBundle.message("markdown.smart.keys.configurable.name")
+  }
+
+  override fun getId(): String {
+    return "Settings.Markdown.SmartKeys"
   }
 
   override fun Panel.createContent() {
