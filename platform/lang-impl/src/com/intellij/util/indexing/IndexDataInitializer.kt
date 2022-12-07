@@ -9,7 +9,6 @@ import kotlinx.coroutines.future.asCompletableFuture
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.Callable
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
 abstract class IndexDataInitializer<T> : Callable<T?> {
@@ -42,9 +41,6 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
     @OptIn(ExperimentalCoroutinesApi::class)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
-    private val context = Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads()) +
-                          CoroutineName("Index Storage Lifecycle")
-
     @JvmStatic
     fun <T> submitGenesisTask(action: Callable<T>): Future<T> {
       return scope.async { action.call() }.asCompletableFuture()
@@ -56,7 +52,8 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
         return
       }
 
-      runBlocking(context) {
+      runBlocking(Dispatchers.IO.limitedParallelism(UnindexedFilesUpdater.getNumberOfIndexingThreads()) +
+                  CoroutineName("Index Storage Lifecycle")) {
         for (task in tasks) {
           launch {
             executeTask(task, checkAppDisposed)
