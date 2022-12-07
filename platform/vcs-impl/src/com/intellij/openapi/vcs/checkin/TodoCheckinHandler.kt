@@ -49,8 +49,8 @@ class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   }
 }
 
-class TodoCommitProblem(val worker: TodoCheckinHandlerWorker,
-                        val isPostCommit: Boolean) : CommitProblemWithDetails {
+class TodoCommitProblem(private val worker: TodoCheckinHandlerWorker,
+                        private val isPostCommit: Boolean) : CommitProblemWithDetails {
   override val text: String get() = message("label.todo.items.found", worker.inOneList().size)
 
   override fun showDetails(project: Project) {

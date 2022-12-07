@@ -117,7 +117,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return element == getRootElement() || element == mySummaryElement && (myAreModulesShown || myArePackagesShown);
   }
 
-  protected boolean acceptTodoFilter(@NotNull PsiFile psiFile) {
+  protected final boolean acceptTodoFilter(@NotNull PsiFile psiFile) {
     PsiTodoSearchHelper searchHelper = getSearchHelper();
     return myTodoFilter != null && myTodoFilter.accept(searchHelper, psiFile) ||
            (myTodoFilter == null && searchHelper.getTodoItemsCount(psiFile) > 0);
