@@ -40,7 +40,7 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
                          PackagePrivateActionBase() {}
                        }""");
     myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase {}");
-    myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup {}");
+    myFixture.addClass("package foo.bar; class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup {}");
     myFixture.addClass("""
                        package foo.bar;
                        import org.jetbrains.annotations.NotNull;
