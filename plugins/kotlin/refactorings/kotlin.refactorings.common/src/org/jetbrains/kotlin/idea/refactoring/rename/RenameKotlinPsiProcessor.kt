@@ -169,7 +169,34 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
             simpleUsages += usage
         })
 
-        RenameUtil.doRenameGenericNamedElement(element, newName, simpleUsages.toTypedArray(), listener)
+        renamePossiblyLightElement(element, newName, simpleUsages.toTypedArray(), listener)
+    }
+
+    /**
+     * This method additionally dispatches rename for selected light elements,
+     * since they are not supposed to be renamed via [PsiNamedElement.setName].
+     */
+    protected fun renamePossiblyLightElement(
+        element: PsiElement,
+        newName: String,
+        usagesToRename: Array<UsageInfo>,
+        listener: RefactoringElementListener?
+    ) {
+        when (element) {
+            is KtLightMethod -> {
+                val kotlinElement = element.unwrapped ?: return
+                val defensiveCopy = kotlinElement.copy()
+
+                RenameUtil.doRenameGenericNamedElement(defensiveCopy, newName, usagesToRename, null)
+                RenameLightElementsHelper.renameLightMethod(element, newName)
+
+                listener?.elementRenamed(kotlinElement)
+            }
+
+            else -> {
+                RenameUtil.doRenameGenericNamedElement(element, newName, usagesToRename, listener)
+            }
+        }
     }
 
     override fun getPostRenameCallback(element: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable? {

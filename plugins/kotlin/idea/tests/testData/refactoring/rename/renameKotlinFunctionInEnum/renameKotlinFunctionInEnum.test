@@ -2,5 +2,6 @@
   "type": "KOTLIN_FUNCTION",
   "classId": "test/E",
   "oldName": "foo",
-  "newName": "bar"
+  "newName": "bar",
+  "enabledInK2": true
 }

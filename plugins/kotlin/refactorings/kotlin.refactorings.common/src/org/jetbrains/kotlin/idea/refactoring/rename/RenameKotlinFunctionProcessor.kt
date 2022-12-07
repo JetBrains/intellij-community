@@ -26,6 +26,8 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.checkWithAttachment
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
@@ -255,7 +257,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         element.ambiguousImportUsages = ambiguousImportUsages
 
         val usagesToRename = if (simpleImportUsages.isEmpty()) simpleUsages else simpleImportUsages + simpleUsages
-        RenameUtil.doRenameGenericNamedElement(element, newName, usagesToRename.toTypedArray(), listener)
+        renamePossiblyLightElement(element, newName, usagesToRename.toTypedArray(), listener)
 
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
 
