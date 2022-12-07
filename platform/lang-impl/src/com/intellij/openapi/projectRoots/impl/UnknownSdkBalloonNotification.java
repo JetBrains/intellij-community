@@ -62,7 +62,7 @@ public final class UnknownSdkBalloonNotification {
       change = ProjectBundle.message("notification.link.change.sdks");
     }
 
-    if (usages.isEmpty() || message.isBlank()) return;
+    if (message.isBlank()) return;
 
     NotificationGroupManager.getInstance().getNotificationGroup("Missing SDKs")
       .createNotification(title, message, NotificationType.INFORMATION)

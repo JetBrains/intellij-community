@@ -1167,7 +1167,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   }
 
   private static boolean isCorrectCapacity(final int capacity) {
-    return 0 < capacity || capacity <= MAX_CAPACITY;
+    return 0 <= capacity && capacity <= MAX_CAPACITY;
   }
 
   private static boolean isCorrectLength(final int length) {

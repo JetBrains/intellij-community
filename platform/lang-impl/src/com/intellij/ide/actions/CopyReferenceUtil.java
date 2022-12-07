@@ -26,8 +26,9 @@ import java.util.List;
 
 public final class CopyReferenceUtil extends FqnUtil {
   static void highlight(Editor editor, Project project, List<? extends PsiElement> elements) {
+    if (project == null) return;
     HighlightManager highlightManager = HighlightManager.getInstance(project);
-    if (elements.size() == 1 && editor != null && project != null) {
+    if (elements.size() == 1 && editor != null) {
       PsiElement element = elements.get(0);
       PsiElement nameIdentifier = IdentifierUtil.getNameIdentifier(element);
       if (nameIdentifier != null) {

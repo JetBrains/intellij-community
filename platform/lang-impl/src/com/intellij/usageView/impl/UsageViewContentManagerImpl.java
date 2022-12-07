@@ -205,7 +205,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
   @Override
   public Content getSelectedContent() {
-    return myFindContentManager == null ? null : myFindContentManager.getSelectedContent();
+    return myFindContentManager.getSelectedContent();
   }
 
   @Override
