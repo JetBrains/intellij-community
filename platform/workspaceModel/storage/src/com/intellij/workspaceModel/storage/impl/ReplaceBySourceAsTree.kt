@@ -399,27 +399,26 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         val parentsAssociation = replaceWithTrack.parents.associateWith { findSameEntityInTargetStore(it) }
         val entriesList = parentsAssociation.entries.toList()
 
-        val targetParents = mutableSetOf<EntityId>()
-        var targetEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null
+        var isNewParent = false
+        // Going through the parents of searchable entity and looking for it in target storage via parent's refs
+        // to detect is it a new entity or existing one
         for (i in entriesList.indices) {
           val value = entriesList[i].value
           if (value is ParentsRef.TargetRef) {
-            targetEntityData = findEntityInTargetStore(replaceWithEntityData, value.targetEntityId, replaceWithTrack.entity.clazz)
+            val targetEntityData = findEntityInTargetStore(replaceWithEntityData, value.targetEntityId, replaceWithTrack.entity.clazz)
             if (targetEntityData != null) {
-              targetParents += entriesList[i].key.entity
-              break
+              return targetEntityData.createEntityId().let { ParentsRef.TargetRef(it) }
+            } else {
+              // If target parent didn't change, but we can't find desired existing child, we suppose it's new child
+              isNewParent = true
             }
           }
-        }
-        if (targetEntityData == null) {
-          for (entry in entriesList) {
-            val value = entry.value
-            if (value is ParentsRef.AddedElement) {
-              return ParentsRef.AddedElement(replaceWithTrack.entity)
-            }
+          else if (value is ParentsRef.AddedElement) {
+            // The simplest case if the entity was already marked as new
+            isNewParent = true
           }
         }
-        return targetEntityData?.createEntityId()?.let { ParentsRef.TargetRef(it) }
+        return if (isNewParent) ParentsRef.AddedElement(replaceWithTrack.entity) else null
       }
     }
 

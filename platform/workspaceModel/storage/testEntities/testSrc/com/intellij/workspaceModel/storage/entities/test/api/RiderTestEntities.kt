@@ -20,6 +20,9 @@ interface ProjectModelTestEntity : WorkspaceEntity {
   val info: String
   val descriptor: Descriptor
 
+  val parentEntity: ProjectModelTestEntity?
+  val childrenEntities: List<@Child ProjectModelTestEntity>
+
   @Child
   val contentRoot: ContentRootEntity?
 
@@ -29,6 +32,8 @@ interface ProjectModelTestEntity : WorkspaceEntity {
     override var entitySource: EntitySource
     override var info: String
     override var descriptor: Descriptor
+    override var parentEntity: ProjectModelTestEntity?
+    override var childrenEntities: List<ProjectModelTestEntity>
     override var contentRoot: ContentRootEntity?
   }
 
