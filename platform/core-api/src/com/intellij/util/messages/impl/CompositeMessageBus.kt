@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.ContainerUtil
@@ -108,26 +109,28 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
       return
     }
 
-    val listenerDescriptors = topicClassToListenerDescriptor.remove(topic.listenerClass.name) ?: return
-
-    // use linked hash map for repeatable results
-    val listenerMap = LinkedHashMap<PluginDescriptor, MutableList<Any>>()
-    for (listenerDescriptor in listenerDescriptors) {
-      try {
-        listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor) { mutableListOf() }.add(owner.createListener(listenerDescriptor))
+    ProgressManager.getInstance().executeNonCancelableSection {
+      // use linked hash map for repeatable results
+      val listenerDescriptors = topicClassToListenerDescriptor.remove(topic.listenerClass.name) ?: return@executeNonCancelableSection
+      val listenerMap = LinkedHashMap<PluginDescriptor, MutableList<Any>>()
+      for (listenerDescriptor in listenerDescriptors) {
+        try {
+          listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor) { mutableListOf() }.add(owner.createListener(listenerDescriptor))
+        }
+        catch (ignore: ExtensionNotApplicableException) {
+        }
+        catch (e: ProcessCanceledException) {
+          // ProgressManager have an assert for this case
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error("Cannot create listener", e)
+        }
       }
-      catch (ignore: ExtensionNotApplicableException) {
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error("Cannot create listener", e)
-      }
+      listenerMap.forEach(BiConsumer { key, listeners ->
+        subscribers.add(DescriptorBasedMessageBusConnection(key, topic, listeners))
+      })
     }
-    listenerMap.forEach(BiConsumer { key, listeners ->
-      subscribers.add(DescriptorBasedMessageBusConnection(key, topic, listeners))
-    })
   }
 
   override fun notifyOnSubscriptionToTopicToChildren(topic: Topic<*>) {
