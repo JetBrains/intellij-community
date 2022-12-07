@@ -480,6 +480,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       final boolean wasEverythingDirty = invalidated.isEverythingDirty();
       final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
+      boolean isInitialUpdate;
       ChangesViewEx changesView = ChangesViewManager.getInstanceEx(myProject);
       try {
         if (myUpdater.isStopped()) return true;
@@ -503,13 +504,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
                       "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
                       "\ncurrent changes: " + myWorker);
           }
+
+          isInitialUpdate = myInitialUpdate;
+          myInitialUpdate = false;
         }
         changesView.setBusy(true);
         changesView.scheduleRefresh();
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
-        if (!myInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
-        myInitialUpdate = false;
+        if (!isInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
 
         try {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
