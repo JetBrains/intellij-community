@@ -16,15 +16,15 @@ abstract class KotlinStringStubIndexExtension<Psi : PsiElement>(private val valu
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
-    fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in Psi>) {
-        processElements(s, project, scope, null, processor)
+    fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in Psi>): Boolean {
+        return processElements(s, project, scope, null, processor)
     }
 
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
-    fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in Psi>) {
-        StubIndex.getInstance().processElements(key, s, project, scope, idFilter, valueClass, processor)
+    fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in Psi>): Boolean {
+        return StubIndex.getInstance().processElements(key, s, project, scope, idFilter, valueClass, processor)
     }
 
     fun processAllElements(
