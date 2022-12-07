@@ -71,7 +71,7 @@
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
-    <orderEntry type="library" name="jetbrains.markdown.jvm" level="project" />
+    <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />

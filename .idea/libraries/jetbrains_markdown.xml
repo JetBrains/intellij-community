@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="jetbrains.markdown.jvm" type="repository">
+  <library name="jetbrains.markdown" type="repository">
     <properties maven-id="org.jetbrains:markdown-jvm:0.3.2">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />

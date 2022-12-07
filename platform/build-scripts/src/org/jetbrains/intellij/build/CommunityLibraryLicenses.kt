@@ -385,7 +385,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/intellij-deps-ini4j/blob/master/LICENSE.txt"),
     androidDependency(name = "Instant run protos", libraryName = "deploy_java_proto"),
     androidDependency(name = "Instant run version", libraryName = "libjava_version"),
-    LibraryLicense(name = "intellij-markdown", libraryName = "jetbrains.markdown.jvm",
+    LibraryLicense(name = "intellij-markdown", libraryName = "jetbrains.markdown",
                    url = "https://github.com/JetBrains/markdown")
       .apache("https://github.com/JetBrains/markdown/blob/master/LICENSE"),
     LibraryLicense(name = "IntelliJ IDEA Code Coverage Agent", libraryName = "intellij-coverage",
