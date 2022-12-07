@@ -8,20 +8,19 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.toCodeCompletionItems
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import java.util.*
 
 interface WebSymbolsScope : ModificationTracker {
 
   fun createPointer(): Pointer<out WebSymbolsScope>
 
-  fun getSymbols(namespace: SymbolNamespace?,
+  fun getSymbols(namespace: SymbolNamespace,
                  kind: SymbolKind,
                  name: String?,
                  params: WebSymbolsNameMatchQueryParams,
                  scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
     emptyList()
 
-  fun getCodeCompletions(namespace: SymbolNamespace?,
+  fun getCodeCompletions(namespace: SymbolNamespace,
                          kind: SymbolKind,
                          name: String?,
                          params: WebSymbolsCodeCompletionQueryParams,
@@ -29,7 +28,7 @@ interface WebSymbolsScope : ModificationTracker {
     getSymbols(namespace, kind, null, WebSymbolsNameMatchQueryParams(params.queryExecutor), scope)
       .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, scope) ?: emptyList() }
 
-  fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
+  fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
     false
 
 }

@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 import java.util.*
@@ -34,7 +35,7 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
           CachedValuesManager.getCachedValue(tag) {
             val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
-              queryExecutor.runNameMatchQuery(listOf(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, tag.name))
+              queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, tag.name)
                 .getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
@@ -48,8 +49,10 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
             val tag = attr.parent as HtmlTag
             val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
-              queryExecutor.runNameMatchQuery(listOf(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS,
-                                                     tag.name, WebSymbol.KIND_HTML_ATTRIBUTES, attr.name)).getLanguageToInject(),
+              queryExecutor.runNameMatchQuery(listOf(
+                WebSymbolQualifiedName(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, tag.name),
+                WebSymbolQualifiedName(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTES, attr.name))
+              ).getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
           }

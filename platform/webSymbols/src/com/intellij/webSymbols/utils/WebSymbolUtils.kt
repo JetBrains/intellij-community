@@ -18,7 +18,6 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
-import com.intellij.webSymbols.CompositeWebSymbol
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -242,6 +241,9 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
 
   }
 }
+
+internal val List<WebSymbolsScope>.lastWebSymbol: WebSymbol?
+  get() = this.lastOrNull { it is WebSymbol } as? WebSymbol
 
 internal fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTracker>>): ModificationTracker =
   ModificationTracker {
