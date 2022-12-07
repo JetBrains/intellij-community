@@ -76,8 +76,8 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
   val pattern: WebSymbolsPattern?
     get() = null
 
-  val queryScope: Sequence<WebSymbolsScope>
-    get() = sequenceOf(this)
+  val queryScope: List<WebSymbolsScope>
+    get() = listOf(this)
 
   @get:JvmName("isVirtual")
   val virtual: Boolean
