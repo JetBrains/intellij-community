@@ -4,12 +4,15 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XDebugSession;
@@ -258,7 +261,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         @Override
         public void onClick(MouseEvent event) {
           if (myFullValueEvaluator.isShowValuePopup()) {
-            DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
+            //FileType currentFileType = myFullValueEvaluator.mySyntaxType;
+            //if (currentFileType == null || currentFileType == FileTypes.PLAIN_TEXT) {
+              DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
+            //} else {
+            //  EditorTextField textArea = new EditorTextField(myTree.getProject(), currentFileType);
+            //  DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null, textArea);
+            //}
           }
           else {
             new HeadlessValueEvaluationCallback(XValueNodeImpl.this).startFetchingValue(myFullValueEvaluator);
