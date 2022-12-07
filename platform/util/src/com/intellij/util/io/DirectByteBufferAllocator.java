@@ -76,17 +76,13 @@ public final class DirectByteBufferAllocator {
     }
   }
 
-  public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator();
+  public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator(FilePageCache.ALLOCATOR_SIZE);
 
   private DirectByteBufferAllocator(int sizeLimitInBytes) {
     mySizeLimitInBytes = sizeLimitInBytes;
   }
 
-  DirectByteBufferAllocator() {
-    this(FilePageCache.ALLOCATOR_SIZE);
-  }
-
-  public @NotNull ByteBuffer allocate(int size) {
+  public @NotNull ByteBuffer allocate(final int size) {
     if (USE_POOLED_ALLOCATOR) {
       Map.Entry<Integer, ArrayBlockingQueue<ByteBuffer>> buffers = myPool.ceilingEntry(size);
 

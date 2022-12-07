@@ -222,9 +222,10 @@ object StorageDiagnosticData {
   /* =========================== Monitoring via OpenTelemetry: ========================================== */
 
   //TODO RC: i'd think it is better to setup such monitoring in apt. component itself, because be
-  //         observable is a responsibility of component, same way as logging is. But a) FilePageCache
-  //         module haven't dependency on monitoring module now b) here we already have monitoring of
-  //         FilePageCache, so better to keep old/new monitoring in one place for a while
+  //         observable is the responsibility of component, the same way as logging is. But:
+  //         a) FilePageCache module hasn't dependency on the monitoring module now
+  //         b) here we already have monitoring of FilePageCache, so better to keep old/new
+  //            monitoring in one place for a while
   private fun setupReportingToOpenTelemetry() {
     val otelMeter = TraceManager.getMeter("storage")
 
@@ -239,7 +240,7 @@ object StorageDiagnosticData {
     val totalCachedSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.totalCachedSizeInBytes")
       .setUnit("bytes")
       .setDescription("Total size of all pages currently cached")
-      .ofLongs().buildObserver();
+      .ofLongs().buildObserver()
     val maxCacheSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.maxCacheSizeInBytes")
       .setUnit("bytes")
       .setDescription("Max size of all cached pages observed since application start")
@@ -252,17 +253,17 @@ object StorageDiagnosticData {
     otelMeter.batchCallback(
       {
         try {
-          val stats = getStorageDataStatistics()
-          uncachedFileAccess.record(stats.pageCacheStats.uncachedFileAccess.toLong())
-          maxRegisteredFiles.record(stats.pageCacheStats.maxRegisteredFiles.toLong())
-          maxCacheSizeInBytes.record(stats.pageCacheStats.maxCacheSizeInBytes)
-          pageHit.record(stats.pageCacheStats.pageHit.toLong())
-          pageFastCacheHit.record(stats.pageCacheStats.pageFastCacheHit.toLong())
-          pageMiss.record(stats.pageCacheStats.pageMiss.toLong())
-          pageLoad.record(stats.pageCacheStats.pageLoad.toLong())
-          disposedBuffers.record(stats.pageCacheStats.disposedBuffers.toLong())
-          capacityInBytes.record(stats.pageCacheStats.capacityInBytes)
-          totalCachedSizeInBytes.record(stats.pageCacheStats.totalCachedSizeInBytes)
+          val pageCacheStats = StorageLockContext.getStatistics()
+          uncachedFileAccess.record(pageCacheStats.uncachedFileAccess.toLong())
+          maxRegisteredFiles.record(pageCacheStats.maxRegisteredFiles.toLong())
+          maxCacheSizeInBytes.record(pageCacheStats.maxCacheSizeInBytes)
+          pageHit.record(pageCacheStats.pageHit.toLong())
+          pageFastCacheHit.record(pageCacheStats.pageFastCacheHit.toLong())
+          pageMiss.record(pageCacheStats.pageMiss.toLong())
+          pageLoad.record(pageCacheStats.pageLoad.toLong())
+          disposedBuffers.record(pageCacheStats.disposedBuffers.toLong())
+          capacityInBytes.record(pageCacheStats.capacityInBytes)
+          totalCachedSizeInBytes.record(pageCacheStats.totalCachedSizeInBytes)
         }
         catch (_: AlreadyDisposedException) {
 

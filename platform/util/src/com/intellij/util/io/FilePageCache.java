@@ -16,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +70,7 @@ final class FilePageCache {
     final int defaultPageSizeMb = SystemProperties.getIntProperty("idea.paged.storage.page.size", 10);
     DEFAULT_PAGE_SIZE = Math.max(1, defaultPageSizeMb) * MiB;
 
-    final long maxDirectMemoryToUseBytes = maxDirectMemory() - 2L * DEFAULT_PAGE_SIZE;
+    final long maxDirectMemoryToUseBytes = IOUtil.maxDirectMemory() - 2L * DEFAULT_PAGE_SIZE;
 
     CACHE_CAPACITY_BYTES = configureCacheCapacity(maxDirectMemoryToUseBytes);
 
@@ -235,7 +233,7 @@ final class FilePageCache {
         return notYetRemoved;
       }
 
-      //Double-check: maybe somebody already load our segment after we've checked first time:
+      //Double-check: maybe somebody already loads our segment after we've checked first time:
       pagesAccessLock.lock();
       try {
         wrapper = pagesByPageId.get(pageId);
@@ -457,44 +455,6 @@ final class FilePageCache {
   }
 
   /* ======================= implementation ==================================================================================== */
-
-  private static long maxDirectMemory() {
-    try {
-      Class<?> aClass = Class.forName("jdk.internal.misc.VM");
-      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
-      return (Long)maxDirectMemory.invoke(null);
-    }
-    catch (Throwable ignore) {
-    }
-
-    try {
-      Class<?> aClass = Class.forName("sun.misc.VM");
-      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
-      return (Long)maxDirectMemory.invoke(null);
-    }
-    catch (Throwable ignore) {
-    }
-
-    try {
-      Class<?> aClass = Class.forName("java.nio.Bits");
-      Field maxMemory = aClass.getDeclaredField("maxMemory");
-      maxMemory.setAccessible(true);
-      return (Long)maxMemory.get(null);
-    }
-    catch (Throwable ignore) {
-    }
-
-    try {
-      Class<?> aClass = Class.forName("java.nio.Bits");
-      Field maxMemory = aClass.getDeclaredField("MAX_MEMORY");
-      maxMemory.setAccessible(true);
-      return (Long)maxMemory.get(null);
-    }
-    catch (Throwable ignore) {
-    }
-
-    return Runtime.getRuntime().maxMemory();
-  }
 
   @NotNull("Seems accessed storage has been closed")
   private PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) {
