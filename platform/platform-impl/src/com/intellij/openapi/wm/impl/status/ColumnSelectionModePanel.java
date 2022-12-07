@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
@@ -21,21 +22,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-final class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
-  @NonNls static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
-  private final TextPanel myTextPanel = new TextPanel();
+final class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
+  static final @NonNls String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
+  private TextPanel textPanel;
 
   ColumnSelectionModePanel(@NotNull Project project) {
     super(project);
-    myTextPanel.setVisible(false);
   }
 
   @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL;
   }
 
@@ -51,7 +49,11 @@ final class ColumnSelectionModePanel extends EditorBasedWidget implements Status
 
   @Override
   public JComponent getComponent() {
-    return myTextPanel;
+    if (textPanel == null) {
+      textPanel = new TextPanel();
+      textPanel.setVisible(false);
+    }
+    return textPanel;
   }
 
   @Override
@@ -73,17 +75,30 @@ final class ColumnSelectionModePanel extends EditorBasedWidget implements Status
       }
     });
 
-    FocusUtil.addFocusOwnerListener(this, this);
+    PropertyChangeListener propertyChangeListener = event -> {
+      String propertyName = event.getPropertyName();
+      if (EditorEx.PROP_INSERT_MODE.equals(propertyName) ||
+          EditorEx.PROP_COLUMN_MODE.equals(propertyName) ||
+          SWING_FOCUS_OWNER_PROPERTY.equals(propertyName)) {
+        if (!getProject().isDisposed()) {
+          updateStatus();
+        }
+      }
+    };
+
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     if (multicaster instanceof EditorEventMulticasterEx) {
-      ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(this, this);
+      ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(propertyChangeListener, this);
     }
 
-    updateStatus();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      FocusUtil.addFocusOwnerListener(this, propertyChangeListener);
+      updateStatus();
+    }, getProject().getDisposed());
   }
 
   private void updateStatus() {
-    if (getProject().isDisposed()) {
+    if (textPanel == null) {
       return;
     }
 
@@ -91,23 +106,14 @@ final class ColumnSelectionModePanel extends EditorBasedWidget implements Status
     if (editor != null && !isOurEditor(editor)) {
       return;
     }
+
     if (editor == null || !editor.isColumnMode()) {
-      myTextPanel.setVisible(false);
+      textPanel.setVisible(false);
     } 
     else {
-      myTextPanel.setVisible(true);
-      myTextPanel.setText(UIBundle.message("status.bar.column.status.text"));
-      myTextPanel.setToolTipText(UIBundle.message("status.bar.column.status.tooltip.text"));
-    }
-  }
-
-  @Override
-  public void propertyChange(@NotNull PropertyChangeEvent evt) {
-    String propertyName = evt.getPropertyName();
-    if (EditorEx.PROP_INSERT_MODE.equals(propertyName) || 
-        EditorEx.PROP_COLUMN_MODE.equals(propertyName) || 
-        SWING_FOCUS_OWNER_PROPERTY.equals(propertyName)) {
-      updateStatus();
+      textPanel.setVisible(true);
+      textPanel.setText(UIBundle.message("status.bar.column.status.text"));
+      textPanel.setToolTipText(UIBundle.message("status.bar.column.status.tooltip.text"));
     }
   }
 }

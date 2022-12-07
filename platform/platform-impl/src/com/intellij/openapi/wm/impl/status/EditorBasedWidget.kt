@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.messages.MessageBusConnection
 import java.awt.Component
@@ -57,8 +56,8 @@ abstract class EditorBasedWidget protected constructor(
   open fun isOurEditor(editor: Editor?): Boolean {
     return editor != null &&
            editor.component.isShowing &&
-           java.lang.Boolean.TRUE != editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) &&
-           WindowManager.getInstance().getStatusBar(editor.component, editor.project) === myStatusBar
+           editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) != java.lang.Boolean.TRUE &&
+           StatusBarUtil.getStatusBar(editor.component) === myStatusBar
   }
 
   fun getFocusedComponent(): Component? {

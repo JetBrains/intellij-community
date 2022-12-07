@@ -196,13 +196,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getStatusBar(project: Project) = getFrameHelper(project)?.statusBar
 
   override fun getStatusBar(component: Component, project: Project?): StatusBar? {
-    val parent = ComponentUtil.findUltimateParent(component)
-    if (parent is IdeFrame) {
-      return parent.statusBar!!.findChild(component)
+    var parent: Component? = component
+    while (parent != null) {
+      if (parent is IdeFrame) {
+        return parent.statusBar
+      }
+      parent = parent.parent
     }
-
-    val frame = findFrameFor(project) ?: return null
-    return frame.statusBar!!.findChild(component)
+    return null
   }
 
   override fun findFrameFor(project: Project?): IdeFrame? {
