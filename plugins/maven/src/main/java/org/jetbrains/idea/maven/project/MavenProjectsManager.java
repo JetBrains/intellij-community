@@ -884,20 +884,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.isIgnored(project);
   }
 
-  public void ignoreMavenProject(@Nullable MavenProject mavenProject) {
-    if (mavenProject != null && !isIgnored(mavenProject)) {
-      VirtualFile file = mavenProject.getFile();
-
-      if (isManagedFile(file) && getModules(mavenProject).isEmpty()) {
-        MavenLog.LOG.info("Removing managed maven project  + " + mavenProject + "because there is no module for it");
-        removeManagedFiles(Collections.singletonList(file));
-      } else {
-        MavenLog.LOG.info("Ignoring " + mavenProject);
-        setIgnoredState(Collections.singletonList(mavenProject), true);
-      }
-    }
-  }
-
   public void scheduleMavenProjectsToIgnore(@NotNull Set<MavenProject> mavenProjects) {
     if (mavenProjects.isEmpty()) return;
 
